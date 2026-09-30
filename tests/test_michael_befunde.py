@@ -109,7 +109,8 @@ class TestMichael(unittest.TestCase):
         self.assertTrue(any("ersatzweise „Erste Überschrift (fiktiv)“" in t for t in texte), texte)
         d2 = _docx([p(EN), p(EN), p(EN)], lang="en-GB")
         a2 = docx_hoerprobe.analysiere(d2)
-        self.assertTrue(any("Dokumentsprache ist gesetzt (en-GB)" in t for t in [b["text"] for b in a2["pruefbericht"]]))
+        # Name (Kürzel) seit 30.09.2026 (Steve): „gesetzt: Englisch (en-GB)“
+        self.assertTrue(any("Dokumentsprache ist gesetzt: Englisch (en-GB)" in t for t in [b["text"] for b in a2["pruefbericht"]]), [b["text"] for b in a2["pruefbericht"]])
 
 
 if __name__ == "__main__":

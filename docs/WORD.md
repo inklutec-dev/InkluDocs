@@ -633,3 +633,18 @@ Gäste sehen weiter nur die Alt-Texte (keine neuen Endpunkte unter `/api/freigab
   Bildern“); Hörprobe-Knopf, -Klappe und -Region in der Prüfung mit Dokumentnamen (vorher doppelte Namen); Einzahl „1 Bild“
   und „1 Regel“; Hinweis im leeren Projekt auch in Alt-Texte; lange Dateinamen brechen bei 320 px um; Übersetzungs-Dialog
   mit `aria-describedby`; Eingang „uebersetzen“ startet ohne Dokument in „Dokument“; schwedisch „Ladda ner“.
+
+## Word-Ansichten: Steves Wortentscheidungen (30.09.2026, Staging)
+
+1. „Problemstellen“ statt „Befunde“ in der Barrierefreiheitsprüfung (Abzeichen, Prüfbericht, „Keine Problemstellen im
+   Word-Dokument.“), wie bei PDF.
+2. Sprache als „Name (Kürzel)“ in der Oberflächensprache, z. B. „Englisch (en-US)“ — Dokumentinfos (app.html
+   `spracheAnzeige`, Intl.DisplayNames), Hörprobe und Prüfbericht (`i18n.sprache_anzeige`, Babel/CLDR). Gilt auch für PDF.
+3. Der Hinweis „feste Regeln, ohne KI, kostenlos“ steht einmal oben im Kopf unter den Ansichts-Knöpfen statt in jeder
+   Prüfkarte.
+4. Nach „In barrierefreie PDF umwandeln“ zeigt der Dialog nur das veraPDF-Ergebnis, „PDF herunterladen“ und den Verweis
+   „Prüfbericht und Hörprobe findest du in der Ansicht „Barrierefreiheitsprüfung““ mit Link (wechselt die Ansicht);
+   `pdfuaAnalyseHtml` ist entfallen.
+Nebenbei: veraPDF-Zeilen nennen die Regel wie bei PDF als „(Regel …)“; die Hörprobe kürzt Absätze nicht mehr
+(`docx_hoerprobe.MAX_ABSATZ = 0`, die Zeilen-Obergrenze bleibt mit hörbarem „Hörprobe gekürzt“).
+„Hörprobe vorlesen“/„Hörprobe lesen“ unverändert (hängt an Michaels Punkt 10, Steve entscheidet).

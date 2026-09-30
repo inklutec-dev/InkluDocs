@@ -34,8 +34,13 @@ log = logging.getLogger(__name__)
 _SCRIPT_DIR = Path(__file__).parent / "pdfix_scripts"
 _SCRIPT = _SCRIPT_DIR / "Struktur_Export.py"
 _TIMEOUT_SECONDS = int(os.environ.get("PDFIX_STRUKTUR_TIMEOUT", "180"))
-MAX_ZEILE = 400
-STRUKTUR_VERSION = 3   # Cache-Version: 2 = mit Objektnummern (obj) je Element; 3 = Leerzeichen-Korrektur 28.09.2026 (Struktur_Export); aeltere Caches werden neu gelesen
+# KEINE KUERZUNG MEHR in der Hoerprobe (30.09.2026, Messlauf Zuverlaessigkeit): bis heute schnitt sie Zeilen nach 400 und
+# Tabellenzellen nach 80 Zeichen ab — still. Wer die Vollstaendigkeit ueber die Hoerprobe beurteilte, sah fehlenden Text,
+# der in der Datei stand (INKL-002: 31 % der Woerter). Ein Screenreader liest alles; die Hoerprobe jetzt auch. Nur die
+# Strukturlesung hat eine Sicherheitsgrenze (20.000 Zeichen je Element, Struktur_Export.MAX_TEXT); greift sie, sagt die
+# Hoerprobe hoerbar „gekürzt“ mit der vollen Laenge.
+MAX_ZEILE = 0   # 0 = nicht kuerzen
+STRUKTUR_VERSION = 4   # Cache-Version: 2 = mit Objektnummern (obj) je Element; 3 = Leerzeichen-Korrektur 28.09.2026 (Struktur_Export); 4 = echte Bindestriche bleiben, keine 600-Zeichen-Kuerzung (30.09.2026); aeltere Caches werden neu gelesen
 
 
 class StrukturFehler(Exception):
@@ -109,13 +114,32 @@ def lesen(pdf_pfad: str, arbeitsordner: str, erneuern: bool = False) -> dict:
 # Hoerprobe
 # ---------------------------------------------------------------------------
 
+# Reine Behaelter: ein Screenreader sagt dazu nichts, ihr Text steckt in den Kindern.
 _ROLLEN_STILL = {"Document", "Part", "Art", "Sect", "Div", "NonStruct", "Private", "DocumentFragment", "Aside",
-                 "TBody", "THead", "TFoot", "LBody", "Lbl", "Span", "Annot", "Ruby", "Warichu", "Reference", "BibEntry"}
+                 "TBody", "THead", "TFoot"}
+# Rollen OHNE eigene Ansage, deren TEXT ein Screenreader aber vorliest (30.09.2026). Bis heute waren sie ganz stumm — beim
+# „Antrag Pflege“ fehlten so alle Feldbeschriftungen (Lbl) in der Hoerprobe (90 von 134 Woertern). Ohne Text bleiben sie
+# stumm; Lbl heisst „Beschriftung“, die anderen tragen ihren Rollennamen wie jede unbekannte Rolle.
+_ROLLEN_TEXT = {"Lbl", "LBody", "Span", "Annot", "Ruby", "Warichu", "Reference", "BibEntry"}
+
+
+def _still(e: dict) -> bool:
+    typ = e.get("typ") or ""
+    return typ in _ROLLEN_STILL or (typ in _ROLLEN_TEXT and not (e.get("text") or "").strip())
 
 
 def _kurz(text: str, n: int = MAX_ZEILE) -> str:
+    """Leerraum vereinheitlichen; kuerzt nur, wenn n > 0 ausdruecklich gesetzt ist (nicht mehr in der Hoerprobe)."""
     text = " ".join((text or "").split())
-    return text if len(text) <= n else text[:n].rstrip() + " …"
+    return text if not n or len(text) <= n else text[:n].rstrip() + " …"
+
+
+def _text_mit_marke(e: dict, _: Callable[[str], str]) -> str:
+    """Text eines Elements fuer die Hoerprobe; hat die Sicherheitsgrenze der Strukturlesung gegriffen, hoerbar markiert."""
+    text = _kurz(e.get("text") or "")
+    if e.get("gekuerzt") and text:
+        text += " " + _("… (gekürzt, insgesamt {n} Zeichen)").format(n=e.get("laenge") or "?")
+    return text
 
 
 def _kinder(elemente: list, idx: int) -> list:
@@ -135,22 +159,23 @@ def _kinder(elemente: list, idx: int) -> list:
 def hoerprobe(struktur: dict, _: Callable[[str], str] = _identitaet, felder_quickinfos: Optional[dict] = None) -> list[str]:
     """Zeilen in Lesereihenfolge. felder_quickinfos: {Feldname: Quickinfo} aus der Datenbank (ergaenzt
     die /TU-Werte der Datei, falls die Datei noch ohne Quickinfos ist)."""
+    from i18n import sprache_anzeige   # „Englisch (en-US)“ in der Oberflaechensprache (Steve 30.09.2026)
     elemente = struktur.get("elemente") or []
     info = struktur.get("info") or {}
     zeilen: list[str] = []
-    zeilen.append(_("Sprache: {s}").format(s=info.get("lang")) if info.get("lang") else _("Sprache: nicht gesetzt"))
+    zeilen.append(_("Sprache: {s}").format(s=sprache_anzeige(info.get("lang"), _)) if info.get("lang") else _("Sprache: nicht gesetzt"))
     zeilen.append(_("Seiten: {n}").format(n=info.get("seiten", 0)))
     letzte_seite = 0
     n_ueberschriften = n_bilder = n_bilder_ohne = n_tabellen = n_listen = n_felder = 0
     for idx, e in enumerate(elemente):
         typ = e.get("typ") or ""
-        text = e.get("text") or ""
         seite = e.get("seite") or 0
-        if seite and seite != letzte_seite and typ not in _ROLLEN_STILL:
+        if seite and seite != letzte_seite and not _still(e):
             zeilen.append(_("— Seite {n} —").format(n=seite))
             letzte_seite = seite
-        if typ in _ROLLEN_STILL:
+        if _still(e):
             continue
+        text = _text_mit_marke(e, _)
         if typ.startswith("H") and typ[1:].isdigit():
             n_ueberschriften += 1
             zeilen.append(_("Überschrift Ebene {n}: {t}").format(n=typ[1:], t=_kurz(text) or _("(leer)")))
@@ -171,9 +196,10 @@ def hoerprobe(struktur: dict, _: Callable[[str], str] = _identitaet, felder_quic
         elif typ == "TR":
             zellen = _kinder(elemente, idx)
             kopf = [k for k in zellen if k.get("typ") == "TH"]
-            zeilen.append(_("Zeile: {t}").format(t=" | ".join(_kurz(k.get("text") or "", 80) for k in zellen)) if zellen else _("Leere Zeile"))
+            # Zellen ganz (30.09.2026; bis dahin nach 80 Zeichen still abgeschnitten)
+            zeilen.append(_("Zeile: {t}").format(t=" | ".join(_text_mit_marke(k, _) for k in zellen)) if zellen else _("Leere Zeile"))
             if kopf and len(kopf) == len(zellen):
-                zeilen[-1] = _("Kopfzeile: {t}").format(t=" | ".join(_kurz(k.get("text") or "", 80) for k in zellen))
+                zeilen[-1] = _("Kopfzeile: {t}").format(t=" | ".join(_text_mit_marke(k, _) for k in zellen))
         elif typ in ("TH", "TD"):
             continue   # in der Zeile enthalten
         elif typ in ("Figure", "Formula"):
@@ -206,6 +232,9 @@ def hoerprobe(struktur: dict, _: Callable[[str], str] = _identitaet, felder_quic
             zeilen.append(_("Zitat: {t}").format(t=_kurz(text)))
         elif typ == "Code":
             zeilen.append(_("Code: {t}").format(t=_kurz(text)))
+        elif typ == "Lbl":
+            # Feldbeschriftung ausserhalb einer Liste (in Listen steckt das Aufzaehlungszeichen im Listenpunkt), 30.09.2026
+            zeilen.append(_("Beschriftung: {t}").format(t=text))
         else:
             zeilen.append(_("{typ}: {t}").format(typ=typ, t=_kurz(text)) if text else _("{typ} (ohne Text)").format(typ=typ))
     zusammen = _("Zusammenfassung: {u} Überschriften, {l} Listen, {t} Tabellen, {b} Grafiken ({o} ohne Alt-Text), {f} Formularfelder.").format(
@@ -267,7 +296,7 @@ def html_ansicht(struktur: dict, _: Callable[[str], str] = _identitaet, felder_q
             continue
         schliesse_bis(eid)
         seite = e.get("seite") or 0
-        if seite and seite != letzte_seite and typ not in _ROLLEN_STILL and typ not in ("TR", "TH", "TD", "LI"):
+        if seite and seite != letzte_seite and not _still(e) and typ not in ("TR", "TH", "TD", "LI"):
             teile.append(f'<p class="struktur-seite" aria-label="{_esc(_("Seite {n}").format(n=seite))}">{_esc(_("— Seite {n} —").format(n=seite))}</p>')
             letzte_seite = seite
         if typ.startswith("H") and typ[1:].isdigit():
@@ -317,7 +346,9 @@ def html_ansicht(struktur: dict, _: Callable[[str], str] = _identitaet, felder_q
             teile.append(f"<blockquote><p>{_esc(text)}</p></blockquote>")
         elif typ == "Code":
             teile.append(f"<pre>{_esc(text)}</pre>")
-        elif typ in _ROLLEN_STILL or typ in ("TOC", "TOCI"):
+        elif typ == "Lbl" and text:
+            teile.append(f'<p><span class="struktur-rolle">{_esc(_("Beschriftung"))}:</span> {_esc(text)}</p>')
+        elif _still(e) or typ in ("TOC", "TOCI"):
             if typ == "TOCI" and text:
                 teile.append(f"<p>{_esc(text)}</p>")
             continue

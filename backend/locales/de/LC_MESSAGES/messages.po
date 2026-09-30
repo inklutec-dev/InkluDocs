@@ -9787,3 +9787,109 @@ msgstr "Die Prüfung mit veraPDF war bei dieser Umwandlung nicht möglich. Das i
 #, python-brace-format
 msgid "Hörprobe von „{name}“"
 msgstr "Hörprobe von „{name}“"
+
+msgid "Diese PDF ist schon getaggt. „Barrierefrei machen“ ersetzt vorhandene Tags nicht, deshalb taggen wir sie nicht noch einmal und berechnen nichts."
+msgstr "Diese PDF ist schon getaggt. „Barrierefrei machen“ ersetzt vorhandene Tags nicht, deshalb taggen wir sie nicht noch einmal und berechnen nichts."
+
+#, python-brace-format
+msgid "… (gekürzt, insgesamt {n} Zeichen)"
+msgstr "… (gekürzt, insgesamt {n} Zeichen)"
+
+#, python-brace-format
+msgid "Beschriftung: {t}"
+msgstr "Beschriftung: {t}"
+
+msgid "Beschriftung"
+msgstr "Beschriftung"
+
+#, python-brace-format
+msgid "(Regel {r})"
+msgstr "(Regel {r})"
+
+#, python-brace-format
+msgid "(Regeln {r})"
+msgstr "(Regeln {r})"
+
+#, python-brace-format
+msgid "PDF barrierefrei machen (Tagging): {tag} Credits je Seite — nur, wenn du das Tagging ausführst. Eine schon getaggte PDF wird nicht neu getaggt und kostet nichts."
+msgstr "PDF barrierefrei machen (Tagging): {tag} Credits je Seite — nur, wenn du das Tagging ausführst. Eine schon getaggte PDF wird nicht neu getaggt und kostet nichts."
+
+#, python-brace-format
+msgid "Herunterladen einer PDF mit deinen Alt-Texten und Quickinfos: {exp} Credits plus {bild} Credits je angefangene {schritt} bearbeitete Bilder und {feld} Credit je angefangene {schritt} bearbeitete Formularfelder. Berechnet wird nur, was du in InkluDocs bearbeitet hast, per KI oder von Hand; ohne Bearbeitung kostet das Herunterladen nichts, und denselben Stand bezahlst du nur einmal. Beispiel: eine PDF mit 26 bearbeiteten Alt-Texten kostet {beispiel} Credits."
+msgstr "Herunterladen einer PDF mit deinen Alt-Texten und Quickinfos: {exp} Credits plus {bild} Credits je angefangene {schritt} bearbeitete Bilder und {feld} Credit je angefangene {schritt} bearbeitete Formularfelder. Berechnet wird nur, was du in InkluDocs bearbeitet hast, per KI oder von Hand; ohne Bearbeitung kostet das Herunterladen nichts, und denselben Stand bezahlst du nur einmal. Beispiel: eine PDF mit 26 bearbeiteten Alt-Texten kostet {beispiel} Credits."
+
+#, python-brace-format
+msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder."
+msgstr "Übernahme der Alt-Texte in das Dokument und Herunterladen als Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder."
+
+#, python-brace-format
+msgid "Word in barrierefreie PDF umwandeln: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder."
+msgstr "Word in barrierefreie PDF umwandeln: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder."
+
+#, python-brace-format
+msgid "Eigenständige Formular-Projekte: Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Eigenständige Formular-Projekte: Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+
+#, python-brace-format
+msgid "Export pdf (PDF-Dokumente): {grund} Credits plus {staffel} je angefangene {schritt} bearbeitete Bilder und {feld} je angefangene {schritt} bearbeitete Formularfelder — nur, wenn Alt-Texte oder Quickinfos in InkluDocs bearbeitet wurden (per KI oder von Hand). Ohne Bearbeitung oder für einen schon bezahlten Stand ist der Export kostenlos."
+msgstr "Export pdf (PDF-Dokumente): {grund} Credits plus {staffel} je angefangene {schritt} bearbeitete Bilder und {feld} je angefangene {schritt} bearbeitete Formularfelder — nur, wenn Alt-Texte oder Quickinfos in InkluDocs bearbeitet wurden (per KI oder von Hand). Ohne Bearbeitung oder für einen schon bezahlten Stand ist der Export kostenlos."
+
+#, python-brace-format
+msgid "Export docx, pdfua und formular: {grund} Credits plus {staffel} je angefangene {schritt} Bilder, bei formular {feld} je angefangene {schritt} Felder."
+msgstr "Export docx, pdfua und formular: {grund} Credits plus {staffel} je angefangene {schritt} Bilder, bei formular {feld} je angefangene {schritt} Felder."
+
+msgid "Diese PDF hat keine Tags. Sie bekommt deine bearbeiteten Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“."
+msgstr "Diese PDF hat keine Tags. Sie bekommt deine bearbeiteten Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“."
+
+#, python-brace-format
+msgid "{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur bearbeitete Quickinfos; Dokumente ohne bearbeitete Quickinfos bleiben unverändert und kosten nichts."
+msgstr "{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur bearbeitete Quickinfos; Dokumente ohne bearbeitete Quickinfos bleiben unverändert und kosten nichts."
+
+#, python-brace-format
+msgid "Berechnet wird nur, was du in InkluDocs bearbeitet hast (Alt-Texte: {a}, Quickinfos: {q}). Das Tagging ist schon beim Ausführen bezahlt."
+msgstr "Berechnet wird nur, was du in InkluDocs bearbeitet hast (Alt-Texte: {a}, Quickinfos: {q}). Das Tagging ist schon beim Ausführen bezahlt."
+
+msgid "Das Herunterladen kostet nichts, weil du diesen Stand schon heruntergeladen und bezahlt hast."
+msgstr "Das Herunterladen kostet nichts, weil du diesen Stand schon heruntergeladen und bezahlt hast."
+
+msgid "Das Herunterladen kostet nichts, weil du keine Alt-Texte und keine Quickinfos bearbeitet hast. Das Tagging ist schon beim Ausführen bezahlt."
+msgstr "Das Herunterladen kostet nichts, weil du keine Alt-Texte und keine Quickinfos bearbeitet hast. Das Tagging ist schon beim Ausführen bezahlt."
+
+msgid "Es wurden keine Credits berechnet."
+msgstr "Es wurden keine Credits berechnet."
+
+msgid "Prüfbericht und Hörprobe findest du in der Ansicht „Barrierefreiheitsprüfung“."
+msgstr "Prüfbericht und Hörprobe findest du in der Ansicht „Barrierefreiheitsprüfung“."
+
+msgid "Zur Barrierefreiheitsprüfung"
+msgstr "Zur Barrierefreiheitsprüfung"
+
+msgid "Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF."
+msgstr "Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF."
+
+msgid "Hier prüfst du die fertige Datei mit veraPDF. Anzeige der Problemstellen im Prüfbericht."
+msgstr "Hier prüfst du die fertige Datei mit veraPDF. Anzeige der Problemstellen im Prüfbericht."
+
+msgid "Keine Problemstellen im Word-Dokument."
+msgstr "Keine Problemstellen im Word-Dokument."
+
+msgid "Hier prüfst du jedes Word-Dokument mit festen Regeln, ohne KI und kostenlos, so wie du es in der Ansicht „Dokument“ herunterlädst. Hast du schon eine barrierefreie PDF erstellt, steht hier auch ihr Ergebnis von veraPDF."
+msgstr "Hier prüfst du jedes Word-Dokument mit festen Regeln, ohne KI und kostenlos, so wie du es in der Ansicht „Dokument“ herunterlädst. Hast du schon eine barrierefreie PDF erstellt, steht hier auch ihr Ergebnis von veraPDF."
+
+msgid "ohne Tags: ohne Alt-Texte, mit bearbeiteten Quickinfos"
+msgstr "ohne Tags: ohne Alt-Texte, mit bearbeiteten Quickinfos"
+
+#, python-brace-format
+msgid "Preis: {c} Credits ({p} Credits je Seite)."
+msgstr "Preis: {c} Credits ({p} Credits je Seite)."
+
+#, python-brace-format
+msgid "Preis: {c} Credits ({p} Credits je Seite). Verfügbar: {v} Credits."
+msgstr "Preis: {c} Credits ({p} Credits je Seite). Verfügbar: {v} Credits."
+
+msgid "Das Tagging bezahlst du nur hier; beim Herunterladen wird es nicht noch einmal berechnet."
+msgstr "Das Tagging bezahlst du nur hier; beim Herunterladen wird es nicht noch einmal berechnet."
+
+#, python-brace-format
+msgid "Die Dokumentsprache ist gesetzt: {s}."
+msgstr "Die Dokumentsprache ist gesetzt: {s}."

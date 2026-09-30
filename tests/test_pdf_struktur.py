@@ -43,7 +43,7 @@ def _fixture():
 class HoerprobeTest(unittest.TestCase):
     def test_zeilen(self):
         z = pdf_struktur.hoerprobe(_fixture(), felder_quickinfos={"vorname": "Vorname eingeben"})
-        self.assertEqual(z[0], "Sprache: de-DE")
+        self.assertEqual(z[0], "Sprache: Deutsch (de-DE)")   # Name (Kürzel), Steve 30.09.2026
         self.assertEqual(z[1], "Seiten: 2")
         self.assertTrue(z[2].startswith("Zusammenfassung: 1 Überschriften, 1 Listen, 1 Tabellen, 2 Grafiken (1 ohne Alt-Text), 2 Formularfelder."), z[2])
         # Feld in einer Zelle: eigene Zeile direkt nach der Zeile der Tabelle (Lesereihenfolge)
@@ -77,13 +77,57 @@ class HoerprobeTest(unittest.TestCase):
         z = pdf_struktur.hoerprobe(_fixture(), lambda s: s.replace("Seiten", "Pages"))
         self.assertEqual(z[1], "Pages: 2")
 
-    def test_kuerzung(self):
+    def test_keine_stille_kuerzung(self):
+        """30.09.2026 (Messlauf): Zeilen und Tabellenzellen werden nicht mehr gekuerzt (vorher 400 bzw. 80 Zeichen, still)."""
         f = _fixture()
         f["elemente"][2]["text"] = "x" * 1000
+        f["elemente"][11]["text"] = "Miete für die Räume im Erdgeschoss und im ersten Obergeschoss, einschließlich Nebenkosten und Stellplatz"
         z = pdf_struktur.hoerprobe(f)
         lang = [x for x in z if x.startswith("Absatz: xxx")][0]
-        self.assertLessEqual(len(lang), pdf_struktur.MAX_ZEILE + 12)
-        self.assertTrue(lang.endswith("…"))
+        self.assertEqual(lang, "Absatz: " + "x" * 1000)
+        self.assertIn("Zeile: Miete für die Räume im Erdgeschoss und im ersten Obergeschoss, einschließlich Nebenkosten und Stellplatz | 500 <b>EUR</b>", z)
+
+    def test_sicherheitsgrenze_hoerbar(self):
+        """Hat die Strukturlesung (Struktur_Export.MAX_TEXT) gekuerzt, sagt die Hoerprobe es hoerbar mit der vollen Laenge."""
+        f = _fixture()
+        f["elemente"][2].update({"text": "y" * 50, "gekuerzt": True, "laenge": 25000})
+        z = pdf_struktur.hoerprobe(f)
+        self.assertIn("Absatz: " + "y" * 50 + " … (gekürzt, insgesamt 25000 Zeichen)", z)
+
+    def test_beschriftung_wird_vorgelesen(self):
+        """Lbl ausserhalb einer Liste (Feldbeschriftungen, „Antrag Pflege“) war stumm; jetzt „Beschriftung: …“. Leere
+        Lbl bleiben stumm, Behaelter (Div, Sect) ebenso; Span mit Text unter einem Behaelter wird gelesen."""
+        f = {"info": {"seiten": 1, "lang": "de-DE"}, "elemente": [
+            {"id": "0", "typ": "Div", "tiefe": 0, "seite": 1, "text": "", "kinder": 4},
+            {"id": "0.0", "typ": "Lbl", "tiefe": 1, "seite": 1, "text": "Name der versicherten Person", "kinder": 0},
+            {"id": "0.1", "typ": "Form", "tiefe": 1, "seite": 1, "text": "", "feldname": "name", "quickinfo": "Name", "kinder": 0},
+            {"id": "0.2", "typ": "Lbl", "tiefe": 1, "seite": 1, "text": "", "kinder": 0},
+            {"id": "0.3", "typ": "Span", "tiefe": 1, "seite": 1, "text": "Seite 1 von 1", "kinder": 0},
+        ]}
+        z = pdf_struktur.hoerprobe(f)
+        self.assertIn("Beschriftung: Name der versicherten Person", z)
+        self.assertLess(z.index("Beschriftung: Name der versicherten Person"), z.index("Formularfeld name: Name"))
+        self.assertIn("Span: Seite 1 von 1", z)
+        self.assertEqual(sum(1 for x in z if x.startswith("Beschriftung")), 1)   # leere Beschriftung stumm
+        self.assertFalse(any(x.startswith("Div") for x in z))
+        self.assertIn("— Seite 1 —", z)
+        h = pdf_struktur.html_ansicht(f)
+        self.assertIn('<span class="struktur-rolle">Beschriftung:</span> Name der versicherten Person', h)
+
+    def test_sprache_name_und_kuerzel(self):
+        """Steve 30.09.2026: Sprache als „Name (Kürzel)“, in der Oberflaechensprache; ohne Uebersetzer deutsch."""
+        f = _fixture()
+        f["info"]["lang"] = "en-US"
+        self.assertEqual(pdf_struktur.hoerprobe(f)[0], "Sprache: Englisch (en-US)")
+        try:
+            import i18n
+        except Exception:
+            self.skipTest("i18n nicht ladbar")
+        self.assertEqual(i18n.sprache_anzeige("en-US", ui_lang="en"), "English (en-US)")
+        self.assertEqual(i18n.sprache_anzeige("de", ui_lang="fr"), "allemand (de)")
+        self.assertEqual(i18n.sprache_anzeige("xx-YY", ui_lang="de"), "xx-YY")   # unbekannt: nur das Kuerzel
+        self.assertEqual(i18n.sprache_anzeige("", ui_lang="de"), "")
+        self.assertEqual(pdf_struktur.hoerprobe(f, i18n.get_gettext("en"))[0], "Language: English (en-US)")
 
 
 class HtmlTest(unittest.TestCase):

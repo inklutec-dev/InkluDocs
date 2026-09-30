@@ -13,7 +13,7 @@
 #  wie im Alt-Text-Export (Karbe V1006): eigene MCIDs plus die der Inline-Kinder (Span, Link …),
 #  Fragmente mit Silbentrennungs-Heuristik verkettet.
 #
-#  Aufruf: python3 Struktur_Export.py -i <pdf> -o <struktur.json> [--max-text 600]
+#  Aufruf: python3 Struktur_Export.py -i <pdf> -o <struktur.json> [--max-text 20000]
 #  Exit 0 = geschrieben; 2 = PDF nicht lesbar; 3 = kein Strukturbaum. Lizenz ueber
 #  PDFIX_LICENSE_USER/KEY (inkludocs_betrieb.lizenz_aktivieren); ohne Lizenz Testmodus (lesen geht).
 # =============================================================================
@@ -32,6 +32,8 @@ _KOPPELWOERTER = ("und ", "oder ", "og ", "eller ", "and ", "or ", "&")
 # Elemente, die IMMER einen eigenen Eintrag bekommen, auch wenn sie in einer Zelle, einem Listenpunkt
 # oder einer Bildunterschrift stecken (Formularfelder in Tabellenzellen sind bei Formularen der Normalfall).
 _STOPP = {"L", "Table", "Figure", "Formula", "Form"}
+# Sicherheitsgrenze je Element (30.09.2026; vorher 600 Zeichen, still): nur gegen entartete Dateien, normaler Text bleibt ganz.
+MAX_TEXT = 20000
 
 _page_cache: dict = {}
 _page_objects_cache: dict = {}
@@ -187,18 +189,46 @@ def _getrennt(page_num, vorher, jetzt):
     return (jetzt[0] - vorher[2]) >= GROSSE_LUECKE * hoehe
 
 
-def _append_fragment(out, frag, letzte_laenge=0, leerzeichen_objekte=False, getrennt=False):
+# BINDESTRICHE (30.09.2026, Messlauf Zuverlaessigkeit): Bis heute strich die Verkettung JEDEN Bindestrich am Ende eines
+# Textstuecks — gedacht fuer die Silbentrennung am Zeilenende („Auftrags-“ / „verarbeitung“). Viele Erzeuger legen aber
+# auch mitten in der Zeile ein neues Textstueck hinter einen echten Bindestrich an; dann las die Hoerprobe „KIgestützte“,
+# „InternetServices“, „EMail“ (AVV: 24- bis 26-mal je Lauf). In der Datei steht der Bindestrich.
+# Jetzt: Bindestrich nur streichen, wenn das naechste Stueck in einer NEUEN Zeile beginnt (Lage aus PDFix, sonst
+# unbekannt) UND es wie eine Silbentrennung aussieht: Kleinbuchstabe vor dem Strich und Kleinbuchstabe danach.
+# Grossbuchstabe oder Ziffer danach („Internet-“ / „Services“, „E-“ / „Mail“) und Abkuerzung davor („KI-“, „EU-“, „PDF-“)
+# sind echte Bindestriche und bleiben — so trennt kein Woerterbuch, aber die Fehlerart „Wort verschluckt Strich“ ist weg,
+# und echte Silbentrennung am Zeilenende wird weiter zusammengezogen. Grenze: Kleinbuchstaben-Komposita, die genau am
+# Zeilenende getrennt sind („blau-“ / „grün“), werden wie bisher zusammengezogen.
+
+
+def _silbentrennung(out, frag, zeilenwechsel):
+    """True = der Bindestrich am Ende von out ist (wahrscheinlich) eine Silbentrennung und faellt weg."""
+    if zeilenwechsel is False:
+        return False              # derselben Zeile: ein Strich mitten in der Zeile trennt keine Silben
+    vor = out[-2:-1]
+    nach = frag[:1]
+    if not vor or not nach:
+        return False
+    return vor.isalpha() and vor.islower() and nach.isalpha() and nach.islower()
+
+
+def _append_fragment(out, frag, letzte_laenge=0, leerzeichen_objekte=False, getrennt=False, zeilenwechsel=None):
     """Fragmente verketten. Manche Erzeuger (z. B. Browser-Druck) legen jeden Buchstaben als eigenes
     Textobjekt ab und Leerzeichen als eigene Objekte — dann werden Einzelzeichen OHNE Leerzeichen
-    angehaengt und die Leerzeichen-Objekte als Worttrenner uebernommen; sonst wie im Alt-Text-Export."""
+    angehaengt und die Leerzeichen-Objekte als Worttrenner uebernommen; sonst wie im Alt-Text-Export.
+    zeilenwechsel: True = frag beginnt in einer neuen Zeile, False = in derselben Zeile, None = unbekannt."""
     if frag == " ":
         return out if out.endswith(" ") or not out else out + " "
     if not out:
         return frag
     if out.endswith("\xad"):
         return out[:-1] + frag
+    if out.endswith(" -"):
+        return out + " " + frag   # freistehender Strich („Seite 3 - 5“): Zeichen, kein Wortteil
     if out.endswith("-") and frag and not frag.lower().startswith(_KOPPELWOERTER):
-        return out[:-1] + frag
+        if _silbentrennung(out, frag, zeilenwechsel):
+            return out[:-1] + frag
+        return out + frag         # echter Bindestrich: stehen lassen, ohne Leerzeichen dahinter
     if out.endswith(" "):
         return out + frag
     # Seite mit eigenen Leerzeichen-Objekten (Browser-Druck u. a.): Textobjekte sind Bruchstuecke von
@@ -229,10 +259,21 @@ def _eigene_mcids(elem, deep=False):
     return out
 
 
-def _text(elem, deep=False, max_text=600):
+def _zeilenwechsel(vorher, jetzt):
+    """True/False: beginnt das Stueck in einer neuen Zeile? None, wenn die Lage fehlt (erstes Stueck einer Seite)."""
+    if not vorher or not jetzt:
+        return None
+    return not _gleiche_zeile(vorher, jetzt)
+
+
+def _text(elem, deep=False, max_text=MAX_TEXT):
+    """(Text, Seite, volle Laenge). KUERZEN (30.09.2026): Die Hoerprobe soll zeigen, was ein Screenreader vorliest — und der
+    liest alles. Bis heute schnitt die Lesung nach 600 Zeichen ab, still; im Messlauf sah das aus wie fehlender Text. Jetzt
+    nur noch eine Sicherheitsgrenze (MAX_TEXT, 20.000 Zeichen je Element gegen entartete Dateien); greift sie, steht die
+    volle Laenge im Eintrag („laenge“) und die Hoerprobe sagt hoerbar „gekürzt“."""
     paare = _eigene_mcids(elem, deep)
     if not paare:
-        return "", -1
+        return "", -1, 0
     seiten = sorted({p for p, _m in paare if p >= 0})
     out = ""
     letzte = 0
@@ -243,14 +284,16 @@ def _text(elem, deep=False, max_text=600):
         vorher = None
         for mcid, text, lage in objekte:
             if mcid in wanted and text:
-                out = _append_fragment(out, text, letzte, leer, _getrennt(p, vorher, lage) if (leer and text != " ") else False)
+                out = _append_fragment(out, text, letzte, leer, _getrennt(p, vorher, lage) if (leer and text != " ") else False,
+                                       _zeilenwechsel(vorher, lage))
                 letzte = len(text)
                 if text.strip():
                     vorher = lage
     out = " ".join(out.replace("\xad", "").split())
-    if max_text and len(out) > max_text:
-        out = out[:max_text].rstrip() + " …"
-    return out, (seiten[0] if seiten else -1)
+    laenge = len(out)
+    if max_text and laenge > max_text:
+        out = out[:max_text].rstrip()
+    return out, (seiten[0] if seiten else -1), laenge
 
 
 def _feld_info(elem):
@@ -309,10 +352,13 @@ def _walk(elem, tiefe, pfad, out, max_text, zaehler, im_text=False):
     except Exception:  # noqa: BLE001
         pass
     deep = typ in ("TH", "TD", "LI", "Lbl", "LBody", "Caption", "Note", "TOCI", "Formula", "Figure", "Form") and typ not in _CONTAINER
-    text, seite = _text(elem, deep=deep, max_text=max_text)
+    text, seite, laenge = _text(elem, deep=deep, max_text=max_text)
     if typ in _CONTAINER and typ not in ("LBody",):
-        text, seite = "", seite
+        text, seite, laenge = "", seite, 0
     eintrag["text"] = text
+    if laenge > len(text):
+        eintrag["gekuerzt"] = True        # Sicherheitsgrenze gegriffen: die Hoerprobe sagt es hoerbar
+        eintrag["laenge"] = laenge
     eintrag["seite"] = (seite + 1) if seite >= 0 else 0
     try:
         alt = _sauber(elem.GetAlt() or "")
@@ -363,7 +409,7 @@ def main():
     ap = argparse.ArgumentParser(description="Strukturlesung einer getaggten PDF (InkluDocs)")
     ap.add_argument("-i", "--input", required=True)
     ap.add_argument("-o", "--output", required=True)
-    ap.add_argument("--max-text", type=int, default=600)
+    ap.add_argument("--max-text", type=int, default=MAX_TEXT)
     args = ap.parse_args()
     t0 = time.time()
     pdfix = GetPdfix()
@@ -409,7 +455,8 @@ def main():
                 t = z["id"].count(".") + 1
                 spalten = max(spalten, sum(1 for f in nach if f["id"].startswith(z["id"] + ".") and f["id"].count(".") == t and f["typ"] in ("TH", "TD")))
             e["zeilen"], e["spalten"] = len(zeilen), spalten
-        info = {"seiten": _doc.GetNumPages(), "elemente": len(out), "dauer_s": round(time.time() - t0, 2), "version": 3}
+        # Version 4 (30.09.2026): echte Bindestriche bleiben, keine Kuerzung auf 600 Zeichen mehr (gekuerzt/laenge)
+        info = {"seiten": _doc.GetNumPages(), "elemente": len(out), "dauer_s": round(time.time() - t0, 2), "version": 4}
         try:
             info["lang"] = _sauber(_doc.GetLang() or "")
         except Exception:  # noqa: BLE001

@@ -240,7 +240,9 @@ POST /api/v1/documents/812/generate  {"scope": "all", "language": "en"}   → al
   <ul>
     <li>{{ _('Alt-Text je Bild (Einzelbild oder im Dokument): {n} Credits.').format(n=preis_alt) }}</li>
     <li>{{ _('Quickinfo je Formularfeld: {n} Credit.').format(n=preis_qi) }}</li>
-    <li>{{ _('Dokument-Export (pdf, docx, pdfua, formular): {grund} Credits plus {staffel} je angefangene {schritt} Einträge.').format(grund=preis_export, staffel=preis_export_bild, schritt=export_schritt) }}</li>
+    {# pdf seit 30.09.2026 nur, was bearbeitet wurde (Michael Karbe, Feedback 202609230 - 1, Punkt 12; billing.pdf_download_preis) #}
+    <li>{{ _('Export pdf (PDF-Dokumente): {grund} Credits plus {staffel} je angefangene {schritt} bearbeitete Bilder und {feld} je angefangene {schritt} bearbeitete Formularfelder — nur, wenn Alt-Texte oder Quickinfos in InkluDocs bearbeitet wurden (per KI oder von Hand). Ohne Bearbeitung oder für einen schon bezahlten Stand ist der Export kostenlos.').format(grund=preis_export, staffel=preis_export_bild, feld=preis_export_feld, schritt=export_schritt) }}</li>
+    <li>{{ _('Export docx, pdfua und formular: {grund} Credits plus {staffel} je angefangene {schritt} Bilder, bei formular {feld} je angefangene {schritt} Felder.').format(grund=preis_export, staffel=preis_export_bild, feld=preis_export_feld, schritt=export_schritt) }}</li>
     <li>{{ _('Textliste (xlsx, csv, json, formular_csv): {n} Credits je Export.').format(n=preis_tabelle) }}</li>
   </ul>
   <p>{{ _('Reicht das Guthaben nicht, antwortet die API mit 402 (Dokumente) bzw. 429 (Einzelbilder) und nennt Preis und verfügbare Credits. Credits gibt es über die Tarife und Pakete unter') }} <a href="{{ base_url }}/preise">{{ base_url }}/preise</a>. {{ _('Den Verbrauch je Schlüssel siehst du in der App unter „API-Schlüssel“.') }}</p>

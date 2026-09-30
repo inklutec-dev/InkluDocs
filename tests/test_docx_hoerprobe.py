@@ -73,7 +73,7 @@ class TestHoerprobe(unittest.TestCase):
         os.unlink(pfad)
         h = a["hoerprobe"]
         self.assertEqual(h[0], "Dokumenttitel: Testdok")
-        self.assertEqual(h[1], "Sprache: de-DE")
+        self.assertEqual(h[1], "Sprache: Deutsch (de-DE)")   # Name (Kürzel), Steve 30.09.2026
         self.assertIn("Überschrift Ebene 1: Kapitel", h)
         self.assertIn("Absatz: Ein Absatz.", h)
         self.assertIn("Bild: Ein Hund im Garten", h)

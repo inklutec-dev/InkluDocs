@@ -78,6 +78,7 @@
 
     function ico(name) { return (typeof icon === 'function') ? icon(name) : ''; }
     function esc(s) { return (typeof escHtml === 'function') ? escHtml(s == null ? '' : String(s)) : String(s == null ? '' : s); }
+    function sprachText(code) { return (typeof spracheAnzeige === 'function') ? spracheAnzeige(code) : String(code || ''); }
 
     // ─── Texte ───
     function standText(d) {
@@ -386,7 +387,8 @@
             : metaZeile(t('Titel'), esc(info.titel || t('kein Titel')))
               + metaZeile(t('Anwendung'), esc(info.anwendung || t('nicht angegeben')))
               + (info.seiten ? metaZeile(t('Seiten'), esc(info.seiten)) : '')
-              + metaZeile(t('Sprache'), esc(info.sprache || t('nicht gesetzt')))
+              // „Englisch (en-US)“ statt nur des Kürzels, in der Oberflächensprache (Steve 30.09.2026; app.html spracheAnzeige)
+              + metaZeile(t('Sprache'), esc(sprachText(info.sprache) || t('nicht gesetzt')))
               + metaZeile(t('Überschriften'), esc(info.ueberschriften || 0))
               + metaZeile(t('Tabellen'), esc(info.tabellen || 0))
               + metaZeile(t('Bilder'), esc(bilderText));
@@ -425,7 +427,7 @@
               + metaZeile(t('Stand'), standText(d), 'dok_stand_' + d.id)
               + metaZeile(t('PDF-Standard'), esc(((d.meta && d.meta.standard) || []).join(', ') || t('keiner')))
               + metaZeile(t('Seiten'), esc(seiten || '?'))
-              + metaZeile(t('Sprache'), esc((d.struktur && d.struktur.lang) || t('nicht gesetzt')))
+              + metaZeile(t('Sprache'), esc(sprachText(d.struktur && d.struktur.lang) || t('nicht gesetzt')))
               + ((d.felder || 0) > 0 ? metaZeile(t('Formularfelder'), t('{n} Felder', { n: d.felder })) : '');
         const hoerprobeKnopf = d.getaggt === true && !busy
             ? '<button type="button" class="btn btn-secondary" id="dok_hp_' + d.id + '" onclick="Dokument.hoerprobeOeffnen(' + project.id + ', ' + d.id + ')">' + t('Hörprobe') + '<span class="visually-hidden"> ' + vh + '</span></button>'
@@ -434,9 +436,13 @@
         if (imTagging) {
             const preis = tg.preis || 0;
             const knopfText = tg.status === 'fertig' ? t('Neu taggen') : t('Barrierefrei machen');
-            knoepfe = (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
+            // Schon getaggte Datei (Messlauf 30.09.2026): PDFix taggt sie nicht neu („Preserve Existing Tags“), buchte aber ab und
+            // setzte im Testmodus das Wasserzeichen — jetzt kein „Barrierefrei machen“ und kein Testlauf, der Satz über den
+            // Knöpfen sagt warum (tagging_api.quelle_getaggt). Hörprobe bleibt.
+            const schonGetaggt = tg.quelle_getaggt === true;
+            knoepfe = (!busy && tg.verfuegbar && seiten && !schonGetaggt ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
                 // TESTWEISE TAGGEN (Michael Karbe, Feedback 24.09.2026 - 2, Punkt 3): kostenlos, Testmodus, das Original bleibt
-                + (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
+                + (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !schonGetaggt && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
                 + hoerprobeKnopf
                 + (ZEIGE_STRUKTURANSICHT && d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '');
         } else {
@@ -444,7 +450,7 @@
             // Herunterladen mit derselben Rückfrage wie in „Alt-Texte“ (app.html openExportPanel, Modus 'pdf')
             knoepfe = hoerprobeKnopf
                 // auch OHNE Tags (Feedback 20260928 - 2, Punkt 5): dann unverändert bzw. nur mit Quickinfos, der Dialog sagt es vorher
-                + (!busy && seiten ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + (d.getaggt === true ? t('mit Alt-Texten und Quickinfos, kommt in die Ablage') : ((d.felder || 0) > 0 ? t('ohne Tags: ohne Alt-Texte, mit vorhandenen Quickinfos') : t('ohne Tags: unverändert und kostenlos'))) + '</span></button>' : '')
+                + (!busy && seiten ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + (d.getaggt === true ? t('mit Alt-Texten und Quickinfos, kommt in die Ablage') : ((d.quickinfos_bearbeitet || 0) > 0 ? t('ohne Tags: ohne Alt-Texte, mit bearbeiteten Quickinfos') : t('ohne Tags: unverändert und kostenlos'))) + '</span></button>' : '')
                 + '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
                 + '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>';
         }
@@ -457,7 +463,9 @@
             + '<div class="ausgabe-text"><ul class="dok-meta">' + meta + '</ul>'
             + (imTagging ? urteilHtml(project, d, tg, busy) : '')
             + '</div></div>'
-            + '<div class="dok-werkbank"><div class="ausgabe-aktionen">' + knoepfe + '</div>'
+            + '<div class="dok-werkbank">'
+            + (imTagging && tg.quelle_getaggt === true ? '<p class="feld-hinweis dok-schon-getaggt" id="dok_schon_getaggt_' + d.id + '">' + t('Diese PDF ist schon getaggt. „Barrierefrei machen“ ersetzt vorhandene Tags nicht, deshalb taggen wir sie nicht noch einmal und berechnen nichts.') + '</p>' : '')
+            + '<div class="ausgabe-aktionen">' + knoepfe + '</div>'
             // Unter den Knöpfen in „Dokument“ nichts weiter (Feedback 20260928 - 2, Punkt 2); Ergebnis, Laufstatus, Testlauf
             // und Bericht gehören zum Tagging.
             + (imTagging
@@ -687,9 +695,13 @@
         const status = document.getElementById('dkLaufStatus');
         const ok = document.getElementById('dkLaufOk');
         if (umfang) umfang.textContent = t('Dokument „{name}“: {n} Seiten.', { name: name, n: tg.seiten || d.seiten || 0 });
+        // Preis je Seite aus dem Server (billing.AKTIONS_PREISE, seit 30.09.2026 20 Credits je Seite — Michael Karbe, Feedback
+        // 202609230 - 1, Punkt 11); bezahlt wird nur dieser Lauf, nie das Herunterladen (Punkt 12)
+        const jeSeite = tg.preis_je_seite != null ? tg.preis_je_seite : ((window.CREDIT_PREISE || {}).pdf_tagging || 0);
         let satz = tg.verfuegbar_credits == null
-            ? t('Preis: {c} Credits (1 Credit je Seite).', { c: tg.preis || 0 })
-            : t('Preis: {c} Credits (1 Credit je Seite). Verfügbar: {v} Credits.', { c: tg.preis || 0, v: tg.verfuegbar_credits });
+            ? t('Preis: {c} Credits ({p} Credits je Seite).', { c: tg.preis || 0, p: jeSeite })
+            : t('Preis: {c} Credits ({p} Credits je Seite). Verfügbar: {v} Credits.', { c: tg.preis || 0, p: jeSeite, v: tg.verfuegbar_credits });
+        satz += ' ' + t('Das Tagging bezahlst du nur hier; beim Herunterladen wird es nicht noch einmal berechnet.');
         if (tg.status === 'fertig') satz += ' ' + t('Das Dokument wird aus der ursprünglichen Datei neu getaggt; Alt-Texte bleiben erhalten.');
         if (tg.modus === 'testmodus') satz += ' ' + t('Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller.');
         if (summary) summary.textContent = satz;

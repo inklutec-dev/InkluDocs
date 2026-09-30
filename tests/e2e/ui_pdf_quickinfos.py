@@ -45,6 +45,8 @@ with sync_playwright() as p:
     check("Quickinfo-Ansicht: kein Upload-Feld (Michael Karbe, Punkt 8: Hochladen nur in der Ansicht Dokument)", pg.locator("#projUploadZone").count() == 0 and pg.locator("#projUpload").count() == 0)
     check("Knopf „Quickinfos generieren“ im Feld „Funktionen und Einstellungen“", pg.locator("section.projekt-funktionen #fGenAllBtn").count() == 1)
     check("Quickinfo-Ansicht: Projektkopf mit PDF-Symbol + Ansichts-Wahl, ohne Statusanzeige", pg.locator(".projekt-kopf img.projekt-dateityp").count() == 1 and pg.locator(".projekt-kopf .ansicht-knoepfe").count() == 1 and pg.locator("#projectStatusBadge").count() == 0)
+    # Michael Karbe, Feedback 202609230 - 1, Punkt 1: unter den Ansichts-Knöpfen kein Infotext mehr
+    check("Quickinfo-Ansicht: kein Infotext unter den Ansichts-Knöpfen (Punkt 1)", pg.locator("#projectHeadInfo").count() == 1 and pg.locator("#projectHeadInfo").is_hidden() and "Felder in" not in pg.locator(".projekt-kopf").inner_text(), pg.locator(".projekt-kopf").inner_text())
     qa = pg.locator(".doc-block .doc-actions").first
     check("Quickinfo-Ansicht: am Dokument kein Umbenennen/Löschen (Feedback 28.09.2026 - 1, Punkt 1)", qa.locator("button:has-text('Umbenennen')").count() == 0 and qa.locator("button:has-text('Löschen')").count() == 0 and "Quickinfos generieren" in qa.inner_text(), qa.inner_text())
     axe(pg, "Quickinfo-Ansicht im PDF-Projekt")
@@ -68,7 +70,7 @@ with sync_playwright() as p:
             break
         pg.wait_for_timeout(500)
     hin = pg.locator("#exportPdfHinweis").inner_text() if pg.locator("#exportPdfHinweis").is_visible() else ""
-    check("Dokument, ungetaggt mit Quickinfos: Hinweis „bekommt die Quickinfos, aber keine Alt-Texte“ + Preis", "Quickinfos" in hin and "keine Alt-Texte" in hin and "Credits" in zs, (zs, hin))
+    check("Dokument, ungetaggt mit bearbeiteter Quickinfo: Hinweis „bekommt deine bearbeiteten Quickinfos, aber keine Alt-Texte“ + Preis 26 (1 bearbeitetes Feld)", "bearbeiteten Quickinfos" in hin and "keine Alt-Texte" in hin and "26 Credits" in zs and "Quickinfos: 1" in zs, (zs, hin))
     doc_id = int(pg.locator("button[id^=dok_export_]").first.get_attribute("id").split("_")[-1])
     r = pg.request.post(B + f"/api/projects/{pid}/export", data={"document_id": doc_id})
     check("Export ungetaggt mit Quickinfos: PDF mit Quickinfos, nicht unverändert, Credits berechnet", r.ok and r.body()[:5] == b"%PDF-" and r.headers.get("x-export-unveraendert") == "0" and int(r.headers.get("x-export-quickinfos") or 0) >= 1 and int(r.headers.get("x-export-credits") or 0) > 0, (r.status, {k: v for k, v in r.headers.items() if k.startswith("x-export")}))

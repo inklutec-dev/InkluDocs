@@ -888,6 +888,10 @@ def _migrate_columns(conn):
         ("documents", "pruefung_bericht", "ALTER TABLE documents ADD COLUMN pruefung_bericht TEXT DEFAULT ''"),
         # KORREKTUR (Stufe 2, 22.09.2026, pdf_korrektur.py): Bericht der letzten automatischen Korrektur (JSON).
         ("documents", "korrektur_bericht", "ALTER TABLE documents ADD COLUMN korrektur_bericht TEXT DEFAULT ''"),
+        # HERUNTERLADEN NUR, WAS GENUTZT WURDE (Michael Karbe, Feedback 202609230 - 1, Punkt 12, 30.09.2026): Fingerabdruck
+        # der bearbeiteten Alt-Texte und Quickinfos beim letzten BEZAHLTEN Herunterladen (main._pdf_export_plan). Derselbe
+        # Stand kostet beim erneuten Herunterladen nichts (keine Doppelabbuchung).
+        ("documents", "export_bezahlt", "ALTER TABLE documents ADD COLUMN export_bezahlt TEXT DEFAULT ''"),
         # ANSICHTEN (22.09.2026, Steve): zuletzt ueber die Ansichts-Wahl geoeffnete Ansicht je Projekt
         # ('' = Startansicht des Dateityps: PDF „dokument“, Word „alttexte“ bzw. „uebersetzung“).
         ("projects", "letzte_ansicht", "ALTER TABLE projects ADD COLUMN letzte_ansicht TEXT DEFAULT ''"),

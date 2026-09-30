@@ -466,7 +466,11 @@
         // Name + Dateityp-Symbol + Ansichts-Wahl in einem Feld, die Knoepfe und Einstellungen in einem eigenen
         // Feld darunter (app.html projektKopfHtml/funktionenKarteHtml). Eigenstaendige Formular-Projekte und
         // Gaeste behalten den bisherigen Kopf mit Status-Badge.
-        const infoHtml = '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>' + abbruchKnopf + laufMeldungHtml;
+        // Im PDF-Projekt steht unter den Ansichts-Knöpfen kein Infotext mehr (Michael Karbe, Feedback 202609230 - 1, Punkt 1) —
+        // wie bei den Alt-Texten bleibt das Element (zaehlerAktualisieren schreibt hinein), nur unsichtbar. Die Zahlen stehen
+        // an jedem Dokument und jeder Seite. Eigenständige Formular-Projekte und Gäste behalten die Zeile.
+        const infoVersteckt = imPdfProjekt && !gast() && typeof mitProjektKopf === 'function' && mitProjektKopf(project);
+        const infoHtml = '<div class="card-info" id="projectHeadInfo"' + (infoVersteckt ? ' hidden' : '') + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>' + abbruchKnopf + laufMeldungHtml;
         // Gast: nur Abschluss/Beenden + Filter „Nur offene Felder" — keine KI, keine
         // Stammdaten, kein Export, keine Sprach-/Prompt-Einstellungen.
         const gastAktionen = (gast() && felder.length ? ''

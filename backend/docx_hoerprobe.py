@@ -24,6 +24,7 @@ from typing import Callable
 
 from lxml import etree
 
+from i18n import sprache_anzeige   # „Englisch (en-US)“ in der Oberflaechensprache (30.09.2026)
 from docx_processor import (NS, DECORATIVE_EXT_URI, DocxFehler, _pruefe_zip, _lese_xml, _text, _pstyle,
                             _heading_level, _styles, _dokumenttitel, _eigener_blip)
 
@@ -33,7 +34,9 @@ _A = "http://schemas.openxmlformats.org/drawingml/2006/main"
 _V = "urn:schemas-microsoft-com:vml"
 _MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
 
-MAX_ABSATZ = 400          # Zeichen je vorgelesenem Absatz (Hoerprobe soll ein Eindruck sein, kein Volltext)
+# 30.09.2026: Absaetze nicht mehr kuerzen (0) — wie bei PDF liest die Hoerprobe, was ein Screenreader liest; vorher 400 Zeichen
+# mit „…“, still. Die Obergrenze der ZEILEN (MAX_ZEILEN) bleibt und sagt hoerbar „Hörprobe gekürzt“.
+MAX_ABSATZ = 0
 MAX_ZEILEN = 400          # Zeilen der Hoerprobe insgesamt
 
 
@@ -168,7 +171,8 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet, titel_ersa
 
         # Kopf
         hoer.append(_("Dokumenttitel: {t}").format(t=titel) if titel else _("Dokumenttitel: fehlt"))
-        hoer.append(_("Sprache: {s}").format(s=sprache) if sprache else _("Sprache: nicht gesetzt"))
+        # „Englisch (en-US)“ statt nur des Kuerzels, in der Oberflaechensprache (Steve 30.09.2026)
+        hoer.append(_("Sprache: {s}").format(s=sprache_anzeige(sprache, _)) if sprache else _("Sprache: nicht gesetzt"))
 
         # Kuerzen NUR der Hoerprobe (Pruefung 30.09.2026, Befund hoch): bis dahin brach die Schleife nach MAX_ZEILEN ab, und
         # damit hoerte auch das ZAEHLEN auf — Ueberschriften, Tabellen ohne Kopfzeile, Bilder ohne Alt-Text und Ebenen-
@@ -235,7 +239,7 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet, titel_ersa
                 ist_liste = el.find(f"{{{W}}}pPr/{{{W}}}numPr") is not None
                 if text:
                     n_absaetze += 1
-                    kurz = text if len(text) <= MAX_ABSATZ else text[:MAX_ABSATZ].rstrip() + " …"
+                    kurz = text if (not MAX_ABSATZ or len(text) <= MAX_ABSATZ) else (text[:MAX_ABSATZ].rstrip() + " " + _("… (gekürzt, insgesamt {n} Zeichen)").format(n=len(text)))
                     sag((_("Listenpunkt: {t}") if ist_liste else _("Absatz: {t}")).format(t=kurz))
                 _bilder(el)
             elif el.tag == f"{{{W}}}tbl":
@@ -268,9 +272,10 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet, titel_ersa
             erkannt, treffer, zweite = _text_sprache(" ".join(texte))
             deklariert = sprache.split("-")[0].lower()
             if erkannt and erkannt != deklariert and treffer >= 12 and treffer >= 2 * max(zweite, 1) and deklariert in _SPRACH_NAMEN:
-                hinweis(_("Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache).").format(s=sprache, name=_(_SPRACH_NAMEN[erkannt])))
+                hinweis(_("Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache).").format(s=sprache_anzeige(sprache, _), name=_(_SPRACH_NAMEN[erkannt])))
             else:
-                ok(_("Die Dokumentsprache ist gesetzt ({s}).").format(s=sprache))
+                # „gesetzt: Englisch (en-GB)“ statt doppelter Klammer „gesetzt (Englisch (en-GB))“ (30.09.2026)
+                ok(_("Die Dokumentsprache ist gesetzt: {s}.").format(s=sprache_anzeige(sprache, _)))
         if n_ueberschriften == 0 and n_absaetze > 5:
             hinweis(_("Das Dokument nutzt keine Überschriften-Formatvorlagen. Ohne Überschriften kann niemand im Dokument springen."))
         else:

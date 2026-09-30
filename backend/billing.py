@@ -77,8 +77,10 @@ AKTIONS_PREISE = {
     # Credits, verbucht je fertigem Paket. Der Export der uebersetzten Datei ist kostenlos.
     "uebersetzung": 1,
     # PDF-TAGGING (22.09.2026): Credits je SEITE, verbucht je erfolgreichem Lauf (tagging_api.py).
-    # VORLAEUFIGER Preis (Steve 22.09.: „preislich reden wir nochmal“; PDFix nennt ~1 Cent je Seite).
-    "pdf_tagging": 1,
+    # Seit 30.09.2026 20 Credits je Seite (Michael Karbe, Mail „Feedback 202609230 - 1“, Punkt 11: „Das Tagging kostet
+    # 20 Credits pro Seite“; vorher vorlaeufig 1 je Seite, Steve 22.09.). Bezahlt wird NUR beim Ausfuehren, nie beim
+    # Herunterladen (Punkt 12); eine schon getaggte Datei wird nicht getaggt und kostet nichts (tagging_api).
+    "pdf_tagging": 20,
     # AUTOMATISCHE PRUEFUNG getaggter PDFs je SEITE (Schritt 5, 22.09.2026) — VORLAEUFIG, Steve:
     # „wird sicherlich mit Credits berechnet, Preis sehen wir dann“. Nur diese Zahl aendern.
     "pdf_pruefung": 2,
@@ -201,6 +203,36 @@ EXPORT_ARTEN = {
 }
 EXPORT_SCHRITT = 10
 TABELLEN_EXPORTE = {"csv": "csv_export", "json": "json_export", "xlsx": "xlsx_export", "formular_csv": "formular_csv_export"}
+
+
+# Keine Doppelabbuchung (30.09.2026): Wer denselben Stand eines Dokuments (dieselben bearbeiteten Alt-Texte und Quickinfos)
+# ein zweites Mal herunterlaedt, zahlt dafuer nicht noch einmal — die Datei liegt ohnehin in der Ablage. Aendert sich etwas,
+# gilt wieder der volle Preis fuer alles Bearbeitete dieses Dokuments. False = jedes Herunterladen kostet (Stand bis 30.09.).
+GLEICHER_STAND_KOSTENLOS = True
+
+
+def pdf_download_preis(alt_bearbeitet: int, qi_bearbeitet: int) -> dict:
+    """HERUNTERLADEN EINER PDF IM PDF-PROJEKT (Michael Karbe, Mail „Feedback 202609230 - 1“, Punkt 12, 30.09.2026):
+    „Beim Herunterladen … nur etwas berechnen, wenn dies auch genutzt wurde … die Gebühr für Alt-Texte nur dann, wenn die
+    Alt-Texte bearbeitet wurden (auch manuell). Das gleiche gilt für die Quickinfos. Für das Tagging zahlt er nur, wenn
+    er das Tagging ausführt.“
+      - nichts bearbeitet                -> 0 Credits (auch bei getaggten Dateien: das Tagging ist beim Lauf bezahlt);
+      - sonst EIN Grundpreis je Herunterladen (pdf_export bzw. formular_export, beide 25) — nie zweimal, auch nicht, wenn
+        Alt-Texte UND Quickinfos bearbeitet wurden —, dazu die Staffel je angefangene EXPORT_SCHRITT BEARBEITETE Bilder
+        (pdf: 5) bzw. BEARBEITETE Felder (formular: 1).
+    Rueckgabe {"preis", "pdf", "formular"}: pdf = Anteil fuer die Alt-Texte (Aktion pdf_export, traegt den Grundpreis,
+    sobald Alt-Texte bearbeitet sind), formular = Anteil fuer die Quickinfos (Aktion formular_export)."""
+    a = max(0, int(alt_bearbeitet or 0))
+    q = max(0, int(qi_bearbeitet or 0))
+    staffel_alt = EXPORT_ARTEN["pdf"][1] * (-(-a // EXPORT_SCHRITT))
+    staffel_qi = EXPORT_ARTEN["formular"][1] * (-(-q // EXPORT_SCHRITT))
+    if a:
+        pdf, formular = AKTIONS_PREISE["pdf_export"] + staffel_alt, staffel_qi
+    elif q:
+        pdf, formular = 0, AKTIONS_PREISE["formular_export"] + staffel_qi
+    else:
+        pdf = formular = 0
+    return {"preis": pdf + formular, "pdf": pdf, "formular": formular}
 
 
 def export_aktion(art: str) -> str:

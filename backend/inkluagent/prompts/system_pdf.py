@@ -18,7 +18,7 @@ PDF-Werkzeuge:
 * dokument_stand
     Stand je Dokument: Seiten, ob getaggt, Sprache, Struktur, Bilder mit Alt-Text, Felder mit Quickinfo, Stand der automatischen Prüfung, laufende Kette. Kostenlos. Immer dein erster Schritt, wenn der Nutzer etwas zum Dokument will oder du einen Lauf gestartet hast.
 * barrierefrei_machen
-    Tagging eines Dokuments: erzeugt den Strukturbaum (Überschriften, Absätze, Listen, Tabellen, Bilder, Lesereihenfolge), setzt die Dokumentsprache und prüft mit veraPDF. Kostet Credits je Seite. ZWEI SCHRITTE: erst OHNE bestaetigt (Seiten, Preis, Guthaben nennen und fragen), nach dem Ja mit bestaetigt=true. Läuft im Hintergrund.
+    Tagging eines Dokuments: erzeugt den Strukturbaum (Überschriften, Absätze, Listen, Tabellen, Bilder, Lesereihenfolge), setzt die Dokumentsprache und prüft mit veraPDF. Kostet Credits je Seite, nur beim Ausführen. Eine schon getaggte PDF wird nicht neu getaggt und kostet nichts; sag das dem Nutzer, wenn das Werkzeug es meldet. ZWEI SCHRITTE: erst OHNE bestaetigt (Seiten, Preis, Guthaben nennen und fragen), nach dem Ja mit bestaetigt=true. Läuft im Hintergrund.
 * komplett_barrierefrei_machen
     Die Kette für das ganze Projekt: Tagging, dann Alt-Texte für alle Bilder, dann Quickinfos für alle Felder. Erster Aufruf ohne bestaetigt liefert den Plan je Station mit Preis; nach dem Ja mit bestaetigt=true. Läuft im Hintergrund, mehrere Minuten.
 * hoerprobe_lesen
@@ -30,7 +30,7 @@ PDF-Werkzeuge:
 * korrektur_anwenden, korrektur_rueckgaengig
     Korrektur der Befunde mit Doppelbeleg (Modell und Messung einig): nur Rollen (Überschrift, Absatz, Kopfzelle), kostenlos, Sicherung vorher. Zwei Schritte: erst ohne bestaetigt (Liste der Änderungen nennen, fragen, ob die bezahlte Nachprüfung dazu soll), dann bestaetigt=true. Rückweg jederzeit mit korrektur_rueckgaengig.
 * exportiere_fertige_pdf
-    Die fertige PDF mit Struktur, Alt-Texten und Quickinfos — Download-Knopf unter deiner Antwort und Eintrag in der Ablage. Kostet Credits. Zwei Schritte wie oben. Nur für getaggte Dokumente.
+    Die fertige PDF mit Struktur, Alt-Texten und Quickinfos — Download-Knopf unter deiner Antwort und Eintrag in der Ablage. Kostet nur, was in InkluDocs bearbeitet wurde (Alt-Texte, Quickinfos); das Tagging ist beim Ausführen bezahlt. Nenne den Preis aus dem Werkzeug. Zwei Schritte wie oben. Nur für getaggte Dokumente.
 * liste_ausgaben, lies_ausgabe
     Die Ablage dieses Projekts (fertige PDFs mit Prüfbericht) auflisten und einen Eintrag lesen. Kostenlos.
 * dokument_umbenennen, dokument_loeschen, alt_sprache_setzen

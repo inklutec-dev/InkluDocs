@@ -50,6 +50,37 @@ class Leerzeichen(unittest.TestCase):
         self.assertEqual(se._append_fragment("Förderung", "für", 3, False, False), "Förderung für")
         self.assertEqual(se._append_fragment("Auftrags-", "verarbeitung", 12, False, False), "Auftragsverarbeitung")
 
+    def test_echte_bindestriche_bleiben(self):
+        """Messlauf 30.09.2026: „KI-gestützte“ wurde „KIgestützte“, „Internet-Services“ „InternetServices“, „E-Mail“ „EMail“.
+        Echte Bindestriche bleiben; echte Silbentrennung am Zeilenende wird weiter zusammengezogen."""
+        af = se._append_fragment
+        # in derselben Zeile ist ein Strich nie eine Silbentrennung
+        self.assertEqual(af("Die KI-", "gestützte Prüfung", 3, False, False, False), "Die KI-gestützte Prüfung")
+        self.assertEqual(af("Auftrags-", "verarbeitung", 12, False, False, False), "Auftrags-verarbeitung")
+        # neue Zeile, Grossbuchstabe oder Ziffer danach: echter Bindestrich
+        self.assertEqual(af("die Internet-", "Services", 13, False, False, True), "die Internet-Services")
+        self.assertEqual(af("per E-", "Mail", 6, False, False, True), "per E-Mail")
+        self.assertEqual(af("EU-", "Standardvertragsklauseln", 3, False, False, True), "EU-Standardvertragsklauseln")
+        self.assertEqual(af("Seiten 3-", "5", 9, False, False, True), "Seiten 3-5")
+        # neue Zeile, Abkuerzung davor: echter Bindestrich, auch wenn klein weitergeht
+        self.assertEqual(af("die KI-", "gestützte", 7, False, False, True), "die KI-gestützte")
+        self.assertEqual(af("PDF-", "basiert", 4, False, False, None), "PDF-basiert")
+        # neue Zeile (oder unbekannt), klein-klein: Silbentrennung wird zusammengezogen
+        self.assertEqual(af("Auftrags-", "verarbeitung", 12, False, False, True), "Auftragsverarbeitung")
+        self.assertEqual(af("Silben-", "trennung", 7, False, False, None), "Silbentrennung")
+        # Koppelwoerter: „Ein- und Ausgabe“ bleibt
+        self.assertEqual(af("Ein-", "und Ausgabe", 4, False, False, True), "Ein- und Ausgabe")
+        # freistehender Strich bleibt Zeichen
+        self.assertEqual(af("Seite 3 -", "5", 9, False, False, False), "Seite 3 - 5")
+        # Seiten mit Leerzeichen-Objekten (Browser-Druck): Strich als eigenes Stück, gleiche Zeile
+        wort = af("KI", "-", 2, True, False, False)
+        self.assertEqual(af(wort, "g", 1, True, False, False), "KI-g")
+
+    def test_zeilenwechsel(self):
+        self.assertIsNone(se._zeilenwechsel(None, (10, 70, 20, 80)))
+        self.assertFalse(se._zeilenwechsel((10, 70, 20, 80), (21, 70, 32, 80)))
+        self.assertTrue(se._zeilenwechsel((10, 70, 20, 80), (10, 55, 32, 65)))
+
     def test_ohne_worterkennung_grobe_regel(self):
         se._woerter_cache[1] = None
         self.assertTrue(se._getrennt(1, (10, 100, 60, 110), (10, 85, 25, 95)))    # andere Zeile

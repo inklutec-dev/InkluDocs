@@ -5,6 +5,7 @@ import shutil
 import json
 import csv
 import asyncio
+import hashlib  # Fingerabdruck des bezahlten Export-Stands (_export_stand, 30.09.2026)
 import html  # Review-Befund 7 (31.07.2026): Nutzereingaben in Mail-HTML escapen
 import secrets
 import sqlite3
@@ -8028,35 +8029,115 @@ UNGETAGGT_HINWEIS = ("Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an
                      "Excel, CSV und JSON bereit.")
 
 
+def _norm_text(s) -> str:
+    return " ".join(str(s or "").split())
+
+
+def _alt_text_bearbeitet(img: dict) -> bool:
+    """Wurde der Alt-Text dieses Bildes in InkluDocs bearbeitet — per KI erzeugt oder von Hand geaendert (Michael Karbe,
+    Feedback 202609230 - 1, Punkt 12)? Massstab ist, was der Export schreibt (_exportable_alt_text), verglichen mit dem, was
+    schon in der Datei steht (original_alt): Nur wenn InkluDocs an diesem Bild etwas aendert, wurde es „genutzt“. Ein
+    unberuehrtes Bild, ein von PDFix beim Tagging gesetzter Alt-Text oder das Dekorativ-Kennzeichen des Autors kosten nichts;
+    ein technischer Fehlertext (None) wird nie geschrieben und kostet nichts."""
+    ausgabe = _exportable_alt_text(img)
+    if ausgabe is None:
+        return False
+    return _norm_text(ausgabe) != _norm_text(img.get("original_alt"))
+
+
+def _quickinfos_bearbeitet(conn, doc_id) -> list:
+    """Bearbeitete Quickinfos eines Dokuments: [(anker, text)] — per KI, aus Stammdaten oder von Hand gesetzt und anders
+    als die Quickinfo, die schon in der Datei stand (quickinfo_original). Geleerte Quickinfos zaehlen nicht: der Export
+    schreibt nur Felder mit Text (_quickinfos_in_export), eine geleerte Quickinfo aendert die Datei also nicht."""
+    if doc_id is None:
+        return []
+    out = []
+    for f in conn.execute("SELECT anker, quickinfo, quickinfo_original FROM formularfelder WHERE document_id = ?", (doc_id,)).fetchall():
+        text = _norm_text(f["quickinfo"])
+        if text and text != _norm_text(f["quickinfo_original"]):
+            out.append((str(f["anker"] or ""), text))
+    return out
+
+
+def _export_stand(alt_items: list, qi_items: list) -> str:
+    """Fingerabdruck des abrechenbaren Inhalts eines Dokuments (bearbeitete Alt-Texte je Bild, bearbeitete Quickinfos je
+    Feld-Anker). Gleich wie beim letzten bezahlten Herunterladen = schon bezahlt (billing.GLEICHER_STAND_KOSTENLOS)."""
+    h = hashlib.sha256()
+    for img_id, text in sorted(alt_items, key=lambda x: int(x[0] or 0)):
+        h.update(f"a\x1f{img_id}\x1f{text}\x1e".encode("utf-8", "replace"))
+    for anker, text in sorted(qi_items):
+        h.update(f"q\x1f{anker}\x1f{text}\x1e".encode("utf-8", "replace"))
+    return h.hexdigest()
+
+
 def _pdf_export_plan(user_id: int, units: list) -> dict:
-    """PDF-Export je Dokument (Michael Karbe, Feedback 20260928 - 2, Punkt 5: „Das Tagging ist für Alt-Texte nur eine
-    Empfehlung … Die PDF herunterladen … sollte aber vorhanden sein … Meldung, dass sich die PDF nicht verändert hat und
-    wir in dem Fall keine Credits berechnen“). Bis dahin: ungetaggt = 422 (15.09.2026, _ungetaggte_pruefen).
-      getaggt              -> Export wie bisher (Alt-Texte + Quickinfos), PDF-Staffel ueber die Bilder;
-      ungetaggt, Quickinfos -> Original + Quickinfos (brauchen keine Tags), Formular-Staffel ueber die Felder —
-                              dasselbe Ergebnis und derselbe Preis wie „Als PDF mit Quickinfos“ im Formular-Werkzeug;
-      ungetaggt, sonst     -> Original UNVERAENDERT, 0 Credits.
-    Dieselbe Planung fuer Export und Zusammenfassung im Dialog (Anzeige = Abrechnung)."""
+    """PDF-Export je Dokument und sein Preis — EINE Planung fuer Export, Zusammenfassung im Dialog und Chatbot
+    (Anzeige = Abrechnung).
+    Seit 29.09.2026 (Michael Karbe, Feedback 20260928 - 2, Punkt 5) gibt es den Download auch ohne Tags.
+    Seit 30.09.2026 (Michael Karbe, Feedback 202609230 - 1, Punkt 12) kostet das Herunterladen NUR, was in InkluDocs
+    bearbeitet wurde: Alt-Texte (per KI erzeugt oder von Hand geaendert, _alt_text_bearbeitet) und Quickinfos
+    (_quickinfos_bearbeitet). Das Tagging kostet nur beim Ausfuehren, nie beim Herunterladen. Vorher kostete jeder
+    Download einer getaggten PDF Grundpreis + Staffel ueber ALLE Bilder, auch ohne jede Bearbeitung.
+      getaggt               -> Export wie bisher (Alt-Texte + Quickinfos);
+      ungetaggt, bearbeitete Quickinfos -> Original + Quickinfos (brauchen keine Tags; Alt-Texte haben ohne Tags keinen Ort);
+      ungetaggt, sonst      -> Original UNVERAENDERT (byte-gleich), 0 Credits.
+    Preis (billing.pdf_download_preis): EIN Grundpreis je Herunterladen, sobald etwas bearbeitet ist, plus Staffel ueber die
+    bearbeiteten Bilder bzw. Felder aller Dokumente. Ein Dokument, dessen bearbeiteter Stand schon einmal bezahlt
+    heruntergeladen wurde (documents.export_bezahlt), zaehlt nicht noch einmal (keine Doppelabbuchung).
+    je_dokument[id] = {"alt", "qi", "stand", "schon_bezahlt"} — nach der Verbuchung schreibt _export_bezahlt_merken den Stand."""
     getaggt, mit_qi, unveraendert = [], [], []
+    alt_summe = qi_summe = schon_bezahlt = 0
+    je_dokument: dict = {}
     conn = get_db()
     try:
         for u in units:
-            if _dokument_getaggt(u["doc"]):
+            doc = u["doc"]
+            doc_id = doc.get("id")
+            ist_getaggt = _dokument_getaggt(doc)
+            qi_items = _quickinfos_bearbeitet(conn, doc_id)
+            # Alt-Texte landen nur in getaggten Dateien (ohne Tags kein verlaesslicher Ort, UNGETAGGT_HINWEIS)
+            alt_items = [(i.get("id"), _norm_text(_exportable_alt_text(i))) for i in u["images"] if _alt_text_bearbeitet(i)] if ist_getaggt else []
+            if ist_getaggt:
                 getaggt.append(u)
-                continue
-            felder = conn.execute("SELECT quickinfo FROM formularfelder WHERE document_id = ?", (u["doc"].get("id"),)).fetchall() \
-                if u["doc"].get("id") is not None else []
-            if any((f["quickinfo"] or "").strip() for f in felder):
-                mit_qi.append((u, len(felder)))
+            elif qi_items:
+                mit_qi.append(u)
             else:
                 unveraendert.append(u)
+            stand = _export_stand(alt_items, qi_items) if (alt_items or qi_items) else ""
+            bezahlt = bool(stand and billing.GLEICHER_STAND_KOSTENLOS and doc_id is not None
+                           and (doc.get("export_bezahlt") or "") == stand)
+            if bezahlt:
+                schon_bezahlt += 1
+            else:
+                alt_summe += len(alt_items)
+                qi_summe += len(qi_items)
+            if doc_id is not None:
+                je_dokument[doc_id] = {"alt": len(alt_items), "qi": len(qi_items), "stand": stand, "schon_bezahlt": bezahlt}
     finally:
         conn.close()
-    preis_pdf = billing.export_preis(sum(len(u["images"]) for u in getaggt), "pdf") if getaggt else 0
-    preis_qi = billing.export_preis(sum(n for _u, n in mit_qi), "formular") if mit_qi else 0
-    return {"getaggt": getaggt, "mit_qi": [u for u, _n in mit_qi], "unveraendert": unveraendert,
-            "preis_pdf": preis_pdf, "preis_qi": preis_qi,
-            "pruefung": billing.preis_pruefung(user_id, preis_pdf + preis_qi)}
+    preis = billing.pdf_download_preis(alt_summe, qi_summe)
+    return {"getaggt": getaggt, "mit_qi": mit_qi, "unveraendert": unveraendert,
+            "preis_pdf": preis["pdf"], "preis_qi": preis["formular"], "preis": preis["preis"],
+            "alt_bearbeitet": alt_summe, "qi_bearbeitet": qi_summe, "schon_bezahlt": schon_bezahlt,
+            "je_dokument": je_dokument,
+            "pruefung": billing.preis_pruefung(user_id, preis["preis"])}
+
+
+def _export_bezahlt_merken(plan: dict, doc_ids) -> None:
+    """Nach einer BEZAHLTEN Verbuchung: den abgerechneten Stand je Dokument merken (keine Doppelabbuchung beim naechsten
+    Herunterladen desselben Stands). Fehler brechen den Download nie ab."""
+    try:
+        conn = get_db()
+        try:
+            for doc_id in doc_ids:
+                d = (plan.get("je_dokument") or {}).get(doc_id) or {}
+                if d.get("stand") and not d.get("schon_bezahlt"):
+                    conn.execute("UPDATE documents SET export_bezahlt = ? WHERE id = ?", (d["stand"], doc_id))
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as e:  # noqa: BLE001
+        log.warning("Export: bezahlter Stand nicht gemerkt: %s", e)
 
 
 def _pdf_ohne_tags(unit: dict, output_dir: str, creator: Optional[str], mit_quickinfos: bool) -> tuple[str, dict]:
@@ -8322,33 +8403,50 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     os.makedirs(output_dir, exist_ok=True)
     _creator = _pdf_creator_fuer(user["id"])   # Ersteller aus dem Konto (14.09.2026)
 
-    # Export-Staffel (Michael 28.08.2026) je Dokument-Art (_pdf_export_plan, 29.09.2026): getaggt = PDF-Staffel,
-    # ungetaggt mit Quickinfos = Formular-Staffel, unveraendert = 0; reicht das Guthaben nicht: 402 mit den Zahlen.
+    # Preis (Michael Karbe, Feedback 202609230 - 1, Punkt 12, 30.09.2026): nur, was in InkluDocs bearbeitet wurde — Alt-Texte
+    # (KI oder von Hand) und Quickinfos; das Tagging nie beim Herunterladen; derselbe schon bezahlte Stand nicht noch einmal
+    # (_pdf_export_plan). Reicht das Guthaben nicht: 402 mit den Zahlen.
     plan = _pdf_export_plan(user["id"], units)
     if not plan["pruefung"]["erlaubt"]:
         raise HTTPException(status_code=402, detail=billing.credits_fehlen_detail(plan["pruefung"], "Der Export"))
-    _preis = plan["preis_pdf"]
     getaggt_ids = {id(u) for u in plan["getaggt"]}
     mit_qi_ids = {id(u) for u in plan["mit_qi"]}
 
+    def _verbuchen(qi_geschrieben: int, doc_ids) -> int:
+        """Abrechnung NACH dem Bau der Antwort: Alt-Text-Anteil (pdf_export) und Quickinfo-Anteil (formular_export); der
+        Quickinfo-Anteil nur, wenn wirklich Quickinfos in der Datei stehen. Gemerkt wird der bezahlte Stand nur, wenn
+        alles geschrieben wurde, was geplant war. Rueckgabe: berechnete Credits."""
+        preis_pdf = int(plan["preis_pdf"] or 0)
+        preis_qi = int(plan["preis_qi"] or 0) if qi_geschrieben else 0
+        if preis_pdf:
+            billing.verbuche(user["id"], "export", aktion="pdf_export", credits=preis_pdf)
+        if preis_qi:
+            billing.verbuche(user["id"], "export", aktion="formular_export", credits=preis_qi)
+        if preis_pdf + preis_qi and preis_pdf + preis_qi == int(plan["preis"] or 0):
+            _export_bezahlt_merken(plan, doc_ids)
+        return preis_pdf + preis_qi
+
+    def _export_preis_vorab(qi_geschrieben: int) -> int:
+        return int(plan["preis_pdf"] or 0) + (int(plan["preis_qi"] or 0) if qi_geschrieben else 0)
+
     if (document_id is not None or len(units) == 1) and id(units[0]) not in getaggt_ids:
         # Ungetaggte Einzeldatei (29.09.2026): Original bzw. Original + Quickinfos, keine Ablage (kein InkluDocs-Ergebnis
-        # mit Struktur). Credits nur, wenn wirklich Quickinfos geschrieben wurden.
+        # mit Struktur). Credits nur, wenn wirklich bearbeitete Quickinfos geschrieben wurden.
         unit = units[0]
         output_path, info = await asyncio.get_running_loop().run_in_executor(
             None, _pdf_ohne_tags, unit, output_dir, _creator, id(unit) in mit_qi_ids)
-        preis_qi = 0 if info["unveraendert"] else plan["preis_qi"]
-        headers = {"X-Export-Credits": str(preis_qi), "X-Export-Method": str(info["method"]),
+        qi_n = 0 if info["unveraendert"] else int(info["quickinfos"].get("geschrieben") or 0)
+        headers = {"X-Export-Credits": str(_export_preis_vorab(qi_n)), "X-Export-Method": str(info["method"]),
                    "X-Export-Tagged": "0", "X-Export-Total": "0",
                    "X-Export-Quickinfos": str(int(info["quickinfos"].get("geschrieben") or 0)),
-                   "X-Export-Unveraendert": "1" if info["unveraendert"] else "0"}
+                   "X-Export-Unveraendert": "1" if info["unveraendert"] else "0",
+                   "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0))}
         if info.get("warnings"):
             headers["X-Export-Warnings"] = _warnings_header(info["warnings"])
         download_base = custom_name or _doc_label(unit["doc"])
         response = FileResponse(output_path, filename=f"inkludocs_{download_base}.pdf", media_type="application/pdf",
                                 headers=headers)
-        if preis_qi:
-            billing.verbuche(user["id"], "export", aktion="formular_export", credits=preis_qi)
+        _verbuchen(qi_n, [unit["doc"].get("id")])
         return response
 
     if document_id is not None or len(units) == 1:
@@ -8356,7 +8454,9 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         unit = units[0]
         output_path, info = _build_pdf_for_document(unit, output_dir,
                                                     custom_title=custom_name, creator=_creator)
-        headers = {"X-Export-Credits": str(_preis)}
+        qi_n = int((info.get("quickinfos") or {}).get("geschrieben") or 0)
+        _preis = _export_preis_vorab(qi_n)
+        headers = {"X-Export-Credits": str(_preis), "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0))}
         if info.get("method"):
             headers["X-Export-Method"] = str(info["method"])
         if "tagged" in info:
@@ -8374,7 +8474,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             media_type="application/pdf",
             headers=headers,
         )
-        billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
+        _preis = _verbuchen(qi_n, [unit["doc"].get("id")])
         # Ablage (22.09.2026): die fertige PDF bleibt mit Bericht und Vorschau erhalten.
         ausgabe_id = await asyncio.get_running_loop().run_in_executor(
             None, _pdf_in_ablage, user["id"], project, unit, output_path, f"inkludocs_{download_base}.pdf", _preis, "knopf")
@@ -8400,41 +8500,39 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         for pos, unit in enumerate(units, start=1):
             inner = f"{pos:02d}_{_doc_label(unit['doc'])}.pdf"
             if id(unit) not in getaggt_ids:
-                # ungetaggt (29.09.2026): Original bzw. mit Quickinfos, keine Ablage
+                # ungetaggt (29.09.2026): Original bzw. mit bearbeiteten Quickinfos, keine Ablage
                 out_path, info = await asyncio.get_running_loop().run_in_executor(
                     None, _pdf_ohne_tags, unit, output_dir, _creator, id(unit) in mit_qi_ids)
                 zf.write(out_path, arcname=inner)
                 unveraendert_n += 1 if info["unveraendert"] else 0
-                quickinfos_geschrieben += int(info["quickinfos"].get("geschrieben") or 0)
             else:
                 out_path, info = _build_pdf_for_document(unit, output_dir, creator=_creator)
                 zf.write(out_path, arcname=inner)
                 ablage_nachher.append((unit, out_path, inner))
+            quickinfos_geschrieben += int((info.get("quickinfos") or {}).get("geschrieben") or 0)
             total_tagged += int(info.get("tagged", 0) or 0)
             total_images += int(info.get("total", 0) or 0)
             for w in info.get("warnings", []) or []:
                 aggregated_warnings.append(f"[{inner}] {w}")
-    preis_qi = plan["preis_qi"] if quickinfos_geschrieben else 0
     headers = {
         "X-Export-Tagged": str(total_tagged),
         "X-Export-Total": str(total_images),
         "X-Export-Unveraendert": str(unveraendert_n),
         "X-Export-Quickinfos": str(quickinfos_geschrieben),
+        "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0)),
     }
     if aggregated_warnings:
         headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
-    headers["X-Export-Credits"] = str(_preis + preis_qi)
-    # Ein Export-Vorgang = Grundpreis + Staffel ueber ALLE Bilder des ZIPs; nur nach erfolgreichem Bau der Antwort.
+    headers["X-Export-Credits"] = str(_export_preis_vorab(quickinfos_geschrieben))
+    # Ein Export-Vorgang = EIN Grundpreis + Staffel ueber die bearbeiteten Bilder/Felder aller Dokumente; nur nach
+    # erfolgreichem Bau der Antwort.
     response = FileResponse(
         zip_path,
         filename=f"{zip_base}_alle_pdfs.zip",
         media_type="application/zip",
         headers=headers,
     )
-    if _preis:
-        billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
-    if preis_qi:
-        billing.verbuche(user["id"], "export", aktion="formular_export", credits=preis_qi)
+    _preis = _verbuchen(quickinfos_geschrieben, [u["doc"].get("id") for u in units])
     # Ablage (22.09.2026): je getaggtem Dokument ein Eintrag, der Preis steht am ersten, die anderen tragen 0.
     for i, (unit, out_path, inner) in enumerate(ablage_nachher):
         await asyncio.get_running_loop().run_in_executor(
@@ -9946,6 +10044,11 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         "dokumente_unveraendert": len(plan["unveraendert"]) if plan else None,
         # Bilderzahlen nur der getaggten Dokumente (PDF-Dialog; Review 29.09.2026: ungetaggte bekommen keine Alt-Texte)
         "pdf_bilder": pdf_zahlen,
+        # Was der Preis abrechnet (Feedback 202609230 - 1, Punkt 12): bearbeitete Alt-Texte und Quickinfos; Dokumente,
+        # deren Stand schon bezahlt heruntergeladen wurde, zaehlen nicht mit
+        "alt_bearbeitet": plan["alt_bearbeitet"] if plan else None,
+        "qi_bearbeitet": plan["qi_bearbeitet"] if plan else None,
+        "schon_bezahlt": plan["schon_bezahlt"] if plan else None,
     })
 
 
@@ -10288,6 +10391,7 @@ async def api_docs(request: Request):
         "preis_qi": billing.AKTIONS_PREISE["quickinfo_generierung"],
         "preis_export": billing.AKTIONS_PREISE["pdf_export"],
         "preis_export_bild": billing.EXPORT_ARTEN["pdf"][1],
+        "preis_export_feld": billing.EXPORT_ARTEN["formular"][1],
         "export_schritt": billing.EXPORT_SCHRITT,
         "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],
         "limit_minute": API_RATE_LIMIT_MINUTE,
@@ -11108,7 +11212,10 @@ async def preise_page(request: Request):
         "preis_export_formular": billing.AKTIONS_PREISE["formular_export"],
         "preis_pdfua": billing.AKTIONS_PREISE["pdfua_export"],
         "preis_pdfua_bild": billing.EXPORT_ARTEN["pdfua"][1],
-        "beispiel_pdf_26": billing.export_preis(26, "pdf"),
+        # Beispiel: PDF mit 26 BEARBEITETEN Alt-Texten (Herunterladen nur, was genutzt wurde, 30.09.2026)
+        "beispiel_pdf_26": billing.pdf_download_preis(26, 0)["preis"],
+        # Tagging je Seite (Michael Karbe, Feedback 202609230 - 1, Punkt 11)
+        "preis_tagging": billing.AKTIONS_PREISE["pdf_tagging"],
     })
     return templates.TemplateResponse("preise.html", ctx)
 

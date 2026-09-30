@@ -200,9 +200,11 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
         # je verletztem Pruefpunkt eine Zeile (pdfua_export._einzeln, Michael Karbe 24.09.2026, Punkt 12)
         for e in (p.get("einzeln") or [{"text": p.get("text") or "", "seiten": p.get("seiten") or []}]):
             seiten = [int(x) for x in (e.get("seiten") or []) if str(x).isdigit()]
-            # Regelnummer von veraPDF dazu (Michael 28.09.2026: vergleichbar mit einer lokalen Pruefung)
+            # Regelnummer von veraPDF dazu (Michael 28.09.2026: vergleichbar mit einer lokalen Pruefung). Seit 30.09.2026 ohne
+            # das Wort „veraPDF“ in der Zeile (Michael Karbe, Feedback 202609230 - 1, Punkt 8: „oben weisen wir bereits auf
+            # veraPDF hin“); die Regelnummer bleibt, die Ansicht nennt oben, dass sie von veraPDF stammt.
             regeln = e.get("regeln") or []
-            ref = ((" " + (_("(veraPDF-Regel {r})") if len(regeln) == 1 else _("(veraPDF-Regeln {r})")).format(r=", ".join(regeln)))
+            ref = ((" " + (_("(Regel {r})") if len(regeln) == 1 else _("(Regeln {r})")).format(r=", ".join(regeln)))
                    if regeln else "")
             out.append({"seite": (seiten[0] if seiten else 0), "seiten": seiten, "art": "technisch", "regeln": regeln,
                         "quelle": _("veraPDF (PDF/UA-1)"), "text": (f"{p.get('bereich', '')}: {e.get('text', '')}".strip(": ") + ref)})

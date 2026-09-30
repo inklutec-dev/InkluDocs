@@ -285,6 +285,9 @@ def barrierefrei_machen(project_id: int, user_id: int, document_id: Optional[int
         return {"ok": False, "error": "Das Tagging dieses Dokuments läuft bereits"}
     if not st.get("seiten"):
         return {"ok": False, "error": "Die PDF konnte nicht gelesen werden"}
+    if st.get("quelle_getaggt"):
+        # schon getaggt (30.09.2026): PDFix taggt nicht neu — kein Lauf, keine Credits
+        return {"ok": False, "error": t.schon_getaggt_text()}
     vorschau = {"dokument": _name(doc), "seiten": st["seiten"], "preis": st.get("preis"), "verfuegbar": st.get("verfuegbar_credits"),
                 "erlaubt": bool(st.get("erlaubt")), "fehlend": st.get("fehlend"), "schon_getaggt": doc.get("getaggt") in (True, 1)}
     grund = _freigabe(user_id, project_id, "tagging", doc["id"], int(st.get("preis") or 0), bool(st.get("erlaubt")), bestaetigt, turn)
@@ -412,14 +415,19 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
         return _fehler(e)
     # Ohne Tags (seit 29.09.2026, Michael Karbe, Feedback 20260928 - 2, Punkt 5): kein Fehler mehr, aber auch kein
     # Export über den Chat — die Datei bliebe unverändert bzw. bekäme nur Quickinfos; das holt man in „Dokument“.
-    if not m._pdf_export_plan(user_id, units)["getaggt"]:
+    plan = m._pdf_export_plan(user_id, units)
+    if not plan["getaggt"]:
         return {"ok": False, "error": ("Diese PDF hat keine Tags, deshalb lassen sich keine Alt-Texte hineinschreiben. "
                                        "In der Ansicht „Dokument“ gibt es sie mit „PDF herunterladen“: unverändert und kostenlos, "
-                                       "oder mit vorhandenen Quickinfos. Für eine PDF mit Alt-Texten sie zuerst in der Ansicht "
+                                       "oder mit bearbeiteten Quickinfos. Für eine PDF mit Alt-Texten sie zuerst in der Ansicht "
                                        "„Tagging“ barrierefrei machen.")}
     anzahl = sum(len(u["images"]) for u in units)
-    p = m.billing.export_pruefung(user_id, anzahl, "pdf")
-    vorschau = {"dokument": _name(doc), "bilder": anzahl, "preis": p.get("preis"), "verfuegbar": p.get("verfuegbar"),
+    # Derselbe Preis wie „PDF herunterladen“ (Michael Karbe, Feedback 202609230 - 1, Punkt 12): nur bearbeitete Alt-Texte
+    # und Quickinfos kosten, das Tagging nie beim Herunterladen, ein schon bezahlter Stand nicht noch einmal.
+    p = plan["pruefung"]
+    vorschau = {"dokument": _name(doc), "bilder": anzahl, "alt_texte_bearbeitet": plan["alt_bearbeitet"],
+                "quickinfos_bearbeitet": plan["qi_bearbeitet"], "schon_bezahlt": bool(plan["schon_bezahlt"]),
+                "preis": p.get("preis"), "verfuegbar": p.get("verfuegbar"),
                 "erlaubt": bool(p.get("erlaubt")), "fehlend": p.get("fehlend")}
     grund = _freigabe(user_id, project_id, "pdf_export", doc["id"], int(p.get("preis") or 0), bool(p.get("erlaubt")), bestaetigt, turn)
     if grund == "rueckfrage":
@@ -434,8 +442,19 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
         unit = units[0]
         output_path, info = m._build_pdf_for_document(unit, output_dir, creator=m._pdf_creator_fuer(user_id))
         dateiname = f"inkludocs_{m._doc_label(unit['doc'])}.pdf"
-        m.billing.verbuche(user_id, "export", aktion="pdf_export", credits=int(p.get("preis") or 0))
-        ausgabe_id = m._pdf_in_ablage(user_id, project, unit, output_path, dateiname, int(p.get("preis") or 0), "bot")
+        # Abrechnung wie beim Knopf: Alt-Text-Anteil (pdf_export) + Quickinfo-Anteil (formular_export, nur wenn Quickinfos
+        # in der Datei stehen); gemerkt wird der bezahlte Stand nur, wenn alles Geplante berechnet wurde.
+        qi_n = int((info.get("quickinfos") or {}).get("geschrieben") or 0)
+        preis_pdf = int(plan["preis_pdf"] or 0)
+        preis_qi = int(plan["preis_qi"] or 0) if qi_n else 0
+        if preis_pdf:
+            m.billing.verbuche(user_id, "export", aktion="pdf_export", credits=preis_pdf)
+        if preis_qi:
+            m.billing.verbuche(user_id, "export", aktion="formular_export", credits=preis_qi)
+        if preis_pdf + preis_qi and preis_pdf + preis_qi == int(plan["preis"] or 0):
+            m._export_bezahlt_merken(plan, [unit["doc"].get("id")])
+        p = dict(p, preis=preis_pdf + preis_qi)
+        ausgabe_id = m._pdf_in_ablage(user_id, project, unit, output_path, dateiname, preis_pdf + preis_qi, "bot")
     except HTTPException as e:
         return _fehler(e)
     except Exception as e:  # noqa: BLE001

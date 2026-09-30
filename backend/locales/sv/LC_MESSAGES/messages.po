@@ -9354,3 +9354,109 @@ msgstr "Kontrollen med veraPDF var inte möjlig vid den här konverteringen. Det
 #, python-brace-format
 msgid "Hörprobe von „{name}“"
 msgstr "Lyssningsprov av ”{name}”"
+
+msgid "Diese PDF ist schon getaggt. „Barrierefrei machen“ ersetzt vorhandene Tags nicht, deshalb taggen wir sie nicht noch einmal und berechnen nichts."
+msgstr "Den här PDF:en är redan taggad. ”Gör tillgänglig” ersätter inte befintliga taggar, därför taggar vi den inte igen och tar inte betalt."
+
+#, python-brace-format
+msgid "… (gekürzt, insgesamt {n} Zeichen)"
+msgstr "… (förkortat, {n} tecken totalt)"
+
+#, python-brace-format
+msgid "Beschriftung: {t}"
+msgstr "Etikett: {t}"
+
+msgid "Beschriftung"
+msgstr "Etikett"
+
+#, python-brace-format
+msgid "(Regel {r})"
+msgstr "(regel {r})"
+
+#, python-brace-format
+msgid "(Regeln {r})"
+msgstr "(regler {r})"
+
+#, python-brace-format
+msgid "PDF barrierefrei machen (Tagging): {tag} Credits je Seite — nur, wenn du das Tagging ausführst. Eine schon getaggte PDF wird nicht neu getaggt und kostet nichts."
+msgstr "Gör en PDF tillgänglig (taggning): {tag} credits per sida — bara när du kör taggningen. En PDF som redan är taggad taggas inte igen och kostar ingenting."
+
+#, python-brace-format
+msgid "Herunterladen einer PDF mit deinen Alt-Texten und Quickinfos: {exp} Credits plus {bild} Credits je angefangene {schritt} bearbeitete Bilder und {feld} Credit je angefangene {schritt} bearbeitete Formularfelder. Berechnet wird nur, was du in InkluDocs bearbeitet hast, per KI oder von Hand; ohne Bearbeitung kostet das Herunterladen nichts, und denselben Stand bezahlst du nur einmal. Beispiel: eine PDF mit 26 bearbeiteten Alt-Texten kostet {beispiel} Credits."
+msgstr "Nedladdning av en PDF med dina alt-texter och verktygstips: {exp} credits plus {bild} credits per påbörjade {schritt} redigerade bilder och {feld} credit per påbörjade {schritt} redigerade formulärfält. Du betalar bara för det du har redigerat i InkluDocs, med AI eller för hand; utan redigering kostar nedladdningen ingenting, och samma tillstånd betalar du bara en gång. Exempel: en PDF med 26 redigerade alt-texter kostar {beispiel} credits."
+
+#, python-brace-format
+msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder."
+msgstr "Överföring av alt-texterna till dokumentet och nedladdning som Word: {exp} credits plus {bild} credits per påbörjade {schritt} bilder."
+
+#, python-brace-format
+msgid "Word in barrierefreie PDF umwandeln: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder."
+msgstr "Omvandla Word till tillgänglig PDF: {exp} credits plus {bild} credits per påbörjade {schritt} bilder."
+
+#, python-brace-format
+msgid "Eigenständige Formular-Projekte: Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Fristående formulärprojekt: överföring av verktygstipsen till formuläret och nedladdning som PDF: {exp} credits plus {feld} credit per påbörjade {schritt} fält."
+
+#, python-brace-format
+msgid "Export pdf (PDF-Dokumente): {grund} Credits plus {staffel} je angefangene {schritt} bearbeitete Bilder und {feld} je angefangene {schritt} bearbeitete Formularfelder — nur, wenn Alt-Texte oder Quickinfos in InkluDocs bearbeitet wurden (per KI oder von Hand). Ohne Bearbeitung oder für einen schon bezahlten Stand ist der Export kostenlos."
+msgstr "Export pdf (PDF-dokument): {grund} credits plus {staffel} per påbörjade {schritt} redigerade bilder och {feld} per påbörjade {schritt} redigerade formulärfält — bara om alt-texter eller verktygstips har redigerats i InkluDocs (med AI eller för hand). Utan redigering, eller för ett tillstånd som redan är betalt, är exporten gratis."
+
+#, python-brace-format
+msgid "Export docx, pdfua und formular: {grund} Credits plus {staffel} je angefangene {schritt} Bilder, bei formular {feld} je angefangene {schritt} Felder."
+msgstr "Export docx, pdfua och formular: {grund} credits plus {staffel} per påbörjade {schritt} bilder, för formular {feld} per påbörjade {schritt} fält."
+
+msgid "Diese PDF hat keine Tags. Sie bekommt deine bearbeiteten Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“."
+msgstr "Den här PDF:en har inga taggar. Den får dina redigerade verktygstips men inga alternativtexter; dem hittar du som lista i vyn ”Alt-texter”."
+
+#, python-brace-format
+msgid "{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur bearbeitete Quickinfos; Dokumente ohne bearbeitete Quickinfos bleiben unverändert und kosten nichts."
+msgstr "{n} dokument har inga taggar. De får inga alternativtexter, bara redigerade verktygstips; dokument utan redigerade verktygstips förblir oförändrade och kostar ingenting."
+
+#, python-brace-format
+msgid "Berechnet wird nur, was du in InkluDocs bearbeitet hast (Alt-Texte: {a}, Quickinfos: {q}). Das Tagging ist schon beim Ausführen bezahlt."
+msgstr "Du betalar bara för det du har redigerat i InkluDocs (alt-texter: {a}, verktygstips: {q}). Taggningen betalades redan när den kördes."
+
+msgid "Das Herunterladen kostet nichts, weil du diesen Stand schon heruntergeladen und bezahlt hast."
+msgstr "Nedladdningen kostar ingenting eftersom du redan har laddat ner och betalat för det här tillståndet."
+
+msgid "Das Herunterladen kostet nichts, weil du keine Alt-Texte und keine Quickinfos bearbeitet hast. Das Tagging ist schon beim Ausführen bezahlt."
+msgstr "Nedladdningen kostar ingenting eftersom du inte har redigerat några alt-texter eller verktygstips. Taggningen betalades redan när den kördes."
+
+msgid "Es wurden keine Credits berechnet."
+msgstr "Inga krediter drogs."
+
+msgid "Prüfbericht und Hörprobe findest du in der Ansicht „Barrierefreiheitsprüfung“."
+msgstr "Kontrollrapporten och lyssningsprovet hittar du i vyn ”Tillgänglighetskontroll”."
+
+msgid "Zur Barrierefreiheitsprüfung"
+msgstr "Gå till tillgänglighetskontrollen"
+
+msgid "Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF."
+msgstr "Kontrollen använder veraPDF mot PDF/UA-1. Varje problemställe anger veraPDF-regelnumret."
+
+msgid "Hier prüfst du die fertige Datei mit veraPDF. Anzeige der Problemstellen im Prüfbericht."
+msgstr "Här kontrollerar du den färdiga filen med veraPDF. Problemställena visas i kontrollrapporten."
+
+msgid "Keine Problemstellen im Word-Dokument."
+msgstr "Inga problemställen i Word-dokumentet."
+
+msgid "Hier prüfst du jedes Word-Dokument mit festen Regeln, ohne KI und kostenlos, so wie du es in der Ansicht „Dokument“ herunterlädst. Hast du schon eine barrierefreie PDF erstellt, steht hier auch ihr Ergebnis von veraPDF."
+msgstr "Här kontrollerar du varje Word-dokument med fasta regler, utan AI och kostnadsfritt, så som du laddar ner det i vyn ”Dokument”. Har du redan skapat en tillgänglig PDF visas även dess resultat från veraPDF här."
+
+msgid "ohne Tags: ohne Alt-Texte, mit bearbeiteten Quickinfos"
+msgstr "utan taggar: utan alternativtexter, med redigerade verktygstips"
+
+#, python-brace-format
+msgid "Preis: {c} Credits ({p} Credits je Seite)."
+msgstr "Pris: {c} krediter ({p} krediter per sida)."
+
+#, python-brace-format
+msgid "Preis: {c} Credits ({p} Credits je Seite). Verfügbar: {v} Credits."
+msgstr "Pris: {c} krediter ({p} krediter per sida). Tillgängligt: {v} krediter."
+
+msgid "Das Tagging bezahlst du nur hier; beim Herunterladen wird es nicht noch einmal berechnet."
+msgstr "Taggningen betalar du bara här; den debiteras inte igen vid nedladdning."
+
+#, python-brace-format
+msgid "Die Dokumentsprache ist gesetzt: {s}."
+msgstr "Dokumentspråket är satt: {s}."

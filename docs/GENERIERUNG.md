@@ -108,6 +108,16 @@ Alle Preise stehen an EINER Stelle: `billing.AKTIONS_PREISE` (je Vorgang) und
   Dokumente zusammengezählt, der Grundpreis fällt einmal an. Beispiele: PDF mit
   1 Bild = 30, 26 Bilder = 40, 100 Bilder = 75; Formular mit 1 Feld = 26,
   26 Felder = 28, 50 Felder = 30.
+- **PDF-Projekte seit 30.09.2026** (Michael Karbe, Mail „Feedback 202609230 - 1“, Punkte 11 und 12): das Tagging
+  („Barrierefrei machen“) kostet 20 Credits je Seite und NUR beim Ausführen; eine schon getaggte PDF wird nicht neu
+  getaggt und kostet nichts. Das Herunterladen der PDF kostet nur, was in InkluDocs bearbeitet wurde:
+  `billing.pdf_download_preis(alt_bearbeitet, qi_bearbeitet)` = EIN Grundpreis 25 (auch wenn Alt-Texte UND Quickinfos
+  bearbeitet sind) + 5 je angefangene 10 bearbeitete Bilder + 1 je angefangene 10 bearbeitete Felder; nichts bearbeitet
+  = 0, auch bei getaggten Dateien. „Bearbeitet“ = der Export schreibt etwas anderes, als schon in der Datei steht
+  (`main._alt_text_bearbeitet`: KI-Text, Handtext, geleert, dekorativ per KI; `main._quickinfos_bearbeitet`: Text da und
+  anders als `quickinfo_original`). Derselbe schon bezahlte Stand eines Dokuments kostet kein zweites Mal
+  (`documents.export_bezahlt`, Schalter `billing.GLEICHER_STAND_KOSTENLOS`). Eine Planung für Dialog, Export und
+  Chatbot: `main._pdf_export_plan`. Word und eigenständige Formular-Projekte rechnen weiter nach der Staffel oben.
 - Tabellen-Export (JSON, CSV, Excel, Formular-CSV): 10 Credits je Vorgang,
   fester Preis (`billing.TABELLEN_EXPORTE`). Die Stammdaten-CSV (eigene
   Bibliothek, kein Dokument) bleibt kostenlos. Der Excel-Export war vom

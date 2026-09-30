@@ -99,11 +99,12 @@
         const erstellenText = !p ? t('Prüfdatei erstellen') : t('Prüfdatei neu erstellen');
         const erstellenPrimaer = !p || !p.aktuell;
         // Kein „PDF herunterladen“ mehr hier (Feedback 24.09.2026 - 3, Punkt 6) — das macht die Ansicht „Dokument“.
+        // Linie über „Prüfdatei erstellen“ (Michael Karbe, Feedback 202609230 - 1, Punkt 2), wie die Werkbank in „Dokument“.
         const aktionen = d.getaggt
-            ? '<div class="ausgabe-aktionen">'
+            ? '<div class="ab-werkbank"><div class="ausgabe-aktionen">'
               + '<button type="button" class="btn ' + (erstellenPrimaer ? 'btn-primary' : 'btn-secondary') + '" id="ab_erstellen_' + d.id + '" onclick="Abschluss.erstellen(' + project.id + ', ' + d.id + ')"' + (d.laeuft ? ' disabled' : '') + '>' + ico('sparkle') + erstellenText + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos') + '</span></button>'
               + (p ? '<a class="btn btn-secondary" id="ab_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '?quelle=abschluss">' + t('Mit eigenem Screenreader prüfen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
-              + '</div>'
+              + '</div></div>'
             : '';
         const dk = dokDaten[d.id];
         // KI-basierte Pruefung ausgeblendet (Michael Karbe, Feedback 20260928 - 2, Punkt 9): ZEIGE_KI = true holt sie zurueck
@@ -116,7 +117,7 @@
             // Sprache und Zusammenfassung oben bei den Infos (Punkt 10); gefuellt, sobald die Details geladen sind
             // Sprache und Zusammenfassung stehen schon unter „Dokument“ (Michael Karbe, Feedback 20260928 - 2, Punkt 10): ZEIGE_KOPF
             + (ZEIGE_KOPF ? '<ul class="dok-meta ab-kopf" id="ab_kopf_' + d.id + '">' + (details[d.id] ? kopfZeilenHtml(details[d.id]) : '') + '</ul>' : '')
-            + (p ? '<p class="feld-hinweis">' + t('Geprüft wird mit veraPDF gegen PDF/UA-1, demselben Werkzeug wie bei einer Prüfung auf dem eigenen Rechner. Jede Problemstelle nennt die Regelnummer von veraPDF.') + '</p>'
+            + (p ? '<p class="feld-hinweis">' + t('Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF.') + '</p>'
                  + '<p class="feld-hinweis">' + t('Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos.') + '</p>'
                  : (d.getaggt ? '<p class="feld-hinweis">' + t('Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos.') + '</p>' : ''))
             + (p && !p.aktuell ? '<p class="feld-hinweis"><strong>' + t('Die Prüfdatei ist nicht mehr aktuell.') + '</strong> ' + t('Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst.') + '</p>' : '')
@@ -146,9 +147,13 @@
         (dd.probleme || []).forEach(p => (p.seiten && p.seiten.length ? p.seiten : [p.seite]).forEach(s => { if (s) mit.add(s); }));
         return alle.filter(s => mit.has(s));
     }
+    // Ohne „veraPDF (PDF/UA-1):“ vor jeder Zeile (Michael Karbe, Feedback 202609230 - 1, Punkt 8: „oben weisen wir bereits auf
+    // veraPDF hin“); die Regelnummer bleibt am Ende der Zeile. Andere Quellen (nur bei eingeschalteten eigenen Prüfungen)
+    // nennen sich weiter.
+    function quelleTeil(p) { return p.art === 'technisch' ? '' : esc(p.quelle) + ': '; }
     function problemText(p) {
         return (p.seiten && p.seiten.length > 1 ? t('Seiten {n}', { n: p.seiten.join(', ') }) : (p.seite ? t('Seite {n}', { n: p.seite }) : t('Dokument')))
-            + ' – ' + esc(p.quelle) + ': ' + esc(p.text);
+            + ' – ' + quelleTeil(p) + esc(p.text);
     }
     // Sprache des Dokuments nur als saubere Sprachkennung (de, de-DE, en-GB …) — geht in lang="" und an die Stimme
     function dokSprache(dd) {
@@ -180,15 +185,15 @@
         const ohneVerapdf = d.pruefdatei && !d.pruefdatei.eigene_pruefungen && d.pruefdatei.verapdf_moeglich === false;
         if (ohneVerapdf) {
             s += '<h4 id="ab_probleme_' + d.id + '">' + t('Prüfung nicht möglich') + '</h4>'
-                + '<p>' + t('Die Prüfung mit veraPDF war nicht möglich, weil der Prüfdienst nicht erreichbar war. Das ist kein Ergebnis über dein Dokument. Erstelle die Prüfdatei bitte später neu.') + '</p>';
+                + '<p class="ab-text">' + t('Die Prüfung mit veraPDF war nicht möglich, weil der Prüfdienst nicht erreichbar war. Das ist kein Ergebnis über dein Dokument. Erstelle die Prüfdatei bitte später neu.') + '</p>';
             return s;
         }
         if (!probleme.length) {
             s += '<h4 id="ab_probleme_' + d.id + '">' + t('Problemstellen ({n})', { n: 0 }) + '</h4>'
-                + '<p>' + t('Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1.') + '</p>'
+                + '<p class="ab-text">' + t('Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1.') + '</p>'
                 // Gruener Haken heisst nur „technisch regelkonform“ (Cody, Lernrunde 29.09.2026): veraPDF haelt auch falsch
                 // getaggte Dateien fuer konform — das offen sagen, damit niemand daraus eine Barrierefreiheitserklaerung ableitet
-                + '<p>' + t('Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe.') + '</p>';
+                + '<p class="ab-text">' + t('Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe.') + '</p>';
             return s;
         }
         if (z.listeOffen === undefined) z.listeOffen = probleme.length <= 10;
@@ -198,9 +203,9 @@
             + (p.seite && seiten.includes(p.seite) ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '</button>' : '') + '</li>').join('') + '</ol></details>';
         if (!seiten.length) {
             const sf = d.pruefdatei && d.pruefdatei.struktur_fehler;
-            // Strukturlesung gescheitert: keine Hoerprobe, also keine Seitenansicht — das sagen statt stiller Knoepfe
-            s += '<p>' + (sf ? t('Die Seitenansicht ist nicht verfügbar: {grund}', { grund: esc(sf) })
-                             : t('Keine der Problemstellen gehört zu einer bestimmten Seite.')) + '</p>';
+            // Strukturlesung gescheitert: keine Hoerprobe, also keine Seitenansicht — das sagen statt stiller Knoepfe. Der Satz
+            // „Keine der Problemstellen gehört zu einer bestimmten Seite.“ entfällt (Michael Karbe, Feedback 202609230 - 1, Punkt 7).
+            if (sf) s += '<p class="ab-text">' + t('Die Seitenansicht ist nicht verfügbar: {grund}', { grund: esc(sf) }) + '</p>';
             return s;
         }
         const idx = seiten.indexOf(z.seite);
@@ -220,7 +225,7 @@
             + '<div class="ab-seite-inhalt">'
             + '<img class="ab-seitenbild" src="/api/projects/' + project.id + '/documents/' + d.id + '/abschluss/seite/' + z.seite + '?v=' + encodeURIComponent((d.pruefdatei && d.pruefdatei.erstellt_am) || '') + '" alt="' + t('Seitenbild von Seite {n}', { n: z.seite }) + '" loading="lazy">'
             + '<div class="ab-seite-text">'
-            + '<div class="ab-seite-probleme"><p><strong>' + t('Problemstellen auf dieser Seite') + '</strong></p><ul>' + pSeite.map(p => '<li>' + t('Problem {n}', { n: p.nr }) + ': ' + esc(p.quelle) + ': ' + esc(p.text) + '</li>').join('') + '</ul></div>'
+            + '<div class="ab-seite-probleme"><p><strong>' + t('Problemstellen auf dieser Seite') + '</strong></p><ul>' + pSeite.map(p => '<li>' + t('Problem {n}', { n: p.nr }) + ': ' + quelleTeil(p) + esc(p.text) + '</li>').join('') + '</ul></div>'
             + '<p><button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_vorlesen_' + d.id + '" aria-pressed="false" onclick="Abschluss.vorlesenSeite(' + d.id + ', this)">' + t('Seite vorlesen') + '</button></p>'
             + '<h5 class="ab-hoerprobe-titel">' + t('Hörprobe: so liest ein Screenreader die Tags dieser Seite vor (kein Prüfergebnis)') + '</h5>'
             + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von Seite {n}', { n: z.seite }) + '" tabindex="0">'
@@ -408,10 +413,12 @@
         if (window.Dokument && typeof Dokument.setNeuLaden === 'function') Dokument.setNeuLaden(pid => showProject(pid, true));
         const docs = data.documents || [];
         const title = (project.name && project.name.trim()) ? project.name : project.filename;
-        main.innerHTML = projektKopfHtml(project, 'abschluss', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
+        // Der Satz, was hier geprüft wird, steht oben im Kopf unter den Ansichts-Knöpfen, gekürzt (Michael Karbe, Feedback
+        // 202609230 - 1, Punkt 9: „Hier prüfst du die fertige Datei mit veraPDF. Anzeige der Problemstellen im Prüfbericht.“)
+        main.innerHTML = projektKopfHtml(project, 'abschluss', title, '<p class="feld-hinweis ab-kopfhinweis" id="abKopfHinweis">' + t('Hier prüfst du die fertige Datei mit veraPDF. Anzeige der Problemstellen im Prüfbericht.') + '</p>'
+                + '<div class="card-info" id="projectHeadInfo" hidden></div>')
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
-            + (docs.length ? '<p class="feld-hinweis">' + t('Hier prüfst du die fertige Datei mit veraPDF: Problemstellen, dazu Seitenbild und Hörprobe. Heruntergeladen wird in der Ansicht „Dokument“.') + '</p>'
-                           : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
+            + (docs.length ? '' : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
             + '<div id="abListe">' + docs.map((d, i) => karteHtml(project, d, i + 1, docs.length)).join('') + '</div>';
         if (window.Dokument && typeof Dokument.kiKlappenBinden === 'function') Dokument.kiKlappenBinden();
         document.querySelectorAll('details.ab-klappe').forEach(el => {
@@ -484,8 +491,9 @@
     let wordVorschau = {};   // docId -> {pruefbericht, hoerprobe} bzw. null, wenn die Prüfung nicht möglich war
     let wordHoerprobeOffen = new Set();
 
+    // Word sagt jetzt wie PDF „Problemstellen“, nicht „Befunde“ (Steve 30.09.2026)
     function befundAnzahlText(n) {
-        return n === 0 ? t('Keine Befunde') : (n === 1 ? t('1 Befund') : t('{n} Befunde', { n: n }));
+        return n === 0 ? t('Keine Problemstellen gefunden') : anzahlProbleme(n);
     }
     function datumZeit(s) {
         // DB-Zeitstempel (UTC, „JJJJ-MM-TT HH:MM:SS“) -> Datum in der Oberflächensprache + lokale Uhrzeit (wie die Ablage)
@@ -503,7 +511,8 @@
             const einzeln = (pk.einzeln && pk.einzeln.length) ? pk.einzeln : [{ text: pk.text || '', regeln: [] }];
             einzeln.forEach(e => {
                 const regeln = e.regeln || [];
-                const ref = regeln.length ? ' ' + (regeln.length === 1 ? t('(veraPDF-Regel {r})', { r: regeln.join(', ') }) : t('(veraPDF-Regeln {r})', { r: regeln.join(', ') })) : '';
+                // wie bei PDF ohne das Wort „veraPDF“ in der Zeile (Michael Karbe, Feedback 202609230 - 1, Punkt 8), die Überschrift nennt veraPDF
+                const ref = regeln.length ? ' ' + (regeln.length === 1 ? t('(Regel {r})', { r: regeln.join(', ') }) : t('(Regeln {r})', { r: regeln.join(', ') })) : '';
                 out.push((pk.bereich ? pk.bereich + ': ' : '') + (e.text || '') + ref);
             });
         });
@@ -535,7 +544,7 @@
         // (1) Prüfbericht
         let s = '<h4 id="ab_wpb_' + d.id + '">' + t('Prüfbericht des Word-Dokuments') + '</h4>';
         if (!befunde) s += '<p>' + t('Der Prüfbericht konnte nicht erstellt werden. Bitte lade die Ansicht später neu.') + '</p>';
-        else if (!befunde.length) s += '<p>' + t('Keine Befunde im Word-Dokument.') + '</p>';
+        else if (!befunde.length) s += '<p>' + t('Keine Problemstellen im Word-Dokument.') + '</p>';
         else s += '<ol class="ab-problemliste">' + befunde.map(b => '<li>' + esc(b.text) + '</li>').join('') + '</ol>';
         // (2) veraPDF der letzten barrierefreien PDF
         s += '<h4 id="ab_wpdf_' + d.id + '">' + t('Norm-Prüfung der barrierefreien PDF (veraPDF)') + '</h4>';
@@ -571,8 +580,8 @@
         return '<section class="card dok-karte ab-karte" id="ab_karte_' + d.id + '">'
             + '<details class="dok-klappe ab-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
             + '<summary><h3 id="ab_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: nm }) + '<span class="visually-hidden">, ' + t('Ergebnis') + ':</span></span> <span class="badge ' + badgeKlasse + '" id="ab_badge_' + d.id + '">' + esc(badgeText) + '</span></h3></summary>'
+            // Der Hinweis „feste Regeln, ohne KI, kostenlos“ steht einmal oben im Kopf statt in jeder Karte (Steve 30.09.2026)
             + '<div class="ab-inhalt">' + meta
-            + '<p class="feld-hinweis">' + t('Geprüft wird die Word-Datei mit den Alt-Texten aus InkluDocs, genau die Datei, die du in der Ansicht „Dokument“ herunterlädst. Die Prüfung arbeitet mit festen Regeln, ohne KI, und kostet nichts.') + '</p>'
             + s + '</div></details></section>';
     }
     function wordVorlesen(docId, btn) {
@@ -627,10 +636,12 @@
         wordVorschau = {};
         docs.forEach((d, i) => { if (geladen[i]) wordVorschau[d.id] = geladen[i]; });
         const title = (project.name && project.name.trim()) ? project.name : project.filename;
-        main.innerHTML = projektKopfHtml(project, 'abschluss', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
+        // Einmal oben unter den Ansichts-Knöpfen, wie bei PDF (Michael Karbe, Feedback 202609230 - 1, Punkt 9), mit dem Hinweis
+        // „ohne KI“, der bis 30.09.2026 in jeder Karte stand (Steve: nur einmal oben)
+        main.innerHTML = projektKopfHtml(project, 'abschluss', title, '<p class="feld-hinweis ab-kopfhinweis" id="abKopfHinweis">' + t('Hier prüfst du jedes Word-Dokument mit festen Regeln, ohne KI und kostenlos, so wie du es in der Ansicht „Dokument“ herunterlädst. Hast du schon eine barrierefreie PDF erstellt, steht hier auch ihr Ergebnis von veraPDF.') + '</p>'
+                + '<div class="card-info" id="projectHeadInfo" hidden></div>')
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
-            + (docs.length ? '<p class="feld-hinweis">' + t('Hier prüfst du jedes Word-Dokument ohne KI: den Prüfbericht mit festen Regeln und die Hörprobe. Hast du schon eine barrierefreie PDF erstellt, steht hier auch ihr Ergebnis von veraPDF. Heruntergeladen wird in der Ansicht „Dokument“.') + '</p>'
-                           : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
+            + (docs.length ? '' : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
             + '<div id="abListe">' + docs.map((d, i) => wordKarteHtml(project, d, i + 1, docs.length)).join('') + '</div>';
         document.querySelectorAll('details.ab-klappe').forEach(el => {
             const gezeichnetOffen = el.open;

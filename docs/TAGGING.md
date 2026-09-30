@@ -107,9 +107,10 @@ Alt-Texte werden nach denselben Regeln wieder übernommen (E2E `verify_tagging_u
 
 ## Preis
 
-`billing.AKTIONS_PREISE["pdf_tagging"] = 1` Credit je Seite — **vorläufig** (Steve 22.09.:
-„preislich reden wir nochmal“; PDFix nennt ~1 Cent je Seite als eigene Kosten). Die Wache
-vor dem Lauf verlangt das volle Guthaben, verbucht wird nach Erfolg.
+`billing.AKTIONS_PREISE["pdf_tagging"] = 20` Credits je Seite seit 30.09.2026 (Michael Karbe, Mail „Feedback
+202609230 - 1“, Punkt 11; vorher vorläufig 1 je Seite). Die Wache vor dem Lauf verlangt das volle Guthaben, verbucht
+wird nach Erfolg. Bezahlt wird das Tagging nur beim Ausführen, nie beim Herunterladen (Punkt 12, Abschnitt am Dateiende).
+Eine schon getaggte Quelle wird nicht getaggt und kostet nichts (Abschnitt „Schon getaggte PDFs“).
 
 ## Bekannte Grenzen (Stand 22.09.2026, PDFix-Weg)
 
@@ -570,3 +571,38 @@ Herunterladen der Testfassung — Steve fragt Michael.
 
 Tests: `tests/test_testweise_taggen.py` (Testmodus erzwungen, Dokument unverändert, Doppelstart, fremd, kein Download,
 Aufräumen), `tests/e2e/ui_dokument.py` (128 Prüfungen inkl. echtem Testlauf, Tagging, Prüfdatei, KI-Prüfung, axe).
+
+## Michaels Mail „Feedback 202609230 - 1“ und Messlauf-Befunde (30.09.2026, Staging)
+
+**Quickinfos (Punkt 1):** Im PDF-Projekt steht unter den Ansichts-Knöpfen kein Infotext mehr („n Felder in d Dokumenten …“);
+das Element `#projectHeadInfo` bleibt versteckt (formular.js), eigenständige Formular-Projekte und Gäste behalten die Zeile.
+
+**Barrierefreiheitsprüfung (Punkte 2–9, frontend/abschluss.js, CSS in app.html):** Linie über „Prüfdatei erstellen“
+(`.ab-werkbank`); mehr Abstand unter „Problemstellen“; Problemtexte in Schrift, Größe und Zeilenhöhe der Dokumentinfos
+(`.ab-problemliste`, `.ab-text`, Kasten der Problemseite) mit Abstand zwischen den Einträgen; Satz gekürzt auf „Geprüft wird
+mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF.“; der Satz „Keine der Problemstellen
+gehört zu einer bestimmten Seite.“ entfällt; die Zeile nennt nicht mehr „veraPDF (PDF/UA-1):“, die Regel heißt „(Regel
+7.3-1)“ (abschluss.py, auch in der Word-Prüfung); oben im Kopf unter den Ansichts-Knöpfen „Hier prüfst du die fertige Datei
+mit veraPDF. Anzeige der Problemstellen im Prüfbericht.“ (vorher unter „Dokumente (n)“).
+
+**Preise (Punkte 11, 12):** Tagging 20 Credits je Seite (Rückfrage nennt „{p} Credits je Seite“ aus `stand().preis_je_seite`).
+Herunterladen nur, was bearbeitet wurde — `billing.pdf_download_preis`, Planung `main._pdf_export_plan` (Dialog = Export =
+Chatbot), EIN Grundpreis, Staffel über bearbeitete Bilder/Felder, getaggt ohne Bearbeitung 0, derselbe bezahlte Stand
+kein zweites Mal (`documents.export_bezahlt`). Der Dialog sagt vorher, was es kostet und warum (bzw. warum nichts), die
+Meldung danach „Es wurden keine Credits berechnet.“ Einzelheiten: backend/ABRECHNUNG.md, docs/GENERIERUNG.md.
+
+**Schon getaggte PDFs (Messlauf):** `tagging_api.quelle_getaggt(doc)` — hat die Quelle (roh_path, sonst die hochgeladene
+Datei) schon einen Strukturbaum, taggt PDFix nicht neu („Preserve Existing Tags“), im Testmodus käme nur das Wasserzeichen
+dazu. Deshalb: kein „Barrierefrei machen“ und kein „Testweise taggen“ (409 `schon_getaggt`, auch im Chatbot und in der
+Kette), die Karte in „Tagging“ sagt es über den Knöpfen, keine Credits; Sicherheitsnetz im Lauf (Quelle hatte Elemente →
+0 Credits). Offen für Steve: „Neu taggen“ (vorhandene Tags ersetzen) anbieten? Nicht gebaut.
+
+**Hörprobe (Messlauf):** Struktur_Export (Version 4): echte Bindestriche bleiben („KI-gestützte“, „Internet-Services“,
+„E-Mail“), zusammengezogen wird nur eine Silbentrennung am Zeilenende (neue Zeile, klein vor und nach dem Strich); keine
+Kürzung auf 600 Zeichen mehr, nur eine Sicherheitsgrenze von 20.000 Zeichen je Element mit hörbarem „… (gekürzt, insgesamt
+n Zeichen)“. pdf_struktur (STRUKTUR_VERSION 4, alte Caches werden neu gelesen): keine Kürzung von Zeilen (400) und
+Tabellenzellen (80); Feldbeschriftungen (Lbl) als „Beschriftung: …“, auch Span/Reference/… mit Text werden gelesen; Sprache
+als „Deutsch (de-DE)“ (i18n.sprache_anzeige, Oberflächensprache).
+
+Tests: `tests/test_herunterladen_genutzt.py`, `tests/test_pdf_struktur.py`, `tests/test_struktur_leerzeichen.py`,
+`tests/e2e/verify_michael_0930.py`, `tests/e2e/ui_dokument.py`, `ui_pdf_quickinfos.py`, `ui_preise.py`.

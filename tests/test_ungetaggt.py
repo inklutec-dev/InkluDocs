@@ -32,15 +32,23 @@ class Ungetaggt(unittest.TestCase):
             open(os.path.join(d, "kaputt.pdf"), "wb").write(b"x"); self.assertFalse(pdf_export.pdf_hat_tags(os.path.join(d, "kaputt.pdf")))
 
     def test_plan_je_dokument(self):
-        """getaggt -> PDF-Staffel; ungetaggt ohne Quickinfos -> unveraendert, 0 Credits."""
-        units = [{"doc": {"id": None, "getaggt": 1, "original_filename": "mit.pdf"}, "images": [{}, {}, {}]},
-                 {"doc": {"id": None, "getaggt": 0, "original_filename": "ohne.pdf"}, "images": [{}]}]
+        """getaggt -> Export mit Alt-Texten; ungetaggt ohne Quickinfos -> unveraendert, 0 Credits. Seit 30.09.2026 (Michael
+        Karbe, Feedback 202609230 - 1, Punkt 12) kosten nur BEARBEITETE Alt-Texte (hier 2 von 3), die Bilder der
+        ungetaggten Datei nie (ausfuehrlich: test_herunterladen_genutzt.py)."""
+        def bild(i, **kw):
+            d = {"id": i, "alt_text": "", "alt_text_edited": None, "original_alt": "", "image_type": "unknown", "status": "pending"}
+            d.update(kw)
+            return d
+        units = [{"doc": {"id": None, "getaggt": 1, "original_filename": "mit.pdf"},
+                  "images": [bild(1, alt_text="KI-Text", status="done"), bild(2, alt_text_edited="Von Hand"), bild(3)]},
+                 {"doc": {"id": None, "getaggt": 0, "original_filename": "ohne.pdf"}, "images": [bild(4, alt_text_edited="Von Hand")]}]
         with mock.patch.object(main.billing, "preis_pruefung", side_effect=lambda uid, preis: {"preis": preis, "verfuegbar": None, "erlaubt": True, "fehlend": 0}):
             plan = main._pdf_export_plan(0, units)
         self.assertEqual([u["doc"]["original_filename"] for u in plan["getaggt"]], ["mit.pdf"])
         self.assertEqual([u["doc"]["original_filename"] for u in plan["unveraendert"]], ["ohne.pdf"])
         self.assertEqual(plan["mit_qi"], [])
-        self.assertEqual(plan["preis_pdf"], main.billing.export_preis(3, "pdf"))   # nur die Bilder der getaggten
+        self.assertEqual(plan["alt_bearbeitet"], 2)
+        self.assertEqual(plan["preis_pdf"], main.billing.pdf_download_preis(2, 0)["preis"])   # nur bearbeitete der getaggten
         self.assertEqual(plan["preis_qi"], 0)
         self.assertEqual(plan["pruefung"]["preis"], plan["preis_pdf"])
         with mock.patch.object(main.billing, "preis_pruefung", side_effect=lambda uid, preis: {"preis": preis, "verfuegbar": None, "erlaubt": True, "fehlend": 0}):

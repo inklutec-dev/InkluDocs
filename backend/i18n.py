@@ -91,6 +91,34 @@ def get_gettext(lang: str) -> Callable[[str], str]:
     return _load_translations(lang).gettext
 
 
+def _sprache_von_gettext(_) -> str:
+    """Oberflaechensprache einer gettext-Funktion aus get_gettext (gebundene Methode der gecachten Translations);
+    sonst die Vorgabe (z. B. die Identitaet in Unit-Tests)."""
+    obj = getattr(_, "__self__", None)
+    if obj is not None:
+        for k, v in _translations_cache.items():
+            if v is obj:
+                return k
+    return DEFAULT_LANGUAGE
+
+
+def sprache_anzeige(code, _=None, ui_lang: Optional[str] = None) -> str:
+    """Dokumentsprache als „Name (Kürzel)“ in der Oberflaechensprache, z. B. „Englisch (en-US)“, „anglais (en-US)“
+    (Steve 30.09.2026: nicht nur das Kuerzel — bei Word und PDF). Namen aus CLDR (Babel), dieselbe Quelle wie
+    Intl.DisplayNames im Browser (app.html spracheAnzeige). Unbekanntes Kuerzel: nur das Kuerzel."""
+    code = str(code or "").strip()
+    if not code:
+        return ""
+    lang = ui_lang or (_sprache_von_gettext(_) if _ is not None else DEFAULT_LANGUAGE)
+    basis = code.replace("_", "-").split("-")[0].lower()
+    try:
+        from babel import Locale
+        name = Locale.parse(lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE).languages.get(basis)
+    except Exception:  # noqa: BLE001
+        name = None
+    return f"{name} ({code})" if name else code
+
+
 def parse_accept_language(header: str) -> Optional[str]:
     """Parse HTTP Accept-Language header, gib erste unterstuetzte Sprache zurueck."""
     if not header:

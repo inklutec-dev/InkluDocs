@@ -19,7 +19,8 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
         "name": "barrierefrei_machen",
         "description": (
             "Tagging eines PDF-Dokuments (Strukturbaum, Lesereihenfolge, Dokumentsprache, veraPDF-Prüfung). Kostet "
-            "Credits je Seite. ZWEI SCHRITTE: Erster Aufruf OHNE bestaetigt liefert Seiten, Preis und Guthaben "
+            "Credits je Seite. Eine schon getaggte PDF wird nicht neu getaggt und kostet nichts (Fehlermeldung sagt es). "
+            "ZWEI SCHRITTE: Erster Aufruf OHNE bestaetigt liefert Seiten, Preis und Guthaben "
             "(rueckfrage_noetig) — nenne dem Nutzer den Preis und frage. Erst nach seinem klaren Ja erneut mit "
             "bestaetigt=true. Läuft dann im Hintergrund; Stand über dokument_stand. Bei nur einem Dokument ohne document_id."
         ),
@@ -83,7 +84,8 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
         "name": "exportiere_fertige_pdf",
         "description": (
             "Fertige PDF eines getaggten Dokuments mit Struktur, Alt-Texten und Quickinfos: Download-Knopf unter deiner "
-            "Antwort und Eintrag in der Ablage (mit Bericht). Kostet Credits (Export-Staffel nach Bildern). ZWEI SCHRITTE "
+            "Antwort und Eintrag in der Ablage (mit Bericht). Kostet nur, was in InkluDocs bearbeitet wurde (Alt-Texte per KI oder "
+            "von Hand, Quickinfos); ohne Bearbeitung oder bei schon bezahltem Stand 0 Credits, das Tagging nie. ZWEI SCHRITTE "
             "wie barrierefrei_machen. Nur für getaggte Dokumente."
         ),
         "input_schema": {"type": "object", "properties": {

@@ -116,7 +116,8 @@ with sync_playwright() as p:
     meta = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
     zeilen = [z.strip() for z in meta.split("\n") if z.strip()]
     check("Dokumentinfos je Zeile „Bezeichnung: Wert“", all(": " in z for z in zeilen) and len(zeilen) >= 6, zeilen)
-    check("Titel aus der Datei, Anwendung, Sprache, Überschriften, Tabellen, Bilder", meta.startswith("Titel: Testdokument") and all(k in meta for k in ("Anwendung: ", "Sprache: en-US", "Überschriften: ", "Tabellen: 1", "Bilder: ")), meta)
+    check("Titel aus der Datei, Anwendung, Sprache, Überschriften, Tabellen, Bilder", meta.startswith("Titel: Testdokument") and all(k in meta for k in ("Anwendung: ", "Sprache: Englisch (en-US)", "Überschriften: ", "Tabellen: 1", "Bilder: ")), meta)
+    check("Sprache als „Name (Kürzel)“ in der Oberflächensprache, nicht nur das Kürzel (Steve 30.09.2026)", "Sprache: Englisch (en-US)" in meta, meta)
     check("Seiten nur, wenn belegbar (python-docx-Datei: keine Zeile „Seiten“)", "Seiten:" not in meta, meta)
     check("Kein Vorschaubild, kein Tagging-Knopf", pg.locator("section.dok-karte img.ausgabe-vorschau").count() == 0 and pg.locator("button[id^=dok_tag_]").count() == 0)
     kn = [x.split("\n")[0].strip() for x in pg.locator("section.dok-karte .dok-werkbank .ausgabe-aktionen button").all_inner_texts()]
@@ -184,6 +185,11 @@ with sync_playwright() as p:
         if pg.locator("#pdfuaDownload").count() or "fehlgeschlagen" in erg or "nicht eingerichtet" in erg:
             break
     check("Umwandlung in barrierefreie PDF liefert Ergebnis + „PDF herunterladen“ mit Fokus", pg.locator("#pdfuaDownload").count() == 1 and aktiv(pg).startswith("BUTTON#pdfuaDownload"), erg[:200])
+    # Steve 30.09.2026: im Dialog nur das veraPDF-Ergebnis und ein Verweis — Prüfbericht und Hörprobe stehen in der Prüfansicht
+    check("Dialog nach der Umwandlung: kein Prüfbericht, keine Hörprobe, Verweis auf die Barrierefreiheitsprüfung",
+          pg.locator("#pdfuaResult details").count() == 0 and "Prüfbericht des Word-Dokuments" not in erg and "Hörprobe: so liest" not in erg
+          and "in der Ansicht „Barrierefreiheitsprüfung“" in erg and pg.locator("#pdfuaResult a#pdfuaZurPruefung").count() == 1
+          and "ansicht=abschluss" in (pg.locator("#pdfuaResult a#pdfuaZurPruefung").get_attribute("href") or ""), erg[:400])
     pg.click("#exportCancelBtn")
     pg.wait_for_timeout(400)
     check("Dialog geschlossen", pg.evaluate("!document.getElementById('exportPanel').open"))
@@ -223,14 +229,16 @@ with sync_playwright() as p:
     pg.wait_for_selector("section.ab-karte", timeout=30000)
     pg.wait_for_timeout(800)
     h3p = pg.locator("section.ab-karte h3").first.inner_text()
-    check("Karte mit H3 „Dokument 1: …“ und Abzeichen (Befunde)", h3p.startswith("Dokument 1: Klicktest umbenannt") and pg.locator("section.ab-karte h3 .badge").count() == 1 and "Befund" in pg.locator("section.ab-karte h3 .badge").inner_text(), h3p)
+    # „Problemstellen“ wie bei PDF, nicht „Befunde“ (Steve 30.09.2026)
+    check("Karte mit H3 „Dokument 1: …“ und Abzeichen „Problemstellen“ wie bei PDF", h3p.startswith("Dokument 1: Klicktest umbenannt") and pg.locator("section.ab-karte h3 .badge").count() == 1 and "Problemstelle" in pg.locator("section.ab-karte h3 .badge").inner_text() and "Befund" not in pg.locator("main").inner_text(), h3p)
     pm = pg.locator("section.ab-karte ul.dok-meta").first.inner_text()
     check("Infos: Prüfbericht, Barrierefreie PDF erstellt am, Stand aktuell, Norm-Prüfung veraPDF", all(k in pm for k in ("Prüfbericht des Word-Dokuments: ", "Barrierefreie PDF: erstellt am", "Stand: aktuell", "Norm-Prüfung PDF/UA-1 (veraPDF): ")), pm)
     h4 = [x.strip() for x in pg.locator("section.ab-karte h4").all_inner_texts()]
     check("Abschnitte H4: Prüfbericht, Norm-Prüfung der barrierefreien PDF, Hörprobe", h4 == ["Prüfbericht des Word-Dokuments", "Norm-Prüfung der barrierefreien PDF (veraPDF)", "Hörprobe"], h4)
     txt = pg.locator("section.ab-karte").first.inner_text()
-    check("veraPDF-Teil: Befunde mit Regelnummer oder „Keine Problemstellen“ + Hinweis", ("(veraPDF-Regel" in txt) or ("Keine Problemstellen gefunden" in txt and "Wichtig: veraPDF prüft" in txt), txt[:600])
-    check("Keine KI: kein KI-Knopf, Hinweis „ohne KI“", pg.locator("section.ab-karte button:has-text('KI')").count() == 0 and "ohne KI" in txt)
+    check("veraPDF-Teil: Problemstellen mit Regelnummer oder „Keine Problemstellen“ + Hinweis", ("(Regel" in txt and "veraPDF-Regel" not in txt) or ("Keine Problemstellen gefunden" in txt and "Wichtig: veraPDF prüft" in txt), txt[:600])
+    # Steve 30.09.2026: „ohne KI“ nur einmal oben, nicht in jeder Karte
+    check("Keine KI: kein KI-Knopf; „ohne KI“ einmal oben im Kopf, nicht in der Karte", pg.locator("section.ab-karte button:has-text('KI')").count() == 0 and "ohne KI" not in txt and pg.locator(".projekt-kopf").inner_text().count("ohne KI") == 1 and pg.locator("main").inner_text().count("ohne KI") == 1, pg.locator(".projekt-kopf").inner_text())
     check("Kein Herunterladen in der Prüfung", pg.locator("section.ab-karte button:has-text('Herunterladen')").count() == 0)
     vk = pg.locator("button[id^=ab_wvorlesen_][aria-pressed=false]")
     check("„Hörprobe vorlesen“ (aria-pressed=false) mit Dokumentname im Namen, Klappe „Hörprobe lesen – Dokument …“",

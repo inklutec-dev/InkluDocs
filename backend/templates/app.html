@@ -68,8 +68,18 @@
       .dok-ergebnis-fehler { border-left-color: #b91c1c; background: #fef2f2; color: #7f1d1d; }
       /* Station „Abschlussprüfung“ (24.09.2026): Problemliste, Seitenansicht (Seitenbild + Hörprobe nebeneinander,
          schmal untereinander), Problemstellen mit Rahmen UND Zeichen „!“ (nicht nur Farbe, WCAG 1.4.1). */
-      .ab-problemliste { margin: 0.3rem 0 0.8rem; padding-left: 1.4rem; font-size: 0.92rem; line-height: 1.5; }
-      .ab-problemliste li { margin: 0.25rem 0; }
+      /* Problemliste (Michael Karbe, Feedback 202609230 - 1, Punkte 3-5): mehr Abstand unter „Problemstellen“, Schrift und
+         Groesse wie die Dokumentinfos darueber (.dok-meta: 0,92rem, Zeilenhoehe 1,5, Schrift der Seite), Luft zwischen den
+         Eintraegen. Dieselbe Schrift fuer alle Saetze, die Probleme beschreiben (.ab-text, Kasten der Problemseite). */
+      .ab-problemliste { margin: 0.75rem 0 0.8rem; padding-left: 1.4rem; font-family: inherit; font-size: 0.92rem; line-height: 1.5; }
+      .ab-problemliste li { margin: 0 0 0.6rem; }
+      .ab-problemliste li:last-child { margin-bottom: 0; }
+      .ab-text { font-family: inherit; font-size: 0.92rem; line-height: 1.5; margin: 0 0 0.6rem; }
+      .ab-detail > h4 { margin: 0.8rem 0 0.75rem; font-size: 1rem; }
+      /* Linie ueber „Prüfdatei erstellen“ (Punkt 2), wie die Werkbank in „Dokument“ */
+      .ab-werkbank { border-top: 1px solid #9ca3af; margin-top: 0.9rem; padding-top: 0.2rem; }
+      /* Hinweis oben im Projektkopf unter den Ansichts-Knoepfen (Punkt 9) */
+      .projekt-kopf .ab-kopfhinweis { margin: 0.6rem 0 0; }
       /* Kein „!“ mehr vor den Problemen (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 7). Linie ueber der seitenweisen
          Anzeige (Punkt 11). */
       .ab-seite { border-top: 1px solid #9ca3af; margin-top: 1rem; padding-top: 0.6rem; }
@@ -78,12 +88,14 @@
       .ab-seite-inhalt { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 1rem; align-items: start; }
       @media (max-width: 760px) { .ab-seite-inhalt { grid-template-columns: 1fr; } }
       .ab-seitenbild { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 4px; background: #fff; }
-      .ab-seite-probleme { border: 2px solid #b45309; border-left-width: 6px; border-radius: 6px; padding: 0.4rem 0.7rem; margin-bottom: 0.6rem; font-size: 0.92rem; }
-      .ab-seite-probleme ul { margin: 0.2rem 0 0; padding-left: 1.1rem; }
+      .ab-seite-probleme { border: 2px solid #b45309; border-left-width: 6px; border-radius: 6px; padding: 0.4rem 0.7rem; margin-bottom: 0.6rem; font-size: 0.92rem; line-height: 1.5; }
+      .ab-seite-probleme ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
+      .ab-seite-probleme li { margin: 0 0 0.5rem; }
+      .ab-seite-probleme li:last-child { margin-bottom: 0; }
       .ab-hoerprobe-titel { margin: 0.4rem 0; font-size: 1rem; }
       .ab-hoerprobe { font-size: 0.92rem; }
       .ab-kopf { margin-top: 0.6rem; }
-      .ab-problemklappe > summary { cursor: pointer; margin: 0.6rem 0 0.2rem; }
+      .ab-problemklappe > summary { cursor: pointer; margin: 0.8rem 0 0.2rem; }
       .ab-problemklappe > summary:focus-visible { outline: 2px solid var(--focus, #c75000); outline-offset: 2px; }
       .ab-inline { display: inline; margin: 0; font-size: 1rem; }
       /* KI-basierte Pruefung als eigener Abschnitt in der Station „Prüfung“ (Feedback 24.09.2026 - 3, Punkt 13) */
@@ -178,6 +190,22 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
+
+    // Dokumentsprache als „Name (Kürzel)“ in der Oberflächensprache, z. B. „Englisch (en-US)“ (Steve 30.09.2026: nicht nur das
+    // Kürzel — bei Word und PDF). Namen aus Intl.DisplayNames (CLDR), dieselbe Quelle wie i18n.sprache_anzeige im Server.
+    // Unbekanntes Kürzel oder alter Browser: nur das Kürzel.
+    function spracheAnzeige(code) {
+        const c = String(code || '').trim();
+        if (!c) return '';
+        try {
+            const basis = c.replace(/_/g, '-').split('-')[0].toLowerCase();
+            const name = new Intl.DisplayNames([window.LANG || 'de'], { type: 'language' }).of(basis);
+            return (name && name.toLowerCase() !== basis) ? name + ' (' + c + ')' : c;
+        } catch (e) {
+            return c;
+        }
+    }
+    window.spracheAnzeige = spracheAnzeige;
 
     // Anzuzeigender Alt-Text — dieselbe Regel wie main._display_alt_text.
     // LEEREN ZAEHLT (31.08.2026): alt_text_edited === null heisst "nie
@@ -3638,8 +3666,19 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function ohneTagsSatz(d) {
         const u = d.dokumente_unveraendert || 0, q = d.dokumente_quickinfos || 0, g = d.dokumente_getaggt || 0;
         if (!g && !q && u) return t('Diese PDF hat keine Tags. Alt-Texte lassen sich deshalb nicht in die Datei schreiben; du findest sie als Liste in der Ansicht „Alt-Texte“. Du bekommst die PDF unverändert zurück, dafür berechnen wir keine Credits.');
-        if (!g && q && !u) return t('Diese PDF hat keine Tags. Sie bekommt die Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“.');
-        return t('{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur vorhandene Quickinfos; Dokumente ohne Quickinfos bleiben unverändert und kosten nichts.', { n: u + q });
+        if (!g && q && !u) return t('Diese PDF hat keine Tags. Sie bekommt deine bearbeiteten Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“.');
+        return t('{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur bearbeitete Quickinfos; Dokumente ohne bearbeitete Quickinfos bleiben unverändert und kosten nichts.', { n: u + q });
+    }
+    // Was der Preis beim Herunterladen der PDF abrechnet (Michael Karbe, Feedback 202609230 - 1, Punkt 12): nur, was in InkluDocs
+    // bearbeitet wurde — Alt-Texte per KI oder von Hand, Quickinfos; das Tagging nie beim Herunterladen; ein schon bezahlter
+    // Stand nicht noch einmal. Der Satz steht VOR dem Herunterladen im Dialog.
+    function pdfPreisGrundSatz(d) {
+        const a = d.alt_bearbeitet || 0, q = d.qi_bearbeitet || 0;
+        if (typeof d.preis === 'number' && d.preis > 0) {
+            return t('Berechnet wird nur, was du in InkluDocs bearbeitet hast (Alt-Texte: {a}, Quickinfos: {q}). Das Tagging ist schon beim Ausführen bezahlt.', { a: a, q: q });
+        }
+        if (d.schon_bezahlt) return t('Das Herunterladen kostet nichts, weil du diesen Stand schon heruntergeladen und bezahlt hast.');
+        return t('Das Herunterladen kostet nichts, weil du keine Alt-Texte und keine Quickinfos bearbeitet hast. Das Tagging ist schon beim Ausführen bezahlt.');
     }
     function openExportPanel(projectId, docId, modus) {
         exportModus = modus || '';
@@ -3762,7 +3801,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const nurUnveraendert = d.dokumente_unveraendert && !d.dokumente_getaggt && !d.dokumente_quickinfos;
                 if (!d.dokumente_getaggt && d.dokumente_getaggt !== null && d.dokumente_getaggt !== undefined) msg = '';
                 if (nurUnveraendert) msg = ohneTagsSatz(d);
-                else if (typeof d.preis === 'number') msg = (msg ? msg + ' ' : '') + exportPreisText(d.preis, d.verfuegbar);
+                else if (typeof d.preis === 'number') {
+                    // Preis nur, wenn etwas berechnet wird; sonst ein Satz, warum es nichts kostet (Punkt 12)
+                    msg = (msg ? msg + ' ' : '') + (d.preis > 0 ? exportPreisText(d.preis, d.verfuegbar) + ' ' : '') + pdfPreisGrundSatz(d);
+                }
             } else if (nurTabellen) {
                 if (typeof d.preis_tabelle === 'number') msg += ' ' + ((d.verfuegbar === null || d.verfuegbar === undefined)
                     ? t('Der Export als CSV, Excel oder JSON kostet {p} Credits.', { p: d.preis_tabelle })
@@ -3814,8 +3856,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     html += '<ul style="margin:0.2rem 0 0.6rem;padding-left:1.2rem;">'
                         + befunde.map(p => '<li>' + escHtml(p.bereich) + ': ' + escHtml(p.text) + '</li>').join('') + '</ul>';
                 }
-                html += pdfuaAnalyseHtml(dok);
             });
+            // Prüfbericht und Hörprobe stehen in der Ansicht „Barrierefreiheitsprüfung“ (Steve 30.09.2026: im Dialog nur das
+            // veraPDF-Ergebnis und ein Verweis — vorher doppelt). Ein Klick schließt den Dialog und wechselt die Ansicht.
+            html += '<p style="margin:0.4rem 0 0.6rem;">' + t('Prüfbericht und Hörprobe findest du in der Ansicht „Barrierefreiheitsprüfung“.') + ' '
+                + '<a id="pdfuaZurPruefung" href="/app?projekt=' + encodeURIComponent(projectId) + '&amp;ansicht=abschluss">' + t('Zur Barrierefreiheitsprüfung') + '</a></p>';
             // Michael Karbe (Mail 12.09.2026, Punkt 9): 3 Punkte mehr Luft ueber „PDF herunterladen“.
             html += '<button type="button" class="btn btn-primary" id="pdfuaDownload" style="margin-top:3pt;">' + icon('download') + t('PDF herunterladen') + '</button>';
             // Meine Ausgaben (11.09.2026): das Ergebnis liegt jetzt dauerhaft im Regal — Link dorthin
@@ -3841,6 +3886,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 box.innerHTML = html;
                 const dl = box.querySelector('#pdfuaDownload');
                 dl.addEventListener('click', () => ladePdfua(projectId, d.token, d.dateiname));
+                const zp = box.querySelector('#pdfuaZurPruefung');
+                if (zp) zp.addEventListener('click', ev => {
+                    if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey || ev.button === 1) return;   // neuer Tab bleibt Link
+                    ev.preventDefault();
+                    closeExportPanel(true);   // kein „Export abgebrochen“: die Umwandlung ist fertig
+                    wechsleAnsicht(projectId, 'abschluss');
+                });
                 dl.focus();
             }
             announce(d.zusammenfassung || '');
@@ -3850,28 +3902,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             if (btn) btn.disabled = false;
         }
     }
-    // Hoerprobe + Pruefbericht des Word-Dokuments (Stufe 2): als aufklappbare Bloecke,
-    // damit die Ergebnis-Region kurz bleibt und die Live-Region nicht alles vorliest.
-    function pdfuaAnalyseHtml(dok) {
-        let html = '';
-        // Nur Befunde (Besprechung 11.09.); ohne Befund ein Satz statt einer Liste von „in Ordnung“.
-        const wordBefunde = (dok.pruefbericht || []).filter(b => b.status !== 'ok');
-        if (dok.pruefbericht && dok.pruefbericht.length) {
-            // Michael Karbe (Mail 12.09.2026, Punkt 8): Trennlinie oberhalb der Pruefbericht-Anzeige.
-            html += '<hr class="export-trenner" aria-hidden="true">';
-            html += '<details style="margin:0.4rem 0;"><summary>' + t('Prüfbericht des Word-Dokuments') + '</summary>'
-                + (wordBefunde.length
-                    ? '<ul style="margin:0.3rem 0 0.4rem;padding-left:1.2rem;">' + wordBefunde.map(b => '<li>' + escHtml(b.text) + '</li>').join('') + '</ul>'
-                    : '<p style="margin:0.3rem 0 0.4rem;">' + t('Keine Befunde im Word-Dokument.') + '</p>')
-                + '</details>';
-        }
-        if (dok.hoerprobe && dok.hoerprobe.length) {
-            html += '<details style="margin:0.4rem 0;"><summary>' + t('Hörprobe: so liest ein Screenreader das Dokument') + '</summary>'
-                + '<div style="max-height:22rem;overflow:auto;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;" tabindex="0">'
-                + dok.hoerprobe.map(z => '<p style="margin:0.15rem 0;">' + escHtml(z) + '</p>').join('') + '</div></details>';
-        }
-        return html;
-    }
+    // pdfuaAnalyseHtml (Prüfbericht + Hörprobe im Umwandlungs-Ergebnis) entfiel am 30.09.2026 (Steve): beides steht in der
+    // Ansicht „Barrierefreiheitsprüfung“, der Dialog verweist nur noch dorthin.
     // „Hörprobe und Prüfbericht“ (doPdfuaVorschau) stand bis 30.09.2026 im Herunterladen-Dialog; seitdem zeigt die Ansicht
     // „Barrierefreiheitsprüfung“ eines Word-Projekts beides (abschluss.js showWordProject, gleicher Endpunkt .../export/pdfua/vorschau).
     async function ladePdfua(projectId, token, name) {
@@ -4021,6 +4053,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (unv === '1' && format === 'pdf' && scope.document_id) fertig += ' ' + t('Die PDF ist unverändert, weil sie keine Tags hat. Es wurden keine Credits berechnet.');
                 else if (unv === '1' && format === 'pdf') fertig += ' ' + t('1 Dokument ohne Tags ist unverändert enthalten, dafür wurden keine Credits berechnet.');
                 else if (unv && unv !== '0' && format === 'pdf') fertig += ' ' + t('{n} Dokumente ohne Tags sind unverändert enthalten, dafür wurden keine Credits berechnet.', { n: unv });
+                // Getaggte PDF ohne Bearbeitung bzw. schon bezahlter Stand (Punkt 12): ausdrücklich sagen, dass nichts berechnet wurde
+                else if (format === 'pdf' && (!credits || credits === '0')) fertig += ' ' + t('Es wurden keine Credits berechnet.');
                 // Wo die Datei liegt, weiss die Seite nicht (Browser-Grenze) — der Satz sagt, wo man sucht (Steve 01.09.2026).
                 fertig += ' ' + t('Du findest die Datei bei deinen Downloads.');
                 // Hinweise des Exports (Titel-Rueckfall, Warnungen des Schreibwegs, Export-Abnahme) — bis 15.09.2026

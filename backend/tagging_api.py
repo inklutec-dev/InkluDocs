@@ -428,6 +428,28 @@ def _seiten(doc: dict) -> int:
         return 0
 
 
+def quelle_getaggt(doc: dict) -> bool:
+    """Hat die Datei, aus der „Barrierefrei machen“ taggen wuerde (roh_path, sonst original_path), schon Tags?
+    Dann taggt PDFix NICHT neu — die Aktion laeuft mit „Preserve Existing Tags“ (add_tags overwrite=false) und laesst den
+    Strukturbaum, wie er ist; im Testmodus kaeme nur das Wasserzeichen dazu. Belegt im Messlauf 30.09.2026 an drei schon
+    getaggten Dateien (gleiche Struktur vorher und nachher), damals wurden trotzdem Credits abgebucht. Seit 30.09.2026:
+    vor dem Start erkennen, sagen, nicht taggen, nichts berechnen. Ob „Neu taggen“ (vorhandene Tags ersetzen) angeboten
+    wird, entscheidet Steve — nicht gebaut."""
+    roh = doc.get("roh_path") or ""
+    if not roh:
+        # ohne Rohdatei ist die Quelle die Arbeitsdatei; ihr Stand steht schon in documents.getaggt (beim Upload bestimmt)
+        if doc.get("getaggt") is not None:
+            return bool(doc.get("getaggt"))
+        roh = doc.get("original_path") or ""
+    from pdf_export import pdf_hat_tags
+    return bool(roh) and pdf_hat_tags(roh)
+
+
+def schon_getaggt_text(_=None) -> str:
+    _ = _ or (lambda s: s)
+    return _("Diese PDF ist schon getaggt. „Barrierefrei machen“ ersetzt vorhandene Tags nicht, deshalb taggen wir sie nicht noch einmal und berechnen nichts.")
+
+
 def _verapdf_beim_upload(conn, doc: dict) -> None:
     """GESAMTURTEIL (23.09.2026, Steve): Eine hochgeladene PDF MIT Tags bekommt einmalig eine PDF/UA-Pruefung
     (veraPDF, kostenlos, Sekunden), damit die Karte sofort sagen kann, ob etwas zu tun ist. Ergebnis im
@@ -506,6 +528,7 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
     except Exception as e:  # noqa: BLE001
         log.warning("[tagging] veraPDF beim Upload nicht moeglich: %r", e)
     seiten = _seiten(doc)
+    schon_getaggt = quelle_getaggt(doc)
     pruefung = _d.billing.aktion_pruefung(user_id, AKTION, seiten) if seiten else None
     alt = conn.execute(
         "SELECT COUNT(*) FROM images WHERE document_id = ? AND ((alt_text IS NOT NULL AND alt_text <> '') OR (alt_text_edited IS NOT NULL AND alt_text_edited <> ''))",
@@ -527,6 +550,10 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
         "fehlend": (pruefung or {}).get("fehlend", 0),
         "hat_alt_texte": int(alt or 0),
         "neu_taggen": bool(doc.get("roh_path")),
+        # Preis je Seite fuer die Rueckfrage (billing.AKTIONS_PREISE, seit 30.09.2026 20 Credits je Seite)
+        "preis_je_seite": int(_d.billing.AKTIONS_PREISE.get(AKTION, 0)),
+        # Quelle schon getaggt (Messlauf 30.09.2026): kein Tagging, kein Testlauf, keine Credits — die Karte sagt es
+        "quelle_getaggt": schon_getaggt,
         "bericht": _bericht(doc),
         "projekt_status": project.get("status"),
         "pruefung": pruefung_stand(conn, doc, user_id, seiten),
@@ -598,6 +625,11 @@ def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
                                           "extraction_method", "created_at", "hinweise")}
         eintrag["getaggt"] = (None if d.get("getaggt") is None else bool(d.get("getaggt")))
         eintrag["felder"] = int(conn.execute("SELECT COUNT(*) FROM formularfelder WHERE document_id = ?", (d["id"],)).fetchone()[0] or 0)
+        # Quickinfos, die InkluDocs in eine ungetaggte PDF schreiben wuerde (Text da und anders als in der Datei, wie
+        # main._quickinfos_bearbeitet) — fuer den Namen des Knopfs „PDF herunterladen“ (Feedback 202609230 - 1, Punkt 12)
+        eintrag["quickinfos_bearbeitet"] = sum(
+            1 for f in conn.execute("SELECT quickinfo, quickinfo_original FROM formularfelder WHERE document_id = ?", (d["id"],)).fetchall()
+            if " ".join((f["quickinfo"] or "").split()) and " ".join((f["quickinfo"] or "").split()) != " ".join((f["quickinfo_original"] or "").split()))
         eintrag["seiten"] = _seiten(d)
         eintrag["struktur"] = _struktur(d)
         eintrag["meta"] = _metadaten(d)
@@ -890,7 +922,14 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
                     os.remove(rp)
                 except OSError:
                     pass
-        _d.billing.verbuche(user_id, QUELLE, AKTION, credits=preis)
+        # Sicherheitsnetz (30.09.2026): hatte die Quelle schon Tags, hat PDFix nichts neu getaggt („Preserve Existing Tags“)
+        # — dann nichts berechnen, auch wenn die Vorpruefung (quelle_getaggt) es nicht erkannt hat.
+        if int(((bericht.get("vorher") or {}).get("elemente")) or 0) > 0:
+            log.warning("[tagging] Dokument %s: Quelle hatte schon %s Elemente — nicht neu getaggt, keine Credits",
+                        document_id, (bericht.get("vorher") or {}).get("elemente"))
+            preis = 0
+        if preis:
+            _d.billing.verbuche(user_id, QUELLE, AKTION, credits=preis)
         log.info("[tagging] Dokument %s fertig: %s Seiten, %s Elemente, %s Bilder (%s uebernommen), %s Credits",
                  document_id, bericht.get("seiten"), (bericht.get("nachher") or {}).get("elemente"),
                  len(images), uebernommen, preis)
@@ -932,6 +971,8 @@ def lauf_synchron(project_id: int, document_id: int, user_id: int, sprache_vorga
         project, doc = dict(project), dict(doc)
         if document_id in _laeuft or doc.get("tagging_status") == STATUS_LAEUFT:
             return {"status": "fehler", "grund": "Das Tagging läuft bereits"}
+        if quelle_getaggt(doc):
+            return {"status": "fehler", "grund": schon_getaggt_text(), "schon_getaggt": True}
         seiten = _seiten(doc)
         if seiten <= 0 or seiten > pdf_tagging.MAX_SEITEN:
             return {"status": "fehler", "grund": "Die PDF konnte nicht gelesen werden oder hat zu viele Seiten"}
@@ -1051,6 +1092,10 @@ def build_router(deps: Deps) -> APIRouter:
                 raise HTTPException(status_code=409, detail="Das Tagging läuft bereits")
             if project.get("status") in ("extracting", "processing"):
                 raise HTTPException(status_code=409, detail="Das Projekt wird gerade verarbeitet. Bitte warte, bis der Lauf fertig ist.")
+            if quelle_getaggt(doc):
+                # schon getaggt (30.09.2026): PDFix taggte nicht neu, buchte aber ab — jetzt vorher Schluss, nichts berechnet
+                _t = _d.get_gettext(_d.resolve_ui_language(request)) if (_d.get_gettext and _d.resolve_ui_language) else None
+                raise HTTPException(status_code=409, detail={"code": "schon_getaggt", "text": schon_getaggt_text(_t)})
             seiten = _seiten(doc)
             if seiten <= 0:
                 raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")
@@ -1083,6 +1128,10 @@ def build_router(deps: Deps) -> APIRouter:
             project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
         finally:
             conn.close()
+        if quelle_getaggt(doc):
+            # auch der Testlauf taggte eine schon getaggte Datei nicht neu, er zeigte nur das Wasserzeichen (30.09.2026)
+            _t = _d.get_gettext(_d.resolve_ui_language(request)) if (_d.get_gettext and _d.resolve_ui_language) else None
+            raise HTTPException(status_code=409, detail={"code": "schon_getaggt", "text": schon_getaggt_text(_t)})
         seiten = _seiten(doc)
         if seiten <= 0:
             raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")

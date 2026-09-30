@@ -160,7 +160,9 @@ with sync_playwright() as p:
     check("Tagging: kein Upload-Feld (Hochladen nur in „Dokument“)", pg.locator("#projUpload").count() == 0)
     tl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
     check("Tagging-Karte zeigt Struktur und Bilder, keine Metadaten (Punkt 7)", "Struktur: " in tl and "Bilder: " in tl and "Titel: " not in tl and "Anwendung: " not in tl, tl)
-    check("Knopf „Barrierefrei machen“ mit Seiten und Credits im Namen", pg.locator("button[id^=dok_tag_]").count() == 1 and "2 Seiten, 2 Credits" in pg.locator("button[id^=dok_tag_]").first.inner_text())
+    # 20 Credits je Seite (Michael Karbe, Feedback 202609230 - 1, Punkt 11)
+    check("Knopf „Barrierefrei machen“ mit Seiten und Credits im Namen (20 je Seite)", pg.locator("button[id^=dok_tag_]").count() == 1 and "2 Seiten, 40 Credits" in pg.locator("button[id^=dok_tag_]").first.inner_text(), pg.locator("button[id^=dok_tag_]").first.inner_text() if pg.locator("button[id^=dok_tag_]").count() else "")
+    check("Ungetaggte Quelle: kein Hinweis „schon getaggt“", pg.locator("[id^=dok_schon_getaggt_]").count() == 0)
     check("Tagging: keine Dateiknöpfe (Umbenennen, Löschen, Herunterladen)", pg.locator("section.dok-karte button:has-text('Umbenennen')").count() == 0 and pg.locator("section.dok-karte button:has-text('Löschen')").count() == 0 and pg.locator("button[id^=dok_export_]").count() == 0)
     check("Knöpfe unter einer Linie über die volle Breite, nicht neben dem Vorschaubild (Mail - 3, Punkt 3)",
           pg.locator("section.dok-karte .dok-werkbank .ausgabe-aktionen button[id^=dok_tag_]").count() == 1
@@ -203,7 +205,8 @@ with sync_playwright() as p:
     umfang = pg.locator("#dkLaufUmfang").inner_text()
     summary = pg.locator("#dkLaufSummary").inner_text()
     check("Umfang nennt Dokument und 2 Seiten", "klicktest_roh.pdf" in umfang and "2 Seiten" in umfang, umfang)
-    check("Preis 2 Credits genannt", "2 Credits" in summary, summary)
+    check("Preis 40 Credits genannt, 20 Credits je Seite, Tagging nicht noch einmal beim Herunterladen (Punkte 11, 12)", "40 Credits" in summary and "20 Credits je Seite" in summary and "beim Herunterladen wird es nicht noch einmal berechnet" in summary, summary)
+    verbraucht_vor_tagging = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
     axe(pg, "Dialog Barrierefrei machen")
     pg.keyboard.press("Escape")
     check("Escape schliesst den Dialog, Fokus zurueck auf dem Knopf", not pg.locator("#dkLaufDialog[open]").count() and (pg.evaluate("document.activeElement && document.activeElement.id") or "").startswith("dok_tag_"))
@@ -222,6 +225,8 @@ with sync_playwright() as p:
     meld = pg.locator("section.dok-karte .dok-ergebnis p").first.inner_text() if fertig else ""
     # Mail - 2, Punkt 2: Ergebnis UNTER dem Dokument in der Karte, farbig, mit Fokus
     check("Ergebnis in der Karte, nennt Struktur", fertig and "getaggt" in meld and "Elemente" in meld, meld)
+    vb_nach = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
+    check("Tagging hat genau 40 Credits gebucht (2 Seiten × 20)", isinstance(vb_nach, int) and isinstance(verbraucht_vor_tagging, int) and vb_nach - verbraucht_vor_tagging == 40, (verbraucht_vor_tagging, vb_nach))
     check("Fokus auf dem Ergebnis in der Karte", str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_ergebnis_text_"))
     check("Ergebnis grün hinterlegt (Erfolg)", pg.evaluate("getComputedStyle(document.querySelector('.dok-ergebnis')).backgroundColor") == "rgb(240, 253, 244)")
     check("Keine Meldung mehr oben über der Liste", pg.locator("#dkLaufMeldung:not([hidden])").count() == 0)
@@ -277,10 +282,12 @@ with sync_playwright() as p:
     check("Im Dialog nur „Als PDF“ und „Abbrechen“ (keine Tabellen, die gibt es in „Alt-Texte“)", sichtbar == ["Als PDF", "Abbrechen"], sichtbar)
     for _ in range(20):
         zs = pg.locator("#exportSummary").inner_text()
-        if "Credits" in zs:
+        if "kostet" in zs:
             break
         pg.wait_for_timeout(500)
-    check("Zusammenfassung nennt Bilder mit Text und Preis, nicht die Tabellen-Exporte", "Text" in zs and "Credits" in zs and "CSV" not in zs, zs)
+    # Punkt 12: getaggt, nichts bearbeitet -> das Herunterladen kostet nichts; der Dialog sagt es VORHER
+    check("Zusammenfassung nennt Bilder mit Text, kein Tabellen-Export, und dass das Herunterladen nichts kostet (nichts bearbeitet)", "Text" in zs and "CSV" not in zs and "kostet nichts" in zs and "keine Alt-Texte und keine Quickinfos bearbeitet" in zs and "Dieser Export kostet" not in zs, zs)
+    verbraucht_vor_dl = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
     check("Fokus liegt im Dialog", pg.evaluate("document.getElementById('exportPanel').contains(document.activeElement)"))
     axe(pg, "Herunterladen-Dialog in der Ansicht Dokument")
     with pg.expect_download(timeout=90000) as dl_info:
@@ -290,6 +297,8 @@ with sync_playwright() as p:
     pg.wait_for_timeout(2500)
     st = pg.locator("#exportStatus").inner_text()
     check("Statuszeile im Dialog nennt den Download, Fokus darauf", "Heruntergeladen" in st and pg.evaluate("document.activeElement && document.activeElement.id") == "exportStatus", st)
+    check("Statuszeile: keine Credits berechnet (Punkt 12)", "Es wurden keine Credits berechnet." in st and "abgebucht" not in st, st)
+    check("Herunterladen ohne Bearbeitung hat nichts gebucht", pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht") == verbraucht_vor_dl)
     check("Abbrechen heißt jetzt „Zurück zum Projekt“", pg.locator("#exportCancelBtn").inner_text().strip() == "Zurück zum Projekt")
     axe(pg, "Herunterladen-Dialog nach dem Download")
     pg.click("#exportCancelBtn")
@@ -392,11 +401,25 @@ with sync_playwright() as p:
     check("Stand: Prüfdatei erstellt am …, aktuell, Norm-Prüfung (veraPDF), Problemstellen", all(k in meta for k in ("Prüfdatei: erstellt am", "Stand: aktuell", "Norm-Prüfung PDF/UA-1 (veraPDF): ", "Problemstellen: ")), meta)
     check("veraPDF nennt Ergebnis mit Zahl der Prüfpunkte (Michael Karbe 28.09.2026)", re.search(r"Norm-Prüfung PDF/UA-1 \(veraPDF\): (bestanden, [\d.]+ Prüfpunkte erfüllt|nicht bestanden, [\d.]+ Prüfpunkte verletzt)", meta) is not None, meta)
     karte = pg.locator("section.ab-karte").first.inner_text()
-    check("Hinweis: geprüft wird mit veraPDF, jede Problemstelle nennt die Regelnummer", "Geprüft wird mit veraPDF" in karte and "Zusätzlich prüft InkluDocs" not in karte, karte[:400])
+    # Michael Karbe, Feedback 202609230 - 1, Punkt 6: gekürzter Satz
+    check("Hinweis gekürzt: „Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF.“ (Punkt 6)", "Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF." in karte and "demselben Werkzeug" not in karte and "Zusätzlich prüft InkluDocs" not in karte, karte[:400])
+    kopf = pg.locator(".projekt-kopf").inner_text()
+    check("Satz oben unter den Ansichts-Knöpfen, gekürzt (Punkt 9)", "Hier prüfst du die fertige Datei mit veraPDF. Anzeige der Problemstellen im Prüfbericht." in kopf and pg.evaluate("(() => { const k = document.querySelector('.projekt-kopf .ansicht-wahl'); const h = document.getElementById('abKopfHinweis'); return !!(k && h && (k.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING)); })()"), kopf)
+    check("Unter „Dokumente (n)“ kein Hinweissatz mehr (Punkt 9)", pg.evaluate("(() => { const n = document.getElementById('dokumenteHeading').nextElementSibling; return n && n.id; })()") == "abListe")
+    check("Linie über „Prüfdatei neu erstellen“ (Punkt 2)", pg.evaluate("(() => { const b = document.querySelector('button[id^=ab_erstellen_]'); const w = b && b.closest('.ab-werkbank'); return !!w && getComputedStyle(w).borderTopStyle === 'solid'; })()"))
+    check("Kein Satz „Keine der Problemstellen gehört zu einer bestimmten Seite.“ (Punkt 7)", "Keine der Problemstellen gehört zu einer bestimmten Seite" not in karte)
     pg.wait_for_timeout(1500)
     check("Keine Sprache/Zusammenfassung in der Prüfung (Punkt 10)", pg.locator("ul[id^=ab_kopf_]").count() == 0)
     probleme = pg.locator("ol.ab-problemliste > li").all_inner_texts()
-    check("Nur veraPDF-Befunde, jeder mit Regelnummer (Punkt 8)", all("veraPDF (PDF/UA-1)" in x and "veraPDF-Regel" in x for x in probleme) and not any(q in " ".join(probleme) for q in ("Vollständigkeit:", "Struktur:", "KI-basierte")), probleme[:4])
+    # Feedback 202609230 - 1, Punkt 8: kein „veraPDF (PDF/UA-1):“ mehr in der Zeile, die Regelnummer bleibt
+    check("Nur veraPDF-Problemstellen, jede mit Regelnummer, ohne „veraPDF“ in der Zeile (Punkt 8)", all("veraPDF" not in x and "(Regel" in x for x in probleme) and not any(q in " ".join(probleme) for q in ("Vollständigkeit:", "Struktur:", "KI-basierte")), probleme[:4])
+    if probleme:
+        st_ab = pg.evaluate("""(() => { const m = document.querySelector('section.ab-karte ul.dok-meta li'); const p = document.querySelector('ol.ab-problemliste > li');
+            const a = getComputedStyle(m), b = getComputedStyle(p); const s = document.querySelector('.ab-problemklappe > summary'); const o = document.querySelector('ol.ab-problemliste');
+            const alle = document.querySelectorAll('ol.ab-problemliste > li');
+            return {gleich: a.fontFamily === b.fontFamily && a.fontSize === b.fontSize && a.lineHeight === b.lineHeight, anzahl: alle.length, li_abstand: alle.length > 1 ? parseFloat(getComputedStyle(alle[0]).marginBottom) : null, ol_oben: parseFloat(getComputedStyle(o).marginTop), sum_unten: parseFloat(getComputedStyle(s).marginBottom)}; })()""")
+        check("Problemtext in Schrift, Größe und Zeilenhöhe der Dokumentinfos (Punkt 4)", st_ab["gleich"], st_ab)
+        check("Abstand zwischen den Problemstellen (Punkt 5, bei mehr als einer) und unter „Problemstellen“ (Punkt 3)", (st_ab["li_abstand"] is None or st_ab["li_abstand"] >= 8) and st_ab["ol_oben"] + st_ab["sum_unten"] >= 14, st_ab)
     check("Kein Filter „Ganzes Dokument / Nur Problemstellen“ mehr (Punkt 12)", pg.locator("fieldset.ab-filter").count() == 0)
     check("Kein „!“ vor den Problemen (Punkt 7)", pg.locator(".ab-marke").count() == 0)
     n_prob = pg.locator("ol.ab-problemliste > li").count()

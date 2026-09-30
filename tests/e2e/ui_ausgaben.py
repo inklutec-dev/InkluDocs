@@ -47,7 +47,8 @@ with sync_playwright() as p:
     # Michael Karbe (Mail 12.09.2026): Abbrechen unten rechts, „Zur Ablage“ direkt links daneben — beide in der Dialog-Fusszeile.
     check("„Zur Ablage“ und „Abbrechen“ stehen zusammen unten rechts (exportFooter, Link direkt vor dem Knopf)", pg.evaluate("() => { const a = document.getElementById('pdfuaAusgabenLink'), b = document.getElementById('exportCancelBtn'), f = document.getElementById('exportFooter'); return !!(a && b && f && a.parentElement === f && b.parentElement === f && a.nextElementSibling === b && getComputedStyle(f).justifyContent === 'flex-end'); }"))
     check("Abbrechen ist der letzte Knopf im Dialog", pg.evaluate("() => { const bs = document.querySelectorAll('#exportPanel button'); return bs[bs.length - 1].id === 'exportCancelBtn'; }"))
-    check("Kein „Zur Ablage“ mehr in der Ergebnisbox", pg.locator("#pdfuaResult a").count() == 0)
+    # In der Ergebnisbox steht seit 30.09.2026 nur der Verweis „Zur Barrierefreiheitsprüfung“ (Steve), kein Ablage-Link
+    check("Kein „Zur Ablage“ mehr in der Ergebnisbox (nur der Verweis auf die Barrierefreiheitsprüfung)", pg.locator("#pdfuaResult a[href*='ablage']").count() == 0 and pg.locator("#pdfuaResult a").count() == pg.locator("#pdfuaResult a#pdfuaZurPruefung").count())
     check("Satz „liegen jetzt in deiner Ablage“, kein Aufbewahrungs-Satz, keine „in Ordnung“-Zeilen", "in deiner Ablage" in pg.locator("#pdfuaResult").inner_text() and "Tage" not in pg.locator("#pdfuaResult").inner_text() and "in Ordnung" not in pg.locator("#pdfuaResult").inner_text())
     n_neu = pg.request.get(B + f"/api/projects/{PID}").json().get("ausgaben_anzahl")
     check("Ablage-Zaehler um 1 erhoeht", n_neu == vorher + 1, (n_neu, vorher))

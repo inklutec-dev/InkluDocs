@@ -220,6 +220,19 @@ Belehrungs-Fassung 2026-08-24. Rueckabwicklung bleibt vorerst Handarbeit
 Tests: verify_treue.py (61 Checks, echte Stripe-Test-API, in
 alle_tests.sh); verify_stripe-Pin auf 18 Preise.
 
+## PDF-PROJEKTE: TAGGING 20 JE SEITE, HERUNTERLADEN NUR, WAS GENUTZT WURDE (30.09.2026)
+
+Michael Karbe, Mail „Feedback 202609230 - 1“, Punkte 11 und 12. `AKTIONS_PREISE["pdf_tagging"] = 20` (vorher 1, vorlaeufig),
+verbucht nur nach erfolgreichem Lauf und nie, wenn die Quelle schon Tags hatte (`tagging_api.quelle_getaggt` vor dem Start,
+Sicherheitsnetz `bericht.vorher.elemente` danach). Herunterladen der PDF: `pdf_download_preis(alt, qi)` — EIN Grundpreis
+(pdf_export bzw. formular_export, 25) sobald etwas bearbeitet ist, Staffel 5 je angefangene 10 bearbeitete Bilder und 1 je
+angefangene 10 bearbeitete Felder; nichts bearbeitet = 0. Verbucht als `pdf_export` (Alt-Text-Anteil mit Grundpreis) und
+`formular_export` (Quickinfo-Anteil; Grundpreis nur ohne Alt-Text-Anteil). Keine Doppelabbuchung: der abgerechnete Stand
+steht je Dokument in `documents.export_bezahlt` (Fingerabdruck der bearbeiteten Alt-Texte und Quickinfos); derselbe Stand
+kostet beim naechsten Herunterladen (auch im ZIP, auch ueber den Chatbot) nichts (`GLEICHER_STAND_KOSTENLOS`). Der
+KI-Alt-Text bleibt bei 5 Credits (Steve 30.09.2026). Word-Export, barrierefreie PDF aus Word und eigenstaendige
+Formular-Projekte unveraendert. Tests: `tests/test_herunterladen_genutzt.py`, `tests/e2e/verify_michael_0930.py`.
+
 ## AKTIONSPREISE (Michael Karbe, bestaetigt 29.08.2026 — gebaut 29.08.2026)
 
 Eine Preisquelle: `billing.AKTIONS_PREISE` (je Vorgang), `billing.EXPORT_ARTEN` +
