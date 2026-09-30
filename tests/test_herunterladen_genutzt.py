@@ -256,8 +256,24 @@ class Plan(unittest.TestCase):
         p2 = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
         self.assertEqual((p1["preis"], p2["preis"]), (30, 30))
         self.assertEqual(self.m._export_abrechnen(7, p1, {1: False}), 30)
-        self.assertEqual(self.m._export_abrechnen(7, p2, {1: False}), 0)
+        self.assertEqual(self.m._export_abrechnen(7, p2, {1: False}), 0)   # derselbe Inhalt ist bezahlt: ausliefern, 0
         self.assertEqual(self.gebucht(), 30)
+
+    def test_verlorener_anspruch_anderer_inhalt_409(self):
+        """Nachpruefung 30.09.2026, Punkt 1 (cas_probe): zwei Plaene mit VERSCHIEDENEN Staenden auf demselben gelesenen Wert
+        (zwei Prozesse ohne gemeinsame Sperre). Der zweite verliert den Anspruch — er darf seinen anderen Inhalt nicht
+        kostenlos ausliefern: 409, nichts gebucht, der bezahlte Stand bleibt der erste."""
+        from fastapi import HTTPException
+        p1 = self.m._pdf_export_plan(0, [self._unit(1, True, [self._bild(1, alt_text="Stand S1", status="done")])])
+        p2 = self.m._pdf_export_plan(0, [self._unit(1, True, [self._bild(1, alt_text="Stand S2", status="done")])])
+        self.assertEqual(p1["je_dokument"][1]["vorher"], p2["je_dokument"][1]["vorher"])
+        self.assertEqual(self.m._export_abrechnen(7, p1, {1: False}), 30)
+        stand1 = self.stand(1)
+        with self.assertRaises(HTTPException) as cm:
+            self.m._export_abrechnen(7, p2, {1: False})
+        self.assertEqual(cm.exception.status_code, 409)
+        self.assertEqual((self.gebucht(), self.stand(1)), (30, stand1))
+        self.assertEqual(self.m._pdf_export_plan(0, [self._unit(1, True, [self._bild(1, alt_text="Stand S2", status="done")])])["preis"], 30)
 
     def test_teilbuchung_wird_gemerkt(self):
         """N4: Alt-Texte UND Quickinfos bearbeitet, die Quickinfos landen aber nicht in der Datei: nur der Alt-Text-Teil wird
@@ -286,8 +302,11 @@ class Plan(unittest.TestCase):
         """N6: schlaegt die Buchung fehl, gilt der Stand NICHT als bezahlt (vorher: verschluckter Fehler, Stand gemerkt)."""
         bilder = [self._bild(1, alt_text="KI-Text", status="done")]
         plan = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
+        from fastapi import HTTPException
         with mock.patch.object(self.m.billing, "_pakete_abbuchen", side_effect=RuntimeError("Datenbank gesperrt")):
-            self.assertEqual(self.m._export_abrechnen(7, plan, {1: False}), 0)
+            with self.assertRaises(HTTPException) as cm:   # seit der Nachpruefung: nichts ausliefern (409)
+                self.m._export_abrechnen(7, plan, {1: False})
+        self.assertEqual(cm.exception.status_code, 409)
         self.assertEqual((self.gebucht(), self.stand(1)), (0, ""))
         self.assertEqual(self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])["preis"], 30)
 
@@ -316,9 +335,117 @@ class Bremse(unittest.TestCase):
                 self.assertEqual(m._export_belegen(uid), "")
                 m._export_freigeben(uid)
             self.assertEqual(m._export_belegen(uid), "drossel")
+        with mock.patch.object(m, "EXPORT_DROSSEL_ANZAHL", 1), mock.patch.object(m.billing, "_ist_admin", return_value=True):
+            m._export_zeiten[uid] = []
+            for _ in range(3):   # Betreiberkonto: keine Drosselung, die Sperre gilt weiter
+                self.assertEqual(m._export_belegen(uid), "")
+                self.assertEqual(m._export_belegen(uid), "laeuft")
+                m._export_freigeben(uid)
         m._export_zeiten.pop(uid, None)
         self.assertIn("warte", m._export_belegt_text("laeuft"))
         self.assertIn("Minuten", m._export_belegt_text("drossel"))
+
+
+class AblageUndBaustand(unittest.TestCase):
+    """Nachpruefung 30.09.2026: Obergrenze der Ablage, ersetzbare kostenlose Eintraege, eigener Ordner je Anfrage,
+    Anzeigename nur im Stand, wenn er Titel wird."""
+
+    @classmethod
+    def setUpClass(cls):
+        try:
+            import main
+        except Exception as e:
+            raise unittest.SkipTest(f"main nicht ladbar: {e}")
+        cls.m = main
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.pfad = os.path.join(self.tmp.name, "t.db")
+        c = sqlite3.connect(self.pfad)
+        c.execute("CREATE TABLE ablage (id INTEGER PRIMARY KEY, user_id INTEGER, project_id INTEGER, document_id INTEGER, art TEXT, "
+                  "datei_pfad TEXT, vorschau_pfad TEXT DEFAULT '', audio_pfad TEXT DEFAULT '', token TEXT DEFAULT '', "
+                  "bau_stand TEXT DEFAULT '', ersetzbar INTEGER DEFAULT 0, preis INTEGER DEFAULT 0)")
+        c.commit()
+        c.close()
+
+        def verbindung():
+            k = sqlite3.connect(self.pfad, timeout=10)
+            k.row_factory = sqlite3.Row
+            return k
+        self.pt = mock.patch.object(self.m, "get_db", side_effect=verbindung)
+        self.pt.start()
+
+    def tearDown(self):
+        self.pt.stop()
+        self.tmp.cleanup()
+
+    def eintrag(self, uid, doc, ersetzbar, groesse=10):
+        pf = os.path.join(self.tmp.name, f"e{uid}_{doc}_{ersetzbar}_{groesse}_{len(os.listdir(self.tmp.name))}.pdf")
+        open(pf, "wb").write(b"x" * groesse)
+        c = sqlite3.connect(self.pfad)
+        c.execute("INSERT INTO ablage (user_id, project_id, document_id, art, datei_pfad, ersetzbar) VALUES (?, 1, ?, 'pdf', ?, ?)",
+                  (uid, doc, pf, 1 if ersetzbar else 0))
+        c.commit()
+        c.close()
+
+    def test_obergrenze_anzahl_und_groesse(self):
+        with mock.patch.object(self.m, "ABLAGE_MAX_EINTRAEGE", 3), mock.patch.object(self.m, "ABLAGE_MAX_MB", 1):
+            for _ in range(2):
+                self.eintrag(5, 1, False)
+            self.assertFalse(self.m._ablage_voll(5))
+            self.eintrag(5, 1, False)
+            self.assertTrue(self.m._ablage_voll(5))            # 3 Eintraege
+            self.assertFalse(self.m._ablage_voll(6))           # je Konto
+            self.eintrag(6, 2, False, groesse=1024 * 1024)
+            self.assertTrue(self.m._ablage_voll(6))            # 1 MB
+            text = self.m._ablage_voll_text()
+            self.assertIn("höchstens 3 Einträge, zusammen 1 MB", text)
+            self.assertIn("nur heruntergeladen", text)
+
+    def test_ersetzbare_nur_kostenlose_desselben_dokuments(self):
+        self.eintrag(5, 1, True)
+        self.eintrag(5, 1, False)   # bezahlt: bleibt
+        self.eintrag(5, 2, True)    # anderes Dokument
+        self.eintrag(6, 1, True)    # anderes Konto
+        e = self.m._ablage_ersetzbare(5, 1)
+        self.assertEqual([(r["user_id"], r["document_id"], r["ersetzbar"]) for r in e], [(5, 1, 1)])
+
+    def test_eigener_ordner_je_anfrage_und_aufraeumen(self):
+        wurzel = os.path.join(self.tmp.name, "_export")
+        a = self.m._export_anfrage_anlegen(wurzel)
+        b = self.m._export_anfrage_anlegen(wurzel)
+        self.assertNotEqual(a, b)
+        self.assertTrue(os.path.basename(a).startswith("dl_"))
+        alt = os.path.getmtime(a) - self.m.EXPORT_ANFRAGE_AUFBEWAHREN - 10
+        os.utime(a, (alt, alt))
+        self.m._export_anfrage_anlegen(wurzel)                 # raeumt liegengebliebene Ordner auf
+        self.assertFalse(os.path.isdir(a))
+        self.assertTrue(os.path.isdir(b))
+        self.m._export_anfrage_weg(b)
+        self.assertFalse(os.path.isdir(b))
+        self.m._export_anfrage_weg(wurzel)                     # nie etwas anderes als dl_-Ordner
+        self.assertTrue(os.path.isdir(wurzel))
+
+    def test_anzeigename_nur_im_stand_wenn_er_titel_wird(self):
+        import fitz
+
+        def pdf(pfad, titel):
+            d = fitz.open()
+            d.new_page()
+            if titel:
+                d.set_metadata({"title": titel})
+            d.save(pfad)
+            d.close()
+        mit, ohne = os.path.join(self.tmp.name, "mit.pdf"), os.path.join(self.tmp.name, "ohne.pdf")
+        pdf(mit, "Jahresbericht 2026")
+        pdf(ohne, "")
+
+        def stand(pfad, name):
+            return self.m._bau_stand({"doc": {"id": 1, "original_path": pfad, "original_filename": "bericht.pdf", "display_name": name},
+                                      "images": [], "quickinfos": {}}, "InkluTec")
+        self.assertEqual(stand(mit, "Name A"), stand(mit, "Name B"))       # Titel aus der Quelle: Umbenennen aendert nichts
+        self.assertNotEqual(stand(ohne, "Name A"), stand(ohne, "Name B"))  # Name wird Titel: neuer Stand
+        self.assertEqual(self.m.EXPORT_BAU_VERSION, "export-v1")
 
 
 class SchonGetaggt(unittest.TestCase):

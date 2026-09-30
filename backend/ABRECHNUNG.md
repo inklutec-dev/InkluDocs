@@ -259,6 +259,31 @@ Formular-Projekte unveraendert. Tests: `tests/test_herunterladen_genutzt.py`, `t
 Tests: `tests/test_herunterladen_genutzt.py` (atomarer Anspruch, Teilbuchung, Buchungsfehler, Bremse, N5, M1),
 `tests/e2e/verify_michael_0930.py` Abschnitt I (vier gleichzeitige Downloads, Ablage statt Neubau).
 
+### Zweite Nachbesserung nach der Nachpruefung (30.09.2026)
+
+- **Eigener Ordner je Download (HOCH):** jede Anfrage baut in `_export/dl_<zufall>/doc<ID>/` (`_export_anfrage_anlegen`);
+  vorher `_export/inkludocs_<Dateiname>` fuer alle — zwei gleichnamige Dokumente ueberschrieben sich (im ZIP bekam die Ablage
+  von Dokument 1 die Datei von Dokument 2 mit dem Stand von Dokument 1 und lieferte sie danach dauerhaft aus). Der Ordner wird
+  nach dem Senden geloescht (BackgroundTask), liegengebliebene nach einer Stunde; der Chatbot loescht ihn sofort (er liefert
+  ueber die Ablage-Kopie). Damit kann auch ein Bau direkt nach dem Freigeben der Sperre keine gerade gesendete Datei
+  ueberschreiben.
+- **Ablage (MITTEL):** ein kostenloser Download ersetzt den letzten kostenlosen Eintrag DESSELBEN Dokuments
+  (`ablage.ersetzbar`), bezahlte Eintraege werden nie ersetzt. Neue kostenlose Eintraege nur unter der Obergrenze je Konto
+  (`ABLAGE_MAX_EINTRAEGE` 500, `ABLAGE_MAX_MB` 2048); ist sie erreicht, wird nur heruntergeladen, mit Hinweis „Deine Ablage ist
+  voll …“ (X-Export-Warnings, 6 Sprachen). Bezahlte Downloads werden immer abgelegt. Der Anzeigename zaehlt im Stand nur, wenn
+  er Titel wird (`_titel_aus_quelle`: hat die Arbeitsdatei einen brauchbaren Titel, schreibt der Bau den Namen nicht) —
+  Umbenennen erzwingt dann keinen Neubau. Plattenplatz der Ablage trotzdem ueberwachen.
+- **Verlorener Anspruch (Punkt 1):** `_export_abrechnen` liefert nur aus, wenn inzwischen GENAU der eigene Stand bezahlt ist
+  (gleichzeitiger Download desselben Inhalts); sonst 409 „Dieser Stand wurde gleichzeitig anders abgerechnet …“, nichts
+  geliefert, nichts berechnet (auch bei Buchungsfehler).
+- **Unvollstaendiger Bau (Punkt 2):** Quickinfos nicht (vollstaendig) geschrieben, finalize oder Abnahme nicht gelaufen:
+  `info["bau_unvollstaendig"]`, kein `bau_stand` — so ein Bau wird nie aus der Ablage wiederverwendet.
+- **Bau-Version (Punkt 5):** `EXPORT_BAU_VERSION` ("export-v1") steht im Stand; hochzaehlen, sobald sich der Bau aendert.
+- **Drosselung:** Betreiberkonten (Admin) sind ausgenommen (Testlaeufe, Support); die Sperre gilt fuer alle.
+
+Tests: `tests/test_herunterladen_genutzt.py` (AblageUndBaustand, verlorener Anspruch 409), `tests/test_chat_hoerprobe.py`,
+`tests/e2e/verify_michael_0930.py` Abschnitte J und K, `tests/e2e/ablage_probe.py` (im Container).
+
 ## AKTIONSPREISE (Michael Karbe, bestaetigt 29.08.2026 — gebaut 29.08.2026)
 
 Eine Preisquelle: `billing.AKTIONS_PREISE` (je Vorgang), `billing.EXPORT_ARTEN` +

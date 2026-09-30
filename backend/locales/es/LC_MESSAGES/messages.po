@@ -9951,3 +9951,10 @@ msgstr "«Como Word» y «Convertir en PDF accesible» cuestan {p} créditos cad
 #, python-brace-format
 msgid "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits (Grundpreis)."
 msgstr "«Como Word» y «Convertir en PDF accesible» cuestan {p} créditos cada uno (precio base)."
+
+#, python-brace-format
+msgid "Deine Ablage ist voll (höchstens {n} Einträge, zusammen {mb} MB). Diese PDF wurde nur heruntergeladen, nicht in „Meine Ablage“ gespeichert. Lösche dort alte Einträge, dann wird wieder gespeichert."
+msgstr "Tu archivo está lleno (como máximo {n} entradas, {mb} MB en total). Este PDF solo se ha descargado, no se ha guardado en «Mi archivo». Elimina allí entradas antiguas y se volverá a guardar."
+
+msgid "Dieser Stand wurde gleichzeitig anders abgerechnet, oder die Buchung ist fehlgeschlagen. Es wurde nichts berechnet und nichts geliefert. Bitte lade die PDF noch einmal herunter."
+msgstr "Esta versión se facturó de otra forma al mismo tiempo, o el cargo ha fallado. No se ha cobrado ni entregado nada. Vuelve a descargar el PDF."

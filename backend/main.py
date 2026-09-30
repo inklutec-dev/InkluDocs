@@ -8180,6 +8180,7 @@ def _export_abrechnen(user_id: int, plan: dict, qi_geschrieben: dict, ausloeser:
     je = plan.get("je_dokument") or {}
     alt_summe = qi_summe = 0
     ansprueche = []
+    teile = []   # (doc_id, "a"|"q", Stand) — was dieser Download bezahlen will
     for doc_id, d in je.items():
         alt_n = int(d.get("alt") or 0)
         qi_n = int(d.get("qi") or 0) if qi_geschrieben.get(doc_id) else 0
@@ -8189,13 +8190,35 @@ def _export_abrechnen(user_id: int, plan: dict, qi_geschrieben: dict, ausloeser:
         qi_summe += qi_n
         vorher = _stand_lesen(d.get("vorher"))
         neu = _stand_schreiben(d["a"] if alt_n else vorher["a"], d["q"] if qi_n else vorher["q"])
+        if alt_n:
+            teile.append((doc_id, "a", d["a"]))
+        if qi_n:
+            teile.append((doc_id, "q", d["q"]))
         if billing.GLEICHER_STAND_KOSTENLOS:
             ansprueche.append((doc_id, d.get("vorher") or "", neu))
     preis = billing.pdf_download_preis(alt_summe, qi_summe)
     if not preis["preis"]:
         return 0
     posten = [("pdf_export", preis["pdf"]), ("formular_export", preis["formular"])]
-    return preis["preis"] if billing.verbuche_export(user_id, "export", posten, ansprueche) else 0
+    if billing.verbuche_export(user_id, "export", posten, ansprueche):
+        return preis["preis"]
+    # Anspruch verloren oder Buchung fehlgeschlagen (Nachpruefung 30.09.2026, Punkt 1): nur ausliefern, wenn inzwischen
+    # GENAU dieser Stand bezahlt ist (ein gleichzeitiger Download desselben Inhalts war schneller) — sonst 409, nichts
+    # geliefert, nichts berechnet; der naechste Versuch plant neu.
+    if teile and billing.GLEICHER_STAND_KOSTENLOS:
+        conn = get_db()
+        try:
+            jetzt = {r["id"]: _stand_lesen(r["export_bezahlt"]) for r in conn.execute(
+                f"SELECT id, export_bezahlt FROM documents WHERE id IN ({','.join('?' * len({t[0] for t in teile}))})",
+                tuple({t[0] for t in teile})).fetchall()}
+        finally:
+            conn.close()
+        if all((jetzt.get(doc_id) or {}).get(teil) == stand for doc_id, teil, stand in teile):
+            log.info("Export: Stand schon von einem gleichzeitigen Download bezahlt — ausgeliefert, nichts gebucht")
+            return 0
+    raise HTTPException(status_code=409, detail=(
+        "Dieser Stand wurde gleichzeitig anders abgerechnet, oder die Buchung ist fehlgeschlagen. Es wurde nichts berechnet "
+        "und nichts geliefert. Bitte lade die PDF noch einmal herunter."))
 
 
 def _pdf_ohne_tags(unit: dict, output_dir: str, creator: Optional[str], mit_quickinfos: bool) -> tuple[str, dict]:
@@ -8253,7 +8276,7 @@ def _quickinfos_in_export(doc: dict, output_path: str, creator: Optional[str], m
 
 
 def _pdf_in_ablage(user_id: int, project: dict, unit: dict, quelle: str, dateiname: str, preis: int, ausloeser: str,
-                   bau_stand: str = "") -> Optional[int]:
+                   bau_stand: str = "", ersetzbar: bool = False) -> Optional[int]:
     """Ablage-Eintrag fuer eine exportierte, getaggte PDF (22.09.2026, Steve: „dann wird sie fertig abgelegt“):
     Kopie in den Ablage-Ordner, PDF/UA-Pruefung ueber den Konverter (Ausfall = Hinweis, kein Fehler),
     Eintrag mit Bericht und Vorschaubild. Scheitert das, bleibt der Download unberuehrt."""
@@ -8281,12 +8304,13 @@ def _pdf_in_ablage(user_id: int, project: dict, unit: dict, quelle: str, dateina
             doc_id = None
         aid = _ausgabe_anlegen(user_id, project, doc_id, ausloeser, dateiname, ziel, "application/pdf", token, preis,
                                bool(pruefung.get("bestanden")), zusammenfassung, ergebnisse, data, art="pdf")
-        if aid and bau_stand:
+        if aid and (bau_stand or ersetzbar):
             # Fingerabdruck des Baus: derselbe Stand wird beim naechsten kostenlosen Herunterladen aus der Ablage geliefert
-            # statt neu gebaut (Pruefung 30.09.2026, H1)
+            # statt neu gebaut (Pruefung 30.09.2026, H1). ersetzbar: kostenloser Eintrag, den der naechste kostenlose Download
+            # desselben Dokuments ersetzt (Nachpruefung 30.09.2026).
             c = get_db()
             try:
-                c.execute("UPDATE ablage SET bau_stand = ? WHERE id = ?", (bau_stand, aid))
+                c.execute("UPDATE ablage SET bau_stand = ?, ersetzbar = ? WHERE id = ?", (bau_stand or "", 1 if ersetzbar else 0, aid))
                 c.commit()
             finally:
                 c.close()
@@ -8387,9 +8411,12 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     # Quickinfo, kommen sie in DIESELBE Datei — eine fertige PDF mit Struktur, Alt-Texten und Quickinfos.
     try:
         info["quickinfos"] = _quickinfos_in_export(doc, output_path, creator, unit.get("quickinfos"))
+        if info["quickinfos"].get("warnungen"):
+            info["bau_unvollstaendig"] = True   # nicht alle Quickinfos geschrieben: nie aus der Ablage wiederverwenden
     except Exception as e:  # noqa: BLE001 — Quickinfos duerfen den Alt-Text-Export nie scheitern lassen
         print(f"WARNUNG: Quickinfos im Export nicht geschrieben ({output_path}): {e}")
         info.setdefault("warnings", []).append("Die Quickinfos konnten nicht in die PDF geschrieben werden.")
+        info["bau_unvollstaendig"] = True
 
     # Gemeinsamer Abschluss fuer BEIDE Pfade (12.06.2026): Dokumentsprache,
     # Dokumenttitel (WCAG 3.1.1 / 2.4.2) und verwaiste /Alt-Altlasten der
@@ -8418,6 +8445,7 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
         # Die Alt-Texte sind zu diesem Zeitpunkt bereits korrekt gesetzt,
         # Sprache/Titel/Aufraeumen sind Zusatznutzen. Fehler aber loggen.
         print(f"WARNUNG: finalize_export_pdf fehlgeschlagen fuer {output_path}: {e}")
+        info["bau_unvollstaendig"] = True
 
     # Export-Abnahme (15.09.2026): Die fertige Datei wird mit pikepdf unabhaengig nachgemessen —
     # gleich fuer PDFix-Weg und Ersatzweg: Seitenzahl, Strukturbaum, keine Waisen, Marker-Balance,
@@ -8436,6 +8464,7 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
         print(f"EXPORT-ABNAHME NICHT MOEGLICH projekt={doc.get('project_id')} dokument={doc.get('id')}: {e}")
         info.setdefault("warnings", []).append(
             "Die automatische Abnahme der Export-Datei konnte nicht laufen. Bitte die Datei pruefen.")
+        info["bau_unvollstaendig"] = True
     if info.get("abnahme") and not info["abnahme"]["ok"]:
         # Befund = KEIN Export (Steve 15.09.2026): keine Datei, keine Credits; der Kunde stoesst neu an,
         # das Team ist ueber die Logzeile informiert. Eine fehlerhafte Datei verlaesst das Haus nicht.
@@ -8468,12 +8497,17 @@ EXPORT_DROSSEL_SEKUNDEN = int(os.environ.get("EXPORT_DROSSEL_SEKUNDEN", "300"))
 def _export_belegen(user_id: int) -> str:
     """Sperre + Drosselung fuer das PDF-Herunterladen eines Nutzers. '' = belegt (am Ende _export_freigeben),
     sonst Grund: 'laeuft' oder 'drossel'."""
+    # Betreiberkonten (Admin) sind von der Drosselung ausgenommen (Testlaeufe, Support); die Sperre gilt fuer alle.
+    try:
+        betreiber = billing._ist_admin(user_id)
+    except Exception:  # noqa: BLE001
+        betreiber = False
     with _export_sperre:
         if user_id in _export_nutzer:
             return "laeuft"
         jetzt = time.time()
         zeiten = [t for t in _export_zeiten.get(user_id, []) if jetzt - t < EXPORT_DROSSEL_SEKUNDEN]
-        if len(zeiten) >= EXPORT_DROSSEL_ANZAHL:
+        if len(zeiten) >= EXPORT_DROSSEL_ANZAHL and not betreiber:
             _export_zeiten[user_id] = zeiten
             return "drossel"
         zeiten.append(jetzt)
@@ -8494,13 +8528,108 @@ def _export_belegt_text(grund: str, _=None) -> str:
     return _("Du hast in kurzer Zeit sehr oft heruntergeladen. Bitte warte ein paar Minuten.")
 
 
+# Bau-Version des Downloads, steht im Fingerabdruck des Baus (ablage.bau_stand). HOCHZAEHLEN, sobald sich am Bau etwas
+# aendert, das die fertige Datei anders macht (Schreibwege fuer Alt-Texte und Quickinfos, finalize_export_pdf, Export-Abnahme,
+# PDFix-Skripte, Titelregel): sonst liefert die Ablage fuer einen unveraenderten Stand weiter die alte Datei aus
+# (Nachpruefung 30.09.2026, Punkt 5).
+EXPORT_BAU_VERSION = "export-v1"
+
+
+def _titel_aus_quelle(doc: dict) -> bool:
+    """Hat die Arbeitsdatei einen brauchbaren eigenen Titel? Dann schreibt der Bau den Anzeigenamen NICHT in die PDF
+    (finalize_export_pdf: Titel der Quelle > Dokumentname > erste Ueberschrift > Dateiname), und ein Umbenennen aendert die
+    Datei nicht — also auch nicht den Stand (Nachpruefung 30.09.2026: Umbenennen erzwang einen Neubau)."""
+    try:
+        import fitz
+        from pdf_export import _titel_brauchbar
+        with fitz.open(doc.get("original_path") or "") as d:
+            titel = ((d.metadata or {}).get("title") or "").strip()
+        basis = re.sub(r"\.pdf$", "", (doc.get("original_filename") or "").strip(), flags=re.IGNORECASE) or None
+        return _titel_brauchbar(titel, basis)
+    except Exception:  # noqa: BLE001 — im Zweifel zaehlt der Name mit (dann eben ein Neubau)
+        return False
+
+
 def _bau_stand(unit: dict, creator: Optional[str]) -> str:
-    """Fingerabdruck von allem, was in die fertige PDF eingeht (Arbeitsdatei, Anzeigename, Ersteller, Alt-Texte, die
-    Quickinfo-Momentaufnahme, Bau-Version) — derselbe Massstab wie die Pruefdatei (abschluss.fingerabdruck)."""
+    """Fingerabdruck von allem, was in die fertige PDF eingeht (Arbeitsdatei, Anzeigename nur, wenn er Titel wird, Ersteller,
+    Alt-Texte, die Quickinfo-Momentaufnahme, Bau-Version) — derselbe Massstab wie die Pruefdatei (abschluss.fingerabdruck)."""
+    doc = unit["doc"]
+    if _titel_aus_quelle(doc):
+        doc = dict(doc, display_name="")
     alt = [(i.get("id"), _exportable_alt_text(i)) for i in unit["images"]]
     qi = sorted((unit.get("quickinfos") or {}).items())
-    grund = abschluss.fingerabdruck(unit["doc"], alt, qi, creator or "")
-    return hashlib.sha256(("export-v1\x1e" + grund).encode("utf-8")).hexdigest()
+    grund = abschluss.fingerabdruck(doc, alt, qi, creator or "")
+    return hashlib.sha256((EXPORT_BAU_VERSION + "\x1e" + grund).encode("utf-8")).hexdigest()
+
+
+# Ablage: Obergrenze je Konto fuer KOSTENLOSE Eintraege (Nachpruefung 30.09.2026, MITTEL). Bezahlte Downloads werden immer
+# abgelegt (durch das Guthaben begrenzt); ein kostenloser Download ersetzt den letzten kostenlosen Eintrag desselben Dokuments
+# (ablage.ersetzbar) und legt nur dann einen neuen an, wenn die Ablage nicht voll ist. Plattenplatz trotzdem ueberwachen.
+ABLAGE_MAX_EINTRAEGE = int(os.environ.get("ABLAGE_MAX_EINTRAEGE", "500"))
+ABLAGE_MAX_MB = int(os.environ.get("ABLAGE_MAX_MB", "2048"))
+
+
+def _ablage_voll(user_id: int) -> bool:
+    conn = get_db()
+    try:
+        pfade = [r["datei_pfad"] for r in conn.execute("SELECT datei_pfad FROM ablage WHERE user_id = ?", (user_id,)).fetchall()]
+    finally:
+        conn.close()
+    if len(pfade) >= ABLAGE_MAX_EINTRAEGE:
+        return True
+    groesse = 0
+    for p in pfade:
+        try:
+            groesse += os.path.getsize(p) if p else 0
+        except OSError:
+            pass
+    return groesse >= ABLAGE_MAX_MB * 1024 * 1024
+
+
+def _ablage_voll_text(_=None) -> str:
+    _ = _ or (lambda s: s)
+    return _("Deine Ablage ist voll (höchstens {n} Einträge, zusammen {mb} MB). Diese PDF wurde nur heruntergeladen, nicht in "
+             "„Meine Ablage“ gespeichert. Lösche dort alte Einträge, dann wird wieder gespeichert.").format(
+        n=ABLAGE_MAX_EINTRAEGE, mb=ABLAGE_MAX_MB)
+
+
+def _ablage_ersetzbare(user_id: int, doc_id) -> list:
+    """Kostenlose PDF-Eintraege dieses Dokuments, die ein neuer kostenloser Download ersetzt (neueste zuerst)."""
+    if not doc_id:
+        return []
+    conn = get_db()
+    try:
+        return [dict(r) for r in conn.execute(
+            "SELECT * FROM ablage WHERE user_id = ? AND document_id = ? AND art = 'pdf' AND COALESCE(ersetzbar, 0) = 1 "
+            "ORDER BY id DESC", (user_id, doc_id)).fetchall()]
+    finally:
+        conn.close()
+
+
+# Eigener Ordner je Download-Anfrage (Nachpruefung 30.09.2026, HOCH): vorher schrieb jeder Bau nach
+# _export/inkludocs_<Dateiname> — zwei gleichnamige Dokumente (im ZIP, oder ein Bau direkt nach dem Freigeben der Sperre,
+# waehrend die erste Datei noch gesendet wurde) ueberschrieben sich gegenseitig, und die Ablage bekam die falsche Datei.
+# Jetzt: _export/dl_<zufall>/doc<ID>/…; der Ordner wird nach dem Senden geloescht, liegengebliebene nach einer Stunde.
+EXPORT_ANFRAGE_AUFBEWAHREN = 3600
+
+
+def _export_anfrage_anlegen(wurzel: str) -> str:
+    import tempfile as _tempfile
+    os.makedirs(wurzel, exist_ok=True)
+    jetzt = time.time()
+    try:
+        for n in os.listdir(wurzel):
+            p = os.path.join(wurzel, n)
+            if n.startswith("dl_") and os.path.isdir(p) and jetzt - os.path.getmtime(p) > EXPORT_ANFRAGE_AUFBEWAHREN:
+                shutil.rmtree(p, ignore_errors=True)
+    except OSError:
+        pass
+    return _tempfile.mkdtemp(prefix="dl_", dir=wurzel)
+
+
+def _export_anfrage_weg(pfad: Optional[str]) -> None:
+    if pfad and os.path.basename(os.path.normpath(pfad)).startswith("dl_"):
+        shutil.rmtree(pfad, ignore_errors=True)
 
 
 def _ablage_datei_fuer(user_id: int, doc_id, bau_stand: str) -> Optional[dict]:
@@ -8519,14 +8648,15 @@ def _ablage_datei_fuer(user_id: int, doc_id, bau_stand: str) -> Optional[dict]:
 
 
 def _pdf_export_sync(user_id: int, project: dict, document_id: Optional[int], custom_name: Optional[str],
-                     ausloeser: str = "knopf", erwarteter_preis: Optional[int] = None) -> dict:
+                     ausloeser: str = "knopf", erwarteter_preis: Optional[int] = None, _=None) -> dict:
     """Das ganze PDF-Herunterladen (im Rechenbereich _export_executor, der Aufrufer haelt die Sperre _export_belegen):
     Planung (NACH dem Belegen, damit sie den zuletzt bezahlten Stand sieht), Bau bzw. Ablage-Datei, Abrechnung aus dem
-    Geschriebenen, Ablage-Eintrag. Rueckgabe {"pfad", "dateiname", "media", "headers", "ausgabe_ids", "preis"}.
-    erwarteter_preis (Chatbot): weicht der Plan davon ab, 409 statt zu einem anderen Preis zu liefern."""
+    Geschriebenen, Ablage-Eintrag. Rueckgabe {"pfad", "dateiname", "media", "headers", "ausgabe_ids", "preis",
+    "anfrage_dir"} — anfrage_dir (eigener Ordner dieser Anfrage) loescht der Aufrufer nach dem Senden (_export_anfrage_weg).
+    erwarteter_preis (Chatbot): weicht der Plan davon ab, 409 statt zu einem anderen Preis zu liefern. _ = Uebersetzer fuer
+    die eigenen Hinweise (Ablage voll)."""
     units = _load_pdf_export_units(project, user_id, document_id)
-    output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export")
-    os.makedirs(output_dir, exist_ok=True)
+    wurzel = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export")
     _creator = _pdf_creator_fuer(user_id)   # Ersteller aus dem Konto (14.09.2026)
     # Preis (Michael Karbe, Feedback 202609230 - 1, Punkt 12): nur, was in InkluDocs bearbeitet wurde; das Tagging nie beim
     # Herunterladen; ein schon bezahlter Teil nicht noch einmal (_pdf_export_plan). Reicht das Guthaben nicht: 402.
@@ -8538,13 +8668,25 @@ def _pdf_export_sync(user_id: int, project: dict, document_id: Optional[int], cu
     getaggt_ids = {id(u) for u in plan["getaggt"]}
     mit_qi_ids = {id(u) for u in plan["mit_qi"]}
     je = plan["je_dokument"]
+    anfrage = _export_anfrage_anlegen(wurzel)
+    hinweise: list = []   # eigene Hinweise dieser Anfrage (Ablage voll), uebersetzt
+
+    def _dok_dir(u) -> str:
+        return os.path.join(anfrage, f"doc{u['doc'].get('id') or u['doc'].get('doc_index') or 0}")
 
     def _qi_ok(u, info) -> bool:
         return int(((info or {}).get("quickinfos") or {}).get("geschrieben") or 0) > 0
 
-    def _getaggt_bauen(u, name_in_ablage: str) -> tuple:
+    def _gebucht(doc_id, preis, qi_geschrieben) -> bool:
+        """Wurde fuer DIESES Dokument in diesem Download etwas gebucht?"""
+        d = je.get(doc_id) or {}
+        return bool(preis) and (int(d.get("alt") or 0) > 0 or (int(d.get("qi") or 0) > 0 and bool(qi_geschrieben.get(doc_id))))
+
+    def _getaggt_bauen(u) -> tuple:
         """Getaggtes Dokument: Datei aus der Ablage, wenn fuer dieses Dokument nichts zu berechnen ist und derselbe Stand
-        dort liegt (kein Neubau, kein neuer Eintrag); sonst bauen. Rueckgabe (pfad, info, bau_stand, ablage_id)."""
+        dort liegt (kein Neubau, kein neuer Eintrag); sonst bauen, im eigenen Ordner dieses Dokuments und dieser Anfrage.
+        Rueckgabe (pfad, info, bau_stand, ablage_id). Ein unvollstaendiger Bau (Quickinfos oder Abschluss nicht geschrieben)
+        bekommt keinen bau_stand und wird nie aus der Ablage wiederverwendet."""
         d = je.get(u["doc"].get("id")) or {}
         stand = _bau_stand(u, _creator)
         if not d.get("alt") and not d.get("qi"):
@@ -8552,88 +8694,117 @@ def _pdf_export_sync(user_id: int, project: dict, document_id: Optional[int], cu
             if alt:
                 return alt["datei_pfad"], {"method": "ablage", "aus_ablage": True,
                                            "quickinfos": {"geschrieben": len(u.get("quickinfos") or {})}}, stand, alt["id"]
-        pfad, info = _build_pdf_for_document(u, output_dir, custom_title=custom_name, creator=_creator)
-        return pfad, info, stand, None
+        pfad, info = _build_pdf_for_document(u, _dok_dir(u), custom_title=custom_name, creator=_creator)
+        return pfad, info, ("" if info.get("bau_unvollstaendig") else stand), None
 
-    if document_id is not None or len(units) == 1:
-        unit = units[0]
-        download_base = custom_name or _doc_label(unit["doc"])
-        dateiname = f"inkludocs_{download_base}.pdf"
-        if id(unit) not in getaggt_ids:
-            # Ungetaggte Einzeldatei (29.09.2026): Original bzw. Original + bearbeitete Quickinfos, keine Ablage
-            output_path, info = _pdf_ohne_tags(unit, output_dir, _creator, id(unit) in mit_qi_ids)
-            preis = _export_abrechnen(user_id, plan, {unit["doc"].get("id"): not info["unveraendert"]})
-            headers = {"X-Export-Credits": str(preis), "X-Export-Method": str(info["method"]),
-                       "X-Export-Tagged": "0", "X-Export-Total": "0",
-                       "X-Export-Quickinfos": str(int(info["quickinfos"].get("geschrieben") or 0)),
-                       "X-Export-Unveraendert": "1" if info["unveraendert"] else "0",
-                       "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0))}
-            if info.get("warnings"):
-                headers["X-Export-Warnings"] = _warnings_header(info["warnings"])
-            return {"pfad": output_path, "dateiname": dateiname, "media": "application/pdf", "headers": headers,
-                    "ausgabe_ids": [], "preis": preis}
-        output_path, info, stand, ablage_id = _getaggt_bauen(unit, dateiname)
-        preis = _export_abrechnen(user_id, plan, {unit["doc"].get("id"): _qi_ok(unit, info)})
-        headers = {"X-Export-Credits": str(preis), "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0))}
-        for k, h in (("method", "X-Export-Method"), ("tagged", "X-Export-Tagged"), ("total", "X-Export-Total")):
-            if k in info:
-                headers[h] = str(info[k])
-        if info.get("aus_ablage"):
-            headers["X-Export-Aus-Ablage"] = "1"
-        if info.get("warnings"):
-            headers["X-Export-Warnings"] = _warnings_header(info["warnings"])
-        if ablage_id is None:
-            # Ablage (22.09.2026): die fertige PDF bleibt mit Bericht und Vorschau erhalten
-            ablage_id = _pdf_in_ablage(user_id, project, unit, output_path, dateiname, preis, ausloeser, stand)
-        if ablage_id:
-            headers["X-Ausgabe-Id"] = str(ablage_id)
-        return {"pfad": output_path, "dateiname": dateiname, "media": "application/pdf", "headers": headers,
-                "ausgabe_ids": [ablage_id] if ablage_id else [], "preis": preis}
-
-    # Alle Dokumente -> ZIP.
-    zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
-    zip_path = os.path.join(output_dir, f"{zip_base}_alle_pdfs.zip")
-    aggregated_warnings: list[str] = []
-    total_tagged = total_images = unveraendert_n = quickinfos_geschrieben = 0
-    qi_geschrieben: dict = {}
-    # Ablage-Eintraege ERST nach dem Bau aller Dateien und nach der Verbuchung (Review 29.09.2026)
-    ablage_nachher: list = []
-    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        # Nummerierung nach Anzeige-Position (1..N), passend zur „Dokument N"-Anzeige im Frontend
-        for pos, unit in enumerate(units, start=1):
-            inner = f"{pos:02d}_{_doc_label(unit['doc'])}.pdf"
-            if id(unit) not in getaggt_ids:
-                out_path, info = _pdf_ohne_tags(unit, output_dir, _creator, id(unit) in mit_qi_ids)
-                unveraendert_n += 1 if info["unveraendert"] else 0
-                qi_geschrieben[unit["doc"].get("id")] = not info["unveraendert"]
-            else:
-                out_path, info, stand, ablage_id = _getaggt_bauen(unit, inner)
-                qi_geschrieben[unit["doc"].get("id")] = _qi_ok(unit, info)
-                if ablage_id is None:
-                    ablage_nachher.append((unit, out_path, inner, stand))
-            zf.write(out_path, arcname=inner)
-            quickinfos_geschrieben += int((info.get("quickinfos") or {}).get("geschrieben") or 0)
-            total_tagged += int(info.get("tagged", 0) or 0)
-            total_images += int(info.get("total", 0) or 0)
-            for w in info.get("warnings", []) or []:
-                aggregated_warnings.append(f"[{inner}] {w}")
-    # Ein Export-Vorgang = EIN Grundpreis + Staffel ueber die bearbeiteten Bilder/Felder aller Dokumente, je Dokument nur,
-    # was wirklich geschrieben wurde
-    preis = _export_abrechnen(user_id, plan, qi_geschrieben)
-    headers = {
-        "X-Export-Tagged": str(total_tagged), "X-Export-Total": str(total_images),
-        "X-Export-Unveraendert": str(unveraendert_n), "X-Export-Quickinfos": str(quickinfos_geschrieben),
-        "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0)), "X-Export-Credits": str(preis),
-    }
-    if aggregated_warnings:
-        headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
-    ids = []
-    for i, (unit, out_path, inner, stand) in enumerate(ablage_nachher):
-        aid = _pdf_in_ablage(user_id, project, unit, out_path, inner, (preis if i == 0 else 0), ausloeser, stand)
+    def _ablegen(u, pfad, name, preis_eintrag, stand, ersetzbar) -> Optional[int]:
+        """Ablage-Eintrag. Kostenlos (ersetzbar): ersetzt den letzten kostenlosen Eintrag desselben Dokuments; gibt es keinen
+        und ist die Ablage voll, nur herunterladen (Hinweis). Bezahlt: immer ablegen."""
+        doc_id = u["doc"].get("id")
+        alte = _ablage_ersetzbare(user_id, doc_id) if ersetzbar else []
+        if ersetzbar and not alte and _ablage_voll(user_id):
+            hinweise.append(_ablage_voll_text(_))
+            return None
+        aid = _pdf_in_ablage(user_id, project, u, pfad, name, preis_eintrag, ausloeser, stand, ersetzbar)
         if aid:
-            ids.append(aid)
-    return {"pfad": zip_path, "dateiname": f"{zip_base}_alle_pdfs.zip", "media": "application/zip", "headers": headers,
-            "ausgabe_ids": ids, "preis": preis}
+            for row in alte:
+                _ablage_eintrag_weg(user_id, row)
+        return aid
+
+    try:
+        if document_id is not None or len(units) == 1:
+            unit = units[0]
+            doc_id = unit["doc"].get("id")
+            download_base = custom_name or _doc_label(unit["doc"])
+            dateiname = f"inkludocs_{download_base}.pdf"
+            if id(unit) not in getaggt_ids:
+                # Ungetaggte Einzeldatei (29.09.2026): Original bzw. Original + bearbeitete Quickinfos, keine Ablage
+                output_path, info = _pdf_ohne_tags(unit, _dok_dir(unit), _creator, id(unit) in mit_qi_ids)
+                preis = _export_abrechnen(user_id, plan, {doc_id: not info["unveraendert"]})
+                headers = {"X-Export-Credits": str(preis), "X-Export-Method": str(info["method"]),
+                           "X-Export-Tagged": "0", "X-Export-Total": "0",
+                           "X-Export-Quickinfos": str(int(info["quickinfos"].get("geschrieben") or 0)),
+                           "X-Export-Unveraendert": "1" if info["unveraendert"] else "0",
+                           "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0))}
+                if info.get("warnings"):
+                    headers["X-Export-Warnings"] = _warnings_header(info["warnings"])
+                return {"pfad": output_path, "dateiname": dateiname, "media": "application/pdf", "headers": headers,
+                        "ausgabe_ids": [], "preis": preis, "anfrage_dir": anfrage}
+            output_path, info, stand, ablage_id = _getaggt_bauen(unit)
+            qi_geschrieben = {doc_id: _qi_ok(unit, info)}
+            preis = _export_abrechnen(user_id, plan, qi_geschrieben)
+            headers = {"X-Export-Credits": str(preis), "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0))}
+            for k, h in (("method", "X-Export-Method"), ("tagged", "X-Export-Tagged"), ("total", "X-Export-Total")):
+                if k in info:
+                    headers[h] = str(info[k])
+            if info.get("aus_ablage"):
+                headers["X-Export-Aus-Ablage"] = "1"
+            if ablage_id is None:
+                # Ablage (22.09.2026): die fertige PDF bleibt mit Bericht und Vorschau erhalten
+                ablage_id = _ablegen(unit, output_path, dateiname, preis, stand, not _gebucht(doc_id, preis, qi_geschrieben))
+            warnungen = list(info.get("warnings") or []) + hinweise
+            if warnungen:
+                headers["X-Export-Warnings"] = _warnings_header(warnungen)
+            if ablage_id:
+                headers["X-Ausgabe-Id"] = str(ablage_id)
+            return {"pfad": output_path, "dateiname": dateiname, "media": "application/pdf", "headers": headers,
+                    "ausgabe_ids": [ablage_id] if ablage_id else [], "preis": preis, "anfrage_dir": anfrage}
+
+        # Alle Dokumente -> ZIP (im Ordner dieser Anfrage; jedes Dokument im eigenen Unterordner, auch bei gleichem Namen).
+        zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
+        zip_path = os.path.join(anfrage, f"{zip_base}_alle_pdfs.zip")
+        aggregated_warnings: list[str] = []
+        total_tagged = total_images = unveraendert_n = quickinfos_geschrieben = 0
+        qi_geschrieben: dict = {}
+        # Ablage-Eintraege ERST nach dem Bau aller Dateien und nach der Verbuchung (Review 29.09.2026)
+        ablage_nachher: list = []
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            # Nummerierung nach Anzeige-Position (1..N), passend zur „Dokument N"-Anzeige im Frontend
+            for pos, unit in enumerate(units, start=1):
+                inner = f"{pos:02d}_{_doc_label(unit['doc'])}.pdf"
+                if id(unit) not in getaggt_ids:
+                    out_path, info = _pdf_ohne_tags(unit, _dok_dir(unit), _creator, id(unit) in mit_qi_ids)
+                    unveraendert_n += 1 if info["unveraendert"] else 0
+                    qi_geschrieben[unit["doc"].get("id")] = not info["unveraendert"]
+                else:
+                    out_path, info, stand, ablage_id = _getaggt_bauen(unit)
+                    qi_geschrieben[unit["doc"].get("id")] = _qi_ok(unit, info)
+                    if ablage_id is None:
+                        ablage_nachher.append((unit, out_path, inner, stand))
+                zf.write(out_path, arcname=inner)
+                quickinfos_geschrieben += int((info.get("quickinfos") or {}).get("geschrieben") or 0)
+                total_tagged += int(info.get("tagged", 0) or 0)
+                total_images += int(info.get("total", 0) or 0)
+                for w in info.get("warnings", []) or []:
+                    aggregated_warnings.append(f"[{inner}] {w}")
+        # Ein Export-Vorgang = EIN Grundpreis + Staffel ueber die bearbeiteten Bilder/Felder aller Dokumente, je Dokument nur,
+        # was wirklich geschrieben wurde
+        preis = _export_abrechnen(user_id, plan, qi_geschrieben)
+        ids = []
+        # Der Preis steht am Eintrag des ersten Dokuments, fuer das gebucht wurde (nicht an einem kostenlosen, der spaeter
+        # ersetzt werden kann)
+        preis_offen = preis
+        for unit, out_path, inner, stand in ablage_nachher:
+            gebucht = _gebucht(unit["doc"].get("id"), preis, qi_geschrieben)
+            aid = _ablegen(unit, out_path, inner, (preis_offen if gebucht else 0), stand, not gebucht)
+            if gebucht:
+                preis_offen = 0
+            if aid:
+                ids.append(aid)
+        for h in hinweise:
+            aggregated_warnings.append(h)
+        headers = {
+            "X-Export-Tagged": str(total_tagged), "X-Export-Total": str(total_images),
+            "X-Export-Unveraendert": str(unveraendert_n), "X-Export-Quickinfos": str(quickinfos_geschrieben),
+            "X-Export-Schon-Bezahlt": str(int(plan["schon_bezahlt"] or 0)), "X-Export-Credits": str(preis),
+        }
+        if aggregated_warnings:
+            headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
+        return {"pfad": zip_path, "dateiname": f"{zip_base}_alle_pdfs.zip", "media": "application/zip", "headers": headers,
+                "ausgabe_ids": ids, "preis": preis, "anfrage_dir": anfrage}
+    except BaseException:
+        _export_anfrage_weg(anfrage)
+        raise
 
 
 @app.post("/api/projects/{project_id}/export")
@@ -8641,7 +8812,8 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     """PDF-Export. Multi-Datei (08.06.2026):
     - ohne document_id im Body: alle Dokumente als ZIP
     - mit document_id: nur dieses Dokument, direkter Download
-    Seit 30.09.2026 (Pruefung H1) im eigenen Rechenbereich, hoechstens ein Download je Nutzer gleichzeitig, gedrosselt."""
+    Seit 30.09.2026 (Pruefung H1) im eigenen Rechenbereich, hoechstens ein Download je Nutzer gleichzeitig, gedrosselt; jede
+    Anfrage baut in ihrem eigenen Ordner, der nach dem Senden geloescht wird (Nachpruefung, HOCH)."""
     document_id, custom_name = await _read_export_options(request)
     conn = get_db()
     project = conn.execute(
@@ -8656,15 +8828,22 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         raise HTTPException(status_code=400, detail="PDF-Export ist nur fuer PDF-Projekte verfuegbar")
     project = dict(project)
     conn.close()
+    _ = get_gettext(resolve_ui_language(request))
     grund = _export_belegen(user["id"])
     if grund:
-        raise HTTPException(status_code=429, detail=_export_belegt_text(grund, get_gettext(resolve_ui_language(request))))
+        raise HTTPException(status_code=429, detail=_export_belegt_text(grund, _))
     try:
         erg = await asyncio.get_running_loop().run_in_executor(
-            _export_executor, _pdf_export_sync, user["id"], project, document_id, custom_name, "knopf")
+            _export_executor, _pdf_export_sync, user["id"], project, document_id, custom_name, "knopf", None, _)
+    except HTTPException as e:
+        if isinstance(e.detail, str):
+            e.detail = _(e.detail)   # eigene Texte (409 Abrechnung, Preis geaendert) in der Sprache der Oberflaeche
+        raise
     finally:
         _export_freigeben(user["id"])
-    return FileResponse(erg["pfad"], filename=erg["dateiname"], media_type=erg["media"], headers=erg["headers"])
+    from starlette.background import BackgroundTask
+    return FileResponse(erg["pfad"], filename=erg["dateiname"], media_type=erg["media"], headers=erg["headers"],
+                        background=BackgroundTask(_export_anfrage_weg, erg.get("anfrage_dir")))
 
 
 # ─── STATION „ABSCHLUSSPRUEFUNG“ (24.09.2026, Steve; Name vorlaeufig) ─────────
@@ -9666,20 +9845,18 @@ async def ausgabe_vorschau(ausgabe_id: int, user: dict = Depends(get_current_use
     return FileResponse(r["vorschau_pfad"], media_type="image/png")
 
 
-@app.delete("/api/ausgaben/{ausgabe_id}")
-async def ausgabe_loeschen(ausgabe_id: int, user: dict = Depends(get_current_user)):
-    r = _ausgabe_row(user["id"], ausgabe_id)
-    if not r:
-        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+def _ablage_eintrag_weg(user_id: int, r) -> None:
+    """Ablage-Eintrag samt Dateien (Datei, Vorschau, Audio, Token-Metadatei) loeschen — fuer „Löschen“ in der Ablage und
+    fuer das Ersetzen eines kostenlosen PDF-Eintrags (Nachpruefung 30.09.2026)."""
     for pf in (r["datei_pfad"], r["vorschau_pfad"], r["audio_pfad"]):
         try:
-            if pf and _ablage_pfad_ok(user["id"], pf):
+            if pf and _ablage_pfad_ok(user_id, pf):
                 os.remove(pf)
         except OSError:
             pass
     # Token-Metadatei des Sofort-Downloads mit weg (liegt im Projektordner, sonst toter Verweis).
     if r["token"] and r["project_id"]:
-        meta = os.path.join(RESULTS_DIR, str(user["id"]), str(r["project_id"]), "_export", f"pdfua_{r['token']}.json")
+        meta = os.path.join(RESULTS_DIR, str(user_id), str(r["project_id"]), "_export", f"pdfua_{r['token']}.json")
         try:
             if os.path.isfile(meta):
                 os.remove(meta)
@@ -9687,10 +9864,18 @@ async def ausgabe_loeschen(ausgabe_id: int, user: dict = Depends(get_current_use
             pass
     conn = get_db()
     try:
-        conn.execute("DELETE FROM ablage WHERE id = ? AND user_id = ?", (ausgabe_id, user["id"]))
+        conn.execute("DELETE FROM ablage WHERE id = ? AND user_id = ?", (r["id"], user_id))
         conn.commit()
     finally:
         conn.close()
+
+
+@app.delete("/api/ausgaben/{ausgabe_id}")
+async def ausgabe_loeschen(ausgabe_id: int, user: dict = Depends(get_current_user)):
+    r = _ausgabe_row(user["id"], ausgabe_id)
+    if not r:
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    _ablage_eintrag_weg(user["id"], r)
     return {"ok": True}
 
 

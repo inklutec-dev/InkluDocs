@@ -14,10 +14,12 @@ gezaehlt wird der Verbrauch in /api/me). Legt eigene Projekte an und loescht sie
   G  Lange Tabellenzellen (Rechnung INKL-002) ungekuerzt
   I  Pruefung 30.09. (H1/M2): vier gleichzeitige Downloads -> einer baut, einmal gebucht, GET /api/me bleibt schnell;
      derselbe Stand noch einmal kommt aus der Ablage (kein Neubau, kein neuer Eintrag)
+  J  Nachpruefung (HOCH): zwei Dokumente „gleich.pdf“ -> ZIP, Ablage und Einzel-Downloads liefern je die eigene Datei
+  K  Nachpruefung (MITTEL): Umbenennen bei eigenem Titel = kein Neubau; ohne Titel ersetzt der Neubau den kostenlosen Eintrag
 
 Aufruf: /home/claude/.venv-pw/bin/python verify_michael_0930.py <ordner-mit-korpus> [--behalten]
-  Korpus: actino_master_word.pdf, testformular_inkludocs.pdf, antrag_pflege.pdf, rechnung_inkl_002.pdf, probe_avv.pdf
-  (die letzten drei optional)
+  Korpus: actino_master_word.pdf, testformular_inkludocs.pdf, antrag_pflege.pdf, synth_getaggt.pdf, rechnung_inkl_002.pdf,
+  probe_avv.pdf (die letzten zwei optional)
 Zugang aus /home/claude/.e2e.env (INKLUDOCS_E2E_URL/MAIL/PW)."""
 import io
 import json
@@ -279,6 +281,68 @@ try:
           r.ok and r.content[:5] == b"%PDF-" and r.headers.get("x-export-aus-ablage") == "1" and r.headers.get("x-export-credits") == "0" and v12 == v11 and anzahl_ablage() == a1,
           (r.status_code, r.headers.get("x-export-aus-ablage"), r.headers.get("x-export-credits"), v11, v12, anzahl_ablage()))
     check("Die Datei aus der Ablage ist dieselbe wie die bezahlte", r.content == ok200[0].content if ok200 else False)
+
+    print("== J. Gleichnamige Dokumente (Nachprüfung, HOCH): jede Datei gehört zu ihrem Dokument, einzeln und im ZIP ==")
+    import fitz
+    import zipfile
+
+    def seiten(daten: bytes) -> int:
+        with fitz.open(stream=daten, filetype="pdf") as d:
+            return d.page_count
+
+    def titel(daten: bytes) -> str:
+        with fitz.open(stream=daten, filetype="pdf") as d:
+            return (d.metadata or {}).get("title") or ""
+
+    def ablage_von(p_id):
+        return s.get(B + f"/api/ausgaben?projekt={p_id}", timeout=60).json().get("ausgaben") or []
+    pid_g = projekt("Gleicher Name 30.09. (Test) " + time.strftime("%H:%M"))
+    for datei in ("actino_master_word.pdf", "antrag_pflege.pdf"):
+        hochladen(pid_g, "gleich.pdf", open(os.path.join(KORPUS, datei), "rb").read())
+    docs_g = sorted(s.get(B + f"/api/projects/{pid_g}/dokument-ansicht", timeout=120).json()["documents"], key=lambda d: d["id"])
+    erwartet = {docs_g[0]["id"]: 10, docs_g[1]["id"]: 1}
+    check("Zwei Dokumente „gleich.pdf“ (10 und 1 Seite)", len(docs_g) == 2 and all(d["original_filename"] == "gleich.pdf" for d in docs_g))
+    r = export(pid_g)
+    with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+        im_zip = [seiten(zf.read(n)) for n in sorted(zf.namelist())]
+    check("ZIP: 10 und 1 Seite", r.ok and im_zip == [10, 1], im_zip)
+    eintraege = ablage_von(pid_g)
+    passend = [(e["document_id"], seiten(s.get(B + f"/api/ausgaben/{e['id']}/datei", timeout=60).content)) for e in eintraege]
+    check("Ablage nach dem ZIP: jeder Eintrag hat die Datei SEINES Dokuments (vorher beide 1 Seite)",
+          len(passend) == 2 and all(erwartet.get(d) == n for d, n in passend), passend)
+    for d in docs_g:
+        r = export(pid_g, d["id"])
+        check(f"Einzeln danach Dokument {d['id']}: aus der Ablage, {erwartet[d['id']]} Seiten",
+              r.ok and r.headers.get("x-export-aus-ablage") == "1" and seiten(r.content) == erwartet[d["id"]],
+              (r.status_code, r.headers.get("x-export-aus-ablage"), seiten(r.content) if r.ok else None))
+    r = export(pid_g)
+    with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+        im_zip = [seiten(zf.read(n)) for n in sorted(zf.namelist())]
+    check("Zweites ZIP: wieder 10 und 1 Seite, kein neuer Ablage-Eintrag", im_zip == [10, 1] and len(ablage_von(pid_g)) == 2, (im_zip, len(ablage_von(pid_g))))
+
+    print("== K. Umbenennen und kostenlose Neubauten (Nachprüfung, MITTEL) ==")
+    pid_k = projekt("Umbenennen 30.09. (Test) " + time.strftime("%H:%M"))
+    d_titel = hochladen(pid_k, "mit_titel.pdf", open(os.path.join(KORPUS, "actino_master_word.pdf"), "rb").read())
+    d_ohne = hochladen(pid_k, "ohne_titel.pdf", open(os.path.join(KORPUS, "synth_getaggt.pdf"), "rb").read())
+    export(pid_k, d_titel["id"])
+    n0 = len(ablage_von(pid_k))
+    s.patch(B + f"/api/projects/{pid_k}/documents/{d_titel['id']}", json={"display_name": "Neuer Name (Test)"}, timeout=30)
+    r = export(pid_k, d_titel["id"])
+    check("Datei mit eigenem Titel: Umbenennen erzwingt keinen Neubau (aus der Ablage, kein neuer Eintrag, Titel bleibt)",
+          r.ok and r.headers.get("x-export-aus-ablage") == "1" and len(ablage_von(pid_k)) == n0 and titel(r.content) == "Actino Software Testdokument",
+          (r.headers.get("x-export-aus-ablage"), n0, len(ablage_von(pid_k)), titel(r.content) if r.ok else None))
+    export(pid_k, d_ohne["id"])
+    n1 = len(ablage_von(pid_k))
+    alt_ids = {e["id"] for e in ablage_von(pid_k) if e["document_id"] == d_ohne["id"]}
+    s.patch(B + f"/api/projects/{pid_k}/documents/{d_ohne['id']}", json={"display_name": "Titel aus dem Namen (Test)"}, timeout=30)
+    r = export(pid_k, d_ohne["id"])
+    neu_ids = {e["id"] for e in ablage_von(pid_k) if e["document_id"] == d_ohne["id"]}
+    check("Datei ohne Titel: der Name wird Titel, Neubau ERSETZT den kostenlosen Eintrag (Anzahl gleich, neue Datei)",
+          r.ok and r.headers.get("x-export-aus-ablage") is None and titel(r.content) == "Titel aus dem Namen (Test)"
+          and len(ablage_von(pid_k)) == n1 and len(neu_ids) == 1 and not (neu_ids & alt_ids),
+          (r.headers.get("x-export-aus-ablage"), titel(r.content) if r.ok else None, n1, len(ablage_von(pid_k)), alt_ids, neu_ids))
+    r = export(pid_k, d_ohne["id"])
+    check("Noch einmal: aus der Ablage (der ersetzende Eintrag trägt den Stand)", r.headers.get("x-export-aus-ablage") == "1" and len(ablage_von(pid_k)) == n1)
 
     print("== H. Bindestriche im echten Dokument (AVV, Messlauf: „KIgestützte“, „EUStandardvertragsklauseln“, „EMail“) ==")
     avv = os.path.join(KORPUS, "probe_avv.pdf")

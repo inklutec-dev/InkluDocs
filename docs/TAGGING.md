@@ -633,8 +633,9 @@ Die Bildzahl in „Tagging“ zählt jetzt auch Alt-Texte aus der Datei (Actino:
 **Enge Fenster (4, 12):** bei 320 px und 200 % kein seitliches Scrollen in Prüfung und Quickinfos (Seitenraster einspaltig
 unter 760 px, lange Wörter brechen um, Auswahlfelder höchstens so breit wie der Platz).
 
-**Chatbot (N1):** `hoerprobe_lesen` begrenzt nach Zeichen (30.000) statt nach Zeilen und gibt nur ganze Zeilen; `bis` ist
-die letzte gelieferte Zeile.
+**Chatbot (N1):** `hoerprobe_lesen` begrenzt nach Zeichen (30.000, gezählt wie in der Antwort: mit Markierung und
+JSON-Escapes) statt nach Zeilen und gibt nur ganze Zeilen; `bis` ist die letzte gelieferte Zeile. Zeilen über 8.000 Zeichen
+werden an Wortgrenzen in Teile zerlegt („(Fortsetzung) …“), nichts wird abgeschnitten.
 
 Nicht geändert (Entscheidung Steve offen): Michaels Satz „Anzeige der Problemstellen im Prüfbericht.“ (6); „Neu taggen“ für
 schon getaggte PDFs (N3). Tests: `tests/e2e/ui_michael_0930.py`, `ui_dokument.py`, `ui_word_ansichten.py`,
