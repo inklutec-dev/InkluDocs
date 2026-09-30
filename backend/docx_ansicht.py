@@ -70,22 +70,25 @@ def _app_seiten(zf: zipfile.ZipFile) -> Optional[int]:
 
 
 def _seitenzahl(zf: zipfile.ZipFile, root) -> Optional[int]:
-    """Seiten, wie Word das Dokument zuletzt angezeigt hat — nur, wenn das belegbar ist:
-    1. Seitenmarken <w:lastRenderedPageBreak/> im Hauptdokument (dieselbe Quelle wie „Seite N“ an den Bildern,
-       docx_processor._seiten_der_bilder): Seiten = Marken + 1.
-    2. Sonst die Angabe in docProps/app.xml — aber nur, wenn die Datei die Bearbeitungsspuren eines Textprogramms traegt
-       (w:rsid… an mindestens der Haelfte der Absaetze) und die Angabe nicht kleiner ist als das, was die ausdruecklichen
-       Seiten- und Abschnittsumbrueche mindestens ergeben. Programmbibliotheken (python-docx) kopieren dort eine feste
-       „1“ aus ihrer Vorlage und schreiben keine rsid-Kennungen (gemessen 30.09.2026: 29 Word-Dateien alle Absaetze mit
-       rsid, die zwei python-docx-Testdateien keinen) -> unbekannt (None).
+    """Seiten, wie Word das Dokument zuletzt gezaehlt hat — nur, wenn das belegbar ist:
+    1. Die Angabe in docProps/app.xml <Pages>, die Word bei jedem Speichern schreibt — aber nur, wenn die Datei die
+       Bearbeitungsspuren eines Textprogramms traegt (w:rsid… an mindestens der Haelfte der Absaetze) und die Angabe
+       nicht kleiner ist als das, was die ausdruecklichen Seiten- und Abschnittsumbrueche mindestens ergeben.
+       Programmbibliotheken (python-docx) kopieren dort eine feste „1“ aus ihrer Vorlage und schreiben keine rsid-
+       Kennungen (gemessen 30.09.2026: 29 Word-Dateien alle Absaetze mit rsid, die zwei python-docx-Testdateien keinen).
+    2. Sonst die Seitenmarken <w:lastRenderedPageBreak/> im Hauptdokument (dieselbe Quelle wie „Seite N“ an den Bildern,
+       docx_processor._seiten_der_bilder): Seiten = Marken + 1. Laeuft eine Tabellenzeile ueber eine Seitengrenze, setzt
+       Word die Marke in JEDE Zelle — Marken derselben Tabellenzeile zaehlen darum nur einmal (Pruefung 30.09.2026).
+    3. Sonst unbekannt (None).
     Andere Programme und Schriften koennen anders umbrechen; das steht in der Doku (docs/WORD.md)."""
     t_lrpb, t_br, t_pbb = f"{{{_W}}}lastRenderedPageBreak", f"{{{_W}}}br", f"{{{_W}}}pageBreakBefore"
-    t_sect, t_ppr, t_p = f"{{{_W}}}sectPr", f"{{{_W}}}pPr", f"{{{_W}}}p"
+    t_sect, t_ppr, t_p, t_tr = f"{{{_W}}}sectPr", f"{{{_W}}}pPr", f"{{{_W}}}p", f"{{{_W}}}tr"
     rsid = (f"{{{_W}}}rsidR", f"{{{_W}}}rsidRDefault", f"{{{_W}}}rsidP")
     marken = 0
     umbrueche = 0
     absaetze = 0
     mit_rsid = 0
+    zeilen_mit_marke: dict = {}   # id -> Element; das Element im Wert halten, sonst ist id() eines lxml-Proxys nicht stabil
     for el in root.iter():
         if not isinstance(el.tag, str):
             continue
@@ -94,8 +97,14 @@ def _seitenzahl(zf: zipfile.ZipFile, root) -> Optional[int]:
             if any(el.get(a) for a in rsid):
                 mit_rsid += 1
         elif el.tag == t_lrpb:
-            if not _in_fallback(el):
-                marken += 1
+            if _in_fallback(el):
+                continue
+            zeile = next((a for a in el.iterancestors(t_tr)), None)
+            if zeile is not None:
+                if id(zeile) in zeilen_mit_marke:
+                    continue
+                zeilen_mit_marke[id(zeile)] = zeile
+            marken += 1
         elif el.tag == t_br:
             if el.get(f"{{{_W}}}type") == "page" and not _in_fallback(el):
                 umbrueche += 1
@@ -107,19 +116,30 @@ def _seitenzahl(zf: zipfile.ZipFile, root) -> Optional[int]:
             typ = el.find(f"{{{_W}}}type")
             if typ is None or typ.get(f"{{{_W}}}val") != "continuous":
                 umbrueche += 1
+    if absaetze and mit_rsid * 2 >= absaetze:
+        angabe = _app_seiten(zf)
+        if angabe and angabe >= umbrueche + 1:
+            return angabe
     if marken:
         return marken + 1
-    if not absaetze or mit_rsid * 2 < absaetze:
-        return None
-    angabe = _app_seiten(zf)
-    if angabe and angabe >= umbrueche + 1:
-        return angabe
     return None
+
+
+def _core_sprache(zf: zipfile.ZipFile) -> str:
+    """dc:language aus docProps/core.xml — steht sie dort, uebernimmt die Umwandlung sie in die PDF und nicht die
+    Sprache der Alt-Texte (pdfua_export.dokumenttitel_setzen fuellt nur leere Felder)."""
+    if "docProps/core.xml" not in zf.namelist():
+        return ""
+    try:
+        el = _lese_xml(zf, "docProps/core.xml").find("dc:language", NS)
+        return ((el.text or "").strip() if el is not None else "")[:35]
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _lesen(pfad: str) -> dict:
     info = {"lesbar": False, "titel": "", "sprache": "", "anwendung": "", "seiten": None,
-            "ueberschriften": 0, "tabellen": 0, "absaetze": 0}
+            "ueberschriften": 0, "tabellen": 0, "absaetze": 0, "core_sprache": ""}
     if not pfad or not os.path.isfile(pfad):
         return info
     try:
@@ -137,6 +157,7 @@ def _lesen(pfad: str) -> dict:
                 "ueberschriften": int(zahlen.get("ueberschriften") or 0),
                 "tabellen": int(zahlen.get("tabellen") or 0),
                 "absaetze": int(zahlen.get("absaetze") or 0),
+                "core_sprache": _core_sprache(zf),
             })
     except Exception as e:  # noqa: BLE001 — kaputte Datei: Karte zeigt „nicht angegeben“, nie einen Absturz
         log.warning("[word-ansicht] Dokumentinfos nicht lesbar (%s): %r", os.path.basename(pfad), e)
@@ -173,33 +194,50 @@ def fingerabdruck(alt_texte: dict, name: str, sprache: str) -> str:
     return hashlib.sha256(roh.encode("utf-8")).hexdigest()[:32]
 
 
+def fingerabdruck_word(alt_texte: dict, name: str, sprache: str, info: dict) -> str:
+    """Fingerabdruck nur ueber das, was die PDF WIRKLICH aendert: Der Dokumentname wird nur dann Titel der PDF, wenn die
+    Word-Datei keinen eigenen Titel hat, die Sprache der Alt-Texte nur dann Dokumentsprache, wenn core.xml keine nennt
+    (pdfua_export.dokumenttitel_setzen fuellt nur leere Felder). Sonst meldete die Pruefansicht nach jedem Umbenennen
+    „nicht mehr aktuell“, obwohl eine neue PDF gleich waere. info = dokumentinfo() der hochgeladenen Word-Datei."""
+    info = info or {}
+    return fingerabdruck(alt_texte, "" if info.get("titel") else name, "" if info.get("core_sprache") else sprache)
+
+
 def pdfua_je_dokument(rows: list, docs: list, label: Callable[[dict], str], fingerabdruecke: dict) -> dict:
     """Letzte barrierefreie PDF je Dokument aus Ablage-Zeilen (neueste zuerst, art 'pdfua').
     Zuordnung: Eintrag fuer genau dieses Dokument (ablage.document_id), sonst ein Eintrag fuer das ganze Projekt (ZIP),
     dessen Bericht das Dokument enthaelt (document_id im Bericht seit 30.09.2026; aeltere ZIP-Berichte nur ueber den
-    Dateinamen-Teil, und nur bei genau einem Treffer). aktuell: True/False ueber den Fingerabdruck, None = unbekannt
-    (Eintrag von vor dem 30.09.2026). Rueckgabe {doc_id: {...}} — ohne Serverpfade."""
-    berichte = []
+    Dateinamen-Teil, und nur bei genau einem Treffer). Eintraege, die VOR dem Hochladen des Dokuments entstanden sind,
+    gehoeren nie zu ihm (gleichnamige Datei neu hochgeladen, Pruefung 30.09.2026). aktuell: True/False ueber den
+    Fingerabdruck, None = unbekannt (Eintrag von vor dem 30.09.2026). Berichte werden erst bei Bedarf gelesen, und die
+    Suche endet, sobald jedes Dokument sein Ergebnis hat. Rueckgabe {doc_id: {...}} — ohne Serverpfade."""
+    offen = [d for d in (docs or []) if d.get("id") is not None]
+    out: dict = {}
     for r in rows or []:
-        try:
-            b = json.loads(r.get("bericht") or "[]")
-        except Exception:  # noqa: BLE001
-            continue
-        if isinstance(b, list) and b:
-            berichte.append((r, [x for x in b if isinstance(x, dict)]))
-    out = {}
-    for doc in docs or []:
-        did = doc.get("id")
-        if did is None:
-            continue
-        for r, b in berichte:
-            e = None
+        if not offen:
+            break
+        bericht = None
+        for doc in list(offen):
+            did = doc["id"]
+            if r.get("document_id") not in (did, None):
+                continue
+            angelegt, entstanden = str(doc.get("created_at") or ""), str(r.get("created_at") or "")
+            if angelegt and entstanden and entstanden < angelegt:
+                continue
+            if bericht is None:
+                try:
+                    b = json.loads(r.get("bericht") or "[]")
+                except Exception:  # noqa: BLE001
+                    b = []
+                bericht = [x for x in b if isinstance(x, dict)] if isinstance(b, list) else []
+            if not bericht:
+                break
             if r.get("document_id") == did:
-                e = next((x for x in b if x.get("document_id") == did), b[0] if len(b) == 1 else None)
-            elif r.get("document_id") is None:
-                e = next((x for x in b if x.get("document_id") == did), None)
-                if e is None and not any("document_id" in x for x in b):
-                    treffer = [x for x in b if x.get("dokument") == label(doc)]
+                e = next((x for x in bericht if x.get("document_id") == did), bericht[0] if len(bericht) == 1 else None)
+            else:
+                e = next((x for x in bericht if x.get("document_id") == did), None)
+                if e is None and not any("document_id" in x for x in bericht):
+                    treffer = [x for x in bericht if x.get("dokument") == label(doc)]
                     e = treffer[0] if len(treffer) == 1 else None
             if e is None:
                 continue
@@ -216,5 +254,5 @@ def pdfua_je_dokument(rows: list, docs: list, label: Callable[[dict], str], fing
                            for p in (pr.get("punkte") or []) if isinstance(p, dict) and p.get("status") == "befund"],
                 "aktuell": (None if not fp else fp == fingerabdruecke.get(did)),
             }
-            break
+            offen.remove(doc)
     return out

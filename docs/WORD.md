@@ -592,8 +592,9 @@ Gäste sehen weiter nur die Alt-Texte (keine neuen Endpunkte unter `/api/freigab
   dieselbe Karte `<details>` mit H3 im summary, dieselbe Knopfleiste unter der Linie). Hochladen gibt es nur hier.
   Dokumentinfos je Zeile „Bezeichnung: Wert“ aus der Word-Datei, ohne KI (`backend/docx_ansicht.py`): Titel und
   Sprache (wie Hörprobe/Prüfbericht, `docx_hoerprobe`), Anwendung (`docProps/app.xml`), Seiten nur wenn belegbar
-  (Word-Seitenmarken `lastRenderedPageBreak`; sonst die Angabe in `app.xml`, aber nur bei Dateien mit rsid-Bearbeitungs-
-  spuren — python-docx-Dateien tragen dort eine falsche „1“), Zahl der Überschriften und Tabellen, Bilder mit Alt-Text
+  (Angabe in `app.xml`, aber nur bei Dateien mit rsid-Bearbeitungsspuren — python-docx-Dateien tragen dort eine falsche
+  „1“; sonst Word-Seitenmarken `lastRenderedPageBreak`, je Tabellenzeile einmal gezählt), Zahl der Überschriften und
+  Tabellen, Bilder mit Alt-Text
   (Zählweise wie der Export, `_exportable_alt_text`). Kein Stand-Abzeichen (kein Tagging), kein Vorschaubild.
   Knöpfe: Hörprobe (Dialog, Word-Datei mit den Alt-Texten aus InkluDocs über `POST …/export/pdfua/vorschau`, kostenlos),
   Herunterladen (derselbe Dialog wie überall, Modus `word`: „Als Word“, „In barrierefreie PDF umwandeln“, bei
@@ -615,3 +616,20 @@ Gäste sehen weiter nur die Alt-Texte (keine neuen Endpunkte unter `/api/freigab
   auf dem Gerät, Inhalt mit `lang` der Dokumentsprache). Keine neuen KI-Prüfungen, kein Herunterladen hier.
 - Chatbot: unverändert derselbe Word-Werkzeugsatz in jeder Ansicht (`agent_loop` wählt nach Dateityp).
 - Tests: `tests/test_docx_ansicht.py` (Unit), `tests/e2e/ui_word_ansichten.py` (Klicktest aller vier Ansichten).
+
+### Unabhängige Prüfung 30.09.2026 (zwei Prüf-Agenten: Entwicklung/Sicherheit, Barrierefreiheit) — behoben
+
+- Hoch: `docx_hoerprobe.analysiere` hörte nach 400 Hörprobe-Zeilen auch mit dem ZÄHLEN auf (Überschriften, Tabellen ohne
+  Kopfzeile, Bilder ohne Alt-Text, Ebenensprünge weiter hinten fehlten im Prüfbericht, in den Dokumentinfos und im
+  Chatbot-Werkzeug `pruefe_word_dokument`). Jetzt wird das ganze Dokument geprüft, nur die Hörprobe wird gekürzt.
+- Die Prüfansicht fragt Prüfbericht und Hörprobe je Dokument einzeln ab (ein defektes Dokument legte alle Karten lahm)
+  und zeichnet nicht mehr über eine inzwischen gewählte andere Ansicht. Die Vorschau baut ihre Word-Datei in
+  `_export/_vorschau/`, damit sie die Arbeitsdatei einer gleichzeitigen Umwandlung nicht ersetzt.
+- veraPDF bei der Umwandlung nicht gelaufen (leerer Bericht) = „nicht möglich“ statt „nicht bestanden, 0 Regeln“.
+- Fingerabdruck nur über das, was die PDF ändert (Name nur ohne eigenen Titel, Sprache nur ohne eigene Sprache in
+  `core.xml`); Ablage-Einträge von vor dem Hochladen eines Dokuments gehören nie zu ihm; Berichte werden erst bei Bedarf
+  gelesen. `document_id`/`fingerabdruck` gehen nicht in die öffentliche API v1.
+- Barrierefreiheit: Lösch-Dialog für Word nennt, dass Alt-Texte und Übersetzungen mitgelöscht werden (vorher „mit 0
+  Bildern“); Hörprobe-Knopf, -Klappe und -Region in der Prüfung mit Dokumentnamen (vorher doppelte Namen); Einzahl „1 Bild“
+  und „1 Regel“; Hinweis im leeren Projekt auch in Alt-Texte; lange Dateinamen brechen bei 320 px um; Übersetzungs-Dialog
+  mit `aria-describedby`; Eingang „uebersetzen“ startet ohne Dokument in „Dokument“; schwedisch „Ladda ner“.

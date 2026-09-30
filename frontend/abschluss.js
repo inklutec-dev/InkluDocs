@@ -515,18 +515,23 @@
         const befunde = vd ? (vd.pruefbericht || []).filter(b => b.status !== 'ok') : null;
         const p = d.pdfua || null;
         const pdfZeilen = p ? veraPdfZeilen(p) : [];
+        // Nicht bestanden, aber keine einzige verletzte Regel: veraPDF lief bei der Umwandlung nicht (Bericht leer) — das ist kein
+        // Ergebnis über das Dokument (wie „Prüfung nicht möglich“ bei PDF; A11y-Prüfung 30.09.2026)
+        const ohneVerapdf = !!(p && !p.bestanden && !p.regeln_verletzt && !pdfZeilen.length);
         // Abzeichen: Befunde des Prüfberichts + Problemstellen der PDF, solange sie nicht nachweislich veraltet ist
         const zahl = befunde ? befunde.length + (p && p.aktuell !== false ? pdfZeilen.length : 0) : null;
         const badgeText = zahl === null ? t('Prüfung nicht möglich') : befundAnzahlText(zahl);
         const badgeKlasse = zahl === null ? 'badge-ready' : (zahl ? 'badge-processing' : 'badge-done');
         const stand = !p ? '' : (p.aktuell === true ? t('aktuell')
-            : (p.aktuell === false ? t('nicht mehr aktuell — seitdem wurden Alt-Texte oder der Dokumentname geändert') : t('nicht bekannt')));
+            : (p.aktuell === false ? t('nicht mehr aktuell — seitdem hat sich geändert, was in die PDF kommt (Alt-Texte, Titel oder Sprache)') : t('nicht bekannt')));
+        const regelText = n => n === 1 ? t('nicht bestanden, 1 Regel verletzt') : t('nicht bestanden, {n} Regeln verletzt', { n: n });
         const meta = '<ul class="dok-meta">'
             + metaZeile(t('Prüfbericht des Word-Dokuments'), befunde ? esc(befundAnzahlText(befunde.length)) : t('nicht möglich'))
             + metaZeile(t('Barrierefreie PDF'), p ? t('erstellt am {zeit}', { zeit: esc(datumZeit(p.erstellt_am)) }) : t('noch nicht erstellt'))
             + (p ? metaZeile(t('Stand'), esc(stand)) : '')
-            + (p ? metaZeile(t('Norm-Prüfung PDF/UA-1 (veraPDF)'), p.bestanden ? t('bestanden') : t('nicht bestanden, {n} Regeln verletzt', { n: p.regeln_verletzt || pdfZeilen.length })) : '')
+            + (p ? metaZeile(t('Norm-Prüfung PDF/UA-1 (veraPDF)'), p.bestanden ? t('bestanden') : (ohneVerapdf ? t('nicht möglich') : regelText(p.regeln_verletzt || pdfZeilen.length))) : '')
             + '</ul>';
+        const vhDok = '<span class="visually-hidden"> ' + t('– Dokument „{name}“', { name: nm }) + '</span>';
         // (1) Prüfbericht
         let s = '<h4 id="ab_wpb_' + d.id + '">' + t('Prüfbericht des Word-Dokuments') + '</h4>';
         if (!befunde) s += '<p>' + t('Der Prüfbericht konnte nicht erstellt werden. Bitte lade die Ansicht später neu.') + '</p>';
@@ -536,6 +541,8 @@
         s += '<h4 id="ab_wpdf_' + d.id + '">' + t('Norm-Prüfung der barrierefreien PDF (veraPDF)') + '</h4>';
         if (!p) {
             s += '<p>' + t('Für dieses Dokument gibt es noch keine barrierefreie PDF. Du erstellst sie in der Ansicht „Dokument“ über „Herunterladen“; danach steht hier das Ergebnis von veraPDF.') + '</p>';
+        } else if (ohneVerapdf) {
+            s += '<p>' + t('Die Prüfung mit veraPDF war bei dieser Umwandlung nicht möglich. Das ist kein Ergebnis über dein Dokument. Erstelle die barrierefreie PDF bitte später in der Ansicht „Dokument“ neu.') + '</p>';
         } else {
             if (p.aktuell === false) s += '<p><strong>' + t('Die barrierefreie PDF ist nicht mehr aktuell.') + '</strong> ' + t('Erstelle sie in der Ansicht „Dokument“ neu, damit das Ergebnis zu deinem heutigen Stand passt.') + '</p>';
             s += pdfZeilen.length
@@ -549,9 +556,14 @@
         s += '<h4 id="ab_whp_' + d.id + '">' + t('Hörprobe') + '</h4>'
             + '<p class="feld-hinweis">' + t('So liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>';
         if (hp.length) {
-            s += '<p><button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_wvorlesen_' + d.id + '" aria-pressed="false" onclick="Abschluss.wordVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button></p>'
-                + '<details class="ab-problemklappe ab-whp" data-doc="' + d.id + '"' + (wordHoerprobeOffen.has(d.id) ? ' open' : '') + '><summary>' + t('Hörprobe lesen') + '</summary>'
-                + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Vorgelesener Text') + '" tabindex="0">'
+            // Eindeutige Namen je Dokument (A11y-Prüfung 30.09.2026, Befund 2): bei mehreren Karten sonst zweimal „Hörprobe vorlesen“
+            // in der Knopfliste und zwei gleich benannte Regionen. Beim Knopf über aria-labelledby (eigener Text + verstecktes
+            // Namensstück), weil vorlesenTeile den Knopftext beim Start/Stopp per textContent ersetzt — ein versteckter Zusatz im
+            // Knopf ginge dabei verloren; so heißt er auch während des Vorlesens „Stopp – Dokument „…““.
+            s += '<p><span id="ab_wname_' + d.id + '" hidden>' + t('– Dokument „{name}“', { name: nm }) + '</span>'
+                + '<button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_wvorlesen_' + d.id + '" aria-labelledby="ab_wvorlesen_' + d.id + ' ab_wname_' + d.id + '" aria-pressed="false" onclick="Abschluss.wordVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button></p>'
+                + '<details class="ab-problemklappe ab-whp" data-doc="' + d.id + '"' + (wordHoerprobeOffen.has(d.id) ? ' open' : '') + '><summary>' + t('Hörprobe lesen') + vhDok + '</summary>'
+                + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von „{name}“', { name: nm }) + '" tabindex="0">'
                 + hp.map(zl => zeileHtml(zl, lang)).join('') + '</div></details>';
         } else if (vd) {
             s += '<p>' + t('Kein Text zum Vorlesen vorhanden.') + '</p>';
@@ -576,14 +588,29 @@
         });
         vorlesenTeile(teile, btn, t('Hörprobe vorlesen'));
     }
+    let wordGen = 0;   // jede Zeichnung hat ihre Nummer; eine neuere (oder ein Ansichtswechsel) macht die ältere wirkungslos
+    function wordNochGewuenscht(gen, projectId) {
+        const u = new URLSearchParams(window.location.search);
+        return gen === wordGen && u.get('ansicht') === 'abschluss' && String(u.get('projekt')) === String(projectId);
+    }
+    async function wordVorschauLaden(projectId, docId) {
+        // je Dokument ein Aufruf (Prüfung 30.09.2026): ein defektes Dokument lässt die anderen Karten unberührt
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/export/pdfua/vorschau', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document_id: docId }) });
+            const j = r.ok ? await r.json() : null;
+            return ((j && j.dokumente) || [])[0] || null;
+        } catch (e) { return null; }
+    }
     async function showWordProject(projectId, erneut) {
         projectId = Number(projectId);
         if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
         pollGen++;
         kiPollStoppen();
         if (typeof vorlesenStopp === 'function') vorlesenStopp();
+        const gen = ++wordGen;
         const main = document.getElementById('main');
         const res = await fetch('/api/projects/' + projectId + '/dokument-ansicht', { credentials: 'same-origin' });
+        if (!wordNochGewuenscht(gen, projectId)) return;   // inzwischen andere Ansicht gewählt (Prüfung 30.09.2026)
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
@@ -594,15 +621,11 @@
         }
         dokDaten = {};
         docs.forEach(x => { dokDaten[x.id] = x; });
-        // Prüfbericht + Hörprobe aller Dokumente in einem Aufruf (kostenlos, ändert nichts); ohne Dokumente kein Aufruf
+        // Prüfbericht + Hörprobe je Dokument (kostenlos, ändert nichts); scheitert eines, zeigt nur seine Karte „Prüfung nicht möglich“
+        const geladen = await Promise.all(docs.map(d => wordVorschauLaden(projectId, d.id)));
+        if (!wordNochGewuenscht(gen, projectId)) return;
         wordVorschau = {};
-        if (docs.length) {
-            try {
-                const r = await fetch('/api/projects/' + projectId + '/export/pdfua/vorschau', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-                const j = r.ok ? await r.json() : null;
-                ((j && j.dokumente) || []).forEach(x => { if (x.document_id != null) wordVorschau[x.document_id] = x; });
-            } catch (e) { /* Karten zeigen „Prüfung nicht möglich“ */ }
-        }
+        docs.forEach((d, i) => { if (geladen[i]) wordVorschau[d.id] = geladen[i]; });
         const title = (project.name && project.name.trim()) ? project.name : project.filename;
         main.innerHTML = projektKopfHtml(project, 'abschluss', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'

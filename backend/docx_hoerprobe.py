@@ -170,6 +170,20 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet, titel_ersa
         hoer.append(_("Dokumenttitel: {t}").format(t=titel) if titel else _("Dokumenttitel: fehlt"))
         hoer.append(_("Sprache: {s}").format(s=sprache) if sprache else _("Sprache: nicht gesetzt"))
 
+        # Kuerzen NUR der Hoerprobe (Pruefung 30.09.2026, Befund hoch): bis dahin brach die Schleife nach MAX_ZEILEN ab, und
+        # damit hoerte auch das ZAEHLEN auf — Ueberschriften, Tabellen ohne Kopfzeile, Bilder ohne Alt-Text und Ebenen-
+        # spruenge weiter hinten fehlten im Pruefbericht (und in den Dokumentinfos der Word-Ansichten). Jetzt wird das
+        # ganze Dokument geprueft; nur die vorgelesenen Zeilen enden mit einem Hinweis.
+        gekuerzt = False
+
+        def sag(zeile):
+            nonlocal gekuerzt
+            if len(hoer) <= MAX_ZEILEN:
+                hoer.append(zeile)
+            elif not gekuerzt:
+                hoer.append(_("… (Hörprobe gekürzt)"))
+                gekuerzt = True
+
         letzte_ebene = 0
         texte: list[str] = []      # Rohtext fuer den Sprach-Abgleich (unabhaengig von der UI-Sprache)
         n_ueberschriften = 0
@@ -189,17 +203,14 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet, titel_ersa
                 n_bilder += 1
                 if deko:
                     n_dekorativ += 1
-                    hoer.append(_("Schmuckbild (wird nicht vorgelesen)"))
+                    sag(_("Schmuckbild (wird nicht vorgelesen)"))
                 elif alt:
-                    hoer.append(_("Bild: {alt}").format(alt=alt))
+                    sag(_("Bild: {alt}").format(alt=alt))
                 else:
                     n_bilder_ohne += 1
-                    hoer.append(_("Bild ohne Beschreibung — ein Screenreader sagt nur „Grafik“"))
+                    sag(_("Bild ohne Beschreibung — ein Screenreader sagt nur „Grafik“"))
 
         for el in body:
-            if len(hoer) > MAX_ZEILEN:
-                hoer.append(_("… (Hörprobe gekürzt)"))
-                break
             if el.tag == f"{{{W}}}p":
                 text = _text(el).strip()
                 if text and len(texte) < 400:
@@ -209,30 +220,30 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet, titel_ersa
                     n_ueberschriften += 1
                     if not text:
                         leere_ueberschriften += 1
-                        hoer.append(_("Leere Überschrift (Ebene {n})").format(n=max(ebene, 1)))
+                        sag(_("Leere Überschrift (Ebene {n})").format(n=max(ebene, 1)))
                     elif ebene == 0:
-                        hoer.append(_("Titel: {t}").format(t=text))
+                        sag(_("Titel: {t}").format(t=text))
                     else:
                         if erste_ebene is None:
                             erste_ebene = ebene
                         if letzte_ebene and ebene > letzte_ebene + 1:
                             spruenge += 1
                         letzte_ebene = ebene
-                        hoer.append(_("Überschrift Ebene {n}: {t}").format(n=ebene, t=text))
+                        sag(_("Überschrift Ebene {n}: {t}").format(n=ebene, t=text))
                     _bilder(el)
                     continue
                 ist_liste = el.find(f"{{{W}}}pPr/{{{W}}}numPr") is not None
                 if text:
                     n_absaetze += 1
                     kurz = text if len(text) <= MAX_ABSATZ else text[:MAX_ABSATZ].rstrip() + " …"
-                    hoer.append((_("Listenpunkt: {t}") if ist_liste else _("Absatz: {t}")).format(t=kurz))
+                    sag((_("Listenpunkt: {t}") if ist_liste else _("Absatz: {t}")).format(t=kurz))
                 _bilder(el)
             elif el.tag == f"{{{W}}}tbl":
                 n_tabellen += 1
                 t = _tabelle(el)
                 if not t["kopf"]:
                     n_tabellen_ohne_kopf += 1
-                hoer.append(_("Tabelle mit {r} Zeilen und {c} Spalten").format(r=t["zeilen"], c=t["spalten"])
+                sag(_("Tabelle mit {r} Zeilen und {c} Spalten").format(r=t["zeilen"], c=t["spalten"])
                             + (_(", Kopfzeile: {k}").format(k=", ".join(k for k in t["kopfzellen"] if k) or "—")
                                if t["kopf"] else _(", ohne Kopfzeile")))
                 for p in el.iter(f"{{{W}}}p"):

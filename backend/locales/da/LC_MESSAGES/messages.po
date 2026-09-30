@@ -9460,8 +9460,26 @@ msgstr "ukendt"
 msgid "nicht bestanden, {n} Regeln verletzt"
 msgstr "ikke bestået, {n} regler overtrådt"
 
-msgid "nicht mehr aktuell — seitdem wurden Alt-Texte oder der Dokumentname geändert"
-msgstr "ikke længere aktuel — alt-tekster eller dokumentnavnet er ændret siden"
-
 msgid "nicht möglich"
 msgstr "ikke muligt"
+
+#, python-brace-format
+msgid "Möchtest du das Dokument „{name}“ wirklich löschen? Dabei gehen auch seine Alt-Texte und Übersetzungen verloren. Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette dokumentet „{name}“? Dets alt-tekster og oversættelser går også tabt. Det kan ikke fortrydes."
+
+#, python-brace-format
+msgid "1 Bild, {m} mit Alt-Text"
+msgstr "1 billede, {m} med alt-tekst"
+
+msgid "nicht bestanden, 1 Regel verletzt"
+msgstr "ikke bestået, 1 regel overtrådt"
+
+msgid "nicht mehr aktuell — seitdem hat sich geändert, was in die PDF kommt (Alt-Texte, Titel oder Sprache)"
+msgstr "ikke længere aktuel — det, der kommer i PDF’en, er ændret siden (alt-tekster, titel eller sprog)"
+
+msgid "Die Prüfung mit veraPDF war bei dieser Umwandlung nicht möglich. Das ist kein Ergebnis über dein Dokument. Erstelle die barrierefreie PDF bitte später in der Ansicht „Dokument“ neu."
+msgstr "Kontrollen med veraPDF var ikke mulig ved denne konvertering. Det er ikke et resultat om dit dokument. Opret den tilgængelige PDF igen senere i visningen „Dokument“."
+
+#, python-brace-format
+msgid "Hörprobe von „{name}“"
+msgstr "Lytteprøve af „{name}“"

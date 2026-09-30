@@ -3,7 +3,9 @@
 Export-Dialog, Link ins Regal, Unterseite /ausgaben (gefiltert + ungefiltert), Bericht/
 Hoerprobe aufklappen, Dashboard-Abschnitt, Loeschen ohne Browser-Dialog, axe auf beiden Seiten.
 Aufruf: /home/claude/.venv-pw/bin/python ui_ausgaben.py <projekt-id eines Word-Projekts>
-Zugangsdaten aus INKLUDOCS_E2E_MAIL / INKLUDOCS_E2E_PW (~/.e2e.env)."""
+Zugangsdaten aus INKLUDOCS_E2E_MAIL / INKLUDOCS_E2E_PW (~/.e2e.env).
+Seit 30.09.2026 (Word-Ansichten wie PDF): Umwandlung im Herunterladen-Dialog der Ansicht „Dokument“ (Modus 'word');
+der Knopf „Ablage (n)“ bleibt in der Ansicht „Alt-Texte“."""
 import os, sys, json, re
 from playwright.sync_api import sync_playwright
 B = os.environ.get("INKLUDOCS_E2E_URL") or "https://staging.inkludocs.inklutec.de"
@@ -32,8 +34,9 @@ with sync_playwright() as p:
     vorher = int(re.search(r"\((\d+)\)", tab.inner_text()).group(1))
     axe(pg, "Projektansicht mit Reitern")
     pg.screenshot(path="/home/claude/shots/a_reiter.png")
-    print("== B. Umwandlung ueber den Export-Dialog ==")
-    pg.locator("#exportOpenBtn").click(); pg.wait_for_timeout(800)
+    print("== B. Umwandlung ueber den Export-Dialog (Ansicht Dokument, 30.09.2026) ==")
+    pg.goto(B + f"/app?projekt={PID}&ansicht=dokument"); pg.wait_for_timeout(3500)
+    (pg.locator("#dkAlleBtn") if pg.locator("#dkAlleBtn").count() else pg.locator("button[id^=dok_export_]").first).click(); pg.wait_for_timeout(800)
     pg.locator("#pdfuaBtn").click()
     for _ in range(120):
         pg.wait_for_timeout(1000)
@@ -46,8 +49,8 @@ with sync_playwright() as p:
     check("Abbrechen ist der letzte Knopf im Dialog", pg.evaluate("() => { const bs = document.querySelectorAll('#exportPanel button'); return bs[bs.length - 1].id === 'exportCancelBtn'; }"))
     check("Kein „Zur Ablage“ mehr in der Ergebnisbox", pg.locator("#pdfuaResult a").count() == 0)
     check("Satz „liegen jetzt in deiner Ablage“, kein Aufbewahrungs-Satz, keine „in Ordnung“-Zeilen", "in deiner Ablage" in pg.locator("#pdfuaResult").inner_text() and "Tage" not in pg.locator("#pdfuaResult").inner_text() and "in Ordnung" not in pg.locator("#pdfuaResult").inner_text())
-    tab_txt = pg.locator("#ausgabenTab").inner_text().strip()
-    check("Ablage-Zaehler um 1 erhoeht", tab_txt == f"Ablage ({vorher + 1})", (tab_txt, vorher))
+    n_neu = pg.request.get(B + f"/api/projects/{PID}").json().get("ausgaben_anzahl")
+    check("Ablage-Zaehler um 1 erhoeht", n_neu == vorher + 1, (n_neu, vorher))
     href = link.get_attribute("href"); aid = re.search(r"#ausgabe-(\d+)", href).group(1)
     pg.screenshot(path="/home/claude/shots/b_umwandlung.png")
     print("== C. Unterseite gefiltert (aus dem Export-Dialog) ==")

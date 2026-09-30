@@ -826,6 +826,12 @@ async def _documents_export(user: dict, request: Request, project_id: int, fmt: 
         token = inhalt.get("token")
         inhalt["download_url"] = f"{_d.base_url}/api/v1/documents/{project_id}/export/pdfua/{token}"
         inhalt.pop("ausgaben_anzahl", None)
+        # Interne Felder der Word-Ansichten (30.09.2026) nicht nach aussen: document_id ist die Unterdokument-Kennung der
+        # App (nicht die Dokument-ID dieser API), fingerabdruck nur fuer die Anzeige „aktuell / nicht mehr aktuell“.
+        for dok in (inhalt.get("dokumente") or []):
+            if isinstance(dok, dict):
+                dok.pop("document_id", None)
+                dok.pop("fingerabdruck", None)
         return inhalt
     return erg
 

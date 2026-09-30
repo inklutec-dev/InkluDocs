@@ -9763,8 +9763,26 @@ msgstr "desconocido"
 msgid "nicht bestanden, {n} Regeln verletzt"
 msgstr "no superada, {n} reglas incumplidas"
 
-msgid "nicht mehr aktuell — seitdem wurden Alt-Texte oder der Dokumentname geändert"
-msgstr "ya no está actualizado — desde entonces han cambiado textos alternativos o el nombre del documento"
-
 msgid "nicht möglich"
 msgstr "no es posible"
+
+#, python-brace-format
+msgid "Möchtest du das Dokument „{name}“ wirklich löschen? Dabei gehen auch seine Alt-Texte und Übersetzungen verloren. Das lässt sich nicht rückgängig machen."
+msgstr "¿De verdad quieres eliminar el documento «{name}»? También se perderán sus textos alternativos y traducciones. Esta acción no se puede deshacer."
+
+#, python-brace-format
+msgid "1 Bild, {m} mit Alt-Text"
+msgstr "1 imagen, {m} con texto alternativo"
+
+msgid "nicht bestanden, 1 Regel verletzt"
+msgstr "no superada, 1 regla incumplida"
+
+msgid "nicht mehr aktuell — seitdem hat sich geändert, was in die PDF kommt (Alt-Texte, Titel oder Sprache)"
+msgstr "ya no está actualizado — desde entonces ha cambiado lo que entra en el PDF (textos alternativos, título o idioma)"
+
+msgid "Die Prüfung mit veraPDF war bei dieser Umwandlung nicht möglich. Das ist kein Ergebnis über dein Dokument. Erstelle die barrierefreie PDF bitte später in der Ansicht „Dokument“ neu."
+msgstr "La comprobación con veraPDF no fue posible en esta conversión. No es un resultado sobre tu documento. Vuelve a crear el PDF accesible más tarde en la vista «Documento»."
+
+#, python-brace-format
+msgid "Hörprobe von „{name}“"
+msgstr "Muestra de audio de «{name}»"

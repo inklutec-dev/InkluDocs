@@ -410,7 +410,9 @@
 
     // ─── Export-Dialog: eine Datei je Dokument (ZIP bei mehreren), kostenlos ───
     function exportDialogHtml(project) {
-        return '<dialog id="uExportPanel" class="invite-dialog" aria-labelledby="uExportHeading">'
+        // aria-describedby (A11y-Prüfung 30.09.2026): die Zusammenfassung (Umfang, „kostet keine Credits“) steht schon beim
+        // Öffnen fest und wird so mit dem Dialog angesagt; die Live-Region ausserhalb des Modals erreicht VoiceOver dort nicht.
+        return '<dialog id="uExportPanel" class="invite-dialog" aria-labelledby="uExportHeading" aria-describedby="uExportSummary">'
             + '<div class="export-kopf"><h2 id="uExportHeading" style="margin:0 0 0.6rem 0;">' + t('Übersetzung herunterladen') + '</h2>'
             +   (typeof exportDocIconHtml === 'function' ? exportDocIconHtml('word') : '') + '</div>'
             + '<div id="uExportSummary" role="status" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>'

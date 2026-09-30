@@ -221,7 +221,7 @@ def konvertiere_zu_pdfua(project_id: int, user_id: int, document_id: Optional[in
         "ausgaben_url": f"/ablage?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
         "ausgaben_anzahl": r.get("ausgaben_anzahl"), "aufbewahrung_tage": r.get("aufbewahrung_tage"),
         "hinweis": ("Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen; die Datei liegt "
-                    "ausserdem unter „Meine Ablage“ (Knopf „Ablage“ neben Herunterladen). Fasse das Ergebnis in Worten "
+                    "ausserdem unter „Meine Ablage“ (Seitenleiste), das Prüfergebnis auch in der Ansicht Barrierefreiheitsprüfung. Fasse das Ergebnis in Worten "
                     "zusammen: bestanden oder welche Bereiche Hinweise haben, und was der Nutzer dagegen tun kann."),
     }, "anhang": _anhang("pdfua", r, project_id)}
 

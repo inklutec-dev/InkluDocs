@@ -8833,7 +8833,17 @@ def _word_fingerabdruck(unit: dict, sprache: str) -> str:
     """Was die barrierefreie PDF eines Word-Dokuments bestimmt (exportierte Alt-Texte, Dokumentname, Sprache) als
     Pruefsumme — dieselbe Rechnung beim Umwandeln und in der Ansicht (docx_ansicht.fingerabdruck)."""
     alt = {(img.get("docx_anker") or f"id{img.get('id')}"): _exportable_alt_text(img) for img in unit.get("images") or []}
-    return docx_ansicht.fingerabdruck(alt, (unit.get("doc") or {}).get("display_name") or "", sprache)
+    doc = unit.get("doc") or {}
+    return docx_ansicht.fingerabdruck_word(alt, (doc.get("display_name") or "").strip(), sprache, _word_dokumentinfo(doc))
+
+
+def _word_dokumentinfo(doc: dict) -> dict:
+    """docx_ansicht.dokumentinfo nur fuer Dateien im Upload-Verzeichnis (zusaetzliche Absicherung wie bei
+    _build_docx_for_document; der Pfad kommt aus der Datenbank)."""
+    pfad = doc.get("original_path") or ""
+    if not pfad or not os.path.realpath(pfad).startswith(_uploads_root):
+        return docx_ansicht.dokumentinfo("")
+    return docx_ansicht.dokumentinfo(pfad)
 
 
 def _word_dokument_ansicht(project: dict, user_id: int) -> dict:
@@ -8865,7 +8875,8 @@ def _word_dokument_ansicht(project: dict, user_id: int) -> dict:
         eintrag["bilder"] = {"gesamt": len(texte),
                              "dekorativ": sum(1 for a in texte if a == "dekorativ"),
                              "mit_text": sum(1 for a in texte if a and a != "dekorativ" and a.strip())}
-        eintrag["info"] = docx_ansicht.dokumentinfo(d.get("original_path") or "")
+        eintrag["info"] = _word_dokumentinfo(d)
+        eintrag["info"].pop("core_sprache", None)   # nur fuer den Fingerabdruck
         eintrag["pdfua"] = pdfua.get(d["id"])
         aussen.append(eintrag)
     projekt_aussen = {k: project.get(k) for k in tagging_api._PROJEKT_FELDER}
@@ -8983,9 +8994,12 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
 def _pdfua_vorschau_sync(project: dict, user_id: int, document_id: Optional[int], ui_lang: str) -> dict:
     """Hoerprobe (was ein Screenreader liest) + Pruefbericht des Word-Dokuments, VOR der
     Umwandlung und kostenlos — reines Lesen der Word-Datei mit unseren Alt-Texten.
-    Synchron; gemeinsam fuer den Knopf „Hoerprobe und Pruefbericht“ und das Chatbot-Werkzeug."""
+    Synchron; gemeinsam fuer die Word-Ansichten (Hoerprobe in „Dokument“, „Barrierefreiheitsprüfung“) und das
+    Chatbot-Werkzeug. Eigener Unterordner _export/_vorschau (Pruefung 30.09.2026): Die Umwandlung setzt Titel und Sprache
+    in IHRER Arbeitsdatei _export/inkludocs_<name>.docx und schickt sie danach an den Umwandler — eine gleichzeitige Vorschau
+    (die Pruefansicht laedt sie beim Oeffnen) haette diese Datei sonst durch eine Fassung ohne Titel ersetzen koennen."""
     units = _load_pdf_export_units(project, user_id, document_id)
-    output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export")
+    output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export", "_vorschau")
     os.makedirs(output_dir, exist_ok=True)
     _ = get_gettext(ui_lang)
     dokumente = []

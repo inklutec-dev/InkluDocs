@@ -53,6 +53,9 @@
       .dok-kopfzeile { display: inline-flex !important; align-items: center; justify-content: space-between; gap: 0.75rem;
                        width: calc(100% - 1.6rem); vertical-align: middle; flex-wrap: wrap; }
       .dok-kopfzeile .badge { margin-left: auto; }
+      /* Lange Dateinamen ohne Leerzeichen umbrechen statt über den Kartenrand zu laufen (WCAG 1.4.10 bei 320 px,
+         A11y-Prüfung 30.09.2026) — Dokumentname in der Karte und Projektname in der H1 */
+      .dok-kopfzeile > span:first-child, .projekt-kopf .card-name { overflow-wrap: anywhere; min-width: 0; }
       /* Unter Vorschau + Dokumentinfos eine Linie ueber die volle Breite, darunter die Knoepfe linksbuendig
          (Feedback 24.09.2026 - 3, Punkt 3). */
       .dok-werkbank { border-top: 1px solid #9ca3af; margin-top: 0.9rem; padding-top: 0.2rem; }
@@ -304,7 +307,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const gemerkt = project && project.letzte_ansicht;
         if (gemerkt && erlaubt.includes(gemerkt)) return gemerkt;
         if (istPdfDateityp(project)) return 'dokument';
-        if (istWordDateityp(project)) return project.tool === 'uebersetzen' ? 'uebersetzung' : 'dokument';
+        // Eingang „uebersetzen“ startet in der Übersetzung — ein neues, leeres Projekt aber in „Dokument“, denn nur dort kann
+        // man hochladen (Prüfung 30.09.2026)
+        if (istWordDateityp(project)) return (project.tool === 'uebersetzen' && project.status !== 'neu') ? 'uebersetzung' : 'dokument';
         return 'alttexte';
     }
     // Dateitypen mit Dateiverwaltung in der Ansicht „Dokument“ (PDF seit 22.09., Word seit 30.09.2026): dort wird hochgeladen,
@@ -1244,6 +1249,17 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             deleted: () => t('Formular gelöscht.'),
             renamed: () => t('Formular umbenannt.'),
         },
+        // WORD-DOKUMENT in der Ansicht „Dokument“ (30.09.2026): Loeschen gibt es nur noch dort — der Satz nennt darum, dass
+        // auch Alt-Texte und Uebersetzung verloren gehen (A11y-Pruefung 30.09.2026, Befund 1; vorher „mit 0 Bildern“).
+        worddoc: {
+            deleteTitle: () => t('Dokument löschen?'),
+            renameTitle: () => t('Dokument umbenennen'),
+            renameLabel: () => t('Neuer Name des Dokuments'),
+            renameHint: () => t('Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.'),
+            fallbackName: () => t('dieses Dokument'),
+            deleted: () => t('Dokument gelöscht.'),
+            renamed: () => t('Dokument umbenannt.'),
+        },
         // UEBERSETZEN-WERKZEUG (18.09.2026): Word-Dokument mit Absaetzen statt Bildern.
         uebdoc: {
             deleteTitle: () => t('Dokument löschen?'),
@@ -1317,6 +1333,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         let body;
         if (_docActionKind === 'img') {
             body = t('Möchtest du das Bild „{name}" wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name });
+        } else if (_docActionKind === 'worddoc') {
+            body = t('Möchtest du das Dokument „{name}“ wirklich löschen? Dabei gehen auch seine Alt-Texte und Übersetzungen verloren. Das lässt sich nicht rückgängig machen.', { name: name });
         } else if (_docActionKind === 'uebdoc') {
             body = count === 1
                 ? t('Möchtest du das Dokument „{name}" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name })
@@ -2513,7 +2531,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function renderImages(images, projectId, showLang, documents, project) {
         const list = document.getElementById('imageList');
         if (!images.length) {
-            list.innerHTML = '<div class="empty-state"><p>' + t('Keine Bilder gefunden.') + '</p></div>';
+            // Word-Projekt ohne Dokument (30.09.2026): Hochladen geht nur in „Dokument“ — sagen, wo (wie Übersetzung und Prüfung)
+            const ohneDokument = !window.GUEST_MODE && istWordDateityp(project) && !(documents || []).length;
+            list.innerHTML = '<div class="empty-state"><p>' + (ohneDokument ? t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') : t('Keine Bilder gefunden.')) + '</p></div>';
             return;
         }
         if (projectId !== openPagesProjectId) { openPages = new Set(); openPagesProjectId = projectId; }
@@ -3499,6 +3519,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const d = await r.json();
             const st = d.stand || {};
             if (!st.vorhanden) return;
+            // Dialog inzwischen im Alt-Texte-Modus neu geöffnet? Dann keinen Übersetzungsknopf nachtragen (Prüfung 30.09.2026)
+            if (exportModus === 'tabellen') return;
+            slot.innerHTML = '';
             const b = document.createElement('button');
             b.type = 'button'; b.className = 'btn btn-secondary'; b.id = 'exportUebersetzungBtn';
             b.textContent = t('Als Word, {sprache}', { sprache: st.sprache_name || st.zielsprache });

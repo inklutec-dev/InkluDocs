@@ -9289,7 +9289,7 @@ msgid "Die barrierefreie PDF ist nicht mehr aktuell."
 msgstr "Den tillgängliga PDF:en är inte längre aktuell."
 
 msgid "Dokument herunterladen"
-msgstr "Ladda ned dokument"
+msgstr "Ladda ner dokument"
 
 msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte und Übersetzungen bleiben erhalten."
 msgstr "Du kan när som helst ladda upp fler Word-filer. Varje fil får ett eget kort i listan nedan; befintliga alt-texter och översättningar behålls."
@@ -9298,7 +9298,7 @@ msgid "Erstelle sie in der Ansicht „Dokument“ neu, damit das Ergebnis zu dei
 msgstr "Skapa den på nytt i vyn ”Dokument” så att resultatet stämmer med ditt nuvarande läge."
 
 msgid "Für dieses Dokument gibt es noch keine barrierefreie PDF. Du erstellst sie in der Ansicht „Dokument“ über „Herunterladen“; danach steht hier das Ergebnis von veraPDF."
-msgstr "Det finns ännu ingen tillgänglig PDF för det här dokumentet. Du skapar den i vyn ”Dokument” via ”Ladda ned”; därefter visas resultatet från veraPDF här."
+msgstr "Det finns ännu ingen tillgänglig PDF för det här dokumentet. Du skapar den i vyn ”Dokument” via ”Ladda ner”; därefter visas resultatet från veraPDF här."
 
 msgid "Geprüft wird die Word-Datei mit den Alt-Texten aus InkluDocs, genau die Datei, die du in der Ansicht „Dokument“ herunterlädst. Die Prüfung arbeitet mit festen Regeln, ohne KI, und kostet nichts."
 msgstr "Det som kontrolleras är Word-filen med alt-texterna från InkluDocs, exakt den fil du laddar ned i vyn ”Dokument”. Kontrollen arbetar med fasta regler, utan AI, och kostar ingenting."
@@ -9331,8 +9331,26 @@ msgstr "okänt"
 msgid "nicht bestanden, {n} Regeln verletzt"
 msgstr "ej godkänd, {n} regler överträdda"
 
-msgid "nicht mehr aktuell — seitdem wurden Alt-Texte oder der Dokumentname geändert"
-msgstr "inte längre aktuell — alt-texter eller dokumentnamnet har ändrats sedan dess"
-
 msgid "nicht möglich"
 msgstr "inte möjligt"
+
+#, python-brace-format
+msgid "Möchtest du das Dokument „{name}“ wirklich löschen? Dabei gehen auch seine Alt-Texte und Übersetzungen verloren. Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen radera dokumentet ”{name}”? Dess alt-texter och översättningar går också förlorade. Det går inte att ångra."
+
+#, python-brace-format
+msgid "1 Bild, {m} mit Alt-Text"
+msgstr "1 bild, {m} med alt-text"
+
+msgid "nicht bestanden, 1 Regel verletzt"
+msgstr "ej godkänd, 1 regel överträdd"
+
+msgid "nicht mehr aktuell — seitdem hat sich geändert, was in die PDF kommt (Alt-Texte, Titel oder Sprache)"
+msgstr "inte längre aktuell — det som hamnar i PDF:en har ändrats sedan dess (alt-texter, titel eller språk)"
+
+msgid "Die Prüfung mit veraPDF war bei dieser Umwandlung nicht möglich. Das ist kein Ergebnis über dein Dokument. Erstelle die barrierefreie PDF bitte später in der Ansicht „Dokument“ neu."
+msgstr "Kontrollen med veraPDF var inte möjlig vid den här konverteringen. Det är inget resultat om ditt dokument. Skapa den tillgängliga PDF:en på nytt senare i vyn ”Dokument”."
+
+#, python-brace-format
+msgid "Hörprobe von „{name}“"
+msgstr "Lyssningsprov av ”{name}”"

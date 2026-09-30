@@ -16,6 +16,7 @@ for kandidat in ("/app", os.path.join(os.path.dirname(HERE), "backend")):
         sys.path.insert(0, kandidat)
 
 import docx_ansicht  # noqa: E402
+import docx_hoerprobe  # noqa: E402
 
 FIX = os.path.join(HERE, "fixtures")
 W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
@@ -50,10 +51,21 @@ class Dokumentinfo(unittest.TestCase):
         return os.path.join(self.tmp.name, name)
 
     def test_seitenmarken_von_word(self):
-        # Zwei <w:lastRenderedPageBreak/> = drei Seiten, egal was app.xml sagt
+        # Zwei <w:lastRenderedPageBreak/> = drei Seiten, wenn app.xml nichts Verlaessliches sagt
         marke = "<w:r><w:lastRenderedPageBreak/></w:r>"
-        _docx(self.pfad("a.docx"), _p("Eins") + _p("Zwei", extra=marke) + _p("Drei", extra=marke), app="Microsoft Office Word", pages=7)
+        _docx(self.pfad("a.docx"), _p("Eins") + _p("Zwei", extra=marke) + _p("Drei", extra=marke))
         self.assertEqual(docx_ansicht.dokumentinfo(self.pfad("a.docx"))["seiten"], 3)
+        # Mit Bearbeitungsspuren gilt die Angabe, die Word beim Speichern schreibt
+        _docx(self.pfad("a2.docx"), _p("Eins") + _p("Zwei", extra=marke) + _p("Drei", extra=marke), app="Microsoft Office Word", pages=5)
+        self.assertEqual(docx_ansicht.dokumentinfo(self.pfad("a2.docx"))["seiten"], 5)
+
+    def test_seitenmarken_je_tabellenzeile_einmal(self):
+        # Laeuft eine Tabellenzeile ueber die Seitengrenze, steht die Marke in jeder Zelle — das ist EINE neue Seite
+        marke = "<w:r><w:lastRenderedPageBreak/></w:r>"
+        zelle = "<w:tc>" + _p("Zelle", extra=marke) + "</w:tc>"
+        tabelle = "<w:tbl><w:tr>" + zelle + zelle + zelle + "</w:tr></w:tbl>"
+        _docx(self.pfad("t.docx"), _p("Vor der Tabelle") + tabelle)
+        self.assertEqual(docx_ansicht.dokumentinfo(self.pfad("t.docx"))["seiten"], 2)
 
     def test_app_xml_nur_mit_bearbeitungsspuren(self):
         _docx(self.pfad("word.docx"), _p("Eins") + _p("Zwei"), app="Microsoft Office Word", pages=1)
@@ -108,6 +120,26 @@ class Dokumentinfo(unittest.TestCase):
         self.assertIn("Word", info["anwendung"])
 
 
+class LangerPruefbericht(unittest.TestCase):
+    def test_zaehlt_ueber_die_gekuerzte_hoerprobe_hinaus(self):
+        # Pruefung 30.09.2026 (hoch): nach 400 Hoerprobe-Zeilen hoerte auch das Zaehlen auf
+        with tempfile.TemporaryDirectory() as tmp:
+            pfad = os.path.join(tmp, "lang.docx")
+            h1 = '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Anfang</w:t></w:r></w:p>'
+            h3 = '<w:p><w:pPr><w:pStyle w:val="Heading3"/></w:pPr><w:r><w:t>Sprung</w:t></w:r></w:p>'
+            tbl = "<w:tbl><w:tr><w:tc>" + _p("Kopf") + "</w:tc></w:tr><w:tr><w:tc>" + _p("Wert") + "</w:tc></w:tr></w:tbl>"
+            _docx(pfad, h1 + "".join(_p(f"Absatz {i}") for i in range(420)) + h3 + tbl)
+            a = docx_hoerprobe.analysiere(pfad)
+            self.assertEqual(a["zahlen"]["ueberschriften"], 2)
+            self.assertEqual(a["zahlen"]["tabellen"], 1)
+            befunde = " ".join(b["text"] for b in a["pruefbericht"] if b["status"] != "ok")
+            self.assertIn("springt", befunde)
+            self.assertIn("Kopfzeile", befunde)
+            self.assertEqual(sum(1 for z in a["hoerprobe"] if "gekürzt" in z), 1)
+            self.assertLessEqual(len(a["hoerprobe"]), docx_hoerprobe.MAX_ZEILEN + 2)
+            self.assertEqual(docx_ansicht.dokumentinfo(pfad)["ueberschriften"], 2)
+
+
 class Fingerabdruck(unittest.TestCase):
     def test_stabil_und_empfindlich(self):
         a = docx_ansicht.fingerabdruck({"x|1": "Hund", "x|2": "dekorativ"}, "Bericht", "de")
@@ -115,6 +147,12 @@ class Fingerabdruck(unittest.TestCase):
         self.assertNotEqual(a, docx_ansicht.fingerabdruck({"x|1": "Katze", "x|2": "dekorativ"}, "Bericht", "de"))
         self.assertNotEqual(a, docx_ansicht.fingerabdruck({"x|1": "Hund", "x|2": "dekorativ"}, "Bericht 2", "de"))
         self.assertNotEqual(a, docx_ansicht.fingerabdruck({"x|1": "Hund", "x|2": "dekorativ"}, "Bericht", "en"))
+        # Name und Sprache zaehlen nur, wenn die Datei keinen eigenen Titel bzw. keine eigene Sprache hat
+        mit = {"titel": "Eigener Titel", "core_sprache": "de-DE"}
+        self.assertEqual(docx_ansicht.fingerabdruck_word({"x|1": "Hund"}, "Alt", "de", mit),
+                         docx_ansicht.fingerabdruck_word({"x|1": "Hund"}, "Neu", "en", mit))
+        self.assertNotEqual(docx_ansicht.fingerabdruck_word({"x|1": "Hund"}, "Alt", "de", {}),
+                            docx_ansicht.fingerabdruck_word({"x|1": "Hund"}, "Neu", "de", {}))
         # leer ("" = Alt-Text entfernen) und None (Fehlertext, Bild bleibt unberuehrt) sind verschieden
         self.assertNotEqual(docx_ansicht.fingerabdruck({"x|1": ""}, "", "de"), docx_ansicht.fingerabdruck({"x|1": None}, "", "de"))
 
@@ -174,6 +212,12 @@ class PdfuaZuordnung(unittest.TestCase):
         self.assertEqual(out[11]["ausgabe_id"], 8)
         self.assertEqual([p["bereich"] for p in out[11]["punkte"]], ["B"])
         self.assertEqual(out[11]["punkte"][0]["einzeln"], [])
+
+    def test_eintrag_vor_dem_hochladen_zaehlt_nicht(self):
+        # Dokument geloescht, gleichnamige Datei neu hochgeladen: der alte ZIP-Eintrag gehoert nicht zum neuen Dokument
+        docs = [{"id": 11, "doc_index": 1, "display_name": "Bericht", "created_at": "2026-09-30 10:00:00"}]
+        rows = [_zeile(3, None, [_eintrag("Bericht")])]   # created_at 08:15 < 10:00
+        self.assertEqual(docx_ansicht.pdfua_je_dokument(rows, docs, self.label, {}), {})
 
     def test_fremdes_dokument_nie(self):
         rows = [_zeile(1, 99, [_eintrag("Bericht", 99)])]

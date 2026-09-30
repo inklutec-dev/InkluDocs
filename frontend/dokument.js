@@ -377,7 +377,8 @@
         const info = d.info || {};
         const b = d.bilder || {};
         const bilderText = (b.gesamt || 0)
-            ? t('{n} Bilder, {m} mit Alt-Text', { n: b.gesamt, m: b.mit_text || 0 }) + (b.dekorativ ? t(', {n} als dekorativ gekennzeichnet', { n: b.dekorativ }) : '')
+            ? (b.gesamt === 1 ? t('1 Bild, {m} mit Alt-Text', { m: b.mit_text || 0 }) : t('{n} Bilder, {m} mit Alt-Text', { n: b.gesamt, m: b.mit_text || 0 }))
+              + (b.dekorativ ? t(', {n} als dekorativ gekennzeichnet', { n: b.dekorativ }) : '')
             : t('keine Bilder gefunden');
         const meta = info.lesbar === false
             ? '<li>' + t('Die Dokumentinfos konnten nicht aus der Word-Datei gelesen werden.') + '</li>' + metaZeile(t('Bilder'), esc(bilderText))
@@ -392,8 +393,9 @@
         const knoepfe = '<button type="button" class="btn btn-secondary" id="dok_hp_' + d.id + '" onclick="Dokument.hoerprobeOeffnen(' + project.id + ', ' + d.id + ')">' + t('Hörprobe') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             // Herunterladen mit derselben Rückfrage wie bei PDF (app.html openExportPanel), Modus 'word': Word-Datei oder barrierefreie PDF
             + (!busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'word\')">' + ico('download') + t('Herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('als Word-Datei oder barrierefreie PDF') + '</span></button>' : '')
-            + '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-            + '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (b.gesamt || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>';
+            + '<button type="button" class="doc-action-btn" data-kind="worddoc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            // Art 'worddoc': der Lösch-Dialog sagt, dass auch Alt-Texte und Übersetzungen verloren gehen (A11y-Prüfung 30.09.2026)
+            + '<button type="button" class="doc-action-btn doc-action-danger" data-kind="worddoc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>';
         return '<section class="card dok-karte" id="dok_karte_' + d.id + '">'
             + '<details class="dok-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
             + '<summary><h3 id="dok_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: name }) + '</span></h3></summary>'
