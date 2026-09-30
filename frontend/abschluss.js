@@ -182,7 +182,10 @@
         }
         if (!probleme.length) {
             s += '<h4 id="ab_probleme_' + d.id + '">' + t('Problemstellen ({n})', { n: 0 }) + '</h4>'
-                + '<p>' + t('Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1.') + '</p>';
+                + '<p>' + t('Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1.') + '</p>'
+                // Gruener Haken heisst nur „technisch regelkonform“ (Cody, Lernrunde 29.09.2026): veraPDF haelt auch falsch
+                // getaggte Dateien fuer konform — das offen sagen, damit niemand daraus eine Barrierefreiheitserklaerung ableitet
+                + '<p>' + t('Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe.') + '</p>';
             return s;
         }
         if (z.listeOffen === undefined) z.listeOffen = probleme.length <= 10;
@@ -305,7 +308,7 @@
             const text = (j.neu_gebaut === false ? t('Die Prüfdatei ist schon aktuell.') : t('Prüfdatei erstellt.')) + ' '
                 + ((!pd.eigene_pruefungen && pd.verapdf_moeglich === false)
                     ? t('Die Prüfung mit veraPDF war nicht möglich (Prüfdienst nicht erreichbar). Bitte später neu erstellen.')
-                    : (n ? (n === 1 ? t('1 Problemstelle gefunden.') : t('{n} Problemstellen gefunden.', { n: n })) : t('Keine Problemstellen gefunden.')));
+                    : (n ? (n === 1 ? t('1 Problemstelle gefunden.') : t('{n} Problemstellen gefunden.', { n: n })) : (t('Keine Problemstellen gefunden.') + ' ' + t('veraPDF prüft die technische Struktur, nicht ob sie inhaltlich stimmt.'))));
             // Die Statuszeile ist ein <output> (Live-Region) und bekommt den Fokus — keine zusaetzliche announce()
             if (o2) { o2.textContent = text; o2.focus(); } else { announce(text); }
         } catch (e) {

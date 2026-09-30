@@ -9700,3 +9700,8 @@ msgstr "Hörprobe geladen, 1 Zeile."
 msgid "Hörprobe geladen, {n} Zeilen."
 msgstr "Hörprobe geladen, {n} Zeilen."
 
+msgid "Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe."
+msgstr "Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe."
+
+msgid "veraPDF prüft die technische Struktur, nicht ob sie inhaltlich stimmt."
+msgstr "veraPDF prüft die technische Struktur, nicht ob sie inhaltlich stimmt."

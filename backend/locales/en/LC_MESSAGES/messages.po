@@ -9697,3 +9697,8 @@ msgstr "Listening sample loaded, 1 line."
 msgid "Hörprobe geladen, {n} Zeilen."
 msgstr "Listening sample loaded, {n} lines."
 
+msgid "Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe."
+msgstr "Important: veraPDF checks whether the structure technically follows the rules. It does not check whether it is right in content, for example whether headings are really tagged as headings or whether an alt text matches its image. The listening sample is the best way to check this."
+
+msgid "veraPDF prüft die technische Struktur, nicht ob sie inhaltlich stimmt."
+msgstr "veraPDF checks the technical structure, not whether it is right in content."

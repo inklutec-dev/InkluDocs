@@ -9396,3 +9396,8 @@ msgstr "Lytteprøve indlæst, 1 linje."
 msgid "Hörprobe geladen, {n} Zeilen."
 msgstr "Lytteprøve indlæst, {n} linjer."
 
+msgid "Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe."
+msgstr "Vigtigt: veraPDF kontrollerer, om strukturen teknisk følger reglerne. Det kontrollerer ikke, om indholdet er rigtigt, for eksempel om overskrifter virkelig er tagget som overskrifter, eller om en alt-tekst passer til billedet. Det tjekkes bedst med lytteprøven."
+
+msgid "veraPDF prüft die technische Struktur, nicht ob sie inhaltlich stimmt."
+msgstr "veraPDF kontrollerer den tekniske struktur, ikke om indholdet er rigtigt."
