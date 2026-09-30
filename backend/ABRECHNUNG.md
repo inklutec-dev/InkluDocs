@@ -233,6 +233,32 @@ kostet beim naechsten Herunterladen (auch im ZIP, auch ueber den Chatbot) nichts
 KI-Alt-Text bleibt bei 5 Credits (Steve 30.09.2026). Word-Export, barrierefreie PDF aus Word und eigenstaendige
 Formular-Projekte unveraendert. Tests: `tests/test_herunterladen_genutzt.py`, `tests/e2e/verify_michael_0930.py`.
 
+### Nachbesserung nach der unabhaengigen Pruefung (30.09.2026)
+
+- **Atomar (M2):** `billing.verbuche_export(user, quelle, posten, ansprueche)` beansprucht den neuen Stand je Dokument
+  (`UPDATE documents SET export_bezahlt = neu WHERE id = ? AND COALESCE(export_bezahlt,'') = vorher`) und bucht in EINER
+  Transaktion (`BEGIN IMMEDIATE`); nur wenn jeder Anspruch genau eine Zeile trifft, wird gebucht, sonst ROLLBACK und 0.
+  Zwei gleichzeitige Downloads (Knopf, ZIP, API, Chatbot) koennen denselben Stand nicht zweimal bezahlen.
+- **Nur Gebuchtes gilt als bezahlt (N4/N6):** der Stand ist je Teil gespeichert (`a=<hash>;q=<hash>`): schreibt der Bau die
+  Quickinfos nicht (Fehler), wird nur der Alt-Text-Teil berechnet und gemerkt; scheitert die Buchung, wird nichts gemerkt.
+  Im ZIP zaehlt der Quickinfo-Teil je Dokument (vorher reichte eine geschriebene Quickinfo irgendwo im ZIP).
+- **Momentaufnahme (M1):** `_quickinfos_momentaufnahme` liest die Quickinfos EINMAL im Plan; der Bau schreibt genau diese
+  (`unit["quickinfos"]`) — eine Aenderung waehrend des Baus geht nicht mehr gratis mit.
+- **Nur geschriebene Bilder (N5):** berechnet werden nur Bilder, die der Export schreiben kann (`_bilder_im_export`:
+  PDFix-Weg mit laufender Nummer, PyMuPDF-Weg mit xref und ohne Layout-Bereich; ein geleertes Feld im PyMuPDF-Weg zaehlt nicht).
+- **Bremse (H1):** das PDF-Herunterladen laeuft im eigenen Rechenbereich (`_export_executor`, 2 Faeden), hoechstens EINES je
+  Nutzer (`_export_belegen`, gemeinsam fuer Knopf, ZIP, API, Chatbot; 429 „Für dich wird gerade schon eine PDF erstellt …“),
+  gedrosselt auf `EXPORT_DROSSEL_ANZAHL` (20) je `EXPORT_DROSSEL_SEKUNDEN` (300). Ist fuer ein getaggtes Dokument nichts zu
+  berechnen und liegt derselbe Stand (`ablage.bau_stand`, Fingerabdruck wie die Pruefdatei) schon in der Ablage, kommt die
+  Datei von dort: kein Neubau, kein neuer Eintrag (Header `X-Export-Aus-Ablage: 1`).
+- **Dialog (Barrierefreiheit 3/8):** `pdf_download_preis` liefert die Zusammensetzung (`grund`, `bilder`, `felder`); der
+  Dialog sagt „Das Herunterladen kostet 30 Credits: 25 Grundpreis und 5 für bearbeitete Alt-Texte (1).“ Der Satz zum
+  Tagging kommt nur, wenn InkluDocs getaggt hat (`von_inkludocs_getaggt`), der Bildsatz nicht bei 0 Bildern. Word nennt den
+  Grund ebenso („… je 30 Credits: 25 Grundpreis und 5 für die Bilder (3).“).
+
+Tests: `tests/test_herunterladen_genutzt.py` (atomarer Anspruch, Teilbuchung, Buchungsfehler, Bremse, N5, M1),
+`tests/e2e/verify_michael_0930.py` Abschnitt I (vier gleichzeitige Downloads, Ablage statt Neubau).
+
 ## AKTIONSPREISE (Michael Karbe, bestaetigt 29.08.2026 — gebaut 29.08.2026)
 
 Eine Preisquelle: `billing.AKTIONS_PREISE` (je Vorgang), `billing.EXPORT_ARTEN` +

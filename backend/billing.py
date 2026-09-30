@@ -228,11 +228,15 @@ def pdf_download_preis(alt_bearbeitet: int, qi_bearbeitet: int) -> dict:
     staffel_qi = EXPORT_ARTEN["formular"][1] * (-(-q // EXPORT_SCHRITT))
     if a:
         pdf, formular = AKTIONS_PREISE["pdf_export"] + staffel_alt, staffel_qi
+        grund = AKTIONS_PREISE["pdf_export"]
     elif q:
         pdf, formular = 0, AKTIONS_PREISE["formular_export"] + staffel_qi
+        grund = AKTIONS_PREISE["formular_export"]
     else:
-        pdf = formular = 0
-    return {"preis": pdf + formular, "pdf": pdf, "formular": formular}
+        pdf = formular = grund = 0
+    # Zusammensetzung fuer den Dialog (Pruefung 30.09.2026, Punkt 8): Grundpreis + Anteil Bilder + Anteil Felder
+    return {"preis": pdf + formular, "pdf": pdf, "formular": formular, "grund": grund,
+            "bilder": staffel_alt, "felder": staffel_qi, "alt": a, "qi": q}
 
 
 def export_aktion(art: str) -> str:
@@ -785,6 +789,47 @@ def pruefe_kontingent(user_id: int) -> dict:
     except Exception:
         log.exception("pruefe_kontingent fehlgeschlagen — Aktion wird erlaubt")
         return ergebnis
+
+
+def verbuche_export(user_id: int, quelle: str, posten: list, ansprueche: list) -> bool:
+    """Buchung eines PDF-Herunterladens mit ATOMARER Sperre gegen Doppelabbuchung (Pruefung 30.09.2026, M2/N6).
+    posten = [(aktion, credits)], ansprueche = [(document_id, gelesener_stand, neuer_stand)]. In EINER Transaktion: erst je
+    Dokument den bezahlten Stand beanspruchen (UPDATE … WHERE export_bezahlt = gelesener Wert — Vergleichen-und-Tauschen),
+    nur wenn JEDER Anspruch genau eine Zeile trifft, die Verbrauchs-Ereignisse schreiben und die Pakete abbuchen. Hat
+    inzwischen ein anderer Download denselben Stand beansprucht, wird nichts gebucht (False). Anders als verbuche() wird ein
+    Fehler nicht verschluckt, sondern mit False gemeldet — dann gilt auch nichts als bezahlt. True = gebucht."""
+    try:
+        konto_id = _konto_fuer(user_id)
+        conn = get_db()
+        try:
+            conn.isolation_level = None
+            conn.execute("BEGIN IMMEDIATE")
+            for doc_id, vorher, neu in ansprueche:
+                cur = conn.execute("UPDATE documents SET export_bezahlt = ? WHERE id = ? AND COALESCE(export_bezahlt, '') = ?",
+                                   (neu, doc_id, vorher or ""))
+                if cur.rowcount != 1:
+                    conn.execute("ROLLBACK")
+                    log.warning("verbuche_export: Stand von Dokument %s inzwischen anders beansprucht — nichts gebucht", doc_id)
+                    return False
+            for aktion, credits in posten:
+                if int(credits or 0) > 0:
+                    conn.execute(
+                        "INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, image_id) VALUES (?, ?, ?, ?, ?, NULL)",
+                        (user_id, konto_id, quelle, aktion, int(credits)))
+            _pakete_abbuchen(conn, konto_id)
+            conn.execute("COMMIT")
+            return True
+        except Exception:
+            try:
+                conn.execute("ROLLBACK")
+            except Exception:  # noqa: BLE001
+                pass
+            raise
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001
+        log.exception("verbuche_export fehlgeschlagen — nichts gebucht, nichts als bezahlt gemerkt")
+        return False
 
 
 def verbuche(user_id: int, quelle: str, aktion: str = "bild_generierung",

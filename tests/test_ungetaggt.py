@@ -36,10 +36,10 @@ class Ungetaggt(unittest.TestCase):
         Karbe, Feedback 202609230 - 1, Punkt 12) kosten nur BEARBEITETE Alt-Texte (hier 2 von 3), die Bilder der
         ungetaggten Datei nie (ausfuehrlich: test_herunterladen_genutzt.py)."""
         def bild(i, **kw):
-            d = {"id": i, "alt_text": "", "alt_text_edited": None, "original_alt": "", "image_type": "unknown", "status": "pending"}
+            d = {"id": i, "image_index": i, "alt_text": "", "alt_text_edited": None, "original_alt": "", "image_type": "unknown", "status": "pending"}
             d.update(kw)
             return d
-        units = [{"doc": {"id": None, "getaggt": 1, "original_filename": "mit.pdf"},
+        units = [{"doc": {"id": None, "getaggt": 1, "original_filename": "mit.pdf", "extraction_method": "pdfix"},
                   "images": [bild(1, alt_text="KI-Text", status="done"), bild(2, alt_text_edited="Von Hand"), bild(3)]},
                  {"doc": {"id": None, "getaggt": 0, "original_filename": "ohne.pdf"}, "images": [bild(4, alt_text_edited="Von Hand")]}]
         with mock.patch.object(main.billing, "preis_pruefung", side_effect=lambda uid, preis: {"preis": preis, "verfuegbar": None, "erlaubt": True, "fehlend": 0}):

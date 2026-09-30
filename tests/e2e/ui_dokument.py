@@ -241,7 +241,7 @@ with sync_playwright() as p:
     check("Kein Testmodus-Hinweis im Bericht (Punkt 7)", "Testmodus" not in ber)
     check("Bericht ohne „In Ordnung“-Zeilen (Punkt 6)", "In Ordnung –" not in ber, ber[-400:])
     tl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
-    check("Tagging-Karte nach dem Lauf: Struktur und 1 Bild", "1 Bilder" in tl and "Struktur: " in tl, tl)
+    check("Tagging-Karte nach dem Lauf: Struktur und „1 Bild“ in der Einzahl (Prüfung 30.09., Punkt 11)", "1 Bild" in tl and "1 Bilder" not in tl and "Struktur: " in tl, tl)
     axe(pg, "Ansicht Tagging nach dem Lauf (mit Ergebnis)")
     pg.click("section.dok-karte .dok-ergebnis button")
     pg.wait_for_timeout(300)
@@ -258,6 +258,12 @@ with sync_playwright() as p:
             break
     check("Hörprobe-Dialog: Sprache, Seiten, Zusammenfassung, Grafik, Seiten in Lesereihenfolge", all(k in hp for k in ("Sprache", "Seiten", "Zusammenfassung", "Grafik", "Seite 1", "Seite 2")), hp[:300])
     check("Hörprobe-Dialog: Überschrift mit Dokumentname, Fokus im Dialog", "klicktest_roh.pdf" in pg.locator("#dkHpHeading").inner_text() and pg.evaluate("document.getElementById('dkHoerprobeDialog').contains(document.activeElement)"))
+    # Prüfung Barrierefreiheit 30.09.2026, Punkt 1: „Hörprobe vorlesen“ im Dialog, Meldung ohne Stimme sichtbar darunter
+    check("Hörprobe-Dialog hat „Hörprobe vorlesen“", pg.locator("#dkHpVorlesen").count() == 1 and pg.locator("#dkHpVorlesen").inner_text().strip() == "Hörprobe vorlesen")
+    pg.click("#dkHpVorlesen"); pg.wait_for_timeout(2500)
+    check("Ohne Stimme: sichtbare Meldung unter dem Knopf, Knopf zurückgesetzt", "keine Stimme" in pg.locator("#dkHpVorleseStatus").inner_text() and pg.locator("#dkHpVorleseStatus").is_visible() and pg.locator("#dkHpVorlesen[aria-pressed=false]").count() == 1, pg.locator("#dkHpVorleseStatus").inner_text())
+    kopf_html = pg.evaluate("Array.from(document.querySelectorAll('#dkHpInhalt p')).slice(0, 3).map(p => p.innerHTML).join(' | ')")
+    check("Sprache, Seiten, Zusammenfassung ohne lang der Dokumentsprache (Punkt 2)", "lang=" not in kopf_html and "Zusammenfassung" in kopf_html, kopf_html[:300])
     axe(pg, "Hörprobe-Dialog")
     pg.keyboard.press("Escape"); pg.wait_for_timeout(400)
     check("Escape schließt, Fokus zurück auf „Hörprobe“", not pg.locator("#dkHoerprobeDialog[open]").count() and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_hp_"))
@@ -287,6 +293,8 @@ with sync_playwright() as p:
         pg.wait_for_timeout(500)
     # Punkt 12: getaggt, nichts bearbeitet -> das Herunterladen kostet nichts; der Dialog sagt es VORHER
     check("Zusammenfassung nennt Bilder mit Text, kein Tabellen-Export, und dass das Herunterladen nichts kostet (nichts bearbeitet)", "Text" in zs and "CSV" not in zs and "kostet nichts" in zs and "keine Alt-Texte und keine Quickinfos bearbeitet" in zs and "Dieser Export kostet" not in zs, zs)
+    # Prüfung 30.09., N2: InkluDocs hat getaggt -> der Satz zum Tagging steht da (bei schon getaggt hochgeladenen nicht, ui_michael_0930)
+    check("Von InkluDocs getaggt: „Das Tagging ist schon beim Ausführen bezahlt.“", "Das Tagging ist schon beim Ausführen bezahlt." in zs, zs)
     verbraucht_vor_dl = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
     check("Fokus liegt im Dialog", pg.evaluate("document.getElementById('exportPanel').contains(document.activeElement)"))
     axe(pg, "Herunterladen-Dialog in der Ansicht Dokument")
@@ -422,6 +430,14 @@ with sync_playwright() as p:
         check("Abstand zwischen den Problemstellen (Punkt 5, bei mehr als einer) und unter „Problemstellen“ (Punkt 3)", (st_ab["li_abstand"] is None or st_ab["li_abstand"] >= 8) and st_ab["ol_oben"] + st_ab["sum_unten"] >= 14, st_ab)
     check("Kein Filter „Ganzes Dokument / Nur Problemstellen“ mehr (Punkt 12)", pg.locator("fieldset.ab-filter").count() == 0)
     check("Kein „!“ vor den Problemen (Punkt 7)", pg.locator(".ab-marke").count() == 0)
+    # Prüfung Barrierefreiheit 30.09.2026, Punkt 7: Seiten nur vorne, nicht noch einmal „(Seite n)“ im Satz
+    check("Problemzeilen nennen die Seiten nicht doppelt", not any(("– " in x) and x.split(" – ")[0].startswith("Seite") and ("(" + x.split(" – ")[0] + ")") in x for x in probleme), probleme[:3])
+    # Punkt 1: Hörprobe des ganzen Dokuments mit „Hörprobe vorlesen“ — unabhängig von Problemseiten
+    check("Hörprobe des ganzen Dokuments: H4 „Hörprobe“, Knopf „Hörprobe vorlesen“, Klappe „Hörprobe lesen“", pg.locator("section.ab-dok-hoerprobe h4").count() == 1 and pg.locator("button[id^=ab_dvorlesen_]").count() == 1 and pg.locator("details.ab-dhp > summary").inner_text().startswith("Hörprobe lesen"))
+    pg.click("button[id^=ab_dvorlesen_]"); pg.wait_for_timeout(2500)
+    check("Ohne Stimme: Meldung sichtbar unter „Hörprobe vorlesen“", "keine Stimme" in pg.locator("[id^=ab_dvstatus_]").inner_text() and pg.locator("[id^=ab_dvstatus_]").is_visible())
+    pg.click("details.ab-dhp > summary"); pg.wait_for_timeout(300)
+    check("Hörprobe lesen: alle Seiten, Inhalt mit lang, Kopfzeilen ohne", "— Seite 1 —" in pg.locator("details.ab-dhp").inner_text() and "— Seite 2 —" in pg.locator("details.ab-dhp").inner_text() and pg.locator("details.ab-dhp span[lang]").count() > 0 and "lang=" not in pg.evaluate("document.querySelector('details.ab-dhp [role=region] p').innerHTML"))
     n_prob = pg.locator("ol.ab-problemliste > li").count()
     if n_prob:
         pg.wait_for_selector("section.ab-seite", timeout=15000)

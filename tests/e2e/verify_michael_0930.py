@@ -12,6 +12,8 @@ gezaehlt wird der Verbrauch in /api/me). Legt eigene Projekte an und loescht sie
   E  Feldbeschriftungen (Lbl) in der Hoerprobe (Antrag Pflege, schon getaggt, 0 Credits)
   F  Ungetaggtes Formular: nur BEARBEITETE Quickinfos kosten (26), gleicher Stand 0; ZIP mit schon bezahlten Staenden 0
   G  Lange Tabellenzellen (Rechnung INKL-002) ungekuerzt
+  I  Pruefung 30.09. (H1/M2): vier gleichzeitige Downloads -> einer baut, einmal gebucht, GET /api/me bleibt schnell;
+     derselbe Stand noch einmal kommt aus der Ablage (kein Neubau, kein neuer Eintrag)
 
 Aufruf: /home/claude/.venv-pw/bin/python verify_michael_0930.py <ordner-mit-korpus> [--behalten]
   Korpus: actino_master_word.pdf, testformular_inkludocs.pdf, antrag_pflege.pdf, rechnung_inkl_002.pdf, probe_avv.pdf
@@ -240,6 +242,43 @@ try:
     r = export(pid)
     v9 = verbraucht()
     check("ZIP aller Dokumente, alle Stände schon bezahlt: 0 Credits, keine Doppelabbuchung", r.ok and r.content[:2] == b"PK" and r.headers.get("x-export-credits") == "0" and v9 == v8, (r.status_code, r.headers.get("x-export-credits"), r.headers.get("x-export-schon-bezahlt"), v8, v9))
+
+    print("== I. Gleichzeitige Downloads (Prüfung H1/M2): einer baut, einmal gebucht, App bleibt flüssig; Ablage statt Neubau ==")
+    s.post(B + f"/api/images/{bilder[0]['id']}/alt-text", json={"alt_text": "Farbverlauf von Blau nach Rot, fiktives Testbild, dritte Fassung"}, timeout=30)
+    check("Neuer Stand: 30 Credits im Dialog", summary(pid, did).get("preis") == 30)
+    anzahl_ablage = lambda: len(s.get(B + f"/api/ausgaben?projekt={pid}", timeout=60).json().get("ausgaben") or [])
+    a0 = anzahl_ablage()
+    v10 = verbraucht()
+    import threading
+    ergebnisse = []
+
+    def _laden():
+        ergebnisse.append(export(pid, did))
+    faeden = [threading.Thread(target=_laden) for _ in range(4)]
+    for f in faeden:
+        f.start()
+    time.sleep(0.4)
+    t0 = time.time()
+    me = s.get(B + "/api/me", timeout=30)
+    dauer = time.time() - t0
+    for f in faeden:
+        f.join()
+    v11 = verbraucht()
+    codes = sorted(r.status_code for r in ergebnisse)
+    ok200 = [r for r in ergebnisse if r.status_code == 200]
+    texte = [((r.json() or {}).get("detail") or "") for r in ergebnisse if r.status_code == 429]
+    check("4 gleichzeitige Klicks: genau einer baut (200), die anderen 429 mit Text „wird gerade schon eine PDF erstellt“",
+          codes.count(200) == 1 and codes.count(429) == 3 and all("gerade schon eine PDF" in t for t in texte), (codes, texte[:1]))
+    check("Genau einmal 30 Credits gebucht (Header = Verbrauch)", len(ok200) == 1 and ok200[0].headers.get("x-export-credits") == "30" and v11 - v10 == 30, ([r.headers.get("x-export-credits") for r in ok200], v10, v11))
+    check("Während des Baus antwortet die App sofort (GET /api/me unter 1 s, vorher 2,77 s)", me.ok and dauer < 1.0, round(dauer, 2))
+    a1 = anzahl_ablage()
+    check("Ein neuer Ablage-Eintrag für den bezahlten Stand", a1 == a0 + 1, (a0, a1))
+    r = export(pid, did)
+    v12 = verbraucht()
+    check("Noch einmal derselbe Stand: aus der Ablage (X-Export-Aus-Ablage 1), 0 Credits, kein neuer Eintrag",
+          r.ok and r.content[:5] == b"%PDF-" and r.headers.get("x-export-aus-ablage") == "1" and r.headers.get("x-export-credits") == "0" and v12 == v11 and anzahl_ablage() == a1,
+          (r.status_code, r.headers.get("x-export-aus-ablage"), r.headers.get("x-export-credits"), v11, v12, anzahl_ablage()))
+    check("Die Datei aus der Ablage ist dieselbe wie die bezahlte", r.content == ok200[0].content if ok200 else False)
 
     print("== H. Bindestriche im echten Dokument (AVV, Messlauf: „KIgestützte“, „EUStandardvertragsklauseln“, „EMail“) ==")
     avv = os.path.join(KORPUS, "probe_avv.pdf")

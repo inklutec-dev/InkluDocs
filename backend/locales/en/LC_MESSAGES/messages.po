@@ -9890,3 +9890,62 @@ msgstr "You pay for the tagging only here; it is not charged again when you down
 #, python-brace-format
 msgid "Die Dokumentsprache ist gesetzt: {s}."
 msgstr "The document language is set: {s}."
+
+msgid "Für dich wird gerade schon eine PDF erstellt. Bitte warte, bis sie fertig ist."
+msgstr "A PDF is already being created for you. Please wait until it is finished."
+
+msgid "Du hast in kurzer Zeit sehr oft heruntergeladen. Bitte warte ein paar Minuten."
+msgstr "You have downloaded very often in a short time. Please wait a few minutes."
+
+#, python-brace-format
+msgid "(Problem {n})"
+msgstr "(problem {n})"
+
+msgid "Getaggt (beim Hochladen)"
+msgstr "Tagged (when uploaded)"
+
+msgid "1 Überschrift"
+msgstr "1 heading"
+
+msgid "1 Liste"
+msgstr "1 list"
+
+msgid "1 Tabelle"
+msgstr "1 table"
+
+#, python-brace-format
+msgid "Diese PDF war beim Hochladen schon getaggt. Neu taggen geht hier nicht, weil vorhandene Tags nicht ersetzt werden; es wird nichts berechnet. Weiter geht es in {alttexte} oder {pruefung}."
+msgstr "This PDF was already tagged when it was uploaded. It cannot be tagged again here because existing tags are not replaced; nothing is charged. You can continue in {alttexte} or {pruefung}."
+
+#, python-brace-format
+msgid "Du hast {v} Credits."
+msgstr "You have {v} credits."
+
+msgid "Das Tagging ist schon beim Ausführen bezahlt."
+msgstr "The tagging was already paid for when it ran."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis, {b} für bearbeitete Alt-Texte ({a}) und {f} für bearbeitete Quickinfos ({q})."
+msgstr "The download costs {p} credits: {g} base price, {b} for edited alt texts ({a}) and {f} for edited tooltips ({q})."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis und {b} für bearbeitete Alt-Texte ({a})."
+msgstr "The download costs {p} credits: {g} base price and {b} for edited alt texts ({a})."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis und {f} für bearbeitete Quickinfos ({q})."
+msgstr "The download costs {p} credits: {g} base price and {f} for edited tooltips ({q})."
+
+msgid "Berechnet wird nur, was du in InkluDocs bearbeitet hast."
+msgstr "Only what you edited in InkluDocs is charged."
+
+msgid "Das Herunterladen kostet nichts, weil du keine Alt-Texte und keine Quickinfos bearbeitet hast."
+msgstr "The download costs nothing because you have not edited any alt texts or tooltips."
+
+#, python-brace-format
+msgid "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits: {g} Grundpreis und {b} für die Bilder ({n})."
+msgstr "“As Word” and “Convert to accessible PDF” each cost {p} credits: {g} base price and {b} for the images ({n})."
+
+#, python-brace-format
+msgid "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits (Grundpreis)."
+msgstr "“As Word” and “Convert to accessible PDF” each cost {p} credits (base price)."

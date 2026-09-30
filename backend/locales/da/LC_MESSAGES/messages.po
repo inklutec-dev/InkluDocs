@@ -9589,3 +9589,62 @@ msgstr "Taggingen betaler du kun her; den opkræves ikke igen ved download."
 #, python-brace-format
 msgid "Die Dokumentsprache ist gesetzt: {s}."
 msgstr "Dokumentsproget er sat: {s}."
+
+msgid "Für dich wird gerade schon eine PDF erstellt. Bitte warte, bis sie fertig ist."
+msgstr "Der bliver allerede oprettet en PDF til dig. Vent, til den er færdig."
+
+msgid "Du hast in kurzer Zeit sehr oft heruntergeladen. Bitte warte ein paar Minuten."
+msgstr "Du har downloadet meget ofte på kort tid. Vent et par minutter."
+
+#, python-brace-format
+msgid "(Problem {n})"
+msgstr "(problem {n})"
+
+msgid "Getaggt (beim Hochladen)"
+msgstr "Tagget (ved upload)"
+
+msgid "1 Überschrift"
+msgstr "1 overskrift"
+
+msgid "1 Liste"
+msgstr "1 liste"
+
+msgid "1 Tabelle"
+msgstr "1 tabel"
+
+#, python-brace-format
+msgid "Diese PDF war beim Hochladen schon getaggt. Neu taggen geht hier nicht, weil vorhandene Tags nicht ersetzt werden; es wird nichts berechnet. Weiter geht es in {alttexte} oder {pruefung}."
+msgstr "Denne PDF var allerede tagget ved upload. Den kan ikke tagges igen her, fordi eksisterende tags ikke erstattes; der opkræves intet. Du kan fortsætte i {alttexte} eller {pruefung}."
+
+#, python-brace-format
+msgid "Du hast {v} Credits."
+msgstr "Du har {v} credits."
+
+msgid "Das Tagging ist schon beim Ausführen bezahlt."
+msgstr "Taggingen er allerede betalt, da den blev kørt."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis, {b} für bearbeitete Alt-Texte ({a}) und {f} für bearbeitete Quickinfos ({q})."
+msgstr "Download koster {p} credits: {g} grundpris, {b} for redigerede alt-tekster ({a}) og {f} for redigerede værktøjstip ({q})."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis und {b} für bearbeitete Alt-Texte ({a})."
+msgstr "Download koster {p} credits: {g} grundpris og {b} for redigerede alt-tekster ({a})."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis und {f} für bearbeitete Quickinfos ({q})."
+msgstr "Download koster {p} credits: {g} grundpris og {f} for redigerede værktøjstip ({q})."
+
+msgid "Berechnet wird nur, was du in InkluDocs bearbeitet hast."
+msgstr "Der betales kun for det, du har redigeret i InkluDocs."
+
+msgid "Das Herunterladen kostet nichts, weil du keine Alt-Texte und keine Quickinfos bearbeitet hast."
+msgstr "Download koster intet, fordi du ikke har redigeret alt-tekster eller værktøjstip."
+
+#, python-brace-format
+msgid "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits: {g} Grundpreis und {b} für die Bilder ({n})."
+msgstr "„Som Word“ og „Konvertér til tilgængelig PDF“ koster hver {p} credits: {g} grundpris og {b} for billederne ({n})."
+
+#, python-brace-format
+msgid "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits (Grundpreis)."
+msgstr "„Som Word“ og „Konvertér til tilgængelig PDF“ koster hver {p} credits (grundpris)."

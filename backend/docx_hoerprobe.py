@@ -38,6 +38,9 @@ _MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
 # mit „…“, still. Die Obergrenze der ZEILEN (MAX_ZEILEN) bleibt und sagt hoerbar „Hörprobe gekürzt“.
 MAX_ABSATZ = 0
 MAX_ZEILEN = 400          # Zeilen der Hoerprobe insgesamt
+# Zeilen von InkluDocs statt Dokumentinhalt (Index): 1 = „Sprache: …“ (0 = Dokumenttitel ist Inhalt). Die Oberflaeche liest
+# sie ohne lang der Dokumentsprache (Pruefung Barrierefreiheit 30.09.2026, Punkt 2).
+EIGENE_ZEILEN = (1,)
 
 
 def _identitaet(s: str) -> str:

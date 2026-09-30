@@ -70,7 +70,7 @@ with sync_playwright() as p:
             break
         pg.wait_for_timeout(500)
     hin = pg.locator("#exportPdfHinweis").inner_text() if pg.locator("#exportPdfHinweis").is_visible() else ""
-    check("Dokument, ungetaggt mit bearbeiteter Quickinfo: Hinweis „bekommt deine bearbeiteten Quickinfos, aber keine Alt-Texte“ + Preis 26 (1 bearbeitetes Feld)", "bearbeiteten Quickinfos" in hin and "keine Alt-Texte" in hin and "26 Credits" in zs and "Quickinfos: 1" in zs, (zs, hin))
+    check("Dokument, ungetaggt mit bearbeiteter Quickinfo: Hinweis „bekommt deine bearbeiteten Quickinfos, aber keine Alt-Texte“ + Preis 26 mit Zusammensetzung (Prüfung 30.09., Punkt 8)", "bearbeiteten Quickinfos" in hin and "keine Alt-Texte" in hin and "26 Credits: 25 Grundpreis und 1 für bearbeitete Quickinfos (1)" in zs, (zs, hin))
     doc_id = int(pg.locator("button[id^=dok_export_]").first.get_attribute("id").split("_")[-1])
     r = pg.request.post(B + f"/api/projects/{pid}/export", data={"document_id": doc_id})
     check("Export ungetaggt mit Quickinfos: PDF mit Quickinfos, nicht unverändert, Credits berechnet", r.ok and r.body()[:5] == b"%PDF-" and r.headers.get("x-export-unveraendert") == "0" and int(r.headers.get("x-export-quickinfos") or 0) >= 1 and int(r.headers.get("x-export-credits") or 0) > 0, (r.status, {k: v for k, v in r.headers.items() if k.startswith("x-export")}))

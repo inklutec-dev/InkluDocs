@@ -319,10 +319,11 @@ def _einzeln(regeln: list, regeln_kt: dict, _: Callable[[str], str]) -> list:
     je_satz: dict = {}
     for r in regeln:
         s = regeln_kt.get((str(r.get("clause")), r.get("test")))
+        uebersetzt = bool(s)
         if not s:
             s = " ".join(str(r.get("description") or _("ohne Beschreibung")).split())[:240].rstrip(".")
         n = int(r.get("failed") or 0)
-        e = je_satz.setdefault(s, {"n": 0, "seiten": set(), "regeln": []})
+        e = je_satz.setdefault(s, {"n": 0, "seiten": set(), "regeln": [], "uebersetzt": uebersetzt})
         e["n"] += n
         e["regeln"].append(f"{r.get('clause')}-{r.get('test')}")
         e["seiten"].update(int(x) for x in (r.get("pages") or []) if str(x).isdigit())
@@ -330,7 +331,11 @@ def _einzeln(regeln: list, regeln_kt: dict, _: Callable[[str], str]) -> list:
     for s, e in je_satz.items():
         t = s + ((" " + _("({n}-mal)").format(n=e["n"])) if e["n"] > 1 else "")
         seiten = sorted(e["seiten"])
-        out.append({"text": t + _seiten_text(seiten, _), "seiten": seiten, "regeln": e["regeln"]})
+        # satz/mal/lang einzeln (Pruefung Barrierefreiheit 30.09.2026, Punkt 7): die Pruefansicht nennt die Seiten schon vorne
+        # und zeichnet nicht uebersetzte veraPDF-Saetze (Englisch) mit lang="en" aus; "text" bleibt fuer die anderen Anzeigen.
+        out.append({"text": t + _seiten_text(seiten, _), "seiten": seiten, "regeln": e["regeln"],
+                    "satz": s, "mal": (_("({n}-mal)").format(n=e["n"]) if e["n"] > 1 else ""),
+                    "lang": ("" if e["uebersetzt"] else "en")})
     return out
 
 

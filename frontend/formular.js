@@ -516,12 +516,12 @@
                 +     '<input type="checkbox" id="fNurUnsichere"' + (nurUnsichere ? ' checked' : '') + ' onchange="Formular.filterUnsicher(this.checked)" style="width:1.2rem;height:1.2rem;"></label></div>'
                 // Sprache der Quickinfos + gespeicherte Prompts: dieselben Endpunkte und
                 // Funktionen wie bei den Alt-Texten (app.html: setAltLanguage, populatePromptSelect, setPromptSetting).
-                +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
+                +   '<div class="einstellung-zeile" style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +     '<label for="altLangSelect" style="font-weight:600;">' + t('Sprache der Quickinfos') + '</label>'
                 +     '<select id="altLangSelect" onchange="setAltLanguage(' + project.id + ', this.value)" data-confirmed="' + escHtml(project.alt_language || 'de') + '" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">'
                 +       ['de','en','da','fr','es','sv'].map(code => '<option value="' + code + '"' + ((project.alt_language || 'de') === code ? ' selected' : '') + '>' + ({de:'Deutsch',en:'English',da:'Dansk',fr:'Français',es:'Español',sv:'Svenska'})[code] + '</option>').join('')
                 +     '</select><span id="altLangStatus" style="font-size:0.9rem;"></span></div>'
-                +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
+                +   '<div class="einstellung-zeile" style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +     '<label for="ownPromptSelect" style="font-weight:600;">' + t('Gespeicherte Prompts') + '</label>'
                 +     '<select id="ownPromptSelect" onchange="setPromptSetting(' + project.id + ', this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;"><option value="">' + t('Kein eigener Prompt') + '</option></select></div>'
                 : '');

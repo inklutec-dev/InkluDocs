@@ -648,3 +648,11 @@ Gäste sehen weiter nur die Alt-Texte (keine neuen Endpunkte unter `/api/freigab
 Nebenbei: veraPDF-Zeilen nennen die Regel wie bei PDF als „(Regel …)“; die Hörprobe kürzt Absätze nicht mehr
 (`docx_hoerprobe.MAX_ABSATZ = 0`, die Zeilen-Obergrenze bleibt mit hörbarem „Hörprobe gekürzt“).
 „Hörprobe vorlesen“/„Hörprobe lesen“ unverändert (hängt an Michaels Punkt 10, Steve entscheidet).
+
+Nachbesserung nach der Barrierefreiheits-Prüfung (30.09.2026): Der Umwandeln-Dialog sagt Warten und Fehler kurz über
+`#exportStatus`; das Ergebnis (`#pdfuaResult`) ist kein Live-Bereich mehr, der Fokus springt auf die Zusammenfassung
+(`#pdfuaZusammenfassung`), danach kommen in der Tab-Reihenfolge „PDF herunterladen“ und der Verweis auf die
+Barrierefreiheitsprüfung. Der Herunterladen-Dialog nennt den Preis mit Grund („„Als Word“ und „In barrierefreie PDF
+umwandeln“ kosten je 30 Credits: 25 Grundpreis und 5 für die Bilder (3).“). Die Hörprobe-Zeile „Sprache: Deutsch (de-DE)“ ist
+eine eigene Zeile von InkluDocs (`docx_hoerprobe.EIGENE_ZEILEN`) und steht ohne Dokumentsprache;
+„keine Stimme“ erscheint sichtbar unter dem Vorlesen-Knopf.

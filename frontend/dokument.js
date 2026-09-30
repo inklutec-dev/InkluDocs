@@ -86,6 +86,9 @@
         if (tg.laeuft) return t('Wird barrierefrei gemacht …');
         if (tg.status === 'fehler') return t('Letzter Lauf fehlgeschlagen');
         // Nur „Getaggt“ / „Nicht getaggt“ (Michael Karbe, Feedback 24.09.2026, Punkt 4) — das PDF/UA-Ergebnis steht im Bericht
+        // Beim Hochladen schon getaggt (Quelle hat Tags, InkluDocs taggt sie nicht neu): unterscheidbar von „Getaggt“, das man
+        // neu taggen kann (Prüfung Barrierefreiheit 30.09.2026, Punkt 5)
+        if (tg.quelle_getaggt === true && d.getaggt === true && tg.status !== 'fertig') return t('Getaggt (beim Hochladen)');
         if (tg.status === 'fertig' || d.getaggt === true) return t('Getaggt');
         if (d.getaggt === false) return t('Nicht getaggt');
         return t('Unbekannt');
@@ -100,10 +103,11 @@
     function strukturText(s) {
         if (!s || !s.elemente) return t('keine Struktur');
         const teile = [];
-        teile.push(t('{n} Überschriften', { n: s.ueberschriften || 0 }));
-        teile.push(t('{n} Listen', { n: s.listen || 0 }));
-        teile.push(t('{n} Tabellen', { n: s.tabellen || 0 }));
-        teile.push(t('{n} Bilder', { n: s.bilder || 0 }));
+        // Einzahl bei 1 (Prüfung Barrierefreiheit 30.09.2026, Punkt 11: „1 Bilder“)
+        teile.push((s.ueberschriften || 0) === 1 ? t('1 Überschrift') : t('{n} Überschriften', { n: s.ueberschriften || 0 }));
+        teile.push((s.listen || 0) === 1 ? t('1 Liste') : t('{n} Listen', { n: s.listen || 0 }));
+        teile.push((s.tabellen || 0) === 1 ? t('1 Tabelle') : t('{n} Tabellen', { n: s.tabellen || 0 }));
+        teile.push((s.bilder || 0) === 1 ? t('1 Bild') : t('{n} Bilder', { n: s.bilder || 0 }));
         return t('{n} Elemente', { n: s.elemente }) + ' (' + teile.join(', ') + ')';
     }
 
@@ -354,6 +358,11 @@
 
     // Dokumentinfo je Zeile „Bezeichnung: Wert“ (Michael Karbe, Mail 22.09.2026, Punkte 2 und 4): eine Liste
     // ohne Aufzaehlungszeichen in derselben Schrift und Groesse wie der Bericht darunter.
+    // Link auf eine andere Ansicht des Projekts (wechselt ohne Neuladen wie die Ansichts-Knöpfe; Strg/Cmd öffnet einen Tab)
+    function ansichtLink(project, ziel) {
+        const namen = (typeof ansichtNamen === 'function') ? ansichtNamen() : {};
+        return '<a href="/app?projekt=' + encodeURIComponent(project.id) + '&amp;ansicht=' + ziel + '" onclick="return ansichtKlick(event, ' + project.id + ', \'' + ziel + '\')">' + esc(namen[ziel] || ziel) + '</a>';
+    }
     function metaZeile(bez, wert, id) {
         return '<li>' + bez + ': <span' + (id ? ' id="' + id + '"' : '') + '>' + wert + '</span></li>';
     }
@@ -418,7 +427,8 @@
         // je Ansicht: „Dokument“ = Metadaten, „Tagging“ = Struktur und Bilder (Feedback 20260928 - 2, Punkt 7).
         const meta = imTagging
             ? metaZeile(t('Struktur'), esc(strukturText(d.struktur)))
-              + metaZeile(t('Bilder'), (d.total_images || 0) ? t('{n} Bilder, {m} mit Alt-Text', { n: d.total_images, m: tg.hat_alt_texte || 0 }) : t('keine Bilder gefunden'))
+              // „mit Alt-Text“ zählt seit 30.09.2026 wie Dialog und Hörprobe auch Alt-Texte aus der Datei (Punkt 11), Einzahl bei 1
+              + metaZeile(t('Bilder'), (d.total_images || 0) ? (d.total_images === 1 ? t('1 Bild, {m} mit Alt-Text', { m: tg.hat_alt_texte || 0 }) : t('{n} Bilder, {m} mit Alt-Text', { n: d.total_images, m: tg.hat_alt_texte || 0 })) : t('keine Bilder gefunden'))
             // Reihenfolge nach Michael Karbe (Feedback 24.09.2026, Punkte 2, 3, 5): Titel, Anwendung, Erstellt mit, Stand,
             // PDF-Standard, dann Seiten und Sprache
             : metaZeile(t('Titel'), esc((d.struktur && d.struktur.titel) || (d.meta && d.meta.titel) || t('kein Titel')))
@@ -464,7 +474,9 @@
             + (imTagging ? urteilHtml(project, d, tg, busy) : '')
             + '</div></div>'
             + '<div class="dok-werkbank">'
-            + (imTagging && tg.quelle_getaggt === true ? '<p class="feld-hinweis dok-schon-getaggt" id="dok_schon_getaggt_' + d.id + '">' + t('Diese PDF ist schon getaggt. „Barrierefrei machen“ ersetzt vorhandene Tags nicht, deshalb taggen wir sie nicht noch einmal und berechnen nichts.') + '</p>' : '')
+            // Satz in normaler Textgröße, ohne Verweis auf einen Knopf, den es hier nicht gibt, und mit dem Weg weiter
+            // (Prüfung Barrierefreiheit 30.09.2026, Punkt 5): Links zu „Alt-Texte“ und „Barrierefreiheitsprüfung“
+            + (imTagging && tg.quelle_getaggt === true ? '<p class="dok-schon-getaggt" id="dok_schon_getaggt_' + d.id + '">' + t('Diese PDF war beim Hochladen schon getaggt. Neu taggen geht hier nicht, weil vorhandene Tags nicht ersetzt werden; es wird nichts berechnet. Weiter geht es in {alttexte} oder {pruefung}.', { alttexte: ansichtLink(project, 'alttexte'), pruefung: ansichtLink(project, 'abschluss') }) + '</p>' : '')
             + '<div class="ausgabe-aktionen">' + knoepfe + '</div>'
             // Unter den Knöpfen in „Dokument“ nichts weiter (Feedback 20260928 - 2, Punkt 2); Ergebnis, Laufstatus, Testlauf
             // und Bericht gehören zum Tagging.
@@ -491,10 +503,17 @@
                 : t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.')) + '</p>'
             + '<p id="dkHpStatus" role="status" class="visually-hidden"></p>'
             + '<div class="ausgabe-hoerprobe" id="dkHpInhalt" role="region" aria-label="' + t('Vorgelesener Text') + '" tabindex="0" style="max-height:24rem;overflow:auto;"></div>'
-            + '<div class="dialog-actions"><button type="button" class="btn btn-secondary" id="dkHpZu" onclick="Dokument.hoerprobeSchliessen()">' + t('Schließen') + '</button></div>'
+            // „Hörprobe vorlesen“ wie bei Word (Prüfung Barrierefreiheit 30.09.2026, Punkt 1; Steve: der Name bleibt, also muss es
+            // etwas zu hören geben): gemeinsame Funktion vorlesenTeile, Ansage in der Kontosprache, Inhalt in der Dokumentsprache,
+            // nur Stimmen auf dem Gerät. Ohne Stimme steht die Meldung SICHTBAR in der Statuszeile darunter (einzige Ansage).
+            + '<p class="ab-vorlese-status" id="dkHpVorleseStatus" role="status"></p>'
+            + '<div class="dialog-actions">'
+            + '<button type="button" class="btn btn-secondary tts-btn" id="dkHpVorlesen" aria-pressed="false" onclick="Dokument.hoerprobeVorlesen(this)">' + t('Hörprobe vorlesen') + '</button>'
+            + '<button type="button" class="btn btn-secondary" id="dkHpZu" onclick="Dokument.hoerprobeSchliessen()">' + t('Schließen') + '</button></div>'
             + '</dialog>';
     }
     let hoerprobeDoc = null;
+    let hoerprobeDaten = { zeilen: [], eigene: new Set(), lang: '' };   // geladene Hörprobe für „Hörprobe vorlesen“
     async function hoerprobeOeffnen(projectId, docId) {
         const dlg = document.getElementById('dkHoerprobeDialog');
         const box = document.getElementById('dkHpInhalt');
@@ -511,11 +530,16 @@
         // Stimme, die auch ein echter Screenreader nähme — die Ansage („Überschrift Ebene 1“) bleibt in der Oberflächensprache.
         const roh = String((d && ((d.struktur && d.struktur.lang) || (d.info && d.info.sprache))) || '').trim();
         const lang = /^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(roh) ? roh : '';
-        const zeile = z => {
+        let eigene = new Set();
+        // eigen = Zeile von InkluDocs (Sprache, Seiten, Zusammenfassung): ohne lang der Dokumentsprache (Prüfung 30.09.2026, Punkt 2)
+        const zeile = (z, idx) => {
             const i = String(z).indexOf(': ');
-            if (i <= 0) return '<p>' + esc(z) + '</p>';
+            if (i <= 0 || eigene.has(idx)) return '<p>' + esc(z) + '</p>';
             return '<p>' + esc(z.slice(0, i)) + ': <span' + (lang ? ' lang="' + esc(lang) + '"' : '') + '>' + esc(z.slice(i + 2)) + '</span></p>';
         };
+        hoerprobeDaten = { zeilen: [], eigene: new Set(), lang: lang };
+        const vst = document.getElementById('dkHpVorleseStatus');
+        if (vst) vst.textContent = '';
         let meldung;
         try {
             let j;
@@ -525,7 +549,7 @@
                 const r = await fetch('/api/projects/' + projectId + '/export/pdfua/vorschau', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document_id: docId }) });
                 const w = await r.json().catch(() => null);
                 const dok = r.ok && w ? (w.dokumente || [])[0] : null;
-                j = dok ? { verfuegbar: true, hoerprobe: dok.hoerprobe || [] }
+                j = dok ? { verfuegbar: true, hoerprobe: dok.hoerprobe || [], hoerprobe_eigene: dok.hoerprobe_eigene || [] }
                         : { verfuegbar: false, grund: (w && typeof w.detail === 'string' && w.detail) || '' };
             } else {
                 const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/struktur', { credentials: 'same-origin' });
@@ -537,6 +561,8 @@
                 box.innerHTML = '<p>' + esc(meldung) + '</p>';
             } else {
                 const zeilen = j.hoerprobe || [];
+                eigene = new Set(j.hoerprobe_eigene || []);
+                hoerprobeDaten = { zeilen: zeilen, eigene: eigene, lang: lang };
                 box.innerHTML = zeilen.map(zeile).join('') || '<p>' + t('Kein Text zum Vorlesen vorhanden.') + '</p>';
                 meldung = zeilen.length === 1 ? t('Hörprobe geladen, 1 Zeile.') : t('Hörprobe geladen, {n} Zeilen.', { n: zeilen.length });
             }
@@ -548,7 +574,21 @@
         if (status) status.textContent = meldung;
         if (document.activeElement !== box) box.focus();
     }
+    // „Hörprobe vorlesen“ im Dialog: Ansage (Kontosprache) und Inhalt (Dokumentsprache) getrennt, Zeilen von InkluDocs ganz in
+    // der Kontosprache — wie „Hörprobe vorlesen“ in der Barrierefreiheitsprüfung (abschluss.js).
+    function hoerprobeVorlesen(btn) {
+        if (typeof vorlesenTeile !== 'function') return;
+        const teile = [];
+        hoerprobeDaten.zeilen.forEach((zl, i) => {
+            const k = String(zl).indexOf(': ');
+            if (k <= 0 || hoerprobeDaten.eigene.has(i)) { teile.push({ text: String(zl), lang: '' }); return; }
+            teile.push({ text: zl.slice(0, k) + ':', lang: '' });
+            teile.push({ text: zl.slice(k + 2) + '.', lang: hoerprobeDaten.lang });
+        });
+        vorlesenTeile(teile, btn, t('Hörprobe vorlesen'), document.getElementById('dkHpVorleseStatus'));
+    }
     function hoerprobeSchliessen() {
+        if (typeof vorlesenStopp === 'function') vorlesenStopp();
         const dlg = document.getElementById('dkHoerprobeDialog');
         if (dlg && dlg.open) dlg.close();
         const btn = hoerprobeDoc ? document.getElementById('dok_hp_' + hoerprobeDoc) : null;
@@ -1074,5 +1114,5 @@
     window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, meldungSchliessen, pollStoppen,
                         ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig,
                         ergebnisSchliessen, hoerprobeOeffnen, hoerprobeSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden, testStarten,
-                        pruefAbschlussText, korrAbschlussText };
+                        pruefAbschlussText, korrAbschlussText, hoerprobeVorlesen };
 })();

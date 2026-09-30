@@ -530,8 +530,12 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
     seiten = _seiten(doc)
     schon_getaggt = quelle_getaggt(doc)
     pruefung = _d.billing.aktion_pruefung(user_id, AKTION, seiten) if seiten else None
+    # „mit Alt-Text“ wie im Herunterladen-Dialog und in der Hoerprobe (Pruefung Barrierefreiheit 30.09.2026, Punkt 11):
+    # sichtbarer Text = eigener Text, sonst KI-Text, sonst der Text aus der Datei (main._display_alt_text); dekorativ zaehlt
+    # nicht. Vorher zaehlten nur Texte aus InkluDocs — bei Actino Master Word „0 mit Alt-Text“, obwohl 8 in der Datei stehen.
     alt = conn.execute(
-        "SELECT COUNT(*) FROM images WHERE document_id = ? AND ((alt_text IS NOT NULL AND alt_text <> '') OR (alt_text_edited IS NOT NULL AND alt_text_edited <> ''))",
+        "SELECT COUNT(*) FROM images WHERE document_id = ? AND TRIM(CASE WHEN alt_text_edited IS NOT NULL THEN alt_text_edited "
+        "ELSE COALESCE(NULLIF(TRIM(COALESCE(alt_text, '')), ''), COALESCE(original_alt, '')) END) NOT IN ('', 'dekorativ')",
         (doc["id"],)).fetchone()[0]
     status = doc.get("tagging_status") or ""
     laeuft = doc["id"] in _laeuft or status == STATUS_LAEUFT
@@ -690,6 +694,8 @@ def struktur_daten(project_id: int, document_id: int, user_id: int, ui_lang: str
         "info": struktur.get("info") or {},
         "zusammenfassung": (zeilen[2] if len(zeilen) > 2 else ""),
         "hoerprobe": zeilen,
+        # Zeilen von InkluDocs (Sprache, Seiten, Zusammenfassung): ohne lang der Dokumentsprache (Pruefung 30.09.2026)
+        "hoerprobe_eigene": list(range(min(pdf_struktur.EIGENE_KOPFZEILEN, len(zeilen)))),
     })
     if mit_html:
         aussen["html"] = pdf_struktur.html_ansicht(struktur, _, quickinfos, ebene_versatz=1)
@@ -1182,7 +1188,8 @@ def build_router(deps: Deps) -> APIRouter:
                 struktur = pdf_struktur.lesen(pdf, ordner)
             except pdf_struktur.StrukturFehler as e:
                 return {"verfuegbar": False, "grund": _(str(e))}
-            return {"verfuegbar": True, "hoerprobe": pdf_struktur.hoerprobe(struktur, _, quickinfos)}
+            zeilen = pdf_struktur.hoerprobe(struktur, _, quickinfos)
+            return {"verfuegbar": True, "hoerprobe": zeilen, "hoerprobe_eigene": list(range(min(pdf_struktur.EIGENE_KOPFZEILEN, len(zeilen))))}
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, lesen)
 

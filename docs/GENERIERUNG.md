@@ -118,6 +118,11 @@ Alle Preise stehen an EINER Stelle: `billing.AKTIONS_PREISE` (je Vorgang) und
   anders als `quickinfo_original`). Derselbe schon bezahlte Stand eines Dokuments kostet kein zweites Mal
   (`documents.export_bezahlt`, Schalter `billing.GLEICHER_STAND_KOSTENLOS`). Eine Planung für Dialog, Export und
   Chatbot: `main._pdf_export_plan`. Word und eigenständige Formular-Projekte rechnen weiter nach der Staffel oben.
+  Nachbesserung nach der unabhängigen Prüfung (30.09.2026): Anspruch auf den Stand und Buchung atomar in einer Transaktion
+  (`billing.verbuche_export`), bezahlt gemerkt nur, was gebucht wurde (je Teil Alt-Texte/Quickinfos), Quickinfos als
+  Momentaufnahme (`_quickinfos_momentaufnahme`), berechnet nur Bilder, die der Export schreibt (`_bilder_im_export`),
+  höchstens ein Herunterladen je Nutzer im eigenen Rechenbereich, derselbe Stand aus der Ablage. Einzelheiten:
+  backend/ABRECHNUNG.md.
 - Tabellen-Export (JSON, CSV, Excel, Formular-CSV): 10 Credits je Vorgang,
   fester Preis (`billing.TABELLEN_EXPORTE`). Die Stammdaten-CSV (eigene
   Bibliothek, kein Dokument) bleibt kostenlos. Der Excel-Export war vom

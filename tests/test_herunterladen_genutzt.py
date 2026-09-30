@@ -50,13 +50,17 @@ class Preise(unittest.TestCase):
 
     def test_download_nur_bearbeitetes(self):
         p = billing.pdf_download_preis
-        self.assertEqual(p(0, 0), {"preis": 0, "pdf": 0, "formular": 0})
+        teil = lambda d: {k: d[k] for k in ("preis", "pdf", "formular")}
+        self.assertEqual(teil(p(0, 0)), {"preis": 0, "pdf": 0, "formular": 0})
         self.assertEqual(p(1, 0)["preis"], 25 + 5)
         self.assertEqual(p(26, 0)["preis"], 25 + 15)            # wie das Beispiel auf der Preisseite
-        self.assertEqual(p(0, 13), {"preis": 25 + 2, "pdf": 0, "formular": 27})
+        self.assertEqual(teil(p(0, 13)), {"preis": 25 + 2, "pdf": 0, "formular": 27})
         # beides bearbeitet: EIN Grundpreis, nie zwei (keine doppelte Abrechnung)
-        self.assertEqual(p(26, 13), {"preis": 25 + 15 + 2, "pdf": 40, "formular": 2})
+        self.assertEqual(teil(p(26, 13)), {"preis": 25 + 15 + 2, "pdf": 40, "formular": 2})
         self.assertEqual(p(-3, None)["preis"], 0)
+        # Zusammensetzung fuer den Dialog (Pruefung 30.09.2026, Punkt 8)
+        z = p(26, 13)
+        self.assertEqual((z["grund"], z["bilder"], z["felder"], z["alt"], z["qi"]), (25, 15, 2, 26, 13))
 
 
 class Bearbeitet(unittest.TestCase):
@@ -88,7 +92,8 @@ class Bearbeitet(unittest.TestCase):
 
 
 class Plan(unittest.TestCase):
-    """_pdf_export_plan mit einer Datenbank im Speicher (nur formularfelder/documents) — keine echte Datenbank."""
+    """_pdf_export_plan und _export_abrechnen mit einer Wegwerf-Datenbank (Datei im Temp-Ordner, nur formularfelder,
+    documents, usage_events) — main.get_db und billing.get_db zeigen darauf, die echte Datenbank bleibt unberuehrt."""
 
     @classmethod
     def setUpClass(cls):
@@ -99,44 +104,58 @@ class Plan(unittest.TestCase):
         cls.m = main
 
     def setUp(self):
-        self.db = sqlite3.connect(":memory:", check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
-        self.db.execute("CREATE TABLE formularfelder (id INTEGER PRIMARY KEY, document_id INTEGER, anker TEXT, quickinfo TEXT, quickinfo_original TEXT)")
-        self.db.execute("CREATE TABLE documents (id INTEGER PRIMARY KEY, export_bezahlt TEXT DEFAULT '')")
+        self.tmp = tempfile.TemporaryDirectory()
+        self.pfad = os.path.join(self.tmp.name, "t.db")
+        c = sqlite3.connect(self.pfad)
+        c.execute("CREATE TABLE formularfelder (id INTEGER PRIMARY KEY, document_id INTEGER, anker TEXT, quickinfo TEXT, quickinfo_original TEXT)")
+        c.execute("CREATE TABLE documents (id INTEGER PRIMARY KEY, export_bezahlt TEXT DEFAULT '')")
+        c.execute("CREATE TABLE usage_events (id INTEGER PRIMARY KEY, user_id INTEGER, konto_user_id INTEGER, quelle TEXT, aktion TEXT, credits INTEGER, image_id INTEGER)")
         for i in (1, 2, 3):
-            self.db.execute("INSERT INTO documents (id) VALUES (?)", (i,))
-        self.db.commit()
+            c.execute("INSERT INTO documents (id) VALUES (?)", (i,))
+        c.commit()
+        c.close()
 
-        class _Conn:
-            """Verbindung, deren close() die Speicher-Datenbank offen laesst."""
-            def __init__(s, c):
-                s.c = c
-
-            def execute(s, *a):
-                return s.c.execute(*a)
-
-            def commit(s):
-                s.c.commit()
-
-            def close(s):
-                pass
-        self.p_db = mock.patch.object(self.m, "get_db", side_effect=lambda: _Conn(self.db))
-        self.p_pr = mock.patch.object(self.m.billing, "preis_pruefung",
-                                      side_effect=lambda uid, preis: {"preis": preis, "verfuegbar": None, "erlaubt": True, "fehlend": 0})
-        self.p_db.start()
-        self.p_pr.start()
+        def verbindung():
+            k = sqlite3.connect(self.pfad, timeout=10)
+            k.row_factory = sqlite3.Row
+            return k
+        self.patches = [
+            mock.patch.object(self.m, "get_db", side_effect=verbindung),
+            mock.patch.object(self.m.billing, "get_db", side_effect=verbindung),
+            mock.patch.object(self.m.billing, "_konto_fuer", side_effect=lambda uid: uid),
+            mock.patch.object(self.m.billing, "_pakete_abbuchen", side_effect=lambda conn, konto: None),
+            mock.patch.object(self.m.billing, "preis_pruefung",
+                              side_effect=lambda uid, preis: {"preis": preis, "verfuegbar": None, "erlaubt": True, "fehlend": 0}),
+        ]
+        for pt in self.patches:
+            pt.start()
 
     def tearDown(self):
-        self.p_db.stop()
-        self.p_pr.stop()
-        self.db.close()
+        for pt in self.patches:
+            pt.stop()
+        self.tmp.cleanup()
 
-    def _unit(self, doc_id, getaggt, images, bezahlt=""):
-        return {"doc": {"id": doc_id, "getaggt": 1 if getaggt else 0, "original_filename": f"d{doc_id}.pdf", "export_bezahlt": bezahlt},
-                "images": images}
+    def sql(self, q, *a):
+        c = sqlite3.connect(self.pfad)
+        try:
+            r = c.execute(q, a).fetchall()
+            c.commit()
+            return r
+        finally:
+            c.close()
+
+    def gebucht(self):
+        return self.sql("SELECT COALESCE(SUM(credits), 0) FROM usage_events")[0][0]
+
+    def stand(self, doc_id):
+        return self.sql("SELECT export_bezahlt FROM documents WHERE id = ?", doc_id)[0][0] or ""
+
+    def _unit(self, doc_id, getaggt, images, extraction="pdfix"):
+        return {"doc": {"id": doc_id, "getaggt": 1 if getaggt else 0, "original_filename": f"d{doc_id}.pdf",
+                        "export_bezahlt": self.stand(doc_id), "extraction_method": extraction}, "images": images}
 
     def _bild(self, i, **kw):
-        d = {"id": i, "alt_text": "", "alt_text_edited": None, "original_alt": "", "image_type": "unknown", "status": "pending"}
+        d = {"id": i, "image_index": i, "alt_text": "", "alt_text_edited": None, "original_alt": "", "image_type": "unknown", "status": "pending"}
         d.update(kw)
         return d
 
@@ -154,19 +173,45 @@ class Plan(unittest.TestCase):
         self.assertEqual(plan["preis"], 25 + 10)      # 11 bearbeitete Bilder = 2 angefangene Zehner
         self.assertEqual((plan["preis_pdf"], plan["preis_qi"]), (35, 0))
 
-    def test_quickinfos_nur_bearbeitete(self):
-        self.db.executemany("INSERT INTO formularfelder (document_id, anker, quickinfo, quickinfo_original) VALUES (?,?,?,?)", [
-            (2, "a", "Vorname eingeben", ""),            # bearbeitet (KI/Stammdaten/Hand)
-            (2, "b", "Aus der Datei", "Aus der Datei"),  # stand schon in der Datei
-            (2, "c", "", "Alt"),                         # geleert: Export schreibt nur Felder mit Text
-            (2, "d", "Neu formuliert", "Alt"),           # geaendert
-        ])
-        plan = self.m._pdf_export_plan(0, [self._unit(2, False, [])])
+    def test_nur_bilder_die_der_export_schreibt(self):
+        """N5: Bilder ohne laufende Nummer (PDFix-Weg) bzw. ohne xref (PyMuPDF-Weg) schreibt der Export nicht — kein Preis."""
+        pdfix = [self._bild(1, alt_text="KI", status="done"), self._bild(2, alt_text="KI", status="done", image_index=0)]
+        self.assertEqual(self.m._pdf_export_plan(0, [self._unit(1, True, pdfix)])["alt_bearbeitet"], 1)
+        fitz_weg = [self._bild(1, alt_text="KI", status="done", xref=12), self._bild(2, alt_text="KI", status="done", xref=None),
+                    self._bild(3, alt_text_edited="", original_alt="Alt", xref=13)]   # geleert: PyMuPDF-Weg entfernt nichts
+        with mock.patch("pdf_export.layout_vektorbilder", return_value=set()):
+            self.assertEqual(self.m._pdf_export_plan(0, [self._unit(1, True, fitz_weg, extraction="fitz")])["alt_bearbeitet"], 1)
+
+    def test_quickinfos_nur_bearbeitete_und_momentaufnahme(self):
+        self.sql("INSERT INTO formularfelder (document_id, anker, quickinfo, quickinfo_original) VALUES "
+                 "(2,'a','Vorname eingeben',''),(2,'b','Aus der Datei','Aus der Datei'),(2,'c','','Alt'),(2,'d','Neu formuliert','Alt')")
+        u = self._unit(2, False, [])
+        plan = self.m._pdf_export_plan(0, [u])
         self.assertEqual(plan["qi_bearbeitet"], 2)
         self.assertEqual(len(plan["mit_qi"]), 1)
         self.assertEqual(plan["preis"], 25 + 1)
+        # M1: die Momentaufnahme haengt am Dokument; eine spaetere Aenderung in der Datenbank kommt NICHT in diese Datei
+        self.assertEqual(u["quickinfos"], {"a": "Vorname eingeben", "b": "Aus der Datei", "d": "Neu formuliert"})
+        self.sql("UPDATE formularfelder SET quickinfo = 'Waehrend des Baus geaendert' WHERE anker = 'b'")
+        geschrieben = {}
+
+        class _Erg:
+            geschrieben = 3
+            warnungen = []
+
+        def schreiber(quelle, ziel, qi, creator=None):
+            geschrieben.update(qi)
+            open(ziel, "wb").write(open(quelle, "rb").read())
+            return _Erg()
+        with tempfile.TemporaryDirectory() as d:
+            ziel = os.path.join(d, "x.pdf")
+            _pdf(ziel, False)
+            with mock.patch("formular_export.write_quickinfos_to_pdf", side_effect=schreiber):
+                self.m._quickinfos_in_export(u["doc"], ziel, None, u["quickinfos"])
+        self.assertEqual(geschrieben.get("b"), "Aus der Datei")
         # ungetaggt, nur Quickinfos aus der Datei: unveraendert, 0 Credits
-        self.db.execute("DELETE FROM formularfelder WHERE anker IN ('a','d')")
+        self.sql("DELETE FROM formularfelder WHERE anker IN ('a','d')")
+        self.sql("UPDATE formularfelder SET quickinfo = 'Aus der Datei' WHERE anker = 'b'")
         plan = self.m._pdf_export_plan(0, [self._unit(2, False, [])])
         self.assertEqual(len(plan["unveraendert"]), 1)
         self.assertEqual(plan["preis"], 0)
@@ -178,7 +223,7 @@ class Plan(unittest.TestCase):
         self.assertEqual(len(plan["unveraendert"]), 1)
 
     def test_zip_ein_grundpreis(self):
-        self.db.execute("INSERT INTO formularfelder (document_id, anker, quickinfo, quickinfo_original) VALUES (2, 'a', 'Neu', '')")
+        self.sql("INSERT INTO formularfelder (document_id, anker, quickinfo, quickinfo_original) VALUES (2, 'a', 'Neu', '')")
         units = [self._unit(1, True, [self._bild(1, alt_text="KI", status="done")]), self._unit(2, False, []), self._unit(3, False, [])]
         plan = self.m._pdf_export_plan(0, units)
         self.assertEqual((plan["alt_bearbeitet"], plan["qi_bearbeitet"]), (1, 1))
@@ -186,21 +231,94 @@ class Plan(unittest.TestCase):
         self.assertEqual((len(plan["getaggt"]), len(plan["mit_qi"]), len(plan["unveraendert"])), (1, 1, 1))
 
     def test_keine_doppelabbuchung(self):
-        """Derselbe Stand, schon bezahlt heruntergeladen: 0. Aendert sich etwas, gilt wieder der volle Preis."""
+        """Derselbe Stand, schon bezahlt: 0. Aendert sich etwas, gilt wieder der volle Preis."""
         bilder = [self._bild(1, alt_text="KI-Text", status="done")]
         plan = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
         self.assertEqual(plan["preis"], 30)
-        self.m._export_bezahlt_merken(plan, [1])
-        stand = self.db.execute("SELECT export_bezahlt FROM documents WHERE id = 1").fetchone()[0]
-        self.assertTrue(stand)
-        plan2 = self.m._pdf_export_plan(0, [self._unit(1, True, bilder, bezahlt=stand)])
+        self.assertEqual(self.m._export_abrechnen(7, plan, {1: False}), 30)
+        self.assertEqual(self.gebucht(), 30)
+        self.assertTrue(self.stand(1).startswith("a="))
+        plan2 = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
         self.assertEqual((plan2["preis"], plan2["schon_bezahlt"]), (0, 1))
+        self.assertEqual(self.m._export_abrechnen(7, plan2, {1: False}), 0)
+        self.assertEqual(self.gebucht(), 30)
         bilder[0]["alt_text_edited"] = "Nachgebessert"
-        plan3 = self.m._pdf_export_plan(0, [self._unit(1, True, bilder, bezahlt=stand)])
+        plan3 = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
         self.assertEqual((plan3["preis"], plan3["schon_bezahlt"]), (30, 0))
-        # Schalter aus: jedes Herunterladen kostet (Stand vor dem 30.09.2026)
         with mock.patch.object(self.m.billing, "GLEICHER_STAND_KOSTENLOS", False):
-            self.assertEqual(self.m._pdf_export_plan(0, [self._unit(1, True, bilder[:0] + [self._bild(1, alt_text="KI-Text", status="done")], bezahlt=stand)])["preis"], 30)
+            self.assertEqual(self.m._pdf_export_plan(0, [self._unit(1, True, [self._bild(1, alt_text="KI-Text", status="done")])])["preis"], 30)
+
+    def test_atomarer_anspruch_zwei_gleichzeitige_plaene(self):
+        """M2: Zwei Downloads planen denselben Stand, bevor einer bucht (Chatbot + Knopf, ZIP + Einzel). Nur der erste bucht;
+        der zweite findet den Stand beansprucht und bucht nichts."""
+        bilder = [self._bild(1, alt_text="KI-Text", status="done")]
+        p1 = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
+        p2 = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
+        self.assertEqual((p1["preis"], p2["preis"]), (30, 30))
+        self.assertEqual(self.m._export_abrechnen(7, p1, {1: False}), 30)
+        self.assertEqual(self.m._export_abrechnen(7, p2, {1: False}), 0)
+        self.assertEqual(self.gebucht(), 30)
+
+    def test_teilbuchung_wird_gemerkt(self):
+        """N4: Alt-Texte UND Quickinfos bearbeitet, die Quickinfos landen aber nicht in der Datei: nur der Alt-Text-Teil wird
+        gebucht UND gemerkt; beim naechsten Herunterladen kostet nur noch der Quickinfo-Teil (mit Grundpreis)."""
+        self.sql("INSERT INTO formularfelder (document_id, anker, quickinfo, quickinfo_original) VALUES (1, 'a', 'Neu', '')")
+        bilder = [self._bild(1, alt_text="KI-Text", status="done")]
+        plan = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
+        self.assertEqual(plan["preis"], 25 + 5 + 1)
+        self.assertEqual(self.m._export_abrechnen(7, plan, {1: False}), 30)   # Quickinfos nicht geschrieben
+        plan2 = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
+        self.assertEqual((plan2["alt_bearbeitet"], plan2["qi_bearbeitet"], plan2["preis"]), (0, 1, 26))
+        self.assertEqual(self.m._export_abrechnen(7, plan2, {1: True}), 26)
+        self.assertEqual(self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])["preis"], 0)
+
+    def test_zip_quickinfos_je_dokument(self):
+        """N4 b: im ZIP zaehlt der Quickinfo-Teil eines Dokuments nur, wenn SEINE Quickinfos geschrieben wurden."""
+        self.sql("INSERT INTO formularfelder (document_id, anker, quickinfo, quickinfo_original) VALUES (2, 'a', 'Neu', ''),(3, 'b', 'Aus Datei', 'Aus Datei')")
+        plan = self.m._pdf_export_plan(0, [self._unit(2, False, []), self._unit(3, False, [])])
+        self.assertEqual(plan["preis"], 26)
+        # Dokument 3 hat Quickinfos geschrieben (unbearbeitet), Dokument 2 nicht -> nichts buchen
+        self.assertEqual(self.m._export_abrechnen(7, plan, {2: False, 3: True}), 0)
+        self.assertEqual(self.gebucht(), 0)
+        self.assertEqual(self.stand(2), "")
+
+    def test_buchungsfehler_nichts_gemerkt(self):
+        """N6: schlaegt die Buchung fehl, gilt der Stand NICHT als bezahlt (vorher: verschluckter Fehler, Stand gemerkt)."""
+        bilder = [self._bild(1, alt_text="KI-Text", status="done")]
+        plan = self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])
+        with mock.patch.object(self.m.billing, "_pakete_abbuchen", side_effect=RuntimeError("Datenbank gesperrt")):
+            self.assertEqual(self.m._export_abrechnen(7, plan, {1: False}), 0)
+        self.assertEqual((self.gebucht(), self.stand(1)), (0, ""))
+        self.assertEqual(self.m._pdf_export_plan(0, [self._unit(1, True, bilder)])["preis"], 30)
+
+
+class Bremse(unittest.TestCase):
+    """H1: hoechstens ein PDF-Herunterladen je Nutzer gleichzeitig, Drosselung je Nutzer."""
+
+    @classmethod
+    def setUpClass(cls):
+        try:
+            import main
+        except Exception as e:
+            raise unittest.SkipTest(f"main nicht ladbar: {e}")
+        cls.m = main
+
+    def test_sperre_und_drossel(self):
+        m = self.m
+        uid = 987654321
+        m._export_zeiten.pop(uid, None)
+        self.assertEqual(m._export_belegen(uid), "")
+        self.assertEqual(m._export_belegen(uid), "laeuft")
+        m._export_freigeben(uid)
+        with mock.patch.object(m, "EXPORT_DROSSEL_ANZAHL", 3):
+            m._export_zeiten[uid] = []
+            for _ in range(3):
+                self.assertEqual(m._export_belegen(uid), "")
+                m._export_freigeben(uid)
+            self.assertEqual(m._export_belegen(uid), "drossel")
+        m._export_zeiten.pop(uid, None)
+        self.assertIn("warte", m._export_belegt_text("laeuft"))
+        self.assertIn("Minuten", m._export_belegt_text("drossel"))
 
 
 class SchonGetaggt(unittest.TestCase):

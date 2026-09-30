@@ -705,6 +705,9 @@ def _migrate_columns(conn):
         # Ablage (Review 12.09.2026): Dokumentname als Momentaufnahme, damit ein Einzeldokument-Eintrag
         # nach dem Loeschen des Projekts nicht als „alle Dokumente“ erscheint.
         ("ablage", "dokument_name", "ALTER TABLE ablage ADD COLUMN dokument_name TEXT DEFAULT ''"),
+        # Fingerabdruck des PDF-Baus (30.09.2026, Pruefung H1): kostenloses erneutes Herunterladen desselben Stands liefert
+        # die Datei aus der Ablage, statt neu zu bauen und je Klick einen Eintrag anzulegen.
+        ("ablage", "bau_stand", "ALTER TABLE ablage ADD COLUMN bau_stand TEXT DEFAULT ''"),
         # Abo-/Credit-System Etappe 1 (31.07.2026)
         ("users", "plan", "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'"),
         # Abo-Etappe 2 (31.07.2026): Team-Toepfe — Mitglieder zeigen auf den

@@ -9893,3 +9893,62 @@ msgstr "Das Tagging bezahlst du nur hier; beim Herunterladen wird es nicht noch 
 #, python-brace-format
 msgid "Die Dokumentsprache ist gesetzt: {s}."
 msgstr "Die Dokumentsprache ist gesetzt: {s}."
+
+msgid "Für dich wird gerade schon eine PDF erstellt. Bitte warte, bis sie fertig ist."
+msgstr "Für dich wird gerade schon eine PDF erstellt. Bitte warte, bis sie fertig ist."
+
+msgid "Du hast in kurzer Zeit sehr oft heruntergeladen. Bitte warte ein paar Minuten."
+msgstr "Du hast in kurzer Zeit sehr oft heruntergeladen. Bitte warte ein paar Minuten."
+
+#, python-brace-format
+msgid "(Problem {n})"
+msgstr "(Problem {n})"
+
+msgid "Getaggt (beim Hochladen)"
+msgstr "Getaggt (beim Hochladen)"
+
+msgid "1 Überschrift"
+msgstr "1 Überschrift"
+
+msgid "1 Liste"
+msgstr "1 Liste"
+
+msgid "1 Tabelle"
+msgstr "1 Tabelle"
+
+#, python-brace-format
+msgid "Diese PDF war beim Hochladen schon getaggt. Neu taggen geht hier nicht, weil vorhandene Tags nicht ersetzt werden; es wird nichts berechnet. Weiter geht es in {alttexte} oder {pruefung}."
+msgstr "Diese PDF war beim Hochladen schon getaggt. Neu taggen geht hier nicht, weil vorhandene Tags nicht ersetzt werden; es wird nichts berechnet. Weiter geht es in {alttexte} oder {pruefung}."
+
+#, python-brace-format
+msgid "Du hast {v} Credits."
+msgstr "Du hast {v} Credits."
+
+msgid "Das Tagging ist schon beim Ausführen bezahlt."
+msgstr "Das Tagging ist schon beim Ausführen bezahlt."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis, {b} für bearbeitete Alt-Texte ({a}) und {f} für bearbeitete Quickinfos ({q})."
+msgstr "Das Herunterladen kostet {p} Credits: {g} Grundpreis, {b} für bearbeitete Alt-Texte ({a}) und {f} für bearbeitete Quickinfos ({q})."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis und {b} für bearbeitete Alt-Texte ({a})."
+msgstr "Das Herunterladen kostet {p} Credits: {g} Grundpreis und {b} für bearbeitete Alt-Texte ({a})."
+
+#, python-brace-format
+msgid "Das Herunterladen kostet {p} Credits: {g} Grundpreis und {f} für bearbeitete Quickinfos ({q})."
+msgstr "Das Herunterladen kostet {p} Credits: {g} Grundpreis und {f} für bearbeitete Quickinfos ({q})."
+
+msgid "Berechnet wird nur, was du in InkluDocs bearbeitet hast."
+msgstr "Berechnet wird nur, was du in InkluDocs bearbeitet hast."
+
+msgid "Das Herunterladen kostet nichts, weil du keine Alt-Texte und keine Quickinfos bearbeitet hast."
+msgstr "Das Herunterladen kostet nichts, weil du keine Alt-Texte und keine Quickinfos bearbeitet hast."
+
+#, python-brace-format
+msgid "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits: {g} Grundpreis und {b} für die Bilder ({n})."
+msgstr "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits: {g} Grundpreis und {b} für die Bilder ({n})."
+
+#, python-brace-format
+msgid "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits (Grundpreis)."
+msgstr "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je {p} Credits (Grundpreis)."

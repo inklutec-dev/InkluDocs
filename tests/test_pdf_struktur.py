@@ -92,7 +92,9 @@ class HoerprobeTest(unittest.TestCase):
         f = _fixture()
         f["elemente"][2].update({"text": "y" * 50, "gekuerzt": True, "laenge": 25000})
         z = pdf_struktur.hoerprobe(f)
-        self.assertIn("Absatz: " + "y" * 50 + " … (gekürzt, insgesamt 25000 Zeichen)", z)
+        # eigene Zeile direkt nach dem Absatz (nicht im Dokumentinhalt, Pruefung Barrierefreiheit 30.09.2026, Punkt 2)
+        i = z.index("Absatz: " + "y" * 50)
+        self.assertEqual(z[i + 1], "… (gekürzt, insgesamt 25000 Zeichen)")
 
     def test_beschriftung_wird_vorgelesen(self):
         """Lbl ausserhalb einer Liste (Feldbeschriftungen, „Antrag Pflege“) war stumm; jetzt „Beschriftung: …“. Leere

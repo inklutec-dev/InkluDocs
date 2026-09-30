@@ -111,7 +111,8 @@
         const ki = (ZEIGE_KI && dk && dokProjekt && window.Dokument && typeof Dokument.kiBlockHtml === 'function') ? Dokument.kiBlockHtml(dokProjekt, dk) : '';
         return '<section class="card dok-karte ab-karte" id="ab_karte_' + d.id + '">'
             + '<details class="dok-klappe ab-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
-            + '<summary><h3 id="ab_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: nm }) + '</span> <span class="badge ' + standKlasse(d) + '" id="ab_badge_' + d.id + '">' + esc(standText(d)) + '</span></h3></summary>'
+            // „, Ergebnis:“ nur für Screenreader wie bei Word (Prüfung 30.09.2026, Punkt 10): sonst klang das Abzeichen wie Teil des Namens
+            + '<summary><h3 id="ab_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: nm }) + '<span class="visually-hidden">, ' + t('Ergebnis') + ':</span></span> <span class="badge ' + standKlasse(d) + '" id="ab_badge_' + d.id + '">' + esc(standText(d)) + '</span></h3></summary>'
             + '<div class="ab-inhalt">'
             + meta
             // Sprache und Zusammenfassung oben bei den Infos (Punkt 10); gefuellt, sobald die Details geladen sind
@@ -151,9 +152,18 @@
     // veraPDF hin“); die Regelnummer bleibt am Ende der Zeile. Andere Quellen (nur bei eingeschalteten eigenen Prüfungen)
     // nennen sich weiter.
     function quelleTeil(p) { return p.art === 'technisch' ? '' : esc(p.quelle) + ': '; }
+    // Inhalt einer Problemzeile (Prüfung Barrierefreiheit 30.09.2026, Punkt 7): aus den Teilen vom Server — die Seiten stehen
+    // nur noch vorne (vorher doppelt: „Seiten 1, 9, 10 – … (Seiten 1, 9, 10)“), ein nicht übersetzter veraPDF-Satz trägt
+    // lang="en" (WCAG 3.1.2). Ältere Antworten ohne Teile: der ganze Text wie bisher.
+    function problemInhalt(p) {
+        const tl = p.teile;
+        if (!tl) return esc(p.text);
+        return (tl.bereich ? esc(tl.bereich) + ': ' : '') + (tl.lang ? '<span lang="' + esc(tl.lang) + '">' + esc(tl.satz) + '</span>' : esc(tl.satz))
+            + (tl.mal ? ' ' + esc(tl.mal) : '') + (tl.ref ? ' ' + esc(tl.ref) : '');
+    }
     function problemText(p) {
         return (p.seiten && p.seiten.length > 1 ? t('Seiten {n}', { n: p.seiten.join(', ') }) : (p.seite ? t('Seite {n}', { n: p.seite }) : t('Dokument')))
-            + ' – ' + quelleTeil(p) + esc(p.text);
+            + ' – ' + quelleTeil(p) + problemInhalt(p);
     }
     // Sprache des Dokuments nur als saubere Sprachkennung (de, de-DE, en-GB …) — geht in lang="" und an die Stimme
     function dokSprache(dd) {
@@ -166,13 +176,70 @@
         const i = String(zl).indexOf(': ');
         return i > 0 ? { ansage: zl.slice(0, i), inhalt: zl.slice(i + 2) } : { ansage: zl, inhalt: '' };
     }
-    function zeileHtml(zl, lang) {
+    // eigen = ganze Zeile ist Text von InkluDocs (Sprache, Seiten, Zusammenfassung): ohne lang der Dokumentsprache (Prüfung
+    // Barrierefreiheit 30.09.2026, Punkt 2; der Server nennt die Zeilen in hoerprobe_eigene bzw. als Kopf)
+    function zeileHtml(zl, lang, eigen) {
         const z = zeilenTeile(zl);
-        if (!z.inhalt) return '<p>' + esc(z.ansage) + '</p>';
+        if (!z.inhalt || eigen) return '<p>' + esc(zl) + '</p>';
         // lang am Inhalt (Punkt 9): VoiceOver/NVDA wechseln dort selbst die Stimme, wie im echten Dokument
         return '<p>' + esc(z.ansage) + ': <span' + (lang ? ' lang="' + esc(lang) + '"' : '') + '>' + esc(z.inhalt) + '</span></p>';
     }
+    // Inhalt einer offenen Karte = Problemstellen (samt Problemseiten) + die Hörprobe des ganzen Dokuments mit „Hörprobe
+    // vorlesen“ — die gibt es IMMER, auch ohne Problemstellen oder ohne Problemseiten (Prüfung Barrierefreiheit 30.09.2026,
+    // Punkt 1; Steve: der Name „Hörprobe“ bleibt, also muss es überall etwas zu hören geben). Vorher gab es Vorlesen nur auf
+    // Problemseiten, und der Satz „Das hörst du am besten in der Hörprobe.“ führte bei 0 Problemstellen ins Leere.
     function detailHtml(project, dd) {
+        return problemHtml(project, dd) + dokHoerprobeHtml(dd);
+    }
+    let dokHoerprobeOffen = new Set();
+    function dokHoerprobeHtml(d) {
+        const hp = d.hoerprobe || { kopf: [], seiten: [] };
+        if (!(hp.kopf || []).length && !(hp.seiten || []).length) return '';   // Strukturlesung gescheitert: steht schon oben
+        const nm = esc(name(d));
+        const lang = dokSprache(d);
+        let zeilen = (hp.kopf || []).map(zl => zeileHtml(zl, lang, true)).join('');
+        (hp.seiten || []).forEach(sd => {
+            zeilen += '<p>' + esc(t('— Seite {n} —', { n: sd.seite })) + '</p>'
+                + (sd.zeilen.length ? sd.zeilen.map(zl => zeileHtml(zl, lang)).join('') : '<p>' + t('Auf dieser Seite liest ein Screenreader nichts vor.') + '</p>');
+        });
+        return '<section class="ab-dok-hoerprobe" aria-labelledby="ab_dhp_heading_' + d.id + '">'
+            + '<h4 id="ab_dhp_heading_' + d.id + '">' + t('Hörprobe') + '</h4>'
+            + '<p class="feld-hinweis">' + t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>'
+            // Name je Dokument über aria-labelledby (wie bei Word): vorlesenTeile ersetzt den Knopftext beim Start/Stopp
+            + '<p class="ab-vorlesen"><span id="ab_dname_' + d.id + '" hidden>' + t('– Dokument „{name}“', { name: nm }) + '</span>'
+            + '<button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_dvorlesen_' + d.id + '" aria-labelledby="ab_dvorlesen_' + d.id + ' ab_dname_' + d.id + '" aria-pressed="false" onclick="Abschluss.dokVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button></p>'
+            // sichtbare Statuszeile: „keine Stimme auf diesem Gerät“ steht HIER, nicht nur in der unsichtbaren Live-Region
+            + '<p class="ab-vorlese-status" id="ab_dvstatus_' + d.id + '" role="status"></p>'
+            + '<details class="ab-problemklappe ab-dhp" data-doc="' + d.id + '"' + (dokHoerprobeOffen.has(d.id) ? ' open' : '') + ' ontoggle="Abschluss.dokHoerprobeGeklappt(' + d.id + ', this.open)"><summary>' + t('Hörprobe lesen') + '<span class="visually-hidden"> ' + t('– Dokument „{name}“', { name: nm }) + '</span></summary>'
+            + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von „{name}“', { name: nm }) + '" tabindex="0">' + zeilen + '</div></details>'
+            + '</section>';
+    }
+    function dokHoerprobeGeklappt(docId, offen) { if (offen) dokHoerprobeOffen.add(docId); else dokHoerprobeOffen.delete(docId); }
+    // Vorlese-Teile einer Zeilenliste: Ansage in der Kontosprache, Inhalt in der Dokumentsprache; Zeilen von InkluDocs (eigen)
+    // ganz in der Kontosprache (Punkt 2)
+    function vorleseTeile(zeilen, lang, eigen) {
+        const teile = [];
+        zeilen.forEach((zl, i) => {
+            const zt = zeilenTeile(zl);
+            if (!zt.inhalt || (eigen && eigen(i))) { teile.push({ text: String(zl), lang: '' }); return; }
+            teile.push({ text: zt.ansage + ':', lang: '' });
+            teile.push({ text: zt.inhalt + '.', lang: lang });
+        });
+        return teile;
+    }
+    function dokVorlesen(docId, btn) {
+        const dd = details[docId];
+        if (!dd || typeof vorlesenTeile !== 'function') return;
+        const hp = dd.hoerprobe || { kopf: [], seiten: [] };
+        const lang = dokSprache(dd);
+        let teile = vorleseTeile(hp.kopf || [], lang, () => true);
+        (hp.seiten || []).forEach(sd => {
+            teile.push({ text: t('— Seite {n} —', { n: sd.seite }), lang: '' });
+            teile = teile.concat(vorleseTeile(sd.zeilen || [], lang));
+        });
+        vorlesenTeile(teile, btn, t('Hörprobe vorlesen'), document.getElementById('ab_dvstatus_' + docId));
+    }
+    function problemHtml(project, dd) {
         const d = dd;
         const z = zustand(d.id);
         const probleme = d.probleme || [];
@@ -200,7 +267,8 @@
         s += '<details class="ab-problemklappe" data-doc="' + d.id + '"' + (z.listeOffen ? ' open' : '') + ' ontoggle="Abschluss.listeGeklappt(' + d.id + ', this.open)">'
             + '<summary><h4 id="ab_probleme_' + d.id + '" class="ab-inline">' + t('Problemstellen ({n})', { n: probleme.length }) + '</h4></summary>'
             + '<ol class="ab-problemliste">' + probleme.map(p => '<li class="ab-problem">' + problemText(p)
-            + (p.seite && seiten.includes(p.seite) ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '</button>' : '') + '</li>').join('') + '</ol></details>';
+            // Knopfname eindeutig je Problemstelle (Punkt 7: zweimal „Zur Seite 1“ in der Knopfliste)
+            + (p.seite && seiten.includes(p.seite) ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '<span class="visually-hidden"> ' + t('(Problem {n})', { n: p.nr }) + '</span></button>' : '') + '</li>').join('') + '</ol></details>';
         if (!seiten.length) {
             const sf = d.pruefdatei && d.pruefdatei.struktur_fehler;
             // Strukturlesung gescheitert: keine Hoerprobe, also keine Seitenansicht — das sagen statt stiller Knoepfe. Der Satz
@@ -225,8 +293,9 @@
             + '<div class="ab-seite-inhalt">'
             + '<img class="ab-seitenbild" src="/api/projects/' + project.id + '/documents/' + d.id + '/abschluss/seite/' + z.seite + '?v=' + encodeURIComponent((d.pruefdatei && d.pruefdatei.erstellt_am) || '') + '" alt="' + t('Seitenbild von Seite {n}', { n: z.seite }) + '" loading="lazy">'
             + '<div class="ab-seite-text">'
-            + '<div class="ab-seite-probleme"><p><strong>' + t('Problemstellen auf dieser Seite') + '</strong></p><ul>' + pSeite.map(p => '<li>' + t('Problem {n}', { n: p.nr }) + ': ' + quelleTeil(p) + esc(p.text) + '</li>').join('') + '</ul></div>'
+            + '<div class="ab-seite-probleme"><p><strong>' + t('Problemstellen auf dieser Seite') + '</strong></p><ul>' + pSeite.map(p => '<li>' + t('Problem {n}', { n: p.nr }) + ': ' + quelleTeil(p) + problemInhalt(p) + '</li>').join('') + '</ul></div>'
             + '<p><button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_vorlesen_' + d.id + '" aria-pressed="false" onclick="Abschluss.vorlesenSeite(' + d.id + ', this)">' + t('Seite vorlesen') + '</button></p>'
+            + '<p class="ab-vorlese-status" id="ab_svstatus_' + d.id + '" role="status"></p>'
             + '<h5 class="ab-hoerprobe-titel">' + t('Hörprobe: so liest ein Screenreader die Tags dieser Seite vor (kein Prüfergebnis)') + '</h5>'
             + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von Seite {n}', { n: z.seite }) + '" tabindex="0">'
             + (seiteDaten.zeilen.length ? seiteDaten.zeilen.map(zl => zeileHtml(zl, lang)).join('') : '<p>' + t('Auf dieser Seite liest ein Screenreader nichts vor.') + '</p>')
@@ -284,13 +353,8 @@
         const z = zustand(docId);
         const seite = ((dd.hoerprobe && dd.hoerprobe.seiten) || []).find(x => x.seite === z.seite);
         const lang = dokSprache(dd);
-        const teile = [];
-        (seite ? seite.zeilen : []).forEach(zl => {
-            const zt = zeilenTeile(zl);
-            teile.push({ text: zt.ansage + (zt.inhalt ? ':' : '.'), lang: '' });
-            if (zt.inhalt) teile.push({ text: zt.inhalt + '.', lang: lang });
-        });
-        vorlesenTeile(teile, btn, t('Seite vorlesen'));
+        const teile = vorleseTeile(seite ? seite.zeilen : [], lang);
+        vorlesenTeile(teile, btn, t('Seite vorlesen'), document.getElementById('ab_svstatus_' + docId));
     }
 
     async function erstellen(projectId, docId) {
@@ -505,6 +569,7 @@
         return datum + ', ' + p(dt.getHours()) + ':' + p(dt.getMinutes());
     }
     // veraPDF-Befunde der PDF, je verletztem Prüfpunkt eine Zeile mit Regelnummer (wie abschluss.probleme_zusammenstellen bei PDF)
+    // HTML je Zeile (escaped): ein nicht übersetzter veraPDF-Satz trägt lang="en" wie bei PDF (Prüfung 30.09.2026, Punkt 7)
     function veraPdfZeilen(p) {
         const out = [];
         (p.punkte || []).forEach(pk => {
@@ -513,7 +578,12 @@
                 const regeln = e.regeln || [];
                 // wie bei PDF ohne das Wort „veraPDF“ in der Zeile (Michael Karbe, Feedback 202609230 - 1, Punkt 8), die Überschrift nennt veraPDF
                 const ref = regeln.length ? ' ' + (regeln.length === 1 ? t('(Regel {r})', { r: regeln.join(', ') }) : t('(Regeln {r})', { r: regeln.join(', ') })) : '';
-                out.push((pk.bereich ? pk.bereich + ': ' : '') + (e.text || '') + ref);
+                const seiten = e.seiten || [];
+                const inhalt = (e.satz !== undefined)
+                    ? (e.lang ? '<span lang="' + esc(e.lang) + '">' + esc(e.satz) + '</span>' : esc(e.satz)) + (e.mal ? ' ' + esc(e.mal) : '')
+                      + (seiten.length ? ' (' + esc(seiten.length > 1 ? t('Seiten {n}', { n: seiten.join(', ') }) : t('Seite {n}', { n: seiten[0] })) + ')' : '')
+                    : esc(e.text || '');
+                out.push((pk.bereich ? esc(pk.bereich) + ': ' : '') + inhalt + esc(ref));
             });
         });
         return out;
@@ -555,7 +625,7 @@
         } else {
             if (p.aktuell === false) s += '<p><strong>' + t('Die barrierefreie PDF ist nicht mehr aktuell.') + '</strong> ' + t('Erstelle sie in der Ansicht „Dokument“ neu, damit das Ergebnis zu deinem heutigen Stand passt.') + '</p>';
             s += pdfZeilen.length
-                ? '<ol class="ab-problemliste">' + pdfZeilen.map(z => '<li>' + esc(z) + '</li>').join('') + '</ol>'
+                ? '<ol class="ab-problemliste">' + pdfZeilen.map(z => '<li>' + z + '</li>').join('') + '</ol>'
                 : '<p>' + t('Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1.') + '</p>'
                   + '<p>' + t('Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe.') + '</p>';
         }
@@ -571,9 +641,10 @@
             // Knopf ginge dabei verloren; so heißt er auch während des Vorlesens „Stopp – Dokument „…““.
             s += '<p><span id="ab_wname_' + d.id + '" hidden>' + t('– Dokument „{name}“', { name: nm }) + '</span>'
                 + '<button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_wvorlesen_' + d.id + '" aria-labelledby="ab_wvorlesen_' + d.id + ' ab_wname_' + d.id + '" aria-pressed="false" onclick="Abschluss.wordVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button></p>'
+                + '<p class="ab-vorlese-status" id="ab_wvstatus_' + d.id + '" role="status"></p>'
                 + '<details class="ab-problemklappe ab-whp" data-doc="' + d.id + '"' + (wordHoerprobeOffen.has(d.id) ? ' open' : '') + '><summary>' + t('Hörprobe lesen') + vhDok + '</summary>'
                 + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von „{name}“', { name: nm }) + '" tabindex="0">'
-                + hp.map(zl => zeileHtml(zl, lang)).join('') + '</div></details>';
+                + hp.map((zl, i) => zeileHtml(zl, lang, eigeneZeilen(vd).has(i))).join('') + '</div></details>';
         } else if (vd) {
             s += '<p>' + t('Kein Text zum Vorlesen vorhanden.') + '</p>';
         }
@@ -584,18 +655,16 @@
             + '<div class="ab-inhalt">' + meta
             + s + '</div></details></section>';
     }
+    // Zeilen der Word-Hörprobe, die Text von InkluDocs sind („Sprache: …“), vom Server (hoerprobe_eigene)
+    function eigeneZeilen(vd) { return new Set((vd && vd.hoerprobe_eigene) || []); }
     function wordVorlesen(docId, btn) {
         const vd = wordVorschau[docId];
         if (!vd || typeof vorlesenTeile !== 'function') return;
         const d = (dokDaten[docId] || {});
         const lang = dokSprache({ sprache: (d.info && d.info.sprache) || '' });
-        const teile = [];
-        (vd.hoerprobe || []).forEach(zl => {
-            const zt = zeilenTeile(zl);
-            teile.push({ text: zt.ansage + (zt.inhalt ? ':' : '.'), lang: '' });
-            if (zt.inhalt) teile.push({ text: zt.inhalt + '.', lang: lang });
-        });
-        vorlesenTeile(teile, btn, t('Hörprobe vorlesen'));
+        const eigen = eigeneZeilen(vd);
+        const teile = vorleseTeile(vd.hoerprobe || [], lang, i => eigen.has(i));
+        vorlesenTeile(teile, btn, t('Hörprobe vorlesen'), document.getElementById('ab_wvstatus_' + docId));
     }
     let wordGen = 0;   // jede Zeichnung hat ihre Nummer; eine neuere (oder ein Ansichtswechsel) macht die ältere wirkungslos
     function wordNochGewuenscht(gen, projectId) {
@@ -663,5 +732,5 @@
         if (h1 && !erneut) h1.focus();
     }
 
-    window.Abschluss = { showProject, erstellen, zurSeite, blaettern, vorlesenSeite, listeGeklappt, showWordProject, wordVorlesen };
+    window.Abschluss = { showProject, erstellen, zurSeite, blaettern, vorlesenSeite, listeGeklappt, showWordProject, wordVorlesen, dokVorlesen, dokHoerprobeGeklappt };
 })();

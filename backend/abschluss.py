@@ -206,8 +206,13 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
             regeln = e.get("regeln") or []
             ref = ((" " + (_("(Regel {r})") if len(regeln) == 1 else _("(Regeln {r})")).format(r=", ".join(regeln)))
                    if regeln else "")
+            # teile: dieselbe Zeile in Stuecken, damit die Ansicht die Seiten nicht doppelt nennt (vorne „Seiten 1, 9, 10 –“) und
+            # einen nicht uebersetzten englischen Satz mit lang="en" auszeichnet (Pruefung Barrierefreiheit 30.09.2026, Punkt 7)
+            teile = ({"bereich": p.get("bereich", ""), "satz": e.get("satz") or "", "lang": e.get("lang") or "",
+                      "mal": e.get("mal") or "", "ref": ref.strip()} if "satz" in e else None)
             out.append({"seite": (seiten[0] if seiten else 0), "seiten": seiten, "art": "technisch", "regeln": regeln,
-                        "quelle": _("veraPDF (PDF/UA-1)"), "text": (f"{p.get('bereich', '')}: {e.get('text', '')}".strip(": ") + ref)})
+                        "quelle": _("veraPDF (PDF/UA-1)"), "text": (f"{p.get('bereich', '')}: {e.get('text', '')}".strip(": ") + ref),
+                        "teile": teile})
     if not EIGENE_PRUEFUNGEN:
         out.sort(key=lambda p: (p["seite"] or 10 ** 6, p["art"]))
         for i, p in enumerate(out, 1):

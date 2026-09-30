@@ -139,6 +139,15 @@ with sync_playwright() as p:
     check("Hörprobe liest die Word-Datei: Dokumenttitel, Überschrift, Bild", "Dokumenttitel: Testdokument" in inhalt and "Überschrift Ebene" in inhalt and ("Bild" in inhalt or "Schmuckbild" in inhalt), inhalt[:300])
     check("Inhalt mit lang der Dokumentsprache", pg.locator("#dkHpInhalt span[lang='en-US']").count() > 3)
     check("Statuszeile „Hörprobe geladen, n Zeilen.“ und Fokus im Vorlesetext", "Hörprobe geladen" in pg.locator("#dkHpStatus").inner_text() and aktiv(pg).startswith("DIV#dkHpInhalt"), (pg.locator("#dkHpStatus").inner_text(), aktiv(pg)))
+    # Prüfung Barrierefreiheit 30.09.2026, Punkt 1 und 2: „Hörprobe vorlesen“ im Dialog; ohne Stimme (Testbrowser) eine SICHTBARE
+    # Meldung in der Statuszeile darunter; die Zeile „Sprache: …“ (Text von InkluDocs) ohne lang der Dokumentsprache
+    sprachzeile = pg.evaluate("(() => { const p = Array.from(document.querySelectorAll('#dkHpInhalt p')).find(x => x.textContent.startsWith('Sprache:')); return p ? p.innerHTML : ''; })()")
+    check("Zeile „Sprache: Englisch (en-US)“ ohne lang (Text von InkluDocs, Punkt 2)", "Englisch (en-US)" in sprachzeile and "lang=" not in sprachzeile, sprachzeile)
+    check("Dialog hat „Hörprobe vorlesen“ (aria-pressed=false)", pg.locator("#dkHpVorlesen[aria-pressed=false]").count() == 1 and pg.locator("#dkHpVorlesen").inner_text().strip() == "Hörprobe vorlesen")
+    pg.click("#dkHpVorlesen"); pg.wait_for_timeout(2500)
+    vst = pg.locator("#dkHpVorleseStatus")
+    check("Ohne Stimme: Meldung sichtbar unter dem Knopf (role=status), Knopf wieder „Hörprobe vorlesen“", "keine Stimme" in vst.inner_text() and vst.is_visible() and (vst.bounding_box() or {}).get("height", 0) > 5 and pg.locator("#dkHpVorlesen[aria-pressed=false]").count() == 1, vst.inner_text())
+    check("Keine zweite Ansage in der Live-Region der Seite", "keine Stimme" not in pg.evaluate("document.getElementById('liveRegion').textContent"))
     axe(pg, "Hörprobe-Dialog Word")
     pg.click("#dkHpZu")
     pg.wait_for_timeout(300)
@@ -168,6 +177,8 @@ with sync_playwright() as p:
     check("Sichtbar: Als Word, In barrierefreie PDF umwandeln, Abbrechen — keine Excel/JSON/CSV, kein „Hörprobe und Prüfbericht“",
           "Als Word" in sichtbar and any("barrierefreie PDF" in s for s in sichtbar) and not any(s in sichtbar for s in ("Als Excel", "Als JSON", "Als CSV")) and not any("Prüfbericht" in s for s in sichtbar), sichtbar)
     check("Zusammenfassung mit Preis, ohne CSV-Satz", "Credits" in zs and "CSV" not in zs, zs)
+    # Prüfung 30.09., Punkt 8: auch Word nennt den Grund („… kosten je 30 Credits: 25 Grundpreis und 5 für die Bilder (1).“)
+    check("Word: Preis mit Grund (Grundpreis und Bilder)", "„Als Word“ und „In barrierefreie PDF umwandeln“ kosten je" in zs and "Grundpreis" in zs, zs)
     axe(pg, "Herunterladen-Dialog Word")
     with pg.expect_download(timeout=90000) as dl:
         pg.click("#exportDocxBtn")
@@ -184,7 +195,11 @@ with sync_playwright() as p:
         erg = pg.locator("#pdfuaResult").inner_text()
         if pg.locator("#pdfuaDownload").count() or "fehlgeschlagen" in erg or "nicht eingerichtet" in erg:
             break
-    check("Umwandlung in barrierefreie PDF liefert Ergebnis + „PDF herunterladen“ mit Fokus", pg.locator("#pdfuaDownload").count() == 1 and aktiv(pg).startswith("BUTTON#pdfuaDownload"), erg[:200])
+    # Prüfung Barrierefreiheit 30.09.2026, Punkt 9: Fokus auf die Zusammenfassung (sie wird gelesen), kein aria-live auf dem
+    # ganzen Ergebnis, Verweis-Link nach „PDF herunterladen“ in der Tab-Reihenfolge
+    check("Umwandlung in barrierefreie PDF liefert Ergebnis + „PDF herunterladen“, Fokus auf der Zusammenfassung", pg.locator("#pdfuaDownload").count() == 1 and aktiv(pg).startswith("P#pdfuaZusammenfassung"), (erg[:200], aktiv(pg)))
+    check("Ergebnis-Bereich ohne aria-live", pg.locator("#pdfuaResult").get_attribute("aria-live") is None)
+    check("Tab-Reihenfolge: „PDF herunterladen“, dann „Zur Barrierefreiheitsprüfung“", pg.evaluate("(() => { const b = document.getElementById('pdfuaDownload'), a = document.getElementById('pdfuaZurPruefung'); return !!(b && a && (b.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING)); })()"))
     # Steve 30.09.2026: im Dialog nur das veraPDF-Ergebnis und ein Verweis — Prüfbericht und Hörprobe stehen in der Prüfansicht
     check("Dialog nach der Umwandlung: kein Prüfbericht, keine Hörprobe, Verweis auf die Barrierefreiheitsprüfung",
           pg.locator("#pdfuaResult details").count() == 0 and "Prüfbericht des Word-Dokuments" not in erg and "Hörprobe: so liest" not in erg
@@ -248,6 +263,8 @@ with sync_playwright() as p:
     pg.click("details.ab-whp > summary")
     pg.wait_for_timeout(300)
     check("Hörprobe in der Prüfung: Zeilen mit lang am Inhalt", "Dokumenttitel" in pg.locator("details.ab-whp").inner_text() and pg.locator("details.ab-whp span[lang='en-US']").count() > 3)
+    pg.click("button[id^=ab_wvorlesen_]"); pg.wait_for_timeout(2500)
+    check("Prüfung: „Hörprobe vorlesen“ ohne Stimme zeigt die Meldung sichtbar darunter (Punkt 1)", "keine Stimme" in pg.locator("[id^=ab_wvstatus_]").first.inner_text() and pg.locator("[id^=ab_wvstatus_]").first.is_visible())
     axe(pg, "Ansicht Barrierefreiheitsprüfung Word")
     # Alt-Text ändern -> die PDF passt nicht mehr zum Stand
     bild = pg.request.get(B + f"/api/projects/{pid}").json().get("images", [])

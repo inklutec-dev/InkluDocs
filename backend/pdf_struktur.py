@@ -40,7 +40,7 @@ _TIMEOUT_SECONDS = int(os.environ.get("PDFIX_STRUKTUR_TIMEOUT", "180"))
 # Strukturlesung hat eine Sicherheitsgrenze (20.000 Zeichen je Element, Struktur_Export.MAX_TEXT); greift sie, sagt die
 # Hoerprobe hoerbar „gekürzt“ mit der vollen Laenge.
 MAX_ZEILE = 0   # 0 = nicht kuerzen
-STRUKTUR_VERSION = 4   # Cache-Version: 2 = mit Objektnummern (obj) je Element; 3 = Leerzeichen-Korrektur 28.09.2026 (Struktur_Export); 4 = echte Bindestriche bleiben, keine 600-Zeichen-Kuerzung (30.09.2026); aeltere Caches werden neu gelesen
+STRUKTUR_VERSION = 5   # 5 = Bindestriche bleiben immer (Pruefung 30.09.2026, N8); Cache-Version: 2 = mit Objektnummern (obj) je Element; 3 = Leerzeichen-Korrektur 28.09.2026 (Struktur_Export); 4 = echte Bindestriche bleiben, keine 600-Zeichen-Kuerzung (30.09.2026); aeltere Caches werden neu gelesen
 
 
 class StrukturFehler(Exception):
@@ -134,12 +134,21 @@ def _kurz(text: str, n: int = MAX_ZEILE) -> str:
     return text if not n or len(text) <= n else text[:n].rstrip() + " …"
 
 
+# Die ersten Zeilen der Hoerprobe (Sprache, Seiten, Zusammenfassung) sind Texte von InkluDocs, kein Dokumentinhalt — die
+# Oberflaeche zeichnet sie ohne lang der Dokumentsprache aus und liest sie mit der Stimme der Kontosprache (Pruefung
+# Barrierefreiheit 30.09.2026, Punkt 2). Seitenmarken und Kuerzungs-Marken haben kein „: “ und gelten dort ohnehin als Ansage.
+EIGENE_KOPFZEILEN = 3
+
+
+def _gekuerzt_marke(e: dict, _: Callable[[str], str]) -> str:
+    """Hat die Sicherheitsgrenze der Strukturlesung gegriffen, eine EIGENE Zeile „… (gekürzt, insgesamt n Zeichen)“ — als
+    eigene Zeile, damit sie nicht im Dokumentinhalt (lang der Dokumentsprache) steht (Pruefung 30.09.2026, Punkt 2)."""
+    return _("… (gekürzt, insgesamt {n} Zeichen)").format(n=e.get("laenge") or "?") if e.get("gekuerzt") and e.get("text") else ""
+
+
 def _text_mit_marke(e: dict, _: Callable[[str], str]) -> str:
-    """Text eines Elements fuer die Hoerprobe; hat die Sicherheitsgrenze der Strukturlesung gegriffen, hoerbar markiert."""
-    text = _kurz(e.get("text") or "")
-    if e.get("gekuerzt") and text:
-        text += " " + _("… (gekürzt, insgesamt {n} Zeichen)").format(n=e.get("laenge") or "?")
-    return text
+    """Text eines Elements fuer die Hoerprobe (Leerraum vereinheitlicht); die Kuerzungs-Marke folgt als eigene Zeile."""
+    return _kurz(e.get("text") or "")
 
 
 def _kinder(elemente: list, idx: int) -> list:
@@ -176,6 +185,8 @@ def hoerprobe(struktur: dict, _: Callable[[str], str] = _identitaet, felder_quic
         if _still(e):
             continue
         text = _text_mit_marke(e, _)
+        # Kuerzungs-Marken (Element bzw. Zellen einer Tabellenzeile) folgen als eigene Zeilen nach der Zeile des Elements
+        marken = [m for m in ([_gekuerzt_marke(k, _) for k in _kinder(elemente, idx)] if typ == "TR" else [_gekuerzt_marke(e, _)]) if m]
         if typ.startswith("H") and typ[1:].isdigit():
             n_ueberschriften += 1
             zeilen.append(_("Überschrift Ebene {n}: {t}").format(n=typ[1:], t=_kurz(text) or _("(leer)")))
@@ -237,6 +248,7 @@ def hoerprobe(struktur: dict, _: Callable[[str], str] = _identitaet, felder_quic
             zeilen.append(_("Beschriftung: {t}").format(t=text))
         else:
             zeilen.append(_("{typ}: {t}").format(typ=typ, t=_kurz(text)) if text else _("{typ} (ohne Text)").format(typ=typ))
+        zeilen.extend(marken)
     zusammen = _("Zusammenfassung: {u} Überschriften, {l} Listen, {t} Tabellen, {b} Grafiken ({o} ohne Alt-Text), {f} Formularfelder.").format(
         u=n_ueberschriften, l=n_listen, t=n_tabellen, b=n_bilder, o=n_bilder_ohne, f=n_felder)
     zeilen.insert(2, zusammen)

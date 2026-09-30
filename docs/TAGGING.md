@@ -606,3 +606,36 @@ als „Deutsch (de-DE)“ (i18n.sprache_anzeige, Oberflächensprache).
 
 Tests: `tests/test_herunterladen_genutzt.py`, `tests/test_pdf_struktur.py`, `tests/test_struktur_leerzeichen.py`,
 `tests/e2e/verify_michael_0930.py`, `tests/e2e/ui_dokument.py`, `ui_pdf_quickinfos.py`, `ui_preise.py`.
+
+### Nachbesserung nach der unabhängigen Prüfung (30.09.2026, Staging)
+
+**Bindestriche (N8):** Struktur_Export (Version 5) behält jeden Bindestrich (`-`, U+2010, U+2011) und zieht nichts mehr
+zusammen, auch nicht „blau-/grün“. Die Hörprobe liest, was im Tag steht; eine Silbentrennung am Zeilenende markiert PDFix
+selbst als Artefakt (dann fehlt der Strich im Tag schon). Das weiche Trennzeichen (U+00AD) fällt weg.
+
+**Hörprobe mit Vorlesen (Barrierefreiheit 1, Steve: der Name „Hörprobe“ bleibt überall, wo es etwas zu hören gibt):**
+Der Dialog „Hörprobe“ in „Dokument“ und „Tagging“ hat den Knopf „Hörprobe vorlesen“ (aria-pressed, gemeinsame Funktion
+`vorlesenTeile` in app.html). Die eigenen Zeilen von InkluDocs („Sprache: …“, Dokumenttitel, Hinweise) stehen ohne
+Dokumentsprache und werden in der Kontosprache gesprochen (`hoerprobe_eigene` aus tagging_api/Word-Vorschau), der
+Dokumentinhalt in der Dokumentsprache. Ohne passende Stimme erscheint „keine Stimme“ SICHTBAR unter dem Knopf
+(`role="status"`) — die einzige Ansage, kein zweiter Live-Bereich. In der Barrierefreiheitsprüfung hat jede PDF-Karte
+einen Abschnitt „Hörprobe“ mit „Hörprobe vorlesen“ und dem aufklappbaren Text („Hörprobe lesen“, Seitenmarken „— Seite n —“),
+unabhängig davon, ob es Problemseiten gibt.
+
+**Problemliste (7):** keine doppelte Seitenangabe mehr; nicht übersetzte veraPDF-Sätze stehen mit `lang="en"`; die
+„Zur Seite n“-Knöpfe tragen versteckt „(Problem n)“ und sind so eindeutig.
+
+**Schon getaggt (5, 11):** Das Abzeichen heißt „Getaggt (beim Hochladen)“; der Hinweis in normaler Schriftgröße sagt, dass
+nicht neu getaggt wird, dass nichts berechnet wird und wie es weitergeht (Links „Alt-Texte“, „Barrierefreiheitsprüfung“).
+Die Bildzahl in „Tagging“ zählt jetzt auch Alt-Texte aus der Datei (Actino: „9 Bilder, 8 mit Alt-Text“, vorher 0); Einzahl
+„1 Bild“, „1 Überschrift“, „1 Liste“, „1 Tabelle“.
+
+**Enge Fenster (4, 12):** bei 320 px und 200 % kein seitliches Scrollen in Prüfung und Quickinfos (Seitenraster einspaltig
+unter 760 px, lange Wörter brechen um, Auswahlfelder höchstens so breit wie der Platz).
+
+**Chatbot (N1):** `hoerprobe_lesen` begrenzt nach Zeichen (30.000) statt nach Zeilen und gibt nur ganze Zeilen; `bis` ist
+die letzte gelieferte Zeile.
+
+Nicht geändert (Entscheidung Steve offen): Michaels Satz „Anzeige der Problemstellen im Prüfbericht.“ (6); „Neu taggen“ für
+schon getaggte PDFs (N3). Tests: `tests/e2e/ui_michael_0930.py`, `ui_dokument.py`, `ui_word_ansichten.py`,
+`verify_michael_0930.py`.

@@ -193,42 +193,29 @@ def _getrennt(page_num, vorher, jetzt):
 # Textstuecks — gedacht fuer die Silbentrennung am Zeilenende („Auftrags-“ / „verarbeitung“). Viele Erzeuger legen aber
 # auch mitten in der Zeile ein neues Textstueck hinter einen echten Bindestrich an; dann las die Hoerprobe „KIgestützte“,
 # „InternetServices“, „EMail“ (AVV: 24- bis 26-mal je Lauf). In der Datei steht der Bindestrich.
-# Jetzt: Bindestrich nur streichen, wenn das naechste Stueck in einer NEUEN Zeile beginnt (Lage aus PDFix, sonst
-# unbekannt) UND es wie eine Silbentrennung aussieht: Kleinbuchstabe vor dem Strich und Kleinbuchstabe danach.
-# Grossbuchstabe oder Ziffer danach („Internet-“ / „Services“, „E-“ / „Mail“) und Abkuerzung davor („KI-“, „EU-“, „PDF-“)
-# sind echte Bindestriche und bleiben — so trennt kein Woerterbuch, aber die Fehlerart „Wort verschluckt Strich“ ist weg,
-# und echte Silbentrennung am Zeilenende wird weiter zusammengezogen. Grenze: Kleinbuchstaben-Komposita, die genau am
-# Zeilenende getrennt sind („blau-“ / „grün“), werden wie bisher zusammengezogen.
-
-
-def _silbentrennung(out, frag, zeilenwechsel):
-    """True = der Bindestrich am Ende von out ist (wahrscheinlich) eine Silbentrennung und faellt weg."""
-    if zeilenwechsel is False:
-        return False              # derselben Zeile: ein Strich mitten in der Zeile trennt keine Silben
-    vor = out[-2:-1]
-    nach = frag[:1]
-    if not vor or not nach:
-        return False
-    return vor.isalpha() and vor.islower() and nach.isalpha() and nach.islower()
+# Seit der Pruefung vom 30.09.2026 (N8) bleibt ein Bindestrich IMMER stehen, auch am Zeilenende: Ob „blau-“/„grün“ ein
+# echter Bindestrich oder „Auftrags-“/„verarbeitung“ eine Silbentrennung ist, laesst sich ohne Woerterbuch nicht sicher
+# entscheiden — und die Hoerprobe soll zeigen, was im Tag steht; genau diesen Text bekommt auch ein Screenreader. Weg
+# faellt nur der weiche Trennstrich (U+00AD), der nie Inhalt ist. Als Bindestrich gelten „-“, U+2010 und U+2011. (Setzt
+# PDFix den Trennstrich am Zeilenende als Artefakt, steht er gar nicht im Tag; dann folgt wie sonst ein Leerzeichen.)
+_BINDESTRICHE = ("-", "\u2010", "\u2011")
 
 
 def _append_fragment(out, frag, letzte_laenge=0, leerzeichen_objekte=False, getrennt=False, zeilenwechsel=None):
     """Fragmente verketten. Manche Erzeuger (z. B. Browser-Druck) legen jeden Buchstaben als eigenes
     Textobjekt ab und Leerzeichen als eigene Objekte — dann werden Einzelzeichen OHNE Leerzeichen
     angehaengt und die Leerzeichen-Objekte als Worttrenner uebernommen; sonst wie im Alt-Text-Export.
-    zeilenwechsel: True = frag beginnt in einer neuen Zeile, False = in derselben Zeile, None = unbekannt."""
+    zeilenwechsel (True/False/None) wird fuer Bindestriche nicht mehr gebraucht (N8), bleibt aber fuer Aufrufer."""
     if frag == " ":
         return out if out.endswith(" ") or not out else out + " "
     if not out:
         return frag
     if out.endswith("\xad"):
         return out[:-1] + frag
-    if out.endswith(" -"):
+    if any(out.endswith(" " + b) for b in _BINDESTRICHE):
         return out + " " + frag   # freistehender Strich („Seite 3 - 5“): Zeichen, kein Wortteil
-    if out.endswith("-") and frag and not frag.lower().startswith(_KOPPELWOERTER):
-        if _silbentrennung(out, frag, zeilenwechsel):
-            return out[:-1] + frag
-        return out + frag         # echter Bindestrich: stehen lassen, ohne Leerzeichen dahinter
+    if out.endswith(_BINDESTRICHE) and frag and not frag.lower().startswith(_KOPPELWOERTER):
+        return out + frag         # Bindestrich bleibt, ohne Leerzeichen dahinter („KI-gestützte“, „blau-grün“)
     if out.endswith(" "):
         return out + frag
     # Seite mit eigenen Leerzeichen-Objekten (Browser-Druck u. a.): Textobjekte sind Bruchstuecke von
@@ -455,8 +442,9 @@ def main():
                 t = z["id"].count(".") + 1
                 spalten = max(spalten, sum(1 for f in nach if f["id"].startswith(z["id"] + ".") and f["id"].count(".") == t and f["typ"] in ("TH", "TD")))
             e["zeilen"], e["spalten"] = len(zeilen), spalten
-        # Version 4 (30.09.2026): echte Bindestriche bleiben, keine Kuerzung auf 600 Zeichen mehr (gekuerzt/laenge)
-        info = {"seiten": _doc.GetNumPages(), "elemente": len(out), "dauer_s": round(time.time() - t0, 2), "version": 4}
+        # Version 4 (30.09.2026): echte Bindestriche bleiben, keine Kuerzung auf 600 Zeichen mehr (gekuerzt/laenge);
+        # Version 5 (30.09.2026, Pruefung N8): Bindestriche bleiben immer, auch U+2010/U+2011
+        info = {"seiten": _doc.GetNumPages(), "elemente": len(out), "dauer_s": round(time.time() - t0, 2), "version": 5}
         try:
             info["lang"] = _sauber(_doc.GetLang() or "")
         except Exception:  # noqa: BLE001

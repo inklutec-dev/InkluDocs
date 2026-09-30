@@ -32,6 +32,7 @@ from . import ausgaben as _ausg
 log = logging.getLogger(__name__)
 
 _HOERPROBE_MAX = 120
+_HOERPROBE_ZEICHEN = 30000   # Zeichen je Aufruf von hoerprobe_lesen (unter der Werkzeug-Kappe von 40.000, N1)
 
 
 def _main():
@@ -178,7 +179,16 @@ def hoerprobe_lesen(project_id: int, user_id: int, document_id: Optional[int] = 
     zeilen = st.get("hoerprobe") or []
     von = max(1, int(von or 1))
     anzahl = max(1, min(int(anzahl or 80), _HOERPROBE_MAX))
-    teil = zeilen[von - 1: von - 1 + anzahl]
+    # Nach ZEICHEN begrenzen (Pruefung 30.09.2026, N1): Zeilen sind seit dem Messlauf ungekuerzt (bis 20.000 Zeichen); die
+    # Werkzeug-Antwort hat eine Kappe (agent_loop, 40.000 Zeichen). Vorher schnitt die Kappe mitten in zeilen_daten, und
+    # „bis“ meldete trotzdem alle Zeilen — beim Weiterlesen fehlten welche. Jetzt nur ganze Zeilen bis _HOERPROBE_ZEICHEN,
+    # „bis“ ist die letzte gelieferte Zeile; mindestens eine Zeile, damit es immer weitergeht.
+    teil, zeichen = [], 0
+    for z in zeilen[von - 1: von - 1 + anzahl]:
+        if teil and zeichen + len(z) > _HOERPROBE_ZEICHEN:
+            break
+        teil.append(z)
+        zeichen += len(z)
     # Sicherheitsdurchgang 22.09.2026: Text aus einer fremden Datei — als DATEN markiert (wie formular._daten),
     # damit eine „Anweisung“ im Dokumenttext nicht als Auftrag gelesen wird. Kostenpflichtige und unumkehrbare
     # Aktionen sind ohnehin serverseitig an ein Angebot aus einer Nutzer-Nachricht gebunden.
@@ -436,30 +446,30 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
         vorschau["hinweis"] = grund
         vorschau["rueckfrage_noetig"] = True
         return {"ok": True, "result": vorschau}
+    # Derselbe Weg wie der Knopf (Pruefung 30.09.2026, H1/M1/M2): gemeinsame Sperre je Nutzer (kein paralleler Bau aus Chat
+    # und Knopf), Planung nach dem Belegen, Quickinfos aus der Momentaufnahme, Abrechnung mit atomarem Anspruch auf den
+    # Stand, kostenloser gleicher Stand aus der Ablage. Hat sich der Preis seit der Rueckfrage geaendert: Abbruch (409).
+    belegt = m._export_belegen(user_id)
+    if belegt:
+        return {"ok": False, "error": m._export_belegt_text(belegt)}
     try:
-        output_dir = os.path.join(m.RESULTS_DIR, str(user_id), str(project_id), "_export")
-        os.makedirs(output_dir, exist_ok=True)
-        unit = units[0]
-        output_path, info = m._build_pdf_for_document(unit, output_dir, creator=m._pdf_creator_fuer(user_id))
-        dateiname = f"inkludocs_{m._doc_label(unit['doc'])}.pdf"
-        # Abrechnung wie beim Knopf: Alt-Text-Anteil (pdf_export) + Quickinfo-Anteil (formular_export, nur wenn Quickinfos
-        # in der Datei stehen); gemerkt wird der bezahlte Stand nur, wenn alles Geplante berechnet wurde.
-        qi_n = int((info.get("quickinfos") or {}).get("geschrieben") or 0)
-        preis_pdf = int(plan["preis_pdf"] or 0)
-        preis_qi = int(plan["preis_qi"] or 0) if qi_n else 0
-        if preis_pdf:
-            m.billing.verbuche(user_id, "export", aktion="pdf_export", credits=preis_pdf)
-        if preis_qi:
-            m.billing.verbuche(user_id, "export", aktion="formular_export", credits=preis_qi)
-        if preis_pdf + preis_qi and preis_pdf + preis_qi == int(plan["preis"] or 0):
-            m._export_bezahlt_merken(plan, [unit["doc"].get("id")])
-        p = dict(p, preis=preis_pdf + preis_qi)
-        ausgabe_id = m._pdf_in_ablage(user_id, project, unit, output_path, dateiname, preis_pdf + preis_qi, "bot")
+        erg = m._pdf_export_sync(user_id, project, doc["id"], None, "bot", int(p.get("preis") or 0))
     except HTTPException as e:
         return _fehler(e)
     except Exception as e:  # noqa: BLE001
         log.exception("[bot] PDF-Export fehlgeschlagen")
         return {"ok": False, "error": f"Der Export ist fehlgeschlagen: {e}"}
+    finally:
+        m._export_freigeben(user_id)
+    h = erg.get("headers") or {}
+    ausgabe_id = (erg.get("ausgabe_ids") or [None])[0]
+    dateiname = erg["dateiname"]
+    try:
+        warnungen = json.loads(h.get("X-Export-Warnings") or "[]")
+    except ValueError:
+        warnungen = []
+    info = {"total": h.get("X-Export-Total"), "tagged": h.get("X-Export-Tagged"), "warnings": warnungen}
+    p = dict(p, preis=int(erg.get("preis") or 0))
     r = {"ausgabe_id": ausgabe_id, "dateiname": dateiname, "media": "application/pdf"}
     result = {
         "ausgabe_id": ausgabe_id, "dateiname": dateiname, "preis": p.get("preis"),
