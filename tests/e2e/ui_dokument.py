@@ -174,6 +174,18 @@ with sync_playwright() as p:
     check("Knopf „Testweise taggen“ (kostenlos, im Testmodus)", kn.count() == 1 and "kostenlos, im Testmodus" in kn.first.inner_text(), kn.first.inner_text() if kn.count() else "")
     guthaben_vorher = pg.request.get(B + "/api/me").json().get("abo", {})
     kn.first.click()
+    pg.wait_for_selector("#dkTestDialog[open]", timeout=5000)
+    # Michael Karbe, Feedback 20261001 - 2, Punkt 4: Rückfrage wie „Barrierefrei machen“ (Text ist ein Entwurf)
+    check("Dialog „Testweise taggen“: Original bleibt, danach richtig taggen; Fokus auf Abbrechen",
+          pg.locator("#dkTestHeading").inner_text() == "Testweise taggen" and "Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen." in pg.locator("#dkTestText").inner_text()
+          and pg.evaluate("document.activeElement && document.activeElement.id") == "dkTestCancel", pg.locator("#dkTestDialog").inner_text())
+    axe(pg, "Dialog Testweise taggen")
+    pg.keyboard.press("Escape")
+    pg.wait_for_timeout(300)
+    check("Escape schließt, nichts gestartet", not pg.locator("#dkTestDialog[open]").count() and pg.locator("#dok_test_laeuft_" + kn.first.get_attribute("id").split("_")[-1]).count() == 0)
+    kn.first.click()
+    pg.wait_for_selector("#dkTestDialog[open]", timeout=5000)
+    pg.click("#dkTestOk")
     pg.wait_for_timeout(1200)
     check("Statuszeile „Testlauf gestartet“ mit Fokus", "Testlauf gestartet" in pg.locator("output[id^=dok_status_]").first.inner_text() and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_status_"))
     fertig = False
@@ -188,13 +200,10 @@ with sync_playwright() as p:
     check("Kein Herunterladen der Testfassung", pg.locator("button[id^=dok_export_]").count() == 0 and pg.locator("section.dok-karte a[href*='test']").count() == 0)
     pg.click("section.dok-karte .dok-ergebnis button"); pg.wait_for_timeout(300)
     pg.click("details.dok-test > summary")
-    hp = ""
-    for _ in range(20):
-        pg.wait_for_timeout(1000)
-        hp = pg.locator("details.dok-test .dok-test-hoerprobe").inner_text() if pg.locator("details.dok-test .dok-test-hoerprobe").count() else ""
-        if hp and "wird geladen" not in hp:
-            break
-    check("Klappe „Ergebnis des Testlaufs“ mit Hörprobe der Testfassung", "Zusammenfassung" in hp and "Seite 1" in hp, hp[:200])
+    pg.wait_for_timeout(500)
+    check("Klappe „Ergebnis des Testlaufs“ ohne Hörprobe (Feedback 20261001 - 2, Punkt 6)",
+          pg.locator("details.dok-test .dok-test-hoerprobe").count() == 0 and "Hörprobe" not in pg.locator("details.dok-test").inner_text()
+          and "Testlauf vom" in pg.locator("details.dok-test").inner_text(), pg.locator("details.dok-test").inner_text()[:200])
     check("Testlauf kostet nichts", pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht") == guthaben_vorher.get("verbraucht"))
     axe(pg, "Ansicht Tagging mit Ergebnis des Testlaufs")
 
@@ -229,9 +238,10 @@ with sync_playwright() as p:
     # Mail - 2, Punkt 2: Ergebnis UNTER dem Dokument in der Karte, farbig, mit Fokus
     check("Ergebnis in der Karte, nennt Struktur", fertig and "getaggt" in meld and "Elemente" in meld, meld)
     # Audit veraPDF 30.09.2026 (MITTEL 4): veraPDF nach dem Taggen ist ein Zwischenstand, nicht „Deine PDF ist fertig“
-    check("Ergebnis nennt die PDF/UA-Prüfung als Stand direkt nach dem Taggen (vor Alt-Texten und Quickinfos), nicht „fertig“",
-          "direkt nach dem Taggen" in meld and "vor Alt-Texten und Quickinfos" in meld and "Deine PDF ist fertig" not in meld
-          and "Barrierefreiheitsprüfung" in meld, meld)
+    # Michael Karbe, Feedback 20261001 - 2, Punkt 5 (wörtlich)
+    check("Ergebnis: „Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert.“ bzw. „… keine Abweichungen …“, Verweis auf die Prüfung",
+          ("Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert." in meld or "Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden." in meld)
+          and "Deine PDF ist fertig" not in meld and "Barrierefreiheitsprüfung" in meld, meld)
     vb_nach = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
     check("Tagging hat genau 40 Credits gebucht (2 Seiten × 20)", isinstance(vb_nach, int) and isinstance(verbraucht_vor_tagging, int) and vb_nach - verbraucht_vor_tagging == 40, (verbraucht_vor_tagging, vb_nach))
     check("Fokus auf dem Ergebnis in der Karte", str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_ergebnis_text_"))
@@ -409,13 +419,21 @@ with sync_playwright() as p:
     check("Kein Herunterladen in der Prüfung (Punkt 6), kein Upload-Feld", pg.locator("button[id^=ab_export_]").count() == 0 and pg.locator("#abAlleBtn").count() == 0 and "PDF herunterladen" not in pg.locator("main").inner_text() and pg.locator("#projUpload").count() == 0)
     check("Keine KI-basierte Prüfung (ausgeblendet, Punkt 9)", pg.locator("section.ab-ki").count() == 0 and pg.locator("button[id^=dok_pruef_]").count() == 0 and "KI-basierte" not in pg.locator("main").inner_text())
     axe(pg, "Prüfung vor der Prüfdatei")
+    # Mitschnitt der allgemeinen Ansage-Region (#liveRegion) und aller Statuszeilen mit Text
+    pg.evaluate("""(() => { window.__live = []; new MutationObserver(ms => ms.forEach(m => { const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        if (!el) return; const live = el.closest('#liveRegion, [role=status], output'); if (live && (live.textContent || '').trim()) window.__live.push({ id: live.id, text: live.textContent.trim() }); }))
+        .observe(document.body, { childList: true, subtree: true, characterData: true }); })()""")
     pg.click("button[id^=ab_erstellen_]")
     for _ in range(60):
         pg.wait_for_timeout(1500)
-        if "Prüfdatei erstellt" in (pg.locator("output[id^=ab_status_]").first.inner_text() if pg.locator("output[id^=ab_status_]").count() else ""):
+        if "Prüfung fertig" in " ".join(x["text"] for x in pg.evaluate("window.__live || []")) or (pg.locator("section.ab-karte ul.dok-meta").count() and "Problemstellen: " in pg.locator("section.ab-karte ul.dok-meta").first.inner_text()):
             break
     st = pg.locator("output[id^=ab_status_]").first.inner_text()
-    check("Prüfdatei erstellt, Statuszeile mit Fokus", "Prüfdatei erstellt" in st and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("ab_status_"), st)
+    # Feedback 20261001 - 2, Punkt 1: kein Satz unter dem Knopf (stand weiter unten doppelt); einmal angesagt, Fokus auf dem Knopf
+    pg.wait_for_timeout(800)
+    ansage = [x["text"] for x in pg.evaluate("window.__live || []") if "Prüfung fertig:" in x["text"]]
+    check("Nach der Prüfung: Statuszeile leer, „Prüfung fertig: …“ genau einmal angesagt, Fokus auf „Prüfung erneut starten“",
+          not st.strip() and len(ansage) == 1 and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("ab_erstellen_"), (st, ansage))
     meta = pg.locator("section.ab-karte ul.dok-meta").first.inner_text()
     check("Stand: Prüfdatei erstellt am …, aktuell, Norm-Prüfung (veraPDF), Problemstellen", all(k in meta for k in ("Prüfdatei: erstellt am", "Stand: aktuell", "Norm-Prüfung PDF/UA-1 (veraPDF): ", "Problemstellen: ")), meta)
     check("veraPDF nennt Ergebnis mit Zahl der Prüfpunkte (Michael Karbe 28.09.2026)", re.search(r"Norm-Prüfung PDF/UA-1 \(veraPDF\): (bestanden, [\d.]+ Prüfpunkte erfüllt|nicht bestanden, [\d.]+ Prüfpunkte verletzt)", meta) is not None, meta)
@@ -431,12 +449,19 @@ with sync_playwright() as p:
     check("Kein Satz „Keine der Problemstellen gehört zu einer bestimmten Seite.“ (Punkt 7)", "Keine der Problemstellen gehört zu einer bestimmten Seite" not in karte)
     pg.wait_for_timeout(1500)
     check("Keine Sprache/Zusammenfassung in der Prüfung (Punkt 10)", pg.locator("ul[id^=ab_kopf_]").count() == 0)
+    # Feedback 20261001 - 2, Punkt 8: Ergebnis und Hörprobe zum Aufklappen wie „Bericht lesen“ in „Tagging“, beide zu
+    erg = pg.locator("details.ab-ergebnis")
+    check("Klappen „Ergebnis der Prüfung anzeigen“ und „Hörprobe anzeigen“, beide zugeklappt (Punkt 8)",
+          erg.count() == 1 and erg.locator("summary").inner_text().startswith("Ergebnis der Prüfung anzeigen") and not erg.get_attribute("open") is not None
+          and pg.locator("details.ab-dhp").count() == 1 and pg.locator("details.ab-dhp[open]").count() == 0, erg.locator("summary").inner_text() if erg.count() else "")
+    check("Kein Infotext „Die Prüfdatei ist nicht mehr aktuell …“ (Punkt 9)", "Starte die Prüfung erneut" not in karte and "Die Prüfdatei ist nicht mehr aktuell." not in karte)
+    erg.locator("summary").click(); pg.wait_for_timeout(400)
     probleme = pg.locator("ol.ab-problemliste > li").all_inner_texts()
     # Feedback 202609230 - 1, Punkt 8: kein „veraPDF (PDF/UA-1):“ mehr in der Zeile, die Regelnummer bleibt
     check("Nur veraPDF-Problemstellen, jede mit Regelnummer, ohne „veraPDF“ in der Zeile (Punkt 8)", all("veraPDF" not in x and "(Regel" in x for x in probleme) and not any(q in " ".join(probleme) for q in ("Vollständigkeit:", "Struktur:", "KI-basierte")), probleme[:4])
     if probleme:
         st_ab = pg.evaluate("""(() => { const m = document.querySelector('section.ab-karte ul.dok-meta li'); const p = document.querySelector('ol.ab-problemliste > li');
-            const a = getComputedStyle(m), b = getComputedStyle(p); const s = document.querySelector('.ab-problemklappe > summary'); const o = document.querySelector('ol.ab-problemliste');
+            const a = getComputedStyle(m), b = getComputedStyle(p); const s = document.querySelector('h4[id^=ab_probleme_]'); const o = document.querySelector('ol.ab-problemliste');
             const alle = document.querySelectorAll('ol.ab-problemliste > li');
             return {gleich: a.fontFamily === b.fontFamily && a.fontSize === b.fontSize && a.lineHeight === b.lineHeight, anzahl: alle.length, li_abstand: alle.length > 1 ? parseFloat(getComputedStyle(alle[0]).marginBottom) : null, ol_oben: parseFloat(getComputedStyle(o).marginTop), sum_unten: parseFloat(getComputedStyle(s).marginBottom)}; })()""")
         check("Problemtext in Schrift, Größe und Zeilenhöhe der Dokumentinfos (Punkt 4)", st_ab["gleich"], st_ab)
@@ -446,13 +471,16 @@ with sync_playwright() as p:
     # Prüfung Barrierefreiheit 30.09.2026, Punkt 7: Seiten nur vorne, nicht noch einmal „(Seite n)“ im Satz
     check("Problemzeilen nennen die Seiten nicht doppelt", not any(("– " in x) and x.split(" – ")[0].startswith("Seite") and ("(" + x.split(" – ")[0] + ")") in x for x in probleme), probleme[:3])
     # Punkt 1: Hörprobe des ganzen Dokuments mit „Hörprobe vorlesen“ — unabhängig von Problemseiten
-    check("Hörprobe des ganzen Dokuments: H4 „Hörprobe“, Satz zur Reihenfolge ohne „kein Prüfergebnis“, Knopf „Hörprobe vorlesen“, Klappe „Hörprobe anzeigen“ (Punkte 2, 3)",
-          pg.locator("section.ab-dok-hoerprobe h4").count() == 1 and pg.locator("button[id^=ab_dvorlesen_]").count() == 1 and pg.locator("details.ab-dhp > summary").inner_text().startswith("Hörprobe anzeigen")
-          and "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor." in pg.locator("section.ab-dok-hoerprobe").inner_text()
-          and "Prüfergebnis" not in pg.locator("main").inner_text(), pg.locator("section.ab-dok-hoerprobe").inner_text()[:300])
+    # Feedback 20261001 - 2, Punkt 7: „Hörprobe vorlesen“ neben „Strukturansicht für Screenreader“
+    check("„Hörprobe vorlesen“ in der Knopfreihe direkt nach „Strukturansicht für Screenreader“ (Punkt 7)",
+          pg.evaluate("(() => { const b = document.querySelector('button[id^=ab_dvorlesen_]'); const a = document.querySelector('a[id^=ab_struktur_]'); if (!a || !b) return false; let n = a.nextElementSibling; while (n && n.tagName === 'SPAN') n = n.nextElementSibling; return n === b && !!b.closest('.ab-werkbank'); })()"))
+    pg.click("details.ab-dhp > summary"); pg.wait_for_timeout(300)
+    check("Hörprobe: Satz zur Reihenfolge, kein „Prüfergebnis“, Klappe „Hörprobe anzeigen“",
+          pg.locator("details.ab-dhp > summary").inner_text().startswith("Hörprobe anzeigen")
+          and "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor." in pg.locator("details.ab-dhp").inner_text()
+          and "Prüfergebnis" not in pg.locator("main").inner_text(), pg.locator("details.ab-dhp").inner_text()[:300])
     pg.click("button[id^=ab_dvorlesen_]"); pg.wait_for_timeout(2500)
     check("Ohne Stimme: Meldung sichtbar unter „Hörprobe vorlesen“", "keine Stimme" in pg.locator("[id^=ab_dvstatus_]").inner_text() and pg.locator("[id^=ab_dvstatus_]").is_visible())
-    pg.click("details.ab-dhp > summary"); pg.wait_for_timeout(300)
     check("Hörprobe anzeigen: alle Seiten, Inhalt mit lang, Kopfzeilen ohne", "— Seite 1 —" in pg.locator("details.ab-dhp").inner_text() and "— Seite 2 —" in pg.locator("details.ab-dhp").inner_text() and pg.locator("details.ab-dhp span[lang]").count() > 0 and "lang=" not in pg.evaluate("document.querySelector('details.ab-dhp [role=region] p').innerHTML"))
     n_prob = pg.locator("ol.ab-problemliste > li").count()
     if n_prob:
@@ -487,7 +515,8 @@ with sync_playwright() as p:
     if bilder:
         pg.request.post(B + f"/api/images/{bilder[0]['id']}/alt-text", data={"alt_text": "Geänderter Alt-Text " + time.strftime("%H%M%S")})
         pg.goto(B + f"/app?projekt={pid}&ansicht=abschluss", wait_until="networkidle"); pg.wait_for_timeout(1200)
-        check("Nach Alt-Text-Änderung: „Prüfdatei nicht mehr aktuell“, Neu-erstellen-Knopf ist Hauptknopf", "nicht mehr aktuell" in pg.locator("section.ab-karte h3").inner_text() and "btn-primary" in (pg.locator("button[id^=ab_erstellen_]").get_attribute("class") or ""), pg.locator("section.ab-karte h3").inner_text())
+        check("Nach Alt-Text-Änderung: „Prüfdatei nicht mehr aktuell“, Knopf ist Hauptknopf, kein Infotext darunter (Punkt 9)", "nicht mehr aktuell" in pg.locator("section.ab-karte h3").inner_text() and "btn-primary" in (pg.locator("button[id^=ab_erstellen_]").get_attribute("class") or "")
+              and "Starte die Prüfung erneut" not in pg.locator("section.ab-karte").inner_text(), pg.locator("section.ab-karte h3").inner_text())
     doc_id = pg.request.get(B + f"/api/projects/{pid}/abschluss").json()["documents"][0]["id"]
     check("Seitenbild ausserhalb des Bereichs: 404", pg.request.get(B + f"/api/projects/{pid}/documents/{doc_id}/abschluss/seite/99").status == 404)
     check("Prüfung fremdes Projekt: 404", pg.request.get(B + "/api/projects/999999/abschluss").status == 404)

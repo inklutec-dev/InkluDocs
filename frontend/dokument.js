@@ -92,7 +92,7 @@
         // Nur „Getaggt“ / „Nicht getaggt“ (Michael Karbe, Feedback 24.09.2026, Punkt 4) — das PDF/UA-Ergebnis steht im Bericht
         // Beim Hochladen schon getaggt (Quelle hat Tags, InkluDocs taggt sie nicht neu): unterscheidbar von „Getaggt“, das man
         // neu taggen kann (Prüfung Barrierefreiheit 30.09.2026, Punkt 5)
-        if (tg.quelle_getaggt === true && d.getaggt === true && tg.status !== 'fertig') return t('Getaggt (beim Hochladen)');
+        // „Getaggt (beim Hochladen)“ entfällt (Michael Karbe, Feedback 20261001 - 2, Punkt 2): nur „Getaggt“ / „Nicht getaggt“
         if (tg.status === 'fertig' || d.getaggt === true) return t('Getaggt');
         if (d.getaggt === false) return t('Nicht getaggt');
         return t('Unbekannt');
@@ -469,7 +469,7 @@
             const knopfText = (tg.status === 'fertig' || tg.quelle_getaggt === true) ? t('Neu taggen') : t('Barrierefrei machen');
             knoepfe = (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
                 // TESTWEISE TAGGEN (Michael Karbe, Feedback 24.09.2026 - 2, Punkt 3): kostenlos, Testmodus, das Original bleibt
-                + (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
+                + (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testOeffnen(' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
                 + hoerprobeKnopf
                 + (ZEIGE_STRUKTURANSICHT && d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '');
         } else {
@@ -493,7 +493,7 @@
             + '<div class="dok-werkbank">'
             // Satz in normaler Textgröße, ohne Verweis auf einen Knopf, den es hier nicht gibt, und mit dem Weg weiter
             // (Prüfung Barrierefreiheit 30.09.2026, Punkt 5): Links zu „Alt-Texte“ und „Barrierefreiheitsprüfung“
-            + (imTagging && tg.quelle_getaggt === true ? '<p class="dok-schon-getaggt" id="dok_schon_getaggt_' + d.id + '">' + t('Diese PDF war beim Hochladen schon getaggt. „Neu taggen“ ersetzt die vorhandenen Tags durch eine neue Struktur. Ohne neues Tagging geht es weiter in {alttexte} oder {pruefung}.', { alttexte: ansichtLink(project, 'alttexte'), pruefung: ansichtLink(project, 'abschluss') }) + '</p>' : '')
+            // Info „beim Hochladen schon getaggt …“ entfällt (Feedback 20261001 - 2, Punkt 3)
             + '<div class="ausgabe-aktionen">' + knoepfe + '</div>'
             // Unter den Knöpfen in „Dokument“ nichts weiter (Feedback 20260928 - 2, Punkt 2); Ergebnis, Laufstatus, Testlauf
             // und Bericht gehören zum Tagging.
@@ -630,7 +630,7 @@
             + '<div class="page-text-content" role="region" aria-label="' + t('Ergebnis des Testlaufs') + '" tabindex="0">'
             + '<p>' + esc(testText(te)) + '</p>'
             + '<p class="feld-hinweis">' + t('Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen.') + '</p>'
-            + (te.hoerprobe_moeglich ? '<h4>' + t('Hörprobe der Testfassung') + '</h4><div class="ausgabe-hoerprobe dok-test-hoerprobe" role="region" aria-label="' + t('Hörprobe der Testfassung') + '" tabindex="0" id="dok_test_hp_' + d.id + '"><p>' + t('Hörprobe wird geladen …') + '</p></div>' : '')
+            // ohne „Hörprobe der Testfassung“ (Feedback 20261001 - 2, Punkt 6: dafür gibt es den Knopf „Hörprobe“)
             + '</div></details>';
     }
     async function testHoerprobeLaden(el) {
@@ -720,7 +720,7 @@
             + ((data.ausgaben_anzahl || 0) > 0 ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : '');
         return projektKopfHtml(project, modus, title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
             + funktionenKarteHtml(modus === 'dokument' ? aktionen : '')
-            + (modus === 'tagging' ? laufDialogHtml(project) : '')
+            + (modus === 'tagging' ? laufDialogHtml(project) + testDialogHtml(project) : '')
             + hoerprobeDialogHtml()
             // Herunterladen-Dialog (Feedback 28.09.2026 - 1, Punkt 4): derselbe wie in „Alt-Texte“, hier nur mit der PDF.
             + (modus === 'dokument' && docs.length && typeof exportDialogHtml === 'function' ? exportDialogHtml(project) : '')
@@ -739,6 +739,38 @@
             +   '<button type="button" class="btn btn-primary" id="dkLaufOk" onclick="Dokument.laufStarten(' + project.id + ')">' + t('Tagging starten') + '</button>'
             + '</div><output id="dkLaufStatus" style="display:block;margin-top:0.5rem;"></output>'
             + '</dialog>';
+    }
+
+    // „Testweise taggen“ mit Rückfrage wie „Barrierefrei machen“ (Michael Karbe, Feedback 20261001 - 2, Punkt 4). Text ist ein
+    // ENTWURF, mit Michael abzustimmen. Wichtig: das Original wird nicht ersetzt, danach kann man richtig taggen.
+    let testZielDoc = null;
+    function testDialogHtml(project) {
+        return '<dialog id="dkTestDialog" class="app-dialog" aria-labelledby="dkTestHeading" aria-describedby="dkTestText">'
+            + '<h2 id="dkTestHeading">' + t('Testweise taggen') + '</h2>'
+            + '<p id="dkTestText">' + t('Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen und lässt sich nicht herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen.') + '</p>'
+            + '<div class="dialog-actions">'
+            +   '<button type="button" class="btn btn-secondary" id="dkTestCancel" onclick="Dokument.testSchliessen()">' + t('Abbrechen') + '</button>'
+            +   '<button type="button" class="btn btn-primary" id="dkTestOk" onclick="Dokument.testBestaetigt(' + project.id + ')">' + t('Testweise taggen') + '</button>'
+            + '</div></dialog>';
+    }
+    function testOeffnen(docId) {
+        const dlg = document.getElementById('dkTestDialog');
+        if (!dlg) return;
+        testZielDoc = docId;
+        dlg.showModal();
+        const c = document.getElementById('dkTestCancel');
+        if (c) c.focus();
+    }
+    function testSchliessen() {
+        const dlg = document.getElementById('dkTestDialog');
+        if (dlg && dlg.open) dlg.close();
+        const btn = testZielDoc ? document.getElementById('dok_test_' + testZielDoc) : null;
+        if (btn) btn.focus();
+    }
+    function testBestaetigt(projectId) {
+        const dlg = document.getElementById('dkTestDialog');
+        if (dlg && dlg.open) dlg.close();
+        if (testZielDoc) testStarten(projectId, testZielDoc);
     }
 
     function laufOeffnen(docId) {
@@ -967,9 +999,9 @@
     // „Deine PDF ist fertig und hat die Prüfung auf PDF/UA bestanden“, obwohl Alt-Texte und Quickinfos noch fehlen).
     function taggingPruefSatz(v) {
         const n = (v.punkte || []).filter(p => p.status === 'befund').reduce((a, p) => a + ((p.einzeln || [p]).length), 0);
-        const satz = v.bestanden ? t('Die PDF/UA-Prüfung direkt nach dem Taggen ist bestanden (vor Alt-Texten und Quickinfos).')
-            : (n === 1 ? t('Die PDF/UA-Prüfung direkt nach dem Taggen meldet 1 Problemstelle (vor Alt-Texten und Quickinfos).')
-                : t('Die PDF/UA-Prüfung direkt nach dem Taggen meldet {n} Problemstellen (vor Alt-Texten und Quickinfos).', { n: n || v.regeln_fehlgeschlagen || 0 }));
+        // Michael Karbe, Feedback 20261001 - 2, Punkt 5 (wörtlich); ohne Abweichung der Gegensatz im selben Wortlaut
+        const satz = v.bestanden ? t('Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden.')
+            : t('Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert.');
         return satz + ' ' + t('Die fertige Datei prüfst du in der Barrierefreiheitsprüfung.');
     }
     function abschlussText(d) {
@@ -1141,7 +1173,7 @@
             if (el.open) offenePruefungen.add(k); else offenePruefungen.delete(k);
         }));
     }
-    window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, meldungSchliessen, pollStoppen,
+    window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, testOeffnen, testSchliessen, testBestaetigt, meldungSchliessen, pollStoppen,
                         ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig,
                         ergebnisSchliessen, hoerprobeOeffnen, hoerprobeSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden, testStarten,
                         pruefAbschlussText, korrAbschlussText, hoerprobeVorlesen };

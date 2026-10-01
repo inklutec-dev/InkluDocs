@@ -357,13 +357,11 @@ def zwischenstand_satz(v: Optional[dict], _=None) -> str:
     _ = _ or (lambda s: s)
     if not v:
         return _("Die PDF/UA-Prüfung nach dem Taggen war nicht möglich.")
-    n = sum(len(p.get("einzeln") or [p]) for p in (v.get("punkte") or []) if p.get("status") == "befund") or int(v.get("regeln_fehlgeschlagen") or 0)
+    # Michael Karbe, Feedback 20261001 - 2, Punkt 5 (wörtlich), ohne Abweichung der Gegensatz im selben Wortlaut
     if v.get("bestanden"):
-        satz = _("Die PDF/UA-Prüfung direkt nach dem Taggen ist bestanden (vor Alt-Texten und Quickinfos).")
-    elif n == 1:
-        satz = _("Die PDF/UA-Prüfung direkt nach dem Taggen meldet 1 Problemstelle (vor Alt-Texten und Quickinfos).")
+        satz = _("Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden.")
     else:
-        satz = _("Die PDF/UA-Prüfung direkt nach dem Taggen meldet {n} Problemstellen (vor Alt-Texten und Quickinfos).").format(n=n)
+        satz = _("Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert.")
     return satz + " " + _("Die fertige Datei prüfst du in der Barrierefreiheitsprüfung.")
 
 

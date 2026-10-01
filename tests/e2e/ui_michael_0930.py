@@ -100,13 +100,9 @@ with sync_playwright() as p:
         pg.wait_for_timeout(1500)
         pg.locator(f"#dok_karte_{aid} summary").first.click()
         pg.wait_for_timeout(500)
-        hin = pg.locator(f"#dok_schon_getaggt_{aid}")
-        text = hin.inner_text() if hin.count() else ""
-        check("Satz: beim Hochladen schon getaggt, „Neu taggen“ ersetzt die vorhandenen Tags, wie es sonst weitergeht (01.10.)",
-              "beim Hochladen schon getaggt" in text and "„Neu taggen“ ersetzt die vorhandenen Tags" in text and "Alt-Texte" in text and "Barrierefreiheitsprüfung" in text, text)
-        hrefs = [a.get_attribute("href") or "" for a in hin.locator("a").all()] if hin.count() else []
-        check("Zwei Links: Alt-Texte und Barrierefreiheitsprüfung", len(hrefs) == 2 and "ansicht=alttexte" in hrefs[0] and "ansicht=abschluss" in hrefs[1], hrefs)
-        check("Satz in normaler Textgröße (nicht die kleine graue Hinweisschrift)", hin.count() and pg.evaluate(f"parseFloat(getComputedStyle(document.getElementById('dok_schon_getaggt_{aid}')).fontSize)") >= 15.5)
+        # Michael Karbe, Feedback 20261001 - 2, Punkt 3: der Satz „beim Hochladen schon getaggt …“ entfällt ganz
+        check("Kein Info-Satz „beim Hochladen schon getaggt“ (Punkt 3)", pg.locator(f"#dok_schon_getaggt_{aid}").count() == 0
+              and "beim Hochladen" not in pg.locator(f"#dok_karte_{aid}").inner_text())
         tag_knopf = pg.locator(f"#dok_tag_{aid}")
         check("Knöpfe „Neu taggen“ (Seiten, Credits) und „Testweise taggen“, „Hörprobe“ da (Feedback 20261001 - 1, Punkt 1)",
               tag_knopf.count() == 1 and tag_knopf.inner_text().startswith("Neu taggen") and "Credits" in tag_knopf.inner_text()
@@ -120,7 +116,7 @@ with sync_playwright() as p:
         pg.click("#dkLaufCancel")
         pg.wait_for_timeout(300)
         badge = pg.locator(f"#dok_badge_{aid}").inner_text()
-        check("Abzeichen unterscheidbar: „Getaggt (beim Hochladen)“", badge.strip() == "Getaggt (beim Hochladen)", badge)
+        check("Abzeichen nur „Getaggt“ (Feedback 20261001 - 2, Punkt 2)", badge.strip() == "Getaggt", badge)
         meta = pg.locator(f"#dok_karte_{aid} ul.dok-meta").inner_text()
         check("Bilder: 9 Bilder, 8 mit Alt-Text (wie Dialog und Hörprobe; vorher 0)", "9 Bilder, 8 mit Alt-Text" in meta, meta)
         axe(pg, "Tagging mit schon getaggter PDF")
@@ -152,9 +148,6 @@ with sync_playwright() as p:
         check("Zweiter Druck stoppt: aria-pressed=false, wieder „Hörprobe vorlesen“", kn.get_attribute("aria-pressed") == "false" and kn.inner_text().strip() == "Hörprobe vorlesen", (kn.get_attribute("aria-pressed"), kn.inner_text()))
         pg.click("#dkHpZu")
         pg.wait_for_timeout(300)
-        pg.locator(f"#dok_schon_getaggt_{aid} a").first.click()
-        pg.wait_for_function("() => (document.getElementById('projectName') || {}).textContent.startsWith('Alt-Texte')", timeout=15000)
-        check("Link „Alt-Texte“ wechselt die Ansicht", "ansicht=alttexte" in pg.url)
 
         print("== Punkte 3 und 8: Herunterladen-Dialog ==")
         pg.goto(B + f"/app?projekt={pid}&ansicht=dokument", wait_until="networkidle")
@@ -194,6 +187,8 @@ with sync_playwright() as p:
         pg.wait_for_timeout(1500)
         pg.locator(f"#ab_karte_{aid} summary").first.click()
         pg.wait_for_timeout(3000)
+        pg.locator(f"#ab_karte_{aid} details.ab-ergebnis > summary").click()   # Ergebnis zum Aufklappen (Feedback 20261001 - 2, Punkt 8)
+        pg.wait_for_timeout(400)
         ad = pg.request.get(B + f"/api/projects/{pid}/documents/{aid}/abschluss").json()
         englisch = sum(1 for pr in (ad.get("probleme") or []) if ((pr.get("teile") or {}).get("lang") == "en"))
         check(f"Nicht übersetzte veraPDF-Sätze ({englisch}) stehen mit lang=\"en\" in der Liste",

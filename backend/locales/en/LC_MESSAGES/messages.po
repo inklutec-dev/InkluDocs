@@ -10327,3 +10327,24 @@ msgstr "This PDF was already tagged when you uploaded it. “Tag again” replac
 
 msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
 msgstr "You pay for the tagging only at this moment; it is not charged again when you download."
+
+msgid "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen und lässt sich nicht herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+msgstr "Test tagging shows you free of charge what the tagging result would look like. The test version carries a watermark and cannot be downloaded. Your original PDF stays unchanged, and you can tag it properly afterwards."
+
+msgid "Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert."
+msgstr "The automatic PDF/UA check identified deviations from the standard."
+
+msgid "Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden."
+msgstr "The automatic PDF/UA check found no deviations from the standard."
+
+msgid "Prüfung läuft …"
+msgstr "Check running …"
+
+msgid "Prüfung fertig:"
+msgstr "Check finished:"
+
+msgid "Ergebnis der Prüfung anzeigen"
+msgstr "Show check result"
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
+msgstr "A screen reader reads the tagged content of this page in this order."

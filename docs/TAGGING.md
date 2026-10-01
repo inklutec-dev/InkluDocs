@@ -704,3 +704,14 @@ einmal angesagt (Statuszeile; `announce()` nur ohne Statuszeile).
   „Prüfung erneut starten“, „Strukturansicht für Screenreader“, Info „Geprüft wird mit veraPDF … kostenlos.“ entfernt, keine
   Minuten-Hinweise in „Wird barrierefrei gemacht …“ und „Prüfdatei wird erstellt …“. Chatbot: Werkzeugname „Prüfung starten“,
   Tagging-Hinweise ohne Zeitangabe, „Neu taggen“ in Beschreibung und Systemprompt.
+
+## Michael Karbe, Feedback 20261001 - 2 (01.10.2026)
+
+- Barrierefreiheitsprüfung: Knopfreihe „Prüfung starten/erneut starten“, „Strukturansicht für Screenreader“, „Hörprobe vorlesen“;
+  darunter zwei Klappen wie „Bericht lesen“ in „Tagging“: „Ergebnis der Prüfung anzeigen“ (Problemstellen, Problemseiten) und
+  „Hörprobe anzeigen“. Nach der Prüfung kein Satz unter dem Knopf mehr: eine kurze Ansage „Prüfung fertig: …“ über die
+  allgemeine Ansage-Region, Fokus zurück auf den Knopf (das Ergebnis ist zugeklappt, ein Fokus dorthin läse nur den Namen).
+  Statuszeile „Prüfung läuft …“. Kein Infotext bei veralteter Prüfdatei (das Abzeichen sagt es).
+- Tagging: Abzeichen nur „Getaggt“/„Nicht getaggt“; kein Satz „beim Hochladen schon getaggt“; „Testweise taggen“ mit Rückfrage
+  (Dialog wie „Barrierefrei machen“, Text ein ENTWURF für Michael); „Ergebnis des Testlaufs“ ohne Hörprobe; Ergebnis nach dem
+  Taggen: „Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert.“ bzw. „… keine Abweichungen … gefunden.“

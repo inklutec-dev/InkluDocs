@@ -49,7 +49,7 @@
         const p = d.pruefdatei;
         if (!p) return t('Noch keine Prüfdatei');
         if (!p.aktuell) return t('Prüfdatei nicht mehr aktuell');
-        if (p.anzahl_probleme == null) return t('Prüfdatei wird erstellt …');
+        if (p.anzahl_probleme == null) return t('Prüfung läuft …');
         // Ohne veraPDF gibt es (seit „nur veraPDF“) nichts, was Probleme melden könnte — nie „Keine Problemstellen“ zeigen
         if (!p.eigene_pruefungen && p.verapdf_moeglich === false) return t('Prüfung nicht möglich');
         const n = p.anzahl_probleme || 0;
@@ -107,7 +107,14 @@
             ? '<div class="ab-werkbank"><div class="ausgabe-aktionen">'
               + '<button type="button" class="btn ' + (erstellenPrimaer ? 'btn-primary' : 'btn-secondary') + '" id="ab_erstellen_' + d.id + '" onclick="Abschluss.erstellen(' + project.id + ', ' + d.id + ')"' + (d.laeuft ? ' disabled' : '') + '>' + ico('sparkle') + erstellenText + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos') + '</span></button>'
               + (p ? '<a class="btn btn-secondary" id="ab_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '?quelle=abschluss">' + t('Strukturansicht für Screenreader') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
-              + '</div></div>'
+              // „Hörprobe vorlesen“ neben „Strukturansicht für Screenreader“ (Michael Karbe, Feedback 20261001 - 2, Punkt 7);
+              // Name je Dokument über aria-labelledby, vorlesenTeile ersetzt den Knopftext beim Start/Stopp
+              + (p ? '<span id="ab_dname_' + d.id + '" hidden>' + t('– Dokument „{name}“', { name: nm }) + '</span>'
+                   + '<button type="button" class="btn btn-secondary tts-btn" id="ab_dvorlesen_' + d.id + '" aria-labelledby="ab_dvorlesen_' + d.id + ' ab_dname_' + d.id + '" aria-pressed="false" onclick="Abschluss.dokVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button>' : '')
+              + '</div>'
+              // sichtbare Statuszeile fürs Vorlesen: „keine Stimme auf diesem Gerät“ steht HIER
+              + (p ? '<p class="ab-vorlese-status" id="ab_dvstatus_' + d.id + '" role="status"></p>' : '')
+              + '</div>'
             : '';
         const dk = dokDaten[d.id];
         // KI-basierte Pruefung ausgeblendet (Michael Karbe, Feedback 20260928 - 2, Punkt 9): ZEIGE_KI = true holt sie zurueck
@@ -124,9 +131,9 @@
             // Info „Geprüft wird mit veraPDF … kostenlos.“ entfällt (Michael Karbe, Feedback 20261001 - 1, Punkt 7); vor der ersten
             // Prüfung bleibt ein Satz, was geprüft wird
             + (!p && d.getaggt ? '<p class="feld-hinweis">' + t('Geprüft wird genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos.') + '</p>' : '')
-            + (p && !p.aktuell ? '<p class="feld-hinweis"><strong>' + t('Die Prüfdatei ist nicht mehr aktuell.') + '</strong> ' + t('Starte die Prüfung erneut, damit du genau die Datei prüfst, die du herunterlädst.') + '</p>' : '')
+            // Infotext „Die Prüfdatei ist nicht mehr aktuell …“ entfällt, das Abzeichen sagt es (Feedback 20261001 - 2, Punkt 9)
             + aktionen
-            + '<output id="ab_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (d.laeuft ? t('Prüfdatei wird erstellt …') : '') + '</output>'
+            + '<output id="ab_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (d.laeuft ? t('Prüfung läuft …') : '') + '</output>'
             + ki
             + '<div class="ab-detail" id="ab_detail_' + d.id + '">' + (d.laeuft ? '' : (p && details[d.id] ? detailHtml(project, details[d.id]) : (p ? '<p>' + t('Wird geladen …') + '</p>' : ''))) + '</div>'
             + '</div></details></section>';
@@ -191,9 +198,17 @@
     // vorlesen“ — die gibt es IMMER, auch ohne Problemstellen oder ohne Problemseiten (Prüfung Barrierefreiheit 30.09.2026,
     // Punkt 1; Steve: der Name „Hörprobe“ bleibt, also muss es überall etwas zu hören geben). Vorher gab es Vorlesen nur auf
     // Problemseiten, und der Satz „Das hörst du am besten in der Hörprobe.“ führte bei 0 Problemstellen ins Leere.
+    // Ergebnis der Prüfung und Hörprobe zum Aufklappen wie „Bericht lesen“ in „Tagging“ (Michael Karbe, Feedback 20261001 - 2,
+    // Punkt 8); der Zustand bleibt beim Blättern und Neuzeichnen
+    let ergebnisOffen = new Set();
     function detailHtml(project, dd) {
-        return problemHtml(project, dd) + dokHoerprobeHtml(dd);
+        const nm = esc(name(dd));
+        return '<details class="page-text-details ab-ergebnis" data-doc="' + dd.id + '"' + (ergebnisOffen.has(dd.id) ? ' open' : '') + ' ontoggle="Abschluss.ergebnisGeklappt(' + dd.id + ', this.open)">'
+            + '<summary>' + t('Ergebnis der Prüfung anzeigen') + '<span class="visually-hidden"> ' + t('– Dokument „{name}“', { name: nm }) + '</span></summary>'
+            + '<div class="ab-ergebnis-inhalt">' + problemHtml(project, dd) + '</div></details>'
+            + dokHoerprobeHtml(dd);
     }
+    function ergebnisGeklappt(docId, offen) { if (offen) ergebnisOffen.add(docId); else ergebnisOffen.delete(docId); }
     let dokHoerprobeOffen = new Set();
     function dokHoerprobeHtml(d) {
         const hp = d.hoerprobe || { kopf: [], seiten: [] };
@@ -205,18 +220,9 @@
             zeilen += '<p>' + esc(t('— Seite {n} —', { n: sd.seite })) + '</p>'
                 + (sd.zeilen.length ? sd.zeilen.map(zl => zeileHtml(zl, lang)).join('') : '<p>' + t('Auf dieser Seite liest ein Screenreader nichts vor.') + '</p>');
         });
-        // Bereichsname je Dokument eindeutig (Pruefung 3, N5): „Hörprobe – Dokument „…““
-        return '<section class="ab-dok-hoerprobe" aria-labelledby="ab_dhp_heading_' + d.id + ' ab_dname_' + d.id + '">'
-            + '<h4 id="ab_dhp_heading_' + d.id + '">' + t('Hörprobe') + '</h4>'
+        return '<details class="page-text-details ab-problemklappe ab-dhp" data-doc="' + d.id + '"' + (dokHoerprobeOffen.has(d.id) ? ' open' : '') + ' ontoggle="Abschluss.dokHoerprobeGeklappt(' + d.id + ', this.open)"><summary>' + t('Hörprobe anzeigen') + '<span class="visually-hidden"> ' + t('– Dokument „{name}“', { name: nm }) + '</span></summary>'
             + '<p class="feld-hinweis">' + t('In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor.') + '</p>'
-            // Name je Dokument über aria-labelledby (wie bei Word): vorlesenTeile ersetzt den Knopftext beim Start/Stopp
-            + '<p class="ab-vorlesen"><span id="ab_dname_' + d.id + '" hidden>' + t('– Dokument „{name}“', { name: nm }) + '</span>'
-            + '<button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_dvorlesen_' + d.id + '" aria-labelledby="ab_dvorlesen_' + d.id + ' ab_dname_' + d.id + '" aria-pressed="false" onclick="Abschluss.dokVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button></p>'
-            // sichtbare Statuszeile: „keine Stimme auf diesem Gerät“ steht HIER, nicht nur in der unsichtbaren Live-Region
-            + '<p class="ab-vorlese-status" id="ab_dvstatus_' + d.id + '" role="status"></p>'
-            + '<details class="ab-problemklappe ab-dhp" data-doc="' + d.id + '"' + (dokHoerprobeOffen.has(d.id) ? ' open' : '') + ' ontoggle="Abschluss.dokHoerprobeGeklappt(' + d.id + ', this.open)"><summary>' + t('Hörprobe anzeigen') + '<span class="visually-hidden"> ' + t('– Dokument „{name}“', { name: nm }) + '</span></summary>'
-            + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von „{name}“', { name: nm }) + '" tabindex="0">' + zeilen + '</div></details>'
-            + '</section>';
+            + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von „{name}“', { name: nm }) + '" tabindex="0">' + zeilen + '</div></details>';
     }
     function dokHoerprobeGeklappt(docId, offen) { if (offen) dokHoerprobeOffen.add(docId); else dokHoerprobeOffen.delete(docId); }
     // Vorlese-Teile einer Zeilenliste: Ansage in der Kontosprache, Inhalt in der Dokumentsprache; Zeilen von InkluDocs (eigen)
@@ -267,12 +273,10 @@
                 + '<p class="ab-text">' + t('Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe.') + '</p>';
             return s;
         }
-        if (z.listeOffen === undefined) z.listeOffen = probleme.length <= 10;
-        s += '<details class="ab-problemklappe" data-doc="' + d.id + '"' + (z.listeOffen ? ' open' : '') + ' ontoggle="Abschluss.listeGeklappt(' + d.id + ', this.open)">'
-            + '<summary><h4 id="ab_probleme_' + d.id + '" class="ab-inline">' + t('Problemstellen ({n})', { n: probleme.length }) + '</h4></summary>'
+        s += '<h4 id="ab_probleme_' + d.id + '">' + t('Problemstellen ({n})', { n: probleme.length }) + '</h4>'
             + '<ol class="ab-problemliste">' + probleme.map(p => '<li class="ab-problem">' + problemText(p)
             // Knopfname eindeutig je Problemstelle (Punkt 7: zweimal „Zur Seite 1“ in der Knopfliste)
-            + (p.seite && seiten.includes(p.seite) ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '<span class="visually-hidden"> ' + t('(Problem {n}, „{name}“)', { n: p.nr, name: esc(name(d)) }) + '</span></button>' : '') + '</li>').join('') + '</ol></details>';
+            + (p.seite && seiten.includes(p.seite) ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '<span class="visually-hidden"> ' + t('(Problem {n}, „{name}“)', { n: p.nr, name: esc(name(d)) }) + '</span></button>' : '') + '</li>').join('') + '</ol>';
         if (!seiten.length) {
             const sf = d.pruefdatei && d.pruefdatei.struktur_fehler;
             // Strukturlesung gescheitert: keine Hoerprobe, also keine Seitenansicht — das sagen statt stiller Knoepfe. Der Satz
@@ -300,7 +304,7 @@
             + '<div class="ab-seite-probleme"><p><strong>' + t('Problemstellen auf dieser Seite') + '</strong></p><ul>' + pSeite.map(p => '<li>' + t('Problem {n}', { n: p.nr }) + ': ' + quelleTeil(p) + problemInhalt(p) + '</li>').join('') + '</ul></div>'
             + '<p><button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_vorlesen_' + d.id + '" aria-pressed="false" onclick="Abschluss.vorlesenSeite(' + d.id + ', this)">' + t('Seite vorlesen') + '</button></p>'
             + '<p class="ab-vorlese-status" id="ab_svstatus_' + d.id + '" role="status"></p>'
-            + '<h5 class="ab-hoerprobe-titel">' + t('Hörprobe: so liest ein Screenreader die Tags dieser Seite vor') + '</h5>'
+            + '<h5 class="ab-hoerprobe-titel">' + t('In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor.') + '</h5>'
             + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von Seite {n} – „{name}“', { n: z.seite, name: esc(name(d)) }) + '" tabindex="0">'
             + (seiteDaten.zeilen.length ? seiteDaten.zeilen.map(zl => zeileHtml(zl, lang)).join('') : '<p>' + t('Auf dieser Seite liest ein Screenreader nichts vor.') + '</p>')
             + '</div></div></div></section>';
@@ -365,7 +369,7 @@
         const btn = document.getElementById('ab_erstellen_' + docId);
         const out = document.getElementById('ab_status_' + docId);
         if (btn) btn.disabled = true;
-        if (out) { out.textContent = t('Prüfdatei wird erstellt …'); out.focus(); }
+        if (out) { out.textContent = t('Prüfung läuft …'); out.focus(); }
         try {
             const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/abschluss', { method: 'POST', credentials: 'same-origin' });
             const j = await r.json().catch(() => ({}));
@@ -378,15 +382,18 @@
             details[docId] = j;
             offeneDokumente.add(docId); geschlosseneDokumente.delete(docId);
             await showProject(projectId, true);
-            const o2 = document.getElementById('ab_status_' + docId);
             const n = (j.probleme || []).length;
             const pd = j.pruefdatei || {};
-            const text = (j.neu_gebaut === false ? t('Die Prüfdatei ist schon aktuell.') : t('Prüfdatei erstellt.')) + ' '
+            const text = t('Prüfung fertig:') + ' '
                 + ((!pd.eigene_pruefungen && pd.verapdf_moeglich === false)
                     ? t('Die Prüfung mit veraPDF war nicht möglich (Prüfdienst nicht erreichbar). Bitte später neu erstellen.')
                     : (n ? (n === 1 ? t('1 Problemstelle gefunden.') : t('{n} Problemstellen gefunden.', { n: n })) : (t('Keine Problemstellen gefunden.') + ' ' + t('veraPDF prüft die technische Struktur, nicht ob sie inhaltlich stimmt.'))));
-            // Die Statuszeile ist ein <output> (Live-Region) und bekommt den Fokus — keine zusaetzliche announce()
-            if (o2) { o2.textContent = text; o2.focus(); } else { announce(text); }
+            // Michael Karbe, Feedback 20261001 - 2, Punkt 1: kein Satz mehr unter dem Knopf (das Ergebnis steht im Abzeichen und
+            // in „Ergebnis der Prüfung anzeigen“). Gehört wird es trotzdem EINMAL: kurze Ansage über die allgemeine Ansage-Region,
+            // der Fokus kommt zurück auf den Knopf, wo man war — ein Fokus auf das zugeklappte Ergebnis läse nur dessen Namen.
+            const knopf = document.getElementById('ab_erstellen_' + docId);
+            if (knopf) knopf.focus();
+            announce(text);
         } catch (e) {
             if (out) out.textContent = t('Verbindungsfehler.');
             if (btn) btn.disabled = false;
@@ -736,5 +743,5 @@
         if (h1 && !erneut) h1.focus();
     }
 
-    window.Abschluss = { showProject, erstellen, zurSeite, blaettern, vorlesenSeite, listeGeklappt, showWordProject, wordVorlesen, dokVorlesen, dokHoerprobeGeklappt };
+    window.Abschluss = { showProject, erstellen, ergebnisGeklappt, zurSeite, blaettern, vorlesenSeite, listeGeklappt, showWordProject, wordVorlesen, dokVorlesen, dokHoerprobeGeklappt };
 })();

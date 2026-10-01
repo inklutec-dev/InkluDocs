@@ -10330,3 +10330,24 @@ msgstr "Diese PDF war beim Hochladen schon getaggt. „Neu taggen“ ersetzt die
 
 msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
 msgstr "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
+
+msgid "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen und lässt sich nicht herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+msgstr "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen und lässt sich nicht herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+
+msgid "Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert."
+msgstr "Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert."
+
+msgid "Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden."
+msgstr "Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden."
+
+msgid "Prüfung läuft …"
+msgstr "Prüfung läuft …"
+
+msgid "Prüfung fertig:"
+msgstr "Prüfung fertig:"
+
+msgid "Ergebnis der Prüfung anzeigen"
+msgstr "Ergebnis der Prüfung anzeigen"
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
+msgstr "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."

@@ -10329,3 +10329,24 @@ msgstr "Ce PDF était déjà balisé lors du téléversement. « Baliser à nouv
 
 msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
 msgstr "Tu paies le balisage uniquement à ce moment ; il n’est pas facturé une nouvelle fois lors du téléchargement."
+
+msgid "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen und lässt sich nicht herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+msgstr "Le balisage d’essai te montre gratuitement à quoi ressemblerait le résultat du balisage. La version d’essai porte un filigrane et ne peut pas être téléchargée. Ton PDF original reste inchangé, tu peux ensuite le baliser pour de bon."
+
+msgid "Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert."
+msgstr "La vérification PDF/UA automatique a identifié des écarts par rapport à la norme."
+
+msgid "Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden."
+msgstr "La vérification PDF/UA automatique n’a trouvé aucun écart par rapport à la norme."
+
+msgid "Prüfung läuft …"
+msgstr "Vérification en cours …"
+
+msgid "Prüfung fertig:"
+msgstr "Vérification terminée :"
+
+msgid "Ergebnis der Prüfung anzeigen"
+msgstr "Afficher le résultat de la vérification"
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
+msgstr "Un lecteur d’écran lit le contenu balisé de cette page dans cet ordre."

@@ -10026,3 +10026,24 @@ msgstr "Denne PDF var allerede tagget ved upload. „Tag igen“ erstatter de ek
 
 msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
 msgstr "Taggingen betaler du kun i dette øjeblik; den opkræves ikke igen ved download."
+
+msgid "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen und lässt sich nicht herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+msgstr "Prøvetagging viser dig gratis, hvordan tagging-resultatet ville se ud. Testudgaven har et vandmærke og kan ikke downloades. Din originale PDF forbliver uændret, og du kan tagge den rigtigt bagefter."
+
+msgid "Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert."
+msgstr "Den automatiske PDF/UA-kontrol har fundet afvigelser fra standarden."
+
+msgid "Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden."
+msgstr "Den automatiske PDF/UA-kontrol har ikke fundet afvigelser fra standarden."
+
+msgid "Prüfung läuft …"
+msgstr "Kontrol kører …"
+
+msgid "Prüfung fertig:"
+msgstr "Kontrol færdig:"
+
+msgid "Ergebnis der Prüfung anzeigen"
+msgstr "Vis kontrollens resultat"
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
+msgstr "En skærmlæser læser denne sides taggede indhold op i denne rækkefølge."

@@ -10329,3 +10329,24 @@ msgstr "Este PDF ya estaba etiquetado al subirlo. «Volver a etiquetar» sustitu
 
 msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
 msgstr "El etiquetado lo pagas solo en este momento; no se vuelve a cobrar al descargar."
+
+msgid "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen und lässt sich nicht herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+msgstr "El etiquetado de prueba te muestra gratis cómo sería el resultado del etiquetado. La versión de prueba lleva una marca de agua y no se puede descargar. Tu PDF original no cambia y después puedes etiquetarlo de verdad."
+
+msgid "Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert."
+msgstr "La comprobación automática PDF/UA ha identificado desviaciones del estándar."
+
+msgid "Die automatische PDF/UA-Prüfung hat keine Abweichungen vom Standard gefunden."
+msgstr "La comprobación automática PDF/UA no ha encontrado desviaciones del estándar."
+
+msgid "Prüfung läuft …"
+msgstr "Comprobación en curso …"
+
+msgid "Prüfung fertig:"
+msgstr "Comprobación terminada:"
+
+msgid "Ergebnis der Prüfung anzeigen"
+msgstr "Mostrar el resultado de la comprobación"
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
+msgstr "Un lector de pantalla lee el contenido etiquetado de esta página en este orden."
