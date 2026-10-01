@@ -475,7 +475,7 @@ class SchonGetaggt(unittest.TestCase):
             self.assertTrue(q({"original_path": mit, "roh_path": "", "getaggt": None}))   # Altbestand: aus der Datei
             # selbst getaggt: Arbeitsdatei hat Tags, die Rohdatei nicht -> Neu taggen bleibt moeglich
             self.assertFalse(q({"original_path": mit, "roh_path": ohne, "getaggt": 1}))
-            # Rohdatei war schon getaggt (z. B. vor dem 30.09. trotzdem „getaggt“) -> auch Neu taggen taggt nichts
+            # Rohdatei war schon getaggt -> „Neu taggen“ ersetzt die vorhandenen Tags (seit 01.10.2026, tags_ersetzen)
             self.assertTrue(q({"original_path": mit, "roh_path": mit, "getaggt": 1}))
 
     def test_text(self):

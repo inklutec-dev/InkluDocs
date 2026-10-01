@@ -188,7 +188,7 @@ class TestEndpunkte(unittest.TestCase):
     def test_3c_ohne_testmodus_verworfen(self):
         """Traegt das Ergebnis keinen Testmodus-Vermerk, wird es verworfen: Fehler im Bericht, keine Testfassung,
         Sperren frei."""
-        def fake_taggen(quelle, ziel, sprache, arbeitsordner=None, testmodus=False):
+        def fake_taggen(quelle, ziel, sprache, arbeitsordner=None, testmodus=False, tags_ersetzen=False):
             self.assertTrue(testmodus)
             with open(ziel, "wb") as f:
                 f.write(b"%PDF-1.7 lizenziert")

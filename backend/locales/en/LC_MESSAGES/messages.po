@@ -10296,3 +10296,34 @@ msgstr "Download of “{name}” has expired (links are valid for 24 hours). Ple
 
 msgid "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."
 msgstr "Download links (download_url) are valid for at least 24 hours; the field gueltig_bis gives this deadline (UTC). Fetch the file before then."
+
+msgid "Prüfung erneut starten"
+msgstr "Start check again"
+
+msgid "Strukturansicht für Screenreader"
+msgstr "Structure view for screen readers"
+
+msgid "Geprüft wird genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos."
+msgstr "The check uses exactly the PDF you download, with structure, alt texts and tooltips."
+
+msgid "Starte die Prüfung erneut, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Start the check again so that you check exactly the file you download."
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor."
+msgstr "A screen reader reads the tagged content of the document in this order."
+
+msgid "Hörprobe anzeigen"
+msgstr "Show listening sample"
+
+msgid "Hörprobe: so liest ein Screenreader die Tags dieser Seite vor"
+msgstr "Listening sample: how a screen reader reads the tags of this page"
+
+msgid "In dieser Reihenfolge liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor."
+msgstr "A screen reader reads this Word document with the alt texts from InkluDocs in this order."
+
+#, python-brace-format
+msgid "Diese PDF war beim Hochladen schon getaggt. „Neu taggen“ ersetzt die vorhandenen Tags durch eine neue Struktur. Ohne neues Tagging geht es weiter in {alttexte} oder {pruefung}."
+msgstr "This PDF was already tagged when you uploaded it. “Tag again” replaces the existing tags with a new structure. Without new tagging, continue in {alttexte} or {pruefung}."
+
+msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
+msgstr "You pay for the tagging only at this moment; it is not charged again when you download."

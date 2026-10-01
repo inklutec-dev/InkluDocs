@@ -28,7 +28,7 @@ WERKZEUG_NAMEN: dict[str, str] = {
     "uebersetze_dokument": "Übersetzen", "uebersetzung_stand": "Stand der Übersetzung",
     "exportiere_uebersetzung": "Übersetzung herunterladen", "liste_ausgaben": "Ablage", "lies_ausgabe": "Ablage-Eintrag lesen",
     # wie die Oberflaeche (30.09.2026)
-    "testweise_taggen": "Testweise taggen", "pruefdatei_erstellen": "Prüfdatei erstellen",
+    "testweise_taggen": "Testweise taggen", "pruefdatei_erstellen": "Prüfung starten",
     "pruefdatei_lesen": "Ergebnis der Barrierefreiheitsprüfung", "exportiere_alt_texte": "Alt-Texte herunterladen",
     "exportiere_quickinfos": "Quickinfos herunterladen", "alt_texte_generieren": "Alt-Texte generieren",
     "quickinfos_generieren": "Quickinfos generieren", "stammdaten_anwenden": "Stammdaten anwenden",

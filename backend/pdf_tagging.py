@@ -215,11 +215,16 @@ def _params(aktion: dict) -> dict:
     return {p.get("name"): str(p.get("value")) for p in (aktion.get("params") or []) if isinstance(p, dict)}
 
 
-def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str, struktur_vorgegeben: bool = False) -> dict:
+def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str, struktur_vorgegeben: bool = False,
+                    tags_ersetzen: bool = False) -> dict:
     """Schreibt die Lauf-Konfiguration (Voreinstellung + unsere Aenderungen) nach ziel_pfad.
     struktur_vorgegeben=True (Weg „Struktur zuerst“, pdf_struktur_tagging, 23.09.2026): der Baum steht schon —
     add_tags (Strukturerkennung) und fix_headings (fuellt Ebenenspruenge mit LEEREN H-Tags, die ein Screenreader
     als „Ueberschrift, leer“ liest) entfallen; alle technischen Schritte bleiben.
+    tags_ersetzen=True („Neu taggen“ einer schon getaggten PDF, Michael Karbe, Feedback 20261001 - 1, Punkt 1): add_tags mit
+    overwrite=true — PDFix verwirft den vorhandenen Strukturbaum und taggt neu. Mit der Voreinstellung („Preserve Existing
+    Tags“) blieb der Baum unveraendert (Messlauf 30.09.2026, und 01.10.2026: Actino Master Word 175 Elemente vorher und
+    nachher; mit overwrite 135 Elemente, andere Struktur).
     Rueckgabe: {"entfernt": [Titel...], "sprache": lang, "schritte": n}"""
     if not re.fullmatch(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*", lang or ""):
         raise TaggingFehler("Ungueltige Sprachangabe")
@@ -235,6 +240,11 @@ def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str, struktur_vo
         if struktur_vorgegeben and name in ("add_tags", "fix_headings"):
             entfernt.append(aktion.get("title") or name)
             continue
+        if tags_ersetzen and name == "add_tags":
+            for q in aktion.get("params", []):
+                if q.get("name") == "overwrite":
+                    q["value"] = "true"
+            aktion["title"] = "AutoTag (Preflight, Replace Existing Tags)"
         if name == "set_language":
             for q in aktion.get("params", []):
                 if q.get("name") == "lang":
@@ -281,7 +291,7 @@ def _grund_aus_ausgabe(stdout: str, stderr: str) -> str:
 
 
 def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner: Optional[str] = None,
-           testmodus: bool = False) -> dict:
+           testmodus: bool = False, tags_ersetzen: bool = False) -> dict:
     """Fuehrt die Aktion aus und liefert den Bericht. Wirft TaggingFehler mit nutzertauglichem Grund.
     pdf_out wird nur bei Erfolg geschrieben (das Skript speichert am Ende, bei Abbruch nicht).
     testmodus=True (25.09.2026, „Testweise taggen“): Lizenz ausdruecklich AUS, egal was PDFIX_TAGGING_LIZENZ sagt —
@@ -302,7 +312,7 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
     vorher = tag_statistik(pdf_in)
     sprache = sprache_bestimmen(pdf_in, sprache_vorgabe)
     konfig_pfad = os.path.join(arbeitsordner, "_make_accessible_konfig.json")
-    konfig = konfig_erzeugen(sprache["lang"], sprache["overwrite"], konfig_pfad)
+    konfig = konfig_erzeugen(sprache["lang"], sprache["overwrite"], konfig_pfad, tags_ersetzen=tags_ersetzen)
     cmd = [sys.executable, str(_SCRIPT), "-i", pdf_in, "-o", pdf_out, "-k", konfig_pfad]
     umgebung = os.environ.copy()
     if testmodus:
@@ -336,6 +346,7 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
         "vorher": {k: vorher[k] for k in ("elemente", "ueberschriften", "listen", "tabellen", "bilder", "absaetze", "titel", "lang")},
         "nachher": nachher,
         "hinweise": [h for h in (sprache.get("hinweis"),) if h],
+        "tags_ersetzt": bool(tags_ersetzen),
     }
 
 

@@ -97,14 +97,16 @@
                 + (p && p.eigene_pruefungen && p.vollstaendigkeit_geprueft === false ? metaZeile(t('Vollständigkeit'), t('nicht geprüft')) : '')
                 + '</ul>';
         }
-        const erstellenText = !p ? t('Prüfdatei erstellen') : t('Prüfdatei neu erstellen');
+        // Michael Karbe, Feedback 20261001 - 1, Punkt 5: „Prüfung erneut starten“; beim ersten Mal „Prüfung starten“ — es gibt
+        // dann noch nichts, was „erneut“ liefe (ein „erneut“ ohne erstes Mal führt Screenreader-Nutzer in die Irre).
+        const erstellenText = !p ? t('Prüfung starten') : t('Prüfung erneut starten');
         const erstellenPrimaer = !p || !p.aktuell;
         // Kein „PDF herunterladen“ mehr hier (Feedback 24.09.2026 - 3, Punkt 6) — das macht die Ansicht „Dokument“.
         // Linie über „Prüfdatei erstellen“ (Michael Karbe, Feedback 202609230 - 1, Punkt 2), wie die Werkbank in „Dokument“.
         const aktionen = d.getaggt
             ? '<div class="ab-werkbank"><div class="ausgabe-aktionen">'
               + '<button type="button" class="btn ' + (erstellenPrimaer ? 'btn-primary' : 'btn-secondary') + '" id="ab_erstellen_' + d.id + '" onclick="Abschluss.erstellen(' + project.id + ', ' + d.id + ')"' + (d.laeuft ? ' disabled' : '') + '>' + ico('sparkle') + erstellenText + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos') + '</span></button>'
-              + (p ? '<a class="btn btn-secondary" id="ab_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '?quelle=abschluss">' + t('Mit eigenem Screenreader prüfen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
+              + (p ? '<a class="btn btn-secondary" id="ab_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '?quelle=abschluss">' + t('Strukturansicht für Screenreader') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
               + '</div></div>'
             : '';
         const dk = dokDaten[d.id];
@@ -119,10 +121,10 @@
             // Sprache und Zusammenfassung oben bei den Infos (Punkt 10); gefuellt, sobald die Details geladen sind
             // Sprache und Zusammenfassung stehen schon unter „Dokument“ (Michael Karbe, Feedback 20260928 - 2, Punkt 10): ZEIGE_KOPF
             + (ZEIGE_KOPF ? '<ul class="dok-meta ab-kopf" id="ab_kopf_' + d.id + '">' + (details[d.id] ? kopfZeilenHtml(details[d.id]) : '') + '</ul>' : '')
-            + (p ? '<p class="feld-hinweis">' + t('Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF.') + '</p>'
-                 + '<p class="feld-hinweis">' + t('Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos.') + '</p>'
-                 : (d.getaggt ? '<p class="feld-hinweis">' + t('Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos.') + '</p>' : ''))
-            + (p && !p.aktuell ? '<p class="feld-hinweis"><strong>' + t('Die Prüfdatei ist nicht mehr aktuell.') + '</strong> ' + t('Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst.') + '</p>' : '')
+            // Info „Geprüft wird mit veraPDF … kostenlos.“ entfällt (Michael Karbe, Feedback 20261001 - 1, Punkt 7); vor der ersten
+            // Prüfung bleibt ein Satz, was geprüft wird
+            + (!p && d.getaggt ? '<p class="feld-hinweis">' + t('Geprüft wird genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos.') + '</p>' : '')
+            + (p && !p.aktuell ? '<p class="feld-hinweis"><strong>' + t('Die Prüfdatei ist nicht mehr aktuell.') + '</strong> ' + t('Starte die Prüfung erneut, damit du genau die Datei prüfst, die du herunterlädst.') + '</p>' : '')
             + aktionen
             + '<output id="ab_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (d.laeuft ? t('Prüfdatei wird erstellt …') : '') + '</output>'
             + ki
@@ -206,13 +208,13 @@
         // Bereichsname je Dokument eindeutig (Pruefung 3, N5): „Hörprobe – Dokument „…““
         return '<section class="ab-dok-hoerprobe" aria-labelledby="ab_dhp_heading_' + d.id + ' ab_dname_' + d.id + '">'
             + '<h4 id="ab_dhp_heading_' + d.id + '">' + t('Hörprobe') + '</h4>'
-            + '<p class="feld-hinweis">' + t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>'
+            + '<p class="feld-hinweis">' + t('In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor.') + '</p>'
             // Name je Dokument über aria-labelledby (wie bei Word): vorlesenTeile ersetzt den Knopftext beim Start/Stopp
             + '<p class="ab-vorlesen"><span id="ab_dname_' + d.id + '" hidden>' + t('– Dokument „{name}“', { name: nm }) + '</span>'
             + '<button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_dvorlesen_' + d.id + '" aria-labelledby="ab_dvorlesen_' + d.id + ' ab_dname_' + d.id + '" aria-pressed="false" onclick="Abschluss.dokVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button></p>'
             // sichtbare Statuszeile: „keine Stimme auf diesem Gerät“ steht HIER, nicht nur in der unsichtbaren Live-Region
             + '<p class="ab-vorlese-status" id="ab_dvstatus_' + d.id + '" role="status"></p>'
-            + '<details class="ab-problemklappe ab-dhp" data-doc="' + d.id + '"' + (dokHoerprobeOffen.has(d.id) ? ' open' : '') + ' ontoggle="Abschluss.dokHoerprobeGeklappt(' + d.id + ', this.open)"><summary>' + t('Hörprobe lesen') + '<span class="visually-hidden"> ' + t('– Dokument „{name}“', { name: nm }) + '</span></summary>'
+            + '<details class="ab-problemklappe ab-dhp" data-doc="' + d.id + '"' + (dokHoerprobeOffen.has(d.id) ? ' open' : '') + ' ontoggle="Abschluss.dokHoerprobeGeklappt(' + d.id + ', this.open)"><summary>' + t('Hörprobe anzeigen') + '<span class="visually-hidden"> ' + t('– Dokument „{name}“', { name: nm }) + '</span></summary>'
             + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von „{name}“', { name: nm }) + '" tabindex="0">' + zeilen + '</div></details>'
             + '</section>';
     }
@@ -298,7 +300,7 @@
             + '<div class="ab-seite-probleme"><p><strong>' + t('Problemstellen auf dieser Seite') + '</strong></p><ul>' + pSeite.map(p => '<li>' + t('Problem {n}', { n: p.nr }) + ': ' + quelleTeil(p) + problemInhalt(p) + '</li>').join('') + '</ul></div>'
             + '<p><button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_vorlesen_' + d.id + '" aria-pressed="false" onclick="Abschluss.vorlesenSeite(' + d.id + ', this)">' + t('Seite vorlesen') + '</button></p>'
             + '<p class="ab-vorlese-status" id="ab_svstatus_' + d.id + '" role="status"></p>'
-            + '<h5 class="ab-hoerprobe-titel">' + t('Hörprobe: so liest ein Screenreader die Tags dieser Seite vor (kein Prüfergebnis)') + '</h5>'
+            + '<h5 class="ab-hoerprobe-titel">' + t('Hörprobe: so liest ein Screenreader die Tags dieser Seite vor') + '</h5>'
             + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von Seite {n} – „{name}“', { n: z.seite, name: esc(name(d)) }) + '" tabindex="0">'
             + (seiteDaten.zeilen.length ? seiteDaten.zeilen.map(zl => zeileHtml(zl, lang)).join('') : '<p>' + t('Auf dieser Seite liest ein Screenreader nichts vor.') + '</p>')
             + '</div></div></div></section>';
@@ -363,7 +365,7 @@
         const btn = document.getElementById('ab_erstellen_' + docId);
         const out = document.getElementById('ab_status_' + docId);
         if (btn) btn.disabled = true;
-        if (out) { out.textContent = t('Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern.'); out.focus(); }
+        if (out) { out.textContent = t('Prüfdatei wird erstellt …'); out.focus(); }
         try {
             const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/abschluss', { method: 'POST', credentials: 'same-origin' });
             const j = await r.json().catch(() => ({}));
@@ -635,7 +637,7 @@
         const hp = vd ? (vd.hoerprobe || []) : [];
         const lang = dokSprache({ sprache: (d.info && d.info.sprache) || '' });
         s += '<h4 id="ab_whp_' + d.id + '">' + t('Hörprobe') + '</h4>'
-            + '<p class="feld-hinweis">' + t('So liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>';
+            + '<p class="feld-hinweis">' + t('In dieser Reihenfolge liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor.') + '</p>';
         if (hp.length) {
             // Eindeutige Namen je Dokument (A11y-Prüfung 30.09.2026, Befund 2): bei mehreren Karten sonst zweimal „Hörprobe vorlesen“
             // in der Knopfliste und zwei gleich benannte Regionen. Beim Knopf über aria-labelledby (eigener Text + verstecktes
@@ -644,7 +646,7 @@
             s += '<p><span id="ab_wname_' + d.id + '" hidden>' + t('– Dokument „{name}“', { name: nm }) + '</span>'
                 + '<button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_wvorlesen_' + d.id + '" aria-labelledby="ab_wvorlesen_' + d.id + ' ab_wname_' + d.id + '" aria-pressed="false" onclick="Abschluss.wordVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button></p>'
                 + '<p class="ab-vorlese-status" id="ab_wvstatus_' + d.id + '" role="status"></p>'
-                + '<details class="ab-problemklappe ab-whp" data-doc="' + d.id + '"' + (wordHoerprobeOffen.has(d.id) ? ' open' : '') + '><summary>' + t('Hörprobe lesen') + vhDok + '</summary>'
+                + '<details class="ab-problemklappe ab-whp" data-doc="' + d.id + '"' + (wordHoerprobeOffen.has(d.id) ? ' open' : '') + '><summary>' + t('Hörprobe anzeigen') + vhDok + '</summary>'
                 + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von „{name}“', { name: nm }) + '" tabindex="0">'
                 + hp.map((zl, i) => zeileHtml(zl, lang, eigeneZeilen(vd).has(i))).join('') + '</div></details>';
         } else if (vd) {

@@ -10298,3 +10298,34 @@ msgstr "La descarga de «{name}» ha caducado (los enlaces son válidos 24 horas
 
 msgid "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."
 msgstr "Los enlaces de descarga (download_url) son válidos al menos 24 horas; el campo gueltig_bis indica ese plazo (UTC). Descarga el archivo antes."
+
+msgid "Prüfung erneut starten"
+msgstr "Volver a iniciar la comprobación"
+
+msgid "Strukturansicht für Screenreader"
+msgstr "Vista de estructura para lectores de pantalla"
+
+msgid "Geprüft wird genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos."
+msgstr "Se comprueba exactamente el PDF que descargas, con estructura, textos alternativos e información sobre herramientas."
+
+msgid "Starte die Prüfung erneut, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Vuelve a iniciar la comprobación para comprobar exactamente el archivo que descargas."
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor."
+msgstr "Un lector de pantalla lee el contenido etiquetado del documento en este orden."
+
+msgid "Hörprobe anzeigen"
+msgstr "Mostrar la muestra de audio"
+
+msgid "Hörprobe: so liest ein Screenreader die Tags dieser Seite vor"
+msgstr "Muestra de audio: así lee un lector de pantalla las etiquetas de esta página"
+
+msgid "In dieser Reihenfolge liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor."
+msgstr "Un lector de pantalla lee este documento de Word con los textos alternativos de InkluDocs en este orden."
+
+#, python-brace-format
+msgid "Diese PDF war beim Hochladen schon getaggt. „Neu taggen“ ersetzt die vorhandenen Tags durch eine neue Struktur. Ohne neues Tagging geht es weiter in {alttexte} oder {pruefung}."
+msgstr "Este PDF ya estaba etiquetado al subirlo. «Volver a etiquetar» sustituye las etiquetas existentes por una estructura nueva. Sin un nuevo etiquetado, sigue en {alttexte} o {pruefung}."
+
+msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
+msgstr "El etiquetado lo pagas solo en este momento; no se vuelve a cobrar al descargar."

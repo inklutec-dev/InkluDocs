@@ -19,7 +19,7 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
         "name": "barrierefrei_machen",
         "description": (
             "Tagging eines PDF-Dokuments (Strukturbaum, Lesereihenfolge, Dokumentsprache, veraPDF-Prüfung). Kostet "
-            "Credits je Seite. Eine schon getaggte PDF wird nicht neu getaggt und kostet nichts (Fehlermeldung sagt es). "
+            "Credits je Seite. Bei einer schon getaggten PDF heißt das „Neu taggen“: PDFix ersetzt die vorhandenen Tags (gleicher Preis). "
             "ZWEI SCHRITTE: Erster Aufruf OHNE bestaetigt liefert Seiten, Preis und Guthaben "
             "(rueckfrage_noetig) — nenne dem Nutzer den Preis und frage. Erst nach seinem klaren Ja erneut mit "
             "bestaetigt=true. Läuft dann im Hintergrund; Stand über dokument_stand. Bei nur einem Dokument ohne document_id."

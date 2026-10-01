@@ -150,8 +150,8 @@ with sync_playwright() as p:
         pg.evaluate("window.__live = []")
 
         tools = pg.locator("#inkluagentLog .inkluagent-message-tools").first.inner_text()
-        check("M1: „Genutzt: Dokumentstand, Prüfdatei erstellen, PDF herunterladen“ — keine rohen Namen",
-              tools == "Genutzt: Dokumentstand, Prüfdatei erstellen, PDF herunterladen" and "_" not in tools, tools)
+        check("M1: „Genutzt: Dokumentstand, Prüfung starten, PDF herunterladen“ — keine rohen Namen",
+              tools == "Genutzt: Dokumentstand, Prüfung starten, PDF herunterladen" and "_" not in tools, tools)
         dl = pg.locator("#inkluagentLog .inkluagent-message-anhang a").first
         check("N6: Download-Knopf mit Dateinamen im Namen", "inkludocs_antrag.pdf" in dl.inner_text() and dl.inner_text().startswith("PDF herunterladen"), dl.inner_text())
 

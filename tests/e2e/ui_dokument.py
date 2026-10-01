@@ -204,8 +204,10 @@ with sync_playwright() as p:
     check("Dialog offen, Fokus auf Abbrechen", pg.evaluate("document.activeElement && document.activeElement.id") == "dkLaufCancel")
     umfang = pg.locator("#dkLaufUmfang").inner_text()
     summary = pg.locator("#dkLaufSummary").inner_text()
-    check("Umfang nennt Dokument und 2 Seiten", "klicktest_roh.pdf" in umfang and "2 Seiten" in umfang, umfang)
-    check("Preis 40 Credits genannt, 20 Credits je Seite, Tagging nicht noch einmal beim Herunterladen (Punkte 11, 12)", "40 Credits" in summary and "20 Credits je Seite" in summary and "beim Herunterladen wird es nicht noch einmal berechnet" in summary, summary)
+    # Michael Karbe, Feedback 20261001 - 1, Punkt 4: Dialog nur noch mit dem Preissatz (Zahlen dynamisch)
+    check("Dialog gekürzt: „Preis: 40 Credits (20 Credits je Seite). Das Tagging bezahlst du nur in diesem Moment; …“, sonst nichts",
+          summary == "Preis: 40 Credits (20 Credits je Seite). Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
+          and not umfang.strip(), (umfang, summary))
     verbraucht_vor_tagging = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
     axe(pg, "Dialog Barrierefrei machen")
     pg.keyboard.press("Escape")
@@ -214,7 +216,8 @@ with sync_playwright() as p:
     pg.wait_for_selector("#dkLaufDialog[open]")
     pg.click("#dkLaufOk")
     pg.wait_for_timeout(1500)
-    check("Dialog zu, Karte zeigt „Wird barrierefrei gemacht“", not pg.locator("#dkLaufDialog[open]").count() and "barrierefrei gemacht" in pg.locator("section.dok-karte").first.inner_text())
+    check("Dialog zu, Karte zeigt „Wird barrierefrei gemacht“ ohne Minuten-Hinweis (Punkt 8)", not pg.locator("#dkLaufDialog[open]").count() and "barrierefrei gemacht" in pg.locator("section.dok-karte").first.inner_text()
+          and "Minute" not in pg.locator("section.dok-karte").first.inner_text())
     check("Knopf waehrend des Laufs ausgeblendet", pg.locator("button[id^=dok_tag_]").count() == 0)
     fertig = False
     for _ in range(60):
@@ -402,7 +405,7 @@ with sync_playwright() as p:
     pg.wait_for_selector("section.ab-karte", timeout=15000); pg.wait_for_timeout(800)
     check("H1 nennt die Station „Barrierefreiheitsprüfung“", pg.locator("h1#projectName").inner_text().startswith("Barrierefreiheitsprüfung – Projekt: "), pg.locator("h1#projectName").inner_text())
     check("Adresse ansicht=abschluss, Kopf mit PDF-Symbol, eine Karte offen", "ansicht=abschluss" in pg.url and pg.locator(".projekt-kopf img.projekt-dateityp").count() == 1 and pg.locator("details.ab-klappe[open]").count() == 1)
-    check("Karte: „Noch keine Prüfdatei“, Knopf „Prüfdatei erstellen“ (kostenlos)", "Noch keine Prüfdatei" in pg.locator("section.ab-karte h3").inner_text() and pg.locator("button[id^=ab_erstellen_]").count() == 1 and "kostenlos" in pg.locator("button[id^=ab_erstellen_]").inner_text())
+    check("Karte: „Noch keine Prüfdatei“, Knopf „Prüfung starten“ (Feedback 20261001 - 1, Punkt 5)", "Noch keine Prüfdatei" in pg.locator("section.ab-karte h3").inner_text() and pg.locator("button[id^=ab_erstellen_]").count() == 1 and pg.locator("button[id^=ab_erstellen_]").inner_text().startswith("Prüfung starten"), pg.locator("button[id^=ab_erstellen_]").inner_text())
     check("Kein Herunterladen in der Prüfung (Punkt 6), kein Upload-Feld", pg.locator("button[id^=ab_export_]").count() == 0 and pg.locator("#abAlleBtn").count() == 0 and "PDF herunterladen" not in pg.locator("main").inner_text() and pg.locator("#projUpload").count() == 0)
     check("Keine KI-basierte Prüfung (ausgeblendet, Punkt 9)", pg.locator("section.ab-ki").count() == 0 and pg.locator("button[id^=dok_pruef_]").count() == 0 and "KI-basierte" not in pg.locator("main").inner_text())
     axe(pg, "Prüfung vor der Prüfdatei")
@@ -417,12 +420,14 @@ with sync_playwright() as p:
     check("Stand: Prüfdatei erstellt am …, aktuell, Norm-Prüfung (veraPDF), Problemstellen", all(k in meta for k in ("Prüfdatei: erstellt am", "Stand: aktuell", "Norm-Prüfung PDF/UA-1 (veraPDF): ", "Problemstellen: ")), meta)
     check("veraPDF nennt Ergebnis mit Zahl der Prüfpunkte (Michael Karbe 28.09.2026)", re.search(r"Norm-Prüfung PDF/UA-1 \(veraPDF\): (bestanden, [\d.]+ Prüfpunkte erfüllt|nicht bestanden, [\d.]+ Prüfpunkte verletzt)", meta) is not None, meta)
     karte = pg.locator("section.ab-karte").first.inner_text()
-    # Michael Karbe, Feedback 202609230 - 1, Punkt 6: gekürzter Satz
-    check("Hinweis gekürzt: „Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF.“ (Punkt 6)", "Geprüft wird mit veraPDF gegen PDF/UA-1. Jede Problemstelle nennt die Regelnummer von veraPDF." in karte and "demselben Werkzeug" not in karte and "Zusätzlich prüft InkluDocs" not in karte, karte[:400])
+    # Michael Karbe, Feedback 20261001 - 1, Punkte 5, 6, 7, 9
+    check("Info „Geprüft wird mit veraPDF … kostenlos.“ entfernt, keine Minuten (Punkte 7, 9)", "Geprüft wird mit veraPDF" not in karte and "Das Erstellen der Prüfdatei ist kostenlos" not in karte and "Minute" not in karte, karte[:400])
+    check("Knöpfe „Prüfung erneut starten“ und „Strukturansicht für Screenreader“ (Punkte 5, 6)", pg.locator("button[id^=ab_erstellen_]").inner_text().startswith("Prüfung erneut starten")
+          and pg.locator("a[id^=ab_struktur_]").inner_text().startswith("Strukturansicht für Screenreader"), (pg.locator("button[id^=ab_erstellen_]").inner_text(), pg.locator("a[id^=ab_struktur_]").inner_text()))
     kopf = pg.locator(".projekt-kopf").inner_text()
     check("Satz oben unter den Ansichts-Knöpfen, gekürzt (Punkt 9)", "Hier prüfst du die fertige Datei mit veraPDF. Anzeige der Problemstellen im Prüfbericht." in kopf and pg.evaluate("(() => { const k = document.querySelector('.projekt-kopf .ansicht-wahl'); const h = document.getElementById('abKopfHinweis'); return !!(k && h && (k.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING)); })()"), kopf)
     check("Unter „Dokumente (n)“ kein Hinweissatz mehr (Punkt 9)", pg.evaluate("(() => { const n = document.getElementById('dokumenteHeading').nextElementSibling; return n && n.id; })()") == "abListe")
-    check("Linie über „Prüfdatei neu erstellen“ (Punkt 2)", pg.evaluate("(() => { const b = document.querySelector('button[id^=ab_erstellen_]'); const w = b && b.closest('.ab-werkbank'); return !!w && getComputedStyle(w).borderTopStyle === 'solid'; })()"))
+    check("Linie über „Prüfung erneut starten“ (Punkt 2)", pg.evaluate("(() => { const b = document.querySelector('button[id^=ab_erstellen_]'); const w = b && b.closest('.ab-werkbank'); return !!w && getComputedStyle(w).borderTopStyle === 'solid'; })()"))
     check("Kein Satz „Keine der Problemstellen gehört zu einer bestimmten Seite.“ (Punkt 7)", "Keine der Problemstellen gehört zu einer bestimmten Seite" not in karte)
     pg.wait_for_timeout(1500)
     check("Keine Sprache/Zusammenfassung in der Prüfung (Punkt 10)", pg.locator("ul[id^=ab_kopf_]").count() == 0)
@@ -441,11 +446,14 @@ with sync_playwright() as p:
     # Prüfung Barrierefreiheit 30.09.2026, Punkt 7: Seiten nur vorne, nicht noch einmal „(Seite n)“ im Satz
     check("Problemzeilen nennen die Seiten nicht doppelt", not any(("– " in x) and x.split(" – ")[0].startswith("Seite") and ("(" + x.split(" – ")[0] + ")") in x for x in probleme), probleme[:3])
     # Punkt 1: Hörprobe des ganzen Dokuments mit „Hörprobe vorlesen“ — unabhängig von Problemseiten
-    check("Hörprobe des ganzen Dokuments: H4 „Hörprobe“, Knopf „Hörprobe vorlesen“, Klappe „Hörprobe lesen“", pg.locator("section.ab-dok-hoerprobe h4").count() == 1 and pg.locator("button[id^=ab_dvorlesen_]").count() == 1 and pg.locator("details.ab-dhp > summary").inner_text().startswith("Hörprobe lesen"))
+    check("Hörprobe des ganzen Dokuments: H4 „Hörprobe“, Satz zur Reihenfolge ohne „kein Prüfergebnis“, Knopf „Hörprobe vorlesen“, Klappe „Hörprobe anzeigen“ (Punkte 2, 3)",
+          pg.locator("section.ab-dok-hoerprobe h4").count() == 1 and pg.locator("button[id^=ab_dvorlesen_]").count() == 1 and pg.locator("details.ab-dhp > summary").inner_text().startswith("Hörprobe anzeigen")
+          and "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor." in pg.locator("section.ab-dok-hoerprobe").inner_text()
+          and "Prüfergebnis" not in pg.locator("main").inner_text(), pg.locator("section.ab-dok-hoerprobe").inner_text()[:300])
     pg.click("button[id^=ab_dvorlesen_]"); pg.wait_for_timeout(2500)
     check("Ohne Stimme: Meldung sichtbar unter „Hörprobe vorlesen“", "keine Stimme" in pg.locator("[id^=ab_dvstatus_]").inner_text() and pg.locator("[id^=ab_dvstatus_]").is_visible())
     pg.click("details.ab-dhp > summary"); pg.wait_for_timeout(300)
-    check("Hörprobe lesen: alle Seiten, Inhalt mit lang, Kopfzeilen ohne", "— Seite 1 —" in pg.locator("details.ab-dhp").inner_text() and "— Seite 2 —" in pg.locator("details.ab-dhp").inner_text() and pg.locator("details.ab-dhp span[lang]").count() > 0 and "lang=" not in pg.evaluate("document.querySelector('details.ab-dhp [role=region] p').innerHTML"))
+    check("Hörprobe anzeigen: alle Seiten, Inhalt mit lang, Kopfzeilen ohne", "— Seite 1 —" in pg.locator("details.ab-dhp").inner_text() and "— Seite 2 —" in pg.locator("details.ab-dhp").inner_text() and pg.locator("details.ab-dhp span[lang]").count() > 0 and "lang=" not in pg.evaluate("document.querySelector('details.ab-dhp [role=region] p').innerHTML"))
     n_prob = pg.locator("ol.ab-problemliste > li").count()
     if n_prob:
         pg.wait_for_selector("section.ab-seite", timeout=15000)
@@ -469,7 +477,7 @@ with sync_playwright() as p:
     # (Michael Karbe, Feedback 20260928 - 2, Punkt 9; Schalter ZEIGE_KI in frontend/abschluss.js).
     pg.click("a[id^=ab_struktur_]")
     pg.wait_for_selector("h1#strukturTitel", timeout=30000)
-    check("Mit eigenem Screenreader prüfen: Strukturansicht der fertigen Datei", "(fertige Datei)" in pg.locator("h1#strukturTitel").inner_text() and "quelle=abschluss" in pg.url, pg.locator("h1#strukturTitel").inner_text())
+    check("Strukturansicht für Screenreader: Strukturansicht der fertigen Datei", "(fertige Datei)" in pg.locator("h1#strukturTitel").inner_text() and "quelle=abschluss" in pg.url, pg.locator("h1#strukturTitel").inner_text())
     check("Strukturansicht: genau eine H1, Hörprobe als H2, Inhalt mit Absätzen, kein Skript-Text", pg.locator("h1").count() == 1 and pg.locator("h2#strukturHoerprobe").count() == 1 and pg.locator("#strukturInhalt p").count() >= 3 and "<script" not in pg.locator("#strukturInhalt").inner_html().lower())
     axe(pg, "Strukturansicht der fertigen Datei")
     pg.click("#strukturZurueck"); pg.wait_for_selector("section.ab-karte", timeout=15000)

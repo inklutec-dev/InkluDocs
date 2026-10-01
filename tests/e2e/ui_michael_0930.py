@@ -102,12 +102,23 @@ with sync_playwright() as p:
         pg.wait_for_timeout(500)
         hin = pg.locator(f"#dok_schon_getaggt_{aid}")
         text = hin.inner_text() if hin.count() else ""
-        check("Satz: beim Hochladen schon getaggt, nichts berechnet, wie es weitergeht; kein Verweis auf „Barrierefrei machen“",
-              "beim Hochladen schon getaggt" in text and "nichts berechnet" in text and "Alt-Texte" in text and "Barrierefreiheitsprüfung" in text and "„Barrierefrei machen“" not in text, text)
+        check("Satz: beim Hochladen schon getaggt, „Neu taggen“ ersetzt die vorhandenen Tags, wie es sonst weitergeht (01.10.)",
+              "beim Hochladen schon getaggt" in text and "„Neu taggen“ ersetzt die vorhandenen Tags" in text and "Alt-Texte" in text and "Barrierefreiheitsprüfung" in text, text)
         hrefs = [a.get_attribute("href") or "" for a in hin.locator("a").all()] if hin.count() else []
         check("Zwei Links: Alt-Texte und Barrierefreiheitsprüfung", len(hrefs) == 2 and "ansicht=alttexte" in hrefs[0] and "ansicht=abschluss" in hrefs[1], hrefs)
         check("Satz in normaler Textgröße (nicht die kleine graue Hinweisschrift)", hin.count() and pg.evaluate(f"parseFloat(getComputedStyle(document.getElementById('dok_schon_getaggt_{aid}')).fontSize)") >= 15.5)
-        check("Keine Knöpfe „Barrierefrei machen“/„Testweise taggen“, „Hörprobe“ da", pg.locator(f"#dok_tag_{aid}").count() == 0 and pg.locator(f"#dok_test_{aid}").count() == 0 and pg.locator(f"#dok_hp_{aid}").count() == 1)
+        tag_knopf = pg.locator(f"#dok_tag_{aid}")
+        check("Knöpfe „Neu taggen“ (Seiten, Credits) und „Testweise taggen“, „Hörprobe“ da (Feedback 20261001 - 1, Punkt 1)",
+              tag_knopf.count() == 1 and tag_knopf.inner_text().startswith("Neu taggen") and "Credits" in tag_knopf.inner_text()
+              and pg.locator(f"#dok_test_{aid}").count() == 1 and pg.locator(f"#dok_hp_{aid}").count() == 1, tag_knopf.inner_text() if tag_knopf.count() else "")
+        tag_knopf.click()
+        pg.wait_for_timeout(500)
+        dlg_text = pg.locator("#dkLaufDialog").inner_text()
+        check("Dialog „Neu taggen“ nur mit dem Preissatz (Punkt 4)", pg.locator("#dkLaufHeading").inner_text() == "Neu taggen"
+              and "Credits (20 Credits je Seite). Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet." in dlg_text
+              and "Verfügbar" not in dlg_text and "Testmodus" not in dlg_text and "Seiten." not in pg.locator("#dkLaufUmfang").inner_text(), dlg_text)
+        pg.click("#dkLaufCancel")
+        pg.wait_for_timeout(300)
         badge = pg.locator(f"#dok_badge_{aid}").inner_text()
         check("Abzeichen unterscheidbar: „Getaggt (beim Hochladen)“", badge.strip() == "Getaggt (beim Hochladen)", badge)
         meta = pg.locator(f"#dok_karte_{aid} ul.dok-meta").inner_text()

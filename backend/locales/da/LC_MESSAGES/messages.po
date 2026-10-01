@@ -9995,3 +9995,34 @@ msgstr "Download af “{name}” er udløbet (links gælder i 24 timer). Bed om 
 
 msgid "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."
 msgstr "Downloadlinks (download_url) gælder i mindst 24 timer; feltet gueltig_bis angiver fristen (UTC). Hent filen inden da."
+
+msgid "Prüfung erneut starten"
+msgstr "Start kontrol igen"
+
+msgid "Strukturansicht für Screenreader"
+msgstr "Strukturvisning til skærmlæsere"
+
+msgid "Geprüft wird genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos."
+msgstr "Der kontrolleres præcis den PDF, du downloader, med struktur, alt-tekster og værktøjstip."
+
+msgid "Starte die Prüfung erneut, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Start kontrollen igen, så du kontrollerer præcis den fil, du downloader."
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor."
+msgstr "En skærmlæser læser dokumentets taggede indhold op i denne rækkefølge."
+
+msgid "Hörprobe anzeigen"
+msgstr "Vis lytteprøve"
+
+msgid "Hörprobe: so liest ein Screenreader die Tags dieser Seite vor"
+msgstr "Lytteprøve: sådan læser en skærmlæser denne sides tags op"
+
+msgid "In dieser Reihenfolge liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor."
+msgstr "En skærmlæser læser dette Word-dokument med alt-teksterne fra InkluDocs op i denne rækkefølge."
+
+#, python-brace-format
+msgid "Diese PDF war beim Hochladen schon getaggt. „Neu taggen“ ersetzt die vorhandenen Tags durch eine neue Struktur. Ohne neues Tagging geht es weiter in {alttexte} oder {pruefung}."
+msgstr "Denne PDF var allerede tagget ved upload. „Tag igen“ erstatter de eksisterende tags med en ny struktur. Uden ny tagging fortsætter du i {alttexte} eller {pruefung}."
+
+msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
+msgstr "Taggingen betaler du kun i dette øjeblik; den opkræves ikke igen ved download."

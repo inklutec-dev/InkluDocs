@@ -75,7 +75,9 @@ def datei_zum_token(url):
 
 print("== Tagging: testweise_taggen ==")
 r = ex(PID).execute("testweise_taggen", {"document_id": ACT})
-check("schon getaggte PDF: kein Testlauf, Grund genannt", not r["ok"] and "schon getaggt" in r.get("error", ""), r)
+# seit 01.10.2026 (Michael Karbe, Feedback 20261001 - 1, Punkt 1): auch eine schon getaggte PDF lässt sich (testweise) neu taggen
+check("schon getaggte PDF: Testlauf ersetzt die Tags (andere Struktur als die 175 Elemente der Quelle), kostenlos",
+      r["ok"] and r["result"].get("preis") == 0 and ((r["result"].get("testlauf") or {}).get("struktur") or {}).get("elemente") not in (None, 175), r)
 r = ex(PID).execute("testweise_taggen", {"document_id": ROH})
 check("ungetaggte PDF: Testlauf gestartet, kostenlos", r["ok"] and r["result"].get("gestartet") and r["result"].get("preis") == 0, r)
 tl = None

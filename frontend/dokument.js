@@ -464,14 +464,12 @@
         let knoepfe;
         if (imTagging) {
             const preis = tg.preis || 0;
-            const knopfText = tg.status === 'fertig' ? t('Neu taggen') : t('Barrierefrei machen');
-            // Schon getaggte Datei (Messlauf 30.09.2026): PDFix taggt sie nicht neu („Preserve Existing Tags“), buchte aber ab und
-            // setzte im Testmodus das Wasserzeichen — jetzt kein „Barrierefrei machen“ und kein Testlauf, der Satz über den
-            // Knöpfen sagt warum (tagging_api.quelle_getaggt). Hörprobe bleibt.
-            const schonGetaggt = tg.quelle_getaggt === true;
-            knoepfe = (!busy && tg.verfuegbar && seiten && !schonGetaggt ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
+            // Schon getaggte PDF (beim Hochladen): „Neu taggen“ ersetzt die vorhandenen Tags (Michael Karbe, Feedback 20261001 - 1,
+            // Punkt 1); vorher gab es hier gar keinen Knopf
+            const knopfText = (tg.status === 'fertig' || tg.quelle_getaggt === true) ? t('Neu taggen') : t('Barrierefrei machen');
+            knoepfe = (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
                 // TESTWEISE TAGGEN (Michael Karbe, Feedback 24.09.2026 - 2, Punkt 3): kostenlos, Testmodus, das Original bleibt
-                + (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !schonGetaggt && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
+                + (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
                 + hoerprobeKnopf
                 + (ZEIGE_STRUKTURANSICHT && d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '');
         } else {
@@ -495,13 +493,13 @@
             + '<div class="dok-werkbank">'
             // Satz in normaler Textgröße, ohne Verweis auf einen Knopf, den es hier nicht gibt, und mit dem Weg weiter
             // (Prüfung Barrierefreiheit 30.09.2026, Punkt 5): Links zu „Alt-Texte“ und „Barrierefreiheitsprüfung“
-            + (imTagging && tg.quelle_getaggt === true ? '<p class="dok-schon-getaggt" id="dok_schon_getaggt_' + d.id + '">' + t('Diese PDF war beim Hochladen schon getaggt. Neu taggen geht hier nicht, weil vorhandene Tags nicht ersetzt werden; es wird nichts berechnet. Weiter geht es in {alttexte} oder {pruefung}.', { alttexte: ansichtLink(project, 'alttexte'), pruefung: ansichtLink(project, 'abschluss') }) + '</p>' : '')
+            + (imTagging && tg.quelle_getaggt === true ? '<p class="dok-schon-getaggt" id="dok_schon_getaggt_' + d.id + '">' + t('Diese PDF war beim Hochladen schon getaggt. „Neu taggen“ ersetzt die vorhandenen Tags durch eine neue Struktur. Ohne neues Tagging geht es weiter in {alttexte} oder {pruefung}.', { alttexte: ansichtLink(project, 'alttexte'), pruefung: ansichtLink(project, 'abschluss') }) + '</p>' : '')
             + '<div class="ausgabe-aktionen">' + knoepfe + '</div>'
             // Unter den Knöpfen in „Dokument“ nichts weiter (Feedback 20260928 - 2, Punkt 2); Ergebnis, Laufstatus, Testlauf
             // und Bericht gehören zum Tagging.
             + (imTagging
                 ? ergebnisHtml(d)
-                  + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
+                  + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht …')) : '') + '</output>'
                   + testHtml(project, d)
                   + berichtHtml(d, project)
                   + pruefungHtml(project, d)
@@ -518,8 +516,8 @@
             + '<h2 id="dkHpHeading">' + t('Hörprobe') + '</h2>'
             // Word hat keine Tags: gelesen wird die Word-Datei mit den Alt-Texten aus InkluDocs (30.09.2026)
             + '<p class="dialog-hint" id="dkHpHinweis">' + (istWord
-                ? t('So liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor, in Lesereihenfolge. Das ist kein Prüfergebnis.')
-                : t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.')) + '</p>'
+                ? t('In dieser Reihenfolge liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor.')
+                : t('In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor.')) + '</p>'
             + '<p id="dkHpStatus" role="status" class="visually-hidden"></p>'
             + '<div class="ausgabe-hoerprobe" id="dkHpInhalt" role="region" aria-label="' + t('Vorgelesener Text') + '" tabindex="0" style="max-height:24rem;overflow:auto;"></div>'
             // „Hörprobe vorlesen“ wie bei Word (Prüfung Barrierefreiheit 30.09.2026, Punkt 1; Steve: der Name bleibt, also muss es
@@ -754,21 +752,19 @@
         const summary = document.getElementById('dkLaufSummary');
         const status = document.getElementById('dkLaufStatus');
         const ok = document.getElementById('dkLaufOk');
-        if (umfang) umfang.textContent = t('Dokument „{name}“: {n} Seiten.', { name: name, n: tg.seiten || d.seiten || 0 });
+        // Dialog gekürzt auf den Preissatz (Michael Karbe, Feedback 20261001 - 1, Punkt 4); welches Dokument, steht am Knopf
+        if (umfang) { umfang.textContent = ''; umfang.hidden = true; }
         // Preis je Seite aus dem Server (billing.AKTIONS_PREISE, seit 30.09.2026 20 Credits je Seite — Michael Karbe, Feedback
         // 202609230 - 1, Punkt 11); bezahlt wird nur dieser Lauf, nie das Herunterladen (Punkt 12)
         const jeSeite = tg.preis_je_seite != null ? tg.preis_je_seite : ((window.CREDIT_PREISE || {}).pdf_tagging || 0);
-        let satz = tg.verfuegbar_credits == null
-            ? t('Preis: {c} Credits ({p} Credits je Seite).', { c: tg.preis || 0, p: jeSeite })
-            : t('Preis: {c} Credits ({p} Credits je Seite). Verfügbar: {v} Credits.', { c: tg.preis || 0, p: jeSeite, v: tg.verfuegbar_credits });
-        satz += ' ' + t('Das Tagging bezahlst du nur hier; beim Herunterladen wird es nicht noch einmal berechnet.');
-        if (tg.status === 'fertig') satz += ' ' + t('Das Dokument wird aus der ursprünglichen Datei neu getaggt; Alt-Texte bleiben erhalten.');
-        if (tg.modus === 'testmodus') satz += ' ' + t('Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller.');
+        const satz = t('Preis: {c} Credits ({p} Credits je Seite).', { c: tg.preis || 0, p: jeSeite })
+            + ' ' + t('Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet.');
         if (summary) summary.textContent = satz;
         if (status) status.textContent = '';
-        if (ok) { ok.disabled = !tg.erlaubt; ok.textContent = tg.status === 'fertig' ? t('Neu taggen') : t('Tagging starten'); }
+        const neu = tg.status === 'fertig' || tg.quelle_getaggt === true;
+        if (ok) { ok.disabled = !tg.erlaubt; ok.textContent = neu ? t('Neu taggen') : t('Tagging starten'); }
         const kopf = document.getElementById('dkLaufHeading');
-        if (kopf) kopf.textContent = tg.status === 'fertig' ? t('Neu taggen') : t('Barrierefrei machen');   // wie der Knopf (A11y-Review 29.09.2026)
+        if (kopf) kopf.textContent = neu ? t('Neu taggen') : t('Barrierefrei machen');   // wie der Knopf (A11y-Review 29.09.2026)
         if (!tg.erlaubt && status) status.textContent = t('Dafür reicht das Guthaben nicht: {c} Credits nötig, {v} vorhanden.', { c: tg.preis || 0, v: tg.verfuegbar_credits == null ? 0 : tg.verfuegbar_credits });
         dlg.showModal();
         const cancel = document.getElementById('dkLaufCancel');

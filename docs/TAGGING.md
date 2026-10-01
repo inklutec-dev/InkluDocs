@@ -686,3 +686,21 @@ den Dokumentnamen und sind über mehrere Dokumente eindeutig.
 
 **Upload:** `main.pdf_vorpruefung` gilt jetzt auch in alten Formular-Projekten (vor `validiere_formular`). Ein Upload-Fehler wird
 einmal angesagt (Statuszeile; `announce()` nur ohne Statuszeile).
+
+## Michael Karbe, Feedback 20261001 - 1 (01.10.2026)
+
+- **Punkt 10, Problemstellen ohne Seitenansicht:** veraPDF nennt Seiten nur, wenn sein Kontextpfad eine Seite enthält; bei
+  Strukturelementen (7.3-1 „Bild ohne Alt-Text“, 7.7-1 Formel) nie. Seit „nur veraPDF“ (28.09.) fehlten dafür Seitenangabe,
+  Seitenbild und Problemseite. `abschluss._struktur_seiten_je_regel` holt die Seiten aus dem Strukturbaum derselben Prüfdatei
+  (Grafik/Formel ohne Alt). Tests: `tests/test_problemseiten.py`, `verify_michael_0930` D2.
+- **Punkt 1, Neu taggen schon getaggter PDF:** `pdf_tagging.taggen(tags_ersetzen=True)` setzt bei `add_tags` overwrite=true
+  („Replace Existing Tags“). Belegt: Actino Master Word 175 Elemente vorher, mit Voreinstellung nachher 175 (unverändert), mit
+  overwrite 135 (andere Struktur, die Word-Überschriften gehen dabei verloren — PDFix erkennt neu). Gilt für Lauf und Testlauf,
+  Preis wie Tagging, die Sperre „schon getaggt“ (409) ist weg. Alt-Texte: Die Bilder werden neu ausgelesen (neue Bild-IDs);
+  vorhandene Alt-Texte überträgt `alt_texte_uebernehmen` auf dieselben Bilder (gleiche Seite und Lage oder gleicher Bild-Hash),
+  der Bericht nennt die Zahl. Nicht zuordenbare Bilder verlieren ihren Text in InkluDocs.
+- **Texte:** Hörprobe „In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor.“ (ohne „kein
+  Prüfergebnis“), „Hörprobe anzeigen“, Dialog nur „Preis: … Das Tagging bezahlst du nur in diesem Moment; …“, „Prüfung starten“ /
+  „Prüfung erneut starten“, „Strukturansicht für Screenreader“, Info „Geprüft wird mit veraPDF … kostenlos.“ entfernt, keine
+  Minuten-Hinweise in „Wird barrierefrei gemacht …“ und „Prüfdatei wird erstellt …“. Chatbot: Werkzeugname „Prüfung starten“,
+  Tagging-Hinweise ohne Zeitangabe, „Neu taggen“ in Beschreibung und Systemprompt.

@@ -10298,3 +10298,34 @@ msgstr "Le téléchargement de « {name} » a expiré (les liens sont valables 2
 
 msgid "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."
 msgstr "Les liens de téléchargement (download_url) sont valables au moins 24 heures ; le champ gueltig_bis indique cette échéance (UTC). Récupère le fichier avant."
+
+msgid "Prüfung erneut starten"
+msgstr "Relancer la vérification"
+
+msgid "Strukturansicht für Screenreader"
+msgstr "Vue de structure pour lecteurs d’écran"
+
+msgid "Geprüft wird genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos."
+msgstr "La vérification porte exactement sur le PDF que tu télécharges, avec structure, textes alternatifs et infobulles."
+
+msgid "Starte die Prüfung erneut, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Relance la vérification pour vérifier exactement le fichier que tu télécharges."
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor."
+msgstr "Un lecteur d’écran lit le contenu balisé du document dans cet ordre."
+
+msgid "Hörprobe anzeigen"
+msgstr "Afficher l’écoute"
+
+msgid "Hörprobe: so liest ein Screenreader die Tags dieser Seite vor"
+msgstr "Écoute : ce qu’un lecteur d’écran lit des balises de cette page"
+
+msgid "In dieser Reihenfolge liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor."
+msgstr "Un lecteur d’écran lit ce document Word avec les textes alternatifs d’InkluDocs dans cet ordre."
+
+#, python-brace-format
+msgid "Diese PDF war beim Hochladen schon getaggt. „Neu taggen“ ersetzt die vorhandenen Tags durch eine neue Struktur. Ohne neues Tagging geht es weiter in {alttexte} oder {pruefung}."
+msgstr "Ce PDF était déjà balisé lors du téléversement. « Baliser à nouveau » remplace les balises existantes par une nouvelle structure. Sans nouveau balisage, continue dans {alttexte} ou {pruefung}."
+
+msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
+msgstr "Tu paies le balisage uniquement à ce moment ; il n’est pas facturé une nouvelle fois lors du téléchargement."

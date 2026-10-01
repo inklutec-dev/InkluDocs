@@ -187,6 +187,18 @@ def struktur_probleme(struktur: dict, _: Callable[[str], str] = _identitaet, qui
     return out
 
 
+def _struktur_seiten_je_regel(struktur: Optional[dict]) -> dict:
+    """Regel -> Seiten aus dem Strukturbaum, fuer Regeln, deren veraPDF-Kontext keine Seite nennt."""
+    ohne = {"Figure": set(), "Formula": set()}
+    for e in ((struktur or {}).get("elemente") or []):
+        seite = int(e.get("seite") or 0)
+        typ = e.get("typ") or ""
+        if seite and typ in ohne and not (e.get("alt") or e.get("actual")):
+            ohne[typ].add(seite)
+    # 7.3-1 Figure ohne Alt-Text, 7.7-1 Formula ohne Alt-Text
+    return {"7.3-1": sorted(ohne["Figure"]), "7.7-1": sorted(ohne["Formula"])}
+
+
 def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: list,
                              _: Callable[[str], str] = _identitaet, quickinfos: Optional[dict] = None) -> list[dict]:
     """Eine Liste, nach Seite sortiert: {seite, seiten, art, quelle, text}."""
@@ -195,12 +207,19 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
         # ehrlich sagen, dass ein Teil der Pruefung nicht lief — sonst sieht „keine fehlenden Zeilen“ wie ein Ergebnis aus
         out.append({"seite": 0, "seiten": [], "art": "hinweis", "quelle": _("Vollständigkeit"),
                     "text": _("Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen.")})
+    # Seiten fuer veraPDF-Befunde ohne Seitenangabe (Michael Karbe, Feedback 20261001 - 1, Punkt 10: „Die Anzeige der
+    # Problemstellen wird nicht mehr angezeigt“): veraPDF nennt Seiten nur, wenn der Kontextpfad eine Seite enthaelt — bei
+    # Strukturelementen (7.3-1 „Figure ohne Alt“) nie. Seit „nur veraPDF“ (28.09.) fehlten damit Seitenbild und Problemseite fuer
+    # die haeufigsten Befunde. Die Seiten stehen im Strukturbaum derselben Pruefdatei.
+    struktur_seiten = _struktur_seiten_je_regel(struktur)
     for p in ((meta.get("verapdf") or {}).get("punkte") or []):
         if p.get("status") != "befund":
             continue
         # je verletztem Pruefpunkt eine Zeile (pdfua_export._einzeln, Michael Karbe 24.09.2026, Punkt 12)
         for e in (p.get("einzeln") or [{"text": p.get("text") or "", "seiten": p.get("seiten") or []}]):
             seiten = [int(x) for x in (e.get("seiten") or []) if str(x).isdigit()]
+            if not seiten:
+                seiten = sorted({s for r in (e.get("regeln") or []) for s in struktur_seiten.get(r, [])})
             # Regelnummer von veraPDF dazu (Michael 28.09.2026: vergleichbar mit einer lokalen Pruefung). Seit 30.09.2026 ohne
             # das Wort „veraPDF“ in der Zeile (Michael Karbe, Feedback 202609230 - 1, Punkt 8: „oben weisen wir bereits auf
             # veraPDF hin“); die Regelnummer bleibt, die Ansicht nennt oben, dass sie von veraPDF stammt.

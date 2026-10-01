@@ -9866,3 +9866,34 @@ msgstr "Nedladdningen av ”{name}” har gått ut (länkar gäller i 24 timmar)
 
 msgid "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."
 msgstr "Nedladdningslänkar (download_url) gäller i minst 24 timmar; fältet gueltig_bis anger tidsfristen (UTC). Hämta filen före dess."
+
+msgid "Prüfung erneut starten"
+msgstr "Starta kontroll igen"
+
+msgid "Strukturansicht für Screenreader"
+msgstr "Strukturvy för skärmläsare"
+
+msgid "Geprüft wird genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos."
+msgstr "Kontrollen gäller exakt den PDF du laddar ner, med struktur, alt-texter och verktygstips."
+
+msgid "Starte die Prüfung erneut, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Starta kontrollen igen så att du kontrollerar exakt den fil du laddar ner."
+
+msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor."
+msgstr "En skärmläsare läser upp dokumentets taggade innehåll i den här ordningen."
+
+msgid "Hörprobe anzeigen"
+msgstr "Visa lyssningsprov"
+
+msgid "Hörprobe: so liest ein Screenreader die Tags dieser Seite vor"
+msgstr "Lyssningsprov: så läser en skärmläsare upp den här sidans taggar"
+
+msgid "In dieser Reihenfolge liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor."
+msgstr "En skärmläsare läser upp det här Word-dokumentet med alt-texterna från InkluDocs i den här ordningen."
+
+#, python-brace-format
+msgid "Diese PDF war beim Hochladen schon getaggt. „Neu taggen“ ersetzt die vorhandenen Tags durch eine neue Struktur. Ohne neues Tagging geht es weiter in {alttexte} oder {pruefung}."
+msgstr "Den här PDF:en var redan taggad vid uppladdningen. ”Tagga igen” ersätter de befintliga taggarna med en ny struktur. Utan ny taggning fortsätter du i {alttexte} eller {pruefung}."
+
+msgid "Das Tagging bezahlst du nur in diesem Moment; beim Herunterladen wird es nicht noch einmal berechnet."
+msgstr "Taggningen betalar du bara just nu; den debiteras inte igen vid nedladdning."

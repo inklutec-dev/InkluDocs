@@ -119,7 +119,7 @@ def _probleme_kurz(d: dict) -> list:
 
 
 def pruefdatei_erstellen(project_id: int, user_id: int, document_id: Optional[int] = None) -> dict[str, Any]:
-    """Wie „Prüfdatei erstellen“ in der Barrierefreiheitsprüfung: die fertige Datei bauen (wie beim Herunterladen, mit
+    """Wie „Prüfung starten“ in der Barrierefreiheitsprüfung: die fertige Datei bauen (wie beim Herunterladen, mit
     Alt-Texten und Quickinfos) und mit veraPDF pruefen. Kostenlos, keine Ablage. Dieselbe Sperre wie der Knopf."""
     m = _main()
     try:

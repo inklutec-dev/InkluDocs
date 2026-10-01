@@ -21,7 +21,7 @@ PDF-Werkzeuge:
 * dokument_stand
     Stand je Dokument: Seiten, ob getaggt, Sprache, Struktur, Bilder mit Alt-Text, Felder mit Quickinfo, PDF/UA-Prüfung direkt nach dem Taggen (Zwischenstand VOR Alt-Texten und Quickinfos), letzter Testlauf. Kostenlos. Immer dein erster Schritt, wenn der Nutzer etwas zum Dokument will oder du einen Lauf gestartet hast.
 * barrierefrei_machen
-    Tagging eines Dokuments: erzeugt den Strukturbaum (Überschriften, Absätze, Listen, Tabellen, Bilder, Lesereihenfolge), setzt die Dokumentsprache und prüft mit veraPDF. Kostet Credits je Seite, nur beim Ausführen. Eine schon getaggte PDF wird nicht neu getaggt und kostet nichts; sag das dem Nutzer, wenn das Werkzeug es meldet. ZWEI SCHRITTE: erst OHNE bestaetigt (Seiten, Preis, Guthaben nennen und fragen), nach dem Ja mit bestaetigt=true. Läuft im Hintergrund.
+    Tagging eines Dokuments: erzeugt den Strukturbaum (Überschriften, Absätze, Listen, Tabellen, Bilder, Lesereihenfolge), setzt die Dokumentsprache und prüft mit veraPDF. Kostet Credits je Seite, nur beim Ausführen. Bei einer schon getaggten PDF heißt das „Neu taggen“: die vorhandenen Tags werden ersetzt, Preis wie beim Tagging; sag das dem Nutzer vorher. ZWEI SCHRITTE: erst OHNE bestaetigt (Seiten, Preis, Guthaben nennen und fragen), nach dem Ja mit bestaetigt=true. Läuft im Hintergrund.
 * testweise_taggen
     Wie „Testweise taggen“: kostenlos, Testmodus, das Dokument bleibt unverändert; Ergebnis in dokument_stand (testlauf).
 """

@@ -349,14 +349,16 @@ def barrierefrei_machen(project_id: int, user_id: int, document_id: Optional[int
         return {"ok": False, "error": "Das Tagging dieses Dokuments läuft bereits"}
     if not st.get("seiten"):
         return {"ok": False, "error": "Die PDF konnte nicht gelesen werden"}
-    if st.get("quelle_getaggt"):
-        # schon getaggt (30.09.2026): PDFix taggt nicht neu — kein Lauf, keine Credits
-        return {"ok": False, "error": t.schon_getaggt_text()}
     grund_lesbar = t.lesbar_grund(doc)   # beschaedigte Quelle: vor dem Preis sagen (Audit 30.09.2026)
     if grund_lesbar:
         return {"ok": False, "error": grund_lesbar}
     vorschau = {"dokument": _name(doc), "seiten": st["seiten"], "preis": st.get("preis"), "verfuegbar": st.get("verfuegbar_credits"),
                 "erlaubt": bool(st.get("erlaubt")), "fehlend": st.get("fehlend"), "schon_getaggt": doc.get("getaggt") in (True, 1)}
+    if st.get("quelle_getaggt"):
+        # „Neu taggen“ einer schon getaggten PDF (Feedback 20261001 - 1, Punkt 1): vorhandene Tags werden ersetzt
+        vorschau["tags_werden_ersetzt"] = True
+        vorschau["hinweis_ersetzen"] = ("Die PDF ist schon getaggt. Neu taggen ersetzt die vorhandenen Tags durch eine neue Struktur "
+                                        "von PDFix; sag das dem Nutzer mit dem Preis.")
     grund = _freigabe(user_id, project_id, "tagging", doc["id"], int(st.get("preis") or 0), bool(st.get("erlaubt")), bestaetigt, turn)
     if grund == "rueckfrage":
         return {"ok": True, "result": _rueckfrage(vorschau, "das Tagging")}
@@ -370,7 +372,7 @@ def barrierefrei_machen(project_id: int, user_id: int, document_id: Optional[int
     time.sleep(0.5)
     return {"ok": True, "result": {
         "gestartet": True, "dokument": _name(doc), "seiten": st["seiten"], "preis": st.get("preis"),
-        "hinweis": ("Das Tagging läuft im Hintergrund (bei großen Dateien einige Minuten). Sag das dem Nutzer; die Karte in "
+        "hinweis": ("Das Tagging läuft im Hintergrund. Sag das dem Nutzer (ohne Zeitangabe); die Karte in "
                     "der Ansicht „Dokument“ zeigt den Stand, und du kannst ihn mit dokument_stand nachsehen. Behaupte nicht, "
                     "es sei fertig."),
     }}

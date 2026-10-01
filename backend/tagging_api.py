@@ -147,7 +147,7 @@ def test_stand(user_id: int, project_id: int, document_id: int) -> dict:
         with open(meta, encoding="utf-8") as f:
             b = json.load(f)
         if isinstance(b, dict):
-            stand_.update({k: b.get(k) for k in ("zeit", "dauer_s", "seiten", "struktur", "verapdf", "fehler")})
+            stand_.update({k: b.get(k) for k in ("zeit", "dauer_s", "seiten", "struktur", "verapdf", "fehler", "tags_ersetzt", "vorher_elemente")})
             stand_["hoerprobe_moeglich"] = bool(not b.get("fehler") and os.path.isfile(pdf))
     except (OSError, ValueError):
         pass
@@ -190,7 +190,8 @@ def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe:
             conn.close()
         quelle = doc.get("roh_path") or doc["original_path"]   # immer die unveraenderte Kundendatei
         os.makedirs(ordner, exist_ok=True)
-        roh = pdf_tagging.taggen(quelle, tmp, sprache_vorgabe, arbeitsordner=ordner, testmodus=True)
+        roh = pdf_tagging.taggen(quelle, tmp, sprache_vorgabe, arbeitsordner=ordner, testmodus=True,
+                                 tags_ersetzen=quelle_getaggt(doc))
         # Gegenprobe: die Datei MUSS den Testmodus tragen (Hersteller „Trial version of PDFix SDK“). Sonst waere ein
         # kostenloser Lauf ein lizenzierter — dann verwerfen statt ausliefern (Pruefbericht 25.09.2026).
         if not roh.get("testmodus"):
@@ -204,6 +205,8 @@ def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe:
             "zeit": roh.get("zeit"), "dauer_s": roh.get("dauer_s"), "seiten": roh.get("seiten"),
             "struktur": {k: (roh.get("nachher") or {}).get(k) for k in ("elemente", "ueberschriften", "listen", "tabellen", "bilder", "absaetze", "lang", "titel")},
             "verapdf": ({"zusammenfassung": v.get("zusammenfassung", ""), "bestanden": v.get("bestanden")} if v else None),
+            # schon getaggte Quelle: vorhandene Tags ersetzt (Feedback 20261001 - 1, Punkt 1) — vorher/nachher zum Vergleich
+            "tags_ersetzt": bool(roh.get("tags_ersetzt")), "vorher_elemente": (roh.get("vorher") or {}).get("elemente"),
         }
         log.info("[testweise] Dokument %s: %s Seiten, %s Elemente, %ss", document_id, bericht["seiten"],
                  bericht["struktur"].get("elemente"), bericht["dauer_s"])
@@ -435,8 +438,8 @@ def quelle_getaggt(doc: dict) -> bool:
     Dann taggt PDFix NICHT neu — die Aktion laeuft mit „Preserve Existing Tags“ (add_tags overwrite=false) und laesst den
     Strukturbaum, wie er ist; im Testmodus kaeme nur das Wasserzeichen dazu. Belegt im Messlauf 30.09.2026 an drei schon
     getaggten Dateien (gleiche Struktur vorher und nachher), damals wurden trotzdem Credits abgebucht. Seit 30.09.2026:
-    vor dem Start erkennen, sagen, nicht taggen, nichts berechnen. Ob „Neu taggen“ (vorhandene Tags ersetzen) angeboten
-    wird, entscheidet Steve — nicht gebaut."""
+    vor dem Start erkennen. Seit 01.10.2026 (Michael Karbe, Feedback 20261001 - 1, Punkt 1; Steves Go): „Neu taggen“ ersetzt
+    die vorhandenen Tags (pdf_tagging.taggen(tags_ersetzen=True)), Preis wie das Tagging."""
     roh = doc.get("roh_path") or ""
     if not roh:
         # ohne Rohdatei ist die Quelle die Arbeitsdatei; ihr Stand steht schon in documents.getaggt (beim Upload bestimmt)
@@ -570,10 +573,10 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
         "erlaubt": bool((pruefung or {}).get("erlaubt")) if pruefung else False,
         "fehlend": (pruefung or {}).get("fehlend", 0),
         "hat_alt_texte": int(alt or 0),
-        "neu_taggen": bool(doc.get("roh_path")),
+        "neu_taggen": bool(doc.get("roh_path")) or schon_getaggt,
         # Preis je Seite fuer die Rueckfrage (billing.AKTIONS_PREISE, seit 30.09.2026 20 Credits je Seite)
         "preis_je_seite": int(_d.billing.AKTIONS_PREISE.get(AKTION, 0)),
-        # Quelle schon getaggt (Messlauf 30.09.2026): kein Tagging, kein Testlauf, keine Credits — die Karte sagt es
+        # Quelle schon getaggt: „Neu taggen“ ersetzt die vorhandenen Tags (seit 01.10.2026), die Karte sagt es
         "quelle_getaggt": schon_getaggt,
         "bericht": _bericht(doc),
         "projekt_status": project.get("status"),
@@ -884,6 +887,7 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
     finally:
         conn.close()
     quelle = doc.get("roh_path") or doc["original_path"]
+    ersetzen = quelle_getaggt(doc)   # schon getaggte Quelle: vorhandene Tags ersetzen (Feedback 20261001 - 1, Punkt 1)
     ziel = _ziel_pfad(doc)
     ziel_tmp = ziel + f".{int(time.time())}.tmp.pdf"
     uebers = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None
@@ -898,7 +902,8 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
             bericht = pdf_struktur_tagging.taggen(quelle, ziel_tmp, sprache_vorgabe, arbeitsordner=os.path.dirname(ziel),
                                                   fortschritt=fortschritt, dokument_name=doc.get("display_name") or doc.get("original_filename") or "")
         else:
-            bericht = pdf_tagging.taggen(quelle, ziel_tmp, sprache_vorgabe, arbeitsordner=os.path.dirname(ziel))
+            bericht = pdf_tagging.taggen(quelle, ziel_tmp, sprache_vorgabe, arbeitsordner=os.path.dirname(ziel),
+                                         tags_ersetzen=ersetzen)
         bericht["verapdf"] = pdf_tagging.verapdf(ziel_tmp, uebers)
         # Bilder des Dokuments neu extrahieren — jetzt ueber den Strukturbaum.
         img_dir = os.path.join(_d.results_dir, str(user_id), str(project_id), f"doc{doc.get('doc_index') or 1}")
@@ -947,7 +952,7 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
                     pass
         # Sicherheitsnetz (30.09.2026): hatte die Quelle schon Tags, hat PDFix nichts neu getaggt („Preserve Existing Tags“)
         # — dann nichts berechnen, auch wenn die Vorpruefung (quelle_getaggt) es nicht erkannt hat.
-        if int(((bericht.get("vorher") or {}).get("elemente")) or 0) > 0:
+        if int(((bericht.get("vorher") or {}).get("elemente")) or 0) > 0 and not bericht.get("tags_ersetzt"):
             log.warning("[tagging] Dokument %s: Quelle hatte schon %s Elemente — nicht neu getaggt, keine Credits",
                         document_id, (bericht.get("vorher") or {}).get("elemente"))
             preis = 0
@@ -994,8 +999,6 @@ def lauf_synchron(project_id: int, document_id: int, user_id: int, sprache_vorga
         project, doc = dict(project), dict(doc)
         if document_id in _laeuft or doc.get("tagging_status") == STATUS_LAEUFT:
             return {"status": "fehler", "grund": "Das Tagging läuft bereits"}
-        if quelle_getaggt(doc):
-            return {"status": "fehler", "grund": schon_getaggt_text(), "schon_getaggt": True}
         seiten = _seiten(doc)
         if seiten <= 0 or seiten > pdf_tagging.MAX_SEITEN:
             return {"status": "fehler", "grund": "Die PDF konnte nicht gelesen werden oder hat zu viele Seiten"}
@@ -1096,9 +1099,6 @@ def test_starten_fuer(project_id: int, document_id: int, user: dict, ui_lang: st
         project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
     finally:
         conn.close()
-    if quelle_getaggt(doc):
-        # auch der Testlauf taggte eine schon getaggte Datei nicht neu, er zeigte nur das Wasserzeichen (30.09.2026)
-        raise HTTPException(status_code=409, detail={"code": "schon_getaggt", "text": schon_getaggt_text(_t)})
     seiten = _seiten(doc)
     if seiten <= 0:
         raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")
@@ -1163,10 +1163,6 @@ def build_router(deps: Deps) -> APIRouter:
                 raise HTTPException(status_code=409, detail="Das Tagging läuft bereits")
             if project.get("status") in ("extracting", "processing"):
                 raise HTTPException(status_code=409, detail="Das Projekt wird gerade verarbeitet. Bitte warte, bis der Lauf fertig ist.")
-            if quelle_getaggt(doc):
-                # schon getaggt (30.09.2026): PDFix taggte nicht neu, buchte aber ab — jetzt vorher Schluss, nichts berechnet
-                _t = _d.get_gettext(_d.resolve_ui_language(request)) if (_d.get_gettext and _d.resolve_ui_language) else None
-                raise HTTPException(status_code=409, detail={"code": "schon_getaggt", "text": schon_getaggt_text(_t)})
             seiten = _seiten(doc)
             if seiten <= 0:
                 raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")

@@ -256,8 +256,8 @@ with sync_playwright() as p:
     check("Keine KI: kein KI-Knopf; „ohne KI“ einmal oben im Kopf, nicht in der Karte", pg.locator("section.ab-karte button:has-text('KI')").count() == 0 and "ohne KI" not in txt and pg.locator(".projekt-kopf").inner_text().count("ohne KI") == 1 and pg.locator("main").inner_text().count("ohne KI") == 1, pg.locator(".projekt-kopf").inner_text())
     check("Kein Herunterladen in der Prüfung", pg.locator("section.ab-karte button:has-text('Herunterladen')").count() == 0)
     vk = pg.locator("button[id^=ab_wvorlesen_][aria-pressed=false]")
-    check("„Hörprobe vorlesen“ (aria-pressed=false) mit Dokumentname im Namen, Klappe „Hörprobe lesen – Dokument …“",
-          vk.count() == 1 and "ab_wname_" in (vk.get_attribute("aria-labelledby") or "") and pg.locator("details.ab-whp > summary").inner_text().strip().startswith("Hörprobe lesen")
+    check("„Hörprobe vorlesen“ (aria-pressed=false) mit Dokumentname im Namen, Klappe „Hörprobe anzeigen – Dokument …“",
+          vk.count() == 1 and "ab_wname_" in (vk.get_attribute("aria-labelledby") or "") and pg.locator("details.ab-whp > summary").inner_text().strip().startswith("Hörprobe anzeigen")
           and "Klicktest umbenannt" in pg.locator("details.ab-whp > summary").inner_text())
     check("Region der Hörprobe heißt „Hörprobe von „…““", (pg.locator("details.ab-whp [role=region]").get_attribute("aria-label") or "").startswith("Hörprobe von „Klicktest umbenannt"))
     pg.click("details.ab-whp > summary")

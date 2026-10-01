@@ -13,7 +13,7 @@ _TESTWEISE = {
 }
 _PRUEFDATEI_ERSTELLEN = {
     "name": "pruefdatei_erstellen",
-    "description": ("Wie „Prüfdatei erstellen“ in der Barrierefreiheitsprüfung: baut die fertige Datei (wie beim Herunterladen, mit "
+    "description": ("Wie „Prüfung starten“ bzw. „Prüfung erneut starten“ in der Barrierefreiheitsprüfung: baut die fertige Datei (wie beim Herunterladen, mit "
                     "Alt-Texten und Quickinfos) und prüft sie mit veraPDF. Kostenlos, keine Ablage. Dauert einige Sekunden. "
                     "Liefert das Ergebnis wie pruefdatei_lesen. Nur für getaggte Dokumente."),
     "input_schema": {"type": "object", "properties": {"document_id": _DOC}, "required": []},

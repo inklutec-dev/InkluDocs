@@ -78,6 +78,23 @@ class KonfigTest(unittest.TestCase):
         self.assertIn("add_tags", namen)
         self.assertIn("set_pdf_ua_standard", namen)
 
+    def test_neu_taggen_ersetzt_vorhandene_tags(self):
+        """Michael Karbe, Feedback 20261001 - 1, Punkt 1: schon getaggte PDF neu taggen = add_tags mit overwrite=true.
+        Voreinstellung bleibt „Preserve Existing Tags“ (overwrite=false)."""
+        with tempfile.TemporaryDirectory() as t:
+            normal = os.path.join(t, "a.json")
+            neu = os.path.join(t, "b.json")
+            pdf_tagging.konfig_erzeugen("de-DE", False, normal)
+            pdf_tagging.konfig_erzeugen("de-DE", False, neu, tags_ersetzen=True)
+            k1 = json.load(open(normal, encoding="utf-8"))
+            k2 = json.load(open(neu, encoding="utf-8"))
+        a1 = [a for a in k1["actions"] if a["name"] == "add_tags"][0]
+        a2 = [a for a in k2["actions"] if a["name"] == "add_tags"][0]
+        self.assertEqual(pdf_tagging._params(a1)["overwrite"], "false")
+        self.assertEqual(pdf_tagging._params(a2)["overwrite"], "true")
+        self.assertIn("Replace Existing Tags", a2["title"])
+        self.assertEqual([a["name"] for a in k1["actions"]], [a["name"] for a in k2["actions"]], "sonst gleiche Schritte")
+
     def test_konfig_weist_ungueltige_sprache_ab(self):
         with tempfile.TemporaryDirectory() as t:
             with self.assertRaises(pdf_tagging.TaggingFehler):

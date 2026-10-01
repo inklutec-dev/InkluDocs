@@ -195,22 +195,57 @@ try:
     check("Langer Absatz ungekürzt (Schlusswort am Ende da, kein „…“)", "Endpunktkontrolle" in text and not any(z.rstrip().endswith("…") for z in hp), [z[-60:] for z in hp if len(z) > 400])
     check("Sprache als Name (Kürzel): „Sprache: Deutsch (de-DE)“", hp[:1] == ["Sprache: Deutsch (de-DE)"], hp[:1])
 
-    print("== D. Schon getaggte PDF: erkannt, nicht getaggt, nichts berechnet ==")
+    print("== D. Schon getaggte PDF: „Neu taggen“ ersetzt die Tags (Michael Karbe, Feedback 20261001 - 1, Punkt 1) ==")
     act = os.path.join(KORPUS, "actino_master_word.pdf")
     doc2 = hochladen(pid, "actino_master_word.pdf", open(act, "rb").read())
     did2 = doc2["id"]
     st2 = s.get(B + f"/api/projects/{pid}/documents/{did2}/tagging", timeout=60).json()
-    check("Stand: getaggt, Quelle schon getaggt", st2.get("getaggt") is True and st2.get("quelle_getaggt") is True, {k: st2.get(k) for k in ("getaggt", "quelle_getaggt", "preis")})
+    check("Stand: getaggt, Quelle schon getaggt, „Neu taggen“ möglich, Preis wie Tagging (20 je Seite)",
+          st2.get("getaggt") is True and st2.get("quelle_getaggt") is True and st2.get("neu_taggen") is True
+          and st2.get("preis") == 20 * (st2.get("seiten") or 0) and st2.get("preis") > 0, {k: st2.get(k) for k in ("getaggt", "quelle_getaggt", "neu_taggen", "preis", "seiten")})
     v5 = verbraucht()
-    r = s.post(B + f"/api/projects/{pid}/documents/{did2}/tagging", timeout=60)
-    det = (r.json() or {}).get("detail") if r.headers.get("content-type", "").startswith("application/json") else None
-    check("„Barrierefrei machen“: 409 schon_getaggt mit Text", r.status_code == 409 and isinstance(det, dict) and det.get("code") == "schon_getaggt" and "schon getaggt" in (det.get("text") or ""), (r.status_code, det))
     r = s.post(B + f"/api/projects/{pid}/documents/{did2}/tagging/test", timeout=60)
-    det = (r.json() or {}).get("detail") if r.headers.get("content-type", "").startswith("application/json") else None
-    check("„Testweise taggen“: 409 schon_getaggt (kein Wasserzeichen-Lauf)", r.status_code == 409 and isinstance(det, dict) and det.get("code") == "schon_getaggt", (r.status_code, det))
-    time.sleep(2)
-    st2b = s.get(B + f"/api/projects/{pid}/documents/{did2}/tagging", timeout=60).json()
-    check("Nichts gebucht, kein Lauf, Dokument unverändert", verbraucht() == v5 and not st2b.get("laeuft") and st2b.get("status") in ("", None) and not (st2b.get("test") or {}).get("laeuft"), (v5, verbraucht(), st2b.get("status")))
+    check("„Testweise taggen“ auf der schon getaggten PDF startet (kostenlos)", r.status_code == 200, (r.status_code, r.text[:200]))
+    tst = {}
+    for _ in range(90):
+        time.sleep(2)
+        tst = (s.get(B + f"/api/projects/{pid}/documents/{did2}/tagging", timeout=60).json().get("test") or {})
+        if not tst.get("laeuft") and (tst.get("struktur") or tst.get("fehler")):
+            break
+    check("Testlauf hat die Tags wirklich ersetzt (PDFix „Replace Existing Tags“: andere Struktur als vorher, 175 Elemente)",
+          tst.get("tags_ersetzt") is True and tst.get("vorher_elemente") == 175 and (tst.get("struktur") or {}).get("elemente") not in (None, 175),
+          {k: tst.get(k) for k in ("tags_ersetzt", "vorher_elemente", "struktur", "fehler")})
+    check("Testlauf kostet nichts", verbraucht() == v5, (v5, verbraucht()))
+    antrag_d = os.path.join(KORPUS, "antrag_pflege.pdf")
+    doc3 = hochladen(pid, "antrag_neu_taggen.pdf", open(antrag_d, "rb").read())
+    st3 = s.get(B + f"/api/projects/{pid}/documents/{doc3['id']}/tagging", timeout=60).json()
+    v6 = verbraucht()
+    r = s.post(B + f"/api/projects/{pid}/documents/{doc3['id']}/tagging", timeout=60)
+    check("„Neu taggen“ einer schon getaggten PDF (1 Seite) startet", r.status_code == 200 and st3.get("quelle_getaggt") is True, (r.status_code, r.text[:200]))
+    for _ in range(90):
+        time.sleep(2)
+        st3 = s.get(B + f"/api/projects/{pid}/documents/{doc3['id']}/tagging", timeout=60).json()
+        if not st3.get("laeuft"):
+            break
+    bericht3 = st3.get("bericht") or {}
+    check("Lauf fertig, Tags ersetzt, Preis wie Tagging gebucht (20 Credits)",
+          st3.get("status") == "fertig" and bericht3.get("tags_ersetzt") is True and verbraucht() - v6 == 20,
+          (st3.get("status"), {k: bericht3.get(k) for k in ("tags_ersetzt", "vorher", "nachher", "fehler")}, verbraucht() - v6))
+
+    print("== D2. Problemstellen mit Seite auch für „Bild ohne Alt-Text“ (Feedback 20261001 - 1, Punkt 10) ==")
+    doc4 = hochladen(pid, "actino_pruefung.pdf", open(act, "rb").read())
+    r = s.post(B + f"/api/projects/{pid}/documents/{doc4['id']}/abschluss", timeout=600)
+    det4 = {}
+    for _ in range(60):
+        det4 = s.get(B + f"/api/projects/{pid}/documents/{doc4['id']}/abschluss", timeout=300).json()
+        if det4.get("probleme") is not None and not det4.get("laeuft"):
+            break
+        time.sleep(3)
+    bild = [p for p in (det4.get("probleme") or []) if "7.3-1" in (p.get("regeln") or [])]
+    hp_seiten = [x["seite"] for x in ((det4.get("hoerprobe") or {}).get("seiten") or [])]
+    check("Prüfung erstellt; „Ein Bild hat keinen Alternativtext“ (7.3-1) hat jetzt eine Seite — Seitenansicht möglich",
+          r.status_code == 200 and bild and bild[0].get("seiten") and bild[0].get("seite") in hp_seiten,
+          (r.status_code, [(p.get("regeln"), p.get("seiten")) for p in (det4.get("probleme") or [])]))
 
     print("== E. Feldbeschriftungen (Lbl) in der Hörprobe ==")
     antrag = os.path.join(KORPUS, "antrag_pflege.pdf")
