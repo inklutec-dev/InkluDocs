@@ -361,6 +361,23 @@ try:
         check(f"Rahmen-Schutz {pfad}: X-Frame-Options DENY, frame-ancestors 'none' (N6)", h.get("x-frame-options") == "DENY"
               and "frame-ancestors 'none'" in h.get("content-security-policy", ""), dict(h))
 
+    print("== G4. Vormonats-Bestellung: Startseite und Guthaben aus einer Rechnung (Nachkontrolle Runde 3, R1/R2) ==")
+    import billing  # noqa: E402
+    from datetime import datetime, timezone
+    kunde.post("/api/express/warenkorb/dokumente", json={"document_ids": [docs[1]["id"]]})
+    r = kunde.post("/api/express/bestellen", json=mit_korb(dict(bestellung, idempotenz="e2e-express-vormonat")))
+    aid4 = r.json().get("auftrag_id")
+    jetzt = datetime.now(timezone.utc)
+    j, m = (jetzt.year, jetzt.month - 1) if jetzt.month > 1 else (jetzt.year - 1, 12)
+    sql("UPDATE express_auftraege SET bestellt_am = ? WHERE id = ?", f"{j:04d}-{m:02d}-28 10:00:00", aid4)
+    z = billing.pruefe_kontingent(k_id)
+    abo = kunde.get("/api/me").json()["abo"]
+    check("/api/me nennt nur die Vormerkung, die diesen Monat bindet (R2)", r.status_code == 200
+          and z["vorgemerkt"] > z["vorgemerkt_laufend"] and abo["vorgemerkt"] == z["vorgemerkt_laufend"], (z, abo))
+    check("/api/me: Rest + Zusatz-Credits - vorgemerkt = verfügbar = Sperre", z["verfuegbar_gesamt"]
+          == max(0, abo["rest"] + abo["pakete_rest"] - abo["vorgemerkt"]) and z["erlaubt"] == (z["verfuegbar_gesamt"] > 0), (z, abo))
+    voll.post(f"/api/admin/express/auftraege/{aid4}/stornieren", json={"grund": "Test"})
+
     print("== H. Recht wieder entziehen ==")
     r = voll.delete(f"/api/admin/express/bearbeiter/{b_id}")
     check("Recht entzogen", r.status_code == 200)

@@ -1150,6 +1150,183 @@ class Runde3(Basis):
         self.assertEqual(express.netz_kurz("2001:db8::1"), "2001:db8::/48")
 
 
+class Runde4(Basis):
+    """Nachkontrolle Runde 3 (05.10.2026): R1 — mit einer Vormonats-Bestellung, die Paket-Credits braucht, darf nichts
+    ungedeckt verbraucht werden; R2 — Sperre, Startseite und Meldungen nennen dieselbe Vormerkung wie das Guthaben.
+    Der Kunde verbraucht immer wieder, was angezeigt wird, bis 0 — die Summe muss stimmen, vor und nach der Lieferung."""
+
+    def _verbrauchen(self, uid, credits):
+        billing.verbuche(uid, "einzeln", "bild_generierung", credits=credits)
+
+    def _stimmig(self, uid):
+        """R2: rest + Pakete - vorgemerkt_laufend = verfuegbar = Sperre."""
+        z = billing.pruefe_kontingent(uid)
+        v = billing.verfuegbare_credits(uid)
+        self.assertEqual(v, max(0, z["rest"] + z["pakete_rest"] - z["vorgemerkt_laufend"]), z)
+        self.assertEqual(z["erlaubt"], v > 0, z)
+        return v
+
+    def _alles_verbrauchen(self, uid, schritt=None):
+        summe = 0
+        for _ in range(100):
+            v = self._stimmig(uid)
+            if not v:
+                return summe
+            c = min(v, schritt) if schritt else v
+            self._verbrauchen(uid, c)
+            summe += c
+        self.fail("verfuegbar wird nie 0")
+
+    def _paket(self, uid, credits):
+        _sql("INSERT INTO quota_pakete (user_id, groesse, verbleibend, quelle, notiz, verfaellt_am) VALUES (?, ?, ?, 'admin', 'Test', NULL)",
+             uid, credits, credits)
+
+    def _ereignis(self, konto, credits, monat_davor, uid=None):
+        j, m = _monat_davor(monat_davor)
+        _sql("INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, created_at) VALUES (?, ?, 'web', 'bild_generierung', ?, ?)",
+             uid or konto, konto, credits, f"{j:04d}-{m:02d}-15 10:00:00")
+
+    def _vormonats_auftrag(self, seiten, monat_davor=1, uid=1):
+        """Bestellen (Guthaben-Pruefung heute), dann auf einen frueheren Monat datieren."""
+        pid = self.pid if uid == 1 else self.fremd_pid
+        express.dokumente_hinzufuegen(uid, [self._dokument(pid, f"Auftrag{seiten}.pdf", seiten)])
+        aid = self._bestellen(f"runde4-{uid}-{seiten}-{monat_davor}", uid=uid)["auftrag_id"]
+        if monat_davor:
+            j, m = _monat_davor(monat_davor)
+            _sql("UPDATE express_auftraege SET bestellt_am = ? WHERE id = ?", f"{j:04d}-{m:02d}-28 10:00:00", aid)
+        return aid
+
+    def _single_szenario(self, monat_davor=1):
+        """Befund R1: Single (250), Vor-Vormonat voll verbraucht, 300 Paket-Credits, Bestellung 500 im Vormonat."""
+        _sql("UPDATE users SET plan = 'single', plan_gueltig_bis = '2099-12-31' WHERE id = 1")
+        self._ereignis(1, 250, monat_davor + 1)
+        self._paket(1, 300)
+        return self._vormonats_auftrag(10, monat_davor)                  # 10 x 50 = 500
+
+    def _abbuchungen(self):
+        return [(a["betrag"], a["created_at"][:7]) for a in _sql("SELECT betrag, created_at FROM paket_abbuchungen ORDER BY id")]
+
+    def test_r1_angezeigtes_wiederholt_verbrauchen_bis_0(self):
+        aid = self._single_szenario()
+        z = billing.pruefe_kontingent(1)
+        self.assertEqual((z["rest"], z["pakete_rest"], z["vorgemerkt"], z["vorgemerkt_laufend"]), (250, 300, 500, 250))
+        self.assertEqual(self._alles_verbrauchen(1), 300)               # Oktober-Summe: 250 Monat + 50 Paket
+        p = billing.aktion_pruefung(1, "bild_generierung")
+        self.assertFalse(p["erlaubt"])
+        self.assertEqual(p["vorgemerkt"], 300)                          # R2: Meldung nennt die bindende Vormerkung
+        self.assertIn("Weitere 300 Credits", billing.credits_fehlen_detail(p)["text"])
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((billing.pakete_rest(1), self._stimmig(1)), (0, 0))
+        j, m = _monat_davor(1)
+        jetzt = express._jetzt().strftime("%Y-%m")
+        self.assertEqual(self._abbuchungen(), [(250, f"{j:04d}-{m:02d}"), (50, jetzt)])
+
+    def test_r1_in_kleinen_schritten(self):
+        self._single_szenario()
+        self.assertEqual(self._alles_verbrauchen(1, schritt=70), 300)
+
+    def test_r1_storno_nach_monatswechsel_kostet_nichts(self):
+        aid = self._single_szenario()
+        self.assertEqual(self._alles_verbrauchen(1), 300)
+        express.stornieren(aid, PERSON, "Test")
+        self.assertEqual(self._stimmig(1), 500)                         # 500 Monat (mit Uebertrag) - 300 + 300 Pakete
+        self.assertEqual((billing.pakete_rest(1), self._abbuchungen()), (300, []))
+
+    def test_r1_lieferung_ohne_verbrauch_aendert_nichts(self):
+        aid = self._single_szenario()
+        vorher = self._stimmig(1)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((vorher, self._stimmig(1), billing.pakete_rest(1)), (300, 300, 50))
+
+    def test_r1_auftrag_ueber_zwei_monatswechsel(self):
+        """Bestellt vor zwei Monaten, dazwischen 300 verbraucht (das Angezeigte), geliefert erst jetzt: Der Monat dazwischen
+        hat seinen Uebertrag an die Bestellung verloren — sein Ueberhang (50) ist gebunden und wird beim Liefern gebucht."""
+        aid = self._single_szenario(monat_davor=2)
+        self._ereignis(1, 300, 1)
+        self.assertEqual(self._stimmig(1), 250)                         # 250 Monat + 300 Pakete - 250 - 50
+        self.assertEqual(self._alles_verbrauchen(1), 250)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((billing.pakete_rest(1), self._stimmig(1)), (0, 0))
+        j2, m2 = _monat_davor(2)
+        j1, m1 = _monat_davor(1)
+        self.assertEqual(self._abbuchungen(), [(250, f"{j2:04d}-{m2:02d}"), (50, f"{j1:04d}-{m1:02d}")])
+
+    def test_r1_zwei_monatswechsel_vorher_wie_nachher(self):
+        aid = self._single_szenario(monat_davor=2)
+        self._ereignis(1, 300, 1)
+        vorher = self._stimmig(1)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((vorher, self._stimmig(1)), (250, 250))
+
+    def test_r1_free_einzelkonto(self):
+        """Free ohne Domain-Buendelung (Freemailer), 100 Paket-Credits, Bestellung 100 im Vormonat (50 traegt der
+        Vormonat, 50 das Paket): im laufenden Monat genau 100."""
+        _sql("UPDATE users SET email = 'kundin-runde4@gmail.com' WHERE id = 1")
+        self._paket(1, 100)
+        aid = self._vormonats_auftrag(2)                                 # 2 x 50 = 100
+        self.assertIsNone(billing.pruefe_kontingent(1)["domain_pool"])
+        self.assertEqual(self._alles_verbrauchen(1), 100)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((billing.pakete_rest(1), self._stimmig(1)), (0, 0))
+
+    def test_r1_free_domain(self):
+        """Free-Domain: Die Vormonats-Bestellung von A bucht A's Paket (so bucht auch die Lieferung) — B bindet sie nicht.
+        Bestellungen DIESES Monats binden die ganze Domain (gemeinsames Volumen)."""
+        _sql("UPDATE users SET email = 'a@firma-runde4-beispiel.de' WHERE id = 1")
+        _sql("UPDATE users SET email = 'b@firma-runde4-beispiel.de' WHERE id = 2")
+        self._paket(1, 100)
+        aid = self._vormonats_auftrag(2)                                 # 100: 50 Vormonat, 50 Paket von A
+        self.assertEqual(billing.pruefe_kontingent(1)["domain_pool"], "firma-runde4-beispiel.de")
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (100, 50))
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((self._stimmig(1), self._stimmig(2), billing.pakete_rest(1)), (100, 50, 50))
+        self._vormonats_auftrag(1, monat_davor=0)                        # heute: 50 = das ganze Domain-Volumen
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (50, 0))
+
+    def test_r1_team_topf(self):
+        """Team (500): Mitglied bestellt aus dem Topf, Vor-Vormonat voll, 300 Paket-Credits beim Inhaber, Bestellung
+        800 im Vormonat (500 Monat + 300 Paket). Mitglied und /api/team-Rechnung zeigen dieselbe Zahl; im laufenden
+        Monat genau 500 (der Vormonat hat keinen Uebertrag mehr uebrig)."""
+        _sql("INSERT INTO users (id, email, password_hash, display_name, plan, plan_gueltig_bis) "
+             "VALUES (3, 'inhaber-runde4@beispiel.invalid', 'x', 'Inhaber', 'team', '2099-12-31')")
+        _sql("INSERT INTO team_mitgliedschaften (inhaber_id, mitglied_id) VALUES (3, 1)")
+        _sql("UPDATE users SET aktiver_topf = 3 WHERE id = 1")
+        self._ereignis(3, 500, 2)
+        self._paket(3, 300)
+        aid = self._vormonats_auftrag(16)                                # 16 x 50 = 800
+        self.assertEqual(_sql("SELECT konto_user_id FROM express_auftraege WHERE id = ?", aid)[0]["konto_user_id"], 3)
+        team = billing.guthaben(3, "team", 500, billing.monats_verbrauch(3))
+        self.assertEqual((team["verfuegbar_gesamt"], team["vorgemerkt_laufend"]), (500, 300))
+        self.assertEqual(self._stimmig(1), 500)
+        self.assertEqual(self._alles_verbrauchen(1), 500)
+        self.assertEqual(billing.guthaben(3, "team", 500, billing.monats_verbrauch(3))["verfuegbar_gesamt"], 0)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((billing.pakete_rest(3), self._stimmig(1)), (0, 0))
+
+    def test_r2_free_vormonat_erlaubt_wie_verfuegbar(self):
+        """Befund R2: Free, 50 im Vormonat vorgemerkt — vorher meldete pruefe_kontingent „erlaubt False“ bei 50 verfuegbar."""
+        self._vormonats_auftrag(1)                                       # 50, Free-Volumen des Vormonats
+        z = billing.pruefe_kontingent(1)
+        self.assertEqual((z["vorgemerkt"], z["vorgemerkt_laufend"], z["erlaubt"]), (50, 0, True))
+        self.assertEqual(self._stimmig(1), 50)
+
+    def test_r1_ohne_vormerkung_wie_bisher(self):
+        """Ohne offene Auftraege bleibt alles beim Alten: Monat + Uebertrag + Pakete."""
+        _sql("UPDATE users SET plan = 'single', plan_gueltig_bis = '2099-12-31' WHERE id = 1")
+        self._ereignis(1, 100, 1)
+        self._paket(1, 40)
+        z = billing.pruefe_kontingent(1)
+        self.assertEqual((z["uebertrag"], z["rest"], z["vorgemerkt_laufend"]), (150, 400, 0))
+        self.assertEqual(self._alles_verbrauchen(1, schritt=90), 440)
+        self.assertEqual(billing.pakete_rest(1), 0)
+
 class NurPdf(unittest.TestCase):
     def test_heute_nur_pdf(self):
         self.assertEqual([t.schluessel for t in express.angebotene_dateitypen()], ["pdf"])

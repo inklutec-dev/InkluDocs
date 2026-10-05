@@ -334,6 +334,21 @@ try:
         js_fehler[:] = [x for x in js_fehler if "status of 503" not in x]     # die 503 oben war gewollt (nachgestellt)
         axe(pg, "Auftragsübersicht geliefert")
 
+        # Ein stornierter Auftrag daneben (Nachkontrolle Runde 3: Abzeichen „Storniert“ hatte 4,34:1) — direkt im Container
+        # bestellt und storniert, ohne Mails.
+        aid_storno = int(im_container(f"""
+import express
+from database import get_user_by_email, get_db
+uid = get_user_by_email({KUNDE!r})['id']
+c = get_db(); did = c.execute("SELECT d.id FROM documents d JOIN projects p ON p.id = d.project_id WHERE p.user_id = ? "
+                              "AND d.original_filename = 'Flyer fiktiv.pdf'", (uid,)).fetchone()[0]; c.close()
+express.dokumente_hinzufuegen(uid, [did])
+w = express.warenkorb(uid)
+r = express.bestellen(uid, ansprechpartner='Kim Muster (fiktiv)', telefon='', hinweise='', bedingungen=True,
+                      idempotenz='ui-storno-%d' % w['id'], korb_id=w['id'], erwartete_credits=w['credits'], fassung=w['fassung'])
+express.stornieren(r['auftrag_id'], {{'id': 0, 'name': 'UI-Test'}}, 'Test: Abzeichen Storniert')
+print(r['auftrag_id'])
+""").splitlines()[-1])
         # ── Kunde: „Meine Aufträge“ als Karten wie die Dokumente, umbenennen und löschen (Punkte 1 und 2) ──
         pg.goto(f"{BASE}/express", wait_until="networkidle")
         pg.wait_for_timeout(1500)
@@ -349,7 +364,10 @@ try:
               and inhalte.locator("a", has_text="Barrierefreie PDF herunterladen").count() == 1, inhalte.inner_text())
         knopf = karte.locator("button", has_text="Umbenennen")
         check("Knöpfe Umbenennen und Löschen (geliefert)", knopf.count() == 1 and karte.locator("button", has_text="Löschen").count() == 1)
-        axe(pg, "Meine Aufträge als Karten")
+        abz = pg.locator(f"#exa_karte_{aid_storno} .badge")
+        check("Abzeichen „Storniert“ mit dunklerer Schrift (#475569, 6,9:1)", abz.count() == 1 and "Storniert" in abz.inner_text()
+              and abz.evaluate("e => getComputedStyle(e).color") == "rgb(71, 85, 105)", abz.count() and abz.evaluate("e => getComputedStyle(e).color"))
+        axe(pg, "Meine Aufträge als Karten (mit storniertem Auftrag)")
         knopf.click()
         pg.wait_for_timeout(300)
         check("Umbenennen: Dialog, Fokus im Feld", pg.locator("#exaRenameDialog").evaluate("d => d.open") and fokus(pg) == "exaRenameName")

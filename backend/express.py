@@ -1533,6 +1533,11 @@ def liefern(auftrag_id: int, person: dict, trotz_befunden: bool = False) -> dict
                              "VALUES (?, ?, 'express', ?, ?, NULL)", (user_id, konto, aktion, credits))
         if frueherer_monat:
             billing.pakete_abbuchen_fuer_monat(conn, konto, bestellt)
+            # Lag der Auftrag ueber mehr als einen Monatswechsel offen, fehlt der aufgebrauchte Uebertrag auch in den
+            # Monaten dazwischen — deren Ueberhang ebenso nachbuchen (Nachkontrolle Runde 3, R1; so rechnet auch
+            # billing._express_bindung vorher).
+            for monat in billing._monate(bestellt[:7], _jetzt().strftime("%Y-%m"))[1:]:
+                billing.pakete_abbuchen_fuer_monat(conn, konto, f"{monat}-01 00:00:00")
         # Immer auch der laufende Monat (Nachpruefung Entwicklung 05.10.2026, N1): die rueckdatierten Ereignisse senken den
         # Uebertrag in diesen Monat; ein so entstandener Ueberhang geht gleich von den Paketen ab, nicht erst bei der
         # naechsten Buchung (sonst zeigte InkluDocs bis dahin zu viel Guthaben).

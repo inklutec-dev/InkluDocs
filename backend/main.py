@@ -974,8 +974,9 @@ async def me(user: dict = Depends(get_current_user)):
             "verbraucht": _verbraucht,
             "rest": None if _verfuegbar is None else max(0, _verfuegbar - _verbraucht),
             "pakete_rest": abo_info.get("pakete_rest", 0),
-            # Express (05.10.2026): fuer offene Auftraege vorgemerkt — steht nicht mehr zur Verfuegung
-            "vorgemerkt": abo_info.get("vorgemerkt", 0),
+            # Express (05.10.2026): fuer offene Auftraege vorgemerkt — steht nicht mehr zur Verfuegung. Nur der Teil, der
+            # DIESEN Monat bindet (Nachkontrolle Runde 3, R2): rest + pakete_rest - vorgemerkt = verfuegbar.
+            "vorgemerkt": abo_info.get("vorgemerkt_laufend", 0),
             "zeitraum_ende": abo_info.get("zeitraum_ende"),
             # Punkt 2 (04.08.2026): Free-Volumen ist bei Firmen-Domains
             # gebuendelt — die Oberflaeche sagt dann ehrlich, dass der
@@ -2015,10 +2016,9 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
     inhaber = _require_team_inhaber(user)
     plan = billing.effektiver_plan(inhaber)
     kontingent = billing.PLAN_KONTINGENTE[plan]
-    uebertrag = billing._uebertrag(inhaber["id"], plan, kontingent, mit_vormerkung=True)
     verbraucht = billing.monats_verbrauch(inhaber["id"])
-    pakete = billing.pakete_rest(inhaber["id"])
-    verfuegbar = kontingent + uebertrag
+    # Dieselbe Rechnung wie verfuegbare_credits (Nachkontrolle Runde 3, R1/R2) — nur fuer das Inhaber-Konto.
+    g = billing.guthaben(inhaber["id"], plan, kontingent, verbraucht)
     conn = get_db()
     try:
         # Inhaber + Mitglieder in einer Abfrage; verbraucht_monat je Person =
@@ -2045,25 +2045,20 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
         m = dict(r)
         m["ist_inhaber"] = (r["id"] == inhaber["id"])
         mitglieder.append(m)
-    # Express (Pruefung Entwicklung 05.10.2026, Befund 15): Credits, die fuer offene Express-Auftraege aus diesem Topf
-    # vorgemerkt sind, stehen nicht mehr zur Verfuegung — wie bei billing.verfuegbare_credits.
-    vorgemerkt = billing.vorgemerkt(inhaber["id"])
-    # Nur der Teil, der diesen Monat bindet (Nachpruefung 05.10.2026, N2) — wie billing.verfuegbare_credits.
-    vorgemerkt_laufend = billing.vormerkung_laufend(inhaber["id"], plan, kontingent) if vorgemerkt else 0
-    rest = max(0, verfuegbar - verbraucht)
+    # Express (Befund 15, R2): vorgemerkt = was offene Express-Auftraege aus diesem Topf DIESEN Monat binden.
     return {
         "ok": True,
         "plan": plan,
         "team_name": inhaber.get("team_name") or "",
         "mitglieder": mitglieder,
         "kontingent": kontingent,
-        "uebertrag": uebertrag,
-        "verfuegbar_monat": verfuegbar,
+        "uebertrag": g["uebertrag"],
+        "verfuegbar_monat": g["verfuegbar_monat"],
         "verbraucht_gesamt": verbraucht,
-        "rest": rest,
-        "vorgemerkt": vorgemerkt,
-        "verfuegbar_nach_vormerkung": max(0, rest + pakete - vorgemerkt_laufend),
-        "pakete_rest": pakete,
+        "rest": g["rest"],
+        "vorgemerkt": g["vorgemerkt_laufend"],
+        "verfuegbar_nach_vormerkung": g["verfuegbar_gesamt"],
+        "pakete_rest": g["pakete_rest"],
         "zeitraum_ende": billing._monatsende_iso(),
         "sitze_belegt": len(mitglieder),
         "sitze_inklusive": billing.sitze_fuer_plan(plan),

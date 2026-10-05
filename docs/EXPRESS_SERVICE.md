@@ -116,14 +116,26 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   Liegt die Bestellung in einem früheren Kalendermonat, tragen die Verbrauchs-Ereignisse den Bestellzeitpunkt, und ein
   Überhang wird für jenen Monat von den Paketen abgebucht (`billing.pakete_abbuchen_fuer_monat`). Sonst verfiele beim
   Monatswechsel Übertrag, den der Kunde im Bestellmonat nicht nutzen durfte.
-- **Vormerkungen über den Monatswechsel** (Nachprüfung Entwicklung 05.10.2026, N1 und N2): Eine offene Bestellung
-  aus einem Vormonat zählt bei der Guthaben-Prüfung im Übertrag ihres Bestellmonats wie Verbrauch
-  (`billing._uebertrag(…, mit_vormerkung=True)`); gegen den laufenden Monat zählt nur, was der Bestellmonat nicht deckt
-  (`billing.vormerkung_laufend`). So sperrt die Vormerkung nach dem Monatswechsel nicht das neue Budget, und das
-  Guthaben ist vor und nach der Lieferung gleich. Buchungswege (Paket-Abbuchungen) rechnen dagegen nur mit echten
-  Ereignissen — ein späterer Storno kostet so keine Paket-Credits. Beim Liefern eines Vormonats-Auftrags wird außer dem
-  Bestellmonat auch der laufende Monat abgeglichen (`_pakete_abbuchen`), damit kein Phantom-Guthaben stehen bleibt.
-  `pruefe_kontingent` liefert dazu `vorgemerkt` (alle offenen) und `vorgemerkt_laufend` (was diesen Monat bindet).
+- **Eine Rechnung für „verfügbar“** (Nachkontrolle Runde 3, R1/R2): `billing.guthaben(konto, plan, kontingent,
+  verbraucht, domain)` ist die einzige Stelle, die das Guthaben rechnet. `pruefe_kontingent` (damit
+  `verfuegbare_credits`, jede Werkzeug-Prüfung, die Sperre `erlaubt`, `/api/me` und die Startseite) und `/api/team`
+  lesen nur daraus. Es gilt immer `verfuegbar = max(0, rest + Zusatz-Credits − vorgemerkt_laufend)`.
+  - `rest` ist das Monatsbudget, in dem offene Vormonats-Bestellungen wie Verbrauch ihres Bestellmonats zählen
+    (`_uebertrag(…, mit_vormerkung=True)`, N2) — so sieht der Übertrag nach der Lieferung aus.
+  - `vorgemerkt` = alle offenen Express-Credits des Topfs (bzw. der Free-Domain); `vorgemerkt_laufend` = was davon das
+    Guthaben dieses Monats bindet (`billing._express_bindung`): Bestellungen dieses Monats ganz (bei Free-Domains die
+    der ganzen Domain), dazu je Monat seit der ältesten offenen Vormonats-Bestellung der Paket-Überhang, den die
+    Lieferung dort noch nachbucht. Das ist im Bestellmonat der Teil der Bestellung, den sein Budget nicht trägt, und in
+    den Monaten danach — auch im laufenden — der Verbrauch über dem kleineren Budget mit Vormerkung, den die
+    Buchungswege nach dem echten Budget noch nicht von den Paketen abgebucht haben (R1: sonst ließ sich dieser Teil
+    ungedeckt verbrauchen).
+  - Buchungswege (Paket-Abbuchungen) rechnen weiter nur mit echten Ereignissen — ein späterer Storno kostet so keine
+    Paket-Credits. Beim Liefern eines Vormonats-Auftrags werden Bestellmonat, die Monate dazwischen (Auftrag über mehr als
+    einen Monatswechsel offen) und der laufende Monat abgeglichen (`pakete_abbuchen_fuer_monat`, `_pakete_abbuchen`).
+  - Ergebnis: Das Guthaben ist vor und nach der Lieferung gleich, und wer immer wieder verbraucht, was angezeigt wird,
+    kommt genau auf das, was Monatsbudgets und Pakete hergeben (Tests `Runde4`).
+  - Free-Domains: Pakete gehören einem Konto. Den Paket-Teil einer Vormonats-Bestellung bindet darum nur das bestellende
+    Konto (so bucht auch die Lieferung ab); die anderen Konten der Domain sperrt er nicht.
 - **Bestellen in Schritten** (Befunde 2–4, 18): Der Korb wird zuerst eingefroren (Zwischenstand `bestellung` — Änderungen
   aus einem zweiten Tab landen in einem neuen Korb), Seiten frisch gezählt, Summe und Fassung mit dem verglichen, was
   der Kunde gesehen hat (sonst 409), das Guthaben **streng** geprüft (ein Datenbankfehler sperrt mit 503, statt alles zu
@@ -134,10 +146,11 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   Tab), antwortet der Server 409 „veraltet“ mit dem aktuellen (leeren) Korb, und die Seite lädt ihren Stand neu (N4).
 - Preis und Seiten werden beim Bestellen festgeschrieben; spätere Preisänderungen betreffen nur neue Aufträge.
   Team-Konten: es zahlt der Topf, aus dem das Konto beim Bestellen arbeitet (`billing._konto_fuer`); die Topf-Übersicht
-  des Inhabers (`/api/team`) nennt `vorgemerkt` und `verfuegbar_nach_vormerkung`. Free-Konten einer Firmen-Domain teilen
+  des Inhabers (`/api/team`) nennt `vorgemerkt` (bindend) und `verfuegbar_nach_vormerkung` — aus `billing.guthaben`. Free-Konten einer Firmen-Domain teilen
   sich das Volumen — und damit auch die Vormerkung (`billing.vorgemerkt_domain`, Befund 7).
-- Startseite und Abo-Seite nennen „Davon für Express-Aufträge vorgemerkt: N Credits“; reicht das Guthaben für eine andere
-  Aktion nicht, nennt die Meldung die Vormerkung mit.
+- Startseite und Abo-Seite nennen „Davon für Express-Aufträge vorgemerkt: N Credits“ — N ist `vorgemerkt_laufend`, damit
+  Monatsrest + Zusatz-Credits − N genau das verfügbare Guthaben ergibt (R2); reicht das Guthaben für eine andere Aktion
+  nicht, nennt die Meldung dieselbe Zahl.
 - Grenze: Das Guthaben wird beim Bestellen geprüft. Eine im selben Augenblick parallel laufende Generierung kann es
   noch verbrauchen; dann bucht die Lieferung trotzdem ab (Überhang wie bei jeder Aktion), nie doppelt.
 
@@ -343,7 +356,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
 ## Dateien
 
 - Kern mit `DATEITYPEN`/`LEISTUNGEN`: `backend/express.py`; Endpunkte, Mails, Erinnerungsschleife, Kontolöschung:
-  `backend/express_api.py`; Guthaben: `backend/billing.py` (`vorgemerkt`, `vorgemerkt_domain`,
+  `backend/express_api.py`; Guthaben: `backend/billing.py` (`guthaben`, `_express_bindung`, `vorgemerkt`, `vorgemerkt_domain`,
   `pakete_abbuchen_fuer_monat`, `EXPRESS_OFFEN`); Schalter: `backend/funktionen.py` (`EXPRESS`)
 - Seiten: `templates/express.html`, `express_auftrag.html`, `express_bedingungen.html`, `verwaltung_express.html`,
   `verwaltung_express_auftrag.html`; Hochlade-Komponente `frontend/hochladefeld.js` (Vorbild `app.html`
@@ -353,7 +366,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
 
 ## Tests
 
-- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 74): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
+- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 85): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
   Vormerkung und Idempotenz (auch 4 gleichzeitige Klicks), Vormerkung sperrt andere Ausgaben, Liefern bucht genau einmal
   (auch 4 gleichzeitig), Storno, Dateinamen nie Pfad, Upload-Prüfung, Downloads erst nach Lieferung, Frist ruht bei
   Rückfrage, Erinnerung/Überfällig je einmal, Nachweis-OOXML, Kontolöschung, Einstellungen, Bearbeiter, Schalter.
@@ -366,14 +379,19 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   Buchungsnachweis und 404 danach, Dokumente in der Liste, „Nur prüfen“ abgeschaltet (nicht wählbar, alte Position
   wechselt), ein Häkchen, positive Meldungen, N1 (laufender Monat beim Liefern abgeglichen), N2 (Vormonats-Vormerkung,
   Single vor und nach der Lieferung gleich), N3, N4, N7, Prüftext für Bearbeiter. Hilfsfunktion `_pruefen_an()` schaltet
-  „Nur prüfen“ für die alten Tests im Test wieder ein.
-- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 127): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
+  „Nur prüfen“ für die alten Tests im Test wieder ein. Klasse `Runde4` (Nachkontrolle Runde 3): der Kunde verbraucht
+  immer wieder, was angezeigt wird, bis 0 — Summe genau wie Monatsbudget + Pakete abzüglich Bestellung (Single, auch in
+  kleinen Schritten, Free-Einzelkonto, Free-Domain, Team-Topf), Storno nach dem Monatswechsel kostet nichts, Lieferung
+  ändert das Guthaben nicht, Auftrag über zwei Monatswechsel, Sperre und Meldung nennen dieselbe Zahl (R2), ohne
+  Vormerkung alles wie bisher.
+- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 129): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
   IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno,
   dazu Preisänderung und alter Schlüssel (409), kaputter JSON-Körper (400), Feldfehler der Einstellungen, no-store,
   Projektliste, ZIP_STORED, Prüfergebnis für Kunden; Abschnitt G2 Umbenennen/Löschen (fremd 404, laufend 409, danach
   404, Verwaltung sieht Nachweis), G3 zweiter Tab 409 „veraltet“ und Einrahmen-Kopfzeilen auf `/express`,
-  `/express/warenkorb`, `/app`, `/api/express/stand`
-- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 88): Link im Projekt, Auswahl, Hochlade-Komponente
+  `/express/warenkorb`, `/app`, `/api/express/stand`; G4 Vormonats-Bestellung: `/api/me` nennt die bindende
+  Vormerkung, Rest + Zusatz-Credits − vorgemerkt = verfügbar = Sperre
+- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 89): Link im Projekt, Auswahl, Hochlade-Komponente
   (Etikett-Knopf, Fokusring, Dateiname in der Statuszeile, Fehler am Feld) beim Kunden und in der Verwaltung,
   Leistung entprellt, Entfernen mit Meldung und Fokus, Pflichtfelder und Häkchen mit Fehler am Feld, Fokusring an
   „Zahlungspflichtig bestellen“, Rahmen der Eingabefelder, keine Ansage beim Laden, Bestellen, Danke-Meldung (nicht im
@@ -381,10 +399,12 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   Beschreibung und Pflichtfeld, Upload, Liefern), Download, PDF-Fehler neben dem Link; Runde 3: keine Leistungswahl,
   nur Summen, kein „nur PDF“, ein Häkchen (Fehler verschwindet beim Ankreuzen), Fokusring per Tab, eindeutige
   Hochlade-Namen ohne Landmarke, Auftragskarten mit Umbenennen-/Lösch-Dialog, Verwaltung sieht „vom Kunden gelöscht“,
-  Fokusring an Feldern und Kästchen auf Anmelden, Registrieren und Passwort vergessen — axe 0 Verstöße
+  Fokusring an Feldern und Kästchen auf Anmelden, Registrieren und Passwort vergessen; Runde 4: stornierter Auftrag
+  daneben, Abzeichen „Storniert“ mit #475569 (6,9:1) — axe 0 Verstöße
 - `tests/e2e/ui_express_korb.py` (25): Knopf am Dokument, Navigationseintrag in drei Modi, H1 „Express-Warenkorb“ auf
   `/express/warenkorb` passend zum Seitentitel (N5)
 - `tests/e2e/ui_bildschirmfotos.py`: Fotos vorher/nachher der globalen CSS-Änderungen (Projekt-Hochladefläche, Knöpfe,
   Formulare) mit berechneten Stilen
-- `verify_abo3.py` (Server, Team-Reihe) prüft die Vormerkung im Team-Topf (`/api/team`)
+- `verify_abo3.py` (Server, Team-Reihe) prüft die Vormerkung im Team-Topf (`/api/team`), nach dem Monatswechsel
+  dieselbe Zahl wie das Guthaben des Mitglieds
 - `tests/e2e/ui_smoke.py` kennt `/express`, `/express/bedingungen`, `/verwaltung/express`
