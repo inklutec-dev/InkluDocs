@@ -40,21 +40,48 @@ Gemessen vorher (Nachbau mit 7 fiktiven PDF):
 - Alle drei laufen im Executor. Die Route get_project bleibt `async def`, weil die Public API v1 sie direkt mit await
   aufruft (`api_dokumente_v1._items_list`).
 - app.html `showProject`: zuerst `/kopf`, die Bildliste nur in der Ansicht Alt-Texte. Steht `?ansicht=alttexte` in der
-  Adresse, wird gleich die Bildliste geholt. Ein Zähler `_showProjectLauf` sorgt dafür, dass bei schnellem Wechseln nur
-  der jüngste Aufruf zeichnet.
+  Adresse, wird gleich die Bildliste geholt.
+- Schnelles Wechseln (Korrektur 05.10.2026 nach der Prüfung Barrierefreiheit, Befunde 1 und 2):
+  - Der Zähler `_showProjectLauf` gilt für alle Ansichten. Die Unteransichten (dokument.js, abschluss.js,
+    uebersetzen.js, formular.js) merken sich beim Start `ansichtLaufMerken()` und zeichnen nur, solange
+    `ansichtNochAktuell(lauf)` gilt.
+  - `wechsleAnsicht` und Browser-Zurück/Vor zählen `_wechselLauf`. Nur der jüngste Wechsel setzt die Adresse, den
+    Fokus auf die H1 und genau eine Ansage („Ansicht … geöffnet.“). Das gilt seit der Korrektur auch für Zurück/Vor
+    (Befund 8).
 - Seitenansicht mit `loading="lazy"`: In einer zugeklappten Klappe lädt der Browser sie erst beim Aufklappen.
 - Seitentext: Wird die Seite aufgeklappt, holt die Ansicht ihn im Hintergrund (`seitentextVorladen`). Spätestens beim
   Aufklappen der Klappe „Seitentext anzeigen“ wird er geholt (`seitentextLaden`).
   - Weg für Screenreader: Der Fokus bleibt auf dem Schalter. Bis der Text da ist, steht im Bereich (role=region, Name
-    „Seitentext“) „Seitentext wird geladen …“ mit aria-busy. Nur wenn das Laden länger als 1 s dauert, kommt die kurze
-    Meldung „Seitentext geladen.“
-  - Bei einem Fehler steht ein Satz im Bereich; erneutes Aufklappen versucht es noch einmal.
+    „Seitentext“) „Seitentext wird geladen …“ mit aria-busy.
+  - Ansage „Seitentext geladen.“, wenn die Klappe offen ist und man ab dem Aufklappen mindestens 500 ms warten musste
+    (`SEITENTEXT_ANSAGE_AB_MS`). Ein Merker (`_wartetSeit`) sorgt dafür, dass das auch gilt, wenn das Vorladen schon lief
+    (Befund 3).
+  - Bei einem Fehler steht ein Satz im Bereich und wird angesagt, wenn die Klappe offen ist (Befund 5). Erneutes
+    Aufklappen versucht es noch einmal.
+- Seitenansicht: Das Bild heißt „Seitenansicht: Seite N als Bild“. Darunter steht, dass es den Text der Seite unter
+  „Seitentext anzeigen“ gibt (Befund 9).
+- Seitentitel mit Projektname auch ohne Ansichts-Wahl (Gastansicht, Grafik, Web, eigenständige Formulare;
+  `seitentitelProjekt`, Befund 10).
+- Übersetzung: Die Statuszeile des Filters ist keine Live-Region mehr. Beim Öffnen kommt nur „Ansicht Übersetzung
+  geöffnet.“, bei einer Filteränderung einmal die Zahl (Befund 6).
 - Die Polls (Upload `projectSnapshot`/`waitForExtraction`, `updateProjectHeader`, formular.js) fragen `/kopf` ab statt der
   ganzen Antwort.
 - Feste 900 ms entfallen. Textfelder melden ihre anstehende Speicherung bei `speicherungVormerken(schluessel, fn)` an
-  (app.html: Alt-Text; formular.js: Quickinfo; uebersetzen.js: Übersetzung). `wechsleAnsicht` und Browser-Zurück/Vor
-  rufen `alleAusstehendenSpeichern()`: Offene Speicherungen gehen sofort raus, abgeschickte werden abgewartet
-  (Obergrenze 8 s). Ohne offene Eingabe kostet das 0 ms.
+  (app.html: Alt-Text; formular.js: Quickinfo; uebersetzen.js: Übersetzung).
+  - `fn({ keepalive })` liefert true (gespeichert) oder false (Fehler, Meldung am Feld). Beim Alt-Text steht bei einem
+    Fehler nie „Gespeichert“, sondern „Nicht gespeichert“, dazu eine Ansage.
+  - `wechsleAnsicht` und Browser-Zurück/Vor rufen `alleAusstehendenSpeichern()`: Offene Speicherungen gehen sofort raus,
+    abgeschickte werden abgewartet (Obergrenze 8 s). Zurückgegeben wird die Zahl der Fehlschläge. Ohne offene Eingabe
+    kostet das 0 ms.
+  - Schlug Speichern fehl (Befund 4), bleibt die Ansicht offen und die Eingabe im Feld. Unter dem Projektkopf steht
+    sichtbar und angesagt: „Achtung: 1 Eingabe konnte nicht gespeichert werden. Die Ansicht bleibt offen, damit nichts
+    verloren geht. Ein zweiter Klick wechselt ohne Speichern.“ Bei Zurück/Vor ist die Adresse schon gewechselt; dort
+    steht dieselbe Meldung in der neuen Ansicht und hängt an der Ansage.
+  - Seite verlassen (Befund 7 bzw. Entwicklung 1):
+    - Bei `pagehide` und `visibilitychange` (verdeckt) gehen anstehende Speicherungen sofort mit `fetch(…, { keepalive:
+      true })` raus. Das deckt Neuladen, Tab schließen und Zurück auf eine andere Seite ab.
+    - Interne Links (Seitenleiste, Ablage …) warten vorher auf das Speichern; bei einem Fehler bleibt die Seite offen.
+    - „Abmelden“ (dashboard.js) speichert vorher, sonst würde die Anfrage nach dem Abmelden abgewiesen.
 - Ansicht „Dokument“: `tagging_api` merkt Seitenzahl, Struktur (`tag_statistik`), Metadaten und bei Rohdatei
   `quelle_getaggt` in `documents.struktur_json`.
   - Gültig, solange `struktur_stand` passt (Pfad, Änderungszeit und Größe von original_path und roh_path, plus
@@ -95,6 +122,14 @@ Gemessen vorher (Nachbau mit 7 fiktiven PDF):
 
 ## Migration und Rückweg
 
+PFLICHT-REIHENFOLGE (Prüfung Entwicklung 05.10.2026, Befund 2): erst der neue Code, dann die Migration. Phase B nie,
+solange noch ein Container mit ALTEM Code auf dieselbe Datenbank schreibt.
+- Alter Code legt Bilder ohne Verweis an. Die Prüfung meldet sie getrennt als „noch_ohne_verweis“; das ist kein Befund
+  und kein Verlust, Phase B lässt sie unangetastet.
+- Ein weiterer Lauf von `--alles` nimmt sie mit, sobald nur noch neuer Code läuft.
+- Der Fingerabdruck vergleicht nur Bilder, die vorher und nachher existieren. Im Betrieb gelöschte oder neu angelegte
+  Bilder sind keine Abweichung.
+
 Ablauf: Container mit dem neuen Code starten (init_db legt Tabelle, Spalten und Indizes an), dann im Container:
 
     docker exec -w /app <container> python3 scripts/texte_migration.py                    # Probe, ändert nichts
@@ -116,8 +151,39 @@ Rückweg ohne Wiederherstellen der Sicherung: `--zurueck` füllt `context_text` 
 auf (vorher wieder eine Sicherung). Ein erneutes `--alles` leert sie wieder.
 
 WICHTIG beim Zurückrollen des CODES: Der alte Code liest nur die alten Spalten. Wer nach Phase B auf einen Stand vor
-diesem Umbau zurückgeht, muss VORHER `--zurueck` laufen lassen, sonst bekäme die KI keinen Kontext mehr. Neuer Code mit
-nicht migrierter Datenbank ist dagegen jederzeit in Ordnung (Rückfall auf die alten Spalten).
+diesem Umbau zurückgeht, muss VORHER `--zurueck` laufen lassen.
+- Sonst bekäme die KI keinen Kontext mehr: Die Alt-Texte würden still schlechter, und der Cache-Schlüssel ändert sich.
+- Neuer Code mit nicht migrierter Datenbank ist dagegen jederzeit in Ordnung (Rückfall auf die alten Spalten).
+
+Tägliche Prüfung (Befund 3 der Prüfung Entwicklung): Der Abo-Tageslauf ruft `_texte_pruefung_tageslauf`
+(`projekt_texte.pruefen`) auf.
+- Das Ergebnis steht im Log und in system_kv `texte_pruefung` (`ok`, abweichend, ins_leere, fremdes_projekt,
+  noch_ohne_verweis, Zeit).
+- Ein Verweis ins Leere fällt außerdem beim Lesen als Log-Warnung „projekt_texte: Verweis ins Leere“ auf.
+- Im Code gibt es keinen Weg dahin; denkbar nur nach einer Teil-Wiederherstellung oder einem Handeingriff. Dann aus der
+  Sicherung `inkludocs.db.bak-pre-texte-…` wiederherstellen.
+
+## Rollout auf Prod und Demo (nur auf Steves Wort)
+
+Prod (Container `inkludocs`, eigenes Volume):
+1. Sicherung der Datenbank (Backup-API, integrity_check).
+2. Rebuild mit dem neuen Code. init_db legt Tabelle, Spalten und Indizes an; der Code liest die alten Spalten weiter.
+3. Prüfen, dass KEIN anderer Container mit altem Code auf diese Datenbank schreibt (Prod hat ein eigenes Volume).
+4. `texte_migration.py` (Probe), dann `--alles --vacuum`.
+5. Erwartung nach dem Trockenlauf auf der Prod-Kopie vom 05.10.2026:
+   - 6.148 Bilder in 287 Projekten, 2,0 s;
+   - 4.056 Texte mit 4,76 Mio. Zeichen;
+   - Datei 94,0 → 18,2 MB;
+   - Fingerabdruck 0 Abweichungen.
+6. Danach die Messreihe kurz gegen Prod laufen lassen, nur lesende Wechsel mit dem Testkonto. Am nächsten Tag
+   `texte_pruefung` in system_kv ansehen.
+
+Demo (Container `inkludocs-demo`, EIGENES Volume): Die Prod-Migration erreicht die Demo nicht. Nach dem Demo-Rebuild
+dieselben Schritte mit `docker exec -w /app inkludocs-demo …`. Bis dahin liest der neue Code dort korrekt die alten
+Spalten.
+
+Rückbau: Code nur zurückrollen, nachdem `texte_migration.py --zurueck` gelaufen ist (siehe oben). Das gilt für Prod und
+Demo getrennt.
 
 Probe auf einer Kopie der Staging-Datenbank (05.10.2026, 2.717 Bilder):
 - Phase A 1,1 s, Phase B 0,5 s, Prüfung 0, Fingerabdruck 0 Abweichungen;
@@ -166,6 +232,10 @@ Gemessen nach dem Umbau (Wegwerf-Container mit Kopie der Staging-Daten, 7 PDF, n
   Abruf.
 - Neue lange Texte je Bild (Kontext, Seitentext und Ähnliches) über `projekt_texte.text_ablegen` ablegen, lesen mit
   `bild_kontext`/`bild_seitentext` bzw. `kontext_sql`. Nie `img["context_text"]` direkt lesen.
-- Neue Auto-Speicher-Felder melden sich bei `speicherungVormerken` an, damit ein Ansichtswechsel nichts verliert.
+- Neue Auto-Speicher-Felder melden sich bei `speicherungVormerken(schluessel, (o) => speichern(…, o))` an. Die
+  Speicherfunktion reicht `o.keepalive` an fetch weiter und liefert true/false. Nur so verliert weder ein Wechsel noch
+  das Verlassen der Seite etwas.
+- Neue Unteransichten merken sich beim Start `ansichtLaufMerken()` und prüfen vor jedem Zeichnen
+  `ansichtNochAktuell(lauf)`.
 - Ansichten laden ihre Daten selbst über eigene Abrufe; `showProject` braucht für die Weiche nur `/kopf`.
 - Synchrone Datei- und Datenbankarbeit in Routen gehört in den Executor (Verbindung im Worker öffnen).

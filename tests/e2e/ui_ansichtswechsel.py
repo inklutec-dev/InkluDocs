@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
-"""Klicktest Ansichtswechsel (05.10.2026, docs/ANSICHTEN_LEISTUNG.md):
-  A. Tippen und SOFORT wechseln — keine Eingabe geht verloren (Alt-Text -> Dokument, Alt-Text -> Browser-Zurueck,
-     Quickinfo -> Dokument); die feste Wartezeit von 900 ms ist weg (Wechsel ohne Eingabe schnell).
-  B. Ansicht Alt-Texte: Seitenansicht und Seitentext erst beim Aufklappen, Platzhalter mit aria-busy, Fokus bleibt
-     auf dem Schalter, Text danach im benannten Bereich; Projektantwort ohne KI-Kontext und Serverpfade.
-  C. Gastansicht (Freigabe): Seitentext beim Aufklappen ueber den Gast-Abruf.
+"""Klicktest Ansichtswechsel (05.10.2026, docs/ANSICHTEN_LEISTUNG.md), erweitert um alle Befunde der Pruefungen
+Barrierefreiheit und Entwicklung (Korrekturrunde 05.10.2026):
+  A. Tippen und SOFORT wechseln (Alt-Text, Browser-Vor, Quickinfo) — keine Eingabe geht verloren; keine feste Wartezeit.
+  B. Ansicht Alt-Texte: Seitenansicht/Seitentext beim Aufklappen, Platzhalter mit aria-busy, Fokus bleibt; Seitenbild
+     mit Namen und Hinweis (Befund 9); Projektantwort ohne KI-Kontext und Serverpfade.
+  C. Gastansicht: Seitentext ueber den Gastweg, Seitentitel mit Projektname (Befund 10).
+  D. Schneller Doppelwechsel (40 und 250 ms): Adresse, Bildschirm, Fokus und EINE Ansage gehoeren zum zweiten Klick
+     (Befunde 1, 2).
+  E. Browser-Zurueck: Fokus auf der H1 und genau eine Ansage (Befund 8).
+  F. Speicherfehler beim Wechsel (Alt-Text, Quickinfo): Ansicht bleibt, Meldung sichtbar und angesagt, Eingabe bleibt im
+     Feld, nie „Gespeichert“ bei Fehler; zweiter Klick wechselt (Befund 4).
+  G. Seite verlassen nach dem Tippen: Seitenleiste, Neuladen, Tab schliessen, Abmelden — gespeichert (Befund 7 /
+     Entwicklung 1).
+  H. Seitentext langsam (1,5 s) und mit Fehler: „Seitentext geladen.“ bzw. Fehlersatz angesagt (Befunde 3, 5).
+  I. Uebersetzung oeffnen: genau eine Ansage (Befund 6; Word-Projekt „E2E Übersetzen (fiktiv)“ des Testkontos, ID als
+     Argument --uebersetzung=<id>, Standard 849).
 Legt sein Projekt selbst an (klar fiktive Inhalte) und loescht es wieder (ausser --behalten).
-Aufruf: /home/claude/.venv-pw/bin/python ui_ansichtswechsel.py [<testformular.pdf>] [--behalten]
-(Standard-Formular: tests/fixtures/testformular_inkludocs.pdf). Braucht INKLUDOCS_E2E_URL/MAIL/PW."""
+Aufruf: /home/claude/.venv-pw/bin/python ui_ansichtswechsel.py [<testformular.pdf>] [--uebersetzung=849] [--behalten]
+Braucht INKLUDOCS_E2E_URL/MAIL/PW."""
 import os
+import re
 import sys
 import time
 
@@ -20,7 +31,32 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 FORM = args[0] if args else os.path.join(HIER, "..", "fixtures", "testformular_inkludocs.pdf")
 BEHALTEN = "--behalten" in sys.argv
+UEB = int(([a.split("=", 1)[1] for a in sys.argv if a.startswith("--uebersetzung=")] or ["849"])[0])
+NAMEN = {"dokument": "Dokument", "tagging": "Tagging", "alttexte": "Alt-Texte", "abschluss": "Barrierefreiheitsprüfung",
+         "quickinfos": "Quickinfos", "uebersetzung": "Übersetzung"}
 ok = fehler = 0
+# Live-Regionen mitschreiben: jede Textaenderung INNERHALB einer Live-Region (aria-live != off, role status/alert,
+# output) — so, wie ein Screenreader sie hoeren wuerde.
+INIT = """
+window.__ansagen = [];
+window.__h1 = [];
+(function () {
+  const live = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) {
+      const l = e.getAttribute('aria-live'); if (l === 'off') return null;
+      if (l || ['status', 'alert'].includes(e.getAttribute('role')) || e.tagName === 'OUTPUT') return e; } return null; };
+  new MutationObserver(ms => ms.forEach(m => {
+      const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+      const lr = live(el);
+      if (lr && lr.textContent.trim()) {
+        const text = lr.textContent.trim().slice(0, 200);
+        const letzte = window.__ansagen[window.__ansagen.length - 1];
+        if (!letzte || letzte.text !== text || performance.now() - letzte.t > 300) window.__ansagen.push({ t: Math.round(performance.now()), text });
+      }
+      const h = document.getElementById('projectName');
+      if (h) { const t = h.textContent.trim().slice(0, 60); if (window.__h1[window.__h1.length - 1] !== t) window.__h1.push(t); }
+  })).observe(document, { subtree: true, childList: true, characterData: true });
+})();
+"""
 
 
 def check(n, c, i=""):
@@ -77,9 +113,36 @@ def warte_lesen(ctx, pid):
             return
 
 
+def ansagen(pg):
+    return [a["text"] for a in pg.evaluate("() => window.__ansagen || []")]
+
+
+def ansagen_leeren(pg):
+    pg.wait_for_timeout(400)   # verspaetete Ansage des vorigen Schritts (announce setzt den Text nach 100 ms) abwarten
+    pg.evaluate("() => { window.__ansagen = []; window.__h1 = []; }")
+
+
+def gezeichnet(pg):
+    return pg.evaluate("() => window.__h1 || []")
+
+
+def aufklappen(pg, seite=0):
+    """Erstes Dokument und die gewuenschte Seite offen (setzen statt klicken: der Auf/Zu-Zustand wird gemerkt)."""
+    pg.evaluate("(i) => { const d = document.querySelector('details.doc-section'); d.open = true; const s = d.querySelectorAll('details.page-section')[i]; s.open = true; }", seite)
+
+
+def bild(ctx, pid, bid):
+    return [b for b in ctx.request.get(B + f"/api/projects/{pid}").json()["images"] if b["id"] == bid][0]
+
+
+def fokus_auf_h1(pg):
+    return pg.evaluate("document.activeElement && document.activeElement.id === 'projectName'")
+
+
 with sync_playwright() as p:
     br = p.chromium.launch()
     ctx = br.new_context(viewport={"width": 1280, "height": 900}, locale="de-DE")
+    ctx.add_init_script(INIT)
     check("Anmeldung", anmelden(ctx))
     pg = ctx.new_page()
     fehler_js = []
@@ -98,78 +161,55 @@ with sync_playwright() as p:
         check("Upload Testformular", r.ok, r.status)
         warte_lesen(ctx, pid)
 
-        # --- B. Alt-Texte: Projektantwort schlank, Seitenansicht/Seitentext beim Aufklappen ---------------------
+        # --- B. Alt-Texte ------------------------------------------------------------------------------------------
         print("== B. Ansicht Alt-Texte", flush=True)
         voll = ctx.request.get(B + f"/api/projects/{pid}").json()
         bilder = voll.get("images") or []
         schwer = {"context_text", "page_text", "pipeline_steps", "validation_result", "image_path", "page_view_path"}
         check("Projektantwort: Bilder da, ohne KI-Kontext/Seitentext/Serverpfade", bilder and not any(schwer & set(b) for b in bilder),
               [sorted(schwer & set(b)) for b in bilder][:2])
-        check("Projektantwort: Merker hat_seitenansicht/hat_seitentext", any(b.get("hat_seitentext") for b in bilder) and any(b.get("hat_seitenansicht") for b in bilder))
         kopf = ctx.request.get(B + f"/api/projects/{pid}/kopf").json()
-        check("/kopf: ohne Bildliste, mit Zaehlern und hat_felder", "images" not in kopf and kopf.get("bilder_gesamt", 0) >= 1 and kopf["project"].get("hat_felder", 0) > 0, {k: kopf.get(k) for k in ("bilder_gesamt", "bilder_status")})
+        check("/kopf: ohne Bildliste, mit Zaehlern und hat_felder", "images" not in kopf and kopf.get("bilder_gesamt", 0) >= 1 and kopf["project"].get("hat_felder", 0) > 0)
         seitenbilder = []
         pg.on("request", lambda rq: seitenbilder.append(rq.url) if "/page-view" in rq.url else None)
         pg.goto(B + f"/app?projekt={pid}&ansicht=alttexte", wait_until="domcontentloaded")
         warte_ansicht(pg, "Alt-Texte")
-        pg.wait_for_timeout(1500)
-        check("Erstes Oeffnen: keine Seitenansicht geladen (alles zugeklappt)", not seitenbilder, seitenbilder[:3])
-        pg.locator("details.doc-section > summary").first.click()
+        pg.wait_for_timeout(1200)
+        check("Erstes Oeffnen: keine Seitenansicht geladen", not seitenbilder, seitenbilder[:3])
+        aufklappen(pg, 0)
         seite = pg.locator("details.page-section").first
-        seite.locator(":scope > summary").click()
-        pg.wait_for_timeout(200)
         st = seite.locator(":scope > details.page-text-details")
-        check("Seitentext-Klappe vorhanden (mit Bild-Verweis)", st.count() == 1 and st.get_attribute("data-seitentext-bild"))
         st.locator(":scope > summary").focus()
-        pg.keyboard.press("Enter")   # wie mit der Tastatur/VoiceOver
+        pg.keyboard.press("Enter")
         pg.wait_for_function("(el) => { const z = el.querySelector('.page-text-content'); return z && !z.hasAttribute('aria-busy') && z.textContent.length > 20; }",
                              arg=st.element_handle(), timeout=10000)
         z = st.locator(".page-text-content")
-        check("Seitentext da, im benannten Bereich (role=region, Name Seitentext)", "Beispielhausen" in z.inner_text() and z.get_attribute("role") == "region" and z.get_attribute("aria-label") == "Seitentext", z.inner_text()[:80])
-        check("Fokus bleibt auf dem Schalter „Seitentext anzeigen“", pg.evaluate("document.activeElement && document.activeElement.tagName === 'SUMMARY' && document.activeElement.textContent.includes('Seitentext')"))
-        # Platzhalter-Weg (ohne Vorlauf): neue Seite aufklappen und Klappe im selben Augenblick oeffnen
-        weg = pg.evaluate("""async () => {
-            const seiten = document.querySelectorAll('details.page-section');
-            const s = seiten[seiten.length - 1];
-            s.open = true;
-            const d = s.querySelector(':scope > details.page-text-details');
-            if (!d) return { fehlt: true };
-            const z = d.querySelector('.page-text-content');
-            d.open = true;
-            const vorher = { busy: z.getAttribute('aria-busy'), text: z.textContent.trim() };
-            const t0 = performance.now();
-            while (z.hasAttribute('aria-busy') && performance.now() - t0 < 10000) await new Promise(r => setTimeout(r, 10));
-            return { vorher, ms: Math.round(performance.now() - t0), nachher: z.textContent.trim().slice(0, 40) };
-        }""")
-        nachher = weg.get("nachher", "")
-        check("Ohne Vorlauf: Platzhalter „Seitentext wird geladen …“ mit aria-busy, danach Text",
-              weg.get("vorher", {}).get("busy") == "true" and "wird geladen" in weg.get("vorher", {}).get("text", "")
-              and len(nachher) > 10 and "wird geladen" not in nachher, weg)
+        check("Seitentext im benannten Bereich (role=region, Name Seitentext)", "Beispielhausen" in z.inner_text() and z.get_attribute("role") == "region" and z.get_attribute("aria-label") == "Seitentext")
+        check("Fokus bleibt auf „Seitentext anzeigen“", pg.evaluate("document.activeElement && document.activeElement.tagName === 'SUMMARY' && document.activeElement.textContent.includes('Seitentext')"))
         sa = seite.locator(":scope > details.page-view-details")
-        if sa.count():
-            vorher = len(seitenbilder)
-            sa.locator(":scope > summary").click()
-            pg.wait_for_function("(el) => { const i = el.querySelector('img.page-view-image'); return i && i.complete && i.naturalWidth > 0; }", arg=sa.element_handle(), timeout=10000)
-            check("Seitenansicht laedt beim Aufklappen (genau eine Anfrage)", len(seitenbilder) == vorher + 1, seitenbilder)
+        alt = sa.locator("img.page-view-image").get_attribute("alt") or ""
+        check("Befund 9: Seitenbild hat einen Namen („Seitenansicht: Seite 1 als Bild“)", alt == "Seitenansicht: Seite 1 als Bild", alt)
+        check("Befund 9: Hinweis auf „Seitentext anzeigen“ in der Seitenansicht", "Den Text dieser Seite gibt es unter „Seitentext anzeigen“." in (sa.text_content() or ""))
+        vorher = len(seitenbilder)
+        sa.locator(":scope > summary").click()
+        pg.wait_for_function("(el) => { const i = el.querySelector('img.page-view-image'); return i && i.complete && i.naturalWidth > 0; }", arg=sa.element_handle(), timeout=10000)
+        check("Seitenansicht laedt beim Aufklappen (genau eine Anfrage)", len(seitenbilder) == vorher + 1, seitenbilder)
 
-        # --- A. Tippen und sofort wechseln -------------------------------------------------------------------
+        # --- A. Tippen und sofort wechseln ------------------------------------------------------------------------
         print("== A. Tippen und sofort wechseln", flush=True)
         feld = seite.locator("textarea.alt-text-field:not(.langtext-field)").first
         bild_id = int(feld.get_attribute("data-image-id"))
         text1 = "Fiktiver Testtext eins " + time.strftime("%H%M%S")
-        feld.fill(text1)                                   # loest input aus — Speichern erst nach 800 ms faellig
+        feld.fill(text1)
         t0 = time.time()
-        pg.click(".ansicht-knoepfe a[data-ansicht=dokument]")   # SOFORT wechseln
+        pg.click(".ansicht-knoepfe a[data-ansicht=dokument]")
         warte_ansicht(pg, "Dokument")
         dauer = (time.time() - t0) * 1000
-        gespeichert = [b for b in ctx.request.get(B + f"/api/projects/{pid}").json()["images"] if b["id"] == bild_id][0]
-        check("Alt-Text getippt, sofort zu „Dokument“: Text gespeichert", gespeichert.get("alt_text_edited") == text1, gespeichert.get("alt_text_edited"))
+        check("Alt-Text getippt, sofort zu „Dokument“: gespeichert", bild(ctx, pid, bild_id).get("alt_text_edited") == text1)
         check(f"Wechsel mit offener Eingabe ohne feste Wartezeit ({dauer:.0f} ms < 900 ms)", dauer < 900, dauer)
-        # Browser-Zurueck nach dem Tippen
         pg.go_back()
         warte_ansicht(pg, "Alt-Texte")
-        # Dokument und Seite offen (der Auf/Zu-Stand wird ueber das Neu-Zeichnen gemerkt — darum setzen statt klicken)
-        pg.evaluate("() => { const d = document.querySelector('details.doc-section'); d.open = true; d.querySelector('details.page-section').open = true; }")
+        aufklappen(pg, 0)
         feld = pg.locator(f"#alttext_{bild_id}")
         check("Nach Zurueck: Feld zeigt den gespeicherten Text", feld.input_value() == text1, feld.input_value())
         text2 = "Fiktiver Testtext zwei " + time.strftime("%H%M%S")
@@ -177,35 +217,192 @@ with sync_playwright() as p:
         pg.go_forward()
         warte_ansicht(pg, "Dokument")
         pg.wait_for_timeout(300)
-        gespeichert = [b for b in ctx.request.get(B + f"/api/projects/{pid}").json()["images"] if b["id"] == bild_id][0]
-        check("Alt-Text getippt, sofort Browser-Vor: Text gespeichert", gespeichert.get("alt_text_edited") == text2, gespeichert.get("alt_text_edited"))
-        # Wechsel ohne Eingabe: schnell
+        check("Alt-Text getippt, sofort Browser-Vor: gespeichert", bild(ctx, pid, bild_id).get("alt_text_edited") == text2)
         t0 = time.time()
         pg.click(".ansicht-knoepfe a[data-ansicht=tagging]")
         warte_ansicht(pg, "Tagging")
         dauer = (time.time() - t0) * 1000
-        check(f"Wechsel ohne Eingabe: {dauer:.0f} ms (Ziel unter 900 ms, ohne feste Wartezeit)", dauer < 900, dauer)
-        # Quickinfo
-        quick = pg.locator(".ansicht-knoepfe a[data-ansicht=quickinfos]")
-        if quick.count():
-            quick.click()
-            warte_ansicht(pg, "Quickinfos")
-            pg.wait_for_timeout(500)
-            pg.evaluate("() => document.querySelectorAll('details').forEach(d => d.open = true)")
-            qf = pg.locator("textarea.quickinfo-field").first
-            feld_id = int(qf.get_attribute("data-feld-id"))
-            text3 = "Fiktive Quickinfo " + time.strftime("%H%M%S")
-            qf.fill(text3)
-            pg.click(".ansicht-knoepfe a[data-ansicht=dokument]")
-            warte_ansicht(pg, "Dokument")
-            felder = ctx.request.get(B + f"/api/projects/{pid}/felder").json().get("felder") or []
-            f = [x for x in felder if x["id"] == feld_id]
-            check("Quickinfo getippt, sofort zu „Dokument“: gespeichert", f and f[0].get("quickinfo") == text3, f[0].get("quickinfo") if f else None)
-        else:
-            check("Quickinfo-Ansicht verfuegbar (Testformular hat Felder)", False, "Knopf fehlt")
+        check(f"Wechsel ohne Eingabe: {dauer:.0f} ms (unter 900 ms)", dauer < 900, dauer)
+        pg.click(".ansicht-knoepfe a[data-ansicht=quickinfos]")
+        warte_ansicht(pg, "Quickinfos")
+        pg.wait_for_timeout(400)
+        pg.evaluate("() => document.querySelectorAll('details').forEach(d => d.open = true)")
+        qf = pg.locator("textarea.quickinfo-field").first
+        feld_id = int(qf.get_attribute("data-feld-id"))
+        text3 = "Fiktive Quickinfo " + time.strftime("%H%M%S")
+        qf.fill(text3)
+        pg.click(".ansicht-knoepfe a[data-ansicht=dokument]")
+        warte_ansicht(pg, "Dokument")
+        f = [x for x in (ctx.request.get(B + f"/api/projects/{pid}/felder").json().get("felder") or []) if x["id"] == feld_id]
+        check("Quickinfo getippt, sofort zu „Dokument“: gespeichert", f and f[0].get("quickinfo") == text3)
 
-        # --- C. Gastansicht -----------------------------------------------------------------------------------
-        print("== C. Gastansicht", flush=True)
+        # --- D. Schneller Doppelwechsel ---------------------------------------------------------------------------
+        print("== D. Schneller Doppelwechsel (Befunde 1, 2)", flush=True)
+        for erst, zweit, ms in (("tagging", "alttexte", 40), ("dokument", "quickinfos", 40), ("abschluss", "dokument", 40),
+                                ("alttexte", "tagging", 40), ("quickinfos", "abschluss", 250), ("dokument", "alttexte", 40)):
+            jetzt = pg.evaluate("new URLSearchParams(location.search).get('ansicht')")
+            if erst == jetzt:
+                continue
+            ansagen_leeren(pg)
+            pg.evaluate("""([a, b, ms]) => { document.querySelector('.ansicht-knoepfe a[data-ansicht=' + a + ']').click();
+                setTimeout(() => { const l = document.querySelector('.ansicht-knoepfe a[data-ansicht=' + b + ']'); if (l) l.click(); }, ms); }""",
+                        [erst, zweit, ms])
+            pg.wait_for_timeout(2500)
+            adresse = pg.evaluate("new URLSearchParams(location.search).get('ansicht')")
+            h1 = pg.locator("#projectName").inner_text()
+            an = [a for a in ansagen(pg) if a.startswith("Ansicht ")]
+            h1s = gezeichnet(pg)
+            # Jede Ansage gehoert zu einer Ansicht, die wirklich gezeichnet wurde (war der erste Wechsel schon fertig, ist
+            # seine Ansage richtig); die letzte Ansage, Adresse, H1 und Fokus gehoeren zum zweiten Klick.
+            verwaist = [a for a in an if not any(h.startswith(a[len("Ansicht "):-len(" geöffnet.")]) for h in h1s)]
+            check(f"{erst} -> {zweit} ({ms} ms): Adresse, Bildschirm, Fokus und letzte Ansage gehoeren zu {zweit}, keine verwaiste Ansage",
+                  adresse == zweit and h1.startswith(NAMEN[zweit]) and fokus_auf_h1(pg) and an and an[-1] == f"Ansicht {NAMEN[zweit]} geöffnet."
+                  and not verwaist and h1s and h1s[-1].startswith(NAMEN[zweit]),
+                  (adresse, h1[:30], fokus_auf_h1(pg), an, h1s, verwaist))
+
+        # Langsame Antworten (300 ms je Abruf): der erste Wechsel ist sicher noch unterwegs, wenn der zweite Klick kommt —
+        # dann darf die erste Ansicht weder gezeichnet noch angesagt werden.
+        langsam = re.compile(r".*/api/projects/\d+(/kopf|/dokument-ansicht|/abschluss|/felder)?(\?.*)?$")
+        pg.route(langsam, lambda rt: (time.sleep(0.3), rt.continue_()) if rt.request.method == "GET" else rt.continue_())
+        for erst, zweit in (("tagging", "alttexte"), ("abschluss", "dokument"), ("alttexte", "quickinfos")):
+            jetzt = pg.evaluate("new URLSearchParams(location.search).get('ansicht')")
+            if erst == jetzt or zweit == jetzt:
+                continue
+            ansagen_leeren(pg)
+            pg.evaluate("""([a, b]) => { document.querySelector('.ansicht-knoepfe a[data-ansicht=' + a + ']').click();
+                setTimeout(() => document.querySelector('.ansicht-knoepfe a[data-ansicht=' + b + ']').click(), 40); }""", [erst, zweit])
+            pg.wait_for_timeout(4000)
+            an = [a for a in ansagen(pg) if a.startswith("Ansicht ")]
+            h1s = gezeichnet(pg)
+            check(f"Langsame Leitung, {erst} -> {zweit} (40 ms): {NAMEN[erst]} nie gezeichnet, genau eine Ansage fuer {zweit}",
+                  an == [f"Ansicht {NAMEN[zweit]} geöffnet."] and not any(h.startswith(NAMEN[erst]) for h in h1s)
+                  and pg.evaluate("new URLSearchParams(location.search).get('ansicht')") == zweit and fokus_auf_h1(pg),
+                  (an, h1s))
+        pg.unroute(langsam)
+
+        # --- E. Browser-Zurueck ----------------------------------------------------------------------------------
+        print("== E. Browser-Zurueck (Befund 8)", flush=True)
+        ansagen_leeren(pg)
+        pg.go_back()
+        pg.wait_for_timeout(1500)
+        adresse = pg.evaluate("new URLSearchParams(location.search).get('ansicht')")
+        an = [a for a in ansagen(pg) if a.startswith("Ansicht ")]
+        check("Zurueck: Fokus auf der H1 und genau eine Ansage passend zur Adresse",
+              fokus_auf_h1(pg) and pg.locator("#projectName").inner_text().startswith(NAMEN.get(adresse, "?")) and an == [f"Ansicht {NAMEN.get(adresse)} geöffnet."],
+              (adresse, fokus_auf_h1(pg), an))
+
+        # --- F. Speicherfehler beim Wechsel -------------------------------------------------------------------------
+        print("== F. Speicherfehler beim Wechsel (Befund 4)", flush=True)
+        pg.goto(B + f"/app?projekt={pid}&ansicht=alttexte", wait_until="domcontentloaded")
+        warte_ansicht(pg, "Alt-Texte")
+        aufklappen(pg, 0)
+        pg.route("**/api/images/*/alt-text", lambda rt: rt.fulfill(status=500, content_type="application/json", body='{"detail":"Testfehler"}')
+                 if rt.request.method == "POST" else rt.continue_())
+        feld = pg.locator(f"#alttext_{bild_id}")
+        text4 = "Fiktiver Text, der nicht gespeichert wird " + time.strftime("%H%M%S")
+        feld.fill(text4)
+        ansagen_leeren(pg)
+        pg.click(".ansicht-knoepfe a[data-ansicht=dokument]")
+        pg.wait_for_timeout(1500)
+        warnung = pg.locator("#speicherWarnung")
+        check("Ansicht bleibt offen (H1 und Adresse Alt-Texte)", pg.locator("#projectName").inner_text().startswith("Alt-Texte")
+              and pg.evaluate("new URLSearchParams(location.search).get('ansicht')") == "alttexte")
+        check("Meldung sichtbar unter dem Projektkopf", warnung.count() == 1 and warnung.is_visible() and "konnte nicht gespeichert werden" in warnung.inner_text(),
+              warnung.inner_text() if warnung.count() else None)
+        check("Meldung angesagt", any("Achtung: 1 Eingabe konnte nicht gespeichert werden." in a for a in ansagen(pg)), ansagen(pg))
+        check("Eingabe steht noch im Feld", feld.input_value() == text4)
+        check("Am Feld „Nicht gespeichert“ statt „Gespeichert“", pg.locator(f"#saved_{bild_id}").inner_text() == "Nicht gespeichert")
+        pg.unroute("**/api/images/*/alt-text")
+        pg.click(".ansicht-knoepfe a[data-ansicht=dokument]")
+        warte_ansicht(pg, "Dokument")
+        check("Zweiter Klick wechselt", pg.locator("#projectName").inner_text().startswith("Dokument"))
+        # Quickinfo mit Fehler
+        pg.click(".ansicht-knoepfe a[data-ansicht=quickinfos]")
+        warte_ansicht(pg, "Quickinfos")
+        pg.wait_for_timeout(300)
+        pg.evaluate("() => document.querySelectorAll('details').forEach(d => d.open = true)")
+        pg.route("**/api/felder/*", lambda rt: rt.fulfill(status=500, content_type="application/json", body='{"detail":"Testfehler"}')
+                 if rt.request.method == "PATCH" else rt.continue_())
+        pg.locator(f"textarea.quickinfo-field[data-feld-id='{feld_id}']").fill("Fiktive Quickinfo mit Fehler")
+        ansagen_leeren(pg)
+        pg.click(".ansicht-knoepfe a[data-ansicht=dokument]")
+        pg.wait_for_timeout(1500)
+        check("Quickinfo-Fehler: Ansicht bleibt, Meldung angesagt", pg.locator("#projectName").inner_text().startswith("Quickinfos")
+              and any("konnte nicht gespeichert werden" in a for a in ansagen(pg)), ansagen(pg))
+        pg.unroute("**/api/felder/*")
+
+        # --- G. Seite verlassen ------------------------------------------------------------------------------------
+        print("== G. Seite verlassen nach dem Tippen (Befund 7 / Entwicklung 1)", flush=True)
+        for art in ("Seitenleiste", "Neuladen", "Tab schliessen", "Abmelden"):
+            seite_g = pg if art != "Tab schliessen" else ctx.new_page()
+            seite_g.goto(B + f"/app?projekt={pid}&ansicht=alttexte", wait_until="domcontentloaded")
+            warte_ansicht(seite_g, "Alt-Texte")
+            aufklappen(seite_g, 0)
+            text = f"Fiktiver Text vor {art} " + time.strftime("%H%M%S")
+            seite_g.locator(f"#alttext_{bild_id}").fill(text)
+            if art == "Seitenleiste":
+                seite_g.locator("a[href='/projekte']").first.click()
+                seite_g.wait_for_url("**/projekte*", timeout=20000)
+            elif art == "Neuladen":
+                seite_g.reload(wait_until="domcontentloaded")
+            elif art == "Tab schliessen":
+                seite_g.close()
+            else:
+                seite_g.click("#logoutBtn")
+                seite_g.wait_for_url(B + "/", timeout=20000)
+                anmelden(ctx)
+            time.sleep(1.0)
+            check(f"{art} direkt nach dem Tippen: gespeichert", bild(ctx, pid, bild_id).get("alt_text_edited") == text,
+                  bild(ctx, pid, bild_id).get("alt_text_edited"))
+
+        # --- H. Seitentext langsam und mit Fehler ------------------------------------------------------------------
+        print("== H. Seitentext langsam und mit Fehler (Befunde 3, 5)", flush=True)
+        pg.route("**/seitentext", lambda rt: (time.sleep(1.5), rt.continue_()))
+        pg.goto(B + f"/app?projekt={pid}&ansicht=alttexte", wait_until="domcontentloaded")
+        warte_ansicht(pg, "Alt-Texte")
+        ansagen_leeren(pg)
+        pg.evaluate("""() => { const d = document.querySelector('details.doc-section'); d.open = true;
+            const s = d.querySelectorAll('details.page-section')[0]; s.open = true;
+            setTimeout(() => { s.querySelector(':scope > details.page-text-details').open = true; }, 50); }""")
+        pg.wait_for_timeout(3000)
+        check("Langsam, Klappe gleich mit der Seite geoeffnet: „Seitentext geladen.“ angesagt", "Seitentext geladen." in ansagen(pg), ansagen(pg))
+        ansagen_leeren(pg)
+        pg.evaluate("""() => { const d = document.querySelector('details.doc-section');
+            const s = d.querySelectorAll('details.page-section')[1]; s.open = true;
+            setTimeout(() => { s.querySelector(':scope > details.page-text-details').open = true; }, 300); }""")
+        pg.wait_for_timeout(3000)
+        check("Langsam, Klappe waehrend des Vorladens geoeffnet: „Seitentext geladen.“ angesagt", "Seitentext geladen." in ansagen(pg), ansagen(pg))
+        pg.unroute("**/seitentext")
+        pg.route("**/seitentext", lambda rt: rt.fulfill(status=500, content_type="application/json", body='{"detail":"Testfehler"}'))
+        pg.goto(B + f"/app?projekt={pid}&ansicht=alttexte", wait_until="domcontentloaded")
+        warte_ansicht(pg, "Alt-Texte")
+        ansagen_leeren(pg)
+        pg.evaluate("""() => { const d = document.querySelector('details.doc-section'); d.open = true;
+            const s = d.querySelectorAll('details.page-section')[0]; s.open = true;
+            s.querySelector(':scope > details.page-text-details').open = true; }""")
+        pg.wait_for_timeout(1500)
+        check("Fehler: Satz angesagt", any("konnte nicht geladen werden" in a for a in ansagen(pg)), ansagen(pg))
+        pg.unroute("**/seitentext")
+        pg.evaluate("""() => { const t = document.querySelector('details.page-section details.page-text-details'); t.open = false; }""")
+        pg.wait_for_timeout(200)
+        pg.evaluate("""() => { const t = document.querySelector('details.page-section details.page-text-details'); t.open = true; }""")
+        pg.wait_for_timeout(1500)
+        check("Fehler: erneutes Aufklappen laedt den Text", "Beispielhausen" in pg.locator("details.page-section .page-text-content").first.inner_text())
+
+        # --- I. Uebersetzung oeffnen: eine Ansage ------------------------------------------------------------------
+        print("== I. Uebersetzung oeffnen (Befund 6)", flush=True)
+        pg.goto(B + f"/app?projekt={UEB}&ansicht=dokument", wait_until="domcontentloaded")
+        warte_ansicht(pg, "Dokument")
+        pg.wait_for_timeout(800)
+        ansagen_leeren(pg)
+        pg.click(".ansicht-knoepfe a[data-ansicht=uebersetzung]")
+        warte_ansicht(pg, "Übersetzung")
+        pg.wait_for_timeout(1500)
+        an = ansagen(pg)
+        check("Uebersetzung: genau eine Ansage („Ansicht Übersetzung geöffnet.“)", an == ["Ansicht Übersetzung geöffnet."], an)
+
+        # --- C. Gastansicht ----------------------------------------------------------------------------------------
+        print("== C. Gastansicht (Befund 10)", flush=True)
         r = ctx.request.post(B + f"/api/projects/{pid}/share", data={"guest_email": "gast@example.invalid", "notify": False, "role": "kunde"})
         token = r.json().get("token") if r.ok else None
         check("Freigabe angelegt (ohne Mail)", bool(token), r.status)
@@ -213,7 +410,6 @@ with sync_playwright() as p:
             gctx = br.new_context(viewport={"width": 1280, "height": 900}, locale="de-DE")
             g = gctx.new_page()
             g.on("pageerror", lambda e: fehler_js.append("Gast: " + str(e)))
-            # E-Mail bestaetigen ueber denselben Abruf wie das Formular; ueber http (Wegwerf-Container) das Secure-Cookie von Hand
             rc = gctx.request.post(f"{B}/api/freigabe/{token}/confirm", data={"email": "gast@example.invalid"})
             check("Gast: E-Mail bestaetigt", rc.ok, rc.status)
             if B.startswith("http://"):
@@ -222,13 +418,12 @@ with sync_playwright() as p:
                         gctx.add_cookies([{"name": "guest_token", "value": h["value"].split(";")[0].split("=", 1)[1], "url": B}])
             g.goto(f"{B}/freigabe/{token}", wait_until="domcontentloaded")
             g.wait_for_selector("details.doc-section", timeout=20000)
+            check("Gast: Seitentitel nennt das Projekt", "Projekt: Klicktest Ansichtswechsel" in g.title(), g.title())
             gs = gctx.request.get(f"{B}/api/freigabe/{token}")
             if gs.ok:
                 check("Gast-Projektantwort ohne KI-Kontext/Seitentext", not any(schwer & set(b) for b in gs.json().get("images", [])))
-            g.locator("details.doc-section > summary").first.click()
-            gseite = g.locator("details.page-section").first
-            gseite.locator(":scope > summary").click()
-            gst = gseite.locator(":scope > details.page-text-details")
+            g.evaluate("() => { const d = document.querySelector('details.doc-section'); d.open = true; d.querySelector('details.page-section').open = true; }")
+            gst = g.locator("details.page-section").first.locator(":scope > details.page-text-details")
             gst.locator(":scope > summary").click()
             g.wait_for_function("(el) => { const z = el.querySelector('.page-text-content'); return z && !z.hasAttribute('aria-busy') && z.textContent.length > 20; }",
                                 arg=gst.element_handle(), timeout=10000)
