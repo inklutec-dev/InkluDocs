@@ -182,7 +182,30 @@ PLAN_SITZE = {
     "enterprise": 25,
 }
 
-GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export", "tagging", "pruefung")
+GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export", "tagging", "pruefung", "express")
+
+# EXPRESS-SERVICE (05.10.2026): Credits offener Express-Auftraege sind VORGEMERKT — sie stehen fuer nichts anderes zur
+# Verfuegung, sind aber noch nicht verbraucht. Abgebucht wird erst bei der Lieferung (express.liefern, Quelle
+# „express“), beim Storno werden sie wieder frei. Kein eigener Kontostand: die Summe kommt jedes Mal aus
+# express_auftraege (Status neu/in_arbeit/rueckfrage).
+EXPRESS_OFFEN = ("neu", "in_arbeit", "rueckfrage")
+
+
+def vorgemerkt(konto_id: int, conn=None) -> int:
+    """Credits, die fuer offene Express-Auftraege dieses Kontos vorgemerkt sind (0, wenn es die Tabelle noch nicht gibt)."""
+    eigene_conn = conn is None
+    try:
+        if eigene_conn:
+            conn = get_db()
+        row = conn.execute(
+            "SELECT COALESCE(SUM(credits_gesamt), 0) FROM express_auftraege WHERE konto_user_id = ? AND status IN "
+            "(" + ",".join("?" * len(EXPRESS_OFFEN)) + ")", (konto_id, *EXPRESS_OFFEN)).fetchone()
+        return int(row[0] or 0)
+    except Exception:  # noqa: BLE001 — Tabelle fehlt (alte Datenbank) oder Lesefehler: nichts vorgemerkt
+        return 0
+    finally:
+        if eigene_conn and conn is not None:
+            conn.close()
 
 # EXPORT-STAFFEL (Michael Karbe 28./29.08.2026): Grundpreis je Export-Vorgang
 # (AKTIONS_PREISE) + Staffel je ANGEFANGENE EXPORT_SCHRITT Bilder bzw. Felder
@@ -295,7 +318,8 @@ def verfuegbare_credits(user_id: int):
         return None
     if not ABO_ENFORCEMENT or _ist_admin(user_id):
         return None
-    return int(z.get("rest") or 0) + int(z.get("pakete_rest") or 0)
+    # Express (05.10.2026): vorgemerkte Credits offener Auftraege stehen nicht mehr zur Verfuegung.
+    return max(0, int(z.get("rest") or 0) + int(z.get("pakete_rest") or 0) - int(z.get("vorgemerkt") or 0))
 
 
 def _ist_admin(user_id: int) -> bool:
@@ -710,7 +734,7 @@ def pruefe_kontingent(user_id: int) -> dict:
         "erlaubt": True, "grund": "", "plan": "free",
         "kontingent": PLAN_KONTINGENTE["free"], "verbraucht": 0, "rest": None,
         "uebertrag": 0, "verfuegbar_monat": PLAN_KONTINGENTE["free"],
-        "pakete_rest": 0, "zeitraum_ende": None, "domain_pool": None,
+        "pakete_rest": 0, "zeitraum_ende": None, "domain_pool": None, "vorgemerkt": 0,
     }
     try:
         ergebnis["zeitraum_ende"] = _monatsende_iso()
@@ -766,6 +790,7 @@ def pruefe_kontingent(user_id: int) -> dict:
                 verbraucht = _domain_monats_verbrauch(_dom)
         uebertrag = _uebertrag(konto_id, plan, kontingent)
         pakete = pakete_rest(konto_id)
+        reserviert = vorgemerkt(konto_id)
         verfuegbar = None if kontingent is None else kontingent + uebertrag
         ergebnis.update({
             "plan": plan,
@@ -776,13 +801,16 @@ def pruefe_kontingent(user_id: int) -> dict:
             "rest": None if verfuegbar is None else max(0, verfuegbar - verbraucht),
             "pakete_rest": pakete,
             "domain_pool": domain_pool,
+            "vorgemerkt": reserviert,
         })
         # Admins werden nie gesperrt; ohne Enforcement wird nie gesperrt.
         if not ABO_ENFORCEMENT or row["is_admin"]:
             return ergebnis
         # Reihenfolge der Toepfe: erst Monats-Budget, dann Zusatz-Pakete.
         # Solange noch Paket-Credits da sind, bleibt die Aktion erlaubt.
-        if verfuegbar is not None and verbraucht >= verfuegbar and pakete == 0:
+        # Express (05.10.2026): vorgemerkte Credits zaehlen wie verbraucht. Ohne Vormerkung ist die Bedingung
+        # gleichwertig zur alten (verbraucht >= verfuegbar und keine Pakete).
+        if verfuegbar is not None and max(0, verfuegbar - verbraucht) + pakete - reserviert <= 0:
             ergebnis["erlaubt"] = False
             ergebnis["grund"] = "kontingent_erschoepft"
         return ergebnis

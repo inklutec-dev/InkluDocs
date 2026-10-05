@@ -23,6 +23,12 @@
         <div id="ausgabenContainer"></div>
       </section>
 
+      {# EXPRESS-SERVICE (05.10.2026): die letzten Aufträge mit Stand; verborgen, solange es keine gibt. #}
+      <section class="dash-section" aria-labelledby="express-h" id="expressSection" hidden>
+        <h2 id="express-h">{{ _('Meine Express-Aufträge') }}</h2>
+        <div id="expressContainer"></div>
+      </section>
+
       {# API (17.09.2026, Steve): Verbrauch ueber die Schluessel des Kontos; verborgen, solange
          es keinen Schluessel gibt (kein leerer Kasten fuer Konten ohne Anbindung). #}
       <section class="dash-section" aria-labelledby="api-h" id="apiSection" hidden>
@@ -337,6 +343,48 @@
     cont.appendChild(all);
     byId('ausgabenSection').hidden = false;
   }
+  // ─── Meine Express-Aufträge (05.10.2026): die letzten fünf mit Stand ───
+  async function loadExpress() {
+    if (!(currentUser && currentUser.express)) return;
+    let data;
+    try {
+      const res = await fetch('/api/express/auftraege');
+      if (!res.ok) return;
+      data = await res.json();
+    } catch (e) { return; }
+    const liste = (data.auftraege || []).slice(0, 5);
+    if (!liste.length) return;
+    const stand = { neu: t('Eingegangen'), in_arbeit: t('In Bearbeitung'), rueckfrage: t('Rückfrage an dich'),
+                    geliefert: t('Geliefert'), storniert: t('Storniert') };
+    const cont = byId('expressContainer');
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    liste.forEach((a) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      const link = document.createElement('a');
+      link.href = '/express/auftrag/' + encodeURIComponent(a.id);
+      link.textContent = t('Auftrag {nr}', { nr: a.id });
+      h3.appendChild(link);
+      const meta = document.createElement('p');
+      meta.className = 'dash-meta';
+      meta.textContent = (stand[a.status] || a.status) + ' · ' + t('{d} Dokumente, {c} Credits', { d: a.dokumente, c: a.credits_gesamt });
+      li.appendChild(h3);
+      li.appendChild(meta);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+    const all = document.createElement('p');
+    all.style.marginTop = '1rem';
+    const allLink = document.createElement('a');
+    allLink.href = '/express#h-auftraege';
+    allLink.textContent = t('Alle Express-Aufträge');
+    allLink.className = 'btn btn-secondary';
+    all.appendChild(allLink);
+    cont.appendChild(all);
+    byId('expressSection').hidden = false;
+  }
   // DB-Zeitstempel (UTC) -> Datum in der Sprache der Oberflaeche + lokale Uhrzeit.
   function ausgabeDatum(s) {
     const d = String(s || '');
@@ -352,6 +400,7 @@
     await loadSharedProjects();
     await loadRecent();
     await loadAusgaben();
+    await loadExpress();
     await loadApiStats();
   })();
 {% endraw %}

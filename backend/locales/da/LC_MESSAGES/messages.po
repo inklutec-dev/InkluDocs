@@ -10281,3 +10281,660 @@ msgstr "over {grenze} input-tokens: input {ein}, output {aus}"
 
 msgid "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
 msgstr "„Uden tilknytning“ er kald uden kendt kunde, fx tests eller konti, der siden er slettet."
+
+msgid "1. Dokumente auswählen"
+msgstr "1. Vælg dokumenter"
+
+msgid "2. Deine Auswahl"
+msgstr "2. Dit udvalg"
+
+msgid "3. Angaben"
+msgstr "3. Oplysninger"
+
+msgid "4. Prüfen und bestellen"
+msgstr "4. Kontrollér og bestil"
+
+msgid "Alle Dokumente dieses Projekts"
+msgstr "Alle dokumenter i dette projekt"
+
+msgid "Alle Express-Aufträge"
+msgstr "Alle ekspresordrer"
+
+msgid "Alle Originale als ZIP herunterladen"
+msgstr "Download alle originaler som ZIP"
+
+msgid "Als PDF herunterladen"
+msgstr "Download som PDF"
+
+msgid "Angaben"
+msgstr "Oplysninger"
+
+msgid "Angaben des Kunden"
+msgstr "Kundens oplysninger"
+
+msgid "Ansprechpartner"
+msgstr "Kontaktperson"
+
+msgid "Antwort des Kunden"
+msgstr "Kundens svar"
+
+msgid "Antwort gesendet. Wir melden uns."
+msgstr "Svar sendt. Vi vender tilbage."
+
+msgid "Antwort senden"
+msgstr "Send svar"
+
+msgid "Auftrag stornieren"
+msgstr "Annullér ordre"
+
+msgid "Auftrag {nr}"
+msgstr "Ordre {nr}"
+
+msgid "Aus einem Projekt"
+msgstr "Fra et projekt"
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
+msgstr "Automatisk PDF/UA-kontrol (veraPDF): bestået."
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
+msgstr "Automatisk PDF/UA-kontrol (veraPDF): {text}"
+
+msgid "Barrierefrei aufbereiten (mit Prüfung)"
+msgstr "Gør tilgængelig (inkl. kontrol)"
+
+msgid "Barrierefrei aufbereiten: Credits je Seite"
+msgstr "Gør tilgængelig: kreditter pr. side"
+
+msgid "Barrierefreie PDF herunterladen"
+msgstr "Download tilgængelig PDF"
+
+msgid "Bearbeiter"
+msgstr "Behandler"
+
+msgid "Bearbeiter: {name}"
+msgstr "Behandler: {name}"
+
+msgid "Bedingungen für den Express-Service"
+msgstr "Betingelser for ekspresservicen"
+
+msgid "Bedingungen für den Express-Service lesen (öffnet in neuem Tab)"
+msgstr "Læs betingelserne for ekspresservicen (åbner i ny fane)"
+
+msgid "Benachrichtigungen an (leer = Support-Postfach)"
+msgstr "Underretninger til (tom = supportpostkasse)"
+
+msgid "Bestellt"
+msgstr "Bestilt"
+
+msgid "Bestellt am"
+msgstr "Bestilt den"
+
+msgid "Bestellung wird gesendet …"
+msgstr "Ordren sendes …"
+
+msgid "Bestätigt am"
+msgstr "Bekræftet den"
+
+msgid "Bestätigt am {datum} (Fassung {fassung}):"
+msgstr "Bekræftet den {datum} (version {fassung}):"
+
+msgid "Bezahlt aus dem Team-Guthaben von"
+msgstr "Betalt af teamkreditten hos"
+
+msgid "Bitte beide Häkchen setzen."
+msgstr "Sæt venligst begge flueben."
+
+msgid "Bitte ein Projekt wählen"
+msgstr "Vælg et projekt"
+
+msgid "Bitte ein Projekt wählen."
+msgstr "Vælg et projekt."
+
+msgid "Bitte eine Antwort schreiben."
+msgstr "Skriv venligst et svar."
+
+msgid "Bitte eine E-Mail-Adresse eingeben."
+msgstr "Indtast en e-mailadresse."
+
+msgid "Bitte eine Frage schreiben."
+msgstr "Skriv venligst et spørgsmål."
+
+msgid "Bitte einen Ansprechpartner angeben."
+msgstr "Angiv en kontaktperson."
+
+msgid "Bitte einen Grund angeben."
+msgstr "Angiv en grund."
+
+msgid "Bitte mindestens ein Dokument ankreuzen."
+msgstr "Sæt flueben ved mindst ét dokument."
+
+msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
+msgstr "Brug kun cifre, mellemrum og + ( ) / -."
+
+msgid "Bitte zuerst eine PDF-Datei auswählen."
+msgstr "Vælg først en PDF-fil."
+
+msgid "Credits"
+msgstr "Kreditter"
+
+msgid "Credits kaufen"
+msgstr "Køb kreditter"
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
+msgstr "Vi opretter et projekt „Ekspresordre“ til det. Størrelse op til 50 MB."
+
+msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
+msgstr "Tak! Din ordre {nr} er modtaget. Vi leverer inden for {stunden} timer og sender dig en bekræftelse pr. e-mail."
+
+msgid "Das Dokument konnte nicht entfernt werden."
+msgstr "Dokumentet kunne ikke fjernes."
+
+msgid "Das hat nicht geklappt."
+msgstr "Det lykkedes ikke."
+
+msgid "Davon für Express-Aufträge vorgemerkt: {anzahl} Credits."
+msgstr "Heraf reserveret til ekspresordrer: {anzahl} kreditter."
+
+msgid "Dein Guthaben reicht für diese Auswahl nicht. Dir fehlen {c} Credits."
+msgstr "Din saldo rækker ikke til dette udvalg. Du mangler {c} kreditter."
+
+msgid "Dein Guthaben: unbegrenzt."
+msgstr "Din saldo: ubegrænset."
+
+msgid "Dein verfügbares Guthaben: {c} Credits."
+msgstr "Din tilgængelige saldo: {c} kreditter."
+
+msgid "Deine Antwort"
+msgstr "Dit svar"
+
+msgid "Deine Auswahl ist leer."
+msgstr "Dit udvalg er tomt."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen."
+msgstr "Dit udvalg er tomt. Tilføj først dokumenter."
+
+msgid "Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits."
+msgstr "Dit udvalg: {d} dokumenter, {s} sider, {c} kreditter."
+
+msgid "Der Auftrag konnte nicht geladen werden."
+msgstr "Ordren kunne ikke indlæses."
+
+msgid "Der Express-Service ist gerade nicht erreichbar."
+msgstr "Ekspresservicen er ikke tilgængelig lige nu."
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
+msgstr "Kunden får spørgsmålet pr. e-mail og ser det i sin ordreoversigt. Fristen er sat på pause, indtil kunden svarer."
+
+msgid "Die Antwort konnte nicht gesendet werden."
+msgstr "Svaret kunne ikke sendes."
+
+msgid "Die Bestellung ist fehlgeschlagen. Bitte erneut versuchen."
+msgstr "Bestillingen mislykkedes. Prøv igen."
+
+msgid "Die Datei konnte nicht hochgeladen werden."
+msgstr "Filen kunne ikke uploades."
+
+msgid "Die Datei wird hochgeladen …"
+msgstr "Filen uploades …"
+
+msgid "Die Dokumente konnten nicht geladen werden."
+msgstr "Dokumenterne kunne ikke indlæses."
+
+msgid "Die Dokumente konnten nicht hinzugefügt werden."
+msgstr "Dokumenterne kunne ikke tilføjes."
+
+msgid "Die Einstellungen konnten nicht gespeichert werden."
+msgstr "Indstillingerne kunne ikke gemmes."
+
+msgid "Die Leistung konnte nicht geändert werden."
+msgstr "Ydelsen kunne ikke ændres."
+
+msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
+msgstr "Priserne er stadig pladsholdere. Fastsæt dem først efter aftale, og sæt flueben ved „Priserne er fastsat“ nedenfor."
+
+msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
+msgstr "Den automatiske PDF/UA-kontrol (veraPDF) melder afvigelser:"
+
+msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
+msgstr "De reserverede kreditter frigives, intet trækkes. Kunden får en e-mail med begrundelsen."
+
+msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "Denne oversigt er en dokumentation, ikke en faktura: Der betales med kreditter, hvis køb er faktureret separat."
+
+msgid "Diesen Auftrag gibt es nicht."
+msgstr "Denne ordre findes ikke."
+
+msgid "Dokumente anzeigen"
+msgstr "Vis dokumenter"
+
+msgid "Dokumente im Projekt „{name}“"
+msgstr "Dokumenter i projektet „{name}“"
+
+msgid "Drucken"
+msgstr "Udskriv"
+
+msgid "Du bearbeitest den Auftrag jetzt."
+msgstr "Du behandler nu ordren."
+
+msgid "Du hast noch keine Express-Aufträge."
+msgstr "Du har endnu ingen ekspresordrer."
+
+msgid "E-Mail-Adresse eines bestehenden Kontos"
+msgstr "E-mailadresse på en eksisterende konto"
+
+msgid "Eingegangen"
+msgstr "Modtaget"
+
+msgid "Einstellungen des Express-Service"
+msgstr "Indstillinger for ekspresservicen"
+
+msgid "Einstellungen speichern"
+msgstr "Gem indstillinger"
+
+msgid "Einverständnis"
+msgstr "Samtykke"
+
+msgid "Ergebnis (PDF) für {name}"
+msgstr "Resultat (PDF) for {name}"
+
+msgid "Ergebnis für „{name}“ gespeichert."
+msgstr "Resultat for „{name}“ gemt."
+
+msgid "Ergebnis herunterladen"
+msgstr "Download resultat"
+
+msgid "Ergebnis hochgeladen"
+msgstr "Resultat uploadet"
+
+msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
+msgstr "Resultatet uploades og kontrolleres med veraPDF …"
+
+msgid "Express-Auftrag"
+msgstr "Ekspresordre"
+
+msgid "Express-Auftrag {nr}: {stand}"
+msgstr "Ekspresordre {nr}: {stand}"
+
+msgid "Express-Aufträge"
+msgstr "Ekspresordrer"
+
+msgid "Express-Aufträge: {u} überfällig, {n} neu."
+msgstr "Ekspresordrer: {u} forsinkede, {n} nye."
+
+msgid "Express-Bearbeiter"
+msgstr "Ekspresbehandlere"
+
+msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
+msgstr "Ekspresbehandlere ser kun ekspresordrerne i administrationen og kan behandle dem, fx en partner, der klargør dokumenterne. De ser ikke kunder, omsætning eller AI-omkostninger."
+
+msgid "Express-Bearbeiter-Recht entziehen: {name}"
+msgstr "Fjern ekspresbehandlerret: {name}"
+
+msgid "Express-Service"
+msgstr "Ekspresservice"
+
+msgid "Fassung {f}, Sprache {s}"
+msgstr "version {f}, sprog {s}"
+
+msgid "Frage"
+msgstr "Spørgsmål"
+
+msgid "Fällig am"
+msgstr "Forfalder den"
+
+msgid "Geliefert"
+msgstr "Leveret"
+
+msgid "Geliefert (die letzten 100)"
+msgstr "Leveret (de seneste 100)"
+
+msgid "Geliefert am"
+msgstr "Leveret den"
+
+msgid "Geliefert. Der Kunde bekommt eine E-Mail, die Credits sind abgebucht."
+msgstr "Leveret. Kunden får en e-mail, kreditterne er trukket."
+
+msgid "Grund"
+msgstr "Grund"
+
+msgid "Hinweise für uns (freiwillig)"
+msgstr "Bemærkninger til os (valgfrit)"
+
+msgid "Hochgeladen und hinzugefügt."
+msgstr "Uploadet og tilføjet."
+
+msgid "Hochladen und hinzufügen"
+msgstr "Upload og tilføj"
+
+msgid "Höchstens Dokumente je Auftrag"
+msgstr "Højst dokumenter pr. ordre"
+
+msgid "Höchstens Seiten je Auftrag"
+msgstr "Højst sider pr. ordre"
+
+msgid "In Bearbeitung genommen"
+msgstr "Taget under behandling"
+
+msgid "Interne Notiz"
+msgstr "Intern note"
+
+msgid "Interne Notiz geändert"
+msgstr "Intern note ændret"
+
+msgid "Keine Aufträge."
+msgstr "Ingen ordrer."
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Lad professionelle gøre dine dokumenter tilgængelige eller kontrollere dem. Vi leverer inden for {stunden} timer. Der betales med kreditter: De reserveres ved bestillingen og trækkes først ved leveringen."
+
+msgid "Leistung für {name}"
+msgstr "Ydelse for {name}"
+
+msgid "Leistung geändert."
+msgstr "Ydelse ændret."
+
+msgid "Lieferfrist in Stunden"
+msgstr "Leveringsfrist i timer"
+
+msgid "Liefern"
+msgstr "Lever"
+
+msgid "Lieferung"
+msgstr "Levering"
+
+msgid "Lieferung innerhalb von {stunden} Stunden"
+msgstr "levering inden for {stunden} timer"
+
+msgid "Lieferung innerhalb von {stunden} Stunden."
+msgstr "Levering inden for {stunden} timer."
+
+msgid "Manche Abweichungen sind bewusst (zum Beispiel Prüfungen, die veraPDF nicht sicher beurteilen kann). Liefern bucht die Credits ab und schickt dem Kunden eine E-Mail."
+msgstr "Nogle afvigelser er bevidste (fx kontroller, som veraPDF ikke kan vurdere sikkert). Levering trækker kreditterne og sender kunden en e-mail."
+
+msgid "Meine Aufträge"
+msgstr "Mine ordrer"
+
+msgid "Meine Express-Aufträge"
+msgstr "Mine ekspresordrer"
+
+msgid "Mir zuweisen"
+msgstr "Tildel til mig"
+
+msgid "Neuer Auftrag"
+msgstr "Ny ordre"
+
+msgid "Noch keine Express-Bearbeiter."
+msgstr "Endnu ingen ekspresbehandlere."
+
+msgid "Notiz"
+msgstr "Note"
+
+msgid "Notiz gespeichert."
+msgstr "Note gemt."
+
+msgid "Notiz speichern"
+msgstr "Gem note"
+
+msgid "Nur hier in der Verwaltung sichtbar, nie für den Kunden."
+msgstr "Kun synlig her i administrationen, aldrig for kunden."
+
+msgid "Nur prüfen (Prüfbericht)"
+msgstr "Kun kontrol (kontrolrapport)"
+
+msgid "Nur prüfen: Credits je Seite"
+msgstr "Kun kontrol: kreditter pr. side"
+
+msgid "Oder eine PDF hochladen, ohne Projekt"
+msgstr "Eller upload en PDF uden projekt"
+
+msgid "Original herunterladen"
+msgstr "Download original"
+
+msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
+msgstr "Priser pr. side: gør tilgængelig (inkl. kontrol) {a} kreditter, kun kontrol {p} kreditter."
+
+msgid "Preise sind festgelegt (kein Platzhalter mehr)"
+msgstr "Priserne er fastsat (ikke længere pladsholdere)"
+
+msgid "Prüfbericht"
+msgstr "Kontrolrapport"
+
+msgid "Prüfbericht (PDF) für {name}"
+msgstr "Kontrolrapport (PDF) for {name}"
+
+msgid "Prüfbericht für „{name}“ gespeichert."
+msgstr "Kontrolrapport for „{name}“ gemt."
+
+msgid "Prüfbericht herunterladen"
+msgstr "Download kontrolrapport"
+
+msgid "Prüfbericht hochgeladen"
+msgstr "Kontrolrapport uploadet"
+
+msgid "Prüfbericht wird hochgeladen …"
+msgstr "Kontrolrapporten uploades …"
+
+msgid "Recht entziehen"
+msgstr "Fjern ret"
+
+msgid "Rückfrage"
+msgstr "Spørgsmål"
+
+msgid "Rückfrage an den Kunden"
+msgstr "Spørgsmål til kunden"
+
+msgid "Rückfrage an dich"
+msgstr "Spørgsmål til dig"
+
+msgid "Rückfrage beim Kunden"
+msgstr "Venter på kunden"
+
+msgid "Rückfrage gesendet. Die Frist ruht, bis der Kunde antwortet."
+msgstr "Spørgsmål sendt. Fristen er sat på pause, indtil kunden svarer."
+
+msgid "Rückfrage senden"
+msgstr "Send spørgsmål"
+
+msgid "Rückfrage stellen"
+msgstr "Stil et spørgsmål"
+
+msgid "Rückfrage von InkluDocs"
+msgstr "Spørgsmål fra InkluDocs"
+
+msgid "Storniert"
+msgstr "Annulleret"
+
+msgid "Storniert (die letzten 100)"
+msgstr "Annulleret (de seneste 100)"
+
+msgid "Storniert am"
+msgstr "Annulleret den"
+
+msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
+msgstr "Annulleret. Kreditterne er frigivet, kunden får en e-mail."
+
+msgid "Summe: {c} Credits"
+msgstr "I alt: {c} kreditter"
+
+msgid "Telefon"
+msgstr "Telefon"
+
+msgid "Telefon für Rückfragen (freiwillig)"
+msgstr "Telefon til spørgsmål (valgfrit)"
+
+msgid "Trotz Abweichungen liefern?"
+msgstr "Lever trods afvigelser?"
+
+msgid "Trotzdem liefern"
+msgstr "Lever alligevel"
+
+msgid "Verlauf"
+msgstr "Forløb"
+
+msgid "Vom Express-Service bearbeiten lassen"
+msgstr "Lad ekspresservicen behandle det"
+
+msgid "Vor dem Liefern fehlt noch:"
+msgstr "Mangler stadig før levering:"
+
+msgid "Zahlt aus dem Topf von"
+msgstr "Betales af puljen hos"
+
+msgid "Zahlungspflichtig bestellen"
+msgstr "Bestil med betalingspligt"
+
+msgid "Zu meinen Aufträgen"
+msgstr "Til mine ordrer"
+
+msgid "Zum Beispiel: „Das Formular auf Seite 3 bitte besonders prüfen.“"
+msgstr "Fx: „Kontrollér venligst formularen på side 3 ekstra grundigt.“"
+
+msgid "Zum Express-Bearbeiter machen"
+msgstr "Gør til ekspresbehandler"
+
+msgid "Zur Auswahl hinzufügen"
+msgstr "Føj til udvalg"
+
+msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
+msgstr "Lige nu kan vi kun behandle PDF-filer."
+
+msgid "Zurück zu den Express-Aufträgen"
+msgstr "Tilbage til ekspresordrerne"
+
+msgid "Zurück zu meinen Aufträgen"
+msgstr "Tilbage til mine ordrer"
+
+msgid "Zurück zum Express-Service"
+msgstr "Tilbage til ekspresservicen"
+
+msgid "Zustimmung"
+msgstr "Samtykke"
+
+msgid "abgebucht"
+msgstr "trukket"
+
+msgid "bestellt am {datum}"
+msgstr "bestilt den {datum}"
+
+msgid "fehlt noch"
+msgstr "mangler stadig"
+
+msgid "fällig in {n} Stunden"
+msgstr "forfalder om {n} timer"
+
+msgid "geliefert am {datum}"
+msgstr "leveret den {datum}"
+
+msgid "hochgeladen am {datum}"
+msgstr "uploadet den {datum}"
+
+msgid "hochgeladen am {datum} von {name}"
+msgstr "uploadet den {datum} af {name}"
+
+msgid "innerhalb von {stunden} Stunden"
+msgstr "inden for {stunden} timer"
+
+msgid "intern"
+msgstr "internt"
+
+msgid "keine"
+msgstr "ingen"
+
+msgid "keine PDF, nicht möglich"
+msgstr "ikke en PDF, ikke muligt"
+
+msgid "keiner (freiwillig)"
+msgstr "ingen (valgfrit)"
+
+msgid "keins angegeben"
+msgstr "ikke angivet"
+
+msgid "nicht mehr vorhanden, bitte entfernen"
+msgstr "findes ikke længere, fjern det venligst"
+
+msgid "noch nicht hochgeladen"
+msgstr "endnu ikke uploadet"
+
+msgid "noch niemand zugewiesen"
+msgstr "endnu ikke tildelt"
+
+msgid "noch {n} Stunden"
+msgstr "{n} timer tilbage"
+
+msgid "schon in deiner Auswahl"
+msgstr "allerede i dit udvalg"
+
+msgid "storniert am {datum}"
+msgstr "annulleret den {datum}"
+
+msgid "veraPDF konnte die Datei nicht prüfen."
+msgstr "veraPDF kunne ikke kontrollere filen."
+
+msgid "veraPDF: Abweichungen — {text}"
+msgstr "veraPDF: afvigelser — {text}"
+
+msgid "veraPDF: PDF/UA bestanden."
+msgstr "veraPDF: PDF/UA bestået."
+
+msgid "vorgemerkt"
+msgstr "reserveret"
+
+msgid "vorgemerkt, abgebucht wird erst bei der Lieferung"
+msgstr "reserveret, trækkes først ved levering"
+
+msgid "wieder frei"
+msgstr "frigivet"
+
+msgid "wieder frei, nichts abgebucht"
+msgstr "frigivet, intet trukket"
+
+msgid "{c} Credits, {stand}"
+msgstr "{c} kreditter, {stand}"
+
+msgid "{d} Dokumente, {c} Credits"
+msgstr "{d} dokumenter, {c} kreditter"
+
+msgid "{d} Dokumente, {s} Seiten"
+msgstr "{d} dokumenter, {s} sider"
+
+msgid "{name}: {s} Seiten, {leistung}, {c} Credits"
+msgstr "{name}: {s} sider, {leistung}, {c} kreditter"
+
+msgid "{n} Dokumente"
+msgstr "{n} dokumenter"
+
+msgid "{n} Dokumente hinzugefügt."
+msgstr "{n} dokumenter tilføjet."
+
+msgid "{n} Dokumente im Projekt, {w} davon wählbar."
+msgstr "{n} dokumenter i projektet, heraf {w} der kan vælges."
+
+msgid "{n} Seiten"
+msgstr "{n} sider"
+
+msgid "{s} Seiten, {leistung}, {c} Credits"
+msgstr "{s} sider, {leistung}, {c} kreditter"
+
+msgid "{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage"
+msgstr "{u} forsinkede, {n} nye, {a} i gang, {r} venter på kunden"
+
+msgid "Überfällig"
+msgstr "Forsinkede"
+
+msgid "Übernehmen"
+msgstr "Overtag"
+
+msgid "Übernommen"
+msgstr "Overtaget"
+
+msgid "überfällig seit {n} Stunden"
+msgstr "forsinket i {n} timer"
+
+msgid "„{name}“ entfernt."
+msgstr "„{name}“ fjernet."
+
+msgid "Ich akzeptiere die Bedingungen für den Express-Service."
+msgstr "Jeg accepterer betingelserne for ekspresservicen."
+
+msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
+msgstr "Jeg accepterer, at medarbejdere hos InkluTec og vores partner Actino ser, behandler og kontrollerer mine dokumenter."

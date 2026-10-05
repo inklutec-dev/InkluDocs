@@ -421,6 +421,10 @@ async def lifespan(app: FastAPI):
                 await asyncio.sleep(600)  # alle 10 Minuten
         asyncio.create_task(_demo_cleanup_loop())
 
+    # Express-Service (05.10.2026): Erinnerung 12 h vor der Frist und Meldung bei Ueberfaelligkeit (nur wenn an).
+    if funktionen.EXPRESS:
+        asyncio.create_task(express_api.erinnerungs_schleife())
+
     yield
 
 
@@ -885,6 +889,9 @@ async def me(user: dict = Depends(get_current_user)):
             "is_admin": db_user["is_admin"],
             "admin_level": db_user.get("admin_level", "full"),
             "pdf_creator": db_user.get("pdf_creator") or "",
+            # Express-Service (05.10.2026): Menuepunkt „Express-Service“ und Recht „Express-Bearbeiter“
+            "express": funktionen.EXPRESS,
+            "express_bearbeiter": bool(db_user.get("express_bearbeiter")) and funktionen.EXPRESS,
         },
         # deprecated: altes Tages-Limit — bleibt bis zur Frontend-Umstellung
         # auf den "abo"-Block mitgeliefert, danach entfernen.
@@ -931,6 +938,8 @@ async def me(user: dict = Depends(get_current_user)):
             "verbraucht": _verbraucht,
             "rest": None if _verfuegbar is None else max(0, _verfuegbar - _verbraucht),
             "pakete_rest": abo_info.get("pakete_rest", 0),
+            # Express (05.10.2026): fuer offene Auftraege vorgemerkt — steht nicht mehr zur Verfuegung
+            "vorgemerkt": abo_info.get("vorgemerkt", 0),
             "zeitraum_ende": abo_info.get("zeitraum_ende"),
             # Punkt 2 (04.08.2026): Free-Volumen ist bei Firmen-Domains
             # gebuendelt — die Oberflaeche sagt dann ehrlich, dass der
@@ -10211,6 +10220,28 @@ app.include_router(ki_kosten_api.build_router(ki_kosten_api.Deps(
     pauschale_eur_je_credit=lambda: billing.KOSTEN_PRO_CREDIT_EUR,
 )))
 
+# Express-Service Stufe 1 (05.10.2026): eigener Router, Kern express.py, docs/EXPRESS_SERVICE.md. Die Seiten-Funktionen
+# (_render_protected_template, _verwaltung_seite) stehen weiter unten — darum ueber lambda erst zur Laufzeit aufgeloest.
+import express_api  # noqa: E402
+app.include_router(express_api.build_router(express_api.Deps(
+    get_current_user=get_current_user,
+    get_user_by_id=get_user_by_id,
+    require_full_admin=require_full_admin,
+    send_email=send_email,
+    base_url=BASE_URL,
+    notification_email=NOTIFICATION_EMAIL,
+    results_dir=RESULTS_DIR,
+    upload_dir=UPLOAD_DIR,
+    max_upload_size=MAX_UPLOAD_SIZE,
+    handle_pdf_upload=lambda pfad, name, user, pid: _handle_pdf_upload(pfad, name, user, pid),
+    pdf_vorpruefung=lambda pfad, _: pdf_vorpruefung(pfad, _),
+    get_gettext=get_gettext,
+    resolve_ui_language=lambda request: resolve_ui_language(request),
+    render_seite=lambda request, vorlage, **extra: _render_protected_template(request, vorlage, **extra),
+    verwaltung_seite=lambda request, vorlage, bereich, **extra: _verwaltung_seite(request, vorlage, bereich, **extra),
+    absender_kennung=absender.limit_schluessel,
+)))
+
 
 # ─── Multi-Datei Export: JSON / CSV / XLSX (08.06.2026; XLSX 28.08.–02.09.2026 entfernt, auf Kundenwunsch zurück) ────────
 #
@@ -11777,6 +11808,11 @@ async def stammdaten_page(request: Request):
 # Seiten nur die Kein-Zugriff-Meldung.
 
 def _verwaltung_seite(request: Request, vorlage: str, bereich: str, **extra):
+    # Express-Service (05.10.2026): Link „Express-Aufträge“ nur, wenn die Funktion an ist; Express-Bearbeiter ohne
+    # Admin-Recht sehen in der Bereichs-Navigation NUR diesen Link (nur_express).
+    nutzer = get_optional_user(request)
+    extra.setdefault("express_an", funktionen.EXPRESS)
+    extra.setdefault("nur_express", bool(nutzer) and not nutzer.get("is_admin"))
     return _render_protected_template(
         request, vorlage, verwaltung_bereich=bereich, api_limit_standard=DAILY_IMAGE_LIMIT,
         verwaltung_preise={

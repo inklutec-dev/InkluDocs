@@ -41,6 +41,8 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
       - NOTIFICATION_EMAIL=support@inklutec.de
+      # EXPRESS-SERVICE Stufe 1 (05.10.2026): nur Staging an; Prod ohne Variable = aus (backend/funktionen.py)
+      - EXPRESS_SERVICE=${EXPRESS_SERVICE:-an}
       - BASE_URL=https://staging.inkludocs.inklutec.de
       # PDFIX-INTEGRATION (24.04.2026): Kill-Switch, default OFF. Fuer Staging auf true.
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}

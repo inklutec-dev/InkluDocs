@@ -1,0 +1,343 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Express-Auftrag') }} {{ auftrag_id }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# VERWALTUNG — EIN EXPRESS-AUFTRAG (05.10.2026): Überblick mit Frist, Arbeitsschritte (Übernehmen, Rückfrage, Liefern,
+   Stornieren), je Dokument Original herunterladen und Ergebnis bzw. Prüfbericht hochladen (veraPDF läuft beim Ergebnis
+   automatisch mit), Angaben und Einverständnis des Kunden, interne Notiz, Verlauf (auch interne Schritte).
+   Nach jeder Aktion: neu laden, Meldung oben mit Fokus (V.meldung) — wie die übrigen Verwaltungsseiten. #}
+<p class="verwaltung-zurueck"><a href="/verwaltung/express">{{ _('Zurück zu den Express-Aufträgen') }}</a></p>
+<h1>{{ _('Verwaltung') }}: {{ _('Express-Auftrag') }} {{ auftrag_id }}</h1>
+{% include "_verwaltung_nav.html" %}
+<div id="exdInhalt" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+{% endblock %}
+
+{% block dialogs %}
+{% include "_verwaltung_dialoge.html" %}
+<dialog id="exdFrageDialog" class="app-dialog" aria-labelledby="exdFrageTitel">
+  <h2 id="exdFrageTitel">{{ _('Rückfrage an den Kunden') }}</h2>
+  <p class="dash-sub">{{ _('Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet.') }}</p>
+  <form id="exdFrageForm" novalidate>
+    <div class="dash-field">
+      <label for="exdFrageText">{{ _('Frage') }}</label>
+      <textarea id="exdFrageText" class="dash-input" rows="5" maxlength="2000"></textarea>
+    </div>
+    <p id="exdFrageFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="exdFrageAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Rückfrage senden') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="exdStornoDialog" class="app-dialog" aria-labelledby="exdStornoTitel">
+  <h2 id="exdStornoTitel">{{ _('Auftrag stornieren') }}</h2>
+  <p class="dash-sub">{{ _('Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund.') }}</p>
+  <form id="exdStornoForm" novalidate>
+    <div class="dash-field">
+      <label for="exdStornoGrund">{{ _('Grund für das Stornieren') }}</label>
+      <input type="text" id="exdStornoGrund" class="dash-input" maxlength="500" autocomplete="off">
+    </div>
+    <p id="exdStornoFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="exdStornoAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-danger">{{ _('Ja, stornieren') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="exdLieferDialog" class="app-dialog" aria-labelledby="exdLieferTitel" aria-describedby="exdLieferText">
+  <h2 id="exdLieferTitel">{{ _('Trotz Abweichungen liefern?') }}</h2>
+  <p id="exdLieferText">{{ _('Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:') }}</p>
+  <ul id="exdLieferBefunde"></ul>
+  <p class="dash-sub">{{ _('Manche Abweichungen sind bewusst (zum Beispiel Prüfungen, die veraPDF nicht sicher beurteilen kann). Liefern bucht die Credits ab und schickt dem Kunden eine E-Mail.') }}</p>
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-secondary" id="exdLieferAbbrechen">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-primary" id="exdLieferTrotz">{{ _('Trotzdem liefern') }}</button>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block page_script %}
+<script>window.API_LIMIT_STANDARD = {{ api_limit_standard|int }}; window.EXPRESS_AUFTRAG = {{ auftrag_id|int }};</script>
+<script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script>
+{% raw %}
+(function () {
+  const V = window.Verwaltung;
+  const ID = window.EXPRESS_AUFTRAG;
+  const API = '/api/admin/express/auftraege/' + ID;
+  const STATUS = { neu: t('Neu'), in_arbeit: t('In Arbeit'), rueckfrage: t('Rückfrage beim Kunden'), geliefert: t('Geliefert'), storniert: t('Storniert') };
+  const VERLAUF = { bestellt: t('Bestellt'), uebernommen: t('Übernommen'), rueckfrage: t('Rückfrage'), antwort: t('Antwort des Kunden'),
+                    ergebnis: t('Ergebnis hochgeladen'), bericht: t('Prüfbericht hochgeladen'), geliefert: t('Geliefert'),
+                    storniert: t('Storniert'), notiz: t('Interne Notiz geändert') };
+  let daten = null;
+  let laeuft = false;
+
+  function offen(a) { return a.status === 'neu' || a.status === 'in_arbeit' || a.status === 'rueckfrage'; }
+  function detailText(d, ersatz) { return (d && d.detail && (d.detail.text || (typeof d.detail === 'string' ? d.detail : ''))) || ersatz; }
+  function abschnitt(ziel, titel, id) {
+    const s = V.el('section', 'dash-card verwaltung-karte');
+    s.setAttribute('aria-labelledby', id);
+    const h = V.el('h2', null, titel);
+    h.id = id;
+    h.tabIndex = -1;
+    s.appendChild(h);
+    ziel.appendChild(s);
+    return s;
+  }
+  function knopf(text, aktion, klasse) {
+    const b = V.el('button', 'btn ' + (klasse || 'btn-secondary'), text);
+    b.type = 'button';
+    b.addEventListener('click', aktion);
+    return b;
+  }
+  function link(text, href, versteckt) {
+    const a = V.el('a', 'btn btn-secondary', text);
+    a.href = href;
+    if (versteckt) a.appendChild(V.el('span', 'visually-hidden', ': ' + versteckt));
+    return a;
+  }
+  function leistungText(l) { return l === 'pruefen' ? t('Nur prüfen (Prüfbericht)') : t('Barrierefrei aufbereiten (mit Prüfung)'); }
+
+  async function aktion(pfad, body, meldung) {
+    if (laeuft) return null;
+    laeuft = true;
+    const r = await V.sendeJson(API + pfad, 'POST', body || {});
+    laeuft = false;
+    if (!r.ok) {
+      if (r.daten && r.daten.detail && r.daten.detail.nachfrage) return r;   // Liefern: Nachfrage bei Befunden
+      V.meldung(detailText(r.daten, t('Das hat nicht geklappt.')), true);
+      return null;
+    }
+    await laden(true);
+    V.meldung(meldung);
+    return r;
+  }
+
+  async function hochladen(pos, art, feld, fehler) {
+    fehler.textContent = '';
+    if (!feld.files || !feld.files.length) { fehler.textContent = t('Bitte zuerst eine PDF-Datei auswählen.'); feld.focus(); return; }
+    if (laeuft) return;
+    laeuft = true;
+    announce(art === 'ergebnis' ? t('Ergebnis wird hochgeladen und mit veraPDF geprüft …') : t('Prüfbericht wird hochgeladen …'));
+    const fd = new FormData();
+    fd.append('file', feld.files[0]);
+    let res;
+    try { res = await fetch(API + '/positionen/' + pos.id + '/' + art, { method: 'POST', body: fd }); } catch (e) { res = null; }
+    laeuft = false;
+    const d = res ? await res.json().catch(() => ({})) : {};
+    if (!res || !res.ok) { fehler.textContent = detailText(d, t('Die Datei konnte nicht hochgeladen werden.')); feld.focus(); return; }
+    await laden(true);
+    const p = (daten.positionen || []).find((x) => x.id === pos.id) || {};
+    let text = art === 'ergebnis' ? t('Ergebnis für „{name}“ gespeichert.', { name: pos.dokument_name }) : t('Prüfbericht für „{name}“ gespeichert.', { name: pos.dokument_name });
+    if (art === 'ergebnis' && p.verapdf) text += ' ' + veraText(p.verapdf);
+    V.meldung(text);
+  }
+
+  function veraText(v) {
+    if (!v) return '';
+    if (v.nicht_geprueft) return t('veraPDF konnte die Datei nicht prüfen.');
+    return v.bestanden ? t('veraPDF: PDF/UA bestanden.') : t('veraPDF: Abweichungen — {text}', { text: v.zusammenfassung || '' });
+  }
+
+  function uploadFeld(li, pos, art, titel) {
+    const form = V.el('form', 'verwaltung-suche');
+    form.noValidate = true;
+    const feld = V.el('div', 'dash-field');
+    const id = 'exd_' + art + '_' + pos.id;
+    const lab = V.el('label', null, titel);
+    lab.htmlFor = id;
+    const inp = V.el('input', 'dash-input');
+    inp.type = 'file';
+    inp.id = id;
+    inp.accept = 'application/pdf,.pdf';
+    feld.appendChild(lab);
+    feld.appendChild(inp);
+    form.appendChild(feld);
+    const btn = V.el('button', 'btn btn-secondary', t('Hochladen'));
+    btn.type = 'submit';
+    btn.appendChild(V.el('span', 'visually-hidden', ': ' + titel));
+    form.appendChild(btn);
+    const fehler = V.el('p', 'verwaltung-fehler');
+    fehler.setAttribute('role', 'alert');
+    form.addEventListener('submit', (e) => { e.preventDefault(); hochladen(pos, art, inp, fehler); });
+    li.appendChild(form);
+    li.appendChild(fehler);
+  }
+
+  function zeigen(a) {
+    daten = a;
+    const ziel = byId('exdInhalt');
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+    const arbeiten = a.darf_arbeiten && offen(a);
+
+    // 1. Überblick + Arbeitsschritte
+    let s = abschnitt(ziel, t('Überblick'), 'exd-h-ueberblick');
+    V.zeile(s, t('Stand'), STATUS[a.status] || a.status);
+    const kunde = (a.kunde_name || t('gelöschtes Konto')) + (a.kunde_email ? ' (' + a.kunde_email + ')' : '');
+    if (a.ist_admin && a.user_id) {
+      const p = V.el('p', 'dash-report-zeile', t('Kunde') + ': ');
+      const l = V.el('a', null, kunde);
+      l.href = '/verwaltung/kunden/' + a.user_id;
+      p.appendChild(l);
+      s.appendChild(p);
+    } else V.zeile(s, t('Kunde'), kunde);
+    if (a.konto_name && a.konto_name !== a.kunde_name) V.zeile(s, t('Zahlt aus dem Topf von'), a.konto_name);
+    V.zeile(s, t('Bestellt am'), V.datumZeit(a.bestellt_am));
+    if (offen(a)) {
+      V.zeile(s, t('Fällig am'), V.datumZeit(a.faellig_am) + ' — ' + (a.faellig_in_stunden < 0
+        ? t('überfällig seit {n} Stunden', { n: V.zahl(Math.abs(Math.round(a.faellig_in_stunden))) })
+        : t('noch {n} Stunden', { n: V.zahl(Math.round(a.faellig_in_stunden)) })));
+    }
+    if (a.geliefert_am) V.zeile(s, t('Geliefert am'), V.datumZeit(a.geliefert_am) + (a.geliefert_von ? ' — ' + a.geliefert_von : ''));
+    if (a.storniert_am) V.zeile(s, t('Storniert am'), V.datumZeit(a.storniert_am) + ' — ' + a.storno_grund);
+    V.zeile(s, t('Bearbeiter'), a.bearbeiter_name || t('noch niemand zugewiesen'));
+    V.zeile(s, t('Credits'), t('{c} Credits, {stand}', { c: V.zahl(a.credits_gesamt),
+      stand: a.status === 'geliefert' ? t('abgebucht') : (a.status === 'storniert' ? t('wieder frei') : t('vorgemerkt')) }));
+    V.zeile(s, t('Seiten'), V.zahl(a.seiten_gesamt));
+    if (arbeiten) {
+      const akt = V.el('div', 'dash-actions');
+      akt.appendChild(knopf(a.bearbeiter_name ? t('Mir zuweisen') : t('Übernehmen'), () => aktion('/uebernehmen', {}, t('Du bearbeitest den Auftrag jetzt.'))));
+      akt.appendChild(knopf(t('Rückfrage stellen'), () => { byId('exdFrageText').value = ''; byId('exdFrageFehler').textContent = ''; byId('exdFrageDialog').showModal(); byId('exdFrageText').focus(); }));
+      akt.appendChild(knopf(t('Liefern'), liefern, 'btn-primary'));
+      akt.appendChild(knopf(t('Stornieren'), () => { byId('exdStornoGrund').value = ''; byId('exdStornoFehler').textContent = ''; byId('exdStornoDialog').showModal(); byId('exdStornoGrund').focus(); }, 'btn-delete'));
+      s.appendChild(akt);
+      const fehlt = (a.lieferbar && a.lieferbar.fehlt) || [];
+      if (fehlt.length) {
+        s.appendChild(V.el('p', 'dash-sub', t('Vor dem Liefern fehlt noch:')));
+        const ul = V.el('ul');
+        fehlt.forEach((f) => ul.appendChild(V.el('li', null, f)));
+        s.appendChild(ul);
+      }
+    }
+
+    // 2. Dokumente
+    s = abschnitt(ziel, t('Dokumente'), 'exd-h-dokumente');
+    if (a.positionen.some((p) => p.original_da)) {
+      const z = V.el('p', 'dash-actions');
+      z.appendChild(link(t('Alle Originale als ZIP herunterladen'), API + '/originale.zip'));
+      s.appendChild(z);
+    }
+    const ul = V.el('ul', 'verwaltung-liste');
+    a.positionen.forEach((p) => {
+      const li = V.el('li', 'verwaltung-zeile');
+      li.appendChild(V.el('h3', 'verwaltung-unterkopf', p.dokument_name));
+      li.appendChild(V.el('p', null, t('{s} Seiten, {leistung}, {c} Credits', { s: V.zahl(p.seiten), leistung: leistungText(p.leistung), c: V.zahl(p.credits) })));
+      const links = V.el('p', 'dash-actions');
+      if (p.original_da) links.appendChild(link(t('Original herunterladen'), API + '/positionen/' + p.id + '/original', p.dokument_name));
+      if (p.ergebnis_da) links.appendChild(link(t('Ergebnis herunterladen'), API + '/positionen/' + p.id + '/ergebnis', p.dokument_name));
+      if (p.bericht_da) links.appendChild(link(t('Prüfbericht herunterladen'), API + '/positionen/' + p.id + '/bericht', p.dokument_name));
+      li.appendChild(links);
+      V.zeile(li, t('Ergebnis'), p.ergebnis_da ? t('hochgeladen am {datum} von {name}', { datum: V.datumZeit(p.ergebnis_am), name: p.ergebnis_von }) : t('noch nicht hochgeladen'));
+      if (p.ergebnis_da && p.verapdf) V.zeile(li, t('Automatische Prüfung'), veraText(p.verapdf));
+      V.zeile(li, t('Prüfbericht'), p.bericht_da ? t('hochgeladen am {datum}', { datum: V.datumZeit(p.bericht_am) }) : (p.leistung === 'pruefen' ? t('fehlt noch') : t('keiner (freiwillig)')));
+      if (arbeiten) {
+        if (p.leistung === 'aufbereiten') uploadFeld(li, p, 'ergebnis', t('Ergebnis (PDF) für {name}', { name: p.dokument_name }));
+        uploadFeld(li, p, 'bericht', t('Prüfbericht (PDF) für {name}', { name: p.dokument_name }));
+      }
+      ul.appendChild(li);
+    });
+    s.appendChild(ul);
+
+    // 3. Angaben + Einverständnis
+    s = abschnitt(ziel, t('Angaben des Kunden'), 'exd-h-angaben');
+    V.zeile(s, t('Ansprechpartner'), a.ansprechpartner);
+    V.zeile(s, t('Telefon'), a.telefon || t('keins angegeben'));
+    V.zeile(s, t('Hinweise'), a.hinweise || t('keine'));
+    s.appendChild(V.el('h3', 'verwaltung-unterkopf', t('Einverständnis')));
+    V.zeile(s, t('Bestätigt am'), V.datumZeit(a.zugestimmt_am) + ' (' + t('Fassung {f}, Sprache {s}', { f: a.zustimmung_fassung, s: a.zustimmung_sprache }) + ')');
+    const zu = V.el('ul');
+    zu.appendChild(V.el('li', null, a.zustimmung_bedingungen));
+    zu.appendChild(V.el('li', null, a.zustimmung_bearbeitung));
+    s.appendChild(zu);
+
+    // 4. Interne Notiz
+    s = abschnitt(ziel, t('Interne Notiz'), 'exd-h-notiz');
+    s.appendChild(V.el('p', 'dash-sub', t('Nur hier in der Verwaltung sichtbar, nie für den Kunden.')));
+    if (a.darf_arbeiten) {
+      const form = V.el('form');
+      form.noValidate = true;
+      const feld = V.el('div', 'dash-field');
+      const lab = V.el('label', null, t('Notiz'));
+      lab.htmlFor = 'exdNotiz';
+      const ta = V.el('textarea', 'dash-input');
+      ta.id = 'exdNotiz';
+      ta.rows = 4;
+      ta.maxLength = 2000;
+      ta.value = a.interne_notiz || '';
+      feld.appendChild(lab);
+      feld.appendChild(ta);
+      form.appendChild(feld);
+      const b = V.el('button', 'btn btn-secondary', t('Notiz speichern'));
+      b.type = 'submit';
+      form.appendChild(b);
+      form.addEventListener('submit', (e) => { e.preventDefault(); aktion('/notiz', { text: ta.value }, t('Notiz gespeichert.')); });
+      s.appendChild(form);
+    } else {
+      s.appendChild(V.el('p', null, a.interne_notiz || t('keine')));
+    }
+
+    // 5. Verlauf
+    s = abschnitt(ziel, t('Verlauf'), 'exd-h-verlauf');
+    const ol = V.el('ol', 'verwaltung-liste');
+    a.verlauf.forEach((v) => {
+      let text = VERLAUF[v.art] || v.art;
+      if ((v.art === 'ergebnis' || v.art === 'bericht') && v.text) text = v.text;   // nennt das Dokument
+      if (['bestellt', 'rueckfrage', 'antwort', 'storniert'].includes(v.art) && v.text) text += ' — ' + v.text;
+      ol.appendChild(V.el('li', 'verwaltung-zeile', V.datumZeit(v.created_at) + ': ' + text
+        + (v.von_name ? ' (' + v.von_name + ')' : '') + (v.fuer_kunde ? '' : ' — ' + t('intern'))));
+    });
+    s.appendChild(ol);
+  }
+
+  async function liefern() {
+    const r = await aktion('/liefern', { trotz_befunden: false }, t('Geliefert. Der Kunde bekommt eine E-Mail, die Credits sind abgebucht.'));
+    if (r && !r.ok) {
+      const ul = byId('exdLieferBefunde');
+      ul.innerHTML = '';
+      (r.daten.detail.befunde || []).forEach((b) => ul.appendChild(V.el('li', null, b)));
+      byId('exdLieferDialog').showModal();
+      byId('exdLieferAbbrechen').focus();
+    }
+  }
+
+  byId('exdLieferAbbrechen').addEventListener('click', () => byId('exdLieferDialog').close());
+  byId('exdLieferTrotz').addEventListener('click', async () => {
+    byId('exdLieferDialog').close();
+    await aktion('/liefern', { trotz_befunden: true }, t('Geliefert. Der Kunde bekommt eine E-Mail, die Credits sind abgebucht.'));
+  });
+  byId('exdFrageAbbrechen').addEventListener('click', () => byId('exdFrageDialog').close());
+  byId('exdFrageForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = byId('exdFrageText').value.trim();
+    if (!text) { byId('exdFrageFehler').textContent = t('Bitte eine Frage schreiben.'); byId('exdFrageText').focus(); return; }
+    byId('exdFrageDialog').close();
+    await aktion('/rueckfrage', { text: text }, t('Rückfrage gesendet. Die Frist ruht, bis der Kunde antwortet.'));
+  });
+  byId('exdStornoAbbrechen').addEventListener('click', () => byId('exdStornoDialog').close());
+  byId('exdStornoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const grund = byId('exdStornoGrund').value.trim();
+    if (!grund) { byId('exdStornoFehler').textContent = t('Bitte einen Grund angeben.'); byId('exdStornoGrund').focus(); return; }
+    byId('exdStornoDialog').close();
+    await aktion('/stornieren', { grund: grund }, t('Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail.'));
+  });
+
+  async function laden(still) {
+    const d = await V.ladeJson(API, byId('exdInhalt'));
+    if (!d) return;
+    zeigen(d);
+    if (!still) announce(t('Express-Auftrag {nr}: {stand}', { nr: d.id, stand: STATUS[d.status] || d.status }));
+  }
+
+  (async function start() {
+    await loadCurrentUser();
+    await laden(false);
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}

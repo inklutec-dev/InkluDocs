@@ -10584,3 +10584,660 @@ msgstr "au-delà de {grenze} tokens d’entrée : entrée {ein}, sortie {aus}"
 
 msgid "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
 msgstr "« Sans attribution » désigne les appels sans client connu, par exemple des tests ou des comptes supprimés depuis."
+
+msgid "1. Dokumente auswählen"
+msgstr "1. Choisir les documents"
+
+msgid "2. Deine Auswahl"
+msgstr "2. Votre sélection"
+
+msgid "3. Angaben"
+msgstr "3. Informations"
+
+msgid "4. Prüfen und bestellen"
+msgstr "4. Vérifier et commander"
+
+msgid "Alle Dokumente dieses Projekts"
+msgstr "Tous les documents de ce projet"
+
+msgid "Alle Express-Aufträge"
+msgstr "Toutes les commandes express"
+
+msgid "Alle Originale als ZIP herunterladen"
+msgstr "Télécharger tous les originaux en ZIP"
+
+msgid "Als PDF herunterladen"
+msgstr "Télécharger en PDF"
+
+msgid "Angaben"
+msgstr "Informations"
+
+msgid "Angaben des Kunden"
+msgstr "Informations du client"
+
+msgid "Ansprechpartner"
+msgstr "Personne à contacter"
+
+msgid "Antwort des Kunden"
+msgstr "Réponse du client"
+
+msgid "Antwort gesendet. Wir melden uns."
+msgstr "Réponse envoyée. Nous reviendrons vers vous."
+
+msgid "Antwort senden"
+msgstr "Envoyer la réponse"
+
+msgid "Auftrag stornieren"
+msgstr "Annuler la commande"
+
+msgid "Auftrag {nr}"
+msgstr "Commande {nr}"
+
+msgid "Aus einem Projekt"
+msgstr "À partir d’un projet"
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
+msgstr "Vérification PDF/UA automatique (veraPDF) : réussie."
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
+msgstr "Vérification PDF/UA automatique (veraPDF) : {text}"
+
+msgid "Barrierefrei aufbereiten (mit Prüfung)"
+msgstr "Rendre accessible (vérification comprise)"
+
+msgid "Barrierefrei aufbereiten: Credits je Seite"
+msgstr "Rendre accessible : crédits par page"
+
+msgid "Barrierefreie PDF herunterladen"
+msgstr "Télécharger le PDF accessible"
+
+msgid "Bearbeiter"
+msgstr "Responsable"
+
+msgid "Bearbeiter: {name}"
+msgstr "Responsable : {name}"
+
+msgid "Bedingungen für den Express-Service"
+msgstr "Conditions du service express"
+
+msgid "Bedingungen für den Express-Service lesen (öffnet in neuem Tab)"
+msgstr "Lire les conditions du service express (s’ouvre dans un nouvel onglet)"
+
+msgid "Benachrichtigungen an (leer = Support-Postfach)"
+msgstr "Notifications à (vide = boîte du support)"
+
+msgid "Bestellt"
+msgstr "Commandé"
+
+msgid "Bestellt am"
+msgstr "Commandé le"
+
+msgid "Bestellung wird gesendet …"
+msgstr "Envoi de la commande …"
+
+msgid "Bestätigt am"
+msgstr "Confirmé le"
+
+msgid "Bestätigt am {datum} (Fassung {fassung}):"
+msgstr "Confirmé le {datum} (version {fassung}) :"
+
+msgid "Bezahlt aus dem Team-Guthaben von"
+msgstr "Payé avec le crédit d’équipe de"
+
+msgid "Bitte beide Häkchen setzen."
+msgstr "Veuillez cocher les deux cases."
+
+msgid "Bitte ein Projekt wählen"
+msgstr "Veuillez choisir un projet"
+
+msgid "Bitte ein Projekt wählen."
+msgstr "Veuillez choisir un projet."
+
+msgid "Bitte eine Antwort schreiben."
+msgstr "Veuillez écrire une réponse."
+
+msgid "Bitte eine E-Mail-Adresse eingeben."
+msgstr "Veuillez saisir une adresse e-mail."
+
+msgid "Bitte eine Frage schreiben."
+msgstr "Veuillez écrire une question."
+
+msgid "Bitte einen Ansprechpartner angeben."
+msgstr "Veuillez indiquer une personne à contacter."
+
+msgid "Bitte einen Grund angeben."
+msgstr "Veuillez indiquer un motif."
+
+msgid "Bitte mindestens ein Dokument ankreuzen."
+msgstr "Veuillez cocher au moins un document."
+
+msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
+msgstr "Veuillez n’utiliser que des chiffres, des espaces et + ( ) / -."
+
+msgid "Bitte zuerst eine PDF-Datei auswählen."
+msgstr "Veuillez d’abord choisir un fichier PDF."
+
+msgid "Credits"
+msgstr "Crédits"
+
+msgid "Credits kaufen"
+msgstr "Acheter des crédits"
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
+msgstr "Nous créons pour cela un projet « Commande express ». Taille jusqu’à 50 Mo."
+
+msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
+msgstr "Merci ! Votre commande {nr} a bien été reçue. Nous livrons sous {stunden} heures et vous envoyons une confirmation par e-mail."
+
+msgid "Das Dokument konnte nicht entfernt werden."
+msgstr "Le document n’a pas pu être retiré."
+
+msgid "Das hat nicht geklappt."
+msgstr "Cela n’a pas fonctionné."
+
+msgid "Davon für Express-Aufträge vorgemerkt: {anzahl} Credits."
+msgstr "Dont réservés pour des commandes express : {anzahl} crédits."
+
+msgid "Dein Guthaben reicht für diese Auswahl nicht. Dir fehlen {c} Credits."
+msgstr "Votre crédit ne suffit pas pour cette sélection. Il vous manque {c} crédits."
+
+msgid "Dein Guthaben: unbegrenzt."
+msgstr "Votre crédit : illimité."
+
+msgid "Dein verfügbares Guthaben: {c} Credits."
+msgstr "Votre crédit disponible : {c} crédits."
+
+msgid "Deine Antwort"
+msgstr "Votre réponse"
+
+msgid "Deine Auswahl ist leer."
+msgstr "Votre sélection est vide."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen."
+msgstr "Votre sélection est vide. Veuillez d’abord ajouter des documents."
+
+msgid "Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits."
+msgstr "Votre sélection : {d} documents, {s} pages, {c} crédits."
+
+msgid "Der Auftrag konnte nicht geladen werden."
+msgstr "La commande n’a pas pu être chargée."
+
+msgid "Der Express-Service ist gerade nicht erreichbar."
+msgstr "Le service express est momentanément indisponible."
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
+msgstr "Le client reçoit la question par e-mail et la voit dans son récapitulatif de commande. Le délai est suspendu jusqu’à sa réponse."
+
+msgid "Die Antwort konnte nicht gesendet werden."
+msgstr "La réponse n’a pas pu être envoyée."
+
+msgid "Die Bestellung ist fehlgeschlagen. Bitte erneut versuchen."
+msgstr "La commande a échoué. Veuillez réessayer."
+
+msgid "Die Datei konnte nicht hochgeladen werden."
+msgstr "Le fichier n’a pas pu être téléversé."
+
+msgid "Die Datei wird hochgeladen …"
+msgstr "Téléversement du fichier …"
+
+msgid "Die Dokumente konnten nicht geladen werden."
+msgstr "Les documents n’ont pas pu être chargés."
+
+msgid "Die Dokumente konnten nicht hinzugefügt werden."
+msgstr "Les documents n’ont pas pu être ajoutés."
+
+msgid "Die Einstellungen konnten nicht gespeichert werden."
+msgstr "Les paramètres n’ont pas pu être enregistrés."
+
+msgid "Die Leistung konnte nicht geändert werden."
+msgstr "La prestation n’a pas pu être modifiée."
+
+msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
+msgstr "Les prix sont encore provisoires. Ne les fixer qu’après accord et cocher « Prix fixés » ci-dessous."
+
+msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
+msgstr "La vérification PDF/UA automatique (veraPDF) signale des écarts :"
+
+msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
+msgstr "Les crédits réservés sont libérés, rien n’est débité. Le client reçoit un e-mail avec le motif."
+
+msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "Ce récapitulatif est un justificatif, pas une facture : le paiement se fait en crédits, dont l’achat a été facturé séparément."
+
+msgid "Diesen Auftrag gibt es nicht."
+msgstr "Cette commande n’existe pas."
+
+msgid "Dokumente anzeigen"
+msgstr "Afficher les documents"
+
+msgid "Dokumente im Projekt „{name}“"
+msgstr "Documents du projet « {name} »"
+
+msgid "Drucken"
+msgstr "Imprimer"
+
+msgid "Du bearbeitest den Auftrag jetzt."
+msgstr "Vous traitez maintenant la commande."
+
+msgid "Du hast noch keine Express-Aufträge."
+msgstr "Vous n’avez pas encore de commandes express."
+
+msgid "E-Mail-Adresse eines bestehenden Kontos"
+msgstr "Adresse e-mail d’un compte existant"
+
+msgid "Eingegangen"
+msgstr "Reçue"
+
+msgid "Einstellungen des Express-Service"
+msgstr "Paramètres du service express"
+
+msgid "Einstellungen speichern"
+msgstr "Enregistrer les paramètres"
+
+msgid "Einverständnis"
+msgstr "Consentement"
+
+msgid "Ergebnis (PDF) für {name}"
+msgstr "Résultat (PDF) pour {name}"
+
+msgid "Ergebnis für „{name}“ gespeichert."
+msgstr "Résultat pour « {name} » enregistré."
+
+msgid "Ergebnis herunterladen"
+msgstr "Télécharger le résultat"
+
+msgid "Ergebnis hochgeladen"
+msgstr "Résultat téléversé"
+
+msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
+msgstr "Téléversement du résultat et vérification avec veraPDF …"
+
+msgid "Express-Auftrag"
+msgstr "Commande express"
+
+msgid "Express-Auftrag {nr}: {stand}"
+msgstr "Commande express {nr} : {stand}"
+
+msgid "Express-Aufträge"
+msgstr "Commandes express"
+
+msgid "Express-Aufträge: {u} überfällig, {n} neu."
+msgstr "Commandes express : {u} en retard, {n} nouvelles."
+
+msgid "Express-Bearbeiter"
+msgstr "Responsables express"
+
+msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
+msgstr "Les responsables express ne voient que les commandes express dans l’administration et peuvent les traiter, par exemple un partenaire qui prépare les documents. Ils ne voient ni les clients, ni le chiffre d’affaires, ni les coûts d’IA."
+
+msgid "Express-Bearbeiter-Recht entziehen: {name}"
+msgstr "Retirer le droit de responsable express : {name}"
+
+msgid "Express-Service"
+msgstr "Service express"
+
+msgid "Fassung {f}, Sprache {s}"
+msgstr "version {f}, langue {s}"
+
+msgid "Frage"
+msgstr "Question"
+
+msgid "Fällig am"
+msgstr "Échéance le"
+
+msgid "Geliefert"
+msgstr "Livrée"
+
+msgid "Geliefert (die letzten 100)"
+msgstr "Livrées (les 100 dernières)"
+
+msgid "Geliefert am"
+msgstr "Livrée le"
+
+msgid "Geliefert. Der Kunde bekommt eine E-Mail, die Credits sind abgebucht."
+msgstr "Livrée. Le client reçoit un e-mail, les crédits ont été débités."
+
+msgid "Grund"
+msgstr "Motif"
+
+msgid "Hinweise für uns (freiwillig)"
+msgstr "Remarques pour nous (facultatif)"
+
+msgid "Hochgeladen und hinzugefügt."
+msgstr "Téléversé et ajouté."
+
+msgid "Hochladen und hinzufügen"
+msgstr "Téléverser et ajouter"
+
+msgid "Höchstens Dokumente je Auftrag"
+msgstr "Nombre maximal de documents par commande"
+
+msgid "Höchstens Seiten je Auftrag"
+msgstr "Nombre maximal de pages par commande"
+
+msgid "In Bearbeitung genommen"
+msgstr "Prise en charge"
+
+msgid "Interne Notiz"
+msgstr "Note interne"
+
+msgid "Interne Notiz geändert"
+msgstr "Note interne modifiée"
+
+msgid "Keine Aufträge."
+msgstr "Aucune commande."
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Faites rendre vos documents accessibles ou vérifier par des professionnels. Nous livrons sous {stunden} heures. Le paiement se fait en crédits : ils sont réservés à la commande et débités seulement à la livraison."
+
+msgid "Leistung für {name}"
+msgstr "Prestation pour {name}"
+
+msgid "Leistung geändert."
+msgstr "Prestation modifiée."
+
+msgid "Lieferfrist in Stunden"
+msgstr "Délai de livraison en heures"
+
+msgid "Liefern"
+msgstr "Livrer"
+
+msgid "Lieferung"
+msgstr "Livraison"
+
+msgid "Lieferung innerhalb von {stunden} Stunden"
+msgstr "livraison sous {stunden} heures"
+
+msgid "Lieferung innerhalb von {stunden} Stunden."
+msgstr "Livraison sous {stunden} heures."
+
+msgid "Manche Abweichungen sind bewusst (zum Beispiel Prüfungen, die veraPDF nicht sicher beurteilen kann). Liefern bucht die Credits ab und schickt dem Kunden eine E-Mail."
+msgstr "Certains écarts sont volontaires (par exemple des contrôles que veraPDF ne peut pas évaluer de façon fiable). Livrer débite les crédits et envoie un e-mail au client."
+
+msgid "Meine Aufträge"
+msgstr "Mes commandes"
+
+msgid "Meine Express-Aufträge"
+msgstr "Mes commandes express"
+
+msgid "Mir zuweisen"
+msgstr "M’attribuer"
+
+msgid "Neuer Auftrag"
+msgstr "Nouvelle commande"
+
+msgid "Noch keine Express-Bearbeiter."
+msgstr "Pas encore de responsables express."
+
+msgid "Notiz"
+msgstr "Note"
+
+msgid "Notiz gespeichert."
+msgstr "Note enregistrée."
+
+msgid "Notiz speichern"
+msgstr "Enregistrer la note"
+
+msgid "Nur hier in der Verwaltung sichtbar, nie für den Kunden."
+msgstr "Visible uniquement ici dans l’administration, jamais pour le client."
+
+msgid "Nur prüfen (Prüfbericht)"
+msgstr "Vérification seule (rapport)"
+
+msgid "Nur prüfen: Credits je Seite"
+msgstr "Vérification seule : crédits par page"
+
+msgid "Oder eine PDF hochladen, ohne Projekt"
+msgstr "Ou téléverser un PDF, sans projet"
+
+msgid "Original herunterladen"
+msgstr "Télécharger l’original"
+
+msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
+msgstr "Prix par page : rendre accessible (vérification comprise) {a} crédits, vérification seule {p} crédits."
+
+msgid "Preise sind festgelegt (kein Platzhalter mehr)"
+msgstr "Prix fixés (plus de valeurs provisoires)"
+
+msgid "Prüfbericht"
+msgstr "Rapport de vérification"
+
+msgid "Prüfbericht (PDF) für {name}"
+msgstr "Rapport de vérification (PDF) pour {name}"
+
+msgid "Prüfbericht für „{name}“ gespeichert."
+msgstr "Rapport de vérification pour « {name} » enregistré."
+
+msgid "Prüfbericht herunterladen"
+msgstr "Télécharger le rapport de vérification"
+
+msgid "Prüfbericht hochgeladen"
+msgstr "Rapport de vérification téléversé"
+
+msgid "Prüfbericht wird hochgeladen …"
+msgstr "Téléversement du rapport de vérification …"
+
+msgid "Recht entziehen"
+msgstr "Retirer le droit"
+
+msgid "Rückfrage"
+msgstr "Question"
+
+msgid "Rückfrage an den Kunden"
+msgstr "Question au client"
+
+msgid "Rückfrage an dich"
+msgstr "Question pour vous"
+
+msgid "Rückfrage beim Kunden"
+msgstr "En attente du client"
+
+msgid "Rückfrage gesendet. Die Frist ruht, bis der Kunde antwortet."
+msgstr "Question envoyée. Le délai est suspendu jusqu’à la réponse du client."
+
+msgid "Rückfrage senden"
+msgstr "Envoyer la question"
+
+msgid "Rückfrage stellen"
+msgstr "Poser une question"
+
+msgid "Rückfrage von InkluDocs"
+msgstr "Question d’InkluDocs"
+
+msgid "Storniert"
+msgstr "Annulée"
+
+msgid "Storniert (die letzten 100)"
+msgstr "Annulées (les 100 dernières)"
+
+msgid "Storniert am"
+msgstr "Annulée le"
+
+msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
+msgstr "Annulée. Les crédits sont libérés, le client reçoit un e-mail."
+
+msgid "Summe: {c} Credits"
+msgstr "Total : {c} crédits"
+
+msgid "Telefon"
+msgstr "Téléphone"
+
+msgid "Telefon für Rückfragen (freiwillig)"
+msgstr "Téléphone pour les questions (facultatif)"
+
+msgid "Trotz Abweichungen liefern?"
+msgstr "Livrer malgré les écarts ?"
+
+msgid "Trotzdem liefern"
+msgstr "Livrer quand même"
+
+msgid "Verlauf"
+msgstr "Historique"
+
+msgid "Vom Express-Service bearbeiten lassen"
+msgstr "Confier au service express"
+
+msgid "Vor dem Liefern fehlt noch:"
+msgstr "Manque encore avant la livraison :"
+
+msgid "Zahlt aus dem Topf von"
+msgstr "Payé avec le crédit de"
+
+msgid "Zahlungspflichtig bestellen"
+msgstr "Commander avec obligation de paiement"
+
+msgid "Zu meinen Aufträgen"
+msgstr "Vers mes commandes"
+
+msgid "Zum Beispiel: „Das Formular auf Seite 3 bitte besonders prüfen.“"
+msgstr "Par exemple : « Veuillez vérifier tout particulièrement le formulaire de la page 3. »"
+
+msgid "Zum Express-Bearbeiter machen"
+msgstr "Nommer responsable express"
+
+msgid "Zur Auswahl hinzufügen"
+msgstr "Ajouter à la sélection"
+
+msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
+msgstr "Pour l’instant, nous ne traitons que des fichiers PDF."
+
+msgid "Zurück zu den Express-Aufträgen"
+msgstr "Retour aux commandes express"
+
+msgid "Zurück zu meinen Aufträgen"
+msgstr "Retour à mes commandes"
+
+msgid "Zurück zum Express-Service"
+msgstr "Retour au service express"
+
+msgid "Zustimmung"
+msgstr "Accord"
+
+msgid "abgebucht"
+msgstr "débités"
+
+msgid "bestellt am {datum}"
+msgstr "commandée le {datum}"
+
+msgid "fehlt noch"
+msgstr "manque encore"
+
+msgid "fällig in {n} Stunden"
+msgstr "échéance dans {n} heures"
+
+msgid "geliefert am {datum}"
+msgstr "livrée le {datum}"
+
+msgid "hochgeladen am {datum}"
+msgstr "téléversé le {datum}"
+
+msgid "hochgeladen am {datum} von {name}"
+msgstr "téléversé le {datum} par {name}"
+
+msgid "innerhalb von {stunden} Stunden"
+msgstr "sous {stunden} heures"
+
+msgid "intern"
+msgstr "interne"
+
+msgid "keine"
+msgstr "aucune"
+
+msgid "keine PDF, nicht möglich"
+msgstr "pas un PDF, impossible"
+
+msgid "keiner (freiwillig)"
+msgstr "aucun (facultatif)"
+
+msgid "keins angegeben"
+msgstr "non indiqué"
+
+msgid "nicht mehr vorhanden, bitte entfernen"
+msgstr "n’existe plus, veuillez le retirer"
+
+msgid "noch nicht hochgeladen"
+msgstr "pas encore téléversé"
+
+msgid "noch niemand zugewiesen"
+msgstr "personne n’est encore attribué"
+
+msgid "noch {n} Stunden"
+msgstr "encore {n} heures"
+
+msgid "schon in deiner Auswahl"
+msgstr "déjà dans votre sélection"
+
+msgid "storniert am {datum}"
+msgstr "annulée le {datum}"
+
+msgid "veraPDF konnte die Datei nicht prüfen."
+msgstr "veraPDF n’a pas pu vérifier le fichier."
+
+msgid "veraPDF: Abweichungen — {text}"
+msgstr "veraPDF : écarts — {text}"
+
+msgid "veraPDF: PDF/UA bestanden."
+msgstr "veraPDF : PDF/UA réussi."
+
+msgid "vorgemerkt"
+msgstr "réservés"
+
+msgid "vorgemerkt, abgebucht wird erst bei der Lieferung"
+msgstr "réservés, débités seulement à la livraison"
+
+msgid "wieder frei"
+msgstr "libérés"
+
+msgid "wieder frei, nichts abgebucht"
+msgstr "libérés, rien débité"
+
+msgid "{c} Credits, {stand}"
+msgstr "{c} crédits, {stand}"
+
+msgid "{d} Dokumente, {c} Credits"
+msgstr "{d} documents, {c} crédits"
+
+msgid "{d} Dokumente, {s} Seiten"
+msgstr "{d} documents, {s} pages"
+
+msgid "{name}: {s} Seiten, {leistung}, {c} Credits"
+msgstr "{name} : {s} pages, {leistung}, {c} crédits"
+
+msgid "{n} Dokumente"
+msgstr "{n} documents"
+
+msgid "{n} Dokumente hinzugefügt."
+msgstr "{n} documents ajoutés."
+
+msgid "{n} Dokumente im Projekt, {w} davon wählbar."
+msgstr "{n} documents dans le projet, dont {w} sélectionnables."
+
+msgid "{n} Seiten"
+msgstr "{n} pages"
+
+msgid "{s} Seiten, {leistung}, {c} Credits"
+msgstr "{s} pages, {leistung}, {c} crédits"
+
+msgid "{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage"
+msgstr "{u} en retard, {n} nouvelles, {a} en cours, {r} en attente du client"
+
+msgid "Überfällig"
+msgstr "En retard"
+
+msgid "Übernehmen"
+msgstr "Prendre en charge"
+
+msgid "Übernommen"
+msgstr "Prise en charge"
+
+msgid "überfällig seit {n} Stunden"
+msgstr "en retard depuis {n} heures"
+
+msgid "„{name}“ entfernt."
+msgstr "« {name} » retiré."
+
+msgid "Ich akzeptiere die Bedingungen für den Express-Service."
+msgstr "J’accepte les conditions du service express."
+
+msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
+msgstr "J’accepte que des collaborateurs d’InkluTec et de notre partenaire Actino consultent, modifient et vérifient mes documents."

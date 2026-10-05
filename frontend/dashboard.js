@@ -88,6 +88,11 @@ function buildCreditLines(abo, kurz) {
   if (abo.pakete_rest > 0) {
     lines.push(t('Zusatz-Credits: {anzahl} verfügbar.', { anzahl: abo.pakete_rest }));
   }
+  if (abo.vorgemerkt > 0) {
+    // Express-Service (05.10.2026): vorgemerkt fuer offene Auftraege (abgebucht erst bei der Lieferung) — diese Credits
+    // stehen fuer anderes nicht mehr zur Verfuegung.
+    lines.push(t('Davon für Express-Aufträge vorgemerkt: {anzahl} Credits.', { anzahl: abo.vorgemerkt }));
+  }
   return lines;
 }
 
@@ -171,6 +176,8 @@ const NAV_ITEMS = [
   { href: '/projekt-neu', label: t('Neues Projekt anlegen') },
   { href: '/projekte', label: t('Meine Projekte') },
   { href: '/ablage', label: t('Meine Ablage') },   // Sicherung der barrierefreien Office-Dokumente inkl. Pruefbericht (11.09.2026)
+  // EXPRESS-SERVICE (05.10.2026): Profis bereiten Dokumente auf — nur, wenn die Funktion an ist (/api/me user.express).
+  { href: '/express', label: t('Express-Service'), express: true, bereich: '/express' },
   // 25.08.2026 (Michael): „Meine Prompts“ wie „Meine Projekte“.
   { href: '/prompts', label: t('Meine Prompts') },
   // QUICKINFO-WERKZEUG (27.08.2026): Stammdaten-Bibliothek fuer Formularfelder, gleiche Stelle wie die Prompts.
@@ -186,6 +193,8 @@ const NAV_ITEMS = [
   // 25.09.2026 (Steve): „Verwaltung“ mit den Unterseiten Kunden, Umsatz, API, Einstellungen —
   // der Eintrag bleibt auf allen /verwaltung/…-Seiten als aktuelle Seite markiert.
   { href: '/verwaltung/kunden', label: t('Verwaltung'), admin: true, bereich: '/verwaltung' },
+  // Express-Bearbeiter ohne Admin-Recht (05.10.2026): nur der Weg zu den Express-Auftraegen.
+  { href: '/verwaltung/express', label: t('Express-Aufträge'), bearbeiter: true, bereich: '/verwaltung/express' },
 ];
 
 // Navigation der oeffentlichen Seiten fuer Besucher OHNE Anmeldung
@@ -261,6 +270,8 @@ function renderSidebar() {
 
   NAV_ITEMS.forEach((it) => {
     if (it.admin && !(currentUser && currentUser.is_admin)) return;
+    if (it.express && !(currentUser && currentUser.express)) return;
+    if (it.bearbeiter && !(currentUser && currentUser.express_bearbeiter && !currentUser.is_admin)) return;
     const li = document.createElement('li');
     const a = document.createElement('a');
     a.href = it.href;

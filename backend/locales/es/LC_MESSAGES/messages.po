@@ -10584,3 +10584,660 @@ msgstr "con más de {grenze} tokens de entrada: entrada {ein}, salida {aus}"
 
 msgid "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
 msgstr "«Sin asignar» son llamadas sin cliente conocido, por ejemplo pruebas o cuentas eliminadas desde entonces."
+
+msgid "1. Dokumente auswählen"
+msgstr "1. Seleccionar documentos"
+
+msgid "2. Deine Auswahl"
+msgstr "2. Tu selección"
+
+msgid "3. Angaben"
+msgstr "3. Datos"
+
+msgid "4. Prüfen und bestellen"
+msgstr "4. Revisar y pedir"
+
+msgid "Alle Dokumente dieses Projekts"
+msgstr "Todos los documentos de este proyecto"
+
+msgid "Alle Express-Aufträge"
+msgstr "Todos los pedidos exprés"
+
+msgid "Alle Originale als ZIP herunterladen"
+msgstr "Descargar todos los originales en ZIP"
+
+msgid "Als PDF herunterladen"
+msgstr "Descargar como PDF"
+
+msgid "Angaben"
+msgstr "Datos"
+
+msgid "Angaben des Kunden"
+msgstr "Datos del cliente"
+
+msgid "Ansprechpartner"
+msgstr "Persona de contacto"
+
+msgid "Antwort des Kunden"
+msgstr "Respuesta del cliente"
+
+msgid "Antwort gesendet. Wir melden uns."
+msgstr "Respuesta enviada. Te contactaremos."
+
+msgid "Antwort senden"
+msgstr "Enviar respuesta"
+
+msgid "Auftrag stornieren"
+msgstr "Cancelar pedido"
+
+msgid "Auftrag {nr}"
+msgstr "Pedido {nr}"
+
+msgid "Aus einem Projekt"
+msgstr "De un proyecto"
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
+msgstr "Comprobación PDF/UA automática (veraPDF): superada."
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
+msgstr "Comprobación PDF/UA automática (veraPDF): {text}"
+
+msgid "Barrierefrei aufbereiten (mit Prüfung)"
+msgstr "Hacer accesible (con revisión)"
+
+msgid "Barrierefrei aufbereiten: Credits je Seite"
+msgstr "Hacer accesible: créditos por página"
+
+msgid "Barrierefreie PDF herunterladen"
+msgstr "Descargar PDF accesible"
+
+msgid "Bearbeiter"
+msgstr "Responsable"
+
+msgid "Bearbeiter: {name}"
+msgstr "Responsable: {name}"
+
+msgid "Bedingungen für den Express-Service"
+msgstr "Condiciones del servicio exprés"
+
+msgid "Bedingungen für den Express-Service lesen (öffnet in neuem Tab)"
+msgstr "Leer las condiciones del servicio exprés (se abre en una pestaña nueva)"
+
+msgid "Benachrichtigungen an (leer = Support-Postfach)"
+msgstr "Notificaciones a (vacío = buzón de soporte)"
+
+msgid "Bestellt"
+msgstr "Pedido"
+
+msgid "Bestellt am"
+msgstr "Pedido el"
+
+msgid "Bestellung wird gesendet …"
+msgstr "Enviando el pedido …"
+
+msgid "Bestätigt am"
+msgstr "Confirmado el"
+
+msgid "Bestätigt am {datum} (Fassung {fassung}):"
+msgstr "Confirmado el {datum} (versión {fassung}):"
+
+msgid "Bezahlt aus dem Team-Guthaben von"
+msgstr "Pagado con el saldo de equipo de"
+
+msgid "Bitte beide Häkchen setzen."
+msgstr "Marca las dos casillas."
+
+msgid "Bitte ein Projekt wählen"
+msgstr "Elige un proyecto"
+
+msgid "Bitte ein Projekt wählen."
+msgstr "Elige un proyecto."
+
+msgid "Bitte eine Antwort schreiben."
+msgstr "Escribe una respuesta."
+
+msgid "Bitte eine E-Mail-Adresse eingeben."
+msgstr "Introduce una dirección de correo."
+
+msgid "Bitte eine Frage schreiben."
+msgstr "Escribe una pregunta."
+
+msgid "Bitte einen Ansprechpartner angeben."
+msgstr "Indica una persona de contacto."
+
+msgid "Bitte einen Grund angeben."
+msgstr "Indica un motivo."
+
+msgid "Bitte mindestens ein Dokument ankreuzen."
+msgstr "Marca al menos un documento."
+
+msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
+msgstr "Usa solo cifras, espacios y + ( ) / -."
+
+msgid "Bitte zuerst eine PDF-Datei auswählen."
+msgstr "Selecciona primero un archivo PDF."
+
+msgid "Credits"
+msgstr "Créditos"
+
+msgid "Credits kaufen"
+msgstr "Comprar créditos"
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
+msgstr "Para ello creamos un proyecto «Pedido exprés». Tamaño hasta 50 MB."
+
+msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
+msgstr "¡Gracias! Hemos recibido tu pedido {nr}. Lo entregamos en un plazo de {stunden} horas y te enviamos una confirmación por correo."
+
+msgid "Das Dokument konnte nicht entfernt werden."
+msgstr "No se pudo quitar el documento."
+
+msgid "Das hat nicht geklappt."
+msgstr "No ha funcionado."
+
+msgid "Davon für Express-Aufträge vorgemerkt: {anzahl} Credits."
+msgstr "De ellos, reservados para pedidos exprés: {anzahl} créditos."
+
+msgid "Dein Guthaben reicht für diese Auswahl nicht. Dir fehlen {c} Credits."
+msgstr "Tu saldo no alcanza para esta selección. Te faltan {c} créditos."
+
+msgid "Dein Guthaben: unbegrenzt."
+msgstr "Tu saldo: ilimitado."
+
+msgid "Dein verfügbares Guthaben: {c} Credits."
+msgstr "Tu saldo disponible: {c} créditos."
+
+msgid "Deine Antwort"
+msgstr "Tu respuesta"
+
+msgid "Deine Auswahl ist leer."
+msgstr "Tu selección está vacía."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen."
+msgstr "Tu selección está vacía. Añade primero documentos."
+
+msgid "Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits."
+msgstr "Tu selección: {d} documentos, {s} páginas, {c} créditos."
+
+msgid "Der Auftrag konnte nicht geladen werden."
+msgstr "No se pudo cargar el pedido."
+
+msgid "Der Express-Service ist gerade nicht erreichbar."
+msgstr "El servicio exprés no está disponible en este momento."
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
+msgstr "El cliente recibe la pregunta por correo y la ve en el resumen de su pedido. El plazo se detiene hasta que responda."
+
+msgid "Die Antwort konnte nicht gesendet werden."
+msgstr "No se pudo enviar la respuesta."
+
+msgid "Die Bestellung ist fehlgeschlagen. Bitte erneut versuchen."
+msgstr "El pedido ha fallado. Inténtalo de nuevo."
+
+msgid "Die Datei konnte nicht hochgeladen werden."
+msgstr "No se pudo subir el archivo."
+
+msgid "Die Datei wird hochgeladen …"
+msgstr "Subiendo el archivo …"
+
+msgid "Die Dokumente konnten nicht geladen werden."
+msgstr "No se pudieron cargar los documentos."
+
+msgid "Die Dokumente konnten nicht hinzugefügt werden."
+msgstr "No se pudieron añadir los documentos."
+
+msgid "Die Einstellungen konnten nicht gespeichert werden."
+msgstr "No se pudieron guardar los ajustes."
+
+msgid "Die Leistung konnte nicht geändert werden."
+msgstr "No se pudo cambiar el servicio."
+
+msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
+msgstr "Los precios son todavía provisionales. Fíjalos solo tras acordarlos y marca «Precios fijados» abajo."
+
+msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
+msgstr "La comprobación PDF/UA automática (veraPDF) indica desviaciones:"
+
+msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
+msgstr "Los créditos reservados quedan libres, no se cobra nada. El cliente recibe un correo con el motivo."
+
+msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "Este resumen es un justificante, no una factura: se paga con créditos cuya compra se facturó por separado."
+
+msgid "Diesen Auftrag gibt es nicht."
+msgstr "Este pedido no existe."
+
+msgid "Dokumente anzeigen"
+msgstr "Mostrar documentos"
+
+msgid "Dokumente im Projekt „{name}“"
+msgstr "Documentos del proyecto «{name}»"
+
+msgid "Drucken"
+msgstr "Imprimir"
+
+msgid "Du bearbeitest den Auftrag jetzt."
+msgstr "Ahora estás trabajando en el pedido."
+
+msgid "Du hast noch keine Express-Aufträge."
+msgstr "Todavía no tienes pedidos exprés."
+
+msgid "E-Mail-Adresse eines bestehenden Kontos"
+msgstr "Correo de una cuenta existente"
+
+msgid "Eingegangen"
+msgstr "Recibido"
+
+msgid "Einstellungen des Express-Service"
+msgstr "Ajustes del servicio exprés"
+
+msgid "Einstellungen speichern"
+msgstr "Guardar ajustes"
+
+msgid "Einverständnis"
+msgstr "Consentimiento"
+
+msgid "Ergebnis (PDF) für {name}"
+msgstr "Resultado (PDF) para {name}"
+
+msgid "Ergebnis für „{name}“ gespeichert."
+msgstr "Resultado de «{name}» guardado."
+
+msgid "Ergebnis herunterladen"
+msgstr "Descargar resultado"
+
+msgid "Ergebnis hochgeladen"
+msgstr "Resultado subido"
+
+msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
+msgstr "Subiendo el resultado y comprobándolo con veraPDF …"
+
+msgid "Express-Auftrag"
+msgstr "Pedido exprés"
+
+msgid "Express-Auftrag {nr}: {stand}"
+msgstr "Pedido exprés {nr}: {stand}"
+
+msgid "Express-Aufträge"
+msgstr "Pedidos exprés"
+
+msgid "Express-Aufträge: {u} überfällig, {n} neu."
+msgstr "Pedidos exprés: {u} atrasados, {n} nuevos."
+
+msgid "Express-Bearbeiter"
+msgstr "Responsables exprés"
+
+msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
+msgstr "Los responsables exprés solo ven los pedidos exprés en la administración y pueden trabajar en ellos, por ejemplo un socio que prepara los documentos. No ven clientes, ingresos ni costes de IA."
+
+msgid "Express-Bearbeiter-Recht entziehen: {name}"
+msgstr "Quitar el permiso de responsable exprés: {name}"
+
+msgid "Express-Service"
+msgstr "Servicio exprés"
+
+msgid "Fassung {f}, Sprache {s}"
+msgstr "versión {f}, idioma {s}"
+
+msgid "Frage"
+msgstr "Pregunta"
+
+msgid "Fällig am"
+msgstr "Vence el"
+
+msgid "Geliefert"
+msgstr "Entregado"
+
+msgid "Geliefert (die letzten 100)"
+msgstr "Entregados (los últimos 100)"
+
+msgid "Geliefert am"
+msgstr "Entregado el"
+
+msgid "Geliefert. Der Kunde bekommt eine E-Mail, die Credits sind abgebucht."
+msgstr "Entregado. El cliente recibe un correo; los créditos se han cobrado."
+
+msgid "Grund"
+msgstr "Motivo"
+
+msgid "Hinweise für uns (freiwillig)"
+msgstr "Indicaciones para nosotros (opcional)"
+
+msgid "Hochgeladen und hinzugefügt."
+msgstr "Subido y añadido."
+
+msgid "Hochladen und hinzufügen"
+msgstr "Subir y añadir"
+
+msgid "Höchstens Dokumente je Auftrag"
+msgstr "Máximo de documentos por pedido"
+
+msgid "Höchstens Seiten je Auftrag"
+msgstr "Máximo de páginas por pedido"
+
+msgid "In Bearbeitung genommen"
+msgstr "En tramitación"
+
+msgid "Interne Notiz"
+msgstr "Nota interna"
+
+msgid "Interne Notiz geändert"
+msgstr "Nota interna modificada"
+
+msgid "Keine Aufträge."
+msgstr "No hay pedidos."
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Deja que profesionales hagan accesibles tus documentos o los revisen. Entregamos en un plazo de {stunden} horas. Se paga con créditos: se reservan al pedir y se cobran solo en la entrega."
+
+msgid "Leistung für {name}"
+msgstr "Servicio para {name}"
+
+msgid "Leistung geändert."
+msgstr "Servicio cambiado."
+
+msgid "Lieferfrist in Stunden"
+msgstr "Plazo de entrega en horas"
+
+msgid "Liefern"
+msgstr "Entregar"
+
+msgid "Lieferung"
+msgstr "Entrega"
+
+msgid "Lieferung innerhalb von {stunden} Stunden"
+msgstr "entrega en un plazo de {stunden} horas"
+
+msgid "Lieferung innerhalb von {stunden} Stunden."
+msgstr "Entrega en un plazo de {stunden} horas."
+
+msgid "Manche Abweichungen sind bewusst (zum Beispiel Prüfungen, die veraPDF nicht sicher beurteilen kann). Liefern bucht die Credits ab und schickt dem Kunden eine E-Mail."
+msgstr "Algunas desviaciones son intencionadas (por ejemplo, comprobaciones que veraPDF no puede evaluar con seguridad). Entregar cobra los créditos y envía un correo al cliente."
+
+msgid "Meine Aufträge"
+msgstr "Mis pedidos"
+
+msgid "Meine Express-Aufträge"
+msgstr "Mis pedidos exprés"
+
+msgid "Mir zuweisen"
+msgstr "Asignármelo"
+
+msgid "Neuer Auftrag"
+msgstr "Nuevo pedido"
+
+msgid "Noch keine Express-Bearbeiter."
+msgstr "Todavía no hay responsables exprés."
+
+msgid "Notiz"
+msgstr "Nota"
+
+msgid "Notiz gespeichert."
+msgstr "Nota guardada."
+
+msgid "Notiz speichern"
+msgstr "Guardar nota"
+
+msgid "Nur hier in der Verwaltung sichtbar, nie für den Kunden."
+msgstr "Solo visible aquí en la administración, nunca para el cliente."
+
+msgid "Nur prüfen (Prüfbericht)"
+msgstr "Solo revisar (informe)"
+
+msgid "Nur prüfen: Credits je Seite"
+msgstr "Solo revisar: créditos por página"
+
+msgid "Oder eine PDF hochladen, ohne Projekt"
+msgstr "O subir un PDF, sin proyecto"
+
+msgid "Original herunterladen"
+msgstr "Descargar original"
+
+msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
+msgstr "Precios por página: hacer accesible (con revisión) {a} créditos, solo revisar {p} créditos."
+
+msgid "Preise sind festgelegt (kein Platzhalter mehr)"
+msgstr "Precios fijados (ya no son provisionales)"
+
+msgid "Prüfbericht"
+msgstr "Informe de revisión"
+
+msgid "Prüfbericht (PDF) für {name}"
+msgstr "Informe de revisión (PDF) para {name}"
+
+msgid "Prüfbericht für „{name}“ gespeichert."
+msgstr "Informe de revisión de «{name}» guardado."
+
+msgid "Prüfbericht herunterladen"
+msgstr "Descargar informe de revisión"
+
+msgid "Prüfbericht hochgeladen"
+msgstr "Informe de revisión subido"
+
+msgid "Prüfbericht wird hochgeladen …"
+msgstr "Subiendo el informe de revisión …"
+
+msgid "Recht entziehen"
+msgstr "Quitar permiso"
+
+msgid "Rückfrage"
+msgstr "Consulta"
+
+msgid "Rückfrage an den Kunden"
+msgstr "Consulta al cliente"
+
+msgid "Rückfrage an dich"
+msgstr "Consulta para ti"
+
+msgid "Rückfrage beim Kunden"
+msgstr "Esperando al cliente"
+
+msgid "Rückfrage gesendet. Die Frist ruht, bis der Kunde antwortet."
+msgstr "Consulta enviada. El plazo se detiene hasta que el cliente responda."
+
+msgid "Rückfrage senden"
+msgstr "Enviar consulta"
+
+msgid "Rückfrage stellen"
+msgstr "Hacer una consulta"
+
+msgid "Rückfrage von InkluDocs"
+msgstr "Consulta de InkluDocs"
+
+msgid "Storniert"
+msgstr "Cancelado"
+
+msgid "Storniert (die letzten 100)"
+msgstr "Cancelados (los últimos 100)"
+
+msgid "Storniert am"
+msgstr "Cancelado el"
+
+msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
+msgstr "Cancelado. Los créditos quedan libres; el cliente recibe un correo."
+
+msgid "Summe: {c} Credits"
+msgstr "Total: {c} créditos"
+
+msgid "Telefon"
+msgstr "Teléfono"
+
+msgid "Telefon für Rückfragen (freiwillig)"
+msgstr "Teléfono para consultas (opcional)"
+
+msgid "Trotz Abweichungen liefern?"
+msgstr "¿Entregar pese a las desviaciones?"
+
+msgid "Trotzdem liefern"
+msgstr "Entregar de todos modos"
+
+msgid "Verlauf"
+msgstr "Historial"
+
+msgid "Vom Express-Service bearbeiten lassen"
+msgstr "Encargarlo al servicio exprés"
+
+msgid "Vor dem Liefern fehlt noch:"
+msgstr "Falta todavía antes de la entrega:"
+
+msgid "Zahlt aus dem Topf von"
+msgstr "Pagado con el saldo de"
+
+msgid "Zahlungspflichtig bestellen"
+msgstr "Pedir con obligación de pago"
+
+msgid "Zu meinen Aufträgen"
+msgstr "A mis pedidos"
+
+msgid "Zum Beispiel: „Das Formular auf Seite 3 bitte besonders prüfen.“"
+msgstr "Por ejemplo: «Por favor, revisad con especial atención el formulario de la página 3.»"
+
+msgid "Zum Express-Bearbeiter machen"
+msgstr "Nombrar responsable exprés"
+
+msgid "Zur Auswahl hinzufügen"
+msgstr "Añadir a la selección"
+
+msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
+msgstr "De momento solo podemos procesar archivos PDF."
+
+msgid "Zurück zu den Express-Aufträgen"
+msgstr "Volver a los pedidos exprés"
+
+msgid "Zurück zu meinen Aufträgen"
+msgstr "Volver a mis pedidos"
+
+msgid "Zurück zum Express-Service"
+msgstr "Volver al servicio exprés"
+
+msgid "Zustimmung"
+msgstr "Conformidad"
+
+msgid "abgebucht"
+msgstr "cobrados"
+
+msgid "bestellt am {datum}"
+msgstr "pedido el {datum}"
+
+msgid "fehlt noch"
+msgstr "falta todavía"
+
+msgid "fällig in {n} Stunden"
+msgstr "vence en {n} horas"
+
+msgid "geliefert am {datum}"
+msgstr "entregado el {datum}"
+
+msgid "hochgeladen am {datum}"
+msgstr "subido el {datum}"
+
+msgid "hochgeladen am {datum} von {name}"
+msgstr "subido el {datum} por {name}"
+
+msgid "innerhalb von {stunden} Stunden"
+msgstr "en un plazo de {stunden} horas"
+
+msgid "intern"
+msgstr "interno"
+
+msgid "keine"
+msgstr "ninguna"
+
+msgid "keine PDF, nicht möglich"
+msgstr "no es un PDF, no es posible"
+
+msgid "keiner (freiwillig)"
+msgstr "ninguno (opcional)"
+
+msgid "keins angegeben"
+msgstr "no indicado"
+
+msgid "nicht mehr vorhanden, bitte entfernen"
+msgstr "ya no existe, quítalo"
+
+msgid "noch nicht hochgeladen"
+msgstr "todavía no subido"
+
+msgid "noch niemand zugewiesen"
+msgstr "todavía sin asignar"
+
+msgid "noch {n} Stunden"
+msgstr "quedan {n} horas"
+
+msgid "schon in deiner Auswahl"
+msgstr "ya está en tu selección"
+
+msgid "storniert am {datum}"
+msgstr "cancelado el {datum}"
+
+msgid "veraPDF konnte die Datei nicht prüfen."
+msgstr "veraPDF no pudo comprobar el archivo."
+
+msgid "veraPDF: Abweichungen — {text}"
+msgstr "veraPDF: desviaciones — {text}"
+
+msgid "veraPDF: PDF/UA bestanden."
+msgstr "veraPDF: PDF/UA superado."
+
+msgid "vorgemerkt"
+msgstr "reservados"
+
+msgid "vorgemerkt, abgebucht wird erst bei der Lieferung"
+msgstr "reservados, se cobran solo en la entrega"
+
+msgid "wieder frei"
+msgstr "liberados"
+
+msgid "wieder frei, nichts abgebucht"
+msgstr "liberados, no se cobró nada"
+
+msgid "{c} Credits, {stand}"
+msgstr "{c} créditos, {stand}"
+
+msgid "{d} Dokumente, {c} Credits"
+msgstr "{d} documentos, {c} créditos"
+
+msgid "{d} Dokumente, {s} Seiten"
+msgstr "{d} documentos, {s} páginas"
+
+msgid "{name}: {s} Seiten, {leistung}, {c} Credits"
+msgstr "{name}: {s} páginas, {leistung}, {c} créditos"
+
+msgid "{n} Dokumente"
+msgstr "{n} documentos"
+
+msgid "{n} Dokumente hinzugefügt."
+msgstr "{n} documentos añadidos."
+
+msgid "{n} Dokumente im Projekt, {w} davon wählbar."
+msgstr "{n} documentos en el proyecto, {w} de ellos seleccionables."
+
+msgid "{n} Seiten"
+msgstr "{n} páginas"
+
+msgid "{s} Seiten, {leistung}, {c} Credits"
+msgstr "{s} páginas, {leistung}, {c} créditos"
+
+msgid "{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage"
+msgstr "{u} atrasados, {n} nuevos, {a} en curso, {r} esperando al cliente"
+
+msgid "Überfällig"
+msgstr "Atrasados"
+
+msgid "Übernehmen"
+msgstr "Asumir"
+
+msgid "Übernommen"
+msgstr "Asumido"
+
+msgid "überfällig seit {n} Stunden"
+msgstr "atrasado desde hace {n} horas"
+
+msgid "„{name}“ entfernt."
+msgstr "«{name}» quitado."
+
+msgid "Ich akzeptiere die Bedingungen für den Express-Service."
+msgstr "Acepto las condiciones del servicio exprés."
+
+msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
+msgstr "Acepto que empleados de InkluTec y de nuestro socio Actino vean, editen y revisen mis documentos."

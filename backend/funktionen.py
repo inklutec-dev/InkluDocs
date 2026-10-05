@@ -14,6 +14,8 @@ Zum Einschalten den Wert hier auf True setzen — sonst nichts.
 """
 from __future__ import annotations
 
+import os
+
 # KI-basierte Pruefung (experimentell): Block in „Tagging“ und „Barrierefreiheitsprüfung“, Chatbot pruefung_starten /
 # pruefbericht_lesen, POST …/pruefung, GET …/pruefung/befunde.csv. Aus seit 24.09.2026 (Steve; Michael, Feedback 28.09.).
 KI_PRUEFUNG = False
@@ -33,6 +35,11 @@ KETTE = False
 TEXT_ZURUECK = False
 # Link „Strukturansicht öffnen“ in „Tagging“ (die Seite selbst bleibt fuer „Mit eigenem Screenreader prüfen“).
 STRUKTURANSICHT = False
+# EXPRESS-SERVICE Stufe 1 (05.10.2026): Bereich „Express-Service“, Link im Projekt, Verwaltung „Express-Aufträge“.
+# Anders als die Schalter oben haengt er an der UMGEBUNG, weil derselbe Code auf Staging an und auf Prod aus sein muss:
+# EXPRESS_SERVICE=an (docker-compose.staging.yml). Prod/ohne Variable: aus. In der Demo nie.
+EXPRESS = ((os.environ.get("EXPRESS_SERVICE") or "aus").strip().lower() in ("an", "on", "1", "true", "ja")
+           and (os.environ.get("DEMO_MODE") or "off").strip().lower() not in ("on", "true", "1", "yes"))
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {
@@ -68,4 +75,4 @@ def endpunkt_frei(schalter: str) -> None:
 def fuer_oberflaeche() -> dict:
     """window.FUNKTIONEN in app.html."""
     return {"ki_pruefung": KI_PRUEFUNG, "korrektur": KORREKTUR, "eigene_pruefungen": EIGENE_PRUEFUNGEN, "urteil": URTEIL,
-            "kette": KETTE, "text_zurueck": TEXT_ZURUECK, "strukturansicht": STRUKTURANSICHT}
+            "kette": KETTE, "text_zurueck": TEXT_ZURUECK, "strukturansicht": STRUKTURANSICHT, "express": EXPRESS}

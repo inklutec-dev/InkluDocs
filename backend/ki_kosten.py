@@ -572,9 +572,10 @@ def monatsbericht(jahr: int, monat: int, umgebungen=None) -> dict:
             kunden.append(dict(_summen(r), konto_user_id=r["konto"], name=r["name"] or "", email=r["email"] or "",
                                konto_geloescht=bool(r["konto"]) and not r["email"]))
         # Credits und Umsatz je Konto im selben Zeitraum (Umsatz wie auf der Umsatz-Seite: ohne Bonus und Ruecklastschrift).
+        # Express-Credits (05.10.2026) bezahlen Handarbeit, keine KI — sie wuerden die Kosten je Credit verwaessern.
         credits = {r["k"]: int(r["s"] or 0) for r in conn.execute(
             "SELECT konto_user_id AS k, SUM(credits) AS s FROM usage_events "
-            "WHERE created_at >= ? AND created_at < ? GROUP BY konto_user_id", (von, bis))}
+            "WHERE created_at >= ? AND created_at < ? AND quelle != 'express' GROUP BY konto_user_id", (von, bis))}
         umsatz_je = {r["k"]: int(r["s"] or 0) for r in conn.execute(
             f"SELECT konto_user_id AS k, SUM(betrag_cent) AS s FROM buchungen WHERE {umsatz._ZAEHLT} "
             "AND gebucht_am >= ? AND gebucht_am < ? GROUP BY konto_user_id", (von, bis))}

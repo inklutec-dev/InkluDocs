@@ -1,0 +1,419 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Express-Service') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Profis bereiten Dokumente auf oder prüfen sie. Ein Auftrag in vier
+   Schritten auf EINER Seite (Dokumente wählen, Auswahl mit Leistung je Dokument, Angaben, Prüfen und zahlungspflichtig
+   bestellen), darunter „Meine Aufträge“. Dem Kunden wird nur „innerhalb von 48 Stunden“ genannt, keine Uhrzeit (Steve).
+   Barrierefreiheit: natives HTML (fieldset/legend, echte Kontrollkästchen, select, button), Fehler am Feld verknüpft,
+   Ansagen sparsam über die Live-Region der App-Hülle (announce). Daten: /api/express/…, Kern express.py. #}
+<h1 id="exTitel" tabindex="-1">{{ _('Express-Service') }}</h1>
+<p class="dash-sub" id="exIntro"></p>
+<p class="dash-sub" id="exPreise"></p>
+<p><a href="#h-auftraege">{{ _('Zu meinen Aufträgen') }}</a></p>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-neu">
+  <h2 id="h-neu">{{ _('Neuer Auftrag') }}</h2>
+
+  <h3 id="h-schritt1">{{ _('1. Dokumente auswählen') }}</h3>
+  <p class="dash-sub">{{ _('Zurzeit können wir nur PDF-Dateien bearbeiten.') }}</p>
+  <form id="exProjektForm" class="verwaltung-suche" novalidate>
+    <div class="dash-field">
+      <label for="exProjekt">{{ _('Aus einem Projekt') }}</label>
+      <select id="exProjekt" class="dash-input"></select>
+    </div>
+    <button type="submit" class="btn btn-secondary">{{ _('Dokumente anzeigen') }}</button>
+  </form>
+  <form id="exDokForm" novalidate hidden>
+    <fieldset class="ex-fieldset">
+      <legend id="exDokLegende"></legend>
+      <p><label><input type="checkbox" id="exAlle"> {{ _('Alle Dokumente dieses Projekts') }}</label></p>
+      <ul id="exDokListe" class="ex-liste"></ul>
+    </fieldset>
+    <p id="exDokFehler" role="alert" class="verwaltung-fehler"></p>
+    <button type="submit" class="btn btn-primary" id="exHinzu">{{ _('Zur Auswahl hinzufügen') }}</button>
+  </form>
+  <form id="exUploadForm" novalidate>
+    <div class="dash-field">
+      <label for="exDatei">{{ _('Oder eine PDF hochladen, ohne Projekt') }}</label>
+      <input type="file" id="exDatei" class="dash-input" accept="application/pdf,.pdf" aria-describedby="exUploadHinweis">
+      <p class="dash-sub" id="exUploadHinweis">{{ _('Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB.') }}</p>
+    </div>
+    <p id="exUploadFehler" role="alert" class="verwaltung-fehler"></p>
+    <button type="submit" class="btn btn-secondary" id="exUploadKnopf">{{ _('Hochladen und hinzufügen') }}</button>
+  </form>
+
+  <h3 id="h-auswahl" tabindex="-1">{{ _('2. Deine Auswahl') }}</h3>
+  <p id="exSumme" class="verwaltung-bestaetigung"></p>
+  <ul id="exAuswahl" class="verwaltung-liste"></ul>
+
+  <form id="exBestellForm" novalidate>
+    <h3 id="h-angaben">{{ _('3. Angaben') }}</h3>
+    <div class="dash-field">
+      <label for="exName">{{ _('Ansprechpartner') }}</label>
+      <input type="text" id="exName" class="dash-input" maxlength="120" autocomplete="name" required aria-describedby="exNameFehler">
+      <p id="exNameFehler" class="verwaltung-fehler"></p>
+    </div>
+    <div class="dash-field">
+      <label for="exTelefon">{{ _('Telefon für Rückfragen (freiwillig)') }}</label>
+      <input type="tel" id="exTelefon" class="dash-input" maxlength="40" autocomplete="tel" aria-describedby="exTelefonFehler">
+      <p id="exTelefonFehler" class="verwaltung-fehler"></p>
+    </div>
+    <div class="dash-field">
+      <label for="exHinweise">{{ _('Hinweise für uns (freiwillig)') }}</label>
+      <textarea id="exHinweise" class="dash-input" rows="4" maxlength="2000" aria-describedby="exHinweiseBeispiel"></textarea>
+      <p class="dash-sub" id="exHinweiseBeispiel">{{ _('Zum Beispiel: „Das Formular auf Seite 3 bitte besonders prüfen.“') }}</p>
+    </div>
+
+    <h3 id="h-pruefen">{{ _('4. Prüfen und bestellen') }}</h3>
+    <ul id="exAufstellung" class="verwaltung-liste"></ul>
+    <p id="exGesamt" class="verwaltung-bestaetigung"></p>
+    <p id="exGuthaben"></p>
+    <p id="exLieferung"></p>
+    <p id="exZuWenig" class="verwaltung-warnung" hidden></p>
+    <p><a href="/express/bedingungen" target="_blank" rel="noopener">{{ _('Bedingungen für den Express-Service lesen (öffnet in neuem Tab)') }}</a></p>
+    <fieldset class="ex-fieldset" aria-describedby="exZustimmungFehler">
+      <legend>{{ _('Zustimmung') }}</legend>
+      <p><input type="checkbox" id="exBedingungen"> <label for="exBedingungen" id="exBedingungenText"></label></p>
+      <p><input type="checkbox" id="exBearbeitung"> <label for="exBearbeitung" id="exBearbeitungText"></label></p>
+      <p id="exZustimmungFehler" class="verwaltung-fehler"></p>
+    </fieldset>
+    <p id="exBestellFehler" role="alert" class="verwaltung-fehler"></p>
+    <button type="submit" class="btn btn-primary" id="exBestellen">{{ _('Zahlungspflichtig bestellen') }}</button>
+  </form>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-auftraege">
+  <h2 id="h-auftraege" tabindex="-1">{{ _('Meine Aufträge') }}</h2>
+  <div id="exAuftraege" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+</section>
+{% endblock %}
+
+{% block page_script %}
+<script>
+{% raw %}
+(function () {
+  'use strict';
+  let stand = null;
+  let laeuft = false;
+  const idempotenz = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+    : (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12));
+
+  function el(tag, klasse, text) {
+    const e = document.createElement(tag);
+    if (klasse) e.className = klasse;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function zahl(n) {
+    try { return new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0); } catch (e) { return String(n); }
+  }
+  const STATUS = { neu: t('Eingegangen'), in_arbeit: t('In Bearbeitung'), rueckfrage: t('Rückfrage an dich'),
+                   geliefert: t('Geliefert'), storniert: t('Storniert') };
+  function leistungText(l) {
+    return l === 'pruefen' ? t('Nur prüfen (Prüfbericht)') : t('Barrierefrei aufbereiten (mit Prüfung)');
+  }
+  function datumZeit(s) {
+    // 'JJJJ-MM-TT HH:MM' (deutsche Zeit vom Server) -> '5. Oktober 2026, 11:41'
+    if (!s) return '';
+    const p = String(s).slice(0, 10).split('-');
+    let tag = String(s).slice(0, 10);
+    try {
+      tag = new Intl.DateTimeFormat(window.LANG || 'de', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+        .format(new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])));
+    } catch (e) { /* Rohtext */ }
+    const uhr = String(s).slice(11, 16);
+    return uhr ? tag + ', ' + uhr : tag;
+  }
+  async function json(url, opt) {
+    let res;
+    try { res = await fetch(url, Object.assign({ headers: { 'Accept': 'application/json' } }, opt || {})); }
+    catch (e) { return { ok: false, status: 0, daten: { detail: t('Keine Verbindung zum Server. Bitte erneut versuchen.') } }; }
+    if (res.status === 401) { window.location.href = '/login'; return { ok: false, status: 401, daten: {} }; }
+    const daten = await res.json().catch(() => ({}));
+    return { ok: res.ok, status: res.status, daten: daten };
+  }
+  function fehlertext(d, ersatz) {
+    const x = d && d.detail;
+    if (!x) return ersatz;
+    return typeof x === 'string' ? x : (x.text || ersatz);
+  }
+  function senden(url, methode, daten) {
+    return json(url, { method: methode, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: daten === undefined ? undefined : JSON.stringify(daten) });
+  }
+
+  // ── Kopf ──
+  function kopf() {
+    byId('exIntro').textContent = t('Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht.', { stunden: stand.frist_stunden });
+    byId('exPreise').textContent = t('Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits.', { a: zahl(stand.preise.aufbereiten), p: zahl(stand.preise.pruefen) });
+    byId('exBedingungenText').textContent = stand.texte.bedingungen;
+    byId('exBearbeitungText').textContent = stand.texte.bearbeitung;
+    if (!byId('exName').value) byId('exName').value = stand.ansprechpartner || '';
+  }
+
+  // ── Schritt 1: Projekte und Dokumente ──
+  async function projekteLaden(vorwahl) {
+    const r = await json('/api/express/projekte');
+    const sel = byId('exProjekt');
+    sel.innerHTML = '';
+    const leer = el('option', null, t('Bitte ein Projekt wählen'));
+    leer.value = '';
+    sel.appendChild(leer);
+    (r.ok ? r.daten.projekte : []).forEach((p) => {
+      const o = el('option', null, p.name + ' (' + t('{n} Dokumente', { n: p.dokumente }) + ')');
+      o.value = String(p.id);
+      sel.appendChild(o);
+    });
+    if (vorwahl && sel.querySelector('option[value="' + vorwahl + '"]')) {
+      sel.value = vorwahl;
+      await dokumenteLaden(vorwahl, true);
+    }
+  }
+
+  async function dokumenteLaden(pid, allesAnhaken) {
+    const r = await json('/api/express/projekte/' + encodeURIComponent(pid) + '/dokumente');
+    const form = byId('exDokForm');
+    const liste = byId('exDokListe');
+    liste.innerHTML = '';
+    byId('exDokFehler').textContent = '';
+    if (!r.ok) { form.hidden = false; byId('exDokFehler').textContent = fehlertext(r.daten, t('Die Dokumente konnten nicht geladen werden.')); return; }
+    const sel = byId('exProjekt');
+    byId('exDokLegende').textContent = t('Dokumente im Projekt „{name}“', { name: sel.options[sel.selectedIndex].textContent });
+    let waehlbar = 0;
+    r.daten.dokumente.forEach((d) => {
+      const li = el('li');
+      const label = el('label');
+      const box = el('input');
+      box.type = 'checkbox';
+      box.name = 'exDok';
+      box.value = String(d.id);
+      let text = d.name;
+      if (d.seiten) text += ', ' + t('{n} Seiten', { n: zahl(d.seiten) });
+      if (d.im_warenkorb) { box.disabled = true; text += ' — ' + t('schon in deiner Auswahl'); }
+      else if (!d.seiten) { box.disabled = true; text += ' — ' + (d.grund === 'keine PDF' ? t('keine PDF, nicht möglich') : d.grund); }
+      else { waehlbar++; if (allesAnhaken) box.checked = true; }
+      label.appendChild(box);
+      label.appendChild(document.createTextNode(' ' + text));
+      li.appendChild(label);
+      liste.appendChild(li);
+    });
+    byId('exAlle').checked = !!allesAnhaken && waehlbar > 0;
+    byId('exAlle').disabled = waehlbar === 0;
+    form.hidden = false;
+    announce(t('{n} Dokumente im Projekt, {w} davon wählbar.', { n: r.daten.dokumente.length, w: waehlbar }));
+  }
+
+  byId('exProjektForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pid = byId('exProjekt').value;
+    if (!pid) { byId('exDokForm').hidden = true; announce(t('Bitte ein Projekt wählen.')); return; }
+    dokumenteLaden(pid, false);
+  });
+  byId('exAlle').addEventListener('change', () => {
+    document.querySelectorAll('input[name="exDok"]:not(:disabled)').forEach((b) => { b.checked = byId('exAlle').checked; });
+  });
+  byId('exDokListe').addEventListener('change', () => {
+    const boxen = Array.from(document.querySelectorAll('input[name="exDok"]:not(:disabled)'));
+    byId('exAlle').checked = boxen.length > 0 && boxen.every((b) => b.checked);
+  });
+
+  byId('exDokForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (laeuft) return;
+    const ids = Array.from(document.querySelectorAll('input[name="exDok"]:checked:not(:disabled)')).map((b) => parseInt(b.value, 10));
+    byId('exDokFehler').textContent = '';
+    if (!ids.length) { byId('exDokFehler').textContent = t('Bitte mindestens ein Dokument ankreuzen.'); byId('exAlle').focus(); return; }
+    laeuft = true;
+    const r = await senden('/api/express/warenkorb/dokumente', 'POST', { document_ids: ids });
+    laeuft = false;
+    if (!r.ok) { byId('exDokFehler').textContent = fehlertext(r.daten, t('Die Dokumente konnten nicht hinzugefügt werden.')); return; }
+    stand.warenkorb = r.daten.warenkorb;
+    auswahl();
+    await dokumenteLaden(byId('exProjekt').value, false);
+    let text = t('{n} Dokumente hinzugefügt.', { n: r.daten.hinzugefuegt }) + ' ' + summeText();
+    if (r.daten.hinweise && r.daten.hinweise.length) text += ' ' + r.daten.hinweise.join(' ');
+    announce(text);
+  });
+
+  byId('exUploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (laeuft) return;
+    const feld = byId('exDatei');
+    byId('exUploadFehler').textContent = '';
+    if (!feld.files || !feld.files.length) { byId('exUploadFehler').textContent = t('Bitte zuerst eine PDF-Datei auswählen.'); feld.focus(); return; }
+    const fd = new FormData();
+    fd.append('file', feld.files[0]);
+    laeuft = true;
+    byId('exUploadKnopf').setAttribute('aria-disabled', 'true');
+    announce(t('Die Datei wird hochgeladen …'));
+    const r = await json('/api/express/warenkorb/hochladen', { method: 'POST', body: fd });
+    laeuft = false;
+    byId('exUploadKnopf').removeAttribute('aria-disabled');
+    if (!r.ok) { byId('exUploadFehler').textContent = fehlertext(r.daten, t('Die Datei konnte nicht hochgeladen werden.')); feld.focus(); return; }
+    feld.value = '';
+    stand.warenkorb = r.daten.warenkorb;
+    auswahl();
+    projekteLaden(byId('exProjekt').value);
+    announce(t('Hochgeladen und hinzugefügt.') + ' ' + summeText());
+  });
+
+  // ── Schritt 2: Auswahl ──
+  function summeText() {
+    const w = stand.warenkorb;
+    if (!w.dokumente) return t('Deine Auswahl ist leer.');
+    return t('Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits.', { d: w.dokumente, s: zahl(w.seiten), c: zahl(w.credits) });
+  }
+
+  function auswahl() {
+    const w = stand.warenkorb;
+    const ul = byId('exAuswahl');
+    ul.innerHTML = '';
+    byId('exSumme').textContent = summeText();
+    w.positionen.forEach((p) => {
+      const li = el('li', 'verwaltung-zeile');
+      li.appendChild(el('p', 'verwaltung-meta', p.dokument_name + ', ' + t('{n} Seiten', { n: zahl(p.seiten) })
+        + (p.vorhanden ? '' : ' — ' + t('nicht mehr vorhanden, bitte entfernen'))));
+      const feld = el('div', 'dash-field');
+      const lab = el('label', null, t('Leistung für {name}', { name: p.dokument_name }));
+      lab.htmlFor = 'exLeistung' + p.id;
+      const sel = el('select', 'dash-input');
+      sel.id = 'exLeistung' + p.id;
+      ['aufbereiten', 'pruefen'].forEach((l) => {
+        const o = el('option', null, leistungText(l) + ' — ' + t('{c} Credits', { c: zahl(stand.preise[l] * p.seiten) }));
+        o.value = l;
+        sel.appendChild(o);
+      });
+      sel.value = p.leistung;
+      sel.addEventListener('change', async () => {
+        const r = await senden('/api/express/warenkorb/positionen/' + p.id + '/leistung', 'POST', { leistung: sel.value });
+        if (!r.ok) { announce(fehlertext(r.daten, t('Die Leistung konnte nicht geändert werden.'))); sel.value = p.leistung; return; }
+        stand.warenkorb = r.daten;
+        p.leistung = sel.value;
+        byId('exSumme').textContent = summeText();
+        aufstellung();
+        announce(t('Leistung geändert.') + ' ' + summeText());
+      });
+      feld.appendChild(lab);
+      feld.appendChild(sel);
+      li.appendChild(feld);
+      const weg = el('button', 'btn btn-secondary btn-small');
+      weg.type = 'button';
+      weg.textContent = t('Entfernen');
+      weg.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
+      weg.addEventListener('click', async () => {
+        const r = await senden('/api/express/warenkorb/positionen/' + p.id, 'DELETE');
+        if (!r.ok) { announce(fehlertext(r.daten, t('Das Dokument konnte nicht entfernt werden.'))); return; }
+        stand.warenkorb = r.daten;
+        auswahl();
+        if (byId('exProjekt').value) dokumenteLaden(byId('exProjekt').value, false);
+        byId('h-auswahl').focus();
+        announce(t('„{name}“ entfernt.', { name: p.dokument_name }) + ' ' + summeText());
+      });
+      li.appendChild(weg);
+      ul.appendChild(li);
+    });
+    aufstellung();
+  }
+
+  // ── Schritt 4: Aufstellung ──
+  function aufstellung() {
+    const w = stand.warenkorb;
+    const ul = byId('exAufstellung');
+    ul.innerHTML = '';
+    w.positionen.forEach((p) => ul.appendChild(el('li', 'verwaltung-zeile',
+      t('{name}: {s} Seiten, {leistung}, {c} Credits', { name: p.dokument_name, s: zahl(p.seiten), leistung: leistungText(p.leistung), c: zahl(p.credits) }))));
+    byId('exGesamt').textContent = w.dokumente ? t('Summe: {c} Credits', { c: zahl(w.credits) }) : t('Deine Auswahl ist leer.');
+    byId('exGuthaben').textContent = stand.guthaben === null || stand.guthaben === undefined
+      ? t('Dein Guthaben: unbegrenzt.') : t('Dein verfügbares Guthaben: {c} Credits.', { c: zahl(stand.guthaben) });
+    byId('exLieferung').textContent = t('Lieferung innerhalb von {stunden} Stunden.', { stunden: stand.frist_stunden });
+    const zuWenig = stand.guthaben !== null && stand.guthaben !== undefined && w.credits > stand.guthaben;
+    const hinweis = byId('exZuWenig');
+    hinweis.hidden = !zuWenig;
+    hinweis.innerHTML = '';
+    if (zuWenig) {
+      hinweis.appendChild(document.createTextNode(t('Dein Guthaben reicht für diese Auswahl nicht. Dir fehlen {c} Credits.', { c: zahl(w.credits - stand.guthaben) }) + ' '));
+      const a = el('a', null, t('Credits kaufen'));
+      a.href = '/abo';
+      hinweis.appendChild(a);
+    }
+  }
+
+  // ── Bestellen ──
+  function feldFehler(id, text) {
+    const f = byId(id);
+    const p = byId(id + 'Fehler');
+    if (p) p.textContent = text || '';
+    if (text) f.setAttribute('aria-invalid', 'true'); else f.removeAttribute('aria-invalid');
+  }
+
+  byId('exBestellForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (laeuft) return;
+    byId('exBestellFehler').textContent = '';
+    byId('exZustimmungFehler').textContent = '';
+    feldFehler('exName', '');
+    feldFehler('exTelefon', '');
+    let erstes = null;
+    if (!stand.warenkorb.dokumente) { byId('exBestellFehler').textContent = t('Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen.'); byId('h-schritt1').scrollIntoView(); return; }
+    if (!byId('exName').value.trim()) { feldFehler('exName', t('Bitte einen Ansprechpartner angeben.')); erstes = erstes || byId('exName'); }
+    const tel = byId('exTelefon').value.trim();
+    if (tel && !/^[0-9+()\/\-. ]{3,40}$/.test(tel)) { feldFehler('exTelefon', t('Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden.')); erstes = erstes || byId('exTelefon'); }
+    if (!byId('exBedingungen').checked || !byId('exBearbeitung').checked) {
+      byId('exZustimmungFehler').textContent = t('Bitte beide Häkchen setzen.');
+      erstes = erstes || (!byId('exBedingungen').checked ? byId('exBedingungen') : byId('exBearbeitung'));
+    }
+    if (erstes) { erstes.focus(); return; }
+    laeuft = true;
+    byId('exBestellen').setAttribute('aria-disabled', 'true');
+    announce(t('Bestellung wird gesendet …'));
+    const r = await senden('/api/express/bestellen', 'POST', {
+      ansprechpartner: byId('exName').value, telefon: tel, hinweise: byId('exHinweise').value,
+      bedingungen: byId('exBedingungen').checked, bearbeitung: byId('exBearbeitung').checked, idempotenz: idempotenz });
+    if (r.ok) { window.location.href = '/express/auftrag/' + r.daten.auftrag_id + '?neu=1'; return; }
+    laeuft = false;
+    byId('exBestellen').removeAttribute('aria-disabled');
+    byId('exBestellFehler').textContent = fehlertext(r.daten, t('Die Bestellung ist fehlgeschlagen. Bitte erneut versuchen.'));
+    byId('exBestellen').focus();
+  });
+
+  // ── Meine Aufträge ──
+  async function auftraegeLaden() {
+    const ziel = byId('exAuftraege');
+    const r = await json('/api/express/auftraege');
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+    const liste = r.ok ? r.daten.auftraege : [];
+    if (!liste.length) { ziel.appendChild(el('p', 'dash-empty', t('Du hast noch keine Express-Aufträge.'))); return; }
+    const ul = el('ul', 'verwaltung-liste');
+    liste.forEach((a) => {
+      const li = el('li', 'verwaltung-zeile');
+      const link = el('a', null, t('Auftrag {nr}', { nr: a.id }));
+      link.href = '/express/auftrag/' + a.id;
+      li.appendChild(link);
+      let text = ': ' + t('bestellt am {datum}', { datum: datumZeit(a.bestellt_am) }) + ', ' + (STATUS[a.status] || a.status)
+        + ', ' + t('{d} Dokumente, {c} Credits', { d: a.dokumente, c: zahl(a.credits_gesamt) });
+      if (a.status === 'neu' || a.status === 'in_arbeit' || a.status === 'rueckfrage') text += ', ' + t('Lieferung innerhalb von {stunden} Stunden', { stunden: a.frist_stunden });
+      if (a.status === 'geliefert' && a.geliefert_am) text += ', ' + t('geliefert am {datum}', { datum: datumZeit(a.geliefert_am) });
+      li.appendChild(document.createTextNode(text));
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+  }
+
+  (async function start() {
+    await loadCurrentUser();
+    const r = await json('/api/express/stand');
+    if (!r.ok) { byId('exIntro').textContent = fehlertext(r.daten, t('Der Express-Service ist gerade nicht erreichbar.')); return; }
+    stand = r.daten;
+    kopf();
+    auswahl();
+    const vorwahl = new URLSearchParams(window.location.search).get('projekt');
+    await projekteLaden(vorwahl && /^\d+$/.test(vorwahl) ? vorwahl : '');
+    await auftraegeLaden();
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}

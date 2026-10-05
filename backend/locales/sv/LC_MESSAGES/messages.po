@@ -10152,3 +10152,660 @@ msgstr "över {grenze} indatatokens: indata {ein}, utdata {aus}"
 
 msgid "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
 msgstr "”Utan koppling” är anrop utan känd kund, t.ex. tester eller konton som sedan har raderats."
+
+msgid "1. Dokumente auswählen"
+msgstr "1. Välj dokument"
+
+msgid "2. Deine Auswahl"
+msgstr "2. Ditt urval"
+
+msgid "3. Angaben"
+msgstr "3. Uppgifter"
+
+msgid "4. Prüfen und bestellen"
+msgstr "4. Granska och beställ"
+
+msgid "Alle Dokumente dieses Projekts"
+msgstr "Alla dokument i det här projektet"
+
+msgid "Alle Express-Aufträge"
+msgstr "Alla expressbeställningar"
+
+msgid "Alle Originale als ZIP herunterladen"
+msgstr "Ladda ner alla original som ZIP"
+
+msgid "Als PDF herunterladen"
+msgstr "Ladda ner som PDF"
+
+msgid "Angaben"
+msgstr "Uppgifter"
+
+msgid "Angaben des Kunden"
+msgstr "Kundens uppgifter"
+
+msgid "Ansprechpartner"
+msgstr "Kontaktperson"
+
+msgid "Antwort des Kunden"
+msgstr "Kundens svar"
+
+msgid "Antwort gesendet. Wir melden uns."
+msgstr "Svaret har skickats. Vi återkommer."
+
+msgid "Antwort senden"
+msgstr "Skicka svar"
+
+msgid "Auftrag stornieren"
+msgstr "Avbryt beställning"
+
+msgid "Auftrag {nr}"
+msgstr "Beställning {nr}"
+
+msgid "Aus einem Projekt"
+msgstr "Från ett projekt"
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
+msgstr "Automatisk PDF/UA-kontroll (veraPDF): godkänd."
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
+msgstr "Automatisk PDF/UA-kontroll (veraPDF): {text}"
+
+msgid "Barrierefrei aufbereiten (mit Prüfung)"
+msgstr "Gör tillgänglig (inkl. kontroll)"
+
+msgid "Barrierefrei aufbereiten: Credits je Seite"
+msgstr "Gör tillgänglig: krediter per sida"
+
+msgid "Barrierefreie PDF herunterladen"
+msgstr "Ladda ner tillgänglig PDF"
+
+msgid "Bearbeiter"
+msgstr "Handläggare"
+
+msgid "Bearbeiter: {name}"
+msgstr "Handläggare: {name}"
+
+msgid "Bedingungen für den Express-Service"
+msgstr "Villkor för expresstjänsten"
+
+msgid "Bedingungen für den Express-Service lesen (öffnet in neuem Tab)"
+msgstr "Läs villkoren för expresstjänsten (öppnas i en ny flik)"
+
+msgid "Benachrichtigungen an (leer = Support-Postfach)"
+msgstr "Aviseringar till (tomt = supportens brevlåda)"
+
+msgid "Bestellt"
+msgstr "Beställd"
+
+msgid "Bestellt am"
+msgstr "Beställd den"
+
+msgid "Bestellung wird gesendet …"
+msgstr "Beställningen skickas …"
+
+msgid "Bestätigt am"
+msgstr "Bekräftat den"
+
+msgid "Bestätigt am {datum} (Fassung {fassung}):"
+msgstr "Bekräftat den {datum} (version {fassung}):"
+
+msgid "Bezahlt aus dem Team-Guthaben von"
+msgstr "Betalt från teamkrediten hos"
+
+msgid "Bitte beide Häkchen setzen."
+msgstr "Kryssa i båda rutorna."
+
+msgid "Bitte ein Projekt wählen"
+msgstr "Välj ett projekt"
+
+msgid "Bitte ein Projekt wählen."
+msgstr "Välj ett projekt."
+
+msgid "Bitte eine Antwort schreiben."
+msgstr "Skriv ett svar."
+
+msgid "Bitte eine E-Mail-Adresse eingeben."
+msgstr "Ange en e-postadress."
+
+msgid "Bitte eine Frage schreiben."
+msgstr "Skriv en fråga."
+
+msgid "Bitte einen Ansprechpartner angeben."
+msgstr "Ange en kontaktperson."
+
+msgid "Bitte einen Grund angeben."
+msgstr "Ange ett skäl."
+
+msgid "Bitte mindestens ein Dokument ankreuzen."
+msgstr "Kryssa i minst ett dokument."
+
+msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
+msgstr "Använd bara siffror, mellanslag och + ( ) / -."
+
+msgid "Bitte zuerst eine PDF-Datei auswählen."
+msgstr "Välj först en PDF-fil."
+
+msgid "Credits"
+msgstr "Krediter"
+
+msgid "Credits kaufen"
+msgstr "Köp krediter"
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
+msgstr "Vi skapar ett projekt ”Expressbeställning” för den. Storlek upp till 50 MB."
+
+msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
+msgstr "Tack! Din beställning {nr} har kommit in. Vi levererar inom {stunden} timmar och skickar en bekräftelse via e-post."
+
+msgid "Das Dokument konnte nicht entfernt werden."
+msgstr "Dokumentet kunde inte tas bort."
+
+msgid "Das hat nicht geklappt."
+msgstr "Det fungerade inte."
+
+msgid "Davon für Express-Aufträge vorgemerkt: {anzahl} Credits."
+msgstr "Varav reserverade för expressbeställningar: {anzahl} krediter."
+
+msgid "Dein Guthaben reicht für diese Auswahl nicht. Dir fehlen {c} Credits."
+msgstr "Ditt saldo räcker inte för det här urvalet. Du saknar {c} krediter."
+
+msgid "Dein Guthaben: unbegrenzt."
+msgstr "Ditt saldo: obegränsat."
+
+msgid "Dein verfügbares Guthaben: {c} Credits."
+msgstr "Ditt tillgängliga saldo: {c} krediter."
+
+msgid "Deine Antwort"
+msgstr "Ditt svar"
+
+msgid "Deine Auswahl ist leer."
+msgstr "Ditt urval är tomt."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen."
+msgstr "Ditt urval är tomt. Lägg först till dokument."
+
+msgid "Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits."
+msgstr "Ditt urval: {d} dokument, {s} sidor, {c} krediter."
+
+msgid "Der Auftrag konnte nicht geladen werden."
+msgstr "Beställningen kunde inte laddas."
+
+msgid "Der Express-Service ist gerade nicht erreichbar."
+msgstr "Expresstjänsten är inte tillgänglig just nu."
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
+msgstr "Kunden får frågan via e-post och ser den i sin beställningsöversikt. Fristen pausas tills kunden svarar."
+
+msgid "Die Antwort konnte nicht gesendet werden."
+msgstr "Svaret kunde inte skickas."
+
+msgid "Die Bestellung ist fehlgeschlagen. Bitte erneut versuchen."
+msgstr "Beställningen misslyckades. Försök igen."
+
+msgid "Die Datei konnte nicht hochgeladen werden."
+msgstr "Filen kunde inte laddas upp."
+
+msgid "Die Datei wird hochgeladen …"
+msgstr "Filen laddas upp …"
+
+msgid "Die Dokumente konnten nicht geladen werden."
+msgstr "Dokumenten kunde inte laddas."
+
+msgid "Die Dokumente konnten nicht hinzugefügt werden."
+msgstr "Dokumenten kunde inte läggas till."
+
+msgid "Die Einstellungen konnten nicht gespeichert werden."
+msgstr "Inställningarna kunde inte sparas."
+
+msgid "Die Leistung konnte nicht geändert werden."
+msgstr "Tjänsten kunde inte ändras."
+
+msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
+msgstr "Priserna är fortfarande platshållare. Fastställ dem först efter överenskommelse och kryssa i ”Priserna är fastställda” nedan."
+
+msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
+msgstr "Den automatiska PDF/UA-kontrollen (veraPDF) rapporterar avvikelser:"
+
+msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
+msgstr "De reserverade krediterna frigörs, inget dras. Kunden får ett e-postmeddelande med skälet."
+
+msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "Den här översikten är ett underlag, inte en faktura: Betalning sker med krediter vars köp har fakturerats separat."
+
+msgid "Diesen Auftrag gibt es nicht."
+msgstr "Den här beställningen finns inte."
+
+msgid "Dokumente anzeigen"
+msgstr "Visa dokument"
+
+msgid "Dokumente im Projekt „{name}“"
+msgstr "Dokument i projektet ”{name}”"
+
+msgid "Drucken"
+msgstr "Skriv ut"
+
+msgid "Du bearbeitest den Auftrag jetzt."
+msgstr "Du handlägger nu beställningen."
+
+msgid "Du hast noch keine Express-Aufträge."
+msgstr "Du har inga expressbeställningar ännu."
+
+msgid "E-Mail-Adresse eines bestehenden Kontos"
+msgstr "E-postadress till ett befintligt konto"
+
+msgid "Eingegangen"
+msgstr "Inkommen"
+
+msgid "Einstellungen des Express-Service"
+msgstr "Inställningar för expresstjänsten"
+
+msgid "Einstellungen speichern"
+msgstr "Spara inställningar"
+
+msgid "Einverständnis"
+msgstr "Samtycke"
+
+msgid "Ergebnis (PDF) für {name}"
+msgstr "Resultat (PDF) för {name}"
+
+msgid "Ergebnis für „{name}“ gespeichert."
+msgstr "Resultatet för ”{name}” har sparats."
+
+msgid "Ergebnis herunterladen"
+msgstr "Ladda ner resultat"
+
+msgid "Ergebnis hochgeladen"
+msgstr "Resultat uppladdat"
+
+msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
+msgstr "Resultatet laddas upp och kontrolleras med veraPDF …"
+
+msgid "Express-Auftrag"
+msgstr "Expressbeställning"
+
+msgid "Express-Auftrag {nr}: {stand}"
+msgstr "Expressbeställning {nr}: {stand}"
+
+msgid "Express-Aufträge"
+msgstr "Expressbeställningar"
+
+msgid "Express-Aufträge: {u} überfällig, {n} neu."
+msgstr "Expressbeställningar: {u} försenade, {n} nya."
+
+msgid "Express-Bearbeiter"
+msgstr "Expresshandläggare"
+
+msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
+msgstr "Expresshandläggare ser bara expressbeställningarna i administrationen och kan handlägga dem, t.ex. en partner som bearbetar dokumenten. De ser inte kunder, omsättning eller AI-kostnader."
+
+msgid "Express-Bearbeiter-Recht entziehen: {name}"
+msgstr "Ta bort expresshandläggarrätt: {name}"
+
+msgid "Express-Service"
+msgstr "Expresstjänst"
+
+msgid "Fassung {f}, Sprache {s}"
+msgstr "version {f}, språk {s}"
+
+msgid "Frage"
+msgstr "Fråga"
+
+msgid "Fällig am"
+msgstr "Förfaller den"
+
+msgid "Geliefert"
+msgstr "Levererad"
+
+msgid "Geliefert (die letzten 100)"
+msgstr "Levererade (de senaste 100)"
+
+msgid "Geliefert am"
+msgstr "Levererad den"
+
+msgid "Geliefert. Der Kunde bekommt eine E-Mail, die Credits sind abgebucht."
+msgstr "Levererad. Kunden får ett e-postmeddelande, krediterna har dragits."
+
+msgid "Grund"
+msgstr "Skäl"
+
+msgid "Hinweise für uns (freiwillig)"
+msgstr "Anvisningar till oss (valfritt)"
+
+msgid "Hochgeladen und hinzugefügt."
+msgstr "Uppladdad och tillagd."
+
+msgid "Hochladen und hinzufügen"
+msgstr "Ladda upp och lägg till"
+
+msgid "Höchstens Dokumente je Auftrag"
+msgstr "Högst antal dokument per beställning"
+
+msgid "Höchstens Seiten je Auftrag"
+msgstr "Högst antal sidor per beställning"
+
+msgid "In Bearbeitung genommen"
+msgstr "Tagen i handläggning"
+
+msgid "Interne Notiz"
+msgstr "Intern anteckning"
+
+msgid "Interne Notiz geändert"
+msgstr "Intern anteckning ändrad"
+
+msgid "Keine Aufträge."
+msgstr "Inga beställningar."
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Låt proffs göra dina dokument tillgängliga eller granska dem. Vi levererar inom {stunden} timmar. Betalning sker med krediter: de reserveras vid beställningen och dras först vid leveransen."
+
+msgid "Leistung für {name}"
+msgstr "Tjänst för {name}"
+
+msgid "Leistung geändert."
+msgstr "Tjänsten har ändrats."
+
+msgid "Lieferfrist in Stunden"
+msgstr "Leveranstid i timmar"
+
+msgid "Liefern"
+msgstr "Leverera"
+
+msgid "Lieferung"
+msgstr "Leverans"
+
+msgid "Lieferung innerhalb von {stunden} Stunden"
+msgstr "leverans inom {stunden} timmar"
+
+msgid "Lieferung innerhalb von {stunden} Stunden."
+msgstr "Leverans inom {stunden} timmar."
+
+msgid "Manche Abweichungen sind bewusst (zum Beispiel Prüfungen, die veraPDF nicht sicher beurteilen kann). Liefern bucht die Credits ab und schickt dem Kunden eine E-Mail."
+msgstr "Vissa avvikelser är avsiktliga (t.ex. kontroller som veraPDF inte kan bedöma säkert). Leverans drar krediterna och skickar kunden ett e-postmeddelande."
+
+msgid "Meine Aufträge"
+msgstr "Mina beställningar"
+
+msgid "Meine Express-Aufträge"
+msgstr "Mina expressbeställningar"
+
+msgid "Mir zuweisen"
+msgstr "Tilldela mig"
+
+msgid "Neuer Auftrag"
+msgstr "Ny beställning"
+
+msgid "Noch keine Express-Bearbeiter."
+msgstr "Inga expresshandläggare ännu."
+
+msgid "Notiz"
+msgstr "Anteckning"
+
+msgid "Notiz gespeichert."
+msgstr "Anteckningen har sparats."
+
+msgid "Notiz speichern"
+msgstr "Spara anteckning"
+
+msgid "Nur hier in der Verwaltung sichtbar, nie für den Kunden."
+msgstr "Bara synlig här i administrationen, aldrig för kunden."
+
+msgid "Nur prüfen (Prüfbericht)"
+msgstr "Endast granskning (granskningsrapport)"
+
+msgid "Nur prüfen: Credits je Seite"
+msgstr "Endast granskning: krediter per sida"
+
+msgid "Oder eine PDF hochladen, ohne Projekt"
+msgstr "Eller ladda upp en PDF utan projekt"
+
+msgid "Original herunterladen"
+msgstr "Ladda ner original"
+
+msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
+msgstr "Priser per sida: gör tillgänglig (inkl. kontroll) {a} krediter, endast granskning {p} krediter."
+
+msgid "Preise sind festgelegt (kein Platzhalter mehr)"
+msgstr "Priserna är fastställda (inte längre platshållare)"
+
+msgid "Prüfbericht"
+msgstr "Granskningsrapport"
+
+msgid "Prüfbericht (PDF) für {name}"
+msgstr "Granskningsrapport (PDF) för {name}"
+
+msgid "Prüfbericht für „{name}“ gespeichert."
+msgstr "Granskningsrapporten för ”{name}” har sparats."
+
+msgid "Prüfbericht herunterladen"
+msgstr "Ladda ner granskningsrapport"
+
+msgid "Prüfbericht hochgeladen"
+msgstr "Granskningsrapport uppladdad"
+
+msgid "Prüfbericht wird hochgeladen …"
+msgstr "Granskningsrapporten laddas upp …"
+
+msgid "Recht entziehen"
+msgstr "Ta bort rätt"
+
+msgid "Rückfrage"
+msgstr "Fråga"
+
+msgid "Rückfrage an den Kunden"
+msgstr "Fråga till kunden"
+
+msgid "Rückfrage an dich"
+msgstr "Fråga till dig"
+
+msgid "Rückfrage beim Kunden"
+msgstr "Väntar på kunden"
+
+msgid "Rückfrage gesendet. Die Frist ruht, bis der Kunde antwortet."
+msgstr "Frågan har skickats. Fristen pausas tills kunden svarar."
+
+msgid "Rückfrage senden"
+msgstr "Skicka fråga"
+
+msgid "Rückfrage stellen"
+msgstr "Ställ en fråga"
+
+msgid "Rückfrage von InkluDocs"
+msgstr "Fråga från InkluDocs"
+
+msgid "Storniert"
+msgstr "Avbruten"
+
+msgid "Storniert (die letzten 100)"
+msgstr "Avbrutna (de senaste 100)"
+
+msgid "Storniert am"
+msgstr "Avbruten den"
+
+msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
+msgstr "Avbruten. Krediterna har frigjorts, kunden får ett e-postmeddelande."
+
+msgid "Summe: {c} Credits"
+msgstr "Summa: {c} krediter"
+
+msgid "Telefon"
+msgstr "Telefon"
+
+msgid "Telefon für Rückfragen (freiwillig)"
+msgstr "Telefon för frågor (valfritt)"
+
+msgid "Trotz Abweichungen liefern?"
+msgstr "Leverera trots avvikelser?"
+
+msgid "Trotzdem liefern"
+msgstr "Leverera ändå"
+
+msgid "Verlauf"
+msgstr "Historik"
+
+msgid "Vom Express-Service bearbeiten lassen"
+msgstr "Låt expresstjänsten bearbeta det"
+
+msgid "Vor dem Liefern fehlt noch:"
+msgstr "Saknas fortfarande före leverans:"
+
+msgid "Zahlt aus dem Topf von"
+msgstr "Betalas från potten hos"
+
+msgid "Zahlungspflichtig bestellen"
+msgstr "Beställ med betalningsskyldighet"
+
+msgid "Zu meinen Aufträgen"
+msgstr "Till mina beställningar"
+
+msgid "Zum Beispiel: „Das Formular auf Seite 3 bitte besonders prüfen.“"
+msgstr "Till exempel: ”Granska formuläret på sidan 3 extra noga.”"
+
+msgid "Zum Express-Bearbeiter machen"
+msgstr "Gör till expresshandläggare"
+
+msgid "Zur Auswahl hinzufügen"
+msgstr "Lägg till i urvalet"
+
+msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
+msgstr "Just nu kan vi bara bearbeta PDF-filer."
+
+msgid "Zurück zu den Express-Aufträgen"
+msgstr "Tillbaka till expressbeställningarna"
+
+msgid "Zurück zu meinen Aufträgen"
+msgstr "Tillbaka till mina beställningar"
+
+msgid "Zurück zum Express-Service"
+msgstr "Tillbaka till expresstjänsten"
+
+msgid "Zustimmung"
+msgstr "Godkännande"
+
+msgid "abgebucht"
+msgstr "dragna"
+
+msgid "bestellt am {datum}"
+msgstr "beställd den {datum}"
+
+msgid "fehlt noch"
+msgstr "saknas fortfarande"
+
+msgid "fällig in {n} Stunden"
+msgstr "förfaller om {n} timmar"
+
+msgid "geliefert am {datum}"
+msgstr "levererad den {datum}"
+
+msgid "hochgeladen am {datum}"
+msgstr "uppladdad den {datum}"
+
+msgid "hochgeladen am {datum} von {name}"
+msgstr "uppladdad den {datum} av {name}"
+
+msgid "innerhalb von {stunden} Stunden"
+msgstr "inom {stunden} timmar"
+
+msgid "intern"
+msgstr "internt"
+
+msgid "keine"
+msgstr "inga"
+
+msgid "keine PDF, nicht möglich"
+msgstr "inte en PDF, inte möjligt"
+
+msgid "keiner (freiwillig)"
+msgstr "ingen (valfritt)"
+
+msgid "keins angegeben"
+msgstr "inget angivet"
+
+msgid "nicht mehr vorhanden, bitte entfernen"
+msgstr "finns inte längre, ta bort det"
+
+msgid "noch nicht hochgeladen"
+msgstr "inte uppladdat ännu"
+
+msgid "noch niemand zugewiesen"
+msgstr "ingen tilldelad ännu"
+
+msgid "noch {n} Stunden"
+msgstr "{n} timmar kvar"
+
+msgid "schon in deiner Auswahl"
+msgstr "redan i ditt urval"
+
+msgid "storniert am {datum}"
+msgstr "avbruten den {datum}"
+
+msgid "veraPDF konnte die Datei nicht prüfen."
+msgstr "veraPDF kunde inte kontrollera filen."
+
+msgid "veraPDF: Abweichungen — {text}"
+msgstr "veraPDF: avvikelser — {text}"
+
+msgid "veraPDF: PDF/UA bestanden."
+msgstr "veraPDF: PDF/UA godkänd."
+
+msgid "vorgemerkt"
+msgstr "reserverade"
+
+msgid "vorgemerkt, abgebucht wird erst bei der Lieferung"
+msgstr "reserverade, dras först vid leverans"
+
+msgid "wieder frei"
+msgstr "frigjorda"
+
+msgid "wieder frei, nichts abgebucht"
+msgstr "frigjorda, inget draget"
+
+msgid "{c} Credits, {stand}"
+msgstr "{c} krediter, {stand}"
+
+msgid "{d} Dokumente, {c} Credits"
+msgstr "{d} dokument, {c} krediter"
+
+msgid "{d} Dokumente, {s} Seiten"
+msgstr "{d} dokument, {s} sidor"
+
+msgid "{name}: {s} Seiten, {leistung}, {c} Credits"
+msgstr "{name}: {s} sidor, {leistung}, {c} krediter"
+
+msgid "{n} Dokumente"
+msgstr "{n} dokument"
+
+msgid "{n} Dokumente hinzugefügt."
+msgstr "{n} dokument tillagda."
+
+msgid "{n} Dokumente im Projekt, {w} davon wählbar."
+msgstr "{n} dokument i projektet, varav {w} valbara."
+
+msgid "{n} Seiten"
+msgstr "{n} sidor"
+
+msgid "{s} Seiten, {leistung}, {c} Credits"
+msgstr "{s} sidor, {leistung}, {c} krediter"
+
+msgid "{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage"
+msgstr "{u} försenade, {n} nya, {a} pågående, {r} väntar på kunden"
+
+msgid "Überfällig"
+msgstr "Försenade"
+
+msgid "Übernehmen"
+msgstr "Ta över"
+
+msgid "Übernommen"
+msgstr "Övertagen"
+
+msgid "überfällig seit {n} Stunden"
+msgstr "försenad i {n} timmar"
+
+msgid "„{name}“ entfernt."
+msgstr "”{name}” borttaget."
+
+msgid "Ich akzeptiere die Bedingungen für den Express-Service."
+msgstr "Jag godkänner villkoren för expresstjänsten."
+
+msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
+msgstr "Jag godkänner att medarbetare på InkluTec och vår partner Actino ser, bearbetar och granskar mina dokument."

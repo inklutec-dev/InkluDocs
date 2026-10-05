@@ -2,11 +2,19 @@
    aria-current="page" — dasselbe Muster wie die Ansichts-Knöpfe im Projekt (.proj-tabs). #}
 <nav class="proj-tabs verwaltung-nav" aria-label="{{ _('Bereiche der Verwaltung') }}">
   <ul>
+    {# Express-Bearbeiter ohne Admin-Recht (05.10.2026) sehen nur „Express-Aufträge“. #}
+    {% if not nur_express %}
     <li><a href="/verwaltung/kunden"{% if verwaltung_bereich == 'kunden' %} aria-current="page"{% endif %}>{{ _('Kunden') }}</a></li>
     <li><a href="/verwaltung/umsatz"{% if verwaltung_bereich == 'umsatz' %} aria-current="page"{% endif %}>{{ _('Umsatz') }}</a></li>
     <li><a href="/verwaltung/ki-kosten"{% if verwaltung_bereich == 'ki_kosten' %} aria-current="page"{% endif %}>{{ _('KI-Kosten') }}</a></li>
+    {% endif %}
+    {% if express_an %}
+    <li><a href="/verwaltung/express"{% if verwaltung_bereich == 'express' %} aria-current="page"{% endif %}>{{ _('Express-Aufträge') }}</a></li>
+    {% endif %}
+    {% if not nur_express %}
     <li><a href="/verwaltung/api"{% if verwaltung_bereich == 'api' %} aria-current="page"{% endif %}>{{ _('API') }}</a></li>
     <li><a href="/verwaltung/einstellungen"{% if verwaltung_bereich == 'einstellungen' %} aria-current="page"{% endif %}>{{ _('Einstellungen') }}</a></li>
+    {% endif %}
   </ul>
 </nav>
 {# Meldungszeile (Steve 25.09.2026: „ich sehe keine Meldung“): Nach jeder Aktion steht hier sichtbar,

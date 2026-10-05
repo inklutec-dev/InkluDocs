@@ -1,0 +1,216 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Express-Aufträge') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# VERWALTUNG — EXPRESS-AUFTRÄGE (05.10.2026): Posteingang nach Dringlichkeit (überfällig, neu, in Arbeit, Rückfrage;
+   geliefert und storniert zum Aufklappen), darunter die Einstellungen (Preise je Seite, Frist, Grenzen,
+   Benachrichtigung) und das Recht „Express-Bearbeiter“. Lesen: Admins und Bearbeiter; Einstellungen und Bearbeiter
+   vergeben: nur Voll-Admins. Wie die anderen Verwaltungsseiten ohne Tabellen. #}
+<h1>{{ _('Verwaltung') }}: {{ _('Express-Aufträge') }}</h1>
+{% include "_verwaltung_nav.html" %}
+
+<section class="verwaltung-bereich" aria-labelledby="h-ex-blick">
+  <h2 id="h-ex-blick" class="sr-only">{{ _('Auf einen Blick') }}</h2>
+  <div id="exvZahlen" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+</section>
+<div id="exvGruppen"></div>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-ex-einst" id="exvEinstellungen" hidden>
+  <h2 id="h-ex-einst" tabindex="-1">{{ _('Einstellungen des Express-Service') }}</h2>
+  <p id="exvPlatzhalter" class="verwaltung-warnung" hidden>{{ _('Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen.') }}</p>
+  <form id="exvEinstForm" novalidate>
+    <div class="dash-field">
+      <label for="exvPreisA">{{ _('Barrierefrei aufbereiten: Credits je Seite') }}</label>
+      <input type="text" id="exvPreisA" class="dash-input" inputmode="numeric" maxlength="7" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="exvPreisP">{{ _('Nur prüfen: Credits je Seite') }}</label>
+      <input type="text" id="exvPreisP" class="dash-input" inputmode="numeric" maxlength="7" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="exvFrist">{{ _('Lieferfrist in Stunden') }}</label>
+      <input type="text" id="exvFrist" class="dash-input" inputmode="numeric" maxlength="4" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="exvMaxSeiten">{{ _('Höchstens Seiten je Auftrag') }}</label>
+      <input type="text" id="exvMaxSeiten" class="dash-input" inputmode="numeric" maxlength="6" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="exvMaxDok">{{ _('Höchstens Dokumente je Auftrag') }}</label>
+      <input type="text" id="exvMaxDok" class="dash-input" inputmode="numeric" maxlength="3" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="exvMail">{{ _('Benachrichtigungen an (leer = Support-Postfach)') }}</label>
+      <input type="email" id="exvMail" class="dash-input" maxlength="254" autocomplete="off">
+    </div>
+    <p><label><input type="checkbox" id="exvFest"> {{ _('Preise sind festgelegt (kein Platzhalter mehr)') }}</label></p>
+    <p id="exvEinstFehler" role="alert" class="verwaltung-fehler"></p>
+    <button type="submit" class="btn btn-primary" id="exvEinstKnopf">{{ _('Einstellungen speichern') }}</button>
+  </form>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-ex-bearb" id="exvBearbeiter" hidden>
+  <h2 id="h-ex-bearb" tabindex="-1">{{ _('Express-Bearbeiter') }}</h2>
+  <p class="dash-sub">{{ _('Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht.') }}</p>
+  <div id="exvBearbListe"></div>
+  <form id="exvBearbForm" class="verwaltung-suche" novalidate>
+    <div class="dash-field">
+      <label for="exvBearbMail">{{ _('E-Mail-Adresse eines bestehenden Kontos') }}</label>
+      <input type="email" id="exvBearbMail" class="dash-input" maxlength="254" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-secondary">{{ _('Zum Express-Bearbeiter machen') }}</button>
+  </form>
+  <p id="exvBearbFehler" role="alert" class="verwaltung-fehler"></p>
+</section>
+{% endblock %}
+
+{% block dialogs %}
+{% include "_verwaltung_dialoge.html" %}
+{% endblock %}
+
+{% block page_script %}
+<script>window.API_LIMIT_STANDARD = {{ api_limit_standard|int }};</script>
+<script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script>
+{% raw %}
+(function () {
+  const V = window.Verwaltung;
+  const GRUPPEN = [
+    ['ueberfaellig', t('Überfällig')], ['neu', t('Neu')], ['in_arbeit', t('In Arbeit')], ['rueckfrage', t('Rückfrage beim Kunden')],
+    ['geliefert', t('Geliefert (die letzten 100)')], ['storniert', t('Storniert (die letzten 100)')],
+  ];
+
+  function stunden(h) { return V.zahl(Math.abs(Math.round(h))); }
+
+  function fristText(a) {
+    if (a.faellig_in_stunden === null || a.faellig_in_stunden === undefined) return '';
+    return a.faellig_in_stunden < 0 ? t('überfällig seit {n} Stunden', { n: stunden(a.faellig_in_stunden) })
+      : t('fällig in {n} Stunden', { n: stunden(a.faellig_in_stunden) });
+  }
+
+  function eintrag(a) {
+    const li = V.el('li', 'verwaltung-zeile');
+    const link = V.el('a', null, t('Auftrag {nr}', { nr: a.id }));
+    link.href = '/verwaltung/express/' + a.id;
+    li.appendChild(link);
+    const teile = [a.kunde_name || t('gelöschtes Konto'), t('{d} Dokumente, {s} Seiten', { d: a.dokumente, s: V.zahl(a.seiten_gesamt) })];
+    const frist = fristText(a);
+    if (frist) teile.push(frist);
+    if (a.status === 'geliefert') teile.push(t('geliefert am {datum}', { datum: V.datumZeit(a.geliefert_am) }));
+    if (a.status === 'storniert') teile.push(t('storniert am {datum}', { datum: V.datumZeit(a.storniert_am) }));
+    else teile.push(a.bearbeiter_name ? t('Bearbeiter: {name}', { name: a.bearbeiter_name }) : t('noch niemand zugewiesen'));
+    li.appendChild(document.createTextNode(' · ' + teile.join(' · ')));
+    return li;
+  }
+
+  function zeigen(d) {
+    const g = d.gruppen;
+    const z = byId('exvZahlen');
+    z.innerHTML = '';
+    z.setAttribute('aria-busy', 'false');
+    V.zeile(z, t('Offen'), t('{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage', {
+      u: g.ueberfaellig.length, n: g.neu.length, a: g.in_arbeit.length, r: g.rueckfrage.length }));
+    const ziel = byId('exvGruppen');
+    ziel.innerHTML = '';
+    GRUPPEN.forEach(([schluessel, titel]) => {
+      const liste = g[schluessel] || [];
+      const fertig = schluessel === 'geliefert' || schluessel === 'storniert';
+      const kasten = fertig ? V.el('details', 'dash-card verwaltung-karte verwaltung-klappe') : V.el('section', 'dash-card verwaltung-karte');
+      const kopf = fertig ? V.el('summary', null, titel + ' (' + liste.length + ')') : V.el('h2', null, titel + ' (' + liste.length + ')');
+      if (!fertig) { kopf.id = 'exv-h-' + schluessel; kasten.setAttribute('aria-labelledby', kopf.id); }
+      kasten.appendChild(kopf);
+      if (!liste.length) kasten.appendChild(V.el('p', 'dash-empty', t('Keine Aufträge.')));
+      else {
+        const ul = V.el('ul', 'verwaltung-liste');
+        liste.forEach((a) => ul.appendChild(eintrag(a)));
+        kasten.appendChild(ul);
+      }
+      ziel.appendChild(kasten);
+    });
+  }
+
+  // ── Einstellungen ──
+  function einstZeigen(e, darf) {
+    byId('exvEinstellungen').hidden = false;
+    byId('exvPreisA').value = e.preis_aufbereiten;
+    byId('exvPreisP').value = e.preis_pruefen;
+    byId('exvFrist').value = e.frist_stunden;
+    byId('exvMaxSeiten').value = e.max_seiten_auftrag;
+    byId('exvMaxDok').value = e.max_dokumente_auftrag;
+    byId('exvMail').value = e.team_mail || '';
+    byId('exvFest').checked = !!e.preise_festgelegt;
+    byId('exvPlatzhalter').hidden = !!e.preise_festgelegt;
+    byId('exvEinstForm').querySelectorAll('input, button').forEach((x) => { x.disabled = !darf; });
+    if (!darf) byId('exvEinstKnopf').hidden = true;
+  }
+
+  let einstLaeuft = false;
+  byId('exvEinstForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    if (einstLaeuft) return;
+    byId('exvEinstFehler').textContent = '';
+    einstLaeuft = true;
+    const r = await V.sendeJson('/api/admin/express/einstellungen', 'POST', {
+      preis_aufbereiten: byId('exvPreisA').value, preis_pruefen: byId('exvPreisP').value, frist_stunden: byId('exvFrist').value,
+      max_seiten_auftrag: byId('exvMaxSeiten').value, max_dokumente_auftrag: byId('exvMaxDok').value,
+      team_mail: byId('exvMail').value, preise_festgelegt: byId('exvFest').checked });
+    einstLaeuft = false;
+    if (!r.ok) { byId('exvEinstFehler').textContent = (r.daten.detail && (r.daten.detail.text || r.daten.detail)) || t('Die Einstellungen konnten nicht gespeichert werden.'); return; }
+    einstZeigen(r.daten.einstellungen, true);
+    V.meldung(r.daten.message || t('Gespeichert.'));
+  });
+
+  // ── Bearbeiter ──
+  function bearbZeigen(liste) {
+    const ziel = byId('exvBearbListe');
+    ziel.innerHTML = '';
+    if (!liste.length) { ziel.appendChild(V.el('p', 'dash-empty', t('Noch keine Express-Bearbeiter.'))); return; }
+    const ul = V.el('ul', 'verwaltung-liste');
+    liste.forEach((b) => {
+      const li = V.el('li', 'verwaltung-zeile', (b.display_name || b.email) + ' (' + b.email + ') ');
+      const k = V.el('button', 'btn btn-secondary btn-small', t('Recht entziehen'));
+      k.type = 'button';
+      k.setAttribute('aria-label', t('Express-Bearbeiter-Recht entziehen: {name}', { name: b.display_name || b.email }));
+      k.addEventListener('click', async () => {
+        const r = await V.sendeJson('/api/admin/express/bearbeiter/' + b.id, 'DELETE');
+        if (!r.ok) { byId('exvBearbFehler').textContent = (r.daten.detail && (r.daten.detail.text || r.daten.detail)) || t('Das hat nicht geklappt.'); return; }
+        bearbZeigen(r.daten.bearbeiter);
+        V.meldung(r.daten.message);
+      });
+      li.appendChild(k);
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+  }
+
+  byId('exvBearbForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    byId('exvBearbFehler').textContent = '';
+    const mail = byId('exvBearbMail').value.trim();
+    if (!mail) { byId('exvBearbFehler').textContent = t('Bitte eine E-Mail-Adresse eingeben.'); byId('exvBearbMail').focus(); return; }
+    const r = await V.sendeJson('/api/admin/express/bearbeiter', 'POST', { email: mail });
+    if (!r.ok) { byId('exvBearbFehler').textContent = (r.daten.detail && (r.daten.detail.text || r.daten.detail)) || t('Das hat nicht geklappt.'); byId('exvBearbMail').focus(); return; }
+    byId('exvBearbMail').value = '';
+    bearbZeigen(r.daten.bearbeiter);
+    V.meldung(r.daten.message);
+  });
+
+  (async function start() {
+    await loadCurrentUser();
+    const d = await V.ladeJson('/api/admin/express/auftraege', byId('exvZahlen'));
+    if (!d) return;
+    zeigen(d);
+    const e = await V.ladeJson('/api/admin/express/einstellungen', null);
+    if (e) einstZeigen(e, d.darf_einstellen);
+    if (d.darf_einstellen) {
+      byId('exvBearbeiter').hidden = false;
+      const b = await V.ladeJson('/api/admin/express/bearbeiter', byId('exvBearbListe'));
+      if (b) bearbZeigen(b.bearbeiter);
+    }
+    announce(t('Express-Aufträge: {u} überfällig, {n} neu.', { u: d.gruppen.ueberfaellig.length, n: d.gruppen.neu.length }));
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}

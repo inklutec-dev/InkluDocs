@@ -10585,3 +10585,660 @@ msgstr "über {grenze} Tokens Eingabe: Eingabe {ein}, Ausgabe {aus}"
 
 msgid "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
 msgstr "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
+
+msgid "1. Dokumente auswählen"
+msgstr "1. Dokumente auswählen"
+
+msgid "2. Deine Auswahl"
+msgstr "2. Deine Auswahl"
+
+msgid "3. Angaben"
+msgstr "3. Angaben"
+
+msgid "4. Prüfen und bestellen"
+msgstr "4. Prüfen und bestellen"
+
+msgid "Alle Dokumente dieses Projekts"
+msgstr "Alle Dokumente dieses Projekts"
+
+msgid "Alle Express-Aufträge"
+msgstr "Alle Express-Aufträge"
+
+msgid "Alle Originale als ZIP herunterladen"
+msgstr "Alle Originale als ZIP herunterladen"
+
+msgid "Als PDF herunterladen"
+msgstr "Als PDF herunterladen"
+
+msgid "Angaben"
+msgstr "Angaben"
+
+msgid "Angaben des Kunden"
+msgstr "Angaben des Kunden"
+
+msgid "Ansprechpartner"
+msgstr "Ansprechpartner"
+
+msgid "Antwort des Kunden"
+msgstr "Antwort des Kunden"
+
+msgid "Antwort gesendet. Wir melden uns."
+msgstr "Antwort gesendet. Wir melden uns."
+
+msgid "Antwort senden"
+msgstr "Antwort senden"
+
+msgid "Auftrag stornieren"
+msgstr "Auftrag stornieren"
+
+msgid "Auftrag {nr}"
+msgstr "Auftrag {nr}"
+
+msgid "Aus einem Projekt"
+msgstr "Aus einem Projekt"
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
+msgstr "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
+
+msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
+msgstr "Automatische PDF/UA-Prüfung (veraPDF): {text}"
+
+msgid "Barrierefrei aufbereiten (mit Prüfung)"
+msgstr "Barrierefrei aufbereiten (mit Prüfung)"
+
+msgid "Barrierefrei aufbereiten: Credits je Seite"
+msgstr "Barrierefrei aufbereiten: Credits je Seite"
+
+msgid "Barrierefreie PDF herunterladen"
+msgstr "Barrierefreie PDF herunterladen"
+
+msgid "Bearbeiter"
+msgstr "Bearbeiter"
+
+msgid "Bearbeiter: {name}"
+msgstr "Bearbeiter: {name}"
+
+msgid "Bedingungen für den Express-Service"
+msgstr "Bedingungen für den Express-Service"
+
+msgid "Bedingungen für den Express-Service lesen (öffnet in neuem Tab)"
+msgstr "Bedingungen für den Express-Service lesen (öffnet in neuem Tab)"
+
+msgid "Benachrichtigungen an (leer = Support-Postfach)"
+msgstr "Benachrichtigungen an (leer = Support-Postfach)"
+
+msgid "Bestellt"
+msgstr "Bestellt"
+
+msgid "Bestellt am"
+msgstr "Bestellt am"
+
+msgid "Bestellung wird gesendet …"
+msgstr "Bestellung wird gesendet …"
+
+msgid "Bestätigt am"
+msgstr "Bestätigt am"
+
+msgid "Bestätigt am {datum} (Fassung {fassung}):"
+msgstr "Bestätigt am {datum} (Fassung {fassung}):"
+
+msgid "Bezahlt aus dem Team-Guthaben von"
+msgstr "Bezahlt aus dem Team-Guthaben von"
+
+msgid "Bitte beide Häkchen setzen."
+msgstr "Bitte beide Häkchen setzen."
+
+msgid "Bitte ein Projekt wählen"
+msgstr "Bitte ein Projekt wählen"
+
+msgid "Bitte ein Projekt wählen."
+msgstr "Bitte ein Projekt wählen."
+
+msgid "Bitte eine Antwort schreiben."
+msgstr "Bitte eine Antwort schreiben."
+
+msgid "Bitte eine E-Mail-Adresse eingeben."
+msgstr "Bitte eine E-Mail-Adresse eingeben."
+
+msgid "Bitte eine Frage schreiben."
+msgstr "Bitte eine Frage schreiben."
+
+msgid "Bitte einen Ansprechpartner angeben."
+msgstr "Bitte einen Ansprechpartner angeben."
+
+msgid "Bitte einen Grund angeben."
+msgstr "Bitte einen Grund angeben."
+
+msgid "Bitte mindestens ein Dokument ankreuzen."
+msgstr "Bitte mindestens ein Dokument ankreuzen."
+
+msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
+msgstr "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
+
+msgid "Bitte zuerst eine PDF-Datei auswählen."
+msgstr "Bitte zuerst eine PDF-Datei auswählen."
+
+msgid "Credits"
+msgstr "Credits"
+
+msgid "Credits kaufen"
+msgstr "Credits kaufen"
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
+msgstr "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
+
+msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
+msgstr "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
+
+msgid "Das Dokument konnte nicht entfernt werden."
+msgstr "Das Dokument konnte nicht entfernt werden."
+
+msgid "Das hat nicht geklappt."
+msgstr "Das hat nicht geklappt."
+
+msgid "Davon für Express-Aufträge vorgemerkt: {anzahl} Credits."
+msgstr "Davon für Express-Aufträge vorgemerkt: {anzahl} Credits."
+
+msgid "Dein Guthaben reicht für diese Auswahl nicht. Dir fehlen {c} Credits."
+msgstr "Dein Guthaben reicht für diese Auswahl nicht. Dir fehlen {c} Credits."
+
+msgid "Dein Guthaben: unbegrenzt."
+msgstr "Dein Guthaben: unbegrenzt."
+
+msgid "Dein verfügbares Guthaben: {c} Credits."
+msgstr "Dein verfügbares Guthaben: {c} Credits."
+
+msgid "Deine Antwort"
+msgstr "Deine Antwort"
+
+msgid "Deine Auswahl ist leer."
+msgstr "Deine Auswahl ist leer."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen."
+msgstr "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen."
+
+msgid "Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits."
+msgstr "Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits."
+
+msgid "Der Auftrag konnte nicht geladen werden."
+msgstr "Der Auftrag konnte nicht geladen werden."
+
+msgid "Der Express-Service ist gerade nicht erreichbar."
+msgstr "Der Express-Service ist gerade nicht erreichbar."
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
+msgstr "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
+
+msgid "Die Antwort konnte nicht gesendet werden."
+msgstr "Die Antwort konnte nicht gesendet werden."
+
+msgid "Die Bestellung ist fehlgeschlagen. Bitte erneut versuchen."
+msgstr "Die Bestellung ist fehlgeschlagen. Bitte erneut versuchen."
+
+msgid "Die Datei konnte nicht hochgeladen werden."
+msgstr "Die Datei konnte nicht hochgeladen werden."
+
+msgid "Die Datei wird hochgeladen …"
+msgstr "Die Datei wird hochgeladen …"
+
+msgid "Die Dokumente konnten nicht geladen werden."
+msgstr "Die Dokumente konnten nicht geladen werden."
+
+msgid "Die Dokumente konnten nicht hinzugefügt werden."
+msgstr "Die Dokumente konnten nicht hinzugefügt werden."
+
+msgid "Die Einstellungen konnten nicht gespeichert werden."
+msgstr "Die Einstellungen konnten nicht gespeichert werden."
+
+msgid "Die Leistung konnte nicht geändert werden."
+msgstr "Die Leistung konnte nicht geändert werden."
+
+msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
+msgstr "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
+
+msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
+msgstr "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
+
+msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
+msgstr "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
+
+msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+
+msgid "Diesen Auftrag gibt es nicht."
+msgstr "Diesen Auftrag gibt es nicht."
+
+msgid "Dokumente anzeigen"
+msgstr "Dokumente anzeigen"
+
+msgid "Dokumente im Projekt „{name}“"
+msgstr "Dokumente im Projekt „{name}“"
+
+msgid "Drucken"
+msgstr "Drucken"
+
+msgid "Du bearbeitest den Auftrag jetzt."
+msgstr "Du bearbeitest den Auftrag jetzt."
+
+msgid "Du hast noch keine Express-Aufträge."
+msgstr "Du hast noch keine Express-Aufträge."
+
+msgid "E-Mail-Adresse eines bestehenden Kontos"
+msgstr "E-Mail-Adresse eines bestehenden Kontos"
+
+msgid "Eingegangen"
+msgstr "Eingegangen"
+
+msgid "Einstellungen des Express-Service"
+msgstr "Einstellungen des Express-Service"
+
+msgid "Einstellungen speichern"
+msgstr "Einstellungen speichern"
+
+msgid "Einverständnis"
+msgstr "Einverständnis"
+
+msgid "Ergebnis (PDF) für {name}"
+msgstr "Ergebnis (PDF) für {name}"
+
+msgid "Ergebnis für „{name}“ gespeichert."
+msgstr "Ergebnis für „{name}“ gespeichert."
+
+msgid "Ergebnis herunterladen"
+msgstr "Ergebnis herunterladen"
+
+msgid "Ergebnis hochgeladen"
+msgstr "Ergebnis hochgeladen"
+
+msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
+msgstr "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
+
+msgid "Express-Auftrag"
+msgstr "Express-Auftrag"
+
+msgid "Express-Auftrag {nr}: {stand}"
+msgstr "Express-Auftrag {nr}: {stand}"
+
+msgid "Express-Aufträge"
+msgstr "Express-Aufträge"
+
+msgid "Express-Aufträge: {u} überfällig, {n} neu."
+msgstr "Express-Aufträge: {u} überfällig, {n} neu."
+
+msgid "Express-Bearbeiter"
+msgstr "Express-Bearbeiter"
+
+msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
+msgstr "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
+
+msgid "Express-Bearbeiter-Recht entziehen: {name}"
+msgstr "Express-Bearbeiter-Recht entziehen: {name}"
+
+msgid "Express-Service"
+msgstr "Express-Service"
+
+msgid "Fassung {f}, Sprache {s}"
+msgstr "Fassung {f}, Sprache {s}"
+
+msgid "Frage"
+msgstr "Frage"
+
+msgid "Fällig am"
+msgstr "Fällig am"
+
+msgid "Geliefert"
+msgstr "Geliefert"
+
+msgid "Geliefert (die letzten 100)"
+msgstr "Geliefert (die letzten 100)"
+
+msgid "Geliefert am"
+msgstr "Geliefert am"
+
+msgid "Geliefert. Der Kunde bekommt eine E-Mail, die Credits sind abgebucht."
+msgstr "Geliefert. Der Kunde bekommt eine E-Mail, die Credits sind abgebucht."
+
+msgid "Grund"
+msgstr "Grund"
+
+msgid "Hinweise für uns (freiwillig)"
+msgstr "Hinweise für uns (freiwillig)"
+
+msgid "Hochgeladen und hinzugefügt."
+msgstr "Hochgeladen und hinzugefügt."
+
+msgid "Hochladen und hinzufügen"
+msgstr "Hochladen und hinzufügen"
+
+msgid "Höchstens Dokumente je Auftrag"
+msgstr "Höchstens Dokumente je Auftrag"
+
+msgid "Höchstens Seiten je Auftrag"
+msgstr "Höchstens Seiten je Auftrag"
+
+msgid "In Bearbeitung genommen"
+msgstr "In Bearbeitung genommen"
+
+msgid "Interne Notiz"
+msgstr "Interne Notiz"
+
+msgid "Interne Notiz geändert"
+msgstr "Interne Notiz geändert"
+
+msgid "Keine Aufträge."
+msgstr "Keine Aufträge."
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+
+msgid "Leistung für {name}"
+msgstr "Leistung für {name}"
+
+msgid "Leistung geändert."
+msgstr "Leistung geändert."
+
+msgid "Lieferfrist in Stunden"
+msgstr "Lieferfrist in Stunden"
+
+msgid "Liefern"
+msgstr "Liefern"
+
+msgid "Lieferung"
+msgstr "Lieferung"
+
+msgid "Lieferung innerhalb von {stunden} Stunden"
+msgstr "Lieferung innerhalb von {stunden} Stunden"
+
+msgid "Lieferung innerhalb von {stunden} Stunden."
+msgstr "Lieferung innerhalb von {stunden} Stunden."
+
+msgid "Manche Abweichungen sind bewusst (zum Beispiel Prüfungen, die veraPDF nicht sicher beurteilen kann). Liefern bucht die Credits ab und schickt dem Kunden eine E-Mail."
+msgstr "Manche Abweichungen sind bewusst (zum Beispiel Prüfungen, die veraPDF nicht sicher beurteilen kann). Liefern bucht die Credits ab und schickt dem Kunden eine E-Mail."
+
+msgid "Meine Aufträge"
+msgstr "Meine Aufträge"
+
+msgid "Meine Express-Aufträge"
+msgstr "Meine Express-Aufträge"
+
+msgid "Mir zuweisen"
+msgstr "Mir zuweisen"
+
+msgid "Neuer Auftrag"
+msgstr "Neuer Auftrag"
+
+msgid "Noch keine Express-Bearbeiter."
+msgstr "Noch keine Express-Bearbeiter."
+
+msgid "Notiz"
+msgstr "Notiz"
+
+msgid "Notiz gespeichert."
+msgstr "Notiz gespeichert."
+
+msgid "Notiz speichern"
+msgstr "Notiz speichern"
+
+msgid "Nur hier in der Verwaltung sichtbar, nie für den Kunden."
+msgstr "Nur hier in der Verwaltung sichtbar, nie für den Kunden."
+
+msgid "Nur prüfen (Prüfbericht)"
+msgstr "Nur prüfen (Prüfbericht)"
+
+msgid "Nur prüfen: Credits je Seite"
+msgstr "Nur prüfen: Credits je Seite"
+
+msgid "Oder eine PDF hochladen, ohne Projekt"
+msgstr "Oder eine PDF hochladen, ohne Projekt"
+
+msgid "Original herunterladen"
+msgstr "Original herunterladen"
+
+msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
+msgstr "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
+
+msgid "Preise sind festgelegt (kein Platzhalter mehr)"
+msgstr "Preise sind festgelegt (kein Platzhalter mehr)"
+
+msgid "Prüfbericht"
+msgstr "Prüfbericht"
+
+msgid "Prüfbericht (PDF) für {name}"
+msgstr "Prüfbericht (PDF) für {name}"
+
+msgid "Prüfbericht für „{name}“ gespeichert."
+msgstr "Prüfbericht für „{name}“ gespeichert."
+
+msgid "Prüfbericht herunterladen"
+msgstr "Prüfbericht herunterladen"
+
+msgid "Prüfbericht hochgeladen"
+msgstr "Prüfbericht hochgeladen"
+
+msgid "Prüfbericht wird hochgeladen …"
+msgstr "Prüfbericht wird hochgeladen …"
+
+msgid "Recht entziehen"
+msgstr "Recht entziehen"
+
+msgid "Rückfrage"
+msgstr "Rückfrage"
+
+msgid "Rückfrage an den Kunden"
+msgstr "Rückfrage an den Kunden"
+
+msgid "Rückfrage an dich"
+msgstr "Rückfrage an dich"
+
+msgid "Rückfrage beim Kunden"
+msgstr "Rückfrage beim Kunden"
+
+msgid "Rückfrage gesendet. Die Frist ruht, bis der Kunde antwortet."
+msgstr "Rückfrage gesendet. Die Frist ruht, bis der Kunde antwortet."
+
+msgid "Rückfrage senden"
+msgstr "Rückfrage senden"
+
+msgid "Rückfrage stellen"
+msgstr "Rückfrage stellen"
+
+msgid "Rückfrage von InkluDocs"
+msgstr "Rückfrage von InkluDocs"
+
+msgid "Storniert"
+msgstr "Storniert"
+
+msgid "Storniert (die letzten 100)"
+msgstr "Storniert (die letzten 100)"
+
+msgid "Storniert am"
+msgstr "Storniert am"
+
+msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
+msgstr "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
+
+msgid "Summe: {c} Credits"
+msgstr "Summe: {c} Credits"
+
+msgid "Telefon"
+msgstr "Telefon"
+
+msgid "Telefon für Rückfragen (freiwillig)"
+msgstr "Telefon für Rückfragen (freiwillig)"
+
+msgid "Trotz Abweichungen liefern?"
+msgstr "Trotz Abweichungen liefern?"
+
+msgid "Trotzdem liefern"
+msgstr "Trotzdem liefern"
+
+msgid "Verlauf"
+msgstr "Verlauf"
+
+msgid "Vom Express-Service bearbeiten lassen"
+msgstr "Vom Express-Service bearbeiten lassen"
+
+msgid "Vor dem Liefern fehlt noch:"
+msgstr "Vor dem Liefern fehlt noch:"
+
+msgid "Zahlt aus dem Topf von"
+msgstr "Zahlt aus dem Topf von"
+
+msgid "Zahlungspflichtig bestellen"
+msgstr "Zahlungspflichtig bestellen"
+
+msgid "Zu meinen Aufträgen"
+msgstr "Zu meinen Aufträgen"
+
+msgid "Zum Beispiel: „Das Formular auf Seite 3 bitte besonders prüfen.“"
+msgstr "Zum Beispiel: „Das Formular auf Seite 3 bitte besonders prüfen.“"
+
+msgid "Zum Express-Bearbeiter machen"
+msgstr "Zum Express-Bearbeiter machen"
+
+msgid "Zur Auswahl hinzufügen"
+msgstr "Zur Auswahl hinzufügen"
+
+msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
+msgstr "Zurzeit können wir nur PDF-Dateien bearbeiten."
+
+msgid "Zurück zu den Express-Aufträgen"
+msgstr "Zurück zu den Express-Aufträgen"
+
+msgid "Zurück zu meinen Aufträgen"
+msgstr "Zurück zu meinen Aufträgen"
+
+msgid "Zurück zum Express-Service"
+msgstr "Zurück zum Express-Service"
+
+msgid "Zustimmung"
+msgstr "Zustimmung"
+
+msgid "abgebucht"
+msgstr "abgebucht"
+
+msgid "bestellt am {datum}"
+msgstr "bestellt am {datum}"
+
+msgid "fehlt noch"
+msgstr "fehlt noch"
+
+msgid "fällig in {n} Stunden"
+msgstr "fällig in {n} Stunden"
+
+msgid "geliefert am {datum}"
+msgstr "geliefert am {datum}"
+
+msgid "hochgeladen am {datum}"
+msgstr "hochgeladen am {datum}"
+
+msgid "hochgeladen am {datum} von {name}"
+msgstr "hochgeladen am {datum} von {name}"
+
+msgid "innerhalb von {stunden} Stunden"
+msgstr "innerhalb von {stunden} Stunden"
+
+msgid "intern"
+msgstr "intern"
+
+msgid "keine"
+msgstr "keine"
+
+msgid "keine PDF, nicht möglich"
+msgstr "keine PDF, nicht möglich"
+
+msgid "keiner (freiwillig)"
+msgstr "keiner (freiwillig)"
+
+msgid "keins angegeben"
+msgstr "keins angegeben"
+
+msgid "nicht mehr vorhanden, bitte entfernen"
+msgstr "nicht mehr vorhanden, bitte entfernen"
+
+msgid "noch nicht hochgeladen"
+msgstr "noch nicht hochgeladen"
+
+msgid "noch niemand zugewiesen"
+msgstr "noch niemand zugewiesen"
+
+msgid "noch {n} Stunden"
+msgstr "noch {n} Stunden"
+
+msgid "schon in deiner Auswahl"
+msgstr "schon in deiner Auswahl"
+
+msgid "storniert am {datum}"
+msgstr "storniert am {datum}"
+
+msgid "veraPDF konnte die Datei nicht prüfen."
+msgstr "veraPDF konnte die Datei nicht prüfen."
+
+msgid "veraPDF: Abweichungen — {text}"
+msgstr "veraPDF: Abweichungen — {text}"
+
+msgid "veraPDF: PDF/UA bestanden."
+msgstr "veraPDF: PDF/UA bestanden."
+
+msgid "vorgemerkt"
+msgstr "vorgemerkt"
+
+msgid "vorgemerkt, abgebucht wird erst bei der Lieferung"
+msgstr "vorgemerkt, abgebucht wird erst bei der Lieferung"
+
+msgid "wieder frei"
+msgstr "wieder frei"
+
+msgid "wieder frei, nichts abgebucht"
+msgstr "wieder frei, nichts abgebucht"
+
+msgid "{c} Credits, {stand}"
+msgstr "{c} Credits, {stand}"
+
+msgid "{d} Dokumente, {c} Credits"
+msgstr "{d} Dokumente, {c} Credits"
+
+msgid "{d} Dokumente, {s} Seiten"
+msgstr "{d} Dokumente, {s} Seiten"
+
+msgid "{name}: {s} Seiten, {leistung}, {c} Credits"
+msgstr "{name}: {s} Seiten, {leistung}, {c} Credits"
+
+msgid "{n} Dokumente"
+msgstr "{n} Dokumente"
+
+msgid "{n} Dokumente hinzugefügt."
+msgstr "{n} Dokumente hinzugefügt."
+
+msgid "{n} Dokumente im Projekt, {w} davon wählbar."
+msgstr "{n} Dokumente im Projekt, {w} davon wählbar."
+
+msgid "{n} Seiten"
+msgstr "{n} Seiten"
+
+msgid "{s} Seiten, {leistung}, {c} Credits"
+msgstr "{s} Seiten, {leistung}, {c} Credits"
+
+msgid "{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage"
+msgstr "{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage"
+
+msgid "Überfällig"
+msgstr "Überfällig"
+
+msgid "Übernehmen"
+msgstr "Übernehmen"
+
+msgid "Übernommen"
+msgstr "Übernommen"
+
+msgid "überfällig seit {n} Stunden"
+msgstr "überfällig seit {n} Stunden"
+
+msgid "„{name}“ entfernt."
+msgstr "„{name}“ entfernt."
+
+msgid "Ich akzeptiere die Bedingungen für den Express-Service."
+msgstr "Ich akzeptiere die Bedingungen für den Express-Service."
+
+msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
+msgstr "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."

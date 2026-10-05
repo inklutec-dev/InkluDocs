@@ -718,7 +718,12 @@
         const busy = docs.some(d => d.tagging && d.tagging.laeuft) || !!kette.laeuft || project.status === 'extracting' || project.status === 'processing';
         const aktionen = !ZEIGE_PROJEKT_KNOEPFE ? '' : (docs.length && !busy ? '<button class="btn btn-primary" id="dkKetteBtn" onclick="Dokument.ketteOeffnen(' + project.id + ')">' + ico('sparkle') + t('Komplett barrierefrei machen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
             + ((data.ausgaben_anzahl || 0) > 0 ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : '');
+        // EXPRESS-SERVICE (05.10.2026): Weg zu den Profis — öffnet einen Auftrag mit den Dokumenten dieses Projekts.
+        const express = (window.FUNKTIONEN && window.FUNKTIONEN.express && modus === 'dokument' && docs.length && !window.GUEST_MODE)
+            ? '<p class="dok-express"><a href="/express?projekt=' + encodeURIComponent(project.id) + '">' + t('Vom Express-Service bearbeiten lassen') + '</a></p>'
+            : '';
         return projektKopfHtml(project, modus, title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
+            + express
             + funktionenKarteHtml(modus === 'dokument' ? aktionen : '')
             + (modus === 'tagging' ? laufDialogHtml(project) + testDialogHtml(project) : '')
             + hoerprobeDialogHtml()

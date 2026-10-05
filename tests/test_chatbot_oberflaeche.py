@@ -29,9 +29,12 @@ def satz(projekt):
 class Schalter(unittest.TestCase):
     def test_voreinstellung_wie_die_oberflaeche(self):
         """Heute ausgeblendet: KI-Pruefung, Korrektur, Kette, „Text zurückholen“, Urteil, Strukturansicht, eigene Pruefungen."""
-        self.assertEqual(funktionen.fuer_oberflaeche(), {"ki_pruefung": False, "korrektur": False, "eigene_pruefungen": False,
-                                                         "urteil": False, "kette": False, "text_zurueck": False,
-                                                         "strukturansicht": False})
+        # „express“ (05.10.2026) haengt an der Umgebung (EXPRESS_SERVICE): Staging an, Prod aus — darum nur Typ und Gleichlauf.
+        schalter = funktionen.fuer_oberflaeche()
+        self.assertIs(schalter.pop("express"), funktionen.EXPRESS)
+        self.assertEqual(schalter, {"ki_pruefung": False, "korrektur": False, "eigene_pruefungen": False,
+                                    "urteil": False, "kette": False, "text_zurueck": False,
+                                    "strukturansicht": False})
         import abschluss
         self.assertIs(abschluss.EIGENE_PRUEFUNGEN, funktionen.EIGENE_PRUEFUNGEN)
 

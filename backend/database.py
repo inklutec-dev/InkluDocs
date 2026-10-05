@@ -703,6 +703,98 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ki_aufrufe_zeit ON ki_aufrufe(created_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ki_aufrufe_konto ON ki_aufrufe(konto_user_id, created_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ki_aufrufe_projekt ON ki_aufrufe(project_id, created_at)")
+
+    # EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Kunden lassen Dokumente von Profis aufbereiten oder pruefen,
+    # Lieferung innerhalb einer Frist, Bezahlung in Credits (vorgemerkt bei der Bestellung, abgebucht bei der Lieferung,
+    # frei beim Storno). Kern: express.py, Doku docs/EXPRESS_SERVICE.md.
+    #   status  entwurf (= Warenkorb, hoechstens einer je Konto) | neu | in_arbeit | rueckfrage | geliefert | storniert
+    #   Vorgemerkt sind die credits_gesamt aller Auftraege in neu/in_arbeit/rueckfrage (billing.vorgemerkt) — kein
+    #   eigener Kontostand, der driften koennte. konto_user_id = der Topf, der bei der Bestellung zahlt.
+    #   zustimmung_*: Wortlaut, Fassung, Sprache, Zeitpunkt und Absender der beiden Pflicht-Haekchen (Nachweis).
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS express_auftraege (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            konto_user_id INTEGER,
+            status TEXT NOT NULL DEFAULT 'entwurf',
+            auto_projekt_id INTEGER,
+            ansprechpartner TEXT NOT NULL DEFAULT '',
+            telefon TEXT NOT NULL DEFAULT '',
+            hinweise TEXT NOT NULL DEFAULT '',
+            seiten_gesamt INTEGER NOT NULL DEFAULT 0,
+            credits_gesamt INTEGER NOT NULL DEFAULT 0,
+            frist_stunden INTEGER NOT NULL DEFAULT 48,
+            faellig_am TEXT,
+            zustimmung_fassung TEXT NOT NULL DEFAULT '',
+            zustimmung_bedingungen TEXT NOT NULL DEFAULT '',
+            zustimmung_bearbeitung TEXT NOT NULL DEFAULT '',
+            zustimmung_sprache TEXT NOT NULL DEFAULT '',
+            zustimmung_absender TEXT NOT NULL DEFAULT '',
+            zugestimmt_am TEXT,
+            idempotenz TEXT,
+            bestellt_am TEXT,
+            bearbeiter_id INTEGER,
+            bearbeiter_name TEXT NOT NULL DEFAULT '',
+            uebernommen_am TEXT,
+            geliefert_am TEXT,
+            geliefert_von TEXT NOT NULL DEFAULT '',
+            storniert_am TEXT,
+            storniert_von TEXT NOT NULL DEFAULT '',
+            storno_grund TEXT NOT NULL DEFAULT '',
+            interne_notiz TEXT NOT NULL DEFAULT '',
+            erinnert_am TEXT,
+            ueberfaellig_gemeldet_am TEXT,
+            rueckfrage_seit TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    ''')
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_express_entwurf ON express_auftraege(user_id) WHERE status = 'entwurf'")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_express_idempotenz ON express_auftraege(user_id, idempotenz) "
+                 "WHERE idempotenz IS NOT NULL")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_express_status ON express_auftraege(status, faellig_am)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_express_konto ON express_auftraege(konto_user_id, status)")
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS express_positionen (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            auftrag_id INTEGER NOT NULL,
+            project_id INTEGER,
+            document_id INTEGER,
+            dokument_name TEXT NOT NULL DEFAULT '',
+            seiten INTEGER NOT NULL DEFAULT 0,
+            leistung TEXT NOT NULL DEFAULT 'aufbereiten',
+            credits INTEGER NOT NULL DEFAULT 0,
+            original_pfad TEXT NOT NULL DEFAULT '',
+            ergebnis_pfad TEXT NOT NULL DEFAULT '',
+            ergebnis_name TEXT NOT NULL DEFAULT '',
+            ergebnis_am TEXT,
+            ergebnis_von TEXT NOT NULL DEFAULT '',
+            bericht_pfad TEXT NOT NULL DEFAULT '',
+            bericht_name TEXT NOT NULL DEFAULT '',
+            bericht_am TEXT,
+            verapdf TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (auftrag_id) REFERENCES express_auftraege(id) ON DELETE CASCADE
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_express_pos_auftrag ON express_positionen(auftrag_id)")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_express_pos_dokument ON express_positionen(auftrag_id, document_id) "
+                 "WHERE document_id IS NOT NULL")
+    # Verlauf je Auftrag (bestellt, uebernommen, Rueckfrage, Antwort, Ergebnis, geliefert, storniert, interne Notiz).
+    # fuer_kunde 0 = nur in der Verwaltung sichtbar (interne Schritte).
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS express_verlauf (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            auftrag_id INTEGER NOT NULL,
+            art TEXT NOT NULL,
+            text TEXT NOT NULL DEFAULT '',
+            von_name TEXT NOT NULL DEFAULT '',
+            fuer_kunde INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (auftrag_id) REFERENCES express_auftraege(id) ON DELETE CASCADE
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_express_verlauf ON express_verlauf(auftrag_id, created_at)")
     conn.commit()
 
     # Backward-compatible migrations using ALTER TABLE with try/except
@@ -958,6 +1050,9 @@ def _migrate_columns(conn):
         ("formularfelder", "quickinfo_ki", "ALTER TABLE formularfelder ADD COLUMN quickinfo_ki TEXT DEFAULT ''"),
         # Gast-Anmerkung je Rolle (Review 28.08.2026): Lektorat und Herausgeber ueberschreiben sich nicht.
         ("feld_reviews", "note", "ALTER TABLE feld_reviews ADD COLUMN note TEXT DEFAULT ''"),
+        # EXPRESS-SERVICE (05.10.2026): Recht „Express-Bearbeiter“ — sieht in der Verwaltung NUR die Express-Auftraege
+        # (z. B. ein Partner, der die Dokumente aufbereitet), nicht Kunden, Umsatz oder KI-Kosten.
+        ("users", "express_bearbeiter", "ALTER TABLE users ADD COLUMN express_bearbeiter INTEGER DEFAULT 0"),
     ]
 
     for table, column, sql in migrations:
@@ -1287,6 +1382,15 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM usage_events WHERE user_id = ? OR konto_user_id = ?",
                  (user_id, user_id))
     conn.execute("DELETE FROM paket_abbuchungen WHERE konto_user_id = ?", (user_id,))
+    # Express-Service (05.10.2026): Auftraege des Kontos mit Positionen und Verlauf. Bezahlt wurde mit Credits, deren
+    # Kauf als Umsatz-Buchung bleibt; die Dateien liegen unter results/<user>/_express und gehen mit dem Nutzerordner.
+    # War das Konto Bearbeiter fremder Auftraege, bleibt dort nur der Name als Momentaufnahme stehen.
+    conn.execute("DELETE FROM express_verlauf WHERE auftrag_id IN (SELECT id FROM express_auftraege WHERE user_id = ?)", (user_id,))
+    conn.execute("DELETE FROM express_positionen WHERE auftrag_id IN (SELECT id FROM express_auftraege WHERE user_id = ?)", (user_id,))
+    conn.execute("DELETE FROM express_auftraege WHERE user_id = ?", (user_id,))
+    conn.execute("UPDATE express_auftraege SET bearbeiter_id = NULL WHERE bearbeiter_id = ?", (user_id,))
+    # Zahlte das Konto als Team-Inhaber fuer Auftraege eines Mitglieds, zahlt kuenftig das Mitglied selbst.
+    conn.execute("UPDATE express_auftraege SET konto_user_id = user_id WHERE konto_user_id = ?", (user_id,))
     # KI-Kosten (05.10.2026): die Kosten sind angefallen und bleiben in der Monatssumme, aber ohne Bezug zur Person
     # (zaehlen danach „ohne Zuordnung“).
     conn.execute("UPDATE ki_aufrufe SET user_id = NULL, konto_user_id = NULL, project_id = NULL, document_id = NULL, "

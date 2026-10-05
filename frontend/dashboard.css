@@ -281,3 +281,22 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Kundensuche untereinander (Michael 25.09.2026): Suchfeld, darunter „Abo“, darunter der Knopf. */
 .verwaltung-suche-stapel { max-width: 30rem; margin-bottom: 1rem; }
 .verwaltung-suche-stapel .dash-field { margin-bottom: .9rem; }
+
+/* EXPRESS-SERVICE (05.10.2026): Auswahl-Felder, Aktionszeilen und Druckansicht der Auftragsübersicht. */
+.ex-fieldset { border: 1px solid var(--border); border-radius: 6px; padding: .6rem 1rem .4rem; margin: 0 0 1rem; }
+.ex-fieldset legend { font-weight: 700; padding: 0 .3rem; }
+.ex-liste { list-style: none; padding: 0; margin: .25rem 0 0; }
+.ex-liste li { padding: .25rem 0; }
+.ex-aktionen { display: flex; gap: .5rem; flex-wrap: wrap; margin: .6rem 0 0; }
+.ex-aktionen[hidden] { display: none; }
+.ex-rechtstext h2 { font-size: 1.1rem; margin: 1.25rem 0 .4rem; }
+.ex-rechtstext p { max-width: 48rem; line-height: 1.55; }
+.dok-express { margin: .25rem 0 .75rem; }
+.dok-express a { color: #a94200; font-weight: 700; text-decoration: underline; }
+/* Druck: nur der Inhalt — ohne Seitenleiste, Sprunglink, Fußzeile und Knöpfe (gilt für alle App-Seiten). */
+@media print {
+  .app-sidebar, .dash-skip, .dash-footer, .no-print, dialog { display: none !important; }
+  .app-shell, .app-content, .dash-main { display: block !important; margin: 0 !important; padding: 0 !important; max-width: none !important; }
+  .dash-card { box-shadow: none !important; border: 1px solid #999 !important; break-inside: avoid; }
+  a { color: #000 !important; }
+}

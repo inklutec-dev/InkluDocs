@@ -1,0 +1,203 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Express-Auftrag') }} {{ auftrag_id }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# AUFTRAGSÜBERSICHT des Express-Service (05.10.2026): Stand, Rückfrage beantworten, Dokumente (nach der Lieferung zum
+   Herunterladen), Angaben, Einverständnis mit Zeitpunkt, Verlauf. Druckbar (Druck-CSS in dashboard.css blendet
+   Seitenleiste und Knöpfe aus) und als barrierefreie PDF (/api/express/auftraege/<id>/nachweis.pdf). Ausdrücklich KEINE
+   Rechnung — bezahlt wird mit Credits, deren Kauf gesondert abgerechnet ist. #}
+<p class="verwaltung-zurueck no-print"><a href="/express#h-auftraege">{{ _('Zurück zu meinen Aufträgen') }}</a></p>
+<h1 id="exaTitel" tabindex="-1">{{ _('Express-Auftrag') }} {{ auftrag_id }}</h1>
+<div id="exaNeu" class="verwaltung-meldung" hidden>
+  <p id="exaNeuText" tabindex="-1"></p>
+</div>
+<div id="exaInhalt" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+<p class="no-print ex-aktionen" id="exaAktionen" hidden>
+  <button type="button" class="btn btn-secondary" id="exaDrucken">{{ _('Drucken') }}</button>
+  <a class="btn btn-secondary" id="exaPdf" href="/api/express/auftraege/{{ auftrag_id }}/nachweis.pdf">{{ _('Als PDF herunterladen') }}</a>
+</p>
+{% endblock %}
+
+{% block page_script %}
+<script>window.EXPRESS_AUFTRAG = {{ auftrag_id|int }};</script>
+<script>
+{% raw %}
+(function () {
+  'use strict';
+  const ID = window.EXPRESS_AUFTRAG;
+  const STATUS = { neu: t('Eingegangen'), in_arbeit: t('In Bearbeitung'), rueckfrage: t('Rückfrage an dich'),
+                   geliefert: t('Geliefert'), storniert: t('Storniert') };
+  const VERLAUF = { bestellt: t('Bestellt'), uebernommen: t('In Bearbeitung genommen'), rueckfrage: t('Rückfrage von InkluDocs'),
+                    antwort: t('Deine Antwort'), geliefert: t('Geliefert'), storniert: t('Storniert') };
+  let laeuft = false;
+
+  function el(tag, klasse, text) {
+    const e = document.createElement(tag);
+    if (klasse) e.className = klasse;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function zahl(n) { try { return new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0); } catch (e) { return String(n); } }
+  function datumZeit(s) {
+    if (!s) return '';
+    const p = String(s).slice(0, 10).split('-');
+    let tag = String(s).slice(0, 10);
+    try {
+      tag = new Intl.DateTimeFormat(window.LANG || 'de', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+        .format(new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])));
+    } catch (e) { /* Rohtext */ }
+    const uhr = String(s).slice(11, 16);
+    return uhr ? tag + ', ' + uhr : tag;
+  }
+  function zeile(ziel, begriff, wert) {
+    if (wert === null || wert === undefined || wert === '') return;
+    ziel.appendChild(el('p', 'dash-report-zeile', begriff + ': ' + wert));
+  }
+  function abschnitt(ziel, titel, id) {
+    const s = el('section', 'dash-card verwaltung-karte');
+    s.setAttribute('aria-labelledby', id);
+    const h = el('h2', null, titel);
+    h.id = id;
+    h.tabIndex = -1;
+    s.appendChild(h);
+    ziel.appendChild(s);
+    return s;
+  }
+  function leistungText(l) { return l === 'pruefen' ? t('Nur prüfen (Prüfbericht)') : t('Barrierefrei aufbereiten (mit Prüfung)'); }
+
+  function zeigen(a) {
+    const ziel = byId('exaInhalt');
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+
+    let s = abschnitt(ziel, t('Überblick'), 'exa-h-ueberblick');
+    zeile(s, t('Stand'), STATUS[a.status] || a.status);
+    zeile(s, t('Bestellt am'), datumZeit(a.bestellt_am));
+    if (a.status === 'geliefert') zeile(s, t('Geliefert am'), datumZeit(a.geliefert_am));
+    else if (a.status === 'storniert') {
+      zeile(s, t('Storniert am'), datumZeit(a.storniert_am));
+      zeile(s, t('Grund'), a.storno_grund);
+    } else zeile(s, t('Lieferung'), t('innerhalb von {stunden} Stunden', { stunden: a.frist_stunden }));
+    const stand = { vorgemerkt: t('vorgemerkt, abgebucht wird erst bei der Lieferung'), abgebucht: t('abgebucht'), frei: t('wieder frei, nichts abgebucht') }[a.credits_stand];
+    zeile(s, t('Credits'), t('{c} Credits, {stand}', { c: zahl(a.credits), stand: stand }));
+    zeile(s, t('Seiten'), zahl(a.seiten));
+    if (a.konto_name) zeile(s, t('Bezahlt aus dem Team-Guthaben von'), a.konto_name);
+
+    if (a.rueckfrage_offen) {
+      s = abschnitt(ziel, t('Rückfrage an dich'), 'exa-h-rueckfrage');
+      const frage = [...a.verlauf].reverse().find((v) => v.art === 'rueckfrage');
+      if (frage) s.appendChild(el('p', 'verwaltung-bestaetigung', frage.text));
+      const form = el('form', 'no-print');
+      form.noValidate = true;
+      const feld = el('div', 'dash-field');
+      const lab = el('label', null, t('Deine Antwort'));
+      lab.htmlFor = 'exaAntwort';
+      const ta = el('textarea', 'dash-input');
+      ta.id = 'exaAntwort';
+      ta.rows = 4;
+      ta.maxLength = 2000;
+      ta.setAttribute('aria-describedby', 'exaAntwortFehler');
+      feld.appendChild(lab);
+      feld.appendChild(ta);
+      form.appendChild(feld);
+      const fehler = el('p', 'verwaltung-fehler');
+      fehler.id = 'exaAntwortFehler';
+      fehler.setAttribute('role', 'alert');
+      form.appendChild(fehler);
+      const knopf = el('button', 'btn btn-primary', t('Antwort senden'));
+      knopf.type = 'submit';
+      form.appendChild(knopf);
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (laeuft) return;
+        fehler.textContent = '';
+        if (!ta.value.trim()) { fehler.textContent = t('Bitte eine Antwort schreiben.'); ta.focus(); return; }
+        laeuft = true;
+        const r = await fetch('/api/express/auftraege/' + ID + '/antwort', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: ta.value }) }).catch(() => null);
+        laeuft = false;
+        const d = r ? await r.json().catch(() => ({})) : {};
+        if (!r || !r.ok) { fehler.textContent = (d.detail && (d.detail.text || d.detail)) || t('Die Antwort konnte nicht gesendet werden.'); return; }
+        zeigen(d);
+        byId('exa-h-ueberblick').focus();
+        announce(t('Antwort gesendet. Wir melden uns.'));
+      });
+      s.appendChild(form);
+    }
+
+    s = abschnitt(ziel, t('Dokumente'), 'exa-h-dokumente');
+    const ul = el('ul', 'verwaltung-liste');
+    a.positionen.forEach((p) => {
+      const li = el('li', 'verwaltung-zeile');
+      li.appendChild(el('p', 'verwaltung-meta', t('{name}: {s} Seiten, {leistung}, {c} Credits',
+        { name: p.dokument_name, s: zahl(p.seiten), leistung: leistungText(p.leistung), c: zahl(p.credits) })));
+      if (p.verapdf) li.appendChild(el('p', 'dash-sub', p.verapdf.bestanden ? t('Automatische PDF/UA-Prüfung (veraPDF): bestanden.')
+        : t('Automatische PDF/UA-Prüfung (veraPDF): {text}', { text: p.verapdf.zusammenfassung || t('mit Hinweisen') })));
+      const links = el('p', 'no-print ex-aktionen');
+      if (p.ergebnis_da) {
+        const l = el('a', 'btn btn-secondary', t('Barrierefreie PDF herunterladen'));
+        l.href = '/api/express/auftraege/' + ID + '/positionen/' + p.id + '/ergebnis';
+        l.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
+        links.appendChild(l);
+      }
+      if (p.bericht_da) {
+        const l = el('a', 'btn btn-secondary', t('Prüfbericht herunterladen'));
+        l.href = '/api/express/auftraege/' + ID + '/positionen/' + p.id + '/bericht';
+        l.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
+        links.appendChild(l);
+      }
+      if (links.children.length) li.appendChild(links);
+      ul.appendChild(li);
+    });
+    s.appendChild(ul);
+
+    s = abschnitt(ziel, t('Angaben'), 'exa-h-angaben');
+    zeile(s, t('Ansprechpartner'), a.ansprechpartner);
+    zeile(s, t('Telefon'), a.telefon);
+    zeile(s, t('Hinweise'), a.hinweise);
+
+    s = abschnitt(ziel, t('Einverständnis'), 'exa-h-zustimmung');
+    s.appendChild(el('p', null, t('Bestätigt am {datum} (Fassung {fassung}):', { datum: datumZeit(a.zustimmung.am), fassung: a.zustimmung.fassung })));
+    const zu = el('ul');
+    zu.appendChild(el('li', null, a.zustimmung.bedingungen));
+    zu.appendChild(el('li', null, a.zustimmung.bearbeitung));
+    s.appendChild(zu);
+
+    s = abschnitt(ziel, t('Verlauf'), 'exa-h-verlauf');
+    const ol = el('ol', 'verwaltung-liste');
+    a.verlauf.forEach((v) => ol.appendChild(el('li', 'verwaltung-zeile', datumZeit(v.created_at) + ': ' + (VERLAUF[v.art] || v.art)
+      + (v.text && ['rueckfrage', 'antwort', 'storniert'].includes(v.art) ? ' — ' + v.text : ''))));
+    s.appendChild(ol);
+    ziel.appendChild(el('p', 'dash-sub', t('Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde.')));
+    byId('exaAktionen').hidden = false;
+  }
+
+  byId('exaDrucken').addEventListener('click', () => window.print());
+
+  (async function start() {
+    await loadCurrentUser();
+    let r;
+    try { r = await fetch('/api/express/auftraege/' + ID, { headers: { 'Accept': 'application/json' } }); } catch (e) { r = null; }
+    const ziel = byId('exaInhalt');
+    if (!r || !r.ok) {
+      ziel.setAttribute('aria-busy', 'false');
+      ziel.innerHTML = '';
+      ziel.appendChild(el('p', 'dash-empty', r && r.status === 404 ? t('Diesen Auftrag gibt es nicht.') : t('Der Auftrag konnte nicht geladen werden.')));
+      return;
+    }
+    const a = await r.json();
+    zeigen(a);
+    if (new URLSearchParams(window.location.search).get('neu') === '1') {
+      byId('exaNeu').hidden = false;
+      byId('exaNeuText').textContent = t('Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail.', { nr: a.id, stunden: a.frist_stunden });
+      history.replaceState(null, '', window.location.pathname);
+      byId('exaNeuText').focus();
+    } else {
+      announce(t('Express-Auftrag {nr}: {stand}', { nr: a.id, stand: STATUS[a.status] || a.status }));
+    }
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}
