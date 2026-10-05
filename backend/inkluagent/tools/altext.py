@@ -46,7 +46,9 @@ def generate_alt_text(image_id: int, project_id: int, user_id: int) -> dict[str,
     if not _wache["erlaubt"]:
         return {"ok": False, "error": billing.credits_fehlen_text(_wache)}
     try:
-        result = _run_pipeline(image_id, project_id, user_id)
+        import ki_kosten
+        with ki_kosten.kontext(user_id=user_id, project_id=project_id, image_id=image_id):   # KI-Kosten (05.10.2026)
+            result = _run_pipeline(image_id, project_id, user_id)
     except Exception as e:
         log.exception("generate_alt_text Pipeline-Fehler")
         return {"ok": False, "error": f"Pipeline-Fehler: {e}"}

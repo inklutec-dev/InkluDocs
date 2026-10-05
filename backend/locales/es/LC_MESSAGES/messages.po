@@ -10350,3 +10350,237 @@ msgstr "Mostrar el resultado de la comprobación"
 
 msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
 msgstr "Un lector de pantalla lee el contenido etiquetado de esta página en este orden."
+
+msgid "1 US-Dollar = {kurs} Euro ({quelle})"
+msgstr "1 dólar estadounidense = {kurs} euros ({quelle})"
+
+msgid "Ausgabe (mit Denk-Tokens)"
+msgstr "Salida (incluidos los tokens de razonamiento)"
+
+msgid "Automatische Tests"
+msgstr "Pruebas automáticas"
+
+msgid "Betrieb"
+msgstr "Producción"
+
+msgid "Bild {id}"
+msgstr "Imagen {id}"
+
+msgid "Bleibt nach KI-Kosten"
+msgstr "Queda tras los costes de IA"
+
+msgid "Demo"
+msgstr "Demo"
+
+msgid "Der Kurs konnte nicht gespeichert werden."
+msgstr "No se pudo guardar el tipo de cambio."
+
+msgid "Der Preis konnte nicht gespeichert werden."
+msgstr "No se pudo guardar el precio."
+
+msgid "Die Summe ist unsere eigene Rechnung. Die Rechnung des Anbieters kann leicht abweichen, etwa durch Rundung, Wechselkurs oder geänderte Preise."
+msgstr "El total es nuestro propio cálculo. La factura del proveedor puede diferir ligeramente, por ejemplo por redondeo, tipo de cambio o precios modificados."
+
+msgid "Eingabe"
+msgstr "Entrada"
+
+msgid "Eingabe aus dem Zwischenspeicher (optional)"
+msgstr "Entrada desde la caché (opcional)"
+
+msgid "Eingabe {ein}, Ausgabe {aus}"
+msgstr "Entrada {ein}, salida {aus}"
+
+msgid "Erfasst seit"
+msgstr "Registrado desde"
+
+msgid "Es wurden noch keine KI-Aufrufe erfasst."
+msgstr "Todavía no se ha registrado ninguna llamada de IA."
+
+msgid "Euro für einen US-Dollar"
+msgstr "Euros por un dólar estadounidense"
+
+msgid "Gelöschtes Konto"
+msgstr "Cuenta eliminada"
+
+msgid "Gelöschtes Projekt"
+msgstr "Proyecto eliminado"
+
+msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
+msgstr "Exactamente como en la lista «Por modelo», por ejemplo gemini-3.1-pro-preview."
+
+msgid "Gültig ab (JJJJ-MM-TT)"
+msgstr "Válido desde (AAAA-MM-DD)"
+
+msgid "In diesem Monat gibt es keine KI-Aufrufe."
+msgstr "No hay llamadas de IA en este mes."
+
+msgid "Jeder Aufruf eines KI-Modells wird einzeln erfasst: wer, wofür, welches Modell und wie viele Tokens. Die Token-Zahlen meldet der Anbieter selbst mit jeder Antwort — genau danach rechnet er auch ab."
+msgstr "Cada llamada a un modelo de IA se registra por separado: quién, para qué, qué modelo y cuántos tokens. El proveedor indica él mismo la cantidad de tokens en cada respuesta — exactamente lo que factura."
+
+msgid "KI-Aufrufe"
+msgstr "Llamadas de IA"
+
+msgid "KI-Kosten"
+msgstr "Costes de IA"
+
+msgid "KI-Kosten dieses Kontos"
+msgstr "Costes de IA de esta cuenta"
+
+msgid "KI-Kosten im Monat"
+msgstr "Costes de IA del mes"
+
+msgid "KI-Kosten im {monat}"
+msgstr "Costes de IA en {monat}"
+
+msgid "KI-Kosten {monat}: {betrag}"
+msgstr "Costes de IA {monat}: {betrag}"
+
+msgid "Keine Einzelheiten."
+msgstr "Sin detalles."
+
+msgid "Keine Projekte."
+msgstr "Sin proyectos."
+
+msgid "Kosten = Tokens mal Preis der Preisliste mal Wechselkurs. Denk-Tokens zählen wie Ausgabe. Auch Antworten, die unbrauchbar waren und wiederholt wurden, kosten Geld und sind darum mitgezählt. Bilder aus dem Zwischenspeicher kosten nichts und erscheinen nicht."
+msgstr "Costes = tokens × precio de la lista × tipo de cambio. Los tokens de razonamiento cuentan como salida. Las respuestas inservibles que se repitieron también cuestan dinero y por eso se incluyen. Las imágenes de la caché no cuestan nada y no aparecen."
+
+msgid "Kosten je Credit im Schnitt"
+msgstr "Coste medio por crédito"
+
+msgid "Kurs speichern"
+msgstr "Guardar tipo de cambio"
+
+msgid "Künftig: {text}"
+msgstr "Próximamente: {text}"
+
+msgid "Modellkennung"
+msgstr "Identificador del modelo"
+
+msgid "Nach Kunde"
+msgstr "Por cliente"
+
+msgid "Nach Modell"
+msgstr "Por modelo"
+
+msgid "Nach Umgebung"
+msgstr "Por entorno"
+
+msgid "Nach Zweck"
+msgstr "Por finalidad"
+
+msgid "Ohne Projekt (zum Beispiel API-Einzelbilder)"
+msgstr "Sin proyecto (por ejemplo, imágenes sueltas por la API)"
+
+msgid "Ohne Zuordnung"
+msgstr "Sin asignar"
+
+msgid "Preis eintragen"
+msgstr "Introducir precio"
+
+msgid "Preis für ein weiteres Modell eintragen"
+msgstr "Introducir el precio de otro modelo"
+
+msgid "Preis speichern"
+msgstr "Guardar precio"
+
+msgid "Preis ändern"
+msgstr "Cambiar precio"
+
+msgid "Preis ändern für {modell}"
+msgstr "Cambiar el precio de {modell}"
+
+msgid "Preise der Anbieter in US-Dollar je eine Million Tokens. Jeder Aufruf wird mit dem Preis gerechnet, der in dem Moment gilt; spätere Änderungen schreiben schon erfasste Kosten nicht um."
+msgstr "Precios de los proveedores en dólares estadounidenses por millón de tokens. Cada llamada se calcula con el precio vigente en ese momento; los cambios posteriores no modifican los costes ya registrados."
+
+msgid "Preisliste"
+msgstr "Lista de precios"
+
+msgid "Projekt {id}"
+msgstr "Proyecto {id}"
+
+msgid "Projekte von {name}"
+msgstr "Proyectos de {name}"
+
+msgid "Quelle (Preisseite und Datum)"
+msgstr "Fuente (página de precios y fecha)"
+
+msgid "Quelle (zum Beispiel EZB-Referenzkurs und Datum)"
+msgstr "Fuente (por ejemplo, tipo de referencia del BCE y fecha)"
+
+msgid "Quelle: {quelle}"
+msgstr "Fuente: {quelle}"
+
+msgid "Seite {seite}"
+msgstr "Página {seite}"
+
+msgid "Tagging mit KI"
+msgstr "Etiquetado con IA"
+
+msgid "Testsystem"
+msgstr "Sistema de pruebas"
+
+msgid "Teuerste zuerst. Zu jedem Kunden lassen sich die Projekte aufklappen, zu jedem Projekt die einzelnen Bilder."
+msgstr "Los más caros primero. Para cada cliente se pueden desplegar los proyectos y para cada proyecto las imágenes."
+
+msgid "US-Dollar je eine Million Tokens, Dezimalkomma erlaubt."
+msgstr "Dólares estadounidenses por millón de tokens; se admite la coma decimal."
+
+msgid "Verbrauchte Credits"
+msgstr "Créditos usados"
+
+msgid "Wechselkurs"
+msgstr "Tipo de cambio"
+
+msgid "Wechselkurs ändern"
+msgstr "Cambiar el tipo de cambio"
+
+msgid "Wie wird gerechnet?"
+msgstr "¿Cómo se calcula?"
+
+msgid "Zwischenspeicher {cache}"
+msgstr "caché {cache}"
+
+msgid "davon {n} ohne bekannten Preis"
+msgstr "de ellas {n} sin precio conocido"
+
+msgid "davon {n} unbrauchbar und wiederholt"
+msgstr "de ellas {n} inservibles y repetidas"
+
+msgid "gültig ab {datum}"
+msgstr "válido desde {datum}"
+
+msgid "noch kein gültiger Preis"
+msgstr "todavía sin precio válido"
+
+msgid "unbekanntes Modell"
+msgstr "modelo desconocido"
+
+msgid "{betrag}, gemessen seit {datum}"
+msgstr "{betrag}, medido desde {datum}"
+
+msgid "{betrag}: {gemessen} gemessen seit {datum}, {geschaetzt} davor geschätzt ({satz} Cent je Credit)"
+msgstr "{betrag}: {gemessen} medidos desde {datum}, {geschaetzt} estimados antes ({satz} céntimos por crédito)"
+
+msgid "{credits} Credits, Umsatz {umsatz}"
+msgstr "{credits} créditos, ingresos {umsatz}"
+
+msgid "{kosten} (bisherige Pauschale: {pauschale})"
+msgstr "{kosten} (tarifa plana anterior: {pauschale})"
+
+msgid "{kosten}, {n} Aufrufe"
+msgstr "{kosten}, {n} llamadas"
+
+msgid "{monat}: {credits} Credits, KI-Kosten {kosten} (gemessen)"
+msgstr "{monat}: {credits} créditos, costes de IA {kosten} (medidos)"
+
+msgid "{monat}: {credits} Credits, KI-Kosten {kosten} ({gemessen} gemessen, {geschaetzt} geschätzt)"
+msgstr "{monat}: {credits} créditos, costes de IA {kosten} ({gemessen} medidos, {geschaetzt} estimados)"
+
+msgid "{zweck} ohne einzelnes Bild"
+msgstr "{zweck} sin imagen concreta"
+
+msgid "über {grenze} Tokens Eingabe: Eingabe {ein}, Ausgabe {aus}"
+msgstr "con más de {grenze} tokens de entrada: entrada {ein}, salida {aus}"
+
+msgid "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
+msgstr "«Sin asignar» son llamadas sin cliente conocido, por ejemplo pruebas o cuentas eliminadas desde entonces."

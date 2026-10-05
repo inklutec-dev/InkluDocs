@@ -17,6 +17,8 @@ from typing import Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
+
 from .gemini_client import _media_type, _prompt_ohne_marker
 
 log = logging.getLogger(__name__)
@@ -80,6 +82,7 @@ def _invoke_openai(model, prompt, image_b64, schema_name, schema_dict, max_token
             raise letzter from e
     else:
         raise letzter or OpenAICallError('OpenAI-Aufruf fehlgeschlagen')
+    ki_kosten.erfasse_openai(model, antwort, schritt=schema_name)  # KI-Kosten (05.10.2026)
     if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
         u = antwort.get('usage', {}) or {}
         print(f"[OPENAI-USAGE] model={model} schema={schema_name} in={u.get('input_tokens', '?')} out={u.get('output_tokens', '?')}", flush=True)

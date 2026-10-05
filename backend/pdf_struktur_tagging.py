@@ -38,6 +38,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -279,6 +280,7 @@ def _seitenbilder_loeschen(pfade: dict) -> None:
             pass
 
 
+@ki_kosten.fuer_zweck("tagging_ki")
 def zuordnung_je_seite(s: dict, seiten_gesamt: int, bild_pfad: str, sprache_dokument: str = "",
                        dokument_name: str = "", modell: Optional[str] = None) -> dict:
     system, prompt = build_struktur_prompt(s["html"], seite=s["seite"], seiten_gesamt=seiten_gesamt,
@@ -650,7 +652,8 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
 
     def _runde(liste: list):
         with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, PARALLEL)) as pool:
-            auftraege = {pool.submit(_eine_seite, s): s for s in liste}
+            # KI-Kosten (05.10.2026): Kunde/Projekt des Aufrufers in die Seiten-Threads mitnehmen.
+            auftraege = {pool.submit(ki_kosten.mit_kontext(_eine_seite), s): s for s in liste}
             for f in concurrent.futures.as_completed(auftraege):
                 s = auftraege[f]
                 try:

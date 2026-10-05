@@ -59,6 +59,17 @@
     } catch (e) { return wert.toFixed(2).replace('.', ',') + ' €'; }
   }
 
+  function euroGenau(cent) {
+    // KI-Kosten (05.10.2026): ein einzelner Aufruf kostet Bruchteile eines Cents — unter einem Euro bis zu vier
+    // Nachkommastellen ('0,0043 €'), sonst wie euro().
+    const wert = (Number(cent) || 0) / 100;
+    const fein = wert !== 0 && Math.abs(wert) < 1;
+    try {
+      return new Intl.NumberFormat(window.LANG || 'de', { style: 'currency', currency: 'EUR',
+        minimumFractionDigits: 2, maximumFractionDigits: fein ? 4 : 2 }).format(wert);
+    } catch (e) { return wert.toFixed(fein ? 4 : 2).replace('.', ',') + ' €'; }
+  }
+
   function euroFeld(cent) {
     // Vorbelegung eines Betragsfeldes: '87,50' (ohne Währungszeichen, Dezimalkomma).
     return ((Number(cent) || 0) / 100).toFixed(2).replace('.', ',');
@@ -395,7 +406,7 @@
   });
 
   window.Verwaltung = {
-    PLAN_NAMEN, meldung, datumLang, datumZeit, monatLang, euro, euroFeld, zahl, el, zeile, leer,
+    PLAN_NAMEN, meldung, datumLang, datumZeit, monatLang, euro, euroGenau, euroFeld, zahl, el, zeile, leer,
     ladeJson, sendeJson, istVollAdmin, planText, buchungText, buchungTeile, datumKurz, korrekturOeffnen, limitOeffnen,
     buchungKnoepfe, zaehltZumUmsatz: (b) => b.weg !== 'bonus' && (b.status === 'ok' || b.status === 'ausstehend'),
   };

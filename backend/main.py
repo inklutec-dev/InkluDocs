@@ -27,6 +27,7 @@ import logging
 
 import absender  # Sicherheitspaket 04.08.2026: echte Besucher-IP hinter dem Proxy (X-Forwarded-For von RECHTS)
 import billing  # Abo-/Credit-System Etappe 1: zentrale Verbrauchs-Zaehlung (backend/ABRECHNUNG.md)
+import ki_kosten  # KI-Kosten je Aufruf fuer die Verwaltung (05.10.2026, docs/KI_KOSTEN.md)
 import demo as demo_mod  # Demo-Modus (oeffentliche Kostprobe ohne Anmeldung) — nur aktiv bei DEMO_MODE=on
 import stripe_zahlung  # Online-Zahlung (06.08.2026): inert ohne STRIPE_SECRET_KEY
 import umsatz  # Umsatz-Buchungen mit Betrag (25.09.2026): Stripe automatisch, Rechnung ueber die Verwaltung
@@ -347,6 +348,9 @@ def im_hauptloop(coro) -> None:
 async def lifespan(app: FastAPI):
     global _HAUPT_LOOP
     _HAUPT_LOOP = asyncio.get_running_loop()
+    # KI-Kosten (05.10.2026): run_in_executor(None, …) nimmt den contextvars-Kontext sonst nicht in den Thread mit —
+    # die KI-Clients wuessten dann nicht, fuer welchen Kunden sie arbeiten. Gleiche Thread-Zahl wie der Standard.
+    _HAUPT_LOOP.set_default_executor(ki_kosten.KontextExecutor(thread_name_prefix="inkludocs"))
     init_db()
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -1457,6 +1461,27 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
     satz = billing.KOSTEN_PRO_CREDIT_EUR
     for zeile in verlauf:
         zeile["kosten_geschaetzt"] = round((zeile["topf"] or 0) * satz, 2)
+    # KI-KOSTEN (05.10.2026): Seit Beginn der Messung (ki_aufrufe) gibt es echte Kosten je Konto. Fuer die Zeit davor
+    # bleibt die Pauschale — aber ausdruecklich als Schaetzung und nur fuer die Credits VOR dem Messbeginn.
+    gemessen = ki_kosten.konto_summen(user_id, monate)
+    vor_messbeginn_credits = eigener_topf_gesamt
+    if gemessen["messbeginn"]:
+        conn = get_db()
+        try:
+            vor_messbeginn_credits = conn.execute(
+                "SELECT COALESCE(SUM(credits), 0) FROM usage_events WHERE COALESCE(konto_user_id, user_id) = ? "
+                "AND created_at < ?", (user_id, gemessen["messbeginn"])).fetchone()[0]
+            for zeile in verlauf:
+                von, bis = umsatz.zeitraum(int(zeile["monat"][:4]), int(zeile["monat"][5:7]))
+                vorher = conn.execute(
+                    "SELECT COALESCE(SUM(credits), 0) FROM usage_events WHERE COALESCE(konto_user_id, user_id) = ? "
+                    "AND created_at >= ? AND created_at < ? AND created_at < ?",
+                    (user_id, von, bis, gemessen["messbeginn"])).fetchone()[0]
+                zeile["kosten_gemessen_cent"] = round(gemessen["je_monat"].get(zeile["monat"], 0.0), 4)
+                zeile["kosten_vorher_geschaetzt_cent"] = round(vorher * satz * 100, 2)
+                zeile["gemessen"] = ("ganz" if not vorher else ("teils" if bis > gemessen["messbeginn"] else "nein"))
+        finally:
+            conn.close()
     plan = billing.effektiver_plan(ziel)
     monatspreis = (billing.preis_pro_monat(plan, ziel.get("plan_laufzeit_monate") or 0)
                    if plan in billing.PLAN_PREISE_EUR else 0.0)
@@ -1533,6 +1558,11 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
         },
         "kosten": {
             "satz_pro_credit_eur": satz,
+            # Gemessen (05.10.2026): echte Kosten seit Messbeginn plus Pauschale nur fuer die Zeit davor.
+            "gemessen_cent": round(gemessen["kosten_cent"], 4),
+            "gemessen_aufrufe": gemessen["aufrufe"],
+            "messbeginn": umsatz.lokal(gemessen["messbeginn"]) or None,
+            "vor_messbeginn_geschaetzt_cent": round(vor_messbeginn_credits * satz * 100, 2),
             # Seit 11.08.2026: NUR der eigene Topf — sonst zaehlt Team-
             # Verbrauch im Report des Mitglieds UND des Inhabers doppelt.
             "gesamt_geschaetzt_eur": round(eigener_topf_gesamt * satz, 2),
@@ -7211,6 +7241,8 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
     document_id (28.08.2026): nur die Bilder EINES Dokuments (Knopf am Dokument)."""
     # v2.2.3: Clear duplicate cache for this project
     clear_project_cache()
+    # KI-Kosten (05.10.2026): Kunde und Projekt fuer alle KI-Aufrufe dieses Laufs (eigene asyncio-Aufgabe).
+    ki_kosten.setze(user_id=user_id, project_id=project_id, document_id=None, image_id=None)
     conn = get_db()
     if document_id is not None:
         images = conn.execute(
@@ -7303,6 +7335,7 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
             break
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
+        ki_kosten.setze(image_id=img["id"], document_id=img["document_id"])
         if force:
             try:
                 from pdf_processor import _get_image_hash
@@ -7763,6 +7796,7 @@ def _fehler_protokoll(vorgang: str, e: BaseException, **bezug) -> None:
 async def regenerate_image(project_id: int, image_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Regenerate alt-text for a single image with optional specialized prompt."""
     data = await request.json()
+    ki_kosten.setze(user_id=user["id"], project_id=project_id, image_id=image_id)   # KI-Kosten (05.10.2026)
     # Abo-Etappe-1: Einzel-Neu-Generieren ist eine echte neue KI-Anfrage und
     # unterliegt dem Monatskontingent (greift erst bei ABO_ENFORCEMENT=on).
     _wache = billing.aktion_pruefung(user["id"], "bild_generierung")
@@ -10169,6 +10203,14 @@ app.include_router(api_dokumente_v1.build_router(api_dokumente_v1.Deps(
     base_url=API_BASE_URL,
 )))
 
+# KI-Kosten in der Verwaltung (05.10.2026): eigener Router, Kern ki_kosten.py, docs/KI_KOSTEN.md.
+import ki_kosten_api  # noqa: E402
+app.include_router(ki_kosten_api.build_router(ki_kosten_api.Deps(
+    require_admin=require_admin,
+    require_full_admin=require_full_admin,
+    pauschale_eur_je_credit=lambda: billing.KOSTEN_PRO_CREDIT_EUR,
+)))
+
 
 # ─── Multi-Datei Export: JSON / CSV / XLSX (08.06.2026; XLSX 28.08.–02.09.2026 entfernt, auf Kundenwunsch zurück) ────────
 #
@@ -10755,6 +10797,7 @@ async def api_generate_alt_text(request: Request):
 
         if str(language).lower() not in ALT_TEXT_LANGUAGES:
             language = "de"
+        ki_kosten.setze(user_id=api_user["id"], project_id=None, document_id=None, image_id=None)   # KI-Kosten (05.10.2026)
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text_for_image, tmp_path, context_text, image_type,
             api_img_width, api_img_height, "", str(language).lower()
@@ -11763,6 +11806,11 @@ async def verwaltung_kunde(user_id: int, request: Request):
 @app.get("/verwaltung/umsatz", response_class=HTMLResponse)
 async def verwaltung_umsatz(request: Request):
     return _verwaltung_seite(request, "verwaltung_umsatz.html", "umsatz")
+
+
+@app.get("/verwaltung/ki-kosten", response_class=HTMLResponse)
+async def verwaltung_ki_kosten(request: Request):
+    return _verwaltung_seite(request, "verwaltung_ki_kosten.html", "ki_kosten")
 
 
 @app.get("/verwaltung/api", response_class=HTMLResponse)

@@ -22,6 +22,8 @@ from typing import Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
+
 log = logging.getLogger(__name__)
 T = TypeVar('T', bound=BaseModel)
 
@@ -201,9 +203,11 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
             print(f"[GEMINI-USAGE] model={model} schema={schema_name} in={u.get('promptTokenCount', '?')} "
                   f"out={u.get('candidatesTokenCount', '?')} denk={u.get('thoughtsTokenCount', 0)} "
                   f"cached={u.get('cachedContentTokenCount', 0)}", flush=True)
+        # KI-Kosten (05.10.2026): jede ANGEKOMMENE Antwort kostet — auch eine unbrauchbare, die wir wiederholen.
         try:
-            return _antwort_auswerten(antwort, model, schema_name)
+            ergebnis = _antwort_auswerten(antwort, model, schema_name)
         except _AntwortUnbrauchbar as e:
+            ki_kosten.erfasse_gemini(model, antwort, schritt=schema_name, erfolg=False, fehler='Antwort unbrauchbar')
             letzter = GeminiCallError(str(e))
             pause = _pause_vor_wiederholung(versuch, kontingent=False)
             if pause is None:
@@ -212,6 +216,12 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
                         model, schema_name, versuch + 1, _VERSUCHE, str(e)[:200])
             time.sleep(pause)
             versuch += 1
+        except GeminiCallError:
+            ki_kosten.erfasse_gemini(model, antwort, schritt=schema_name, erfolg=False, fehler='von Gemini gesperrt')
+            raise
+        else:
+            ki_kosten.erfasse_gemini(model, antwort, schritt=schema_name)
+            return ergebnis
 
 
 class _AntwortUnbrauchbar(Exception):

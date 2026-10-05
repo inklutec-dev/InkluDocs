@@ -27,6 +27,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 from dataclasses import dataclass, field
 
 import fitz
@@ -238,6 +239,7 @@ def konsistenz(vorschlaege: list[FeldVorschlag], felder_by_id: dict[int, dict]) 
 
 # --------------------------------------------------------------------------- Feld-Pass
 
+@ki_kosten.fuer_zweck("quickinfo")
 def generiere_seite(pdf_path: str, page_number: int, felder: list[dict], *, sprache: str = "de",
                     formular_titel: str = "", seiten_gesamt: int = 1, bestaetigte: list[tuple[str, str]] | None = None,
                     user_prompt: str = "", variation: bool = False, seitenbild_path: str | None = None) -> list[FeldVorschlag]:

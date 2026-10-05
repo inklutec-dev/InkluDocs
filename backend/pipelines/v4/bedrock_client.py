@@ -30,6 +30,8 @@ from typing import Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
+
 # _resize_image_for_model wird lazy in den Funktionen importiert (Circular-
 # Import-Vermeidung: pdf_processor importiert orchestrator).
 
@@ -208,6 +210,7 @@ def _invoke_converse(model, prompt, image_b64, image_path, schema_name, schema_d
                 raise BedrockCallError(f'Bedrock converse fehlgeschlagen ({model}): {e2}') from e2
         else:
             raise BedrockCallError(f'Bedrock converse fehlgeschlagen ({model}): {e}') from e
+    ki_kosten.erfasse_converse(model, resp, schritt=schema_name)  # KI-Kosten (05.10.2026)
     if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
         _u = resp.get('usage', {}) or {}
         print(f"[BEDROCK-USAGE] model={model} schema={schema_name} "
@@ -303,6 +306,7 @@ def _invoke_bedrock(
         payload = json.loads(response['body'].read())
     except (KeyError, ValueError) as e:
         raise BedrockCallError(f'Bedrock-Antwort nicht parsebar: {e}') from e
+    ki_kosten.erfasse_anthropic(model, payload, schritt=schema_name)  # KI-Kosten (05.10.2026)
 
     # Token-Messung je Aufruf (03.09.2026, Kostenrechnung je Pass): nur bei
     # DEBUG_GEN_RAW=true, eine Zeile je Bedrock-Aufruf, Modell + Schema + Tokens.

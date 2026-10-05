@@ -669,6 +669,40 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_buchungen_konto ON buchungen(konto_user_id, gebucht_am)")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_buchungen_stripe ON buchungen(stripe_ref) "
                  "WHERE stripe_ref IS NOT NULL")
+
+    # KI-KOSTEN (05.10.2026, Steve): jeder KI-Aufruf eine Zeile (ki_kosten.erfasse) — Tokens und Kosten mit dem
+    # beim Aufruf gueltigen Preis festgeschrieben. Keine Fremdschluessel: Zeilen ueberleben das Loeschen von Projekten
+    # (Kosten sind angefallen); beim Loeschen eines Kontos werden die Verweise geleert (delete_user_data).
+    # kosten_eur_cent NULL = Preis des Modells unbekannt (nie still 0). umgebung: prod | staging | demo | test.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS ki_aufrufe (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            umgebung TEXT NOT NULL DEFAULT 'prod',
+            user_id INTEGER,
+            konto_user_id INTEGER,
+            project_id INTEGER,
+            document_id INTEGER,
+            image_id INTEGER,
+            zweck TEXT NOT NULL DEFAULT 'unbekannt',
+            schritt TEXT NOT NULL DEFAULT '',
+            anbieter TEXT NOT NULL DEFAULT '',
+            modell TEXT NOT NULL DEFAULT '',
+            tokens_ein INTEGER NOT NULL DEFAULT 0,
+            tokens_cache INTEGER NOT NULL DEFAULT 0,
+            tokens_cache_schreiben INTEGER NOT NULL DEFAULT 0,
+            tokens_aus INTEGER NOT NULL DEFAULT 0,
+            tokens_denk INTEGER NOT NULL DEFAULT 0,
+            kosten_usd REAL,
+            kosten_eur_cent REAL,
+            kurs_usd_eur REAL,
+            erfolg INTEGER NOT NULL DEFAULT 1,
+            fehler TEXT NOT NULL DEFAULT ''
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ki_aufrufe_zeit ON ki_aufrufe(created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ki_aufrufe_konto ON ki_aufrufe(konto_user_id, created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ki_aufrufe_projekt ON ki_aufrufe(project_id, created_at)")
     conn.commit()
 
     # Backward-compatible migrations using ALTER TABLE with try/except
@@ -1253,6 +1287,10 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM usage_events WHERE user_id = ? OR konto_user_id = ?",
                  (user_id, user_id))
     conn.execute("DELETE FROM paket_abbuchungen WHERE konto_user_id = ?", (user_id,))
+    # KI-Kosten (05.10.2026): die Kosten sind angefallen und bleiben in der Monatssumme, aber ohne Bezug zur Person
+    # (zaehlen danach „ohne Zuordnung“).
+    conn.execute("UPDATE ki_aufrufe SET user_id = NULL, konto_user_id = NULL, project_id = NULL, document_id = NULL, "
+                 "image_id = NULL WHERE user_id = ? OR konto_user_id = ?", (user_id, user_id))
     conn.execute("DELETE FROM quota_pakete WHERE user_id = ?", (user_id,))
     # Umsatz-Buchungen (25.09.2026) sind Geschaeftsunterlagen mit Aufbewahrungspflicht
     # (HGB/AO, DSGVO Art. 17 Abs. 3 b): NICHT loeschen, nur vom Konto loesen. Name und

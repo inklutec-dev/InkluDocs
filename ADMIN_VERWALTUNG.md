@@ -198,3 +198,13 @@ mussten ins Kulanz-Feld — Jens' Kauf (25.09.) landete als Geschenk, der Bonus 
 - **Michael 25.09.2026**: Kundenliste nur Name · E-Mail · Abo; Umsatz zeigt den (aktuellen) Kundennamen statt E-Mail, keine Stripe-Vermerke „Neue Buchung/Planwechsel“ mehr; kein Stornieren-Knopf in der Umsatzübersicht (nur auf der Kundenseite). Stornieren bewegt kein Geld — Stripe-Erstattung im Stripe-Dashboard, Rechnung per Gutschrift von Actino.
 
 - **Michael 25.09.2026 (14:38)**: Kundensuche untereinander (Suchfeld ohne Hinweis, darunter Auswahl „Abo“: Alle Kunden, Free, Single, Team, Enterprise — effektiver Plan, darunter „Suchen“).
+
+
+# KI-KOSTEN (Stand 05.10.2026)
+
+Neuer Bereich `/verwaltung/ki-kosten` (Link „KI-Kosten“ in der Bereichs-Navigation): was die KI-Aufrufe im Monat
+gekostet haben — gesamt, nach Zweck, nach Kunde (aufklappbar bis Projekt und Bild), nach Modell — neben Umsatz und
+„bleibt nach KI-Kosten“, dazu die Preisliste. Lesen: jeder Admin; Preise und Wechselkurs ändern: nur Voll-Admins.
+Die Kundenseite zeigt die gemessenen KI-Kosten statt der Pauschale (für die Zeit vor dem Messbeginn weiter als
+Schätzung). Einzelheiten: `docs/KI_KOSTEN.md`.
+

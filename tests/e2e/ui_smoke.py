@@ -59,6 +59,7 @@ SEITEN = [
     ("/geteilte-projekte", "Geteilte Projekte"),
     ("/verwaltung/kunden", "Kunden"),
     ("/verwaltung/umsatz", "Umsatz"),
+    ("/verwaltung/ki-kosten", "KI-Kosten"),
     ("/verwaltung/api", "API"),
     ("/verwaltung/einstellungen", "Verwaltung Einstellungen"),
     ("/datensicherheit", "Datensicherheit"),

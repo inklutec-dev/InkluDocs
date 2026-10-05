@@ -23,6 +23,8 @@ from typing import Any, Optional
 
 from pipelines.v4.gemini_client import _schema_fuer_gemini
 
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
+
 from .base import LLMProvider
 from .bedrock import BedrockProviderError, _detect_media_type
 
@@ -101,7 +103,10 @@ class GeminiProvider(LLMProvider):
             req = urllib.request.Request(_endpunkt(model), data=daten, headers=gemini_auth.kopfzeilen())
             try:
                 with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
-                    return json.load(r)
+                    antwort = json.load(r)
+                # KI-Kosten (05.10.2026): Chat-Aufrufe zaehlen als „chatbot“, sofern der Aufrufer nichts anderes setzt.
+                ki_kosten.erfasse_gemini(model, antwort, schritt="chat", standard_zweck="chatbot")
+                return antwort
             except urllib.error.HTTPError as e:
                 text = ""
                 try:

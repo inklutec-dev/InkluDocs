@@ -6,6 +6,7 @@ import httpx
 import base64
 import time
 import re
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 from PIL import Image
 # Register AVIF and HEIF support via pillow-heif
 try:
@@ -686,6 +687,7 @@ def _resize_image_for_model(image_path: str) -> str:
         return base64.b64encode(f.read()).decode()
 
 
+@ki_kosten.fuer_zweck("alttext")
 def generate_alt_text(image_path: str, context: str = "", image_type: str = None,
                       width: int = 0, height: int = 0, original_alt: str = "",
                       force_regenerate: bool = False, temperature: float = 0.0,

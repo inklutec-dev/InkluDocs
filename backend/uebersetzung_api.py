@@ -35,6 +35,7 @@ unter RESULTS_DIR; Kopfzeilen ASCII, Dateinamen nach RFC 6266; Export im Executo
 from __future__ import annotations
 
 import asyncio
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 import io
 import json
 import logging
@@ -458,6 +459,7 @@ async def lauf_starten(project_id: int, user: dict, einstellungen: dict, documen
 async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict, document_id: Optional[int]) -> None:
     st = _lauf.setdefault(project_id, {"laeuft": True, "pakete_gesamt": 0, "pakete_fertig": 0, "segmente_fertig": 0,
                                        "segmente_gesamt": 0, "credits": 0, "fehler": [], "abbruch": False})
+    ki_kosten.setze(user_id=user_id, project_id=project_id, document_id=document_id, image_id=None)   # KI-Kosten (05.10.2026)
     loop = asyncio.get_running_loop()
     ziel = einstellungen["zielsprache"]
     conn = _d.get_db()

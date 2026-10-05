@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 import time
 from typing import Callable, Optional
 
@@ -210,6 +211,7 @@ def nachpruefung(befunde: list, kennungen: dict, seite: int, elemente: Optional[
     return out
 
 
+@ki_kosten.fuer_zweck("ki_pruefung")
 def pruefe_dokument(pdf_pfad: str, struktur: dict, ordner: str, *, sprache_ausgabe: str = "de",
                     dokument_name: str = "", fortschritt: Optional[Callable[[int, int], None]] = None) -> dict:
     """Prueft alle Seiten (bis MAX_SEITEN). Rueckgabe: Bericht-Dict fuer documents.pruefung_bericht."""

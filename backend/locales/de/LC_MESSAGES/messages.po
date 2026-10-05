@@ -10351,3 +10351,237 @@ msgstr "Ergebnis der Prüfung anzeigen"
 
 msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
 msgstr "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
+
+msgid "1 US-Dollar = {kurs} Euro ({quelle})"
+msgstr "1 US-Dollar = {kurs} Euro ({quelle})"
+
+msgid "Ausgabe (mit Denk-Tokens)"
+msgstr "Ausgabe (mit Denk-Tokens)"
+
+msgid "Automatische Tests"
+msgstr "Automatische Tests"
+
+msgid "Betrieb"
+msgstr "Betrieb"
+
+msgid "Bild {id}"
+msgstr "Bild {id}"
+
+msgid "Bleibt nach KI-Kosten"
+msgstr "Bleibt nach KI-Kosten"
+
+msgid "Demo"
+msgstr "Demo"
+
+msgid "Der Kurs konnte nicht gespeichert werden."
+msgstr "Der Kurs konnte nicht gespeichert werden."
+
+msgid "Der Preis konnte nicht gespeichert werden."
+msgstr "Der Preis konnte nicht gespeichert werden."
+
+msgid "Die Summe ist unsere eigene Rechnung. Die Rechnung des Anbieters kann leicht abweichen, etwa durch Rundung, Wechselkurs oder geänderte Preise."
+msgstr "Die Summe ist unsere eigene Rechnung. Die Rechnung des Anbieters kann leicht abweichen, etwa durch Rundung, Wechselkurs oder geänderte Preise."
+
+msgid "Eingabe"
+msgstr "Eingabe"
+
+msgid "Eingabe aus dem Zwischenspeicher (optional)"
+msgstr "Eingabe aus dem Zwischenspeicher (optional)"
+
+msgid "Eingabe {ein}, Ausgabe {aus}"
+msgstr "Eingabe {ein}, Ausgabe {aus}"
+
+msgid "Erfasst seit"
+msgstr "Erfasst seit"
+
+msgid "Es wurden noch keine KI-Aufrufe erfasst."
+msgstr "Es wurden noch keine KI-Aufrufe erfasst."
+
+msgid "Euro für einen US-Dollar"
+msgstr "Euro für einen US-Dollar"
+
+msgid "Gelöschtes Konto"
+msgstr "Gelöschtes Konto"
+
+msgid "Gelöschtes Projekt"
+msgstr "Gelöschtes Projekt"
+
+msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
+msgstr "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
+
+msgid "Gültig ab (JJJJ-MM-TT)"
+msgstr "Gültig ab (JJJJ-MM-TT)"
+
+msgid "In diesem Monat gibt es keine KI-Aufrufe."
+msgstr "In diesem Monat gibt es keine KI-Aufrufe."
+
+msgid "Jeder Aufruf eines KI-Modells wird einzeln erfasst: wer, wofür, welches Modell und wie viele Tokens. Die Token-Zahlen meldet der Anbieter selbst mit jeder Antwort — genau danach rechnet er auch ab."
+msgstr "Jeder Aufruf eines KI-Modells wird einzeln erfasst: wer, wofür, welches Modell und wie viele Tokens. Die Token-Zahlen meldet der Anbieter selbst mit jeder Antwort — genau danach rechnet er auch ab."
+
+msgid "KI-Aufrufe"
+msgstr "KI-Aufrufe"
+
+msgid "KI-Kosten"
+msgstr "KI-Kosten"
+
+msgid "KI-Kosten dieses Kontos"
+msgstr "KI-Kosten dieses Kontos"
+
+msgid "KI-Kosten im Monat"
+msgstr "KI-Kosten im Monat"
+
+msgid "KI-Kosten im {monat}"
+msgstr "KI-Kosten im {monat}"
+
+msgid "KI-Kosten {monat}: {betrag}"
+msgstr "KI-Kosten {monat}: {betrag}"
+
+msgid "Keine Einzelheiten."
+msgstr "Keine Einzelheiten."
+
+msgid "Keine Projekte."
+msgstr "Keine Projekte."
+
+msgid "Kosten = Tokens mal Preis der Preisliste mal Wechselkurs. Denk-Tokens zählen wie Ausgabe. Auch Antworten, die unbrauchbar waren und wiederholt wurden, kosten Geld und sind darum mitgezählt. Bilder aus dem Zwischenspeicher kosten nichts und erscheinen nicht."
+msgstr "Kosten = Tokens mal Preis der Preisliste mal Wechselkurs. Denk-Tokens zählen wie Ausgabe. Auch Antworten, die unbrauchbar waren und wiederholt wurden, kosten Geld und sind darum mitgezählt. Bilder aus dem Zwischenspeicher kosten nichts und erscheinen nicht."
+
+msgid "Kosten je Credit im Schnitt"
+msgstr "Kosten je Credit im Schnitt"
+
+msgid "Kurs speichern"
+msgstr "Kurs speichern"
+
+msgid "Künftig: {text}"
+msgstr "Künftig: {text}"
+
+msgid "Modellkennung"
+msgstr "Modellkennung"
+
+msgid "Nach Kunde"
+msgstr "Nach Kunde"
+
+msgid "Nach Modell"
+msgstr "Nach Modell"
+
+msgid "Nach Umgebung"
+msgstr "Nach Umgebung"
+
+msgid "Nach Zweck"
+msgstr "Nach Zweck"
+
+msgid "Ohne Projekt (zum Beispiel API-Einzelbilder)"
+msgstr "Ohne Projekt (zum Beispiel API-Einzelbilder)"
+
+msgid "Ohne Zuordnung"
+msgstr "Ohne Zuordnung"
+
+msgid "Preis eintragen"
+msgstr "Preis eintragen"
+
+msgid "Preis für ein weiteres Modell eintragen"
+msgstr "Preis für ein weiteres Modell eintragen"
+
+msgid "Preis speichern"
+msgstr "Preis speichern"
+
+msgid "Preis ändern"
+msgstr "Preis ändern"
+
+msgid "Preis ändern für {modell}"
+msgstr "Preis ändern für {modell}"
+
+msgid "Preise der Anbieter in US-Dollar je eine Million Tokens. Jeder Aufruf wird mit dem Preis gerechnet, der in dem Moment gilt; spätere Änderungen schreiben schon erfasste Kosten nicht um."
+msgstr "Preise der Anbieter in US-Dollar je eine Million Tokens. Jeder Aufruf wird mit dem Preis gerechnet, der in dem Moment gilt; spätere Änderungen schreiben schon erfasste Kosten nicht um."
+
+msgid "Preisliste"
+msgstr "Preisliste"
+
+msgid "Projekt {id}"
+msgstr "Projekt {id}"
+
+msgid "Projekte von {name}"
+msgstr "Projekte von {name}"
+
+msgid "Quelle (Preisseite und Datum)"
+msgstr "Quelle (Preisseite und Datum)"
+
+msgid "Quelle (zum Beispiel EZB-Referenzkurs und Datum)"
+msgstr "Quelle (zum Beispiel EZB-Referenzkurs und Datum)"
+
+msgid "Quelle: {quelle}"
+msgstr "Quelle: {quelle}"
+
+msgid "Seite {seite}"
+msgstr "Seite {seite}"
+
+msgid "Tagging mit KI"
+msgstr "Tagging mit KI"
+
+msgid "Testsystem"
+msgstr "Testsystem"
+
+msgid "Teuerste zuerst. Zu jedem Kunden lassen sich die Projekte aufklappen, zu jedem Projekt die einzelnen Bilder."
+msgstr "Teuerste zuerst. Zu jedem Kunden lassen sich die Projekte aufklappen, zu jedem Projekt die einzelnen Bilder."
+
+msgid "US-Dollar je eine Million Tokens, Dezimalkomma erlaubt."
+msgstr "US-Dollar je eine Million Tokens, Dezimalkomma erlaubt."
+
+msgid "Verbrauchte Credits"
+msgstr "Verbrauchte Credits"
+
+msgid "Wechselkurs"
+msgstr "Wechselkurs"
+
+msgid "Wechselkurs ändern"
+msgstr "Wechselkurs ändern"
+
+msgid "Wie wird gerechnet?"
+msgstr "Wie wird gerechnet?"
+
+msgid "Zwischenspeicher {cache}"
+msgstr "Zwischenspeicher {cache}"
+
+msgid "davon {n} ohne bekannten Preis"
+msgstr "davon {n} ohne bekannten Preis"
+
+msgid "davon {n} unbrauchbar und wiederholt"
+msgstr "davon {n} unbrauchbar und wiederholt"
+
+msgid "gültig ab {datum}"
+msgstr "gültig ab {datum}"
+
+msgid "noch kein gültiger Preis"
+msgstr "noch kein gültiger Preis"
+
+msgid "unbekanntes Modell"
+msgstr "unbekanntes Modell"
+
+msgid "{betrag}, gemessen seit {datum}"
+msgstr "{betrag}, gemessen seit {datum}"
+
+msgid "{betrag}: {gemessen} gemessen seit {datum}, {geschaetzt} davor geschätzt ({satz} Cent je Credit)"
+msgstr "{betrag}: {gemessen} gemessen seit {datum}, {geschaetzt} davor geschätzt ({satz} Cent je Credit)"
+
+msgid "{credits} Credits, Umsatz {umsatz}"
+msgstr "{credits} Credits, Umsatz {umsatz}"
+
+msgid "{kosten} (bisherige Pauschale: {pauschale})"
+msgstr "{kosten} (bisherige Pauschale: {pauschale})"
+
+msgid "{kosten}, {n} Aufrufe"
+msgstr "{kosten}, {n} Aufrufe"
+
+msgid "{monat}: {credits} Credits, KI-Kosten {kosten} (gemessen)"
+msgstr "{monat}: {credits} Credits, KI-Kosten {kosten} (gemessen)"
+
+msgid "{monat}: {credits} Credits, KI-Kosten {kosten} ({gemessen} gemessen, {geschaetzt} geschätzt)"
+msgstr "{monat}: {credits} Credits, KI-Kosten {kosten} ({gemessen} gemessen, {geschaetzt} geschätzt)"
+
+msgid "{zweck} ohne einzelnes Bild"
+msgstr "{zweck} ohne einzelnes Bild"
+
+msgid "über {grenze} Tokens Eingabe: Eingabe {ein}, Ausgabe {aus}"
+msgstr "über {grenze} Tokens Eingabe: Eingabe {ein}, Ausgabe {aus}"
+
+msgid "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
+msgstr "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."

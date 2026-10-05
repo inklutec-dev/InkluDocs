@@ -69,6 +69,7 @@ from fastapi.responses import FileResponse, Response
 
 import formular_export
 import formular_ki
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 from formular_processor import extract_formular
 
 log = logging.getLogger(__name__)
@@ -624,6 +625,7 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
     von Hand geaendert wurde (updated_at weicht vom Stand beim Start ab), wird nicht
     ueberschrieben — die Handarbeit gewinnt, das Feld kostet dann auch nichts."""
     st = _generierung.setdefault(project_id, {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []})
+    ki_kosten.setze(user_id=user_id, project_id=project_id, document_id=document_id, image_id=None)   # KI-Kosten (05.10.2026)
     loop = asyncio.get_running_loop()
     conn = _d.get_db()
     try:
@@ -1117,6 +1119,7 @@ def build_router(deps: Deps) -> APIRouter:
             conn.close()
         src = _originalpfad(doc)
         loop = asyncio.get_running_loop()
+        ki_kosten.setze(user_id=user["id"], project_id=feld["project_id"], document_id=feld["document_id"], image_id=None)
         try:
             vorschlaege = await loop.run_in_executor(
                 None, lambda: formular_ki.generiere_seite(

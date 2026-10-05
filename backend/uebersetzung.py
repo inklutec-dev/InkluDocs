@@ -54,6 +54,7 @@ import logging
 import math
 import os
 import re
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 import tempfile
 import zipfile
 from dataclasses import dataclass, field
@@ -637,6 +638,7 @@ class SegmentErgebnis:
     hinweis: str = ""
 
 
+@ki_kosten.fuer_zweck("uebersetzung")
 def _modell_aufruf_standard(prompt: str, max_tokens: int) -> UebersetzungBatchOutput:
     from pipelines.v4 import llm_client
     return llm_client.call_text_with_schema(model=llm_client.MODEL_GENERATE, prompt=prompt,

@@ -62,6 +62,14 @@ _HISTORY_TURNS = 30  # letzte 30 Nachrichten als Kontext mitgeben (05.05.2026 vo
 
 
 def process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None) -> dict:
+    """KI-Kosten (05.10.2026): alle KI-Aufrufe dieser Nachricht zaehlen fuer diesen Kunden und dieses Projekt — als
+    „chatbot“, ausser eine Fachfunktion (z. B. Alt-Text-Pipeline) setzt ihren eigenen Zweck."""
+    import ki_kosten
+    with ki_kosten.kontext(user_id=user_id, project_id=project_id, document_id=None, image_id=None, zweck="chatbot"):
+        return _process_message(project_id, user_message, user_id, system_suffix=system_suffix, on_tool=on_tool)
+
+
+def _process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None) -> dict:
     """Hauptfunktion. Returns:
     {"reply": str, "intent": str, "image_refs": list[int]|None,
      "actions": list[dict]}.

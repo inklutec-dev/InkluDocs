@@ -348,7 +348,17 @@
     V.zeile(sec, t('Projekte insgesamt'), V.zahl(d.nutzung.projekte));
     V.zeile(sec, t('Bilder insgesamt'), V.zahl(d.nutzung.bilder));
     V.zeile(sec, t('Credits verbraucht, insgesamt'), V.zahl(d.nutzung.selbst_gesamt !== undefined ? d.nutzung.selbst_gesamt : d.nutzung.credits_gesamt));
-    V.zeile(sec, t('Geschätzte KI-Kosten dieses Kontos'), t('{betrag} (grobe Schätzung, {satz} Cent je Credit)', { betrag: V.euro(Math.round(d.kosten.gesamt_geschaetzt_eur * 100)), satz: new Intl.NumberFormat(window.LANG || 'de', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(d.kosten.satz_pro_credit_eur * 100) }));
+    const satzText = new Intl.NumberFormat(window.LANG || 'de', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(d.kosten.satz_pro_credit_eur * 100);
+    if (d.kosten.messbeginn) {
+      // KI-Kosten (05.10.2026): seit Messbeginn echte Kosten je Aufruf; die Pauschale nur noch für die Zeit davor.
+      const k = d.kosten;
+      const summe = k.gemessen_cent + k.vor_messbeginn_geschaetzt_cent;
+      V.zeile(sec, t('KI-Kosten dieses Kontos'), k.vor_messbeginn_geschaetzt_cent
+        ? t('{betrag}: {gemessen} gemessen seit {datum}, {geschaetzt} davor geschätzt ({satz} Cent je Credit)', { betrag: V.euroGenau(summe), gemessen: V.euroGenau(k.gemessen_cent), datum: V.datumLang(k.messbeginn), geschaetzt: V.euroGenau(k.vor_messbeginn_geschaetzt_cent), satz: satzText })
+        : t('{betrag}, gemessen seit {datum}', { betrag: V.euroGenau(summe), datum: V.datumLang(k.messbeginn) }));
+    } else {
+      V.zeile(sec, t('Geschätzte KI-Kosten dieses Kontos'), t('{betrag} (grobe Schätzung, {satz} Cent je Credit)', { betrag: V.euro(Math.round(d.kosten.gesamt_geschaetzt_eur * 100)), satz: satzText }));
+    }
     const details = V.el('details', 'verwaltung-klappe');
     details.appendChild(V.el('summary', null, t('Verbrauch im Detail')));
     V.zeile(details, t('Monatskontingent'), g.kontingent === null ? t('unbegrenzt') : V.zahl(g.kontingent));
@@ -361,8 +371,17 @@
     if (d.nutzung.verlauf.length) {
       details.appendChild(V.el('h3', null, t('Verbrauch je Monat')));
       const ul = V.el('ul', 'verwaltung-liste');
-      d.nutzung.verlauf.forEach((m) => ul.appendChild(V.el('li', 'verwaltung-zeile',
-        t('{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}', { monat: V.monatLang(m.monat), credits: V.zahl(m.topf), kosten: V.euro(Math.round(m.kosten_geschaetzt * 100)) }))));
+      d.nutzung.verlauf.forEach((m) => {
+        let text;
+        if (m.gemessen === 'ganz') {
+          text = t('{monat}: {credits} Credits, KI-Kosten {kosten} (gemessen)', { monat: V.monatLang(m.monat), credits: V.zahl(m.topf), kosten: V.euroGenau(m.kosten_gemessen_cent) });
+        } else if (m.gemessen === 'teils') {
+          text = t('{monat}: {credits} Credits, KI-Kosten {kosten} ({gemessen} gemessen, {geschaetzt} geschätzt)', { monat: V.monatLang(m.monat), credits: V.zahl(m.topf), kosten: V.euroGenau(m.kosten_gemessen_cent + m.kosten_vorher_geschaetzt_cent), gemessen: V.euroGenau(m.kosten_gemessen_cent), geschaetzt: V.euroGenau(m.kosten_vorher_geschaetzt_cent) });
+        } else {
+          text = t('{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}', { monat: V.monatLang(m.monat), credits: V.zahl(m.topf), kosten: V.euro(Math.round(m.kosten_geschaetzt * 100)) });
+        }
+        ul.appendChild(V.el('li', 'verwaltung-zeile', text));
+      });
       details.appendChild(ul);
     }
     sec.appendChild(details);

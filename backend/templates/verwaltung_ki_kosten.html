@@ -1,0 +1,478 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('KI-Kosten') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# VERWALTUNG — KI-KOSTEN (Steve 05.10.2026): „wer hat wie viel mit KI generiert, welche KI-Kosten sind angelaufen,
+   die Gesamtkosten z. B. für den Monat — so wie beim Umsatz“. Daten: ki_kosten.py (je KI-Aufruf eine Zeile mit den
+   beim Aufruf gültigen Preisen). Wie die anderen Verwaltungsseiten ohne Tabellen: Überschriften, Absätze „Begriff:
+   Wert“ und Listen — Steve hört die Seite mit VoiceOver. Kunden und Projekte zum Aufklappen (<details>), die
+   Einzelheiten werden erst beim Öffnen geladen. #}
+<h1>{{ _('Verwaltung') }}: {{ _('KI-Kosten') }}</h1>
+{% include "_verwaltung_nav.html" %}
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-ki-monat">
+  <h2 id="h-ki-monat" tabindex="-1">{{ _('KI-Kosten im Monat') }}</h2>
+  <form id="kiZeitraumForm" class="verwaltung-suche" novalidate>
+    <div class="dash-field">
+      <label for="kiZeitraum">{{ _('Monat') }}</label>
+      <select id="kiZeitraum" class="dash-input"></select>
+    </div>
+    <button type="submit" class="btn btn-primary">{{ _('Anzeigen') }}</button>
+  </form>
+  <div id="kiZahlen" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-ki-zweck">
+  <h2 id="h-ki-zweck">{{ _('Nach Zweck') }}</h2>
+  <div id="kiZwecke"></div>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-ki-kunden">
+  <h2 id="h-ki-kunden" tabindex="-1">{{ _('Nach Kunde') }}</h2>
+  <p class="dash-sub">{{ _('Teuerste zuerst. Zu jedem Kunden lassen sich die Projekte aufklappen, zu jedem Projekt die einzelnen Bilder.') }}</p>
+  <div id="kiKunden"></div>
+  <nav class="verwaltung-seiten" id="kiSeiten" aria-label="{{ _('Seiten der Kundenliste') }}" hidden>
+    <button type="button" class="btn btn-secondary" id="kiSeiteZurueck">{{ _('Vorherige Seite') }}</button>
+    <button type="button" class="btn btn-secondary" id="kiSeiteVor">{{ _('Nächste Seite') }}</button>
+  </nav>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-ki-modell">
+  <h2 id="h-ki-modell">{{ _('Nach Modell') }}</h2>
+  <div id="kiModelle"></div>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-ki-preise">
+  <h2 id="h-ki-preise" tabindex="-1">{{ _('Preisliste') }}</h2>
+  <p class="dash-sub">{{ _('Preise der Anbieter in US-Dollar je eine Million Tokens. Jeder Aufruf wird mit dem Preis gerechnet, der in dem Moment gilt; spätere Änderungen schreiben schon erfasste Kosten nicht um.') }}</p>
+  <div id="kiPreise"></div>
+  <div class="dash-actions" id="kiPreisKnoepfe" hidden>
+    <button type="button" class="btn btn-secondary" id="kiNeuesModell">{{ _('Preis für ein weiteres Modell eintragen') }}</button>
+    <button type="button" class="btn btn-secondary" id="kiKursAendern">{{ _('Wechselkurs ändern') }}</button>
+  </div>
+</section>
+
+<details class="verwaltung-klappe verwaltung-hinweis">
+  <summary>{{ _('Wie wird gerechnet?') }}</summary>
+  <p>{{ _('Jeder Aufruf eines KI-Modells wird einzeln erfasst: wer, wofür, welches Modell und wie viele Tokens. Die Token-Zahlen meldet der Anbieter selbst mit jeder Antwort — genau danach rechnet er auch ab.') }}</p>
+  <p>{{ _('Kosten = Tokens mal Preis der Preisliste mal Wechselkurs. Denk-Tokens zählen wie Ausgabe. Auch Antworten, die unbrauchbar waren und wiederholt wurden, kosten Geld und sind darum mitgezählt. Bilder aus dem Zwischenspeicher kosten nichts und erscheinen nicht.') }}</p>
+  <p>{{ _('„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden.') }}</p>
+  <p>{{ _('Die Summe ist unsere eigene Rechnung. Die Rechnung des Anbieters kann leicht abweichen, etwa durch Rundung, Wechselkurs oder geänderte Preise.') }}</p>
+</details>
+{% endblock %}
+
+{% block dialogs %}
+{% include "_verwaltung_dialoge.html" %}
+<dialog id="kiPreisDialog" class="app-dialog" aria-labelledby="kiPreisTitel">
+  <h2 id="kiPreisTitel">{{ _('Preis eintragen') }}</h2>
+  <p class="dash-sub">{{ _('US-Dollar je eine Million Tokens, Dezimalkomma erlaubt.') }}</p>
+  <form id="kiPreisForm" novalidate>
+    <div class="dash-field">
+      <label for="kiPreisModell">{{ _('Modellkennung') }}</label>
+      <input type="text" id="kiPreisModell" class="dash-input" maxlength="100" autocomplete="off" spellcheck="false" aria-describedby="kiPreisModellHinweis">
+      <p class="dash-sub" id="kiPreisModellHinweis">{{ _('Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview.') }}</p>
+    </div>
+    <div class="dash-field">
+      <label for="kiPreisEin">{{ _('Eingabe') }}</label>
+      <input type="text" id="kiPreisEin" class="dash-input" inputmode="decimal" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="kiPreisAus">{{ _('Ausgabe (mit Denk-Tokens)') }}</label>
+      <input type="text" id="kiPreisAus" class="dash-input" inputmode="decimal" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="kiPreisCache">{{ _('Eingabe aus dem Zwischenspeicher (optional)') }}</label>
+      <input type="text" id="kiPreisCache" class="dash-input" inputmode="decimal" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="kiPreisAb">{{ _('Gültig ab (JJJJ-MM-TT)') }}</label>
+      <input type="text" id="kiPreisAb" class="dash-input" inputmode="numeric" maxlength="10" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="kiPreisQuelle">{{ _('Quelle (Preisseite und Datum)') }}</label>
+      <input type="text" id="kiPreisQuelle" class="dash-input" maxlength="300" autocomplete="off">
+    </div>
+    <p id="kiPreisFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="kiPreisAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Preis speichern') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="kiKursDialog" class="app-dialog" aria-labelledby="kiKursTitel">
+  <h2 id="kiKursTitel">{{ _('Wechselkurs ändern') }}</h2>
+  <form id="kiKursForm" novalidate>
+    <div class="dash-field">
+      <label for="kiKursWert">{{ _('Euro für einen US-Dollar') }}</label>
+      <input type="text" id="kiKursWert" class="dash-input" inputmode="decimal" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="kiKursQuelle">{{ _('Quelle (zum Beispiel EZB-Referenzkurs und Datum)') }}</label>
+      <input type="text" id="kiKursQuelle" class="dash-input" maxlength="300" autocomplete="off">
+    </div>
+    <p id="kiKursFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="kiKursAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Kurs speichern') }}</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block page_script %}
+<script>window.API_LIMIT_STANDARD = {{ api_limit_standard|int }};</script>
+<script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script>
+{% raw %}
+(function () {
+  const V = window.Verwaltung;
+  const JE_SEITE = 25;
+  const wahl = { jahr: null, monat: null };
+  let daten = null;
+  let seite = 1;
+  let ersterLauf = true;
+  let preise = null;
+
+  const ZWECK_TEXT = {
+    alttext: t('Alt-Texte'), chatbot: t('Chatbot'), quickinfo: t('Quickinfos'), uebersetzung: t('Übersetzen'),
+    tagging_ki: t('Tagging mit KI'), ki_pruefung: t('KI-Prüfung'), unbekannt: t('Sonstiges'),
+  };
+  const UMGEBUNG_TEXT = { prod: t('Betrieb'), staging: t('Testsystem'), demo: t('Demo'), test: t('Automatische Tests') };
+
+  function zweckText(z) { return ZWECK_TEXT[z] || z; }
+
+  function summeText(s) {
+    // „12,40 €, 1.234 Aufrufe“ plus Hinweise auf unbekannte Preise und fehlgeschlagene Antworten.
+    let text = t('{kosten}, {n} Aufrufe', { kosten: V.euroGenau(s.kosten_cent), n: V.zahl(s.aufrufe) });
+    if (s.unbekannt) text += ', ' + t('davon {n} ohne bekannten Preis', { n: V.zahl(s.unbekannt) });
+    if (s.fehlgeschlagen) text += ', ' + t('davon {n} unbrauchbar und wiederholt', { n: V.zahl(s.fehlgeschlagen) });
+    return text;
+  }
+
+  function ausAdresse() {
+    const p = new URLSearchParams(window.location.search);
+    const j = parseInt(p.get('jahr') || '', 10);
+    const m = parseInt(p.get('monat') || '', 10);
+    wahl.jahr = Number.isInteger(j) ? j : null;
+    wahl.monat = (Number.isInteger(m) && m >= 1 && m <= 12) ? m : null;
+  }
+
+  function abfrage() {
+    const p = new URLSearchParams();
+    if (wahl.jahr && wahl.monat) { p.set('jahr', String(wahl.jahr)); p.set('monat', String(wahl.monat)); }
+    return p;
+  }
+
+  function monatsname() {
+    return V.monatLang(wahl.jahr + '-' + String(wahl.monat).padStart(2, '0'));
+  }
+
+  function zahlen(d) {
+    const ziel = byId('kiZahlen');
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+    if (!d.messbeginn) {
+      ziel.appendChild(V.el('p', 'dash-empty', t('Es wurden noch keine KI-Aufrufe erfasst.')));
+      return;
+    }
+    const ul = V.el('ul', 'umsatz-zahlen');
+    [[t('KI-Kosten'), V.euroGenau(d.gesamt.kosten_cent)],
+     [t('Umsatz'), V.euro(d.umsatz_cent)],
+     [t('Bleibt nach KI-Kosten'), V.euroGenau(d.bleibt_cent)]].forEach(([was, wert]) => {
+      const li = V.el('li', 'umsatz-zahl');
+      li.appendChild(V.el('span', 'umsatz-zahl-was', was + ': '));
+      li.appendChild(V.el('span', 'umsatz-zahl-wert', wert));
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+    V.zeile(ziel, t('KI-Aufrufe'), summeText(d.gesamt));
+    V.zeile(ziel, t('Verbrauchte Credits'), V.zahl(d.credits));
+    if (d.kosten_je_credit_cent !== null && d.kosten_je_credit_cent !== undefined) {
+      V.zeile(ziel, t('Kosten je Credit im Schnitt'), t('{kosten} (bisherige Pauschale: {pauschale})',
+        { kosten: V.euroGenau(d.kosten_je_credit_cent), pauschale: V.euroGenau(d.pauschale_cent_je_credit) }));
+    }
+    if ((d.nach_umgebung || []).length > 1) {
+      V.zeile(ziel, t('Nach Umgebung'), d.nach_umgebung.map((u) => (UMGEBUNG_TEXT[u.umgebung] || u.umgebung) + ' ' + V.euroGenau(u.kosten_cent)).join(', '));
+    }
+    V.zeile(ziel, t('Erfasst seit'), V.datumZeit(d.messbeginn));
+  }
+
+  function zeitraumListe(d) {
+    const sel = byId('kiZeitraum');
+    sel.innerHTML = '';
+    d.zeitraeume.forEach((z) => {
+      const o = V.el('option', null, V.monatLang(z.jahr + '-' + String(z.monat).padStart(2, '0')) + ': ' + V.euroGenau(z.kosten_cent));
+      o.value = z.jahr + '-' + z.monat;
+      sel.appendChild(o);
+    });
+    sel.value = d.jahr + '-' + d.monat;
+  }
+
+  function liste(ziel, eintraege, text) {
+    ziel.innerHTML = '';
+    if (!eintraege.length) {
+      ziel.appendChild(V.el('p', 'dash-empty', t('In diesem Monat gibt es keine KI-Aufrufe.')));
+      return;
+    }
+    const ul = V.el('ul', 'verwaltung-liste');
+    eintraege.forEach((e) => ul.appendChild(V.el('li', 'verwaltung-zeile', text(e))));
+    ziel.appendChild(ul);
+  }
+
+  // ── Kunden mit aufklappbaren Projekten und Bildern ──
+  function konto(k) { return k.konto_user_id === null || k.konto_user_id === undefined ? 'ohne' : String(k.konto_user_id); }
+
+  function kundenName(k) {
+    if (k.konto_user_id === null || k.konto_user_id === undefined) return t('Ohne Zuordnung');
+    if (k.konto_geloescht) return t('Gelöschtes Konto');
+    return k.name || k.email;
+  }
+
+  async function projekteLaden(k, ziel) {
+    const p = abfrage();
+    p.set('konto', konto(k));
+    const d = await V.ladeJson('/api/admin/ki-kosten/kunde?' + p.toString(), ziel);
+    if (!d) return;
+    ziel.innerHTML = '';
+    if (!d.projekte.length) { ziel.appendChild(V.el('p', 'dash-empty', t('Keine Projekte.'))); return; }
+    const ul = V.el('ul', 'verwaltung-liste');
+    d.projekte.forEach((pr) => {
+      const li = V.el('li', 'verwaltung-zeile');
+      const det = V.el('details', 'verwaltung-klappe');
+      const name = pr.project_id === null ? t('Ohne Projekt (zum Beispiel API-Einzelbilder)')
+        : (pr.geloescht ? t('Gelöschtes Projekt') : (pr.name || t('Projekt {id}', { id: pr.project_id })));
+      det.appendChild(V.el('summary', null, name + ': ' + summeText(pr)));
+      const inhalt = V.el('div');
+      det.appendChild(inhalt);
+      let geladen = false;
+      det.addEventListener('toggle', () => {
+        if (det.open && !geladen) { geladen = true; bilderLaden(k, pr, inhalt); }
+      });
+      li.appendChild(det);
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+  }
+
+  async function bilderLaden(k, pr, ziel) {
+    ziel.appendChild(V.el('p', 'dash-sub', t('Wird geladen …')));
+    const p = abfrage();
+    p.set('konto', konto(k));
+    p.set('projekt', pr.project_id === null ? 'ohne' : String(pr.project_id));
+    const d = await V.ladeJson('/api/admin/ki-kosten/projekt?' + p.toString(), ziel);
+    if (!d) return;
+    ziel.innerHTML = '';
+    const ul = V.el('ul', 'verwaltung-liste');
+    d.bilder.forEach((b) => {
+      const wo = (b.dokument ? b.dokument + ', ' : '') + (b.seite ? t('Seite {seite}', { seite: b.seite }) : t('Bild {id}', { id: b.image_id }));
+      ul.appendChild(V.el('li', 'verwaltung-zeile', wo + ': ' + summeText(b)));
+    });
+    d.ohne_bild.forEach((z) => ul.appendChild(V.el('li', 'verwaltung-zeile', t('{zweck} ohne einzelnes Bild', { zweck: zweckText(z.zweck) }) + ': ' + summeText(z))));
+    if (!ul.children.length) ziel.appendChild(V.el('p', 'dash-empty', t('Keine Einzelheiten.')));
+    else ziel.appendChild(ul);
+  }
+
+  function kunden(d) {
+    const ziel = byId('kiKunden');
+    ziel.innerHTML = '';
+    const n = d.kunden.length;
+    const seiten = Math.max(1, Math.ceil(n / JE_SEITE));
+    seite = Math.min(Math.max(1, seite), seiten);
+    if (!n) {
+      ziel.appendChild(V.el('p', 'dash-empty', t('In diesem Monat gibt es keine KI-Aufrufe.')));
+    } else {
+      if (seiten > 1) ziel.appendChild(V.el('p', 'dash-sub', t('Seite {seite} von {seiten}', { seite: seite, seiten: seiten })));
+      const ul = V.el('ul', 'verwaltung-liste');
+      d.kunden.slice((seite - 1) * JE_SEITE, seite * JE_SEITE).forEach((k) => {
+        const li = V.el('li', 'verwaltung-zeile');
+        const kopf = V.el('p', 'verwaltung-meta');
+        if (k.konto_user_id && !k.konto_geloescht) {
+          const a = V.el('a', null, kundenName(k));
+          a.href = '/verwaltung/kunden/' + k.konto_user_id;
+          kopf.appendChild(a);
+        } else {
+          kopf.appendChild(document.createTextNode(kundenName(k)));
+        }
+        let text = ': ' + summeText(k);
+        if (k.konto_user_id) text += ' · ' + t('{credits} Credits, Umsatz {umsatz}', { credits: V.zahl(k.credits), umsatz: V.euro(k.umsatz_cent) });
+        kopf.appendChild(document.createTextNode(text));
+        li.appendChild(kopf);
+        const det = V.el('details', 'verwaltung-klappe');
+        det.appendChild(V.el('summary', null, t('Projekte von {name}', { name: kundenName(k) })));
+        const inhalt = V.el('div');
+        inhalt.appendChild(V.el('p', 'dash-sub', t('Wird geladen …')));
+        det.appendChild(inhalt);
+        let geladen = false;
+        det.addEventListener('toggle', () => {
+          if (det.open && !geladen) { geladen = true; projekteLaden(k, inhalt); }
+        });
+        li.appendChild(det);
+        ul.appendChild(li);
+      });
+      ziel.appendChild(ul);
+    }
+    byId('kiSeiten').hidden = seiten <= 1;
+    byId('kiSeiteZurueck').disabled = seite <= 1;
+    byId('kiSeiteVor').disabled = seite >= seiten;
+  }
+
+  function blaettern(richtung) {
+    seite += richtung;
+    kunden(daten);
+    byId('h-ki-kunden').focus();
+    announce(t('Seite {seite}', { seite: seite }));
+  }
+  byId('kiSeiteZurueck').addEventListener('click', () => blaettern(-1));
+  byId('kiSeiteVor').addEventListener('click', () => blaettern(1));
+
+  async function laden(fokus) {
+    const d = await V.ladeJson('/api/admin/ki-kosten?' + abfrage().toString(), byId('kiZahlen'));
+    if (!d) return;
+    daten = d;
+    wahl.jahr = d.jahr; wahl.monat = d.monat;
+    if (fokus) seite = 1;
+    history.replaceState(null, '', window.location.pathname + '?' + abfrage().toString());
+    byId('h-ki-monat').textContent = t('KI-Kosten im {monat}', { monat: monatsname() });
+    zahlen(d);
+    zeitraumListe(d);
+    liste(byId('kiZwecke'), d.nach_zweck, (z) => zweckText(z.zweck) + ': ' + summeText(z));
+    kunden(d);
+    liste(byId('kiModelle'), d.nach_modell, (m) => (m.modell || t('unbekanntes Modell')) + ': ' + summeText(m));
+    if (fokus) {
+      byId('h-ki-monat').focus();
+      announce(t('KI-Kosten {monat}: {betrag}', { monat: monatsname(), betrag: V.euroGenau(d.gesamt.kosten_cent) }));
+    } else if (ersterLauf) {
+      ersterLauf = false;
+      announce(t('KI-Kosten {monat}: {betrag}', { monat: monatsname(), betrag: V.euroGenau(d.gesamt.kosten_cent) }));
+    }
+  }
+
+  byId('kiZeitraumForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const teile = byId('kiZeitraum').value.split('-');
+    wahl.jahr = parseInt(teile[0], 10) || null;
+    wahl.monat = parseInt(teile[1] || '', 10) || null;
+    laden(true);
+  });
+
+  // ── Preisliste ──
+  function dollar(wert) {
+    try { return new Intl.NumberFormat(window.LANG || 'de', { style: 'currency', currency: 'USD', maximumFractionDigits: 4 }).format(wert); }
+    catch (e) { return String(wert) + ' $'; }
+  }
+
+  function stufeText(s) {
+    let text = t('Eingabe {ein}, Ausgabe {aus}', { ein: dollar(s.ein), aus: dollar(s.aus) });
+    if (s.cache !== undefined && s.cache !== null) text += ', ' + t('Zwischenspeicher {cache}', { cache: dollar(s.cache) });
+    if (s.grenze) text += ', ' + t('über {grenze} Tokens Eingabe: Eingabe {ein}, Ausgabe {aus}', { grenze: V.zahl(s.grenze), ein: dollar(s.ein_lang), aus: dollar(s.aus_lang) });
+    return text + ' — ' + t('gültig ab {datum}', { datum: V.datumLang(s.ab) });
+  }
+
+  function preiseZeigen() {
+    const ziel = byId('kiPreise');
+    ziel.innerHTML = '';
+    V.zeile(ziel, t('Wechselkurs'), t('1 US-Dollar = {kurs} Euro ({quelle})', {
+      kurs: new Intl.NumberFormat(window.LANG || 'de', { maximumFractionDigits: 6 }).format(preise.usd_eur), quelle: preise.usd_eur_quelle || '—' }));
+    const ul = V.el('ul', 'verwaltung-liste');
+    preise.modelle.forEach((m) => {
+      const li = V.el('li', 'verwaltung-zeile');
+      li.appendChild(V.el('p', 'verwaltung-meta', m.modell + ': ' + (m.aktuell ? stufeText(m.aktuell) : t('noch kein gültiger Preis'))));
+      (m.kuenftig || []).forEach((s) => li.appendChild(V.el('p', 'dash-sub', t('Künftig: {text}', { text: stufeText(s) }))));
+      if (m.quelle) li.appendChild(V.el('p', 'dash-sub', t('Quelle: {quelle}', { quelle: m.quelle })));
+      if (V.istVollAdmin()) {
+        const k = V.el('button', 'btn btn-secondary btn-small', t('Preis ändern'));
+        k.type = 'button';
+        k.setAttribute('aria-label', t('Preis ändern für {modell}', { modell: m.modell }));
+        k.addEventListener('click', () => preisDialog(m, k));
+        li.appendChild(k);
+      }
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+    byId('kiPreisKnoepfe').hidden = !V.istVollAdmin();
+  }
+
+  async function preiseLaden() {
+    const d = await V.ladeJson('/api/admin/ki-preise', byId('kiPreise'));
+    if (!d) return;
+    preise = d;
+    preiseZeigen();
+  }
+
+  function feldWert(x) { return x === undefined || x === null ? '' : String(x).replace('.', ','); }
+  let preisZurueck = null;
+
+  function preisDialog(m, knopf) {
+    preisZurueck = knopf || byId('kiNeuesModell');
+    const s = (m && m.aktuell) || {};
+    byId('kiPreisTitel').textContent = m ? t('Preis ändern für {modell}', { modell: m.modell }) : t('Preis für ein weiteres Modell eintragen');
+    byId('kiPreisModell').value = m ? m.modell : '';
+    byId('kiPreisModell').readOnly = !!m;
+    byId('kiPreisEin').value = feldWert(s.ein);
+    byId('kiPreisAus').value = feldWert(s.aus);
+    byId('kiPreisCache').value = feldWert(s.cache);
+    byId('kiPreisAb').value = new Date().toISOString().slice(0, 10);
+    byId('kiPreisQuelle').value = '';
+    byId('kiPreisFehler').textContent = '';
+    byId('kiPreisDialog').showModal();
+    (m ? byId('kiPreisEin') : byId('kiPreisModell')).focus();
+  }
+
+  byId('kiNeuesModell').addEventListener('click', () => preisDialog(null));
+  byId('kiPreisAbbrechen').addEventListener('click', () => byId('kiPreisDialog').close());
+  byId('kiPreisDialog').addEventListener('close', () => { if (preisZurueck) preisZurueck.focus(); });
+  let preisLaeuft = false;
+  byId('kiPreisForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (preisLaeuft) return;
+    preisLaeuft = true;
+    const r = await V.sendeJson('/api/admin/ki-preise/modell', 'POST', {
+      modell: byId('kiPreisModell').value, ein: byId('kiPreisEin').value, aus: byId('kiPreisAus').value,
+      cache: byId('kiPreisCache').value, ab: byId('kiPreisAb').value, quelle: byId('kiPreisQuelle').value });
+    preisLaeuft = false;
+    if (!r.ok) { byId('kiPreisFehler').textContent = r.daten.detail || t('Der Preis konnte nicht gespeichert werden.'); return; }
+    preise = r.daten.preise;
+    // Erfolg: der Fokus geht auf die Meldung (V.meldung), nicht zurück auf den Knopf — der wird neu aufgebaut.
+    preisZurueck = null;
+    byId('kiPreisDialog').close();
+    preiseZeigen();
+    V.meldung(r.daten.message || t('Gespeichert.'));
+  });
+
+  byId('kiKursAendern').addEventListener('click', () => {
+    byId('kiKursWert').value = feldWert(preise ? preise.usd_eur : '');
+    byId('kiKursQuelle').value = '';
+    byId('kiKursFehler').textContent = '';
+    byId('kiKursDialog').showModal();
+    byId('kiKursWert').focus();
+  });
+  byId('kiKursAbbrechen').addEventListener('click', () => byId('kiKursDialog').close());
+  let kursGespeichert = false;
+  byId('kiKursDialog').addEventListener('close', () => { if (!kursGespeichert) byId('kiKursAendern').focus(); kursGespeichert = false; });
+  let kursLaeuft = false;
+  byId('kiKursForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (kursLaeuft) return;
+    kursLaeuft = true;
+    const r = await V.sendeJson('/api/admin/ki-preise/kurs', 'POST', { usd_eur: byId('kiKursWert').value, quelle: byId('kiKursQuelle').value });
+    kursLaeuft = false;
+    if (!r.ok) { byId('kiKursFehler').textContent = r.daten.detail || t('Der Kurs konnte nicht gespeichert werden.'); return; }
+    preise = r.daten.preise;
+    kursGespeichert = true;
+    byId('kiKursDialog').close();
+    preiseZeigen();
+    V.meldung(r.daten.message || t('Gespeichert.'));
+  });
+
+  (async function start() {
+    await loadCurrentUser();
+    ausAdresse();
+    await laden(false);
+    await preiseLaden();
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}

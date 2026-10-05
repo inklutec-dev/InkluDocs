@@ -60,7 +60,10 @@ class TestGeminiWiederholung(unittest.TestCase):
         self.p_endp = mock.patch("pipelines.v4.gemini_auth.endpunkt", return_value="https://gemini.invalid/x")
         self.p_prof = mock.patch("pipelines.v4.anbieter_profil.profil", return_value=_Profil())
         self.p_sleep = mock.patch("pipelines.v4.gemini_client.time.sleep")
-        for p in (self.p_auth, self.p_endp, self.p_prof, self.p_sleep):
+        # KI-Kosten (05.10.2026): die nachgebauten Antworten nicht in die echte Datenbank schreiben
+        # (das Mitschreiben selbst prueft test_ki_kosten.py).
+        self.p_kosten = mock.patch("ki_kosten.erfasse")
+        for p in (self.p_auth, self.p_endp, self.p_prof, self.p_sleep, self.p_kosten):
             p.start()
             self.addCleanup(p.stop)
 

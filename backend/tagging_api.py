@@ -32,6 +32,7 @@ import asyncio
 import funktionen   # Funktionsschalter (30.09.2026)
 import concurrent.futures as _cf
 import json
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 import logging
 import os
 import threading
@@ -389,6 +390,7 @@ def pruefung_stand(conn, doc: dict, user_id: int, seiten: int) -> dict:
     }
 
 
+@ki_kosten.mit_kunde   # KI-Kosten (05.10.2026)
 def _korrektur_sync(project_id: int, document_id: int, user_id: int, erneut: bool, preis: int, ui_lang: str) -> None:
     """KORREKTUR (im Executor): Befunde mit Doppelbeleg ueber Korrektur_Anwenden.py ausfuehren (Sicherung vorher),
     Bericht speichern, Pruefbericht als „von vor der Korrektur“ markieren; optional direkt die Nachpruefung
@@ -877,6 +879,7 @@ def _ziel_pfad(doc: dict) -> str:
     return os.path.join(ordner, f"{stamm}_getaggt.pdf")
 
 
+@ki_kosten.mit_kunde   # KI-Kosten (05.10.2026)
 def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, sprache_vorgabe: str,
                status_vorher: str, ui_lang: str) -> None:
     """Der eigentliche Lauf (im Executor): taggen -> pruefen -> Bilder neu extrahieren -> Alt-Texte
@@ -986,6 +989,7 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
         _laeuft.pop(document_id, None)
 
 
+@ki_kosten.mit_kunde   # KI-Kosten (05.10.2026)
 def lauf_synchron(project_id: int, document_id: int, user_id: int, sprache_vorgabe: str, ui_lang: str) -> dict:
     """Tagging EINES Dokuments synchron (Kette „Komplett barrierefrei machen“, 22.09.2026): dieselbe
     Buchfuehrung wie POST .../tagging (Status, Projekt 'extracting', Guthaben-Wache), dann _lauf_sync.
@@ -1020,6 +1024,7 @@ def lauf_synchron(project_id: int, document_id: int, user_id: int, sprache_vorga
     return {"status": ("fertig" if d2.get("tagging_status") == STATUS_FERTIG else "fehler"), "grund": b.get("fehler", ""), "bericht": b}
 
 
+@ki_kosten.mit_kunde   # KI-Kosten (05.10.2026)
 def _pruefung_sync(project_id: int, document_id: int, user_id: int, preis: int, ui_lang: str) -> None:
     """AUTOMATISCHE PRUEFUNG eines Dokuments (im Executor): Strukturlesung -> pdf_pruefung.pruefe_dokument
     (ein Modellaufruf je Seite mit Seitenbild) -> Bericht speichern -> Credits. Aendert die Datei nicht."""

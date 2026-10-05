@@ -225,7 +225,11 @@ class ToolExecutor:
                 return {"ok": False, "error": f"Unbekanntes Tool: {name}"}
             vorher = ausgaben_tools._LETZTES.get((self.user_id, self.project_id))
             try:
-                ergebnis = handler(args)
+                # KI-Kosten (05.10.2026): was ein Werkzeug an KI verbraucht, zaehlt fuer diesen Kunden und dieses Projekt —
+                # auch wenn das Werkzeug ausserhalb einer Chat-Nachricht aufgerufen wird.
+                import ki_kosten
+                with ki_kosten.kontext(user_id=self.user_id, project_id=self.project_id):
+                    ergebnis = handler(args)
             except Exception as e:  # noqa: BLE001
                 ergebnis = {"ok": False, "error": f"Tool-Ausführung crashte: {e}"}
             # neues Angebot -> Bestaetigungs-Karte mit dem Text des SERVERS (Pruefung 3, Entwicklung N1); verbrauchte Karten

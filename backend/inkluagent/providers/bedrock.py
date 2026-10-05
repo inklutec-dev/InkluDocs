@@ -23,6 +23,8 @@ from typing import Any, Optional
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
+import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
+
 from .base import LLMProvider
 
 
@@ -106,6 +108,7 @@ class BedrockProvider(LLMProvider):
 
         try:
             payload = json.loads(response["body"].read())
+            ki_kosten.erfasse_anthropic(chosen_model, payload, schritt="chat", standard_zweck="chatbot")
             content_blocks = payload.get("content", [])
             text_parts = [
                 b.get("text", "") for b in content_blocks if b.get("type") == "text"
@@ -158,11 +161,13 @@ class BedrockProvider(LLMProvider):
             ) from e
 
         try:
-            return json.loads(response["body"].read())
+            payload = json.loads(response["body"].read())
         except (ValueError, TypeError) as e:
             raise BedrockProviderError(
                 f"Tool-Use Response nicht JSON: {e}"
             ) from e
+        ki_kosten.erfasse_anthropic(chosen_model, payload, schritt="agent", standard_zweck="chatbot")
+        return payload
 
     def _build_anthropic_messages(
         self,

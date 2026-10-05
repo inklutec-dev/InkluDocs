@@ -10047,3 +10047,237 @@ msgstr "Vis kontrollens resultat"
 
 msgid "In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt dieser Seite vor."
 msgstr "En skærmlæser læser denne sides taggede indhold op i denne rækkefølge."
+
+msgid "1 US-Dollar = {kurs} Euro ({quelle})"
+msgstr "1 amerikansk dollar = {kurs} euro ({quelle})"
+
+msgid "Ausgabe (mit Denk-Tokens)"
+msgstr "Output (inkl. tænke-tokens)"
+
+msgid "Automatische Tests"
+msgstr "Automatiske tests"
+
+msgid "Betrieb"
+msgstr "Drift"
+
+msgid "Bild {id}"
+msgstr "Billede {id}"
+
+msgid "Bleibt nach KI-Kosten"
+msgstr "Tilbage efter AI-omkostninger"
+
+msgid "Demo"
+msgstr "Demo"
+
+msgid "Der Kurs konnte nicht gespeichert werden."
+msgstr "Valutakursen kunne ikke gemmes."
+
+msgid "Der Preis konnte nicht gespeichert werden."
+msgstr "Prisen kunne ikke gemmes."
+
+msgid "Die Summe ist unsere eigene Rechnung. Die Rechnung des Anbieters kann leicht abweichen, etwa durch Rundung, Wechselkurs oder geänderte Preise."
+msgstr "Summen er vores egen beregning. Udbyderens faktura kan afvige lidt, fx på grund af afrunding, valutakurs eller ændrede priser."
+
+msgid "Eingabe"
+msgstr "Input"
+
+msgid "Eingabe aus dem Zwischenspeicher (optional)"
+msgstr "Input fra cache (valgfrit)"
+
+msgid "Eingabe {ein}, Ausgabe {aus}"
+msgstr "Input {ein}, output {aus}"
+
+msgid "Erfasst seit"
+msgstr "Registreret siden"
+
+msgid "Es wurden noch keine KI-Aufrufe erfasst."
+msgstr "Der er endnu ikke registreret nogen AI-kald."
+
+msgid "Euro für einen US-Dollar"
+msgstr "Euro pr. amerikansk dollar"
+
+msgid "Gelöschtes Konto"
+msgstr "Slettet konto"
+
+msgid "Gelöschtes Projekt"
+msgstr "Slettet projekt"
+
+msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
+msgstr "Præcis som i listen „Efter model“, fx gemini-3.1-pro-preview."
+
+msgid "Gültig ab (JJJJ-MM-TT)"
+msgstr "Gyldig fra (ÅÅÅÅ-MM-DD)"
+
+msgid "In diesem Monat gibt es keine KI-Aufrufe."
+msgstr "Der er ingen AI-kald i denne måned."
+
+msgid "Jeder Aufruf eines KI-Modells wird einzeln erfasst: wer, wofür, welches Modell und wie viele Tokens. Die Token-Zahlen meldet der Anbieter selbst mit jeder Antwort — genau danach rechnet er auch ab."
+msgstr "Hvert kald til en AI-model registreres enkeltvis: hvem, til hvad, hvilken model og hvor mange tokens. Udbyderen oplyser selv antallet af tokens i hvert svar — præcis det, der faktureres."
+
+msgid "KI-Aufrufe"
+msgstr "AI-kald"
+
+msgid "KI-Kosten"
+msgstr "AI-omkostninger"
+
+msgid "KI-Kosten dieses Kontos"
+msgstr "AI-omkostninger for denne konto"
+
+msgid "KI-Kosten im Monat"
+msgstr "AI-omkostninger for måneden"
+
+msgid "KI-Kosten im {monat}"
+msgstr "AI-omkostninger i {monat}"
+
+msgid "KI-Kosten {monat}: {betrag}"
+msgstr "AI-omkostninger {monat}: {betrag}"
+
+msgid "Keine Einzelheiten."
+msgstr "Ingen detaljer."
+
+msgid "Keine Projekte."
+msgstr "Ingen projekter."
+
+msgid "Kosten = Tokens mal Preis der Preisliste mal Wechselkurs. Denk-Tokens zählen wie Ausgabe. Auch Antworten, die unbrauchbar waren und wiederholt wurden, kosten Geld und sind darum mitgezählt. Bilder aus dem Zwischenspeicher kosten nichts und erscheinen nicht."
+msgstr "Omkostninger = tokens gange prisen i prislisten gange valutakursen. Tænke-tokens tæller som output. Svar, der var ubrugelige og blev gentaget, koster også penge og tælles derfor med. Billeder fra cachen koster intet og vises ikke."
+
+msgid "Kosten je Credit im Schnitt"
+msgstr "Gennemsnitlig omkostning pr. kredit"
+
+msgid "Kurs speichern"
+msgstr "Gem kurs"
+
+msgid "Künftig: {text}"
+msgstr "Fremover: {text}"
+
+msgid "Modellkennung"
+msgstr "Model-id"
+
+msgid "Nach Kunde"
+msgstr "Efter kunde"
+
+msgid "Nach Modell"
+msgstr "Efter model"
+
+msgid "Nach Umgebung"
+msgstr "Efter miljø"
+
+msgid "Nach Zweck"
+msgstr "Efter formål"
+
+msgid "Ohne Projekt (zum Beispiel API-Einzelbilder)"
+msgstr "Uden projekt (fx enkeltbilleder via API’et)"
+
+msgid "Ohne Zuordnung"
+msgstr "Uden tilknytning"
+
+msgid "Preis eintragen"
+msgstr "Indtast pris"
+
+msgid "Preis für ein weiteres Modell eintragen"
+msgstr "Indtast pris for en anden model"
+
+msgid "Preis speichern"
+msgstr "Gem pris"
+
+msgid "Preis ändern"
+msgstr "Ændr pris"
+
+msgid "Preis ändern für {modell}"
+msgstr "Ændr pris for {modell}"
+
+msgid "Preise der Anbieter in US-Dollar je eine Million Tokens. Jeder Aufruf wird mit dem Preis gerechnet, der in dem Moment gilt; spätere Änderungen schreiben schon erfasste Kosten nicht um."
+msgstr "Udbydernes priser i amerikanske dollar pr. en million tokens. Hvert kald beregnes med den pris, der gælder i øjeblikket; senere ændringer omskriver ikke allerede registrerede omkostninger."
+
+msgid "Preisliste"
+msgstr "Prisliste"
+
+msgid "Projekt {id}"
+msgstr "Projekt {id}"
+
+msgid "Projekte von {name}"
+msgstr "Projekter for {name}"
+
+msgid "Quelle (Preisseite und Datum)"
+msgstr "Kilde (prisside og dato)"
+
+msgid "Quelle (zum Beispiel EZB-Referenzkurs und Datum)"
+msgstr "Kilde (fx ECB’s referencekurs og dato)"
+
+msgid "Quelle: {quelle}"
+msgstr "Kilde: {quelle}"
+
+msgid "Seite {seite}"
+msgstr "Side {seite}"
+
+msgid "Tagging mit KI"
+msgstr "Tagging med AI"
+
+msgid "Testsystem"
+msgstr "Testsystem"
+
+msgid "Teuerste zuerst. Zu jedem Kunden lassen sich die Projekte aufklappen, zu jedem Projekt die einzelnen Bilder."
+msgstr "Dyreste først. For hver kunde kan projekterne foldes ud, og for hvert projekt de enkelte billeder."
+
+msgid "US-Dollar je eine Million Tokens, Dezimalkomma erlaubt."
+msgstr "Amerikanske dollar pr. en million tokens, decimalkomma tilladt."
+
+msgid "Verbrauchte Credits"
+msgstr "Brugte kreditter"
+
+msgid "Wechselkurs"
+msgstr "Valutakurs"
+
+msgid "Wechselkurs ändern"
+msgstr "Ændr valutakurs"
+
+msgid "Wie wird gerechnet?"
+msgstr "Hvordan beregnes det?"
+
+msgid "Zwischenspeicher {cache}"
+msgstr "cache {cache}"
+
+msgid "davon {n} ohne bekannten Preis"
+msgstr "heraf {n} uden kendt pris"
+
+msgid "davon {n} unbrauchbar und wiederholt"
+msgstr "heraf {n} ubrugelige og gentaget"
+
+msgid "gültig ab {datum}"
+msgstr "gyldig fra {datum}"
+
+msgid "noch kein gültiger Preis"
+msgstr "endnu ingen gyldig pris"
+
+msgid "unbekanntes Modell"
+msgstr "ukendt model"
+
+msgid "{betrag}, gemessen seit {datum}"
+msgstr "{betrag}, målt siden {datum}"
+
+msgid "{betrag}: {gemessen} gemessen seit {datum}, {geschaetzt} davor geschätzt ({satz} Cent je Credit)"
+msgstr "{betrag}: {gemessen} målt siden {datum}, {geschaetzt} anslået før ({satz} cent pr. kredit)"
+
+msgid "{credits} Credits, Umsatz {umsatz}"
+msgstr "{credits} kreditter, omsætning {umsatz}"
+
+msgid "{kosten} (bisherige Pauschale: {pauschale})"
+msgstr "{kosten} (tidligere fast sats: {pauschale})"
+
+msgid "{kosten}, {n} Aufrufe"
+msgstr "{kosten}, {n} kald"
+
+msgid "{monat}: {credits} Credits, KI-Kosten {kosten} (gemessen)"
+msgstr "{monat}: {credits} kreditter, AI-omkostninger {kosten} (målt)"
+
+msgid "{monat}: {credits} Credits, KI-Kosten {kosten} ({gemessen} gemessen, {geschaetzt} geschätzt)"
+msgstr "{monat}: {credits} kreditter, AI-omkostninger {kosten} ({gemessen} målt, {geschaetzt} anslået)"
+
+msgid "{zweck} ohne einzelnes Bild"
+msgstr "{zweck} uden enkelt billede"
+
+msgid "über {grenze} Tokens Eingabe: Eingabe {ein}, Ausgabe {aus}"
+msgstr "over {grenze} input-tokens: input {ein}, output {aus}"
+
+msgid "„Ohne Zuordnung“ sind Aufrufe, bei denen kein Kunde bekannt ist, zum Beispiel Tests oder Konten, die inzwischen gelöscht wurden."
+msgstr "„Uden tilknytning“ er kald uden kendt kunde, fx tests eller konti, der siden er slettet."
