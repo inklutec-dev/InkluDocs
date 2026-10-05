@@ -159,6 +159,43 @@ class TexteMigrationTest(unittest.TestCase):
         self.assertIsNone(projekt_texte.text_ablegen(self.c, pid, ""))
         self.assertIsNone(projekt_texte.text_ablegen(self.c, pid, None))
 
+    # --- Korrektur nach den Pruefungen (05.10.2026) -------------------------------------------------------------
+    def test_nicht_migrierte_bilder_sind_kein_befund(self):
+        """Befund 2 (Entwicklung): Ein Bild, das waehrend der Migration von altem Code ohne Verweis angelegt wurde, zaehlt
+        getrennt als noch_ohne_verweis, nicht als abweichend; Phase B laesst es unangetastet."""
+        pid, did = self._projekt()
+        self._altbild(pid, did, 1, KAPITEL, SEITE1)
+        projekt_texte.phase_a(self.c)
+        spaet = self._altbild(pid, did, 2, "spaeter Kontext von altem Code", SEITE2)   # nach Phase A, ohne Verweis
+        p = projekt_texte.pruefen(self.c)
+        self.assertEqual((p["abweichend"], p["ins_leere"], p["fremdes_projekt"], p["noch_ohne_verweis"]), (0, 0, 0, 1))
+        projekt_texte.phase_b(self.c)
+        self.assertEqual(self._bild(spaet)["context_text"], "spaeter Kontext von altem Code")
+        self.assertEqual(projekt_texte.bild_kontext(self.c, self._bild(spaet)), "spaeter Kontext von altem Code")
+        self.assertEqual(projekt_texte.pruefen(self.c)["abweichend"], 0)
+
+    def test_fingerabdruck_nur_ueber_gemeinsame_bilder(self):
+        v = projekt_texte.fingerabdruck_vergleich({1: ("a", "b"), 2: ("c", None), 3: ("d", "e")},
+                                                  {1: ("a", "b"), 3: ("d", "e"), 4: ("x", None)})
+        self.assertEqual(v, {"verglichen": 2, "abweichend": [], "geloescht": 1, "neu": 1})
+        v = projekt_texte.fingerabdruck_vergleich({1: ("a", "b")}, {1: ("a", "anders")})
+        self.assertEqual(v["abweichend"], [1])
+
+    def test_verweis_ins_leere_wird_geloggt(self):
+        """Befund 3 (Entwicklung): Verweis ins Leere liefert nicht still „kein Kontext“, sondern eine Log-Warnung;
+        die Pruefung zaehlt ihn."""
+        pid, did = self._projekt()
+        a = self._altbild(pid, did, 1, KAPITEL, SEITE1)
+        projekt_texte.phase_a(self.c)
+        projekt_texte.phase_b(self.c)
+        self.c.execute("PRAGMA foreign_keys=OFF")
+        self.c.execute("DELETE FROM projekt_texte WHERE id = (SELECT kontext_id FROM images WHERE id = ?)", (a,))
+        self.c.commit()
+        with self.assertLogs("inkludocs.projekt_texte", level="WARNING") as cm:
+            projekt_texte.bild_kontext(self.c, self._bild(a))
+        self.assertIn("Verweis ins Leere", cm.output[0])
+        self.assertEqual(projekt_texte.pruefen(self.c)["ins_leere"], 1)
+
     # --- Skript ------------------------------------------------------------------------------------------------
     def test_skript_alles_mit_sicherung(self):
         pid, did = self._projekt()

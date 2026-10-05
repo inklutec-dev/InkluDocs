@@ -16,8 +16,11 @@ Migration und Rueckweg: scripts/texte_migration.py (Funktionen unten, damit die 
 from __future__ import annotations
 
 import hashlib
+import logging
 from contextlib import contextmanager
 from typing import Optional
+
+log = logging.getLogger("inkludocs.projekt_texte")
 
 # Spaltenpaare (alte Spalte, Verweis-Spalte) in images.
 PAARE = (("context_text", "kontext_id"), ("page_text", "seitentext_id"))
@@ -74,6 +77,10 @@ def _text_zu(conn, img, alt_spalte: str, id_spalte: str):
         row = conn.execute("SELECT text FROM projekt_texte WHERE id = ?", (tid,)).fetchone()
         if row is not None:
             return row[0]
+        # Darf nie vorkommen (texte_aufraeumen loescht nur Texte ohne Bild): laut melden statt still „kein Kontext“
+        # (Befund 3 der Pruefung Entwicklung 05.10.2026). Die taegliche Pruefung (main._texte_pruefung_tageslauf) zaehlt es.
+        log.warning("projekt_texte: Verweis ins Leere — Bild %s, %s=%s; Rueckfall auf %s",
+                    _wert(img, "id"), id_spalte, tid, alt_spalte)
     # Altbestand (vor der Migration) oder kein Text: unveraendert die alte Spalte (auch None bleibt None)
     return _wert(img, alt_spalte)
 
@@ -178,11 +185,13 @@ def phase_a(conn, fortschritt=None) -> dict:
 def pruefen(conn) -> dict:
     """Jeder Verweis muss byte-gleich den Text der alten Spalte liefern (solange die alte Spalte gefuellt ist),
     und kein Verweis darf ins Leere zeigen. Ergebnis 0/0 ist Pflicht vor Phase B."""
+    # Nur Bilder MIT Verweis (Befund 2 der Pruefung Entwicklung 05.10.2026): noch nicht migrierte Bilder (Verweis leer,
+    # alte Spalte gefuellt) sind kein Befund, sondern stehen getrennt in „noch_ohne_verweis“.
     abweichend = conn.execute(
         "SELECT COUNT(*) FROM images i LEFT JOIN projekt_texte k ON k.id = i.kontext_id "
         "LEFT JOIN projekt_texte s ON s.id = i.seitentext_id "
-        "WHERE (COALESCE(i.context_text, '') <> '' AND (k.text IS NULL OR k.text <> i.context_text OR k.project_id <> i.project_id)) "
-        "OR (COALESCE(i.page_text, '') <> '' AND (s.text IS NULL OR s.text <> i.page_text OR s.project_id <> i.project_id))").fetchone()[0]
+        "WHERE (i.kontext_id IS NOT NULL AND COALESCE(i.context_text, '') <> '' AND (k.text IS NULL OR k.text <> i.context_text)) "
+        "OR (i.seitentext_id IS NOT NULL AND COALESCE(i.page_text, '') <> '' AND (s.text IS NULL OR s.text <> i.page_text))").fetchone()[0]
     ins_leere = conn.execute(
         "SELECT COUNT(*) FROM images i WHERE (i.kontext_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM projekt_texte k WHERE k.id = i.kontext_id)) "
         "OR (i.seitentext_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM projekt_texte s WHERE s.id = i.seitentext_id))").fetchone()[0]
@@ -232,3 +241,11 @@ def fingerabdruck(conn) -> dict:
     def h(t):
         return None if t is None else _sha(t)
     return {r[0]: (h(r[1]), h(r[2])) for r in rows}
+
+
+def fingerabdruck_vergleich(vorher: dict, nachher: dict) -> dict:
+    """Vergleich zweier Fingerabdruecke nur ueber Bilder, die vorher UND nachher existieren (im laufenden Betrieb
+    geloeschte oder neu angelegte Bilder sind keine Abweichung; Befund 2 der Pruefung Entwicklung 05.10.2026)."""
+    gemeinsam = [i for i in vorher if i in nachher]
+    return {"verglichen": len(gemeinsam), "abweichend": [i for i in gemeinsam if nachher[i] != vorher[i]],
+            "geloescht": len(vorher) - len(gemeinsam), "neu": len([i for i in nachher if i not in vorher])}

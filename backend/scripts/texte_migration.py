@@ -69,10 +69,17 @@ def bericht(conn, titel: str) -> dict:
 
 
 def pruefung_ok(conn) -> bool:
+    """Befund = Verweis liefert anderen Text, zeigt ins Leere oder in ein fremdes Projekt. Bilder ohne Verweis (noch nicht
+    migriert oder waehrend der Migration von altem Code angelegt) sind KEIN Befund: Phase B laesst sie unangetastet, sie
+    bleiben ueber die alte Spalte lesbar (Befund 2 der Pruefung Entwicklung 05.10.2026)."""
     t0 = time.time()
     p = projekt_texte.pruefen(conn)
     ok = p["abweichend"] == 0 and p["ins_leere"] == 0 and p["fremdes_projekt"] == 0
     print(f"Pruefung ({time.time() - t0:.1f} s): {json.dumps(p)} -> {'OK' if ok else 'BEFUND'}")
+    if ok and p["noch_ohne_verweis"]:
+        print(f"  Hinweis: {p['noch_ohne_verweis']} Bild(er) ohne Verweis — kein Datenverlust, sie behalten ihre alte Spalte. "
+              "Schreibt noch ein Container mit ALTEM Code auf diese Datenbank? Regel: erst neuer Code, dann Migration; "
+              "ein weiterer Lauf von --alles nimmt sie mit.")
     return ok
 
 
@@ -128,9 +135,13 @@ def main():
             return 1
     if fingerabdruck_vorher is not None:
         nachher = projekt_texte.fingerabdruck(conn)
-        abw = [i for i, f in fingerabdruck_vorher.items() if nachher.get(i) != f]
-        print(f"Fingerabdruck (SHA-256 des wirksamen Textes je Bild): {len(fingerabdruck_vorher)} Bilder, {len(abw)} Abweichungen"
-              + (f" — z. B. {abw[:5]}" if abw else ""))
+        # Nur Bilder, die vorher UND nachher existieren: im laufenden Betrieb geloeschte oder neu angelegte Bilder sind
+        # keine Abweichung (Befund 2 der Pruefung Entwicklung 05.10.2026).
+        v = projekt_texte.fingerabdruck_vergleich(fingerabdruck_vorher, nachher)
+        abw, weg, neu = v["abweichend"], v["geloescht"], v["neu"]
+        print(f"Fingerabdruck (SHA-256 des wirksamen Textes je Bild): {v['verglichen']} Bilder verglichen, {len(abw)} Abweichungen"
+              + (f" — z. B. {abw[:5]}" if abw else "")
+              + (f"; waehrend des Laufs geloescht: {weg}, neu: {neu}" if (weg or neu) else ""))
         if abw:
             return 1
     if a.vacuum:

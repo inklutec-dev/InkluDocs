@@ -166,6 +166,26 @@ class ProjektSchlankTest(unittest.TestCase):
         self.assertEqual(aufruf.get("kontext"), KAPITEL)
         self.assertFalse(any("context_text" in b for b in ad.get_project_context(self.pid, 1)["images"]))
 
+    def test_taegliche_texte_pruefung(self):
+        """Befund 3 (Entwicklung): die Datenpruefung laeuft im Tageslauf und haelt ihr Ergebnis in system_kv fest."""
+        erg = main._texte_pruefung_tageslauf()
+        self.assertTrue(erg.get("ok"), erg)
+        c = database.get_db()
+        import json
+        gespeichert = json.loads(c.execute("SELECT value FROM system_kv WHERE key = 'texte_pruefung'").fetchone()[0])
+        c.close()
+        self.assertTrue(gespeichert["ok"])
+        self.assertEqual(gespeichert["ins_leere"], 0)
+
+    def test_bildliste_spalten_tupel(self):
+        """Hinweis 5 (Entwicklung): Spaltenliste als fertig gebautes Tupel (threadsicher ohne Sperre)."""
+        c = database.get_db()
+        sp = main._bildliste_spalten(c)
+        c.close()
+        self.assertIsInstance(sp, tuple)
+        self.assertEqual(len(sp), len(set(sp)))
+        self.assertFalse(SCHWER & set(sp))
+
     def test_struktur_kennzahlen_gemerkt(self):
         c = database.get_db()
         doc = dict(c.execute("SELECT * FROM documents WHERE id = ?", (self.did,)).fetchone())

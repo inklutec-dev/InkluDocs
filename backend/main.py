@@ -3878,6 +3878,29 @@ def _abo_tageslauf_noetig() -> bool:
     return _tageslauf_datum != heute
 
 
+def _texte_pruefung_tageslauf() -> dict:
+    """Taegliche Datenpruefung „Texte einmal je Projekt“ (05.10.2026, Befund 3 der Pruefung Entwicklung,
+    docs/ANSICHTEN_LEISTUNG.md): kein Bild darf ins Leere oder in ein fremdes Projekt verweisen, kein Verweis darf einen
+    anderen Text liefern als die (noch gefuellte) alte Spalte. Ergebnis im Log und in system_kv „texte_pruefung“."""
+    try:
+        conn = get_db()
+        try:
+            erg = projekt_texte.pruefen(conn)
+        finally:
+            conn.close()
+        ok = erg["abweichend"] == 0 and erg["ins_leere"] == 0 and erg["fremdes_projekt"] == 0
+        erg = dict(erg, ok=ok, stand=datetime.utcnow().strftime("%Y-%m-%d %H:%M") + " UTC")
+        _kv_setzen("texte_pruefung", json.dumps(erg))
+        if ok:
+            logger.info("Texte-Pruefung: in Ordnung (%s)", erg)
+        else:
+            logger.warning("Texte-Pruefung: BEFUND %s — siehe docs/ANSICHTEN_LEISTUNG.md (Rueckweg/Sicherung)", erg)
+        return erg
+    except Exception:
+        logger.exception("Texte-Pruefung im Tageslauf fehlgeschlagen")
+        return {}
+
+
 def _abo_tageslauf() -> None:
     """Taeglicher Abo-Lauf (Erinnerungen, Auto-Verlaengerungen), max. 1x/Tag.
 
@@ -3927,6 +3950,7 @@ def _abo_tageslauf() -> None:
                 _abo_konto_pruefen(dict(k), heute)
             except Exception:
                 logger.exception("Abo-Tageslauf: Konto %s fehlgeschlagen", k["id"])
+        _texte_pruefung_tageslauf()
         # Abschluss festhalten (10.08.2026): Nur so kann ein Waechter von aussen
         # sehen, ob der Lauf wirklich durchlief — ein blosses "angestossen"
         # meldet auch dann gruen, wenn er unterwegs abbricht.
@@ -6463,14 +6487,17 @@ def pdf_langbeschreibung_enabled():
 # NICHT in der Bildliste: schwere Felder und Serverpfade. Alle anderen Spalten bleiben (app.html, API v1 _bild_item).
 _BILDLISTE_OHNE = frozenset({"context_text", "page_text", "pipeline_steps", "validation_result",
                              "image_path", "page_view_path", "kontext_id", "seitentext_id"})
-_bildliste_spalten_cache: list = []
+_bildliste_spalten_cache: Optional[tuple] = None
 
 
-def _bildliste_spalten(conn) -> list:
-    """Spalten der Bildliste: alle images-Spalten ausser _BILDLISTE_OHNE (einmal je Prozess aus dem Schema)."""
-    if not _bildliste_spalten_cache:
-        _bildliste_spalten_cache.extend(r[1] for r in conn.execute("PRAGMA table_info(images)").fetchall()
-                                        if r[1] not in _BILDLISTE_OHNE)
+def _bildliste_spalten(conn) -> tuple:
+    """Spalten der Bildliste: alle images-Spalten ausser _BILDLISTE_OHNE (einmal je Prozess aus dem Schema).
+    Threadsicher ohne Sperre: das Tupel wird fertig gebaut und dann in einem Schritt zugewiesen (Hinweis 5 der
+    Pruefung 05.10.2026; vorher fuellten parallele erste Aufrufe dieselbe Liste)."""
+    global _bildliste_spalten_cache
+    if _bildliste_spalten_cache is None:
+        _bildliste_spalten_cache = tuple(r[1] for r in conn.execute("PRAGMA table_info(images)").fetchall()
+                                         if r[1] not in _BILDLISTE_OHNE)
     return _bildliste_spalten_cache
 
 
