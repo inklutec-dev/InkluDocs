@@ -288,19 +288,21 @@ def _express_bindung(konto_id: int, plan: str, kontingent: int, verbraucht: int,
 
     Grundsatz: Nach der Lieferung soll genau das Guthaben uebrig sein, das vorher angezeigt wurde — und nichts darf
     ungedeckt verbraucht werden. Gebunden sind darum
-    1. Bestellungen dieses Monats ganz (bei Free-Domains alle Konten der Domain: sie teilen das Volumen);
+    1. Bestellungen dieses Monats ganz;
     2. je Monat seit der aeltesten offenen Vormonats-Bestellung (Konto des Topfs, so bucht auch express.liefern ab) der
        Paket-Ueberhang, den die Lieferung dort noch nachbucht: max(0, v + r - Budget mit Vormerkung) gegen das, was die
        Buchungswege nach dem echten Budget schon abgebucht haben, max(0, v - Budget echt). Das deckt den Bestellmonat
        ab (Rest der Bestellung, den sein Budget nicht traegt) und die Monate danach (dort fehlt der Uebertrag, den die
        Bestellung aufbraucht) — auch den laufenden Monat (Verbrauch ueber dem kleineren Budget mit Vormerkung, den
        _pakete_abbuchen nach dem echten Budget noch nicht abgebucht hat).
-    Nie negativ je Monat: was schon von den Paketen abging, gibt die Lieferung nicht zurueck."""
+    Nie negativ je Monat: was schon von den Paketen abging, gibt die Lieferung nicht zurueck.
+    Free-Domain-Konten: eigene Regel, siehe _domain_bindung."""
+    if domain:
+        return _domain_bindung(konto_id, kontingent, verbraucht, domain, conn)
     jetzt = datetime.now(timezone.utc)
     laufender = f"{jetzt.year:04d}-{jetzt.month:02d}"
     topf = _vormerkungen_je_monat(konto_id=konto_id, conn=conn)
-    jetzige = _vormerkungen_je_monat(domain=domain, conn=conn) if domain else topf
-    gebunden = sum(c for m, c in jetzige.items() if m >= laufender)
+    gebunden = sum(c for m, c in topf.items() if m >= laufender)
 
     def ueberhang(v, r, budget_mit, budget_echt):
         return max(0, max(0, v + r - budget_mit) - max(0, v - budget_echt))
@@ -324,26 +326,178 @@ def _express_bindung(konto_id: int, plan: str, kontingent: int, verbraucht: int,
     return gebunden
 
 
-def guthaben(konto_id: int, plan: str, kontingent, verbraucht: int, domain=None) -> dict:
+def guthaben(konto_id: int, plan: str, kontingent, domain=None) -> dict:
     """DIE eine Rechnung fuer „verfuegbar“ (Nachkontrolle Runde 3, R1/R2, 05.10.2026). pruefe_kontingent (und damit
     verfuegbare_credits, alle Werkzeug-Pruefungen, /api/me, die Startseite) und /api/team lesen nur hieraus.
 
+    verbraucht: Verbrauch des Abrechnungszeitraums (Free-Domain: der ganzen Domain im Kalendermonat).
     uebertrag / verfuegbar_monat / rest: Monatsbudget, in dem offene Vormonats-Bestellungen wie Verbrauch ihres
     Bestellmonats zaehlen (so sieht es nach der Lieferung aus, N2). vorgemerkt: alle offenen Express-Credits (Topf bzw.
-    Free-Domain). vorgemerkt_laufend: was davon das Guthaben dieses Monats bindet (_express_bindung). Es gilt immer
-    verfuegbar_gesamt = max(0, rest + pakete_rest - vorgemerkt_laufend) — Anzeige und Rest passen zusammen.
-    kontingent None (unbegrenzt): verfuegbar_gesamt None."""
-    pakete = pakete_rest(konto_id)
-    alle = vorgemerkt_domain(domain) if domain else vorgemerkt(konto_id)
+    Free-Domain). vorgemerkt_laufend: was davon das Guthaben DIESES Kontos in diesem Monat bindet (_express_bindung).
+    Es gilt immer verfuegbar_gesamt = max(0, rest + pakete_rest - vorgemerkt_laufend) — Anzeige und Rest passen zusammen.
+    kontingent None (unbegrenzt): verfuegbar_gesamt None.
+
+    Ein Stand (Nachkontrolle Runde 4, R4-1): alles in EINER Lese-Transaktion auf EINER Verbindung — unter WAL ein
+    fester Schnappschuss. Sonst konnte eine Lieferung, die zwischen zwei Lesungen committet, kurz zu viel Guthaben
+    zeigen (Pakete vor der Abbuchung gelesen, Vormerkung schon weg)."""
+    conn = get_db()
+    try:
+        conn.isolation_level = None
+        conn.execute("BEGIN")
+        try:
+            return _guthaben_in(conn, konto_id, plan, kontingent, domain)
+        finally:
+            conn.execute("COMMIT")
+    finally:
+        conn.close()
+
+
+def _guthaben_in(conn, konto_id: int, plan: str, kontingent, domain=None) -> dict:
+    eigen = monats_verbrauch(konto_id, conn=conn)
+    verbraucht = _domain_monats_verbrauch(domain, conn=conn) if domain else eigen
+    pakete = pakete_rest(konto_id, conn=conn)
+    alle = vorgemerkt_domain(domain, conn=conn) if domain else vorgemerkt(konto_id, conn=conn)
     if kontingent is None:
-        return {"uebertrag": 0, "verfuegbar_monat": None, "rest": None, "pakete_rest": pakete, "vorgemerkt": alle,
-                "vorgemerkt_laufend": alle, "verfuegbar_gesamt": None}
-    uebertrag_echt = _uebertrag(konto_id, plan, kontingent)
-    uebertrag = _uebertrag(konto_id, plan, kontingent, mit_vormerkung=True) if alle else uebertrag_echt
-    gebunden = _express_bindung(konto_id, plan, kontingent, verbraucht, uebertrag, uebertrag_echt, domain) if alle else 0
+        return {"verbraucht": verbraucht, "uebertrag": 0, "verfuegbar_monat": None, "rest": None, "pakete_rest": pakete,
+                "vorgemerkt": alle, "vorgemerkt_laufend": alle, "verfuegbar_gesamt": None}
+    uebertrag_echt = _uebertrag(konto_id, plan, kontingent, conn=conn)
+    uebertrag = _uebertrag(konto_id, plan, kontingent, conn=conn, mit_vormerkung=True) if alle else uebertrag_echt
+    gebunden = (_express_bindung(konto_id, plan, kontingent, verbraucht, uebertrag, uebertrag_echt, domain, conn)
+                if alle else 0)
     rest = max(0, kontingent + uebertrag - verbraucht)
-    return {"uebertrag": uebertrag, "verfuegbar_monat": kontingent + uebertrag, "rest": rest, "pakete_rest": pakete,
-            "vorgemerkt": alle, "vorgemerkt_laufend": gebunden, "verfuegbar_gesamt": max(0, rest + pakete - gebunden)}
+    return {"verbraucht": verbraucht, "uebertrag": uebertrag, "verfuegbar_monat": kontingent + uebertrag, "rest": rest,
+            "pakete_rest": pakete, "vorgemerkt": alle, "vorgemerkt_laufend": gebunden,
+            "verfuegbar_gesamt": max(0, rest + pakete - gebunden)}
+
+
+# ── Free-Domain mit Zusatz-Paketen (Runde 5, Steves Regel 05.10.2026) ───────────────────────────────────────────────
+# Die Gratis-Credits (PLAN_KONTINGENTE["free"]) gehoeren allen Free-Konten einer Firmen-Domain GEMEINSAM; gekaufte
+# Pakete gehoeren nur dem kaufenden Konto (und werden nur dort angezeigt). Sind die gemeinsamen Gratis-Credits des
+# Monats verbraucht, zahlt jedes Konto alles Weitere aus seinen eigenen Paketen.
+# Umsetzung: In der Buchungs-Transaktion geht genau der Teil von den Paketen des BUCHENDEN Kontos ab, um den die
+# Buchung die Domain ueber das Gratis-Volumen hebt: delta = max(0, V_nachher - K) - max(0, V_vorher - K). V ist der
+# Domain-Verbrauch des Monats plus die offenen Express-Bestellungen dieses Monats (sie belegen das Volumen schon, bevor
+# sie geliefert sind). Ein Express-Auftrag steht in dieser Reihenfolge an seinem Bestellzeitpunkt: sein Paket-Teil ist
+# das delta an dieser Stelle (Verbrauch der Domain davor + vorher bestellte, noch offene Auftraege) — so bindet ihn die
+# Anzeige, und genau so viel geht bei der Lieferung ab; die Verbrauchs-Ereignisse tragen den Bestellzeitpunkt.
+# Vorher (bis Runde 4, auch Prod api1) rechnete die Sperre mit dem Domain-, die Abbuchung mit dem eigenen Verbrauch:
+# wer selbst unter 50 lag, verbrauchte nach Erschoepfen des Domain-Volumens ungedeckt.
+
+def _domain_aus(row):
+    """Firmen-Domain eines gebuendelten Free-Kontos (effektiv Free, kein Admin, keine Freemail-Domain), sonst None.
+    row: plan, plan_gueltig_bis, is_admin, email."""
+    if row is None or row["is_admin"] or effektiver_plan(row) != "free":
+        return None
+    dom = (row["email"] or "").rsplit("@", 1)[-1].strip().lower()
+    return dom if dom and "." in dom and not ist_freemail_domain(dom) else None
+
+
+def _domain_von(conn, konto_id: int):
+    return _domain_aus(conn.execute("SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis, is_admin, email "
+                                    "FROM users WHERE id = ?", (konto_id,)).fetchone())
+
+
+# Gleicher Kontofilter wie _domain_monats_verbrauch / vorgemerkt_domain (Domain exakt, effektiv Free, keine Admins).
+_DOMAIN_KONTEN = ("substr(u.email, instr(u.email, '@') + 1) = ? "
+                  "AND (COALESCE(u.plan, 'free') = 'free' "
+                  "     OR (u.plan_gueltig_bis IS NOT NULL AND date(u.plan_gueltig_bis) < date('now'))) "
+                  "AND u.is_admin = 0")
+
+
+def _monatsgrenzen(monat: str):
+    j, m = int(monat[:4]), int(monat[5:7])
+    return f"{monat}-01", f"{j + (m == 12):04d}-{m % 12 + 1:02d}-01"
+
+
+def _domain_verbrauch_monat(conn, domain: str, monat: str, vor: str = None) -> int:
+    """Verbrauch aller Free-Konten der Domain im Kalendermonat monat ('JJJJ-MM', UTC); mit `vor` nur Ereignisse davor."""
+    von, bis = _monatsgrenzen(monat)
+    row = conn.execute("SELECT COALESCE(SUM(e.credits), 0) FROM usage_events e JOIN users u ON u.id = e.konto_user_id "
+                       f"WHERE {_DOMAIN_KONTEN} AND e.created_at >= ? AND e.created_at < ?",
+                       (domain, von, min(bis, vor) if vor else bis)).fetchone()
+    return int(row[0] or 0)
+
+
+def _monat_jetzt() -> str:
+    jetzt = datetime.now(timezone.utc)
+    return f"{jetzt.year:04d}-{jetzt.month:02d}"
+
+
+def _domain_teil(v: int, credits: int, kontingent: int) -> int:
+    """Teil von `credits`, der bei Domain-Stand v ueber das Gratis-Volumen hinausgeht."""
+    return max(0, v + credits - kontingent) - max(0, v - kontingent)
+
+
+def _domain_auftrag_teil(conn, domain: str, auftrag_id: int, bestellt: str, credits: int) -> int:
+    """Paket-Teil eines Express-Auftrags einer Free-Domain an seinem Bestellzeitpunkt: Verbrauch der Domain im
+    Bestellmonat davor + offene Auftraege der Domain, die im selben Monat vorher bestellt wurden. Ein storniertes
+    frueheres Auftrag faellt heraus (der Teil sinkt dann)."""
+    bestellt = bestellt or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    monat = bestellt[:7]
+    von, _bis = _monatsgrenzen(monat)
+    vorher = int(conn.execute(
+        "SELECT COALESCE(SUM(a.credits_gesamt), 0) FROM express_auftraege a JOIN users u ON u.id = a.konto_user_id "
+        f"WHERE {_DOMAIN_KONTEN} AND a.status IN ('neu', 'in_arbeit', 'rueckfrage') AND a.id != ? AND a.bestellt_am >= ? "
+        "AND (a.bestellt_am < ? OR (a.bestellt_am = ? AND a.id < ?))",
+        (domain, int(auftrag_id), von, bestellt, bestellt, int(auftrag_id))).fetchone()[0] or 0)
+    v = _domain_verbrauch_monat(conn, domain, monat, vor=bestellt) + vorher
+    return _domain_teil(v, int(credits), PLAN_KONTINGENTE["free"])
+
+
+def _domain_bindung(konto_id: int, kontingent: int, verbraucht: int, domain: str, conn) -> int:
+    """vorgemerkt_laufend eines Free-Domain-Kontos: (a) der Teil des gemeinsamen Gratis-Volumens, den offene
+    Bestellungen DIESES Monats aller Konten der Domain schon belegen, (b) die Paket-Teile der eigenen offenen
+    Auftraege (jedes Monats). Fremde Paket-Teile binden die eigenen Pakete nicht.
+    verfuegbar = max(0, K - V) + eigene Pakete - eigene Paket-Teile."""
+    offen_monat = _vormerkungen_je_monat(domain=domain, conn=conn).get(_monat_jetzt(), 0)
+    rest = max(0, kontingent - verbraucht)
+    gebunden = rest - max(0, kontingent - verbraucht - offen_monat)
+    for a in conn.execute("SELECT id, credits_gesamt, bestellt_am FROM express_auftraege "
+                          "WHERE konto_user_id = ? AND status IN ('neu', 'in_arbeit', 'rueckfrage')", (konto_id,)).fetchall():
+        gebunden += _domain_auftrag_teil(conn, domain, a["id"], a["bestellt_am"], a["credits_gesamt"] or 0)
+    return gebunden
+
+
+def _domain_abbuchen(conn, konto_id: int, domain: str, neu: int) -> None:
+    """Nach einer Buchung von `neu` Credits im laufenden Monat (in der offenen Transaktion): delta von den Paketen des
+    buchenden Kontos."""
+    if neu <= 0:
+        return
+    monat = _monat_jetzt()
+    v_nachher = _domain_verbrauch_monat(conn, domain, monat) + _vormerkungen_je_monat(domain=domain, conn=conn).get(monat, 0)
+    _pakete_belasten(conn, konto_id, _domain_teil(v_nachher - neu, neu, PLAN_KONTINGENTE["free"]))
+
+
+def lieferung_buchen(conn, user_id: int, konto_id: int, posten: dict, bestellt: str, auftrag_id: int) -> None:
+    """Verbrauch einer Express-Lieferung buchen und von den Paketen abbuchen (in der Transaktion von express.liefern,
+    nachdem der Auftrag auf „geliefert“ steht). posten = {aktion: credits}.
+    - Free-Domain-Konto (Runde 5): Ereignisse zum Bestellzeitpunkt, von den Paketen genau der Paket-Teil des Auftrags
+      an dieser Stelle (_domain_auftrag_teil), protokolliert zum Bestellzeitpunkt.
+    - sonst: Ereignisse im laufenden Monat bzw. — Bestellung in einem frueheren Monat — zum Bestellzeitpunkt (Befund 1);
+      Ueberhang des Bestellmonats, der Monate dazwischen (Runde 4) und des laufenden Monats (N1)."""
+    monat = _monat_jetzt()
+    bestellmonat = (bestellt or "")[:7] or monat
+    frueher = bestellmonat < monat
+    domain = _domain_von(conn, konto_id)
+    zurueck = bool(bestellt) and (frueher or bool(domain))
+    for aktion, credits in posten.items():
+        if credits <= 0:
+            continue
+        if zurueck:
+            conn.execute("INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, image_id, created_at) "
+                         "VALUES (?, ?, 'express', ?, ?, NULL, ?)", (user_id, konto_id, aktion, credits, bestellt))
+        else:
+            conn.execute("INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, image_id) "
+                         "VALUES (?, ?, 'express', ?, ?, NULL)", (user_id, konto_id, aktion, credits))
+    if domain:
+        teil = _domain_auftrag_teil(conn, domain, auftrag_id, bestellt, sum(c for c in posten.values() if c > 0))
+        _pakete_belasten(conn, konto_id, teil, bestellt or None)
+        return
+    if frueher:
+        pakete_abbuchen_fuer_monat(conn, konto_id, bestellt)
+        for m in _monate(bestellmonat, monat)[1:]:
+            pakete_abbuchen_fuer_monat(conn, konto_id, f"{m}-01 00:00:00")
+    _pakete_abbuchen(conn, konto_id)
 
 
 def vorgemerkt_domain(domain: str, conn=None) -> int:
@@ -801,7 +955,8 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None, bis=None, mit_vo
     # Express (Nachpruefung 05.10.2026, N2): offene Vormerkungen frueherer Monate zaehlen im Monat ihrer Bestellung wie
     # Verbrauch — dort werden sie bei der Lieferung abgebucht (express.liefern datiert die Ereignisse zurueck).
     if mit_vormerkung:
-        _vormerkungen_einrechnen(verbrauch_je_monat, konto_id, f"{jetzt.year:04d}-{jetzt.month:02d}")
+        _vormerkungen_einrechnen(verbrauch_je_monat, konto_id, f"{jetzt.year:04d}-{jetzt.month:02d}",
+                                 None if eigene_conn else conn)
     if not verbrauch_je_monat:
         # Keine Historie vor dem laufenden Monat -> nichts anzusparen.
         return 0
@@ -915,7 +1070,7 @@ def starte_kontingent_neu(konto_id: int) -> None:
         log.exception("Kontingent-Neustart fehlgeschlagen (konto=%s)", konto_id)
 
 
-def pakete_rest(konto_id: int) -> int:
+def pakete_rest(konto_id: int, conn=None) -> int:
     """Summe der noch nutzbaren Zusatz-Credits.
 
     Zwei Verfalls-Arten (Steves Regel 24.08.2026, ersetzt das Ruhen):
@@ -924,7 +1079,9 @@ def pakete_rest(konto_id: int) -> int:
       kuendigt, braucht seine Pakete trotzdem auf).
     - verfaellt_am gesetzt: Datums-Paket (Alt-Modell/Kulanz-Geschenke).
     """
-    conn = get_db()
+    eigene_conn = conn is None
+    if eigene_conn:
+        conn = get_db()
     try:
         row = conn.execute(
             "SELECT COALESCE(SUM(verbleibend), 0) FROM quota_pakete "
@@ -934,7 +1091,8 @@ def pakete_rest(konto_id: int) -> int:
         ).fetchone()
         return int(row[0])
     finally:
-        conn.close()
+        if eigene_conn:
+            conn.close()
 
 
 # Grober Kostensatz pro Credit fuer den Admin-Report (08.08.2026). Er ist
@@ -1026,22 +1184,17 @@ def pruefe_kontingent(user_id: int, streng: bool = False) -> dict:
         # Auto-Rueckfall (Punkt 8): abgelaufener Bezahl-Plan zaehlt als Free.
         plan = effektiver_plan(row)
         kontingent = PLAN_KONTINGENTE[plan]
-        verbraucht = monats_verbrauch(konto_id)
         # Domain-Buendelung Free (Punkt 2, 04.08.2026): Konten einer
         # Firmen-Domain teilen sich das Free-Volumen — der ANGEZEIGTE und
         # fuer die Sperre massgebliche Verbrauch ist dann die Domain-Summe.
         # Freemailer werden nie gebuendelt (sonst teilten sich alle
         # Gmail-Nutzer der Welt einen Topf), Betreiber-Konten auch nicht.
-        # Zusatz-Pakete bleiben bewusst PRO KONTO (gekauft ist gekauft).
-        domain_pool = None
-        if plan == "free" and not row["is_admin"]:
-            _dom = (row["email"] or "").rsplit("@", 1)[-1].strip().lower()
-            if _dom and "." in _dom and not ist_freemail_domain(_dom):
-                domain_pool = _dom
-                verbraucht = _domain_monats_verbrauch(_dom)
-        # Guthaben (Monatsbudget, Pakete, Express-Vormerkungen, verfuegbar) aus der EINEN Rechnung (R1/R2).
-        ergebnis.update({"plan": plan, "kontingent": kontingent, "verbraucht": verbraucht, "domain_pool": domain_pool,
-                         **guthaben(konto_id, plan, kontingent, verbraucht, domain_pool)})
+        # Zusatz-Pakete bleiben bewusst PRO KONTO (gekauft ist gekauft; Runde 5: sie zahlen, was ueber das gemeinsame
+        # Volumen hinausgeht — siehe _domain_abbuchen).
+        domain_pool = _domain_aus(row)
+        # Guthaben (Verbrauch, Monatsbudget, Pakete, Express-Vormerkungen, verfuegbar) aus der EINEN Rechnung, ein Stand.
+        ergebnis.update({"plan": plan, "kontingent": kontingent, "domain_pool": domain_pool,
+                         **guthaben(konto_id, plan, kontingent, domain_pool)})
         # Admins werden nie gesperrt; ohne Enforcement wird nie gesperrt.
         if not ABO_ENFORCEMENT or row["is_admin"]:
             return ergebnis
@@ -1083,7 +1236,7 @@ def verbuche_export(user_id: int, quelle: str, posten: list, ansprueche: list) -
                     conn.execute(
                         "INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, image_id) VALUES (?, ?, ?, ?, ?, NULL)",
                         (user_id, konto_id, quelle, aktion, int(credits)))
-            _pakete_abbuchen(conn, konto_id)
+            _pakete_abbuchen(conn, konto_id, neu=sum(int(c or 0) for _a, c in posten if int(c or 0) > 0))
             conn.execute("COMMIT")
             return True
         except Exception:
@@ -1131,7 +1284,7 @@ def verbuche(user_id: int, quelle: str, aktion: str = "bild_generierung",
             # Budget (Kontingent + Uebertrag), wird der Ueberhang von den
             # Zusatz-Paketen abgebucht — in DERSELBEN Transaktion, damit
             # Ereignis und Abbuchung nur gemeinsam sichtbar werden.
-            _pakete_abbuchen(conn, konto_id)
+            _pakete_abbuchen(conn, konto_id, neu=betrag)
             conn.execute("COMMIT")
         except Exception:
             try:
@@ -1146,7 +1299,7 @@ def verbuche(user_id: int, quelle: str, aktion: str = "bild_generierung",
                       user_id, quelle, aktion, image_id)
 
 
-def _pakete_abbuchen(conn, konto_id: int) -> None:
+def _pakete_abbuchen(conn, konto_id: int, neu: int = 0) -> None:
     """Bucht den Monats-Ueberhang eines Kontos von den Zusatz-Paketen ab.
 
     Laeuft IN der offenen Transaktion des Aufrufers (verbuche haelt
@@ -1175,12 +1328,19 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
     (Enterprise/None) buchen NIE Pakete ab. Fehler steigen zum Aufrufer
     verbuche auf — DORT sitzt die Nie-Crashen-Garantie (Rollback + Log),
     hier darf nichts halb committen.
+
+    Free-Domain-Konten (Runde 5): nicht nach dem eigenen Verbrauch, sondern `neu` (die gerade gebuchten Credits) gegen
+    das gemeinsame Gratis-Volumen der Domain — _domain_abbuchen.
     """
     row = conn.execute(
-        "SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis FROM users WHERE id = ?",
+        "SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis, is_admin, email FROM users WHERE id = ?",
         (konto_id,),
     ).fetchone()
     if row is None:
+        return
+    domain = _domain_aus(row)
+    if domain:
+        _domain_abbuchen(conn, konto_id, domain, int(neu or 0))
         return
     plan = effektiver_plan(row)
     kontingent = PLAN_KONTINGENTE[plan]

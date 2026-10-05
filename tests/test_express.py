@@ -1150,10 +1150,9 @@ class Runde3(Basis):
         self.assertEqual(express.netz_kurz("2001:db8::1"), "2001:db8::/48")
 
 
-class Runde4(Basis):
-    """Nachkontrolle Runde 3 (05.10.2026): R1 — mit einer Vormonats-Bestellung, die Paket-Credits braucht, darf nichts
-    ungedeckt verbraucht werden; R2 — Sperre, Startseite und Meldungen nennen dieselbe Vormerkung wie das Guthaben.
-    Der Kunde verbraucht immer wieder, was angezeigt wird, bis 0 — die Summe muss stimmen, vor und nach der Lieferung."""
+class _Guthabenhilfe:
+    """Hilfen fuer die Guthaben-Tests (Runde 4 und 5): verbrauchen, was angezeigt wird, und dabei pruefen, dass Anzeige,
+    Sperre und Rest zusammenpassen."""
 
     def _verbrauchen(self, uid, credits):
         billing.verbuche(uid, "einzeln", "bild_generierung", credits=credits)
@@ -1205,6 +1204,12 @@ class Runde4(Basis):
 
     def _abbuchungen(self):
         return [(a["betrag"], a["created_at"][:7]) for a in _sql("SELECT betrag, created_at FROM paket_abbuchungen ORDER BY id")]
+
+
+class Runde4(_Guthabenhilfe, Basis):
+    """Nachkontrolle Runde 3 (05.10.2026): R1 — mit einer Vormonats-Bestellung, die Paket-Credits braucht, darf nichts
+    ungedeckt verbraucht werden; R2 — Sperre, Startseite und Meldungen nennen dieselbe Vormerkung wie das Guthaben.
+    Der Kunde verbraucht immer wieder, was angezeigt wird, bis 0 — die Summe muss stimmen, vor und nach der Lieferung."""
 
     def test_r1_angezeigtes_wiederholt_verbrauchen_bis_0(self):
         aid = self._single_szenario()
@@ -1301,11 +1306,11 @@ class Runde4(Basis):
         self._paket(3, 300)
         aid = self._vormonats_auftrag(16)                                # 16 x 50 = 800
         self.assertEqual(_sql("SELECT konto_user_id FROM express_auftraege WHERE id = ?", aid)[0]["konto_user_id"], 3)
-        team = billing.guthaben(3, "team", 500, billing.monats_verbrauch(3))
+        team = billing.guthaben(3, "team", 500)
         self.assertEqual((team["verfuegbar_gesamt"], team["vorgemerkt_laufend"]), (500, 300))
         self.assertEqual(self._stimmig(1), 500)
         self.assertEqual(self._alles_verbrauchen(1), 500)
-        self.assertEqual(billing.guthaben(3, "team", 500, billing.monats_verbrauch(3))["verfuegbar_gesamt"], 0)
+        self.assertEqual(billing.guthaben(3, "team", 500)["verfuegbar_gesamt"], 0)
         self._ergebnis(aid)
         express.liefern(aid, PERSON)
         self.assertEqual((billing.pakete_rest(3), self._stimmig(1)), (0, 0))
@@ -1326,6 +1331,197 @@ class Runde4(Basis):
         self.assertEqual((z["uebertrag"], z["rest"], z["vorgemerkt_laufend"]), (150, 400, 0))
         self.assertEqual(self._alles_verbrauchen(1, schritt=90), 440)
         self.assertEqual(billing.pakete_rest(1), 0)
+
+class Runde5(_Guthabenhilfe, Basis):
+    """Abrechnung Free-Domain mit Zusatz-Paketen (Steves Regel 05.10.2026): Die 50 Gratis-Credits im Monat gehoeren allen
+    Free-Konten einer Firmen-Domain gemeinsam, gekaufte Pakete nur dem kaufenden Konto; ist das gemeinsame Volumen
+    verbraucht, zahlt jedes Konto alles Weitere aus seinen eigenen Paketen. Dazu R4-1: guthaben() liest einen Stand."""
+    DOM = "firma-runde5-beispiel.de"
+
+    def setUp(self):
+        super().setUp()
+        _sql("UPDATE users SET email = ? WHERE id = 1", f"anna@{self.DOM}")
+        _sql("UPDATE users SET email = ? WHERE id = 2", f"ben@{self.DOM}")
+
+    def _monat(self, n=0):
+        j, m = _monat_davor(n)
+        return f"{j:04d}-{m:02d}"
+
+    def _ungedeckt(self, monat):
+        """Domain-Ueberhang des Monats minus das, was die Pakete der Domain-Konten dafuer bezahlt haben (0 = gedeckt)."""
+        conn = database.get_db()
+        try:
+            d = billing._domain_verbrauch_monat(conn, self.DOM, monat)
+        finally:
+            conn.close()
+        gebucht = _sql("SELECT COALESCE(SUM(a.betrag), 0) AS s FROM paket_abbuchungen a JOIN users u ON u.id = a.konto_user_id "
+                       "WHERE u.email LIKE ? AND strftime('%Y-%m', a.created_at) = ?", f"%@{self.DOM}", monat)[0]["s"]
+        return max(0, d - 50) - gebucht
+
+    def _teil(self, aid):
+        """Paket-Teil eines offenen Auftrags an seinem Bestellzeitpunkt (billing._domain_auftrag_teil)."""
+        a = _sql("SELECT credits_gesamt, bestellt_am FROM express_auftraege WHERE id = ?", aid)[0]
+        conn = database.get_db()
+        try:
+            return billing._domain_auftrag_teil(conn, self.DOM, aid, a["bestellt_am"], a["credits_gesamt"])
+        finally:
+            conn.close()
+
+    def _abwechselnd(self, schritte=(7, 13, 1, 29, 4)):
+        """Anna und Ben verbrauchen abwechselnd in krummen Schritten, was angezeigt wird, bis beide 0 sehen."""
+        summe, i = {1: 0, 2: 0}, 0
+        for _ in range(400):
+            offen = [u for u in (1, 2) if self._stimmig(u)]
+            if not offen:
+                return summe
+            uid = offen[i % len(offen)]
+            c = min(self._stimmig(uid), schritte[i % len(schritte)])
+            self._verbrauchen(uid, c)
+            summe[uid] += c
+            i += 1
+        self.fail("verfuegbar wird nie 0")
+
+    def test_anna_und_ben(self):
+        """Ben verbraucht das gemeinsame Volumen (50); Anna mit 100 Paket-Credits darf danach genau 100."""
+        self._paket(1, 100)
+        self.assertEqual(billing.pruefe_kontingent(1)["domain_pool"], self.DOM)
+        self.assertEqual(self._alles_verbrauchen(2), 50)
+        self.assertEqual(self._stimmig(1), 100)
+        self.assertEqual(self._alles_verbrauchen(1), 100)
+        self.assertEqual((billing.pakete_rest(1), self._ungedeckt(self._monat())), (0, 0))
+
+    def test_abwechselnd_in_krummen_schritten(self):
+        """Zusammen genau 50 Gratis + 70 (Anna) + 30 (Ben); jedes Konto zahlt aus seinen Paketen, nichts ungedeckt."""
+        self._paket(1, 70)
+        self._paket(2, 30)
+        s = self._abwechselnd()
+        self.assertEqual(s[1] + s[2], 150)
+        self.assertEqual((billing.pakete_rest(1), billing.pakete_rest(2), self._ungedeckt(self._monat())), (0, 0, 0))
+
+    def test_pakete_nur_beim_kaeufer(self):
+        self._paket(1, 100)
+        z1, z2 = billing.pruefe_kontingent(1), billing.pruefe_kontingent(2)
+        self.assertEqual((z1["pakete_rest"], z2["pakete_rest"]), (100, 0))
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (150, 50))
+
+    def test_express_vormonat_zusammen_hoechstens_50(self):
+        """Befund 5b: Ben hat das Volumen des Vormonats verbraucht, Anna bestellt dort fuer 100 (ganz aus ihren
+        Paketen). Im laufenden Monat verbrauchen beide zusammen hoechstens 50; nach der Lieferung ist nichts ungedeckt."""
+        self._paket(1, 100)
+        self._verbrauchen(2, 50)
+        _sql("UPDATE usage_events SET created_at = ?", f"{self._monat(1)}-05 10:00:00")   # Ben: Volumen des Vormonats
+        aid = self._vormonats_auftrag(2)                                 # Anna: 100 Credits, am 28. des Vormonats
+        self.assertEqual(self._teil(aid), 100)                           # ganz aus ihren Paketen
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (50, 50))
+        s = self._abwechselnd()
+        self.assertEqual(s[1] + s[2], 50)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((billing.pakete_rest(1), self._stimmig(1), self._stimmig(2)), (0, 0, 0))
+        self.assertEqual((self._ungedeckt(self._monat(1)), self._ungedeckt(self._monat())), (0, 0))
+
+    def test_express_gleicher_monat_fremder_verbrauch_zahlt_selbst(self):
+        """Anna (ohne Pakete) bestellt 50 aus dem gemeinsamen Volumen; Ben (10 Paket-Credits) verbraucht danach alles
+        Angezeigte — das Gratis-Volumen ist durch Annas Auftrag schon belegt, Ben zahlt aus seinem Paket. Nach Annas
+        Lieferung ist nichts ungedeckt."""
+        self._paket(2, 10)
+        aid = self._vormonats_auftrag(1, monat_davor=0)                  # 50 Credits, Paket-Teil 0
+        self.assertEqual(self._teil(aid), 0)
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (0, 10))
+        self.assertEqual(self._alles_verbrauchen(2), 10)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((billing.pakete_rest(2), self._ungedeckt(self._monat())), (0, 0))
+
+    def test_express_paket_teil_bindet_nur_den_besteller(self):
+        """Anna bestellt 100 bei leerem Volumen (50 gratis, 50 aus ihrem Paket): Ben sieht 0 (Volumen belegt), aber seine
+        eigenen Pakete bleiben frei; Anna sieht ihr Paket abzueglich ihres Paket-Teils."""
+        self._paket(1, 100)
+        self._paket(2, 20)
+        aid = self._vormonats_auftrag(2, monat_davor=0)
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (50, 20))
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((billing.pakete_rest(1), self._stimmig(1), self._stimmig(2)), (50, 50, 20))
+        self.assertEqual(self._ungedeckt(self._monat()), 0)
+
+    def test_storno_eines_frueheren_auftrags_senkt_den_paket_teil(self):
+        """Ben bestellt 50 (das ganze Volumen), danach Anna (50 Paket-Credits) 50: Annas Paket-Teil ist 50. Storniert Ben,
+        rueckt Anna nach — ihr Teil faellt auf 0, bei der Lieferung bleiben ihre Pakete unberuehrt."""
+        self._paket(1, 50)
+        ben = self._vormonats_auftrag(1, monat_davor=0, uid=2)
+        anna = self._vormonats_auftrag(1, monat_davor=0)
+        self.assertEqual((self._teil(ben), self._teil(anna)), (0, 50))
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (0, 0))
+        express.stornieren(ben, PERSON, "Test")
+        self.assertEqual(self._teil(anna), 0)
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (50, 0))  # Volumen bei Anna, ihr Paket wieder frei
+        self._ergebnis(anna)
+        express.liefern(anna, PERSON)
+        self.assertEqual((billing.pakete_rest(1), self._ungedeckt(self._monat())), (50, 0))
+
+    def test_storno_gibt_das_volumen_frei(self):
+        aid = self._vormonats_auftrag(1, monat_davor=0)
+        self.assertEqual(self._stimmig(2), 0)
+        express.stornieren(aid, PERSON, "Test")
+        self.assertEqual((self._stimmig(1), self._stimmig(2), self._abbuchungen()), (50, 50, []))
+
+    def test_freemailer_nie_gebuendelt(self):
+        _sql("UPDATE users SET email = 'anna-runde5@gmail.com' WHERE id = 1")
+        _sql("UPDATE users SET email = 'ben-runde5@gmail.com' WHERE id = 2")
+        self.assertEqual(self._alles_verbrauchen(2), 50)
+        self.assertIsNone(billing.pruefe_kontingent(1)["domain_pool"])
+        self.assertEqual(self._stimmig(1), 50)
+
+    def test_admin_unbegrenzt_und_nicht_im_domain_volumen(self):
+        _sql("INSERT INTO users (id, email, password_hash, display_name, plan, is_admin) VALUES (4, ?, 'x', 'Admin', 'free', 1)",
+             f"admin@{self.DOM}")
+        self._paket(4, 30)
+        self.assertIsNone(billing.verfuegbare_credits(4))
+        self.assertIsNone(billing.pruefe_kontingent(4)["domain_pool"])
+        self._verbrauchen(4, 500)
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (50, 50))
+
+    def test_gleichzeitige_buchungen_zweier_domain_konten(self):
+        """Rennbedingung: Anna und Ben buchen gleichzeitig (je 8 x 10). BEGIN IMMEDIATE ordnet die Buchungen; genau der
+        Ueberhang ueber 50 geht von den Paketen, keine Buchung rechnet mit einem veralteten Domain-Stand."""
+        self._paket(1, 100)
+        self._paket(2, 100)
+        start = threading.Barrier(2)
+
+        def buchen(uid):
+            start.wait()
+            for _ in range(8):
+                self._verbrauchen(uid, 10)
+        t = [threading.Thread(target=buchen, args=(u,)) for u in (1, 2)]
+        for x in t:
+            x.start()
+        for x in t:
+            x.join()
+        self.assertEqual(len(_sql("SELECT id FROM usage_events")), 16)
+        self.assertEqual(200 - billing.pakete_rest(1) - billing.pakete_rest(2), 160 - 50)
+        self.assertEqual(self._ungedeckt(self._monat()), 0)
+
+    def test_r4_1_guthaben_liest_einen_stand(self):
+        """Eine Lieferung committet mitten im Lesen (simulierte Verschraenkung): guthaben() zeigt den Stand von vorher
+        (300), nicht die Mischung (vorher 550: Pakete vor der Abbuchung, Vormerkung schon weg)."""
+        _sql("UPDATE users SET email = 'kundin-runde5@gmail.com', plan = 'single', plan_gueltig_bis = '2099-12-31' WHERE id = 1")
+        self._ereignis(1, 250, 2)
+        self._paket(1, 300)
+        aid = self._vormonats_auftrag(10)                               # 500, Vormonat
+        self._ergebnis(aid)
+        self.assertEqual(self._stimmig(1), 300)
+        echt, geliefert = billing.vorgemerkt, []
+
+        def dazwischen(konto_id, conn=None):
+            if not geliefert:
+                geliefert.append(express.liefern(aid, PERSON)["status"])
+            return echt(konto_id, conn)
+        with mock.patch.object(billing, "vorgemerkt", side_effect=dazwischen):
+            mitten = billing.pruefe_kontingent(1)
+        self.assertEqual(geliefert, ["geliefert"])
+        self.assertEqual((mitten["verfuegbar_gesamt"], mitten["pakete_rest"], mitten["vorgemerkt"]), (300, 300, 500))
+        self.assertEqual(self._stimmig(1), 300)                          # nach der Lieferung derselbe Betrag
 
 class NurPdf(unittest.TestCase):
     def test_heute_nur_pdf(self):

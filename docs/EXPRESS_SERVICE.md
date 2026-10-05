@@ -117,7 +117,8 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   Überhang wird für jenen Monat von den Paketen abgebucht (`billing.pakete_abbuchen_fuer_monat`). Sonst verfiele beim
   Monatswechsel Übertrag, den der Kunde im Bestellmonat nicht nutzen durfte.
 - **Eine Rechnung für „verfügbar“** (Nachkontrolle Runde 3, R1/R2): `billing.guthaben(konto, plan, kontingent,
-  verbraucht, domain)` ist die einzige Stelle, die das Guthaben rechnet. `pruefe_kontingent` (damit
+  domain)` ist die einzige Stelle, die das Guthaben rechnet — in EINER Lese-Transaktion auf EINER Verbindung (Runde 5,
+  R4-1: ein fester Stand, auch wenn gleichzeitig eine Lieferung committet). `pruefe_kontingent` (damit
   `verfuegbare_credits`, jede Werkzeug-Prüfung, die Sperre `erlaubt`, `/api/me` und die Startseite) und `/api/team`
   lesen nur daraus. Es gilt immer `verfuegbar = max(0, rest + Zusatz-Credits − vorgemerkt_laufend)`.
   - `rest` ist das Monatsbudget, in dem offene Vormonats-Bestellungen wie Verbrauch ihres Bestellmonats zählen
@@ -134,8 +135,12 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
     einen Monatswechsel offen) und der laufende Monat abgeglichen (`pakete_abbuchen_fuer_monat`, `_pakete_abbuchen`).
   - Ergebnis: Das Guthaben ist vor und nach der Lieferung gleich, und wer immer wieder verbraucht, was angezeigt wird,
     kommt genau auf das, was Monatsbudgets und Pakete hergeben (Tests `Runde4`).
-  - Free-Domains: Pakete gehören einem Konto. Den Paket-Teil einer Vormonats-Bestellung bindet darum nur das bestellende
-    Konto (so bucht auch die Lieferung ab); die anderen Konten der Domain sperrt er nicht.
+  - Free-Domains (Runde 5, Steves Regel; Einzelheiten `backend/ABRECHNUNG.md`): Das Gratis-Volumen ist gemeinsam,
+    Pakete gehören dem kaufenden Konto. Jeder Auftrag hat an seinem Bestellzeitpunkt einen Paket-Teil (was das
+    gemeinsame Volumen dort nicht mehr trägt); den bindet nur das bestellende Konto, und genau der geht bei der
+    Lieferung von dessen Paketen ab. Offene Aufträge dieses Monats belegen für alle Konten der Domain das gemeinsame
+    Volumen; wer danach bucht, zahlt den Überhang aus seinen Paketen. Die Verbrauchs-Ereignisse einer Lieferung tragen
+    bei Free-Domain-Konten den Bestellzeitpunkt.
 - **Bestellen in Schritten** (Befunde 2–4, 18): Der Korb wird zuerst eingefroren (Zwischenstand `bestellung` — Änderungen
   aus einem zweiten Tab landen in einem neuen Korb), Seiten frisch gezählt, Summe und Fassung mit dem verglichen, was
   der Kunde gesehen hat (sonst 409), das Guthaben **streng** geprüft (ein Datenbankfehler sperrt mit 503, statt alles zu
@@ -366,7 +371,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
 
 ## Tests
 
-- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 85): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
+- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 97): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
   Vormerkung und Idempotenz (auch 4 gleichzeitige Klicks), Vormerkung sperrt andere Ausgaben, Liefern bucht genau einmal
   (auch 4 gleichzeitig), Storno, Dateinamen nie Pfad, Upload-Prüfung, Downloads erst nach Lieferung, Frist ruht bei
   Rückfrage, Erinnerung/Überfällig je einmal, Nachweis-OOXML, Kontolöschung, Einstellungen, Bearbeiter, Schalter.
@@ -383,7 +388,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   immer wieder, was angezeigt wird, bis 0 — Summe genau wie Monatsbudget + Pakete abzüglich Bestellung (Single, auch in
   kleinen Schritten, Free-Einzelkonto, Free-Domain, Team-Topf), Storno nach dem Monatswechsel kostet nichts, Lieferung
   ändert das Guthaben nicht, Auftrag über zwei Monatswechsel, Sperre und Meldung nennen dieselbe Zahl (R2), ohne
-  Vormerkung alles wie bisher.
+  Vormerkung alles wie bisher. Klasse `Runde5` (Free-Domain mit Paketen und ein Stand): siehe `backend/ABRECHNUNG.md`.
 - `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 129): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
   IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno,
   dazu Preisänderung und alter Schlüssel (409), kaputter JSON-Körper (400), Feldfehler der Einstellungen, no-store,

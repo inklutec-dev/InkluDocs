@@ -355,3 +355,50 @@ deckt — nicht nur einmal am Lauf-Start.
 ## Umsatz-Buchungen (25.09.2026)
 
 Jeder Kauf und jede Gutschrift steht mit Betrag in der Tabelle `buchungen` (backend/umsatz.py). Einzelheiten, Wege und Regeln: ADMIN_VERWALTUNG.md, Abschnitt „VERWALTUNG NEU“.
+
+## GUTHABEN: EINE RECHNUNG, EIN STAND (Express Runde 4/5, 05.10.2026)
+
+- `billing.guthaben(konto, plan, kontingent, domain)` ist die einzige Stelle, die „verfügbar“ rechnet. Daraus lesen
+  `pruefe_kontingent` (damit `verfuegbare_credits`, jede Werkzeug-Prüfung, die Sperre `erlaubt`), `/api/me`, die
+  Startseite und `/api/team`. Es gilt immer `verfuegbar = max(0, rest + Zusatz-Credits − vorgemerkt_laufend)`;
+  `vorgemerkt_laufend` ist der Teil offener Express-Aufträge, der dieses Konto in diesem Monat bindet (Einzelheiten in
+  `docs/EXPRESS_SERVICE.md`).
+- Ein Stand (Nachkontrolle Runde 4, R4-1): `guthaben()` liest alles in EINER Lese-Transaktion auf EINER Verbindung
+  (unter WAL ein fester Schnappschuss); die Hilfsfunktionen (`monats_verbrauch`, `pakete_rest`, `vorgemerkt`,
+  `_uebertrag`, `_express_bindung` …) bekommen diese Verbindung. Vorher konnte eine Lieferung, die zwischen zwei
+  Lesungen committete, kurz zu viel zeigen (550 statt 300).
+
+## FREE-DOMAIN MIT ZUSATZ-PAKETEN (Steves Regel 05.10.2026, gebaut 05.10.2026)
+
+Regel: Die Gratis-Credits im Monat (`PLAN_KONTINGENTE["free"]`, 50) gehören allen Free-Konten einer Firmen-Domain
+gemeinsam. Gekaufte Pakete gehören nur dem kaufenden Konto und werden nur dort angezeigt. Sind die gemeinsamen
+Gratis-Credits verbraucht, zahlt jedes Konto alles Weitere aus seinen eigenen Paketen. Freemailer werden nie gebündelt,
+Betreiber-Konten (Admins) zählen nicht mit und bleiben unbegrenzt.
+
+Vorher (bis a81f28c, auch Prod api1): Die Sperre rechnete mit dem Domain-Verbrauch, die Paket-Abbuchung
+(`_pakete_abbuchen`) mit dem EIGENEN Verbrauch des Kontos. Wer selbst unter 50 lag, verbrauchte nach Erschöpfen des
+Domain-Volumens ungedeckt (Probe: Ben verbraucht 50, Anna mit 100 Paket-Credits konnte 150 verbrauchen).
+
+Umsetzung (`backend/billing.py`, Abschnitt „Free-Domain mit Zusatz-Paketen“):
+- **Buchen** (`verbuche`, `verbuche_export`; in der Buchungs-Transaktion, BEGIN IMMEDIATE): `_pakete_abbuchen(conn,
+  konto, neu)` erkennt das Free-Domain-Konto (`_domain_aus`) und zieht von den Paketen des BUCHENDEN Kontos genau
+  `delta = max(0, V_nachher − 50) − max(0, V_vorher − 50)` ab. V = Domain-Verbrauch des Monats + offene
+  Express-Bestellungen der Domain in diesem Monat (sie belegen das Volumen schon vor der Lieferung). BEGIN IMMEDIATE
+  ordnet gleichzeitige Buchungen zweier Domain-Konten; keine rechnet mit einem veralteten Stand.
+- **Express:** Ein Auftrag steht an seinem Bestellzeitpunkt in dieser Reihenfolge. Sein Paket-Teil ist das delta an
+  dieser Stelle (Domain-Verbrauch davor + vorher bestellte, noch offene Aufträge; `_domain_auftrag_teil`) — so bindet
+  ihn die Anzeige des bestellenden Kontos, und genau so viel geht bei der Lieferung ab (`lieferung_buchen`). Die
+  Verbrauchs-Ereignisse tragen bei Free-Domain-Konten den Bestellzeitpunkt (auch im laufenden Monat), damit die
+  Reihenfolge stimmt; bei Vormonats-Aufträgen zählt so der Domain-Verbrauch des Bestellmonats. Wird ein früherer
+  Auftrag storniert, rückt der spätere nach (sein Teil sinkt).
+- **Anzeige/Sperre** (`_domain_bindung`): `verfügbar(A) = max(0, 50 − V) + Pakete(A) − Paket-Teile der offenen
+  Aufträge von A`. Fremde Paket-Teile binden die eigenen Pakete nicht; offene Aufträge anderer Konten belegen nur das
+  gemeinsame Volumen.
+- Bewusst nicht erstattet: Wer gebucht hat, während ein später stornierter Auftrag das Volumen belegte, hat dafür aus
+  seinem Paket gezahlt (selten; zugunsten der Deckung).
+
+Geprüft: `tests/test_express.py` Klasse `Runde5` (Anna und Ben: genau 100; abwechselnd in krummen Schritten genau
+50 + 70 + 30; Pakete nur beim Käufer; Express-Vormonat: Anna und Ben zusammen höchstens 50, nach der Lieferung nichts
+ungedeckt; Express im selben Monat: Ben zahlt aus seinem Paket, was Annas Auftrag schon belegt; Paket-Teil bindet nur
+die Bestellerin; Storno lässt den späteren Auftrag nachrücken; Freemailer; Admin; gleichzeitige Buchungen; ein Stand
+während einer Lieferung). „Ungedeckt“ = Domain-Überhang des Monats minus Paket-Abbuchungen der Domain-Konten = 0.

@@ -123,7 +123,7 @@ class Plan(unittest.TestCase):
             mock.patch.object(self.m, "get_db", side_effect=verbindung),
             mock.patch.object(self.m.billing, "get_db", side_effect=verbindung),
             mock.patch.object(self.m.billing, "_konto_fuer", side_effect=lambda uid: uid),
-            mock.patch.object(self.m.billing, "_pakete_abbuchen", side_effect=lambda conn, konto: None),
+            mock.patch.object(self.m.billing, "_pakete_abbuchen", side_effect=lambda conn, konto, neu=0: None),
             mock.patch.object(self.m.billing, "preis_pruefung",
                               side_effect=lambda uid, preis: {"preis": preis, "verfuegbar": None, "erlaubt": True, "fehlend": 0}),
         ]

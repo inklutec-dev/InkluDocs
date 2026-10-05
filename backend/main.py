@@ -2017,9 +2017,8 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
     inhaber = _require_team_inhaber(user)
     plan = billing.effektiver_plan(inhaber)
     kontingent = billing.PLAN_KONTINGENTE[plan]
-    verbraucht = billing.monats_verbrauch(inhaber["id"])
-    # Dieselbe Rechnung wie verfuegbare_credits (Nachkontrolle Runde 3, R1/R2) — nur fuer das Inhaber-Konto.
-    g = billing.guthaben(inhaber["id"], plan, kontingent, verbraucht)
+    # Dieselbe Rechnung wie verfuegbare_credits (Nachkontrolle Runde 3, R1/R2) — nur fuer das Inhaber-Konto, ein Stand.
+    g = billing.guthaben(inhaber["id"], plan, kontingent)
     conn = get_db()
     try:
         # Inhaber + Mitglieder in einer Abfrage; verbraucht_monat je Person =
@@ -2055,7 +2054,7 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
         "kontingent": kontingent,
         "uebertrag": g["uebertrag"],
         "verfuegbar_monat": g["verfuegbar_monat"],
-        "verbraucht_gesamt": verbraucht,
+        "verbraucht_gesamt": g["verbraucht"],
         "rest": g["rest"],
         "vorgemerkt": g["vorgemerkt_laufend"],
         "verfuegbar_nach_vormerkung": g["verfuegbar_gesamt"],

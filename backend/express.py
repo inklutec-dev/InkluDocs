@@ -1515,33 +1515,14 @@ def liefern(auftrag_id: int, person: dict, trotz_befunden: bool = False) -> dict
             aktion = LEISTUNGEN[p["leistung"]].aktion        # unbekannte Leistung: schon oben als „fehlt“ abgewiesen
             posten[aktion] = posten.get(aktion, 0) + int(p["credits"] or 0)
         bestellt = str(a["bestellt_am"] or "")
-        frueherer_monat = bool(bestellt) and bestellt[:7] < _jetzt().strftime("%Y-%m")
         cur = conn.execute("UPDATE express_auftraege SET status = 'geliefert', geliefert_am = datetime('now'), geliefert_von = ?, "
                            "updated_at = datetime('now') WHERE id = ? AND status IN ('neu', 'in_arbeit', 'rueckfrage')",
                            (person["name"][:120], int(auftrag_id)))
         if cur.rowcount != 1:
             conn.execute("ROLLBACK")
             raise ExpressFehler("Der Auftrag ist schon abgeschlossen.", 409)
-        for aktion, credits in posten.items():
-            if credits <= 0:
-                continue
-            if frueherer_monat:
-                conn.execute("INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, image_id, created_at) "
-                             "VALUES (?, ?, 'express', ?, ?, NULL, ?)", (user_id, konto, aktion, credits, bestellt))
-            else:
-                conn.execute("INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, image_id) "
-                             "VALUES (?, ?, 'express', ?, ?, NULL)", (user_id, konto, aktion, credits))
-        if frueherer_monat:
-            billing.pakete_abbuchen_fuer_monat(conn, konto, bestellt)
-            # Lag der Auftrag ueber mehr als einen Monatswechsel offen, fehlt der aufgebrauchte Uebertrag auch in den
-            # Monaten dazwischen — deren Ueberhang ebenso nachbuchen (Nachkontrolle Runde 3, R1; so rechnet auch
-            # billing._express_bindung vorher).
-            for monat in billing._monate(bestellt[:7], _jetzt().strftime("%Y-%m"))[1:]:
-                billing.pakete_abbuchen_fuer_monat(conn, konto, f"{monat}-01 00:00:00")
-        # Immer auch der laufende Monat (Nachpruefung Entwicklung 05.10.2026, N1): die rueckdatierten Ereignisse senken den
-        # Uebertrag in diesen Monat; ein so entstandener Ueberhang geht gleich von den Paketen ab, nicht erst bei der
-        # naechsten Buchung (sonst zeigte InkluDocs bis dahin zu viel Guthaben).
-        billing._pakete_abbuchen(conn, konto)
+        # Verbrauch buchen und Pakete abbuchen (Befund 1, N1, Runde 4; Free-Domain: Runde 5) — billing.lieferung_buchen.
+        billing.lieferung_buchen(conn, user_id, konto, posten, bestellt, int(auftrag_id))
         _verlauf_eintrag(conn, int(auftrag_id), "geliefert", "Ergebnisse stehen zum Herunterladen bereit", person["name"], True)
         conn.execute("COMMIT")
     except ExpressFehler:
