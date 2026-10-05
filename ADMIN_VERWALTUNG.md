@@ -208,3 +208,12 @@ gekostet haben — gesamt, nach Zweck, nach Kunde (aufklappbar bis Projekt und B
 Die Kundenseite zeigt die gemessenen KI-Kosten statt der Pauschale (für die Zeit vor dem Messbeginn weiter als
 Schätzung). Einzelheiten: `docs/KI_KOSTEN.md`.
 
+
+# EXPRESS-AUFTRÄGE (Stand 05.10.2026, nur Staging)
+
+Bereich `/verwaltung/express` (Link „Express-Aufträge“, nur wenn `EXPRESS_SERVICE=an`): Posteingang des Express-Service
+nach Dringlichkeit, je Auftrag Übernehmen, Rückfrage, Ergebnis/Prüfbericht hochladen (veraPDF läuft mit), Liefern,
+Stornieren; darunter die Einstellungen (Preise je Seite — Platzhalter —, Frist, Grenzen, Benachrichtigung) und das Recht
+„Express-Bearbeiter“ (sieht nur die Express-Aufträge). Lesen: Admins und Bearbeiter; arbeiten: Voll-Admins und
+Bearbeiter; Einstellungen und Bearbeiter vergeben: nur Voll-Admins. Einzelheiten: `docs/EXPRESS_SERVICE.md`.
+

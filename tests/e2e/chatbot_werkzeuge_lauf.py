@@ -84,9 +84,11 @@ try:
         schalter = json.loads(roh)
     except (IndexError, ValueError):
         schalter = {}
-    check("Seite bekommt die Schalter aus funktionen.py (window.FUNKTIONEN, alles aus)",
+    # „express“ (05.10.2026) haengt an der Umgebung (EXPRESS_SERVICE, Staging an) — nur pruefen, dass er da ist.
+    express_an = schalter.pop("express", None)
+    check("Seite bekommt die Schalter aus funktionen.py (window.FUNKTIONEN, alles aus; express je Umgebung)",
           set(schalter) == {"ki_pruefung", "korrektur", "eigene_pruefungen", "urteil", "kette", "text_zurueck", "strukturansicht"}
-          and not any(schalter.values()), schalter)
+          and not any(schalter.values()) and isinstance(express_an, bool), schalter)
 
     print("== Chatbot-Werkzeuge im Container ==")
     subprocess.run(["sudo", "-n", "bash", "-c", "cat /home/openclaw/.openclaw/workspace/InkluDocs/tests/e2e/chatbot_werkzeuge_probe.py > /tmp/cwp.py && "

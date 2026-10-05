@@ -10453,8 +10453,6 @@ msgstr "Dit udvalg er tomt."
 msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen."
 msgstr "Dit udvalg er tomt. Tilføj først dokumenter."
 
-msgid "Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits."
-msgstr "Dit udvalg: {d} dokumenter, {s} sider, {c} kreditter."
 
 msgid "Der Auftrag konnte nicht geladen werden."
 msgstr "Ordren kunne ikke indlæses."
@@ -10891,29 +10889,17 @@ msgstr "frigivet, intet trukket"
 msgid "{c} Credits, {stand}"
 msgstr "{c} kreditter, {stand}"
 
-msgid "{d} Dokumente, {c} Credits"
-msgstr "{d} dokumenter, {c} kreditter"
 
-msgid "{d} Dokumente, {s} Seiten"
-msgstr "{d} dokumenter, {s} sider"
 
-msgid "{name}: {s} Seiten, {leistung}, {c} Credits"
-msgstr "{name}: {s} sider, {leistung}, {c} kreditter"
 
 msgid "{n} Dokumente"
 msgstr "{n} dokumenter"
 
-msgid "{n} Dokumente hinzugefügt."
-msgstr "{n} dokumenter tilføjet."
 
-msgid "{n} Dokumente im Projekt, {w} davon wählbar."
-msgstr "{n} dokumenter i projektet, heraf {w} der kan vælges."
 
 msgid "{n} Seiten"
 msgstr "{n} sider"
 
-msgid "{s} Seiten, {leistung}, {c} Credits"
-msgstr "{s} sider, {leistung}, {c} kreditter"
 
 msgid "{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage"
 msgstr "{u} forsinkede, {n} nye, {a} i gang, {r} venter på kunden"
@@ -10938,3 +10924,27 @@ msgstr "Jeg accepterer betingelserne for ekspresservicen."
 
 msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
 msgstr "Jeg accepterer, at medarbejdere hos InkluTec og vores partner Actino ser, behandler og kontrollerer mine dokumenter."
+
+msgid "1 Dokument"
+msgstr "1 dokument"
+
+msgid "1 Seite"
+msgstr "1 side"
+
+msgid "Deine Auswahl: {dokumente}, {seiten}, {c} Credits."
+msgstr "Dit udvalg: {dokumente}, {seiten}, {c} kreditter."
+
+msgid "Hinzugefügt: {dokumente}."
+msgstr "Tilføjet: {dokumente}."
+
+msgid "Im Projekt: {dokumente}, davon wählbar: {w}."
+msgstr "I projektet: {dokumente}, kan vælges: {w}."
+
+msgid "{name}: {seiten}, {leistung}, {c} Credits"
+msgstr "{name}: {seiten}, {leistung}, {c} kreditter"
+
+msgid "{seiten}, {leistung}, {c} Credits"
+msgstr "{seiten}, {leistung}, {c} kreditter"
+
+msgid "{dokumente}, {c} Credits"
+msgstr "{dokumente}, {c} kreditter"

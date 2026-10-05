@@ -81,6 +81,12 @@
     ['geliefert', t('Geliefert (die letzten 100)')], ['storniert', t('Storniert (die letzten 100)')],
   ];
 
+  function mehrzahl(n, eins, viele) {
+    // „1 Dokument“ statt „1 Dokumente“ (Hörtest-Tauglichkeit, 05.10.2026)
+    return Number(n) === 1 ? t(eins) : t(viele, { n: new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0) });
+  }
+  const DOK = (n) => mehrzahl(n, '1 Dokument', '{n} Dokumente');
+  const SEITEN = (n) => mehrzahl(n, '1 Seite', '{n} Seiten');
   function stunden(h) { return V.zahl(Math.abs(Math.round(h))); }
 
   function fristText(a) {
@@ -94,7 +100,7 @@
     const link = V.el('a', null, t('Auftrag {nr}', { nr: a.id }));
     link.href = '/verwaltung/express/' + a.id;
     li.appendChild(link);
-    const teile = [a.kunde_name || t('gelöschtes Konto'), t('{d} Dokumente, {s} Seiten', { d: a.dokumente, s: V.zahl(a.seiten_gesamt) })];
+    const teile = [a.kunde_name || t('gelöschtes Konto'), DOK(a.dokumente) + ', ' + SEITEN(a.seiten_gesamt)];
     const frist = fristText(a);
     if (frist) teile.push(frist);
     if (a.status === 'geliefert') teile.push(t('geliefert am {datum}', { datum: V.datumZeit(a.geliefert_am) }));

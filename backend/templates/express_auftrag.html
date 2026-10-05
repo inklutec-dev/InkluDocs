@@ -64,6 +64,12 @@
     ziel.appendChild(s);
     return s;
   }
+  function mehrzahl(n, eins, viele) {
+    // „1 Dokument“ statt „1 Dokumente“ (Hörtest-Tauglichkeit, 05.10.2026)
+    return Number(n) === 1 ? t(eins) : t(viele, { n: new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0) });
+  }
+  const DOK = (n) => mehrzahl(n, '1 Dokument', '{n} Dokumente');
+  const SEITEN = (n) => mehrzahl(n, '1 Seite', '{n} Seiten');
   function leistungText(l) { return l === 'pruefen' ? t('Nur prüfen (Prüfbericht)') : t('Barrierefrei aufbereiten (mit Prüfung)'); }
 
   function zeigen(a) {
@@ -130,8 +136,8 @@
     const ul = el('ul', 'verwaltung-liste');
     a.positionen.forEach((p) => {
       const li = el('li', 'verwaltung-zeile');
-      li.appendChild(el('p', 'verwaltung-meta', t('{name}: {s} Seiten, {leistung}, {c} Credits',
-        { name: p.dokument_name, s: zahl(p.seiten), leistung: leistungText(p.leistung), c: zahl(p.credits) })));
+      li.appendChild(el('p', 'verwaltung-meta', t('{name}: {seiten}, {leistung}, {c} Credits',
+        { name: p.dokument_name, seiten: SEITEN(p.seiten), leistung: leistungText(p.leistung), c: zahl(p.credits) })));
       if (p.verapdf) li.appendChild(el('p', 'dash-sub', p.verapdf.bestanden ? t('Automatische PDF/UA-Prüfung (veraPDF): bestanden.')
         : t('Automatische PDF/UA-Prüfung (veraPDF): {text}', { text: p.verapdf.zusammenfassung || t('mit Hinweisen') })));
       const links = el('p', 'no-print ex-aktionen');

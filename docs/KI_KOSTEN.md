@@ -79,7 +79,8 @@ Tabellen (Überschriften, „Begriff: Wert“, Listen), Kunden und Projekte zum 
 Öffnen geladen.
 
 - Monat wählbar (deutsche Monatsgrenzen wie beim Umsatz): KI-Kosten, Umsatz, was bleibt, Aufrufe, verbrauchte
-  Credits, **Kosten je Credit im Schnitt** neben der bisherigen Pauschale, erfasst seit
+  Credits, **Kosten je Credit im Schnitt** neben der bisherigen Pauschale (ohne Express-Credits — die bezahlen
+  Handarbeit, keine KI), erfasst seit
 - Nach Zweck, nach Kunde (teuerste zuerst; je Kunde Credits und Umsatz im Monat; Projekte → Bilder), nach Modell
 - Preisliste mit Quelle, künftigen Stufen und den Dialogen „Preis ändern“ / „Wechselkurs ändern“
 

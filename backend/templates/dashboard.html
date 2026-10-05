@@ -369,7 +369,7 @@
       h3.appendChild(link);
       const meta = document.createElement('p');
       meta.className = 'dash-meta';
-      meta.textContent = (stand[a.status] || a.status) + ' · ' + t('{d} Dokumente, {c} Credits', { d: a.dokumente, c: a.credits_gesamt });
+      meta.textContent = (stand[a.status] || a.status) + ' · ' + t('{dokumente}, {c} Credits', { dokumente: Number(a.dokumente) === 1 ? t('1 Dokument') : t('{n} Dokumente', { n: a.dokumente }), c: a.credits_gesamt });
       li.appendChild(h3);
       li.appendChild(meta);
       ul.appendChild(li);

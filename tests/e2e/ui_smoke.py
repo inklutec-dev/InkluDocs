@@ -57,9 +57,12 @@ SEITEN = [
     ("/prompts", "Meine Prompts"),
     ("/stammdaten", "Meine Stammdaten"),
     ("/geteilte-projekte", "Geteilte Projekte"),
+    ("/express", "Express-Service"),             # 05.10.2026, nur wenn EXPRESS_SERVICE an ist (Staging)
+    ("/express/bedingungen", "Express-Bedingungen"),
     ("/verwaltung/kunden", "Kunden"),
     ("/verwaltung/umsatz", "Umsatz"),
     ("/verwaltung/ki-kosten", "KI-Kosten"),
+    ("/verwaltung/express", "Express-Aufträge"),
     ("/verwaltung/api", "API"),
     ("/verwaltung/einstellungen", "Verwaltung Einstellungen"),
     ("/datensicherheit", "Datensicherheit"),

@@ -85,6 +85,15 @@ Die sechs Bausteine:
 - Chatbot: `tools/pdf.py` (korrektur_anwenden, korrektur_rueckgaengig)
 - Tests und Doku: `tests/test_pdf_messung.py`, `tests/e2e/verify_korrektur.py`, `docs/TAGGING.md`
 
+## Express-Service (Profis bereiten auf, Stufe 1, nur Staging)
+
+- Kern: `backend/express.py` (Warenkorb, Bestellung, Vormerkung, Liefern, Storno, Erinnerungen, Nachweis)
+- Endpunkte: `backend/express_api.py` (Kunde und Verwaltung, Mails); Guthaben `billing.vorgemerkt`; Schalter `funktionen.EXPRESS`
+- Oberfläche: `templates/express.html`, `express_auftrag.html`, `express_bedingungen.html`, `verwaltung_express.html`, `verwaltung_express_auftrag.html`; Link in `frontend/dokument.js`
+- Prompt und Schema: keine (Handarbeit)
+- Chatbot: bewusst noch keiner (zahlungspflichtige Bestellung nur über den Knopf), siehe Doku
+- Tests und Doku: `tests/test_express.py`, `tests/e2e/verify_express.py`, `ui_express.py`, `docs/EXPRESS_SERVICE.md`
+
 ## Querschnitt
 
 - Abrechnung: `backend/billing.py` (AKTIONS_PREISE: eine Zeile je kostenpflichtiger Aktion, GUELTIGE_QUELLEN)

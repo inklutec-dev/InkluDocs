@@ -188,7 +188,7 @@ GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export", "taggin
 # Verfuegung, sind aber noch nicht verbraucht. Abgebucht wird erst bei der Lieferung (express.liefern, Quelle
 # „express“), beim Storno werden sie wieder frei. Kein eigener Kontostand: die Summe kommt jedes Mal aus
 # express_auftraege (Status neu/in_arbeit/rueckfrage).
-EXPRESS_OFFEN = ("neu", "in_arbeit", "rueckfrage")
+EXPRESS_OFFEN = ("neu", "in_arbeit", "rueckfrage")   # bei Aenderung auch das SQL in vorgemerkt() anpassen
 
 
 def vorgemerkt(konto_id: int, conn=None) -> int:
@@ -197,9 +197,10 @@ def vorgemerkt(konto_id: int, conn=None) -> int:
     try:
         if eigene_conn:
             conn = get_db()
+        # Feste Liste im SQL (= EXPRESS_OFFEN), damit der Platzhalter-Check in verify_admin die Werte zaehlen kann.
         row = conn.execute(
-            "SELECT COALESCE(SUM(credits_gesamt), 0) FROM express_auftraege WHERE konto_user_id = ? AND status IN "
-            "(" + ",".join("?" * len(EXPRESS_OFFEN)) + ")", (konto_id, *EXPRESS_OFFEN)).fetchone()
+            "SELECT COALESCE(SUM(credits_gesamt), 0) FROM express_auftraege WHERE konto_user_id = ? "
+            "AND status IN ('neu', 'in_arbeit', 'rueckfrage')", (konto_id,)).fetchone()
         return int(row[0] or 0)
     except Exception:  # noqa: BLE001 — Tabelle fehlt (alte Datenbank) oder Lesefehler: nichts vorgemerkt
         return 0

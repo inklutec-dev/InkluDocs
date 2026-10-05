@@ -1018,9 +1018,10 @@ def mail_kunde(art: str, a: dict, basis_url: str, text: str = "") -> tuple:
     link = f"{basis_url.rstrip('/')}/express/auftrag/{a['id']}"
     hallo = f"Hallo {a.get('ansprechpartner') or a.get('kunde_name') or ''},".replace(" ,", ",")
     n = len(a.get("positionen") or [])
+    seiten = int(a.get("seiten_gesamt") or a.get("seiten") or 0)
     if art == "bestellt":
         return (f"Dein Express-Auftrag {a['id']} ist eingegangen", _mail_html([
-            hallo, f"wir haben deinen Auftrag erhalten: {n} Dokument{'e' if n != 1 else ''}, {a.get('seiten_gesamt') or a.get('seiten')} Seiten.",
+            hallo, f"wir haben deinen Auftrag erhalten: {n} Dokument{'e' if n != 1 else ''}, {seiten} Seite{'n' if seiten != 1 else ''}.",
             f"Dafür sind {a.get('credits_gesamt') or a.get('credits')} Credits vorgemerkt. Abgebucht wird erst bei der Lieferung.",
             f"Wir liefern innerhalb von {a.get('frist_stunden')} Stunden. Den Stand siehst du jederzeit in deiner Auftragsübersicht."],
             link, "Auftragsübersicht öffnen"))

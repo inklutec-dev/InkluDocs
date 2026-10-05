@@ -10756,8 +10756,6 @@ msgstr "Votre sélection est vide."
 msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen."
 msgstr "Votre sélection est vide. Veuillez d’abord ajouter des documents."
 
-msgid "Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits."
-msgstr "Votre sélection : {d} documents, {s} pages, {c} crédits."
 
 msgid "Der Auftrag konnte nicht geladen werden."
 msgstr "La commande n’a pas pu être chargée."
@@ -11194,29 +11192,17 @@ msgstr "libérés, rien débité"
 msgid "{c} Credits, {stand}"
 msgstr "{c} crédits, {stand}"
 
-msgid "{d} Dokumente, {c} Credits"
-msgstr "{d} documents, {c} crédits"
 
-msgid "{d} Dokumente, {s} Seiten"
-msgstr "{d} documents, {s} pages"
 
-msgid "{name}: {s} Seiten, {leistung}, {c} Credits"
-msgstr "{name} : {s} pages, {leistung}, {c} crédits"
 
 msgid "{n} Dokumente"
 msgstr "{n} documents"
 
-msgid "{n} Dokumente hinzugefügt."
-msgstr "{n} documents ajoutés."
 
-msgid "{n} Dokumente im Projekt, {w} davon wählbar."
-msgstr "{n} documents dans le projet, dont {w} sélectionnables."
 
 msgid "{n} Seiten"
 msgstr "{n} pages"
 
-msgid "{s} Seiten, {leistung}, {c} Credits"
-msgstr "{s} pages, {leistung}, {c} crédits"
 
 msgid "{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage"
 msgstr "{u} en retard, {n} nouvelles, {a} en cours, {r} en attente du client"
@@ -11241,3 +11227,27 @@ msgstr "J’accepte les conditions du service express."
 
 msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
 msgstr "J’accepte que des collaborateurs d’InkluTec et de notre partenaire Actino consultent, modifient et vérifient mes documents."
+
+msgid "1 Dokument"
+msgstr "1 document"
+
+msgid "1 Seite"
+msgstr "1 page"
+
+msgid "Deine Auswahl: {dokumente}, {seiten}, {c} Credits."
+msgstr "Votre sélection : {dokumente}, {seiten}, {c} crédits."
+
+msgid "Hinzugefügt: {dokumente}."
+msgstr "Ajouté : {dokumente}."
+
+msgid "Im Projekt: {dokumente}, davon wählbar: {w}."
+msgstr "Dans le projet : {dokumente}, sélectionnables : {w}."
+
+msgid "{name}: {seiten}, {leistung}, {c} Credits"
+msgstr "{name} : {seiten}, {leistung}, {c} crédits"
+
+msgid "{seiten}, {leistung}, {c} Credits"
+msgstr "{seiten}, {leistung}, {c} crédits"
+
+msgid "{dokumente}, {c} Credits"
+msgstr "{dokumente}, {c} crédits"

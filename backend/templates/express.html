@@ -111,6 +111,12 @@
   }
   const STATUS = { neu: t('Eingegangen'), in_arbeit: t('In Bearbeitung'), rueckfrage: t('Rückfrage an dich'),
                    geliefert: t('Geliefert'), storniert: t('Storniert') };
+  function mehrzahl(n, eins, viele) {
+    // „1 Dokument“ statt „1 Dokumente“ (Hörtest-Tauglichkeit, 05.10.2026)
+    return Number(n) === 1 ? t(eins) : t(viele, { n: new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0) });
+  }
+  const DOK = (n) => mehrzahl(n, '1 Dokument', '{n} Dokumente');
+  const SEITEN = (n) => mehrzahl(n, '1 Seite', '{n} Seiten');
   function leistungText(l) {
     return l === 'pruefen' ? t('Nur prüfen (Prüfbericht)') : t('Barrierefrei aufbereiten (mit Prüfung)');
   }
@@ -162,7 +168,7 @@
     leer.value = '';
     sel.appendChild(leer);
     (r.ok ? r.daten.projekte : []).forEach((p) => {
-      const o = el('option', null, p.name + ' (' + t('{n} Dokumente', { n: p.dokumente }) + ')');
+      const o = el('option', null, p.name + ' (' + DOK(p.dokumente) + ')');
       o.value = String(p.id);
       sel.appendChild(o);
     });
@@ -190,7 +196,7 @@
       box.name = 'exDok';
       box.value = String(d.id);
       let text = d.name;
-      if (d.seiten) text += ', ' + t('{n} Seiten', { n: zahl(d.seiten) });
+      if (d.seiten) text += ', ' + SEITEN(d.seiten);
       if (d.im_warenkorb) { box.disabled = true; text += ' — ' + t('schon in deiner Auswahl'); }
       else if (!d.seiten) { box.disabled = true; text += ' — ' + (d.grund === 'keine PDF' ? t('keine PDF, nicht möglich') : d.grund); }
       else { waehlbar++; if (allesAnhaken) box.checked = true; }
@@ -202,7 +208,7 @@
     byId('exAlle').checked = !!allesAnhaken && waehlbar > 0;
     byId('exAlle').disabled = waehlbar === 0;
     form.hidden = false;
-    announce(t('{n} Dokumente im Projekt, {w} davon wählbar.', { n: r.daten.dokumente.length, w: waehlbar }));
+    announce(t('Im Projekt: {dokumente}, davon wählbar: {w}.', { dokumente: DOK(r.daten.dokumente.length), w: waehlbar }));
   }
 
   byId('exProjektForm').addEventListener('submit', (e) => {
@@ -232,7 +238,7 @@
     stand.warenkorb = r.daten.warenkorb;
     auswahl();
     await dokumenteLaden(byId('exProjekt').value, false);
-    let text = t('{n} Dokumente hinzugefügt.', { n: r.daten.hinzugefuegt }) + ' ' + summeText();
+    let text = t('Hinzugefügt: {dokumente}.', { dokumente: DOK(r.daten.hinzugefuegt) }) + ' ' + summeText();
     if (r.daten.hinweise && r.daten.hinweise.length) text += ' ' + r.daten.hinweise.join(' ');
     announce(text);
   });
@@ -263,7 +269,7 @@
   function summeText() {
     const w = stand.warenkorb;
     if (!w.dokumente) return t('Deine Auswahl ist leer.');
-    return t('Deine Auswahl: {d} Dokumente, {s} Seiten, {c} Credits.', { d: w.dokumente, s: zahl(w.seiten), c: zahl(w.credits) });
+    return t('Deine Auswahl: {dokumente}, {seiten}, {c} Credits.', { dokumente: DOK(w.dokumente), seiten: SEITEN(w.seiten), c: zahl(w.credits) });
   }
 
   function auswahl() {
@@ -273,7 +279,7 @@
     byId('exSumme').textContent = summeText();
     w.positionen.forEach((p) => {
       const li = el('li', 'verwaltung-zeile');
-      li.appendChild(el('p', 'verwaltung-meta', p.dokument_name + ', ' + t('{n} Seiten', { n: zahl(p.seiten) })
+      li.appendChild(el('p', 'verwaltung-meta', p.dokument_name + ', ' + SEITEN(p.seiten)
         + (p.vorhanden ? '' : ' — ' + t('nicht mehr vorhanden, bitte entfernen'))));
       const feld = el('div', 'dash-field');
       const lab = el('label', null, t('Leistung für {name}', { name: p.dokument_name }));
@@ -323,7 +329,7 @@
     const ul = byId('exAufstellung');
     ul.innerHTML = '';
     w.positionen.forEach((p) => ul.appendChild(el('li', 'verwaltung-zeile',
-      t('{name}: {s} Seiten, {leistung}, {c} Credits', { name: p.dokument_name, s: zahl(p.seiten), leistung: leistungText(p.leistung), c: zahl(p.credits) }))));
+      t('{name}: {seiten}, {leistung}, {c} Credits', { name: p.dokument_name, seiten: SEITEN(p.seiten), leistung: leistungText(p.leistung), c: zahl(p.credits) }))));
     byId('exGesamt').textContent = w.dokumente ? t('Summe: {c} Credits', { c: zahl(w.credits) }) : t('Deine Auswahl ist leer.');
     byId('exGuthaben').textContent = stand.guthaben === null || stand.guthaben === undefined
       ? t('Dein Guthaben: unbegrenzt.') : t('Dein verfügbares Guthaben: {c} Credits.', { c: zahl(stand.guthaben) });
@@ -393,7 +399,7 @@
       link.href = '/express/auftrag/' + a.id;
       li.appendChild(link);
       let text = ': ' + t('bestellt am {datum}', { datum: datumZeit(a.bestellt_am) }) + ', ' + (STATUS[a.status] || a.status)
-        + ', ' + t('{d} Dokumente, {c} Credits', { d: a.dokumente, c: zahl(a.credits_gesamt) });
+        + ', ' + t('{dokumente}, {c} Credits', { dokumente: DOK(a.dokumente), c: zahl(a.credits_gesamt) });
       if (a.status === 'neu' || a.status === 'in_arbeit' || a.status === 'rueckfrage') text += ', ' + t('Lieferung innerhalb von {stunden} Stunden', { stunden: a.frist_stunden });
       if (a.status === 'geliefert' && a.geliefert_am) text += ', ' + t('geliefert am {datum}', { datum: datumZeit(a.geliefert_am) });
       li.appendChild(document.createTextNode(text));

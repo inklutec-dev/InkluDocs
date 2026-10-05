@@ -99,6 +99,12 @@
     if (versteckt) a.appendChild(V.el('span', 'visually-hidden', ': ' + versteckt));
     return a;
   }
+  function mehrzahl(n, eins, viele) {
+    // „1 Dokument“ statt „1 Dokumente“ (Hörtest-Tauglichkeit, 05.10.2026)
+    return Number(n) === 1 ? t(eins) : t(viele, { n: new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0) });
+  }
+  const DOK = (n) => mehrzahl(n, '1 Dokument', '{n} Dokumente');
+  const SEITEN = (n) => mehrzahl(n, '1 Seite', '{n} Seiten');
   function leistungText(l) { return l === 'pruefen' ? t('Nur prüfen (Prüfbericht)') : t('Barrierefrei aufbereiten (mit Prüfung)'); }
 
   async function aktion(pfad, body, meldung) {
@@ -225,7 +231,7 @@
     a.positionen.forEach((p) => {
       const li = V.el('li', 'verwaltung-zeile');
       li.appendChild(V.el('h3', 'verwaltung-unterkopf', p.dokument_name));
-      li.appendChild(V.el('p', null, t('{s} Seiten, {leistung}, {c} Credits', { s: V.zahl(p.seiten), leistung: leistungText(p.leistung), c: V.zahl(p.credits) })));
+      li.appendChild(V.el('p', null, t('{seiten}, {leistung}, {c} Credits', { seiten: SEITEN(p.seiten), leistung: leistungText(p.leistung), c: V.zahl(p.credits) })));
       const links = V.el('p', 'dash-actions');
       if (p.original_da) links.appendChild(link(t('Original herunterladen'), API + '/positionen/' + p.id + '/original', p.dokument_name));
       if (p.ergebnis_da) links.appendChild(link(t('Ergebnis herunterladen'), API + '/positionen/' + p.id + '/ergebnis', p.dokument_name));

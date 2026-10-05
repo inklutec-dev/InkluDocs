@@ -311,7 +311,9 @@ with sync_playwright() as p:
     pg.wait_for_timeout(800)
     pg.click("text=Konto löschen")
     pg.click("#loeschJa")
-    pg.wait_for_url("**/verwaltung/kunden**", timeout=10000)
+    # 05.10.2026: „**/verwaltung/kunden**“ passte schon auf die Kundenseite selbst (/verwaltung/kunden/<id>) — der Test lief
+    # dann los, bevor das Loeschen fertig war. Jetzt auf die LISTE warten (ohne /<id>).
+    pg.wait_for_url(re.compile(r".*/verwaltung/kunden(\?.*)?$"), timeout=20000)
     check("Konto gelöscht, zurück in der Kundenliste", "/verwaltung/kunden" in pg.url)
     r = pg.request.get(f"{BASE}/api/admin/umsatz")
     rest = [x for x in r.json()["buchungen"] if x["kunde_email"] == test_mail]
