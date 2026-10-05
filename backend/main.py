@@ -74,6 +74,7 @@ import tagging_api  # PDF-Tagging (22.09.2026)
 import abschluss    # Station „Abschlussprüfung“ (24.09.2026)
 import kette_api    # Kette „Komplett barrierefrei machen“ (22.09.2026)
 import api_dokumente_v1   # Public API v1: Dokumente (17.09.2026)
+import projekt_texte      # KI-Kontext und Seitentext einmal je Projekt (05.10.2026, docs/ANSICHTEN_LEISTUNG.md)
 from formular_processor import validiere_formular, FormularFehler
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, get_gettext, SUPPORTED_LANGUAGES
@@ -5360,19 +5361,23 @@ def _bilder_uebernehmen(conn, project_id: int, document_id: int, images: list, a
         # falsch haelt, nimmt „Neu generieren“ am Bild. Vorher lief es mit, bekam
         # einen Text, und der Text gewann ueber das Kennzeichen.
         autor_deko = bool(img.get("decorative_hint"))
+        # Texte einmal je Projekt (05.10.2026): KI-Kontext und Seitentext liegen in projekt_texte, das Bild verweist
+        # darauf (vorher je Bild kopiert — beim PDFix-Weg oft das ganze Dokument). Byte-gleich, nur nicht doppelt.
         conn.execute(
             """INSERT INTO images (project_id, document_id, page_number, image_index, image_path, context_text,
                width, height, xref, bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-               original_alt, page_view_path, page_text, docx_anker, status, image_type)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               original_alt, page_view_path, page_text, docx_anker, status, image_type, kontext_id, seitentext_id)
+               VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?)""",
             (project_id, document_id, img["page_number"], next_idx, img["image_path"],
-             img["context_text"], img["width"], img["height"], img.get("xref"),
+             img["width"], img["height"], img.get("xref"),
              bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
              ("dekorativ" if autor_deko else img.get("original_alt", "")),
-             img.get("page_view_path", ""), img.get("page_text", ""),
+             img.get("page_view_path", ""),
              img.get("docx_anker", ""),
              ("done" if autor_deko else "pending"),
-             ("dekorativ" if autor_deko else "unknown"))
+             ("dekorativ" if autor_deko else "unknown"),
+             projekt_texte.text_ablegen(conn, project_id, img.get("context_text")),
+             projekt_texte.text_ablegen(conn, project_id, img.get("page_text")))
         )
 
     # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg merken (fitz|pdfix)
@@ -6311,9 +6316,10 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
 
                 conn.execute(
                     """INSERT INTO images (project_id, document_id, page_number, image_index, image_path, context_text,
-                       width, height, xref, original_alt)
-                       VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ?)""",
-                    (project_id, document_id, idx, img_path, context_text, width, height, original_alt)
+                       width, height, xref, original_alt, kontext_id)
+                       VALUES (?, ?, 1, ?, ?, '', ?, ?, 0, ?, ?)""",
+                    (project_id, document_id, idx, img_path, width, height, original_alt,
+                     projekt_texte.text_ablegen(conn, project_id, context_text))   # Text einmal je Projekt (05.10.2026)
                 )
                 downloaded += 1
 
@@ -6636,7 +6642,7 @@ def _seitentext_lesen(image_id: int, user_id: Optional[int] = None, project_id: 
             img = conn.execute("SELECT * FROM images WHERE id = ? AND project_id = ?", (image_id, project_id)).fetchone()
         if not img:
             raise HTTPException(status_code=404, detail="Bild nicht gefunden")
-        text = img["page_text"]
+        text = projekt_texte.bild_seitentext(conn, img)
     finally:
         conn.close()
     return {"image_id": image_id, "seite": img["page_number"], "text": text or ""}
@@ -6789,6 +6795,7 @@ def _dokument_loeschen_sync(user_id: int, project_id: int, document_id: int) -> 
         conn.execute(f"DELETE FROM image_reviews WHERE image_id IN ({_ph})", _img_ids)
         conn.execute(f"DELETE FROM messages WHERE image_id IN ({_ph})", _img_ids)
     conn.execute("DELETE FROM images WHERE document_id = ? AND project_id = ?", (document_id, project_id))
+    projekt_texte.texte_aufraeumen(conn, project_id)   # Texte ohne Bild (05.10.2026)
     # Quickinfo-Werkzeug (27.08.2026): Formularfelder des Dokuments (+ Gast-Urteile, 28.08.).
     conn.execute("DELETE FROM feld_reviews WHERE feld_id IN "
                  "(SELECT id FROM formularfelder WHERE document_id = ? AND project_id = ?)", (document_id, project_id))
@@ -6907,6 +6914,7 @@ async def delete_image(project_id: int, image_id: int, user: dict = Depends(get_
     conn.execute("DELETE FROM image_reviews WHERE image_id = ?", (image_id,))
     conn.execute("DELETE FROM messages WHERE image_id = ?", (image_id,))
     conn.execute("DELETE FROM images WHERE id = ? AND project_id = ?", (image_id, project_id))
+    projekt_texte.texte_aufraeumen(conn, project_id)   # Texte ohne Bild (05.10.2026)
 
     removed_document = None
     doc_id = img.get("document_id")
@@ -6977,6 +6985,7 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
                         pass
 
     conn.execute("DELETE FROM images WHERE project_id = ?", (project_id,))
+    projekt_texte.projekt_texte_loeschen(conn, project_id)   # KI-Kontext und Seitentexte (05.10.2026)
     # Quickinfo-Werkzeug (27.08.2026): Formularfelder mit aufraeumen (+ Gast-Urteile, 28.08.).
     conn.execute("DELETE FROM feld_reviews WHERE feld_id IN (SELECT id FROM formularfelder WHERE project_id = ?)", (project_id,))
     conn.execute("DELETE FROM formularfelder WHERE project_id = ?", (project_id,))
@@ -7521,7 +7530,8 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
             img_original_alt = img["original_alt"] if img["original_alt"] else ""
 
             # KI-Kontext-Schalter: bei "aus" leeren Kontext an die KI geben.
-            effective_context = img["context_text"] if use_context else ""
+            # Text hinter dem Verweis bzw. (Altbestand) die alte Spalte — byte-gleich wie bisher (05.10.2026).
+            effective_context = projekt_texte.bild_kontext(conn, img) if use_context else ""
 
             # First pass: general prompt for type detection + alt-text
             result = await asyncio.get_event_loop().run_in_executor(
@@ -8013,7 +8023,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
 
         # KI-Kontext-Schalter (Projekt-Einstellung): bei "aus" keinen Kontext an die KI.
         _use_context = True if img["use_context"] is None else bool(img["use_context"])
-        regen_context = img["context_text"] if _use_context else ""
+        regen_context = projekt_texte.bild_kontext(conn, img) if _use_context else ""   # byte-gleich (05.10.2026)
         regen_ctx_mode = "mit" if _use_context else "ohne"
         # Ausgabesprache: aktuelle Projekt-Einstellung gilt auch fuer Einzel-Neu-Generieren.
         regen_lang = img["alt_language"] if img["alt_language"] in ALT_TEXT_LANGUAGES else "de"

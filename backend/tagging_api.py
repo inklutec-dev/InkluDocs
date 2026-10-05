@@ -33,6 +33,7 @@ import funktionen   # Funktionsschalter (30.09.2026)
 import concurrent.futures as _cf
 import json
 import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
+import projekt_texte  # Texte einmal je Projekt (05.10.2026)
 import logging
 import os
 import threading
@@ -974,6 +975,7 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
             conn.execute("DELETE FROM images WHERE document_id = ? AND project_id = ?", (document_id, project_id))
             methode = _d.bilder_uebernehmen(conn, project_id, document_id, images, "pdf", ziel)
             uebernommen = alt_texte_uebernehmen(conn, document_id, alte)
+            projekt_texte.texte_aufraeumen(conn, project_id)   # Texte der alten Bildzeilen ohne Verweis (05.10.2026)
             bericht["bilder"] = {"vorher": len(alte), "nachher": len(images), "uebernommen": uebernommen, "methode": methode}
             conn.execute(
                 "UPDATE documents SET original_path = ?, roh_path = COALESCE(NULLIF(roh_path, ''), ?), getaggt = 1, "

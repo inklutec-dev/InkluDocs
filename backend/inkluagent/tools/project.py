@@ -90,11 +90,13 @@ def list_project_images(project_id: int, user_id: int) -> dict[str, Any]:
         ).fetchall()
         img_rows = conn.execute(
             "SELECT i.id, i.page_number, i.image_index, i.image_type, i.alt_text, "
-            "i.alt_text_edited, i.langbeschreibung, i.context_text, i.width, i.height, "
+            # KI-Kontext nur die ersten 200 Zeichen, aus projekt_texte bzw. der alten Spalte (05.10.2026)
+            "i.alt_text_edited, i.langbeschreibung, substr(COALESCE(kt.text, i.context_text), 1, 200) AS context_text, i.width, i.height, "
             "i.status, i.konfidenz, i.needs_review, i.pipeline_steps, "
             "i.document_id, d.doc_index AS doc_index "
             "FROM images i "
             "LEFT JOIN documents d ON d.id = i.document_id "
+            "LEFT JOIN projekt_texte kt ON kt.id = i.kontext_id "
             "WHERE i.project_id = ? "
             "ORDER BY COALESCE(d.doc_index, 0), i.page_number, i.image_index, i.id ASC",
             (project_id,),
@@ -172,10 +174,11 @@ def get_image_metadata(image_id: int, project_id: int, user_id: int) -> dict[str
     conn.row_factory = sqlite3.Row
     try:
         row = conn.execute(
-            "SELECT id, project_id, page_number, image_index, image_path, image_type, "
-            "alt_text, alt_text_edited, langbeschreibung, context_text, width, height, "
-            "status, konfidenz, needs_review, pipeline_steps, validation_result, feedback "
-            "FROM images WHERE id = ? AND project_id = ?",
+            # KI-Kontext aus projekt_texte bzw. (Altbestand) der alten Spalte (05.10.2026)
+            "SELECT i.id, i.project_id, i.page_number, i.image_index, i.image_path, i.image_type, "
+            "i.alt_text, i.alt_text_edited, i.langbeschreibung, COALESCE(kt.text, i.context_text) AS context_text, i.width, i.height, "
+            "i.status, i.konfidenz, i.needs_review, i.pipeline_steps, i.validation_result, i.feedback "
+            "FROM images i LEFT JOIN projekt_texte kt ON kt.id = i.kontext_id WHERE i.id = ? AND i.project_id = ?",
             (image_id, project_id),
         ).fetchone()
     finally:

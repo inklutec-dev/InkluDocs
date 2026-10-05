@@ -805,6 +805,9 @@ def init_db():
     # der Kontexttexte aller Kunden (31 ms je Abfrage auf Staging). Nach _migrate_columns, weil document_id in alten
     # Datenbanken per ALTER entstanden ist.
     conn.execute("CREATE INDEX IF NOT EXISTS idx_images_document ON images(document_id, page_number, image_index)")
+    # Texte einmal je Projekt (05.10.2026): Tabelle projekt_texte + Indizes auf die Verweise (nach _migrate_columns).
+    import projekt_texte
+    projekt_texte.schema_anlegen(conn)
     conn.commit()
 
     conn.close()
@@ -1072,6 +1075,10 @@ def _migrate_columns(conn):
         # struktur_stand (Dateistempel von original_path und roh_path) zur Datei passt (tagging_api._struktur_daten).
         ("documents", "struktur_json", "ALTER TABLE documents ADD COLUMN struktur_json TEXT DEFAULT ''"),
         ("documents", "struktur_stand", "ALTER TABLE documents ADD COLUMN struktur_stand TEXT DEFAULT ''"),
+        # TEXTE EINMAL SPEICHERN (05.10.2026, projekt_texte.py): Verweise auf projekt_texte statt des je Bild kopierten
+        # KI-Kontexts bzw. Seitentexts. Die alten Spalten context_text/page_text bleiben (Rueckfall, Migration).
+        ("images", "kontext_id", "ALTER TABLE images ADD COLUMN kontext_id INTEGER"),
+        ("images", "seitentext_id", "ALTER TABLE images ADD COLUMN seitentext_id INTEGER"),
     ]
 
     for table, column, sql in migrations:
@@ -1367,6 +1374,8 @@ def delete_user_data(user_id: int):
         conn.execute("DELETE FROM image_reviews WHERE image_id IN "
                      "(SELECT id FROM images WHERE project_id = ?)", (p["id"],))
         conn.execute("DELETE FROM images WHERE project_id = ?", (p["id"],))
+        # Texte einmal je Projekt (05.10.2026): KI-Kontext und Seitentexte des Projekts.
+        conn.execute("DELETE FROM projekt_texte WHERE project_id = ?", (p["id"],))
         # Quickinfo-Werkzeug (27.08.2026): Formularfelder des Projekts (+ Gast-Urteile, 28.08.).
         conn.execute("DELETE FROM feld_reviews WHERE feld_id IN "
                      "(SELECT id FROM formularfelder WHERE project_id = ?)", (p["id"],))

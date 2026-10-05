@@ -90,8 +90,10 @@ def _verify_gegen_bild(image_id: int, project_id: int, alt_text: str) -> Optiona
     try:
         conn.row_factory = sqlite3.Row
         row = conn.execute(
-            "SELECT i.image_path, i.image_type, i.context_text, i.gen_language, "
+            # KI-Kontext aus projekt_texte bzw. (Altbestand) der alten Spalte (05.10.2026)
+            "SELECT i.image_path, i.image_type, COALESCE(kt.text, i.context_text) AS context_text, i.gen_language, "
             "p.alt_language FROM images i JOIN projects p ON p.id = i.project_id "
+            "LEFT JOIN projekt_texte kt ON kt.id = i.kontext_id "
             "WHERE i.id = ? AND i.project_id = ?",
             (image_id, project_id),
         ).fetchone()

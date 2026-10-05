@@ -5,6 +5,7 @@ import re
 from typing import Optional
 
 import billing  # Abo-/Credit-System Etappe 1
+import projekt_texte  # KI-Kontext einmal je Projekt (05.10.2026)
 from database import get_db
 
 log = logging.getLogger(__name__)
@@ -377,6 +378,8 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
             "WHERE i.id = ? AND i.project_id = ? AND p.user_id = ?",
             (image_id, project_id, user_id),
         ).fetchone()
+        # KI-Kontext: Text hinter dem Verweis bzw. (Altbestand) die alte Spalte — byte-gleich (05.10.2026)
+        kontext = projekt_texte.bild_kontext(conn, img) if img else ""
     finally:
         conn.close()
     if not img:
@@ -411,7 +414,7 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
 
     result = generate_alt_text(
         img["image_path"],
-        img["context_text"] or "",
+        kontext or "",
         img["image_type"] if img["image_type"] != "unknown" else None,
         img["width"] or 0,
         img["height"] or 0,
