@@ -564,7 +564,12 @@
     function bindAutosave() {
         document.querySelectorAll('.seg-ziel').forEach(ta => {
             let timer;
-            ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => speichern(Number(ta.dataset.segId), ta.value), 800); });
+            ta.addEventListener('input', () => {
+                const segId = Number(ta.dataset.segId);
+                // Offene Speicherung beim Ansichtswechsel sofort ausloesen (app.html, 05.10.2026)
+                if (typeof speicherungVormerken === 'function') { speicherungVormerken('segment_' + segId, () => speichern(segId, ta.value)); return; }
+                clearTimeout(timer); timer = setTimeout(() => speichern(segId, ta.value), 800);
+            });
         });
         document.querySelectorAll('details.page-section').forEach(d => d.addEventListener('toggle', () => {
             if (d.open) offeneAbschnitte.add(d.dataset.page); else offeneAbschnitte.delete(d.dataset.page);

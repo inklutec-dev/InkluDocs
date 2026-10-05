@@ -543,8 +543,11 @@
         document.querySelectorAll('.quickinfo-field').forEach(ta => {
             let timer;
             ta.addEventListener('input', () => {
+                const feldId = Number(ta.dataset.feldId);
+                // Offene Speicherung beim Ansichtswechsel sofort ausloesen (app.html, 05.10.2026)
+                if (typeof speicherungVormerken === 'function') { speicherungVormerken('quickinfo_' + feldId, () => speichern(feldId, ta.value)); return; }
                 clearTimeout(timer);
-                timer = setTimeout(() => speichern(Number(ta.dataset.feldId), ta.value), 800);
+                timer = setTimeout(() => speichern(feldId, ta.value), 800);
             });
         });
         document.querySelectorAll('details.page-section').forEach(d => d.addEventListener('toggle', () => {

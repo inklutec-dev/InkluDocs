@@ -281,6 +281,38 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/seitentext') : ('/api/images/' + imageId + '/seitentext');
     }
 
+    // ─── Offene Speicherungen (Ansichtswechsel-Umbau 05.10.2026) ─────────────
+    // Textfelder speichern 800 ms nach der letzten Eingabe. Bis 05.10. wartete darum jeder Ansichtswechsel fest
+    // 900 ms. Jetzt merkt sich jedes Feld seine anstehende Speicherung hier (Alt-Text hier, Quickinfo in formular.js,
+    // Uebersetzung in uebersetzen.js); der Wechsel loest sie SOFORT aus und wartet nur auf deren Antwort — ohne offene
+    // Eingabe 0 ms. Schon abgeschickte Speicherungen werden ebenso abgewartet (die neue Ansicht zeigt den neuen Stand).
+    const _ausstehendeSpeicherungen = new Map();   // Schluessel -> { fn, timer }
+    const _laufendeSpeicherungen = new Set();      // Promises abgeschickter Speicherungen
+    function _speicherungAusfuehren(schluessel, eintrag) {
+        if (_ausstehendeSpeicherungen.get(schluessel) === eintrag) _ausstehendeSpeicherungen.delete(schluessel);
+        clearTimeout(eintrag.timer);
+        let p;
+        try { p = Promise.resolve(eintrag.fn()); } catch (e) { p = Promise.resolve(); }
+        const q = p.catch(() => {}).finally(() => _laufendeSpeicherungen.delete(q));
+        _laufendeSpeicherungen.add(q);
+        return q;
+    }
+    function speicherungVormerken(schluessel, fn, verzoegerungMs) {
+        const alt = _ausstehendeSpeicherungen.get(schluessel);
+        if (alt) clearTimeout(alt.timer);
+        const eintrag = { fn: fn, timer: null };
+        eintrag.timer = setTimeout(() => _speicherungAusfuehren(schluessel, eintrag), verzoegerungMs == null ? 800 : verzoegerungMs);
+        _ausstehendeSpeicherungen.set(schluessel, eintrag);
+    }
+    async function alleAusstehendenSpeichern() {
+        Array.from(_ausstehendeSpeicherungen.entries()).forEach(([k, e]) => _speicherungAusfuehren(k, e));
+        if (!_laufendeSpeicherungen.size) return;
+        // Obergrenze 8 s: haengt das Netz, laeuft das Speichern im Hintergrund weiter, der Wechsel wartet nicht ewig.
+        await Promise.race([Promise.all(Array.from(_laufendeSpeicherungen)), new Promise(r => setTimeout(r, 8000))]);
+    }
+    window.speicherungVormerken = speicherungVormerken;
+    window.alleAusstehendenSpeichern = alleAusstehendenSpeichern;
+
     // ─── Init ────────────────────────────────────────
     async function init() {
         // Gast: erst direkt das Projekt versuchen — bei gültiger Gast-Sitzung
@@ -470,9 +502,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const grund = ansichtGesperrtWeil(currentProjectFuerAnsicht || {}, ziel);
         if (grund) { announce(t('Diese Ansicht ist nicht verfügbar: {grund}', { grund: grund })); return; }
         if (ziel === aktuelleAnsicht(currentProjectFuerAnsicht || {})) { announce(t('Diese Ansicht ist schon geöffnet.')); return; }
-        // Auto-Speichern (800 ms nach der letzten Eingabe) einen Moment Vorsprung geben; der PATCH selbst
-        // laeuft im Hintergrund weiter und geht durch den Neuaufbau der Ansicht nicht verloren.
-        await new Promise(r => setTimeout(r, 900));
+        // Offene Eingaben SOFORT speichern und auf die Antwort warten (05.10.2026; vorher feste 900 ms Wartezeit
+        // fuer das Auto-Speichern mit 800 ms Entprellung — bei jedem Wechsel, auch ohne Eingabe).
+        await alleAusstehendenSpeichern();
         const url = new URL(window.location.href);
         url.searchParams.set('projekt', projectId);
         url.searchParams.set('ansicht', ziel);
@@ -489,9 +521,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
     window.wechsleAnsicht = wechsleAnsicht;
     let currentProjectFuerAnsicht = null;
-    window.addEventListener('popstate', () => {
+    window.addEventListener('popstate', async () => {
         const pid = new URLSearchParams(window.location.search).get('projekt');
-        if (pid && !window.GUEST_MODE) showProject(pid);
+        if (pid && !window.GUEST_MODE) { await alleAusstehendenSpeichern(); showProject(pid); }
     });
 
     // ─── Project Detail ──────────────────────────────
@@ -3207,12 +3239,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         dokumentKoepfeAusrichten();
         seitentexteAnbinden(list);
 
-        // Auto-save alt-text on edit
+        // Auto-save alt-text on edit — 800 ms nach der letzten Eingabe; ein Ansichtswechsel loest offene Speicherungen
+        // sofort aus (speicherungVormerken/alleAusstehendenSpeichern, 05.10.2026).
         document.querySelectorAll('.alt-text-field:not(.langtext-field)').forEach(ta => {
-            let timeout;
             ta.addEventListener('input', () => {
-                clearTimeout(timeout);
-                timeout = setTimeout(async () => {
+                speicherungVormerken('alttext_' + ta.dataset.imageId, async () => {
                     const id = ta.dataset.imageId;
                     const res = await fetch(altTextSaveUrl(id), {
                         method: 'POST',
@@ -3249,7 +3280,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     }
                     const ind = document.getElementById('saved_' + id);
                     if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
-                }, 800);
+                });
             });
         });
 
