@@ -800,6 +800,13 @@ def init_db():
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 
+    # ANSICHTSWECHSEL (05.10.2026): Bilder eines Dokuments ueber einen Index finden. Ohne ihn las jede Abfrage
+    # „WHERE document_id = ?“ (Ansicht „Dokument“, Pruefung, Export, Word-Ansicht, Tagging) die ganze Tabelle samt
+    # der Kontexttexte aller Kunden (31 ms je Abfrage auf Staging). Nach _migrate_columns, weil document_id in alten
+    # Datenbanken per ALTER entstanden ist.
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_images_document ON images(document_id, page_number, image_index)")
+    conn.commit()
+
     conn.close()
 
     # T6 (03.05.2026, Phase A): Persistente Cache-Tabelle anlegen.
@@ -1060,6 +1067,11 @@ def _migrate_columns(conn):
         ("express_auftraege", "auftrag_name", "ALTER TABLE express_auftraege ADD COLUMN auftrag_name TEXT NOT NULL DEFAULT ''"),
         ("express_auftraege", "kunde_geloescht_am", "ALTER TABLE express_auftraege ADD COLUMN kunde_geloescht_am TEXT"),
         ("express_auftraege", "meldung_fehlversuche", "ALTER TABLE express_auftraege ADD COLUMN meldung_fehlversuche INTEGER NOT NULL DEFAULT 0"),
+        # ANSICHTSWECHSEL (05.10.2026, docs/ANSICHTEN_LEISTUNG.md): Struktur-Kennzahlen der Arbeitsdatei (tag_statistik,
+        # Seitenzahl, Metadaten) gemerkt statt bei jedem Aufruf der Ansicht „Dokument“ neu gerechnet; gueltig, solange
+        # struktur_stand (Dateistempel von original_path und roh_path) zur Datei passt (tagging_api._struktur_daten).
+        ("documents", "struktur_json", "ALTER TABLE documents ADD COLUMN struktur_json TEXT DEFAULT ''"),
+        ("documents", "struktur_stand", "ALTER TABLE documents ADD COLUMN struktur_stand TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:
