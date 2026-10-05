@@ -79,7 +79,14 @@ EINSTELLUNGEN_STANDARD = {
     # Datenschutz (Befund 14): Tage nach Lieferung/Storno, nach denen Originale, Ergebnisse und Pruefberichte geloescht
     # werden. 0 = nichts loeschen — Standard, bis Steve die Frist festlegt.
     "aufbewahrung_tage": 0,
+    # ZUSATZ 05.10.2026 (Steve): ohne Codeaenderung in der Verwaltung umschaltbar (wirken nur, solange Neu-Bestellen an ist).
+    # Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument der Projektansicht „Dokument“.
+    "korb_knopf": True,
+    # Eintrag „Express-Warenkorb“ in der Hauptnavigation: "immer" | "mit_inhalt" (nur wenn etwas im Warenkorb liegt) | "aus".
+    # Welcher Modus bleibt, bespricht Steve mit Michael.
+    "korb_navigation": "immer",
 }
+KORB_NAVIGATION = ("immer", "mit_inhalt", "aus")
 _KV = "express_einstellungen"
 ERINNERUNG_VORHER_STUNDEN = 12
 PRUEFUNG_HAENGT_MIN = 15                  # so lange darf eine automatische Pruefung laufen, danach „nicht geprueft“
@@ -402,6 +409,14 @@ def speichere_einstellungen(daten: dict) -> dict:
     if daten.get("aufbewahrung_tage") is not None:
         e["aufbewahrung_tage"] = _ganzzahl(daten.get("aufbewahrung_tage"), "Dateien löschen nach Tagen", 0, 3650,
                                            feld="aufbewahrung_tage")
+    if daten.get("korb_knopf") is not None:
+        e["korb_knopf"] = daten.get("korb_knopf") is True
+    if daten.get("korb_navigation") is not None:
+        modus = str(daten.get("korb_navigation") or "")
+        if modus not in KORB_NAVIGATION:
+            raise ExpressFehler("Express-Warenkorb in der Navigation: bitte „immer“, „nur wenn etwas im Warenkorb liegt“ "
+                                "oder „aus“ wählen.", feld="korb_navigation")
+        e["korb_navigation"] = modus
     mail = str(daten.get("team_mail") or "").strip()
     if mail and (len(mail) > 254 or not _MAIL_RE.match(mail)):
         raise ExpressFehler("Benachrichtigung an: bitte eine gültige E-Mail-Adresse oder leer lassen.", feld="team_mail")
@@ -482,6 +497,20 @@ def warenkorb(user_id: int) -> dict:
     return {"id": wid, "positionen": positionen, "dokumente": len(positionen),
             "seiten": sum(p["seiten"] for p in positionen), "credits": sum(p["credits"] for p in positionen),
             "fassung": _fassung(positionen, e)}
+
+
+def korb_kurz(user_id: int) -> dict:
+    """Fuer die Navigation („Express-Warenkorb: N Dokumente“): nur Zaehlen, keine Dateien oeffnen, keine Preise."""
+    conn = get_db()
+    try:
+        r = conn.execute("SELECT COUNT(x.id) AS n, COALESCE(SUM(x.seiten), 0) AS s FROM express_auftraege a "
+                         "LEFT JOIN express_positionen x ON x.auftrag_id = a.id "
+                         "WHERE a.user_id = ? AND a.status = 'entwurf'", (int(user_id),)).fetchone()
+    except sqlite3.OperationalError:
+        return {"dokumente": 0, "seiten": 0}
+    finally:
+        conn.close()
+    return {"dokumente": int(r["n"] or 0) if r else 0, "seiten": int(r["s"] or 0) if r else 0}
 
 
 def _grenzen_pruefen(dokumente: int, seiten: int, e: dict) -> None:

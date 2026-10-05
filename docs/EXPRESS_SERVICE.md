@@ -51,6 +51,32 @@ Menüpunkt „Express-Service“ (`/api/me` `user.express`): Schalter an oder ei
    als rohe JSON-Seite. Datum im PDF ausgeschrieben („5. Oktober 2026, 12:04“), „1 Seite“ in der Einzahl. Das Ergebnis
    der automatischen Prüfung sieht der Kunde nur als „bestanden“ bzw. „mit Hinweisen, die unser Team geprüft hat“.
 
+## Express-Warenkorb am Dokument und in der Navigation (Zusatz 05.10.2026, Steve)
+
+Zwei Abkürzungen zum Warenkorb, beide **ohne Codeänderung umschaltbar** in der Verwaltung unter „Einstellungen des
+Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksam, solange Neu-Bestellen an ist
+(`funktionen.EXPRESS`):
+
+- **Knopf „In den Express-Warenkorb“** (`korb_knopf`, Standard an): an jedem PDF-Dokument der Projektansicht „Dokument“,
+  dort wo „Umbenennen“ und „Löschen“ stehen (`frontend/dokument.js`, `Dokument.inExpressKorb`; nie im Gastzugang). Er
+  legt genau dieses Dokument in den Entwurfs-Korb — über denselben Endpunkt wie die Express-Seite
+  (`POST /api/express/warenkorb/dokumente`), also nur eigene Dokumente (Besitz im SQL). Bei Team-Konten ist der Korb
+  der des eigenen Kontos; gezahlt wird beim Bestellen aus dem Topf, aus dem das Konto dann arbeitet. Liegt das Dokument
+  schon im Korb, sagt die Meldung „… liegt schon im Express-Warenkorb“. Bestätigung: sichtbarer Satz unter den Knöpfen
+  mit Link „Zum Warenkorb“, der Fokus geht darauf — keine zusätzliche Live-Ansage. An die Oberfläche kommt der Schalter
+  als `window.FUNKTIONEN.express_korb_knopf` (`express_api.fuer_oberflaeche()`).
+- **Eintrag „Express-Warenkorb“ in der Hauptnavigation** (`korb_navigation`): „immer“ (Standard jetzt), „nur wenn etwas
+  im Warenkorb liegt“ (`mit_inhalt`) oder „aus“ — welcher Modus bleibt, bespricht Steve mit Michael. Mit Inhalt heißt
+  er „Express-Warenkorb: N Dokumente“ (Zahl als Text, Einzahl „1 Dokument“). Ändert sich die Zahl (Knopf am Dokument,
+  Hinzufügen/Entfernen auf der Express-Seite), wechselt der Text still (`window.expressKorbAnzeigen` in
+  `frontend/dashboard.js`) — die Bestätigung kommt vom auslösenden Knopf. Ziel ist `/express/warenkorb`: dieselbe Seite
+  wie `/express`, geöffnet bei „2. Deine Auswahl“ (Fokus dorthin), Titel „Express-Warenkorb“; `aria-current` trägt dort
+  nur dieser Eintrag, auf `/express` nur „Express-Service“. Daten: `/api/me` → `user.express_warenkorb` =
+  `{"modus", "dokumente"}` oder `null` (aus), gezählt mit `express.korb_kurz()` (ohne Dateien zu öffnen).
+- Tests: `tests/test_express.py` Klasse `WarenkorbZusatz`; `tests/e2e/verify_express.py` (Abschnitt A);
+  Klicktest mit axe `tests/e2e/ui_express_korb.py` (Knopf, Bestätigung, Fokus, stille Zahl, aria-current, alle drei
+  Modi, Knopf aus).
+
 ## Credits: vormerken, abbuchen, freigeben
 
 - **Bestellen merkt vor.** Die Summe offener Aufträge (Status neu, in Arbeit, Rückfrage) eines Topfs ist

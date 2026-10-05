@@ -113,6 +113,18 @@ try:
     check("Stand: Leistungen und Dateitypen aus der Liste", [l["schluessel"] for l in st["leistungen"]] == ["aufbereiten", "pruefen"]
           and [t["schluessel"] for t in st["dateitypen"]] == ["pdf"], (st.get("leistungen"), st.get("dateitypen")))
     check("/api/me meldet express", kunde.get("/api/me").json()["user"]["express"] is True)
+    # Zusatz 05.10.2026: Navigations-Eintrag „Express-Warenkorb“ und Knopf am Dokument (Einstellungen, ohne Codeaenderung)
+    check("/api/me: Express-Warenkorb (Modus immer, leer)", kunde.get("/api/me").json()["user"]["express_warenkorb"] == {"modus": "immer", "dokumente": 0})
+    r = kunde.get("/express/warenkorb")
+    check("Seite /express/warenkorb 200, Titel „Express-Warenkorb“, no-store", r.status_code == 200 and "<title>Express-Warenkorb" in r.text
+          and r.headers.get("cache-control") == "no-store", r.status_code)
+    check("Projektseite: window.FUNKTIONEN mit express_korb_knopf", '"express_korb_knopf": true' in kunde.get("/app").text)
+    r = voll.post("/api/admin/express/einstellungen", json=dict(EINST, korb_knopf=False, korb_navigation="aus"))
+    check("Einstellungen: Knopf aus, Navigation aus", r.status_code == 200 and r.json()["einstellungen"]["korb_navigation"] == "aus"
+          and kunde.get("/api/me").json()["user"]["express_warenkorb"] is None and '"express_korb_knopf": false' in kunde.get("/app").text, r.text[:200])
+    r = voll.post("/api/admin/express/einstellungen", json=dict(EINST, korb_navigation="manchmal"))
+    check("Einstellungen: unbekannter Navigations-Modus 400 mit Feld", r.status_code == 400 and r.json()["detail"].get("feld") == "korb_navigation")
+    voll.post("/api/admin/express/einstellungen", json=dict(EINST, korb_knopf=True, korb_navigation="immer"))
 
     print("== B. Upload ohne Projekt + Pruefungen ==")
     r = kunde.post("/api/express/warenkorb/hochladen", files={"file": ("bild.png", b"\x89PNG\r\n", "image/png")})

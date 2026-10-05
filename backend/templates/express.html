@@ -1,6 +1,6 @@
 {% extends "base_app.html" %}
 
-{% block title %}{{ _('Express-Service') }} · InkluDocs{% endblock %}
+{% block title %}{% if warenkorb_ansicht %}{{ _('Express-Warenkorb') }}{% else %}{{ _('Express-Service') }}{% endif %} · InkluDocs{% endblock %}
 
 {% block main %}
 {# EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Profis bereiten Dokumente auf oder prüfen sie. Ein Auftrag in vier
@@ -93,7 +93,7 @@
 {% endblock %}
 
 {% block page_script %}
-<script>window.EXPRESS_BESTELLEN = {{ 'true' if express_bestellen else 'false' }};</script>
+<script>window.EXPRESS_BESTELLEN = {{ 'true' if express_bestellen else 'false' }}; window.EXPRESS_WARENKORB = {{ 'true' if warenkorb_ansicht else 'false' }};</script>
 <script src="/static/hochladefeld.js?v={{ asset_version }}"></script>
 <script>
 {% raw %}
@@ -347,6 +347,8 @@
     const ul = byId('exAuswahl');
     ul.innerHTML = '';
     byId('exSumme').textContent = summeText();
+    // Zahl im Navigations-Eintrag „Express-Warenkorb“ mitführen — ohne eigene Ansage (die Bestätigung sagt es schon).
+    if (window.expressKorbAnzeigen) window.expressKorbAnzeigen(w.dokumente);
     w.positionen.forEach((p) => {
       const li = el('li', 'verwaltung-zeile');
       li.appendChild(el('p', 'verwaltung-meta', p.dokument_name + ', ' + SEITEN(p.seiten)
@@ -516,6 +518,8 @@
         // Vorwahl aus dem Projekt („Vom Express-Service bearbeiten lassen“): Dokumente gleich zeigen und ankreuzen —
         // ohne Ansage, die Liste steht sichtbar da (Befund 8).
         if (pid && byId('exProjekt').value === pid) await dokumenteLaden(pid, true, true);
+        // /express/warenkorb (Navigation „Express-Warenkorb“, Link „Zum Warenkorb“): gleich bei „2. Deine Auswahl“.
+        if (window.EXPRESS_WARENKORB) { byId('h-auswahl').scrollIntoView(); byId('h-auswahl').focus(); }
       }
     }
     await auftraegeLaden();

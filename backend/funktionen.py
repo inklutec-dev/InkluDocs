@@ -40,6 +40,10 @@ STRUKTURANSICHT = False
 # EXPRESS_SERVICE=an (docker-compose.staging.yml). Prod/ohne Variable: aus. In der Demo nie.
 EXPRESS = ((os.environ.get("EXPRESS_SERVICE") or "aus").strip().lower() in ("an", "on", "1", "true", "ja")
            and (os.environ.get("DEMO_MODE") or "off").strip().lower() not in ("on", "true", "1", "yes"))
+# Unterschalter des Express-Service ohne Codeaenderung (Zusatz 05.10.2026, Steve): Knopf „In den Express-Warenkorb“ am
+# Dokument und Eintrag „Express-Warenkorb“ in der Navigation (immer / nur mit Inhalt / aus) stehen in der Verwaltung unter
+# „Einstellungen des Express-Service“ (express.EINSTELLUNGEN_STANDARD korb_knopf, korb_navigation) und wirken nur, wenn
+# EXPRESS an ist. window.FUNKTIONEN.express_korb_knopf kommt aus express_api.fuer_oberflaeche().
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

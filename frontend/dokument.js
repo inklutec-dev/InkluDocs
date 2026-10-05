@@ -478,6 +478,9 @@
             knoepfe = hoerprobeKnopf
                 // auch OHNE Tags (Feedback 20260928 - 2, Punkt 5): dann unverändert bzw. nur mit Quickinfos, der Dialog sagt es vorher
                 + (!busy && seiten ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + (d.getaggt === true ? t('mit Alt-Texten und Quickinfos, kommt in die Ablage') : ((d.quickinfos_bearbeitet || 0) > 0 ? t('ohne Tags: ohne Alt-Texte, mit bearbeiteten Quickinfos') : t('ohne Tags: unverändert und kostenlos'))) + '</span></button>' : '')
+                // EXPRESS-WARENKORB (Zusatz 05.10.2026, Steve): genau dieses Dokument in den Warenkorb des Express-Service —
+                // eigener Schalter in der Verwaltung (window.FUNKTIONEN.express_korb_knopf), nie im Gastzugang
+                + (F.express_korb_knopf && !window.GUEST_MODE && seiten ? '<button type="button" class="doc-action-btn" id="dok_express_' + d.id + '" onclick="Dokument.inExpressKorb(' + d.id + ')">' + t('In den Express-Warenkorb') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
                 + '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
                 + '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>';
         }
@@ -503,7 +506,8 @@
                   + testHtml(project, d)
                   + berichtHtml(d, project)
                   + pruefungHtml(project, d)
-                : '')
+                // Bestätigung „In den Express-Warenkorb“: sichtbar, mit Link, Fokus darauf (keine zusätzliche Ansage)
+                : (F.express_korb_knopf && !window.GUEST_MODE ? '<p class="verwaltung-bestaetigung dok-express-meldung" id="dok_express_meldung_' + d.id + '" tabindex="-1" hidden></p>' : ''))
             + '</div></details></section>';
     }
 
@@ -1178,7 +1182,51 @@
             if (el.open) offenePruefungen.add(k); else offenePruefungen.delete(k);
         }));
     }
-    window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, testOeffnen, testSchliessen, testBestaetigt, meldungSchliessen, pollStoppen,
+    // ─── Express-Warenkorb (Zusatz 05.10.2026) ───
+    // Legt genau dieses Dokument in den Entwurfs-Korb (derselbe Endpunkt wie die Express-Seite: nur eigene Dokumente,
+    // Besitz im SQL). Ist es schon drin, sagt die Meldung das. Bestätigung: sichtbarer Satz mit Link „Zum Warenkorb“, Fokus
+    // darauf; die Zahl im Navigations-Eintrag wechselt still (expressKorbAnzeigen in dashboard.js).
+    async function inExpressKorb(docId) {
+        const meldung = document.getElementById('dok_express_meldung_' + docId);
+        if (!meldung || meldung.dataset.laeuft) return;
+        meldung.dataset.laeuft = '1';
+        let r = null, d = {};
+        try {
+            r = await fetch('/api/express/warenkorb/dokumente', { method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ document_ids: [docId] }) });
+            d = await r.json().catch(() => ({}));
+        } catch (e) { r = null; }
+        delete meldung.dataset.laeuft;
+        const zahl = (n) => { try { return new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0); } catch (e) { return String(n); } };
+        let text;
+        if (r && r.ok) {
+            const w = d.warenkorb || {};
+            const pos = (w.positionen || []).find((p) => p.document_id === docId);
+            const dok = Number(w.dokumente) === 1 ? t('1 Dokument') : t('{n} Dokumente', { n: zahl(w.dokumente) });
+            if (d.hinzugefuegt && pos) {
+                text = t('„{name}“ liegt jetzt im Express-Warenkorb.', { name: pos.dokument_name }) + ' '
+                    + t('Im Warenkorb: {dokumente}, {c} Credits.', { dokumente: dok, c: zahl(w.credits) });
+            } else if (pos) {
+                text = t('„{name}“ liegt schon im Express-Warenkorb.', { name: pos.dokument_name });
+            } else {
+                text = (d.hinweise || []).join(' ') || t('Das Dokument konnte nicht in den Express-Warenkorb gelegt werden.');
+            }
+            if (window.expressKorbAnzeigen) window.expressKorbAnzeigen(w.dokumente);
+        } else {
+            const x = d && d.detail;
+            text = (typeof x === 'string' ? x : (x && x.text)) || t('Das Dokument konnte nicht in den Express-Warenkorb gelegt werden.');
+        }
+        meldung.textContent = text + ' ';
+        const link = document.createElement('a');
+        link.href = '/express/warenkorb';
+        link.textContent = t('Zum Warenkorb');
+        meldung.appendChild(link);
+        meldung.hidden = false;
+        meldung.focus();
+    }
+
+    window.Dokument = { showProject, inExpressKorb, laufOeffnen, laufSchliessen, laufStarten, testOeffnen, testSchliessen, testBestaetigt, meldungSchliessen, pollStoppen,
                         ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig,
                         ergebnisSchliessen, hoerprobeOeffnen, hoerprobeSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden, testStarten,
                         pruefAbschlussText, korrAbschlussText, hoerprobeVorlesen };

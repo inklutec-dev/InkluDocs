@@ -125,7 +125,9 @@ with sync_playwright() as p:
     check("Kein Knopf „Alt-Texte bearbeiten“; Umbenennen / Löschen da", pg.locator("section.dok-karte button:has-text('Alt-Texte bearbeiten')").count() == 0 and pg.locator("section.dok-karte button:has-text('Umbenennen')").count() == 1 and pg.locator("section.dok-karte button:has-text('Löschen')").count() == 1)
     check("Ungetaggt: keine Hörprobe, aber „PDF herunterladen“ (Feedback 20260928 - 2, Punkt 5)", pg.locator("button[id^=dok_hp_]").count() == 0 and pg.locator("button[id^=dok_export_]").count() == 1)
     kn0 = [x.split("\n")[0].strip() for x in pg.locator("section.dok-karte .dok-werkbank .ausgabe-aktionen button").all_inner_texts()]
-    check("Ungetaggt: Knöpfe PDF herunterladen, Umbenennen, Löschen", kn0 == ["PDF herunterladen", "Umbenennen", "Löschen"], kn0)
+    # Express-Warenkorb (Zusatz 05.10.2026, Steve): eigener Knopf neben Umbenennen/Löschen, solange sein Schalter an ist.
+    KORB = ["In den Express-Warenkorb"] if pg.evaluate("() => !!(window.FUNKTIONEN || {}).express_korb_knopf") else []
+    check("Ungetaggt: Knöpfe PDF herunterladen, (Express-Warenkorb,) Umbenennen, Löschen", kn0 == ["PDF herunterladen"] + KORB + ["Umbenennen", "Löschen"], kn0)
     verbraucht0 = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
     pg.click("button[id^=dok_export_]"); pg.wait_for_timeout(800)
     for _ in range(20):
@@ -149,7 +151,8 @@ with sync_playwright() as p:
     check("Knöpfe unter der Linie, darunter nichts weiter (Punkt 2)",
           pg.locator("section.dok-karte .ausgabe-text button").count() == 0
           and pg.evaluate("getComputedStyle(document.querySelector('.dok-werkbank')).borderTopStyle") == "solid"
-          and pg.evaluate("document.querySelector('.dok-werkbank').children.length") == 1)
+          # die Bestätigung „In den Express-Warenkorb“ liegt versteckt darunter und erscheint erst nach dem Klick
+          and pg.evaluate("[...document.querySelector('.dok-werkbank').children].filter((c) => !c.hidden).length") == 1)
     axe(pg, "Ansicht Dokument vor dem Lauf")
 
     print("== A1. Ansicht Tagging (Feedback 20260928 - 2, Punkte 1, 6, 7) ==")
@@ -297,8 +300,8 @@ with sync_playwright() as p:
     check("PDF-Standard nach dem Tagging: PDF/UA-1, Sprache de-DE", "PDF-Standard: PDF/UA-1" in mt and "de-DE" in mt, mt)
     check("Kein Testmodus-Hinweis in den Dokumentinfos (Punkt 7)", "Testmodus" not in mt)
     kn = [x.split("\n")[0].strip() for x in pg.locator("section.dok-karte .dok-werkbank .ausgabe-aktionen button").all_inner_texts()]
-    check("Knöpfe genau: Hörprobe, PDF herunterladen, Umbenennen, Löschen (Punkt 1)", kn == ["Hörprobe", "PDF herunterladen", "Umbenennen", "Löschen"], kn)
-    check("Unter den Knöpfen nichts weiter: kein Ergebnis, kein Bericht, kein Testlauf, kein Hinweis (Punkt 2)", pg.evaluate("document.querySelector('.dok-werkbank').children.length") == 1 and pg.locator("section.dok-karte details.dok-bericht, section.dok-karte details.dok-test, section.dok-karte .dok-ergebnis").count() == 0)
+    check("Knöpfe genau: Hörprobe, PDF herunterladen, (Express-Warenkorb,) Umbenennen, Löschen (Punkt 1)", kn == ["Hörprobe", "PDF herunterladen"] + KORB + ["Umbenennen", "Löschen"], kn)
+    check("Unter den Knöpfen nichts weiter: kein Ergebnis, kein Bericht, kein Testlauf, kein Hinweis (Punkt 2)", pg.evaluate("[...document.querySelector('.dok-werkbank').children].filter((c) => !c.hidden).length") == 1 and pg.locator("section.dok-karte details.dok-bericht, section.dok-karte details.dok-test, section.dok-karte .dok-ergebnis").count() == 0)
     axe(pg, "Ansicht Dokument nach dem Lauf")
     # Feedback 28.09.2026 - 1, Punkt 4: „PDF herunterladen“ öffnet dieselbe Rückfrage wie früher in „Alt-Texte“ — nur mit der PDF
     pg.click("button[id^=dok_export_]")

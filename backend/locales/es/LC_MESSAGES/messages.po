@@ -11339,3 +11339,42 @@ msgstr "«{datei}» se ha guardado como informe de comprobación de «{name}»."
 
 msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
 msgstr "«{name}» subido y añadido a la selección."
+
+msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
+msgstr "No se ha podido añadir el documento al carrito exprés."
+
+msgid "Express-Warenkorb"
+msgstr "Carrito exprés"
+
+msgid "Express-Warenkorb in der Navigation"
+msgstr "Carrito exprés en la navegación"
+
+msgid "Express-Warenkorb: {dokumente}"
+msgstr "Carrito exprés: {dokumente}"
+
+msgid "Im Warenkorb: {dokumente}, {c} Credits."
+msgstr "En el carrito: {dokumente}, {c} créditos."
+
+msgid "In den Express-Warenkorb"
+msgstr "Añadir al carrito exprés"
+
+msgid "Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)"
+msgstr "Botón «Añadir al carrito exprés» en cada documento PDF (vista «Documento» del proyecto)"
+
+msgid "Zum Warenkorb"
+msgstr "Ir al carrito"
+
+msgid "aus"
+msgstr "desactivado"
+
+msgid "immer"
+msgstr "siempre"
+
+msgid "nur wenn etwas im Warenkorb liegt"
+msgstr "solo si hay algo en el carrito"
+
+msgid "„{name}“ liegt jetzt im Express-Warenkorb."
+msgstr "«{name}» ya está en el carrito exprés."
+
+msgid "„{name}“ liegt schon im Express-Warenkorb."
+msgstr "«{name}» ya estaba en el carrito exprés."

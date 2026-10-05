@@ -3,6 +3,7 @@
 Kunde (angemeldet):
   GET  /express                                   Seite: neuer Auftrag (Warenkorb) + Meine Auftraege
   GET  /express/auftrag/{id}                      Seite: Auftragsuebersicht (Nachweis, druckbar)
+  GET  /express/warenkorb                         Seite: dieselbe, geoeffnet bei „Deine Auswahl“ (Navigation, Zusatz 05.10.)
   GET  /express/bedingungen                       Seite: Bedingungen (ENTWURF)
   GET  /api/express/stand                         Warenkorb, Leistungen und Preise, Dateitypen, Frist, Guthaben
   GET  /api/express/projekte                      eigene Projekte mit Dokumenten eines angebotenen Dateityps
@@ -137,6 +138,30 @@ def aktiv() -> bool:
 def _an() -> None:
     if not aktiv():
         raise HTTPException(status_code=404, detail="Not Found")
+
+
+def fuer_oberflaeche() -> dict:
+    """Zusatz zu funktionen.fuer_oberflaeche() (window.FUNKTIONEN in app.html): Knopf „In den Express-Warenkorb“ am
+    Dokument — nur bei eingeschaltetem Neu-Bestellen UND Einstellung korb_knopf (Verwaltung, ohne Codeaenderung)."""
+    try:
+        an = bool(funktionen.EXPRESS) and bool(express.einstellungen().get("korb_knopf"))
+    except Exception:  # noqa: BLE001
+        an = False
+    return {"express_korb_knopf": an}
+
+
+def korb_fuer_me(user_id: int):
+    """Fuer /api/me: {"modus", "dokumente"} des Navigations-Eintrags „Express-Warenkorb“ oder None (Eintrag aus)."""
+    if not funktionen.EXPRESS:
+        return None
+    try:
+        modus = express.einstellungen().get("korb_navigation") or "immer"
+        if modus == "aus":
+            return None
+        return {"modus": modus, "dokumente": express.korb_kurz(user_id)["dokumente"]}
+    except Exception:  # noqa: BLE001
+        log.exception("Express-Warenkorb fuer /api/me nicht lesbar (Konto %s)", user_id)
+        return None
 
 
 def _person(user_id: int) -> dict:
@@ -320,6 +345,13 @@ def build_router(deps: Deps) -> APIRouter:
     async def seite_express(request: Request):
         _an()
         return _ohne_cache(_d.render_seite(request, "express.html", express_bestellen=bool(funktionen.EXPRESS)))
+
+    @router.get("/express/warenkorb", response_class=HTMLResponse)
+    async def seite_warenkorb(request: Request):
+        """Ziel des Navigations-Eintrags „Express-Warenkorb“ und des Links „Zum Warenkorb“: dieselbe Seite wie /express,
+        geoeffnet bei „2. Deine Auswahl“ (eigene Adresse, damit die Navigation sie als aktuelle Seite markieren kann)."""
+        _neu_an()
+        return _ohne_cache(_d.render_seite(request, "express.html", express_bestellen=True, warenkorb_ansicht=True))
 
     @router.get("/express/auftrag/{auftrag_id}", response_class=HTMLResponse)
     async def seite_auftrag(auftrag_id: int, request: Request):

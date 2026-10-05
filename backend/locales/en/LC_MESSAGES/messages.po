@@ -11337,3 +11337,42 @@ msgstr "“{datei}” has been saved as the check report for “{name}”."
 
 msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
 msgstr "“{name}” uploaded and added to the selection."
+
+msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
+msgstr "The document could not be added to the express cart."
+
+msgid "Express-Warenkorb"
+msgstr "Express cart"
+
+msgid "Express-Warenkorb in der Navigation"
+msgstr "Express cart in the navigation"
+
+msgid "Express-Warenkorb: {dokumente}"
+msgstr "Express cart: {dokumente}"
+
+msgid "Im Warenkorb: {dokumente}, {c} Credits."
+msgstr "In the cart: {dokumente}, {c} credits."
+
+msgid "In den Express-Warenkorb"
+msgstr "Add to express cart"
+
+msgid "Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)"
+msgstr "Button “Add to express cart” on every PDF document (project view “Document”)"
+
+msgid "Zum Warenkorb"
+msgstr "Go to cart"
+
+msgid "aus"
+msgstr "off"
+
+msgid "immer"
+msgstr "always"
+
+msgid "nur wenn etwas im Warenkorb liegt"
+msgstr "only when the cart is not empty"
+
+msgid "„{name}“ liegt jetzt im Express-Warenkorb."
+msgstr "“{name}” is now in the express cart."
+
+msgid "„{name}“ liegt schon im Express-Warenkorb."
+msgstr "“{name}” is already in the express cart."

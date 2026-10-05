@@ -11036,3 +11036,42 @@ msgstr "„{datei}“ er gemt som kontrolrapport for „{name}“."
 
 msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
 msgstr "„{name}“ uploadet og føjet til udvalget."
+
+msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
+msgstr "Dokumentet kunne ikke lægges i ekspres-kurven."
+
+msgid "Express-Warenkorb"
+msgstr "Ekspres-kurv"
+
+msgid "Express-Warenkorb in der Navigation"
+msgstr "Ekspres-kurv i navigationen"
+
+msgid "Express-Warenkorb: {dokumente}"
+msgstr "Ekspres-kurv: {dokumente}"
+
+msgid "Im Warenkorb: {dokumente}, {c} Credits."
+msgstr "I kurven: {dokumente}, {c} kreditter."
+
+msgid "In den Express-Warenkorb"
+msgstr "Læg i ekspres-kurven"
+
+msgid "Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)"
+msgstr "Knappen „Læg i ekspres-kurven“ ved hvert PDF-dokument (projektvisningen „Dokument“)"
+
+msgid "Zum Warenkorb"
+msgstr "Til kurven"
+
+msgid "aus"
+msgstr "fra"
+
+msgid "immer"
+msgstr "altid"
+
+msgid "nur wenn etwas im Warenkorb liegt"
+msgstr "kun når der ligger noget i kurven"
+
+msgid "„{name}“ liegt jetzt im Express-Warenkorb."
+msgstr "„{name}“ ligger nu i ekspres-kurven."
+
+msgid "„{name}“ liegt schon im Express-Warenkorb."
+msgstr "„{name}“ ligger allerede i ekspres-kurven."

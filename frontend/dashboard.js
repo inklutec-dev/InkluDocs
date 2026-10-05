@@ -177,7 +177,10 @@ const NAV_ITEMS = [
   { href: '/projekte', label: t('Meine Projekte') },
   { href: '/ablage', label: t('Meine Ablage') },   // Sicherung der barrierefreien Office-Dokumente inkl. Pruefbericht (11.09.2026)
   // EXPRESS-SERVICE (05.10.2026): Profis bereiten Dokumente auf — nur, wenn die Funktion an ist (/api/me user.express).
-  { href: '/express', label: t('Express-Service'), express: true, bereich: '/express' },
+  { href: '/express', label: t('Express-Service'), express: true, bereich: '/express', ausser: ['/express/warenkorb'] },
+  // Express-Warenkorb (Zusatz 05.10.2026, Steve): fester Eintrag mit Anzahl als Text; Anzeige-Modus in der Verwaltung
+  // (immer / nur mit Inhalt / aus, /api/me user.express_warenkorb). Text siehe expressKorbText().
+  { href: '/express/warenkorb', label: '', korb: true },
   // 25.08.2026 (Michael): „Meine Prompts“ wie „Meine Projekte“.
   { href: '/prompts', label: t('Meine Prompts') },
   // QUICKINFO-WERKZEUG (27.08.2026): Stammdaten-Bibliothek fuer Formularfelder, gleiche Stelle wie die Prompts.
@@ -211,6 +214,32 @@ const OEFFENTLICH_NAV = [
 function istAnonym() {
   return !!window.GUEST_MODE || (!!window.OEFFENTLICH && !currentUser);
 }
+
+// ─── Express-Warenkorb in der Navigation (Zusatz 05.10.2026) ───
+function expressKorbSichtbar() {
+  const k = currentUser && currentUser.express_warenkorb;
+  if (!k) return false;
+  return k.modus === 'immer' || (k.modus === 'mit_inhalt' && Number(k.dokumente) > 0);
+}
+
+function expressKorbText() {
+  const n = Number((currentUser && currentUser.express_warenkorb && currentUser.express_warenkorb.dokumente) || 0);
+  if (!n) return t('Express-Warenkorb');
+  // Zahl als Text, nicht nur als Symbol; Einzahl wie auf der Express-Seite.
+  const dok = n === 1 ? t('1 Dokument') : t('{n} Dokumente', { n: new Intl.NumberFormat(window.LANG || 'de').format(n) });
+  return t('Express-Warenkorb: {dokumente}', { dokumente: dok });
+}
+
+// Neue Anzahl nach Hinzufügen/Entfernen: Text still austauschen (keine eigene Ansage — die Bestätigung kommt vom
+// auslösenden Knopf). Muss der Eintrag erscheinen oder verschwinden (Modus „nur mit Inhalt“), wird die Leiste neu gebaut.
+window.expressKorbAnzeigen = function (n) {
+  if (!currentUser || !currentUser.express_warenkorb) return;
+  const vorher = expressKorbSichtbar();
+  currentUser.express_warenkorb.dokumente = Number(n) || 0;
+  const a = document.querySelector('a[data-express-korb]');
+  if (a && expressKorbSichtbar()) { a.textContent = expressKorbText(); return; }
+  if (vorher !== expressKorbSichtbar()) renderSidebar();
+};
 
 function renderSidebar() {
   const host = byId('appSidebar');
@@ -272,11 +301,14 @@ function renderSidebar() {
     if (it.admin && !(currentUser && currentUser.is_admin)) return;
     if (it.express && !(currentUser && currentUser.express)) return;
     if (it.bearbeiter && !(currentUser && currentUser.express_bearbeiter && !currentUser.is_admin)) return;
+    if (it.korb && !expressKorbSichtbar()) return;
     const li = document.createElement('li');
     const a = document.createElement('a');
     a.href = it.href;
-    a.textContent = it.label;
-    if (path === it.href || (it.bereich && (path === it.bereich || path.startsWith(it.bereich + '/')))) {
+    a.textContent = it.korb ? expressKorbText() : it.label;
+    if (it.korb) a.setAttribute('data-express-korb', '');
+    if ((path === it.href || (it.bereich && (path === it.bereich || path.startsWith(it.bereich + '/'))))
+        && !(it.ausser && it.ausser.includes(path))) {
       a.setAttribute('aria-current', 'page');
     }
     li.appendChild(a);

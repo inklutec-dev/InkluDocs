@@ -857,6 +857,61 @@ class Erweiterbar(Basis):
             express.dateityp_fuer_upload("a.docx", b"PK\x03\x04")
 
 
+class WarenkorbZusatz(Basis):
+    """Zusatz 05.10.2026 (Steve): Knopf „In den Express-Warenkorb“ am Dokument und Eintrag „Express-Warenkorb“ in der
+    Navigation — beides ohne Codeaenderung in den Express-Einstellungen umschaltbar, nur bei eingeschaltetem Express."""
+
+    BASIS = {"preise": {"aufbereiten": "50", "pruefen": "25"}, "frist_stunden": "48", "max_seiten_auftrag": "500",
+             "max_dokumente_auftrag": "50"}
+
+    def test_standard_und_umschalten(self):
+        e = express.einstellungen()
+        self.assertEqual((e["korb_knopf"], e["korb_navigation"]), (True, "immer"))
+        e = express.speichere_einstellungen(dict(self.BASIS, korb_knopf=False, korb_navigation="mit_inhalt"))
+        self.assertEqual((e["korb_knopf"], e["korb_navigation"]), (False, "mit_inhalt"))
+        e = express.speichere_einstellungen(dict(self.BASIS))                 # ohne Angabe: bleibt, wie es war
+        self.assertEqual((e["korb_knopf"], e["korb_navigation"]), (False, "mit_inhalt"))
+        with self.assertRaises(express.ExpressFehler) as fe:
+            express.speichere_einstellungen(dict(self.BASIS, korb_navigation="manchmal"))
+        self.assertEqual(fe.exception.extra.get("feld"), "korb_navigation")
+
+    def test_korb_kurz_zaehlt_nur_den_eigenen_entwurf(self):
+        self.assertEqual(express.korb_kurz(1), {"dokumente": 0, "seiten": 0})
+        express.dokumente_hinzufuegen(1, [self.d1, self.d2])
+        self.assertEqual(express.korb_kurz(1), {"dokumente": 2, "seiten": 3})
+        self.assertEqual(express.korb_kurz(2), {"dokumente": 0, "seiten": 0})
+        self._guthaben(1000)
+        self._bestellen()                                                      # bestellt = kein Warenkorb mehr
+        self.assertEqual(express.korb_kurz(1)["dokumente"], 0)
+
+    def test_knopf_legt_nur_eigene_dokumente_und_meldet_doppelte(self):
+        # Der Knopf am Dokument nutzt denselben Weg wie die Express-Seite (dokumente_hinzufuegen): Besitz im SQL.
+        r = express.dokumente_hinzufuegen(1, [self.d1])
+        self.assertEqual(r["hinzugefuegt"], 1)
+        r = express.dokumente_hinzufuegen(1, [self.d1])
+        self.assertEqual(r["hinzugefuegt"], 0)
+        self.assertIn(self.d1, [p["document_id"] for p in r["warenkorb"]["positionen"]])
+        with self.assertRaises(express.ExpressFehler) as fe:
+            express.dokumente_hinzufuegen(2, [self.d1])                         # fremdes Dokument
+        self.assertEqual(fe.exception.status, 404)
+
+    def test_schalter_fuer_oberflaeche_und_navigation(self):
+        import express_api
+        import funktionen
+        express.dokumente_hinzufuegen(1, [self.d1])
+        with mock.patch.object(funktionen, "EXPRESS", True):
+            self.assertEqual(express_api.fuer_oberflaeche(), {"express_korb_knopf": True})
+            self.assertEqual(express_api.korb_fuer_me(1), {"modus": "immer", "dokumente": 1})
+            express.speichere_einstellungen(dict(self.BASIS, korb_knopf=False, korb_navigation="aus"))
+            self.assertEqual(express_api.fuer_oberflaeche(), {"express_korb_knopf": False})
+            self.assertIsNone(express_api.korb_fuer_me(1))
+            express.speichere_einstellungen(dict(self.BASIS, korb_knopf=True, korb_navigation="mit_inhalt"))
+            self.assertEqual(express_api.korb_fuer_me(2), {"modus": "mit_inhalt", "dokumente": 0})
+        with mock.patch.object(funktionen, "EXPRESS", False):                  # Schalter aus: beides weg
+            self.assertEqual(express_api.fuer_oberflaeche(), {"express_korb_knopf": False})
+            self.assertIsNone(express_api.korb_fuer_me(1))
+
+
 class NurPdf(unittest.TestCase):
     def test_heute_nur_pdf(self):
         self.assertEqual([t.schluessel for t in express.angebotene_dateitypen()], ["pdf"])

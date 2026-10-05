@@ -45,7 +45,15 @@
       <label for="exvMail">{{ _('Benachrichtigungen an (leer = Support-Postfach)') }}</label>
       <input type="email" id="exvMail" class="dash-input" maxlength="254" autocomplete="off">
     </div>
-    <p><label><input type="checkbox" id="exvFest"> {{ _('Preise sind festgelegt (kein Platzhalter mehr)') }}</label></p>
+    <p class="verwaltung-wahl"><label><input type="checkbox" id="exvFest"> {{ _('Preise sind festgelegt (kein Platzhalter mehr)') }}</label></p>
+    {# Zusatz 05.10.2026 (Steve): ohne Codeänderung umschaltbar; wirkt nur, solange Neu-Bestellen an ist. #}
+    <p class="verwaltung-wahl"><label><input type="checkbox" id="exvKorbKnopf"> {{ _('Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)') }}</label></p>
+    <fieldset class="ex-fieldset" id="exvKorbNav">
+      <legend>{{ _('Express-Warenkorb in der Navigation') }}</legend>
+      <p class="verwaltung-wahl"><label><input type="radio" name="exvKorbNav" id="exvKorbNav_immer" value="immer"> {{ _('immer') }}</label></p>
+      <p class="verwaltung-wahl"><label><input type="radio" name="exvKorbNav" id="exvKorbNav_mit_inhalt" value="mit_inhalt"> {{ _('nur wenn etwas im Warenkorb liegt') }}</label></p>
+      <p class="verwaltung-wahl"><label><input type="radio" name="exvKorbNav" id="exvKorbNav_aus" value="aus"> {{ _('aus') }}</label></p>
+    </fieldset>
     <p id="exvEinstFehler" role="alert" class="verwaltung-fehler"></p>
     <button type="submit" class="btn btn-primary" id="exvEinstKnopf">{{ _('Einstellungen speichern') }}</button>
   </form>
@@ -204,6 +212,9 @@
     byId('exvMail').value = e.team_mail || '';
     byId('exvFest').checked = !!e.preise_festgelegt;
     byId('exvPlatzhalter').hidden = !!e.preise_festgelegt;
+    byId('exvKorbKnopf').checked = e.korb_knopf !== false;
+    const nav = byId('exvKorbNav_' + (e.korb_navigation || 'immer'));
+    if (nav) nav.checked = true;
     byId('exvEinstForm').querySelectorAll('input, button').forEach((x) => { x.disabled = !darf; });
     if (!darf) byId('exvEinstKnopf').hidden = true;
   }
@@ -221,7 +232,10 @@
       preise: preise, frist_stunden: byId('exvFrist').value,
       max_seiten_auftrag: byId('exvMaxSeiten').value, max_dokumente_auftrag: byId('exvMaxDok').value,
       aufbewahrung_tage: byId('exvAufbewahrung').value,
-      team_mail: byId('exvMail').value, preise_festgelegt: byId('exvFest').checked });
+      team_mail: byId('exvMail').value, preise_festgelegt: byId('exvFest').checked,
+      korb_knopf: byId('exvKorbKnopf').checked,
+      // Eine der drei Möglichkeiten ist immer gewählt (vorbelegt aus den Einstellungen).
+      korb_navigation: (document.querySelector('input[name="exvKorbNav"]:checked') || {}).value || undefined });
     einstLaeuft = false;
     if (!r.ok) {
       // Fehler am Feld, Fokus dorthin; ohne Feld bleibt die Meldung unter dem Formular (Befund 4).

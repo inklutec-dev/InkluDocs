@@ -11339,3 +11339,42 @@ msgstr "« {datei} » est enregistré comme rapport de vérification pour « {na
 
 msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
 msgstr "« {name} » envoyé et ajouté à la sélection."
+
+msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
+msgstr "Le document n’a pas pu être ajouté au panier express."
+
+msgid "Express-Warenkorb"
+msgstr "Panier express"
+
+msgid "Express-Warenkorb in der Navigation"
+msgstr "Panier express dans la navigation"
+
+msgid "Express-Warenkorb: {dokumente}"
+msgstr "Panier express : {dokumente}"
+
+msgid "Im Warenkorb: {dokumente}, {c} Credits."
+msgstr "Dans le panier : {dokumente}, {c} crédits."
+
+msgid "In den Express-Warenkorb"
+msgstr "Ajouter au panier express"
+
+msgid "Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)"
+msgstr "Bouton « Ajouter au panier express » sur chaque document PDF (vue « Document » du projet)"
+
+msgid "Zum Warenkorb"
+msgstr "Aller au panier"
+
+msgid "aus"
+msgstr "désactivé"
+
+msgid "immer"
+msgstr "toujours"
+
+msgid "nur wenn etwas im Warenkorb liegt"
+msgstr "uniquement si le panier n’est pas vide"
+
+msgid "„{name}“ liegt jetzt im Express-Warenkorb."
+msgstr "« {name} » est maintenant dans le panier express."
+
+msgid "„{name}“ liegt schon im Express-Warenkorb."
+msgstr "« {name} » est déjà dans le panier express."

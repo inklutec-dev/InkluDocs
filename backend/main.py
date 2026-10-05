@@ -893,6 +893,8 @@ async def me(user: dict = Depends(get_current_user)):
             # auch nach dem Abschalten erreichbar, Befund 9), Neu-Bestellen nur bei Schalter an, Recht „Express-Bearbeiter“.
             "express": bool(funktionen.EXPRESS) or express.hat_bestellte(db_user["id"]),
             "express_bestellen": bool(funktionen.EXPRESS),
+            # Navigations-Eintrag „Express-Warenkorb“ (Zusatz 05.10.2026): {"modus", "dokumente"} oder None = aus.
+            "express_warenkorb": express_api.korb_fuer_me(db_user["id"]),
             "express_bearbeiter": bool(db_user.get("express_bearbeiter")) and express_api.aktiv(),
         },
         # deprecated: altes Tages-Limit — bleibt bis zur Frontend-Umstellung
@@ -11983,7 +11985,7 @@ async def app_page(request: Request):
     return _render_protected_template(request, "app.html",
                                       max_upload_mb=MAX_UPLOAD_SIZE // (1024 * 1024),
                                       credit_preise=billing.preise_fuer_frontend(),
-                                      funktionen=funktionen.fuer_oberflaeche(),
+                                      funktionen={**funktionen.fuer_oberflaeche(), **express_api.fuer_oberflaeche()},
                                       werkzeug_namen=_werkzeug_namen.fuer_oberflaeche(get_gettext(resolve_ui_language(request))))
 
 

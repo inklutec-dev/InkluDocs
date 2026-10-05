@@ -10907,3 +10907,42 @@ msgstr "”{datei}” har sparats som kontrollrapport för ”{name}”."
 
 msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
 msgstr "”{name}” har laddats upp och lagts till i urvalet."
+
+msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
+msgstr "Dokumentet kunde inte läggas i expressvagnen."
+
+msgid "Express-Warenkorb"
+msgstr "Expressvagn"
+
+msgid "Express-Warenkorb in der Navigation"
+msgstr "Expressvagn i navigeringen"
+
+msgid "Express-Warenkorb: {dokumente}"
+msgstr "Expressvagn: {dokumente}"
+
+msgid "Im Warenkorb: {dokumente}, {c} Credits."
+msgstr "I vagnen: {dokumente}, {c} krediter."
+
+msgid "In den Express-Warenkorb"
+msgstr "Lägg i expressvagnen"
+
+msgid "Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)"
+msgstr "Knappen ”Lägg i expressvagnen” vid varje PDF-dokument (projektvyn ”Dokument”)"
+
+msgid "Zum Warenkorb"
+msgstr "Till vagnen"
+
+msgid "aus"
+msgstr "av"
+
+msgid "immer"
+msgstr "alltid"
+
+msgid "nur wenn etwas im Warenkorb liegt"
+msgstr "bara när något ligger i vagnen"
+
+msgid "„{name}“ liegt jetzt im Express-Warenkorb."
+msgstr "”{name}” ligger nu i expressvagnen."
+
+msgid "„{name}“ liegt schon im Express-Warenkorb."
+msgstr "”{name}” ligger redan i expressvagnen."

@@ -11340,3 +11340,42 @@ msgstr "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
 
 msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
 msgstr "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
+
+msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
+msgstr "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
+
+msgid "Express-Warenkorb"
+msgstr "Express-Warenkorb"
+
+msgid "Express-Warenkorb in der Navigation"
+msgstr "Express-Warenkorb in der Navigation"
+
+msgid "Express-Warenkorb: {dokumente}"
+msgstr "Express-Warenkorb: {dokumente}"
+
+msgid "Im Warenkorb: {dokumente}, {c} Credits."
+msgstr "Im Warenkorb: {dokumente}, {c} Credits."
+
+msgid "In den Express-Warenkorb"
+msgstr "In den Express-Warenkorb"
+
+msgid "Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)"
+msgstr "Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)"
+
+msgid "Zum Warenkorb"
+msgstr "Zum Warenkorb"
+
+msgid "aus"
+msgstr "aus"
+
+msgid "immer"
+msgstr "immer"
+
+msgid "nur wenn etwas im Warenkorb liegt"
+msgstr "nur wenn etwas im Warenkorb liegt"
+
+msgid "„{name}“ liegt jetzt im Express-Warenkorb."
+msgstr "„{name}“ liegt jetzt im Express-Warenkorb."
+
+msgid "„{name}“ liegt schon im Express-Warenkorb."
+msgstr "„{name}“ liegt schon im Express-Warenkorb."
