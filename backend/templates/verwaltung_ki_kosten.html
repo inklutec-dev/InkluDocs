@@ -64,22 +64,25 @@
 
 {% block dialogs %}
 {% include "_verwaltung_dialoge.html" %}
-<dialog id="kiPreisDialog" class="app-dialog" aria-labelledby="kiPreisTitel">
+<dialog id="kiPreisDialog" class="app-dialog" aria-labelledby="kiPreisTitel" aria-describedby="kiPreisInfo">
   <h2 id="kiPreisTitel">{{ _('Preis eintragen') }}</h2>
-  <p class="dash-sub">{{ _('US-Dollar je eine Million Tokens, Dezimalkomma erlaubt.') }}</p>
+  <p class="dash-sub" id="kiPreisInfo">{{ _('US-Dollar je eine Million Tokens, Dezimalkomma erlaubt.') }}</p>
+  {# Neue Preisstufe: Staffel (lange Eingaben) und Cache-Schreibpreis übernimmt der Server aus der bisherigen Stufe —
+     hier steht, was übernommen wird (Prüfung Entwicklung 05.10.2026, Befund 12). #}
+  <p class="dash-sub" id="kiPreisStaffel" hidden></p>
   <form id="kiPreisForm" novalidate>
     <div class="dash-field">
       <label for="kiPreisModell">{{ _('Modellkennung') }}</label>
-      <input type="text" id="kiPreisModell" class="dash-input" maxlength="100" autocomplete="off" spellcheck="false" aria-describedby="kiPreisModellHinweis">
+      <input type="text" id="kiPreisModell" class="dash-input" maxlength="100" autocomplete="off" spellcheck="false" required aria-describedby="kiPreisModellHinweis">
       <p class="dash-sub" id="kiPreisModellHinweis">{{ _('Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview.') }}</p>
     </div>
     <div class="dash-field">
       <label for="kiPreisEin">{{ _('Eingabe') }}</label>
-      <input type="text" id="kiPreisEin" class="dash-input" inputmode="decimal" autocomplete="off">
+      <input type="text" id="kiPreisEin" class="dash-input" inputmode="decimal" autocomplete="off" required>
     </div>
     <div class="dash-field">
       <label for="kiPreisAus">{{ _('Ausgabe (mit Denk-Tokens)') }}</label>
-      <input type="text" id="kiPreisAus" class="dash-input" inputmode="decimal" autocomplete="off">
+      <input type="text" id="kiPreisAus" class="dash-input" inputmode="decimal" autocomplete="off" required>
     </div>
     <div class="dash-field">
       <label for="kiPreisCache">{{ _('Eingabe aus dem Zwischenspeicher (optional)') }}</label>
@@ -87,11 +90,11 @@
     </div>
     <div class="dash-field">
       <label for="kiPreisAb">{{ _('Gültig ab (JJJJ-MM-TT)') }}</label>
-      <input type="text" id="kiPreisAb" class="dash-input" inputmode="numeric" maxlength="10" autocomplete="off">
+      <input type="text" id="kiPreisAb" class="dash-input" inputmode="numeric" maxlength="10" autocomplete="off" required>
     </div>
     <div class="dash-field">
       <label for="kiPreisQuelle">{{ _('Quelle (Preisseite und Datum)') }}</label>
-      <input type="text" id="kiPreisQuelle" class="dash-input" maxlength="300" autocomplete="off">
+      <input type="text" id="kiPreisQuelle" class="dash-input" maxlength="300" autocomplete="off" required>
     </div>
     <p id="kiPreisFehler" role="alert" class="verwaltung-fehler"></p>
     <div class="dialog-actions">
@@ -106,11 +109,11 @@
   <form id="kiKursForm" novalidate>
     <div class="dash-field">
       <label for="kiKursWert">{{ _('Euro für einen US-Dollar') }}</label>
-      <input type="text" id="kiKursWert" class="dash-input" inputmode="decimal" autocomplete="off">
+      <input type="text" id="kiKursWert" class="dash-input" inputmode="decimal" autocomplete="off" required>
     </div>
     <div class="dash-field">
       <label for="kiKursQuelle">{{ _('Quelle (zum Beispiel EZB-Referenzkurs und Datum)') }}</label>
-      <input type="text" id="kiKursQuelle" class="dash-input" maxlength="300" autocomplete="off">
+      <input type="text" id="kiKursQuelle" class="dash-input" maxlength="300" autocomplete="off" required>
     </div>
     <p id="kiKursFehler" role="alert" class="verwaltung-fehler"></p>
     <div class="dialog-actions">
@@ -132,7 +135,6 @@
   const wahl = { jahr: null, monat: null };
   let daten = null;
   let seite = 1;
-  let ersterLauf = true;
   let preise = null;
 
   const ZWECK_TEXT = {
@@ -178,8 +180,10 @@
       return;
     }
     const ul = V.el('ul', 'umsatz-zahlen');
-    [[t('KI-Kosten'), V.euroGenau(d.gesamt.kosten_cent)],
-     [t('Umsatz'), V.euro(d.umsatz_cent)],
+    // Beschriftung sagt, was verglichen wird (Befund 13): Umsatz = Endpreise ohne Umsatzsteuer (§ 19 UStG, siehe
+    // Preisseite), KI-Kosten = Listenpreise netto. Beides ohne Umsatzsteuer, also vergleichbar.
+    [[t('KI-Kosten (Listenpreise netto)'), V.euroGenau(d.gesamt.kosten_cent)],
+     [t('Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)'), V.euro(d.umsatz_cent)],
      [t('Bleibt nach KI-Kosten'), V.euroGenau(d.bleibt_cent)]].forEach(([was, wert]) => {
       const li = V.el('li', 'umsatz-zahl');
       li.appendChild(V.el('span', 'umsatz-zahl-was', was + ': '));
@@ -189,9 +193,15 @@
     ziel.appendChild(ul);
     V.zeile(ziel, t('KI-Aufrufe'), summeText(d.gesamt));
     V.zeile(ziel, t('Verbrauchte Credits'), V.zahl(d.credits));
+    // Kosten je Credit (Befund 5): nur Credits für KI-Arbeit und deren KI-Kosten, beides ab Messbeginn — sonst wäre die
+    // Zahl im ersten Monat viel zu niedrig und durch Tagging und Exporte verwässert.
     if (d.kosten_je_credit_cent !== null && d.kosten_je_credit_cent !== undefined) {
       V.zeile(ziel, t('Kosten je Credit im Schnitt'), t('{kosten} (bisherige Pauschale: {pauschale})',
         { kosten: V.euroGenau(d.kosten_je_credit_cent), pauschale: V.euroGenau(d.pauschale_cent_je_credit) }));
+    }
+    if (d.kosten_je_credit_ab) {
+      ziel.appendChild(V.el('p', 'dash-sub', t('Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit.',
+        { credits: V.zahl(d.ki_credits), datum: V.datumZeit(d.kosten_je_credit_ab_lokal || d.messbeginn) })));
     }
     if ((d.nach_umgebung || []).length > 1) {
       V.zeile(ziel, t('Nach Umgebung'), d.nach_umgebung.map((u) => (UMGEBUNG_TEXT[u.umgebung] || u.umgebung) + ' ' + V.euroGenau(u.kosten_cent)).join(', '));
@@ -242,7 +252,7 @@
       const li = V.el('li', 'verwaltung-zeile');
       const det = V.el('details', 'verwaltung-klappe');
       const name = pr.project_id === null ? t('Ohne Projekt (zum Beispiel API-Einzelbilder)')
-        : (pr.geloescht ? t('Gelöschtes Projekt') : (pr.name || t('Projekt {id}', { id: pr.project_id })));
+        : (pr.geloescht ? t('Gelöschtes Projekt {id}', { id: pr.project_id }) : (pr.name || t('Projekt {id}', { id: pr.project_id })));
       det.appendChild(V.el('summary', null, name + ': ' + summeText(pr)));
       const inhalt = V.el('div');
       det.appendChild(inhalt);
@@ -283,7 +293,12 @@
     if (!n) {
       ziel.appendChild(V.el('p', 'dash-empty', t('In diesem Monat gibt es keine KI-Aufrufe.')));
     } else {
-      if (seiten > 1) ziel.appendChild(V.el('p', 'dash-sub', t('Seite {seite} von {seiten}', { seite: seite, seiten: seiten })));
+      if (seiten > 1) {
+        const stelle = V.el('p', 'dash-sub', t('Seite {seite} von {seiten}', { seite: seite, seiten: seiten }));
+        stelle.id = 'kiSeiteStelle';
+        stelle.tabIndex = -1;
+        ziel.appendChild(stelle);
+      }
       const ul = V.el('ul', 'verwaltung-liste');
       d.kunden.slice((seite - 1) * JE_SEITE, seite * JE_SEITE).forEach((k) => {
         const li = V.el('li', 'verwaltung-zeile');
@@ -318,11 +333,12 @@
     byId('kiSeiteVor').disabled = seite >= seiten;
   }
 
+  // Blättern: Fokus auf „Seite X von Y“ — der Text wird beim Fokus vorgelesen, eine Ansage dazu würde ihn überschreiben
+  // (Befund 3).
   function blaettern(richtung) {
     seite += richtung;
     kunden(daten);
-    byId('h-ki-kunden').focus();
-    announce(t('Seite {seite}', { seite: seite }));
+    (byId('kiSeiteStelle') || byId('h-ki-kunden')).focus();
   }
   byId('kiSeiteZurueck').addEventListener('click', () => blaettern(-1));
   byId('kiSeiteVor').addEventListener('click', () => blaettern(1));
@@ -340,13 +356,9 @@
     liste(byId('kiZwecke'), d.nach_zweck, (z) => zweckText(z.zweck) + ': ' + summeText(z));
     kunden(d);
     liste(byId('kiModelle'), d.nach_modell, (m) => (m.modell || t('unbekanntes Modell')) + ': ' + summeText(m));
-    if (fokus) {
-      byId('h-ki-monat').focus();
-      announce(t('KI-Kosten {monat}: {betrag}', { monat: monatsname(), betrag: V.euroGenau(d.gesamt.kosten_cent) }));
-    } else if (ersterLauf) {
-      ersterLauf = false;
-      announce(t('KI-Kosten {monat}: {betrag}', { monat: monatsname(), betrag: V.euroGenau(d.gesamt.kosten_cent) }));
-    }
+    // Nach „Anzeigen“: Fokus auf die Überschrift mit dem Monat, die Zahlen folgen direkt darunter. Keine Ansage dazu und
+    // keine beim Laden der Seite (Befunde 3 und 8).
+    if (fokus) byId('h-ki-monat').focus();
   }
 
   byId('kiZeitraumForm').addEventListener('submit', (e) => {
@@ -384,7 +396,8 @@
       if (V.istVollAdmin()) {
         const k = V.el('button', 'btn btn-secondary btn-small', t('Preis ändern'));
         k.type = 'button';
-        k.setAttribute('aria-label', t('Preis ändern für {modell}', { modell: m.modell }));
+        // Sichtbarer Text + versteckter Zusatz statt aria-label (Befund 17).
+        k.appendChild(V.el('span', 'visually-hidden', ' ' + t('für {modell}', { modell: m.modell })));
         k.addEventListener('click', () => preisDialog(m, k));
         li.appendChild(k);
       }
@@ -403,6 +416,9 @@
 
   function feldWert(x) { return x === undefined || x === null ? '' : String(x).replace('.', ','); }
   let preisZurueck = null;
+  const PREIS_FELDER = { modell: 'kiPreisModell', ein: 'kiPreisEin', aus: 'kiPreisAus', cache: 'kiPreisCache', ab: 'kiPreisAb', quelle: 'kiPreisQuelle' };
+  const KURS_FELDER = { usd_eur: 'kiKursWert', quelle: 'kiKursQuelle' };
+  function felderLeeren(felder) { Object.values(felder).forEach((id) => V.feldFehler(id, '')); }
 
   function preisDialog(m, knopf) {
     preisZurueck = knopf || byId('kiNeuesModell');
@@ -416,6 +432,11 @@
     byId('kiPreisAb').value = new Date().toISOString().slice(0, 10);
     byId('kiPreisQuelle').value = '';
     byId('kiPreisFehler').textContent = '';
+    felderLeeren(PREIS_FELDER);
+    const staffel = byId('kiPreisStaffel');
+    staffel.hidden = !(s.grenze);
+    staffel.textContent = s.grenze ? t('Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens Eingabe kostet die Eingabe {ein}, die Ausgabe {aus}.',
+      { grenze: V.zahl(s.grenze), ein: dollar(s.ein_lang), aus: dollar(s.aus_lang) }) : '';
     byId('kiPreisDialog').showModal();
     (m ? byId('kiPreisEin') : byId('kiPreisModell')).focus();
   }
@@ -432,7 +453,14 @@
       modell: byId('kiPreisModell').value, ein: byId('kiPreisEin').value, aus: byId('kiPreisAus').value,
       cache: byId('kiPreisCache').value, ab: byId('kiPreisAb').value, quelle: byId('kiPreisQuelle').value });
     preisLaeuft = false;
-    if (!r.ok) { byId('kiPreisFehler').textContent = r.daten.detail || t('Der Preis konnte nicht gespeichert werden.'); return; }
+    if (!r.ok) {
+      // Fehler am Feld, Fokus dorthin (Befund 4); ohne Feld bleibt die Meldung unter dem Formular.
+      felderLeeren(PREIS_FELDER);
+      const feld = V.serverFeldFehler(r.daten, PREIS_FELDER);
+      if (feld) { feld.focus(); return; }
+      byId('kiPreisFehler').textContent = V.detailText(r.daten, t('Der Preis konnte nicht gespeichert werden.'));
+      return;
+    }
     preise = r.daten.preise;
     // Erfolg: der Fokus geht auf die Meldung (V.meldung), nicht zurück auf den Knopf — der wird neu aufgebaut.
     preisZurueck = null;
@@ -445,6 +473,7 @@
     byId('kiKursWert').value = feldWert(preise ? preise.usd_eur : '');
     byId('kiKursQuelle').value = '';
     byId('kiKursFehler').textContent = '';
+    felderLeeren(KURS_FELDER);
     byId('kiKursDialog').showModal();
     byId('kiKursWert').focus();
   });
@@ -458,7 +487,13 @@
     kursLaeuft = true;
     const r = await V.sendeJson('/api/admin/ki-preise/kurs', 'POST', { usd_eur: byId('kiKursWert').value, quelle: byId('kiKursQuelle').value });
     kursLaeuft = false;
-    if (!r.ok) { byId('kiKursFehler').textContent = r.daten.detail || t('Der Kurs konnte nicht gespeichert werden.'); return; }
+    if (!r.ok) {
+      felderLeeren(KURS_FELDER);
+      const feld = V.serverFeldFehler(r.daten, KURS_FELDER);
+      if (feld) { feld.focus(); return; }
+      byId('kiKursFehler').textContent = V.detailText(r.daten, t('Der Kurs konnte nicht gespeichert werden.'));
+      return;
+    }
     preise = r.daten.preise;
     kursGespeichert = true;
     byId('kiKursDialog').close();

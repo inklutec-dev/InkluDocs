@@ -9,14 +9,22 @@
    Rechnung — bezahlt wird mit Credits, deren Kauf gesondert abgerechnet ist. #}
 <p class="verwaltung-zurueck no-print"><a href="/express#h-auftraege">{{ _('Zurück zu meinen Aufträgen') }}</a></p>
 <h1 id="exaTitel" tabindex="-1">{{ _('Express-Auftrag') }} {{ auftrag_id }}</h1>
-<div id="exaNeu" class="verwaltung-meldung" hidden>
+{# Meldungen oben (Danke nach der Bestellung, „Antwort gesendet“): sichtbar, mit Fokus, ohne zusätzliche Live-Ansage —
+   und nicht im Ausdruck (Prüfung Barrierefreiheit 05.10.2026, Befunde 3 und 20). #}
+<div id="exaNeu" class="verwaltung-meldung no-print" hidden>
   <p id="exaNeuText" tabindex="-1"></p>
 </div>
 <div id="exaInhalt" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
-<p class="no-print ex-aktionen" id="exaAktionen" hidden>
-  <button type="button" class="btn btn-secondary" id="exaDrucken">{{ _('Drucken') }}</button>
-  <a class="btn btn-secondary" id="exaPdf" href="/api/express/auftraege/{{ auftrag_id }}/nachweis.pdf">{{ _('Als PDF herunterladen') }}</a>
-</p>
+<div class="no-print" id="exaAktionen" hidden>
+  <p class="ex-aktionen">
+    <button type="button" class="btn btn-secondary" id="exaDrucken">{{ _('Drucken') }}</button>
+    <a class="btn btn-secondary" id="exaPdf" href="/api/express/auftraege/{{ auftrag_id }}/nachweis.pdf">{{ _('Als PDF herunterladen') }}</a>
+  </p>
+  {# Erstellen dauert ein paar Sekunden: Stand in der Statuszeile; ein Fehler steht neben dem Link (Fokus dorthin) statt
+     als rohe JSON-Seite (Befund 6). #}
+  <p id="exaPdfStatus" role="status" class="dash-sub"></p>
+  <p id="exaPdfFehler" class="verwaltung-fehler" tabindex="-1" hidden></p>
+</div>
 {% endblock %}
 
 {% block page_script %}
@@ -29,7 +37,8 @@
   const STATUS = { neu: t('Eingegangen'), in_arbeit: t('In Bearbeitung'), rueckfrage: t('Rückfrage an dich'),
                    geliefert: t('Geliefert'), storniert: t('Storniert') };
   const VERLAUF = { bestellt: t('Bestellt'), uebernommen: t('In Bearbeitung genommen'), rueckfrage: t('Rückfrage von InkluDocs'),
-                    antwort: t('Deine Antwort'), geliefert: t('Geliefert'), storniert: t('Storniert') };
+                    antwort: t('Deine Antwort'), geliefert: t('Geliefert'), storniert: t('Storniert'),
+                    dateien_geloescht: t('Dateien gelöscht') };
   let laeuft = false;
 
   function el(tag, klasse, text) {
@@ -70,7 +79,13 @@
   }
   const DOK = (n) => mehrzahl(n, '1 Dokument', '{n} Dokumente');
   const SEITEN = (n) => mehrzahl(n, '1 Seite', '{n} Seiten');
-  function leistungText(l) { return l === 'pruefen' ? t('Nur prüfen (Prüfbericht)') : t('Barrierefrei aufbereiten (mit Prüfung)'); }
+  // Name der Leistung kommt vom Server (express.LEISTUNGEN) und wird hier übersetzt.
+  function leistungText(p) { return t(p.leistung_text || p.leistung); }
+  function meldung(text) {
+    byId('exaNeuText').textContent = text;
+    byId('exaNeu').hidden = false;
+    byId('exaNeuText').focus();
+  }
 
   function zeigen(a) {
     const ziel = byId('exaInhalt');
@@ -103,13 +118,14 @@
       ta.id = 'exaAntwort';
       ta.rows = 4;
       ta.maxLength = 2000;
+      ta.required = true;
       ta.setAttribute('aria-describedby', 'exaAntwortFehler');
       feld.appendChild(lab);
       feld.appendChild(ta);
       form.appendChild(feld);
+      // Fehler am Feld (aria-invalid + Beschreibung), Fokus ins Feld — darum keine eigene Live-Ansage (Befund 4).
       const fehler = el('p', 'verwaltung-fehler');
       fehler.id = 'exaAntwortFehler';
-      fehler.setAttribute('role', 'alert');
       form.appendChild(fehler);
       const knopf = el('button', 'btn btn-primary', t('Antwort senden'));
       knopf.type = 'submit';
@@ -118,16 +134,22 @@
         e.preventDefault();
         if (laeuft) return;
         fehler.textContent = '';
-        if (!ta.value.trim()) { fehler.textContent = t('Bitte eine Antwort schreiben.'); ta.focus(); return; }
+        ta.removeAttribute('aria-invalid');
+        if (!ta.value.trim()) { fehler.textContent = t('Bitte eine Antwort schreiben.'); ta.setAttribute('aria-invalid', 'true'); ta.focus(); return; }
         laeuft = true;
         const r = await fetch('/api/express/auftraege/' + ID + '/antwort', { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: ta.value }) }).catch(() => null);
         laeuft = false;
         const d = r ? await r.json().catch(() => ({})) : {};
-        if (!r || !r.ok) { fehler.textContent = (d.detail && (d.detail.text || d.detail)) || t('Die Antwort konnte nicht gesendet werden.'); return; }
+        if (!r || !r.ok) {
+          fehler.textContent = (d.detail && (d.detail.text || d.detail)) || t('Die Antwort konnte nicht gesendet werden.');
+          ta.setAttribute('aria-invalid', 'true');
+          ta.focus();
+          return;
+        }
         zeigen(d);
-        byId('exa-h-ueberblick').focus();
-        announce(t('Antwort gesendet. Wir melden uns.'));
+        // Sichtbare Meldung oben mit Fokus — keine gleichzeitige Live-Ansage (Befund 3).
+        meldung(t('Antwort gesendet. Wir melden uns.'));
       });
       s.appendChild(form);
     }
@@ -137,12 +159,14 @@
     a.positionen.forEach((p) => {
       const li = el('li', 'verwaltung-zeile');
       li.appendChild(el('p', 'verwaltung-meta', t('{name}: {seiten}, {leistung}, {c} Credits',
-        { name: p.dokument_name, seiten: SEITEN(p.seiten), leistung: leistungText(p.leistung), c: zahl(p.credits) })));
-      if (p.verapdf) li.appendChild(el('p', 'dash-sub', p.verapdf.bestanden ? t('Automatische PDF/UA-Prüfung (veraPDF): bestanden.')
-        : t('Automatische PDF/UA-Prüfung (veraPDF): {text}', { text: p.verapdf.zusammenfassung || t('mit Hinweisen') })));
+        { name: p.dokument_name, seiten: SEITEN(p.seiten), leistung: leistungText(p), c: zahl(p.credits) })));
+      // Kurz und ohne Technik-Zusammenfassung (Befund 12): bestanden — oder Hinweise, die das Team geprüft hat.
+      if (p.verapdf) li.appendChild(el('p', 'dash-sub', p.verapdf.bestanden
+        ? t('Automatische Prüfung ({pruefung}): bestanden.', { pruefung: p.pruef_name || 'veraPDF' })
+        : t('Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat.', { pruefung: p.pruef_name || 'veraPDF' })));
       const links = el('p', 'no-print ex-aktionen');
       if (p.ergebnis_da) {
-        const l = el('a', 'btn btn-secondary', t('Barrierefreie PDF herunterladen'));
+        const l = el('a', 'btn btn-secondary', p.ergebnis_typ === 'pdf' ? t('Barrierefreie PDF herunterladen') : t('Ergebnis herunterladen'));
         l.href = '/api/express/auftraege/' + ID + '/positionen/' + p.id + '/ergebnis';
         l.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
         links.appendChild(l);
@@ -181,6 +205,45 @@
 
   byId('exaDrucken').addEventListener('click', () => window.print());
 
+  // „Als PDF herunterladen“ (Befund 6): per fetch, damit ein Fehler (Umwandler aus, zu viele Anfragen) als Satz neben
+  // dem Link steht — nicht als rohe JSON-Seite ohne Titel. Ohne Skript bleibt der normale Link.
+  let pdfLaeuft = false;
+  byId('exaPdf').addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (pdfLaeuft) return;
+    const status = byId('exaPdfStatus');
+    const fehler = byId('exaPdfFehler');
+    fehler.hidden = true;
+    fehler.textContent = '';
+    status.textContent = t('Die PDF wird erstellt …');
+    pdfLaeuft = true;
+    let r = null;
+    try { r = await fetch(byId('exaPdf').href); } catch (x) { r = null; }
+    pdfLaeuft = false;
+    if (r && r.ok) {
+      const blob = await r.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = t('Express-Auftrag {nr} – Auftragsübersicht.pdf', { nr: ID });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+      status.textContent = t('Die PDF ist heruntergeladen.');
+      return;
+    }
+    let text = t('Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen.');
+    if (r && r.status === 429) text = t('Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen.');
+    else if (r) {
+      const d = await r.json().catch(() => ({}));
+      if (d && d.detail) text = typeof d.detail === 'string' ? d.detail : (d.detail.text || text);
+    }
+    status.textContent = '';
+    fehler.textContent = text;
+    fehler.hidden = false;
+    fehler.focus();
+  });
+
   (async function start() {
     await loadCurrentUser();
     let r;
@@ -195,13 +258,10 @@
     const a = await r.json();
     zeigen(a);
     if (new URLSearchParams(window.location.search).get('neu') === '1') {
-      byId('exaNeu').hidden = false;
-      byId('exaNeuText').textContent = t('Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail.', { nr: a.id, stunden: a.frist_stunden });
       history.replaceState(null, '', window.location.pathname);
-      byId('exaNeuText').focus();
-    } else {
-      announce(t('Express-Auftrag {nr}: {stand}', { nr: a.id, stand: STATUS[a.status] || a.status }));
+      meldung(t('Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail.', { nr: a.id, stunden: a.frist_stunden }));
     }
+    // Sonst keine Ansage beim Laden (Befund 8): Nummer und Stand stehen in Überschrift und Überblick.
   })();
 })();
 {% endraw %}

@@ -9970,8 +9970,6 @@ msgstr "Euro per US-dollar"
 msgid "Gelöschtes Konto"
 msgstr "Raderat konto"
 
-msgid "Gelöschtes Projekt"
-msgstr "Raderat projekt"
 
 msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
 msgstr "Exakt som i listan ”Per modell”, t.ex. gemini-3.1-pro-preview."
@@ -10000,8 +9998,6 @@ msgstr "AI-kostnader för månaden"
 msgid "KI-Kosten im {monat}"
 msgstr "AI-kostnader i {monat}"
 
-msgid "KI-Kosten {monat}: {betrag}"
-msgstr "AI-kostnader {monat}: {betrag}"
 
 msgid "Keine Einzelheiten."
 msgstr "Inga detaljer."
@@ -10204,17 +10200,11 @@ msgstr "Beställning {nr}"
 msgid "Aus einem Projekt"
 msgstr "Från ett projekt"
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
-msgstr "Automatisk PDF/UA-kontroll (veraPDF): godkänd."
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
-msgstr "Automatisk PDF/UA-kontroll (veraPDF): {text}"
 
 msgid "Barrierefrei aufbereiten (mit Prüfung)"
 msgstr "Gör tillgänglig (inkl. kontroll)"
 
-msgid "Barrierefrei aufbereiten: Credits je Seite"
-msgstr "Gör tillgänglig: krediter per sida"
 
 msgid "Barrierefreie PDF herunterladen"
 msgstr "Ladda ner tillgänglig PDF"
@@ -10267,14 +10257,10 @@ msgstr "Skriv ett svar."
 msgid "Bitte eine E-Mail-Adresse eingeben."
 msgstr "Ange en e-postadress."
 
-msgid "Bitte eine Frage schreiben."
-msgstr "Skriv en fråga."
 
 msgid "Bitte einen Ansprechpartner angeben."
 msgstr "Ange en kontaktperson."
 
-msgid "Bitte einen Grund angeben."
-msgstr "Ange ett skäl."
 
 msgid "Bitte mindestens ein Dokument ankreuzen."
 msgstr "Kryssa i minst ett dokument."
@@ -10282,8 +10268,6 @@ msgstr "Kryssa i minst ett dokument."
 msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
 msgstr "Använd bara siffror, mellanslag och + ( ) / -."
 
-msgid "Bitte zuerst eine PDF-Datei auswählen."
-msgstr "Välj först en PDF-fil."
 
 msgid "Credits"
 msgstr "Krediter"
@@ -10291,8 +10275,6 @@ msgstr "Krediter"
 msgid "Credits kaufen"
 msgstr "Köp krediter"
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
-msgstr "Vi skapar ett projekt ”Expressbeställning” för den. Storlek upp till 50 MB."
 
 msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
 msgstr "Tack! Din beställning {nr} har kommit in. Vi levererar inom {stunden} timmar och skickar en bekräftelse via e-post."
@@ -10343,8 +10325,6 @@ msgstr "Beställningen misslyckades. Försök igen."
 msgid "Die Datei konnte nicht hochgeladen werden."
 msgstr "Filen kunde inte laddas upp."
 
-msgid "Die Datei wird hochgeladen …"
-msgstr "Filen laddas upp …"
 
 msgid "Die Dokumente konnten nicht geladen werden."
 msgstr "Dokumenten kunde inte laddas."
@@ -10361,8 +10341,6 @@ msgstr "Tjänsten kunde inte ändras."
 msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
 msgstr "Priserna är fortfarande platshållare. Fastställ dem först efter överenskommelse och kryssa i ”Priserna är fastställda” nedan."
 
-msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
-msgstr "Den automatiska PDF/UA-kontrollen (veraPDF) rapporterar avvikelser:"
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "De reserverade krediterna frigörs, inget dras. Kunden får ett e-postmeddelande med skälet."
@@ -10403,11 +10381,7 @@ msgstr "Spara inställningar"
 msgid "Einverständnis"
 msgstr "Samtycke"
 
-msgid "Ergebnis (PDF) für {name}"
-msgstr "Resultat (PDF) för {name}"
 
-msgid "Ergebnis für „{name}“ gespeichert."
-msgstr "Resultatet för ”{name}” har sparats."
 
 msgid "Ergebnis herunterladen"
 msgstr "Ladda ner resultat"
@@ -10415,20 +10389,14 @@ msgstr "Ladda ner resultat"
 msgid "Ergebnis hochgeladen"
 msgstr "Resultat uppladdat"
 
-msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
-msgstr "Resultatet laddas upp och kontrolleras med veraPDF …"
 
 msgid "Express-Auftrag"
 msgstr "Expressbeställning"
 
-msgid "Express-Auftrag {nr}: {stand}"
-msgstr "Expressbeställning {nr}: {stand}"
 
 msgid "Express-Aufträge"
 msgstr "Expressbeställningar"
 
-msgid "Express-Aufträge: {u} überfällig, {n} neu."
-msgstr "Expressbeställningar: {u} försenade, {n} nya."
 
 msgid "Express-Bearbeiter"
 msgstr "Expresshandläggare"
@@ -10436,8 +10404,6 @@ msgstr "Expresshandläggare"
 msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
 msgstr "Expresshandläggare ser bara expressbeställningarna i administrationen och kan handlägga dem, t.ex. en partner som bearbetar dokumenten. De ser inte kunder, omsättning eller AI-kostnader."
 
-msgid "Express-Bearbeiter-Recht entziehen: {name}"
-msgstr "Ta bort expresshandläggarrätt: {name}"
 
 msgid "Express-Service"
 msgstr "Expresstjänst"
@@ -10445,8 +10411,6 @@ msgstr "Expresstjänst"
 msgid "Fassung {f}, Sprache {s}"
 msgstr "version {f}, språk {s}"
 
-msgid "Frage"
-msgstr "Fråga"
 
 msgid "Fällig am"
 msgstr "Förfaller den"
@@ -10454,8 +10418,6 @@ msgstr "Förfaller den"
 msgid "Geliefert"
 msgstr "Levererad"
 
-msgid "Geliefert (die letzten 100)"
-msgstr "Levererade (de senaste 100)"
 
 msgid "Geliefert am"
 msgstr "Levererad den"
@@ -10469,11 +10431,7 @@ msgstr "Skäl"
 msgid "Hinweise für uns (freiwillig)"
 msgstr "Anvisningar till oss (valfritt)"
 
-msgid "Hochgeladen und hinzugefügt."
-msgstr "Uppladdad och tillagd."
 
-msgid "Hochladen und hinzufügen"
-msgstr "Ladda upp och lägg till"
 
 msgid "Höchstens Dokumente je Auftrag"
 msgstr "Högst antal dokument per beställning"
@@ -10550,17 +10508,11 @@ msgstr "Bara synlig här i administrationen, aldrig för kunden."
 msgid "Nur prüfen (Prüfbericht)"
 msgstr "Endast granskning (granskningsrapport)"
 
-msgid "Nur prüfen: Credits je Seite"
-msgstr "Endast granskning: krediter per sida"
 
-msgid "Oder eine PDF hochladen, ohne Projekt"
-msgstr "Eller ladda upp en PDF utan projekt"
 
 msgid "Original herunterladen"
 msgstr "Ladda ner original"
 
-msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
-msgstr "Priser per sida: gör tillgänglig (inkl. kontroll) {a} krediter, endast granskning {p} krediter."
 
 msgid "Preise sind festgelegt (kein Platzhalter mehr)"
 msgstr "Priserna är fastställda (inte längre platshållare)"
@@ -10568,11 +10520,7 @@ msgstr "Priserna är fastställda (inte längre platshållare)"
 msgid "Prüfbericht"
 msgstr "Granskningsrapport"
 
-msgid "Prüfbericht (PDF) für {name}"
-msgstr "Granskningsrapport (PDF) för {name}"
 
-msgid "Prüfbericht für „{name}“ gespeichert."
-msgstr "Granskningsrapporten för ”{name}” har sparats."
 
 msgid "Prüfbericht herunterladen"
 msgstr "Ladda ner granskningsrapport"
@@ -10580,8 +10528,6 @@ msgstr "Ladda ner granskningsrapport"
 msgid "Prüfbericht hochgeladen"
 msgstr "Granskningsrapport uppladdad"
 
-msgid "Prüfbericht wird hochgeladen …"
-msgstr "Granskningsrapporten laddas upp …"
 
 msgid "Recht entziehen"
 msgstr "Ta bort rätt"
@@ -10613,8 +10559,6 @@ msgstr "Fråga från InkluDocs"
 msgid "Storniert"
 msgstr "Avbruten"
 
-msgid "Storniert (die letzten 100)"
-msgstr "Avbrutna (de senaste 100)"
 
 msgid "Storniert am"
 msgstr "Avbruten den"
@@ -10664,8 +10608,6 @@ msgstr "Gör till expresshandläggare"
 msgid "Zur Auswahl hinzufügen"
 msgstr "Lägg till i urvalet"
 
-msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
-msgstr "Just nu kan vi bara bearbeta PDF-filer."
 
 msgid "Zurück zu den Express-Aufträgen"
 msgstr "Tillbaka till expressbeställningarna"
@@ -10676,8 +10618,6 @@ msgstr "Tillbaka till mina beställningar"
 msgid "Zurück zum Express-Service"
 msgstr "Tillbaka till expresstjänsten"
 
-msgid "Zustimmung"
-msgstr "Godkännande"
 
 msgid "abgebucht"
 msgstr "dragna"
@@ -10709,8 +10649,6 @@ msgstr "internt"
 msgid "keine"
 msgstr "inga"
 
-msgid "keine PDF, nicht möglich"
-msgstr "inte en PDF, inte möjligt"
 
 msgid "keiner (freiwillig)"
 msgstr "ingen (valfritt)"
@@ -10736,14 +10674,8 @@ msgstr "redan i ditt urval"
 msgid "storniert am {datum}"
 msgstr "avbruten den {datum}"
 
-msgid "veraPDF konnte die Datei nicht prüfen."
-msgstr "veraPDF kunde inte kontrollera filen."
 
-msgid "veraPDF: Abweichungen — {text}"
-msgstr "veraPDF: avvikelser — {text}"
 
-msgid "veraPDF: PDF/UA bestanden."
-msgstr "veraPDF: PDF/UA godkänd."
 
 msgid "vorgemerkt"
 msgstr "reserverade"
@@ -10819,3 +10751,159 @@ msgstr "{seiten}, {leistung}, {c} krediter"
 
 msgid "{dokumente}, {c} Credits"
 msgstr "{dokumente}, {c} krediter"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid " oder "
+msgstr " eller "
+
+msgid "(die letzten 100)"
+msgstr "(de senaste 100)"
+
+msgid "Automatische Prüfung ({pruefung}): bestanden."
+msgstr "Automatisk kontroll ({pruefung}): godkänd."
+
+msgid "Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat."
+msgstr "Automatisk kontroll ({pruefung}): med anmärkningar som vårt team har granskat."
+
+msgid "Bitte warten, bis der vorige Schritt fertig ist."
+msgstr "Vänta tills föregående steg är klart."
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
+msgstr "Vi skapar ett projekt ”Expressbeställning” för den."
+
+msgid "Datei auswählen"
+msgstr "Välj fil"
+
+msgid "Dateien gelöscht"
+msgstr "Filer raderade"
+
+msgid "Dateien löschen nach Tagen"
+msgstr "Radera filer efter dagar"
+
+msgid "Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte."
+msgstr "Filtyp: {typen}. Den automatiska kontrollen körs efter uppladdningen. En ny fil ersätter den gamla."
+
+msgid "Dateityp: {typen}. Eine neue Datei ersetzt die alte."
+msgstr "Filtyp: {typen}. En ny fil ersätter den gamla."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen (Schritt 1)."
+msgstr "Ditt urval är tomt. Lägg först till dokument (steg 1)."
+
+msgid "Die PDF ist heruntergeladen."
+msgstr "PDF:en har laddats ner."
+
+msgid "Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen."
+msgstr "PDF:en kan inte skapas just nu. Använd utskriftsvyn."
+
+msgid "Die PDF wird erstellt …"
+msgstr "PDF:en skapas …"
+
+msgid "Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens Eingabe kostet die Eingabe {ein}, die Ausgabe {aus}."
+msgstr "Nivån för långa indata förs över: över {grenze} indatatoken kostar indata {ein} och utdata {aus}."
+
+msgid "Die automatische Prüfung meldet Abweichungen:"
+msgstr "Den automatiska kontrollen rapporterar avvikelser:"
+
+msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
+msgstr "Expressbeställning {nr} – beställningsöversikt.pdf"
+
+msgid "Frage (Pflicht)"
+msgstr "Fråga (obligatorisk)"
+
+msgid "Frage: Bitte eine Frage schreiben."
+msgstr "Fråga: Skriv en fråga."
+
+msgid "Frist ruht bis zur Antwort des Kunden"
+msgstr "Fristen vilar tills kunden svarar"
+
+msgid "Gelöschtes Projekt {id}"
+msgstr "Raderat projekt {id}"
+
+msgid "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+msgstr "Räknas för ”kostnad per kredit”: {credits} krediter för AI-arbete (alt-texter, snabbinfo, översättning, ändringar av chattboten) och deras AI-kostnader, båda sedan {datum}. Taggning, kontroll, export och Express räknas inte."
+
+msgid "Grund für das Stornieren (Pflicht)"
+msgstr "Anledning till avbokningen (obligatorisk)"
+
+msgid "Grund für das Stornieren: Bitte einen Grund angeben."
+msgstr "Anledning till avbokningen: Ange en anledning."
+
+msgid "KI-Kosten (Listenpreise netto)"
+msgstr "AI-kostnader (listpriser netto)"
+
+msgid "Keine offenen Aufträge."
+msgstr "Inga öppna beställningar."
+
+msgid "Neue Bestellungen sind zurzeit abgeschaltet. Bestehende Aufträge lassen sich weiter bearbeiten, liefern und stornieren."
+msgstr "Nya beställningar är avstängda just nu. Befintliga beställningar kan fortfarande hanteras, levereras och avbokas."
+
+msgid "Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier."
+msgstr "Nya expressbeställningar är inte möjliga just nu. Dina tidigare beställningar hittar du här."
+
+msgid "Offene Aufträge"
+msgstr "Öppna beställningar"
+
+msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
+msgstr "Original, resultat och kontrollrapporter raderas så många dagar efter leverans eller avbokning; själva beställningen sparas som underlag. 0 = radera aldrig."
+
+msgid "Preise je Seite: {liste}."
+msgstr "Priser per sida: {liste}."
+
+msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
+msgstr "Omsättning (slutpriser, utan moms enligt § 19 UStG)"
+
+msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
+msgstr "För många förfrågningar på kort tid. Försök igen senare."
+
+msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
+msgstr "Just nu kan vi bara bearbeta {typen}-filer."
+
+msgid "Zustimmung (beide Häkchen sind nötig)"
+msgstr "Samtycke (båda kryssrutorna krävs)"
+
+msgid "für {modell}"
+msgstr "för {modell}"
+
+msgid "nicht möglich, nur {typen}"
+msgstr "inte möjligt, endast {typen}"
+
+msgid "{art} für „{name}“ hochladen"
+msgstr "Ladda upp {art} för ”{name}”"
+
+msgid "{leistung} {c} Credits"
+msgstr "{leistung} {c} krediter"
+
+msgid "{leistung}: Credits je Seite"
+msgstr "{leistung}: krediter per sida"
+
+msgid "{name}, angelegt am {datum}"
+msgstr "{name}, skapat den {datum}"
+
+msgid "{pruefung} konnte die Datei nicht prüfen."
+msgstr "{pruefung} kunde inte kontrollera filen."
+
+msgid "{pruefung}: Abweichungen — {text}"
+msgstr "{pruefung}: avvikelser — {text}"
+
+msgid "{pruefung}: bestanden."
+msgstr "{pruefung}: godkänd."
+
+msgid "{pruefung}: läuft noch …"
+msgstr "{pruefung}: pågår fortfarande …"
+
+msgid "{typen} hochladen, ohne Projekt"
+msgstr "Ladda upp {typen} utan projekt"
+
+msgid "{typ}-Datei auswählen"
+msgstr "Välj {typ}-fil"
+
+msgid "„{datei}“ ist als Ergebnis für „{name}“ gespeichert."
+msgstr "”{datei}” har sparats som resultat för ”{name}”."
+
+msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
+msgstr "”{datei}” har sparats som kontrollrapport för ”{name}”."
+
+msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
+msgstr "”{name}” har laddats upp och lagts till i urvalet."

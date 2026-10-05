@@ -2,7 +2,11 @@
 """Klicktest EXPRESS-SERVICE (05.10.2026) im echten Browser mit axe: Kunde (Link im Projekt, Auswahl über Projekt und
 „Alle Dokumente“, Leistung, Entfernen, Pflichtfelder mit Fokus, zahlungspflichtig bestellen, Auftragsübersicht,
 Startseite) und Verwaltung (Liste, Auftrag, Rückfrage-Dialog, Ergebnis hochladen, Liefern mit Nachfrage), danach der
-Download beim Kunden. NUR gegen Staging. Ein fiktives Kundenkonto auf .invalid wird im Container angelegt und am Ende
+Download beim Kunden.
+Korrekturrunde 05.10.2026: Hochladefeld = Komponente der Projekte (Etikett-Knopf, Fokusring sichtbar, Dateiname in der
+Statuszeile, Fehler am Feld) beim Kunden und in der Verwaltung; Entfernen mit sichtbarer Meldung und Fokus; Leistung
+entprellt (eine Anfrage); Häkchen mit required und Fehler am Kästchen; keine Ansage beim Laden; Fokusring an .btn;
+Rahmen der Eingabefelder; PDF-Nachweis per fetch; Danke-Kasten nicht im Druck; Überschrift im summary. NUR gegen Staging. Ein fiktives Kundenkonto auf .invalid wird im Container angelegt und am Ende
 mit allen Aufträgen gelöscht; die Verwaltung bedient das E2E-Konto (Admin) aus ~/.e2e.env.
 Aufruf auf dem Server: /home/claude/.venv-pw/bin/python ui_express.py [BASIS]
 """
@@ -116,6 +120,14 @@ try:
         def fokus(pg):
             return pg.evaluate("() => document.activeElement && (document.activeElement.id || document.activeElement.textContent.trim().slice(0, 60))")
 
+        def live(pg):
+            return pg.evaluate("() => (document.getElementById('liveRegion') || {}).textContent || ''")
+
+        def ring(pg, sel):
+            """Berechneter Fokusring: 3px solid in #c75000."""
+            return pg.evaluate("(s) => { const e = document.querySelector(s); const c = getComputedStyle(e); "
+                               "return c.outlineStyle + ' ' + c.outlineWidth + ' ' + c.outlineColor; }", sel)
+
         # ── Kunde ──
         kc = b.new_context(locale="de-DE")
         pg = seite(kc)
@@ -134,23 +146,58 @@ try:
               and pg.locator("#exAlle").is_checked() and pg.locator("input[name=exDok]:checked").count() == 2)
         check("Keine Zahlen-Stepper, keine Tabellen", pg.locator("input[type=number]").count() == 0 and pg.locator("main table").count() == 0)
         check("Lieferung ohne Uhrzeit genannt", "innerhalb von 48 Stunden" in pg.locator("#exIntro").inner_text())
+        check("Keine Ansage beim Laden (Vorwahl ist sichtbar)", live(pg) == "", live(pg))
+        check("Legende mit Projektname ohne Anzahl", pg.locator("#exDokLegende").inner_text().startswith("Dokumente im Projekt „")
+              and "Dokumente)" not in pg.locator("#exDokLegende").inner_text(), pg.locator("#exDokLegende").inner_text())
+        check("Rahmen der Eingabefelder dunkel (#767f8f)", pg.evaluate("() => getComputedStyle(document.getElementById('exName')).borderColor") == "rgb(118, 127, 143)")
+        # Hochladefeld = Komponente der Projekte
+        zone = pg.locator("#exDateiZone")
+        check("Hochladefeld: Komponente der Projekte (proj-dropzone, Etikett-Knopf, „oder Datei hierher ziehen“)",
+              zone.count() == 1 and zone.locator(".dropzone-inner label.upload-btn[for=exDatei]").is_visible()
+              and "oder Datei hierher ziehen" in zone.inner_text() and zone.locator("h4").inner_text() == "PDF hochladen, ohne Projekt",
+              zone.inner_text() if zone.count() else "fehlt")
+        check("Hochladefeld: Knopf „PDF-Datei auswählen“", zone.locator("label.upload-btn").inner_text().strip() == "PDF-Datei auswählen")
+        pg.evaluate("() => document.getElementById('exDatei').focus()")
+        check("Hochladefeld: Fokusring am Knopf sichtbar", ring(pg, "label[for=exDatei]").startswith("solid 3px rgb(199, 80, 0)"), ring(pg, "label[for=exDatei]"))
+        check("Hochladefeld: Hinweis und Statuszeile am Feld", pg.locator("#exDatei").get_attribute("aria-describedby") == "exDateiHinweis exDateiStatus")
         axe(pg, "Express-Seite")
         pg.click("#exHinzu")
         pg.wait_for_timeout(1200)
         check("Auswahl: 2 Dokumente, 3 Seiten, 150 Credits", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 2 Dokumente, 3 Seiten, 150 Credits.",
               pg.locator("#exSumme").inner_text())
+        check("Hinzufügen: EINE Ansage (Bestätigung), keine Neuladung-Ansage darüber", live(pg).startswith("Hinzugefügt: 2 Dokumente."), live(pg))
+        # Fehler beim Hochladen: am Feld, mit Grund in der Statuszeile
+        pg.locator("#exDatei").set_input_files(files=[{"name": "kein.pdf", "mimeType": "application/pdf", "buffer": b"kein pdf"}])
+        pg.wait_for_timeout(1500)
+        check("Hochladen falsche Datei: Fehler in der Statuszeile, aria-invalid", pg.locator("#exDatei").get_attribute("aria-invalid") == "true"
+              and pg.locator("#exDateiStatus").inner_text().startswith("Fehler:"), pg.locator("#exDateiStatus").inner_text())
+        pg.locator("#exDatei").set_input_files(files=[{"name": "Beilage fiktiv.pdf", "mimeType": "application/pdf", "buffer": open(ergebnis_pdf, "rb").read()}])
+        pg.wait_for_timeout(3000)
+        check("Hochladen: Dateiname und neue Summe in der Statuszeile, Fehler weg", "„Beilage fiktiv.pdf“ hochgeladen" in pg.locator("#exDateiStatus").inner_text()
+              and pg.locator("#exDatei").get_attribute("aria-invalid") is None, pg.locator("#exDateiStatus").inner_text())
+        pg.locator("#exAuswahl button", has_text="Entfernen").nth(2).click()
+        pg.wait_for_timeout(1000)
+        check("Entfernen der Beilage: Meldung mit Fokus", fokus(pg) == "exMeldung" and "„Beilage fiktiv.pdf“ entfernt." in pg.locator("#exMeldung").inner_text(),
+              (fokus(pg), pg.locator("#exMeldung").inner_text()))
         check("Dokumente als „schon in deiner Auswahl“ gesperrt", pg.locator("input[name=exDok]:disabled").count() == 2)
+        anfragen = []
+        pg.on("request", lambda r: anfragen.append(r.url) if "/leistung" in r.url else None)
         sel = pg.locator("#exAuswahl select").first
-        sel.select_option("pruefen")
-        pg.wait_for_timeout(800)
+        sel.focus()
+        for _ in range(3):                                  # Pfeiltasten in der geschlossenen Liste (Windows-Verhalten)
+            sel.press("ArrowDown")
+            sel.press("ArrowUp")
+        sel.press("ArrowDown")
+        pg.wait_for_timeout(1500)
+        check("Leistung per Pfeiltasten: EINE Speicheranfrage (entprellt)", len(anfragen) == 1, anfragen)
         check("Leistung geändert: Summe 100", "100 Credits" in pg.locator("#exSumme").inner_text(), pg.locator("#exSumme").inner_text())
         pg.locator("#exAuswahl button", has_text="Entfernen").nth(1).click()
         pg.wait_for_timeout(800)
-        check("Entfernen: Fokus auf „2. Deine Auswahl“", fokus(pg) == "h-auswahl", fokus(pg))
+        check("Entfernen: Fokus auf die sichtbare Meldung", fokus(pg) == "exMeldung" and "entfernt" in pg.locator("#exMeldung").inner_text(), fokus(pg))
         check("Nach Entfernen: „1 Dokument“ (Einzahl)", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 1 Dokument, 2 Seiten, 50 Credits.",
               pg.locator("#exSumme").inner_text())
         pg.locator("#exAuswahl select").first.select_option("aufbereiten")
-        pg.wait_for_timeout(800)
+        pg.wait_for_timeout(1500)
         check("Wieder „aufbereiten“: 100 Credits", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 1 Dokument, 2 Seiten, 100 Credits.",
               pg.locator("#exSumme").inner_text())
         axe(pg, "Express-Seite mit Auswahl")
@@ -163,7 +210,13 @@ try:
         pg.click("#exBestellen")
         pg.wait_for_timeout(400)
         check("Häkchen fehlen: Fokus auf das erste", fokus(pg) == "exBedingungen" and "Häkchen" in pg.locator("#exZustimmungFehler").inner_text(), fokus(pg))
+        check("Häkchen: Fehler am Kästchen (aria-invalid, Beschreibung), required, Legende nennt Pflicht",
+              all(pg.locator(f"#{i}").get_attribute("aria-invalid") == "true" and pg.locator(f"#{i}").get_attribute("aria-describedby") == "exZustimmungFehler"
+                  and pg.locator(f"#{i}").get_attribute("required") is not None for i in ("exBedingungen", "exBearbeitung"))
+              and "beide Häkchen sind nötig" in pg.locator("#exBestellForm legend").inner_text())
         check("Häkchen nicht vorab gesetzt", not pg.locator("#exBedingungen").is_checked() and not pg.locator("#exBearbeitung").is_checked())
+        pg.evaluate("() => document.getElementById('exBestellen').focus()")
+        check("Fokusring an „Zahlungspflichtig bestellen“ (3px #c75000)", ring(pg, "#exBestellen").startswith("solid 3px rgb(199, 80, 0)"), ring(pg, "#exBestellen"))
         check("Knopf „Zahlungspflichtig bestellen“", pg.locator("#exBestellen").inner_text() == "Zahlungspflichtig bestellen")
         pg.check("#exBedingungen")
         pg.check("#exBearbeitung")
@@ -176,7 +229,13 @@ try:
         check("Übersicht: vorgemerkt, Einverständnis, Verlauf", all(w in pg.locator("main").inner_text() for w in
               ("vorgemerkt, abgebucht wird erst bei der Lieferung", "Ich bin einverstanden", "Bestellt", "keine Rechnung")))
         check("Drucken und PDF angeboten", pg.locator("#exaDrucken").count() == 1 and pg.locator("#exaPdf").count() == 1)
+        pg.emulate_media(media="print")
+        check("Druck: Danke-Kasten nicht dabei", not pg.locator("#exaNeu").is_visible())
+        pg.emulate_media(media="screen")
         axe(pg, "Auftragsübersicht")
+        pg.goto(f"{BASE}/express/auftrag/{aid}", wait_until="networkidle")
+        pg.wait_for_timeout(1200)
+        check("Auftragsübersicht ohne Ansage beim Laden", live(pg) == "", live(pg))
         pg.goto(f"{BASE}/dashboard", wait_until="networkidle")
         pg.wait_for_timeout(1200)
         check("Startseite: „Meine Express-Aufträge“", pg.locator("#expressSection").is_visible() and f"Auftrag {aid}" in pg.locator("#expressSection").inner_text())
@@ -192,6 +251,17 @@ try:
         check("Verwaltung: „Express-Aufträge“ aktuelle Seite", ap.locator(".verwaltung-nav a[aria-current=page]").inner_text().strip() == "Express-Aufträge")
         check("Auftrag in „Neu“", ap.locator(f"a[href='/verwaltung/express/{aid}']").count() == 1)
         check("Platzhalter-Hinweis bei Preisen", ap.locator("#exvPlatzhalter").is_visible())
+        check("Verwaltung: keine Ansage beim Laden", live(ap) == "", live(ap))
+        check("Geliefert/Storniert: Überschrift im summary", ap.locator("details summary h2").count() == 2)
+        check("Preisfelder aus der Liste der Leistungen", ap.locator("#exvPreis_aufbereiten").count() == 1 and ap.locator("#exvPreis_pruefen").count() == 1)
+        ap.fill("#exvFrist", "bald")
+        ap.click("#exvEinstKnopf")
+        ap.wait_for_timeout(1000)
+        check("Einstellungen: Fehler am Feld „Lieferfrist in Stunden“, Fokus dorthin", fokus(ap) == "exvFrist"
+              and ap.locator("#exvFrist").get_attribute("aria-invalid") == "true"
+              and ap.locator("#exvFristFehler").inner_text().startswith("Lieferfrist in Stunden"), (fokus(ap), ap.locator("#exvFristFehler").inner_text() if ap.locator("#exvFristFehler").count() else ""))
+        ap.reload(wait_until="networkidle")
+        ap.wait_for_timeout(1200)
         axe(ap, "Verwaltung Express-Liste")
         ap.goto(f"{BASE}/verwaltung/express/{aid}", wait_until="networkidle")
         ap.wait_for_timeout(1500)
@@ -201,15 +271,32 @@ try:
         check("Übernommen: Meldung mit Fokus", fokus(ap) == "verwaltungMeldung" and "bearbeitest" in ap.locator("#verwaltungMeldung").inner_text())
         ap.click("button:has-text('Rückfrage stellen')")
         ap.wait_for_timeout(400)
-        check("Rückfrage-Dialog: Fokus im Textfeld", fokus(ap) == "exdFrageText")
+        check("Rückfrage-Dialog: Fokus im Textfeld, Beschreibung, Pflicht", fokus(ap) == "exdFrageText"
+              and ap.locator("#exdFrageDialog").get_attribute("aria-describedby") == "exdFrageInfo"
+              and ap.locator("#exdFrageText").get_attribute("required") is not None)
+        ap.click("#exdFrageForm button[type=submit]")
+        ap.wait_for_timeout(300)
+        check("Rückfrage leer: Fehler am Feld", fokus(ap) == "exdFrageText" and ap.locator("#exdFrageText").get_attribute("aria-invalid") == "true"
+              and "Frage" in ap.locator("#exdFrageTextFehler").inner_text())
         axe(ap, "Rückfrage-Dialog")
         ap.keyboard.press("Escape")
         ap.wait_for_timeout(300)
-        feld = ap.locator("input[type=file]").first
-        feld.set_input_files(ergebnis_pdf)
-        ap.locator("form:has(input[type=file]) button[type=submit]").first.click()
-        ap.wait_for_timeout(5000)
-        check("Ergebnis hochgeladen: Meldung nennt veraPDF", "veraPDF" in ap.locator("#verwaltungMeldung").inner_text(), ap.locator("#verwaltungMeldung").inner_text())
+        zonen = ap.locator(".proj-dropzone.hochladefeld")
+        check("Verwaltung: Hochladefelder = Komponente der Projekte (Ergebnis und Prüfbericht)", zonen.count() == 2
+              and zonen.first.locator("label.upload-btn").is_visible() and zonen.first.locator("label.upload-btn").inner_text().strip() == "PDF-Datei auswählen"
+              and "Ergebnis für „Jahresbericht fiktiv.pdf“ hochladen" in zonen.first.locator("h4").inner_text(), zonen.count())
+        feld = zonen.first.locator("input[type=file]")
+        fid = feld.get_attribute("id")
+        ap.evaluate("(i) => document.getElementById(i).focus()", fid)
+        check("Verwaltung: Fokusring am Knopf des Hochladefelds", ring(ap, f"label[for={fid}]").startswith("solid 3px rgb(199, 80, 0)"), ring(ap, f"label[for={fid}]"))
+        feld.set_input_files(files=[{"name": "kein.pdf", "mimeType": "application/pdf", "buffer": b"kein pdf"}])
+        ap.wait_for_timeout(1500)
+        check("Verwaltung: falsche Datei -> Fehler am Feld", feld.get_attribute("aria-invalid") == "true"
+              and ap.locator(f"#{fid}Status").inner_text().startswith("Fehler:"), ap.locator(f"#{fid}Status").inner_text())
+        feld.set_input_files(ergebnis_pdf)                  # startet das Hochladen sofort (wie in den Projekten)
+        ap.wait_for_timeout(6000)
+        check("Ergebnis hochgeladen: Meldung nennt Datei und veraPDF", "veraPDF" in ap.locator("#verwaltungMeldung").inner_text()
+              and "als Ergebnis für" in ap.locator("#verwaltungMeldung").inner_text(), ap.locator("#verwaltungMeldung").inner_text())
         ap.click("button:has-text('Liefern')")
         ap.wait_for_timeout(1500)
         if ap.locator("#exdLieferDialog").evaluate("d => d.open"):
@@ -228,6 +315,16 @@ try:
             dl.click()
         check("Download kommt an", info.value.suggested_filename.endswith("(barrierefrei).pdf"), info.value.suggested_filename)
         check("Stand „Geliefert“, abgebucht", "Geliefert" in pg.locator("main").inner_text() and "abgebucht" in pg.locator("main").inner_text())
+        check("Prüfergebnis für Kunden ohne Technik-Zusammenfassung", "Automatische Prüfung (veraPDF):" in pg.locator("main").inner_text()
+              and "identifiziert" not in pg.locator("main").inner_text())
+        # PDF-Nachweis per fetch: Erfolg als Download, Fehler als Satz neben dem Link (nicht als JSON-Seite)
+        pg.route("**/nachweis.pdf", lambda route: route.fulfill(status=503, content_type="application/json",
+                                                                 body='{"detail": "Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen."}'))
+        pg.click("#exaPdf")
+        pg.wait_for_timeout(800)
+        check("PDF-Fehler: Meldung neben dem Link mit Fokus, Seite bleibt", fokus(pg) == "exaPdfFehler" and "Druckansicht" in pg.locator("#exaPdfFehler").inner_text()
+              and pg.url.endswith(f"/express/auftrag/{aid}"), (fokus(pg), pg.url))
+        pg.unroute("**/nachweis.pdf")
         axe(pg, "Auftragsübersicht geliefert")
         check("Keine JS-Fehler", not js_fehler, js_fehler)
         b.close()

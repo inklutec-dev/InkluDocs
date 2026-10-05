@@ -10402,8 +10402,6 @@ msgstr "Euros pour un dollar US"
 msgid "Gelöschtes Konto"
 msgstr "Compte supprimé"
 
-msgid "Gelöschtes Projekt"
-msgstr "Projet supprimé"
 
 msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
 msgstr "Exactement comme dans la liste « Par modèle », par exemple gemini-3.1-pro-preview."
@@ -10432,8 +10430,6 @@ msgstr "Coûts d’IA du mois"
 msgid "KI-Kosten im {monat}"
 msgstr "Coûts d’IA en {monat}"
 
-msgid "KI-Kosten {monat}: {betrag}"
-msgstr "Coûts d’IA {monat} : {betrag}"
 
 msgid "Keine Einzelheiten."
 msgstr "Aucun détail."
@@ -10636,17 +10632,11 @@ msgstr "Commande {nr}"
 msgid "Aus einem Projekt"
 msgstr "À partir d’un projet"
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
-msgstr "Vérification PDF/UA automatique (veraPDF) : réussie."
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
-msgstr "Vérification PDF/UA automatique (veraPDF) : {text}"
 
 msgid "Barrierefrei aufbereiten (mit Prüfung)"
 msgstr "Rendre accessible (vérification comprise)"
 
-msgid "Barrierefrei aufbereiten: Credits je Seite"
-msgstr "Rendre accessible : crédits par page"
 
 msgid "Barrierefreie PDF herunterladen"
 msgstr "Télécharger le PDF accessible"
@@ -10699,14 +10689,10 @@ msgstr "Veuillez écrire une réponse."
 msgid "Bitte eine E-Mail-Adresse eingeben."
 msgstr "Veuillez saisir une adresse e-mail."
 
-msgid "Bitte eine Frage schreiben."
-msgstr "Veuillez écrire une question."
 
 msgid "Bitte einen Ansprechpartner angeben."
 msgstr "Veuillez indiquer une personne à contacter."
 
-msgid "Bitte einen Grund angeben."
-msgstr "Veuillez indiquer un motif."
 
 msgid "Bitte mindestens ein Dokument ankreuzen."
 msgstr "Veuillez cocher au moins un document."
@@ -10714,8 +10700,6 @@ msgstr "Veuillez cocher au moins un document."
 msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
 msgstr "Veuillez n’utiliser que des chiffres, des espaces et + ( ) / -."
 
-msgid "Bitte zuerst eine PDF-Datei auswählen."
-msgstr "Veuillez d’abord choisir un fichier PDF."
 
 msgid "Credits"
 msgstr "Crédits"
@@ -10723,8 +10707,6 @@ msgstr "Crédits"
 msgid "Credits kaufen"
 msgstr "Acheter des crédits"
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
-msgstr "Nous créons pour cela un projet « Commande express ». Taille jusqu’à 50 Mo."
 
 msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
 msgstr "Merci ! Votre commande {nr} a bien été reçue. Nous livrons sous {stunden} heures et vous envoyons une confirmation par e-mail."
@@ -10775,8 +10757,6 @@ msgstr "La commande a échoué. Veuillez réessayer."
 msgid "Die Datei konnte nicht hochgeladen werden."
 msgstr "Le fichier n’a pas pu être téléversé."
 
-msgid "Die Datei wird hochgeladen …"
-msgstr "Téléversement du fichier …"
 
 msgid "Die Dokumente konnten nicht geladen werden."
 msgstr "Les documents n’ont pas pu être chargés."
@@ -10793,8 +10773,6 @@ msgstr "La prestation n’a pas pu être modifiée."
 msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
 msgstr "Les prix sont encore provisoires. Ne les fixer qu’après accord et cocher « Prix fixés » ci-dessous."
 
-msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
-msgstr "La vérification PDF/UA automatique (veraPDF) signale des écarts :"
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "Les crédits réservés sont libérés, rien n’est débité. Le client reçoit un e-mail avec le motif."
@@ -10835,11 +10813,7 @@ msgstr "Enregistrer les paramètres"
 msgid "Einverständnis"
 msgstr "Consentement"
 
-msgid "Ergebnis (PDF) für {name}"
-msgstr "Résultat (PDF) pour {name}"
 
-msgid "Ergebnis für „{name}“ gespeichert."
-msgstr "Résultat pour « {name} » enregistré."
 
 msgid "Ergebnis herunterladen"
 msgstr "Télécharger le résultat"
@@ -10847,20 +10821,14 @@ msgstr "Télécharger le résultat"
 msgid "Ergebnis hochgeladen"
 msgstr "Résultat téléversé"
 
-msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
-msgstr "Téléversement du résultat et vérification avec veraPDF …"
 
 msgid "Express-Auftrag"
 msgstr "Commande express"
 
-msgid "Express-Auftrag {nr}: {stand}"
-msgstr "Commande express {nr} : {stand}"
 
 msgid "Express-Aufträge"
 msgstr "Commandes express"
 
-msgid "Express-Aufträge: {u} überfällig, {n} neu."
-msgstr "Commandes express : {u} en retard, {n} nouvelles."
 
 msgid "Express-Bearbeiter"
 msgstr "Responsables express"
@@ -10868,8 +10836,6 @@ msgstr "Responsables express"
 msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
 msgstr "Les responsables express ne voient que les commandes express dans l’administration et peuvent les traiter, par exemple un partenaire qui prépare les documents. Ils ne voient ni les clients, ni le chiffre d’affaires, ni les coûts d’IA."
 
-msgid "Express-Bearbeiter-Recht entziehen: {name}"
-msgstr "Retirer le droit de responsable express : {name}"
 
 msgid "Express-Service"
 msgstr "Service express"
@@ -10877,8 +10843,6 @@ msgstr "Service express"
 msgid "Fassung {f}, Sprache {s}"
 msgstr "version {f}, langue {s}"
 
-msgid "Frage"
-msgstr "Question"
 
 msgid "Fällig am"
 msgstr "Échéance le"
@@ -10886,8 +10850,6 @@ msgstr "Échéance le"
 msgid "Geliefert"
 msgstr "Livrée"
 
-msgid "Geliefert (die letzten 100)"
-msgstr "Livrées (les 100 dernières)"
 
 msgid "Geliefert am"
 msgstr "Livrée le"
@@ -10901,11 +10863,7 @@ msgstr "Motif"
 msgid "Hinweise für uns (freiwillig)"
 msgstr "Remarques pour nous (facultatif)"
 
-msgid "Hochgeladen und hinzugefügt."
-msgstr "Téléversé et ajouté."
 
-msgid "Hochladen und hinzufügen"
-msgstr "Téléverser et ajouter"
 
 msgid "Höchstens Dokumente je Auftrag"
 msgstr "Nombre maximal de documents par commande"
@@ -10982,17 +10940,11 @@ msgstr "Visible uniquement ici dans l’administration, jamais pour le client."
 msgid "Nur prüfen (Prüfbericht)"
 msgstr "Vérification seule (rapport)"
 
-msgid "Nur prüfen: Credits je Seite"
-msgstr "Vérification seule : crédits par page"
 
-msgid "Oder eine PDF hochladen, ohne Projekt"
-msgstr "Ou téléverser un PDF, sans projet"
 
 msgid "Original herunterladen"
 msgstr "Télécharger l’original"
 
-msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
-msgstr "Prix par page : rendre accessible (vérification comprise) {a} crédits, vérification seule {p} crédits."
 
 msgid "Preise sind festgelegt (kein Platzhalter mehr)"
 msgstr "Prix fixés (plus de valeurs provisoires)"
@@ -11000,11 +10952,7 @@ msgstr "Prix fixés (plus de valeurs provisoires)"
 msgid "Prüfbericht"
 msgstr "Rapport de vérification"
 
-msgid "Prüfbericht (PDF) für {name}"
-msgstr "Rapport de vérification (PDF) pour {name}"
 
-msgid "Prüfbericht für „{name}“ gespeichert."
-msgstr "Rapport de vérification pour « {name} » enregistré."
 
 msgid "Prüfbericht herunterladen"
 msgstr "Télécharger le rapport de vérification"
@@ -11012,8 +10960,6 @@ msgstr "Télécharger le rapport de vérification"
 msgid "Prüfbericht hochgeladen"
 msgstr "Rapport de vérification téléversé"
 
-msgid "Prüfbericht wird hochgeladen …"
-msgstr "Téléversement du rapport de vérification …"
 
 msgid "Recht entziehen"
 msgstr "Retirer le droit"
@@ -11045,8 +10991,6 @@ msgstr "Question d’InkluDocs"
 msgid "Storniert"
 msgstr "Annulée"
 
-msgid "Storniert (die letzten 100)"
-msgstr "Annulées (les 100 dernières)"
 
 msgid "Storniert am"
 msgstr "Annulée le"
@@ -11096,8 +11040,6 @@ msgstr "Nommer responsable express"
 msgid "Zur Auswahl hinzufügen"
 msgstr "Ajouter à la sélection"
 
-msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
-msgstr "Pour l’instant, nous ne traitons que des fichiers PDF."
 
 msgid "Zurück zu den Express-Aufträgen"
 msgstr "Retour aux commandes express"
@@ -11108,8 +11050,6 @@ msgstr "Retour à mes commandes"
 msgid "Zurück zum Express-Service"
 msgstr "Retour au service express"
 
-msgid "Zustimmung"
-msgstr "Accord"
 
 msgid "abgebucht"
 msgstr "débités"
@@ -11141,8 +11081,6 @@ msgstr "interne"
 msgid "keine"
 msgstr "aucune"
 
-msgid "keine PDF, nicht möglich"
-msgstr "pas un PDF, impossible"
 
 msgid "keiner (freiwillig)"
 msgstr "aucun (facultatif)"
@@ -11168,14 +11106,8 @@ msgstr "déjà dans votre sélection"
 msgid "storniert am {datum}"
 msgstr "annulée le {datum}"
 
-msgid "veraPDF konnte die Datei nicht prüfen."
-msgstr "veraPDF n’a pas pu vérifier le fichier."
 
-msgid "veraPDF: Abweichungen — {text}"
-msgstr "veraPDF : écarts — {text}"
 
-msgid "veraPDF: PDF/UA bestanden."
-msgstr "veraPDF : PDF/UA réussi."
 
 msgid "vorgemerkt"
 msgstr "réservés"
@@ -11251,3 +11183,159 @@ msgstr "{seiten}, {leistung}, {c} crédits"
 
 msgid "{dokumente}, {c} Credits"
 msgstr "{dokumente}, {c} crédits"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid " oder "
+msgstr " ou "
+
+msgid "(die letzten 100)"
+msgstr "(les 100 dernières)"
+
+msgid "Automatische Prüfung ({pruefung}): bestanden."
+msgstr "Vérification automatique ({pruefung}) : réussie."
+
+msgid "Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat."
+msgstr "Vérification automatique ({pruefung}) : avec des remarques que notre équipe a examinées."
+
+msgid "Bitte warten, bis der vorige Schritt fertig ist."
+msgstr "Veuillez attendre la fin de l’étape précédente."
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
+msgstr "Nous créons pour cela un projet « Commande express »."
+
+msgid "Datei auswählen"
+msgstr "Choisir un fichier"
+
+msgid "Dateien gelöscht"
+msgstr "Fichiers supprimés"
+
+msgid "Dateien löschen nach Tagen"
+msgstr "Supprimer les fichiers après (jours)"
+
+msgid "Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte."
+msgstr "Type de fichier : {typen}. La vérification automatique s’exécute après l’envoi. Un nouveau fichier remplace l’ancien."
+
+msgid "Dateityp: {typen}. Eine neue Datei ersetzt die alte."
+msgstr "Type de fichier : {typen}. Un nouveau fichier remplace l’ancien."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen (Schritt 1)."
+msgstr "Votre sélection est vide. Veuillez d’abord ajouter des documents (étape 1)."
+
+msgid "Die PDF ist heruntergeladen."
+msgstr "Le PDF a été téléchargé."
+
+msgid "Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen."
+msgstr "Le PDF ne peut pas être créé pour le moment. Veuillez utiliser la vue d’impression."
+
+msgid "Die PDF wird erstellt …"
+msgstr "Création du PDF …"
+
+msgid "Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens Eingabe kostet die Eingabe {ein}, die Ausgabe {aus}."
+msgstr "Le palier pour les entrées longues est repris : au-delà de {grenze} jetons d’entrée, l’entrée coûte {ein} et la sortie {aus}."
+
+msgid "Die automatische Prüfung meldet Abweichungen:"
+msgstr "La vérification automatique signale des écarts :"
+
+msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
+msgstr "Commande express {nr} – récapitulatif.pdf"
+
+msgid "Frage (Pflicht)"
+msgstr "Question (obligatoire)"
+
+msgid "Frage: Bitte eine Frage schreiben."
+msgstr "Question : veuillez écrire une question."
+
+msgid "Frist ruht bis zur Antwort des Kunden"
+msgstr "Délai suspendu jusqu’à la réponse du client"
+
+msgid "Gelöschtes Projekt {id}"
+msgstr "Projet supprimé {id}"
+
+msgid "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+msgstr "Pris en compte pour « coût par crédit » : {credits} crédits pour le travail d’IA (textes alternatifs, infobulles, traduction, modifications par le chatbot) et leurs coûts d’IA, les deux depuis le {datum}. Le balisage, la vérification, les exports et Express ne sont pas comptés."
+
+msgid "Grund für das Stornieren (Pflicht)"
+msgstr "Motif de l’annulation (obligatoire)"
+
+msgid "Grund für das Stornieren: Bitte einen Grund angeben."
+msgstr "Motif de l’annulation : veuillez indiquer un motif."
+
+msgid "KI-Kosten (Listenpreise netto)"
+msgstr "Coûts d’IA (prix catalogue hors taxes)"
+
+msgid "Keine offenen Aufträge."
+msgstr "Aucune commande en cours."
+
+msgid "Neue Bestellungen sind zurzeit abgeschaltet. Bestehende Aufträge lassen sich weiter bearbeiten, liefern und stornieren."
+msgstr "Les nouvelles commandes sont actuellement désactivées. Les commandes existantes peuvent toujours être traitées, livrées et annulées."
+
+msgid "Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier."
+msgstr "Les nouvelles commandes express ne sont pas possibles pour le moment. Vous trouverez vos commandes précédentes ici."
+
+msgid "Offene Aufträge"
+msgstr "Commandes en cours"
+
+msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
+msgstr "Les originaux, les résultats et les rapports de vérification sont supprimés ce nombre de jours après la livraison ou l’annulation ; la commande elle-même reste comme justificatif. 0 = ne jamais supprimer."
+
+msgid "Preise je Seite: {liste}."
+msgstr "Prix par page : {liste}."
+
+msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
+msgstr "Chiffre d’affaires (prix finaux, sans TVA selon le § 19 UStG)"
+
+msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
+msgstr "Trop de demandes en peu de temps. Veuillez réessayer plus tard."
+
+msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
+msgstr "Pour le moment, nous ne pouvons traiter que des fichiers {typen}."
+
+msgid "Zustimmung (beide Häkchen sind nötig)"
+msgstr "Consentement (les deux cases sont obligatoires)"
+
+msgid "für {modell}"
+msgstr "pour {modell}"
+
+msgid "nicht möglich, nur {typen}"
+msgstr "impossible, uniquement {typen}"
+
+msgid "{art} für „{name}“ hochladen"
+msgstr "Envoyer {art} pour « {name} »"
+
+msgid "{leistung} {c} Credits"
+msgstr "{leistung} {c} crédits"
+
+msgid "{leistung}: Credits je Seite"
+msgstr "{leistung} : crédits par page"
+
+msgid "{name}, angelegt am {datum}"
+msgstr "{name}, créé le {datum}"
+
+msgid "{pruefung} konnte die Datei nicht prüfen."
+msgstr "{pruefung} n’a pas pu vérifier le fichier."
+
+msgid "{pruefung}: Abweichungen — {text}"
+msgstr "{pruefung} : écarts — {text}"
+
+msgid "{pruefung}: bestanden."
+msgstr "{pruefung} : réussi."
+
+msgid "{pruefung}: läuft noch …"
+msgstr "{pruefung} : en cours …"
+
+msgid "{typen} hochladen, ohne Projekt"
+msgstr "Envoyer un fichier {typen} sans projet"
+
+msgid "{typ}-Datei auswählen"
+msgstr "Choisir un fichier {typ}"
+
+msgid "„{datei}“ ist als Ergebnis für „{name}“ gespeichert."
+msgstr "« {datei} » est enregistré comme résultat pour « {name} »."
+
+msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
+msgstr "« {datei} » est enregistré comme rapport de vérification pour « {name} »."
+
+msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
+msgstr "« {name} » envoyé et ajouté à la sélection."

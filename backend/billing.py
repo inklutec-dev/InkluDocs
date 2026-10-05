@@ -208,6 +208,28 @@ def vorgemerkt(konto_id: int, conn=None) -> int:
         if eigene_conn and conn is not None:
             conn.close()
 
+
+def vorgemerkt_domain(domain: str, conn=None) -> int:
+    """Vormerkungen ALLER Free-Konten einer Firmen-Domain (Pruefung Entwicklung 05.10.2026, Befund 7): Der Verbrauch wird
+    bei der Free-Buendelung je Domain gerechnet (_domain_monats_verbrauch) — die Vormerkung muss es genauso, sonst koennten
+    zwei Konten derselben Domain zusammen mehr vormerken, als die Domain hat. Gleicher Kontofilter wie dort."""
+    eigene_conn = conn is None
+    try:
+        if eigene_conn:
+            conn = get_db()
+        row = conn.execute(
+            "SELECT COALESCE(SUM(a.credits_gesamt), 0) FROM express_auftraege a JOIN users u ON u.id = a.konto_user_id "
+            "WHERE substr(u.email, instr(u.email, '@') + 1) = ? "
+            "AND (COALESCE(u.plan, 'free') = 'free' "
+            "     OR (u.plan_gueltig_bis IS NOT NULL AND date(u.plan_gueltig_bis) < date('now'))) "
+            "AND u.is_admin = 0 AND a.status IN ('neu', 'in_arbeit', 'rueckfrage')", (domain,)).fetchone()
+        return int(row[0] or 0)
+    except Exception:  # noqa: BLE001
+        return 0
+    finally:
+        if eigene_conn and conn is not None:
+            conn.close()
+
 # EXPORT-STAFFEL (Michael Karbe 28./29.08.2026): Grundpreis je Export-Vorgang
 # (AKTIONS_PREISE) + Staffel je ANGEFANGENE EXPORT_SCHRITT Bilder bzw. Felder
 # der exportierten Datei — PDF und Word 5 Credits je 10 Bilder, Formular-PDF
@@ -311,16 +333,20 @@ def tagesverbrauch_ki(user_id: int) -> int:
         conn.close()
 
 
-def verfuegbare_credits(user_id: int):
-    """Guthaben, das fuer eine kostenpflichtige Aktion zur Verfuegung steht:
-    Monats-Rest + Zusatz-Pakete; None = unbegrenzt (Enterprise/Admin/Enforcement aus)."""
-    z = pruefe_kontingent(user_id)
+def _verfuegbar_aus(z: dict, user_id: int):
     if z.get("rest") is None:
         return None
     if not ABO_ENFORCEMENT or _ist_admin(user_id):
         return None
     # Express (05.10.2026): vorgemerkte Credits offener Auftraege stehen nicht mehr zur Verfuegung.
     return max(0, int(z.get("rest") or 0) + int(z.get("pakete_rest") or 0) - int(z.get("vorgemerkt") or 0))
+
+
+def verfuegbare_credits(user_id: int, streng: bool = False):
+    """Guthaben, das fuer eine kostenpflichtige Aktion zur Verfuegung steht:
+    Monats-Rest + Zusatz-Pakete - Express-Vormerkungen; None = unbegrenzt (Enterprise/Admin/Enforcement aus).
+    streng=True (Express-Bestellung, Befund 18): ein Datenbankfehler wirft, statt alles zu erlauben (fail-closed)."""
+    return _verfuegbar_aus(pruefe_kontingent(user_id, streng=streng), user_id)
 
 
 def _ist_admin(user_id: int) -> bool:
@@ -339,8 +365,15 @@ def _pruefung(user_id: int, preis: int) -> dict:
     {"preis", "verfuegbar" (None = unbegrenzt), "erlaubt", "fehlend"}"""
     verf = verfuegbare_credits(user_id)
     erlaubt = verf is None or verf >= preis
+    # Express-Vormerkung nur fuer den Meldungstext, wenn es nicht reicht (Befund 15) — sonst kein zweiter Rechenweg.
+    vorgemerkt = 0
+    if not erlaubt:
+        try:
+            vorgemerkt = int(pruefe_kontingent(user_id).get("vorgemerkt") or 0)
+        except Exception:  # noqa: BLE001
+            vorgemerkt = 0
     return {"preis": int(preis), "verfuegbar": verf, "erlaubt": erlaubt,
-            "fehlend": 0 if erlaubt else int(preis) - int(verf or 0)}
+            "fehlend": 0 if erlaubt else int(preis) - int(verf or 0), "vorgemerkt": vorgemerkt}
 
 
 def preis_pruefung(user_id: int, preis: int) -> dict:
@@ -372,15 +405,20 @@ def credits_fehlen_detail(p: dict, was: str = "Diese Aktion") -> dict:
     """Einheitlicher 402-Body (code credits_fehlen) fuer alle Werkzeuge; die
     Oberflaeche zeigt daraus die barrierefreie Meldung (zeigeCreditsMeldung)."""
     verf = 0 if p.get("verfuegbar") is None else int(p["verfuegbar"])
+    # Befund 15 (05.10.2026): sonst passt die Zahl nicht zur Startseite, wenn Credits fuer Express vorgemerkt sind.
+    vorm = (f" Weitere {int(p['vorgemerkt'])} Credits sind für offene Express-Aufträge vorgemerkt."
+            if int(p.get("vorgemerkt") or 0) > 0 else "")
     return {"code": "credits_fehlen", "preis": p["preis"], "verfuegbar": p.get("verfuegbar"), "fehlend": p["fehlend"],
-            "text": (f"{was} würde {p['preis']} Credits benötigen, du verfügst derzeit über {verf} Credits. "
+            "text": (f"{was} würde {p['preis']} Credits benötigen, du verfügst derzeit über {verf} Credits.{vorm} "
                      "Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben.")}
 
 
 def credits_fehlen_text(p: dict) -> str:
     """Kurzfassung fuer den InkluAgent (Chat-Antwort statt HTTP-Fehler)."""
     verf = 0 if p.get("verfuegbar") is None else int(p["verfuegbar"])
-    return (f"Dafür reicht das Guthaben nicht: {p['preis']} Credits nötig, {verf} vorhanden. "
+    vorm = (f" ({int(p['vorgemerkt'])} weitere sind für offene Express-Aufträge vorgemerkt.)"
+            if int(p.get("vorgemerkt") or 0) > 0 else "")
+    return (f"Dafür reicht das Guthaben nicht: {p['preis']} Credits nötig, {verf} vorhanden.{vorm} "
             "Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits.")
 
 
@@ -556,7 +594,7 @@ def _monatsende_iso() -> str:
     return f"{jetzt.year:04d}-{jetzt.month:02d}-{letzter_tag:02d}"
 
 
-def _uebertrag(konto_id: int, plan: str, kontingent, conn=None) -> int:
+def _uebertrag(konto_id: int, plan: str, kontingent, conn=None, bis=None) -> int:
     """Uebertrag ("Rollover") ins laufende Monatsbudget, ZUSTANDSLOS berechnet.
 
     Fachregel (Steve/Michael 31.07.2026): maximal EIN Monatskontingent darf
@@ -579,9 +617,13 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None) -> int:
     Plan-Historien-Tabelle; Fehlrichtung ist fuer den Kunden meist guenstig.
 
     conn: optional eine bestehende Verbindung (siehe monats_verbrauch).
+    bis (05.10.2026, Express ueber den Monatswechsel): (jahr, monat) — Uebertrag IN diesen Monat statt in den laufenden.
+    Die Neustart-Regel (kontingent_reset_am) gilt nur fuer den laufenden Monat.
     """
     if plan == "free" or not kontingent:
         return 0
+    if bis is not None:
+        return _uebertrag_bis(konto_id, kontingent, int(bis[0]), int(bis[1]), conn)
     # Review-Befund 3 (07.08.): Nach einem Kontingent-Neustart im laufenden
     # Monat gibt es KEINEN Uebertrag mehr — "frischer Topf" heisst frisch.
     # Sonst wuerde der Uebertrag aus den Vormonaten ein zweites Mal gewaehrt
@@ -630,6 +672,58 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None) -> int:
         if monat > 12:
             monat, jahr = 1, jahr + 1
     return u
+
+
+def _uebertrag_bis(konto_id: int, kontingent: int, jahr: int, monat: int, conn=None) -> int:
+    """Uebertrag in den Monat (jahr, monat) — dieselbe Rekurrenz wie _uebertrag, nur mit festem Zielmonat."""
+    eigene_conn = conn is None
+    if eigene_conn:
+        conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT strftime('%Y-%m', created_at) AS monat, COALESCE(SUM(credits), 0) AS verbrauch "
+            "FROM usage_events WHERE konto_user_id = ? AND created_at < ? GROUP BY monat ORDER BY monat",
+            (konto_id, f"{jahr:04d}-{monat:02d}-01")).fetchall()
+    finally:
+        if eigene_conn:
+            conn.close()
+    if not rows:
+        return 0
+    verbrauch_je_monat = {r["monat"]: int(r["verbrauch"]) for r in rows}
+    j, m = int(rows[0]["monat"][:4]), int(rows[0]["monat"][5:7])
+    u = 0
+    while (j, m) < (jahr, monat):
+        u = max(0, min(kontingent, kontingent + u - verbrauch_je_monat.get(f"{j:04d}-{m:02d}", 0)))
+        m += 1
+        if m > 12:
+            m, j = 1, j + 1
+    return u
+
+
+def pakete_abbuchen_fuer_monat(conn, konto_id: int, zeitpunkt: str) -> None:
+    """Paket-Abbuchung fuer einen ZURUECKLIEGENDEN Abrechnungsmonat (Express ueber den Monatswechsel, Pruefung
+    Entwicklung 05.10.2026, Befund 1): Die Abbuchung einer Express-Lieferung gehoert in den Monat der Bestellung — dort
+    war das Guthaben vorgemerkt. Sonst verfiele beim Monatswechsel Uebertrag, den der Kunde nie nutzen durfte.
+    Gleiche Differenzrechnung wie _pakete_abbuchen, nur fuer den Kalendermonat von `zeitpunkt` (UTC-Text); die
+    Paket-Abbuchungen tragen diesen Zeitpunkt, damit sie in DEM Monat als „bereits abgebucht“ zaehlen. Laeuft in der
+    offenen Transaktion des Aufrufers."""
+    jahr, monat = int(zeitpunkt[:4]), int(zeitpunkt[5:7])
+    von = f"{jahr:04d}-{monat:02d}-01"
+    bis = f"{jahr + (monat == 12):04d}-{monat % 12 + 1:02d}-01"
+    row = conn.execute("SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis FROM users WHERE id = ?",
+                       (konto_id,)).fetchone()
+    if row is None:
+        return
+    plan = effektiver_plan(row)
+    kontingent = PLAN_KONTINGENTE[plan]
+    if kontingent is None:
+        return
+    budget = kontingent + _uebertrag(konto_id, plan, kontingent, conn=conn, bis=(jahr, monat))
+    verbraucht = int(conn.execute("SELECT COALESCE(SUM(credits), 0) FROM usage_events WHERE konto_user_id = ? "
+                                  "AND created_at >= ? AND created_at < ?", (konto_id, von, bis)).fetchone()[0])
+    bereits = int(conn.execute("SELECT COALESCE(SUM(betrag), 0) FROM paket_abbuchungen WHERE konto_user_id = ? "
+                               "AND created_at >= ? AND created_at < ?", (konto_id, von, bis)).fetchone()[0])
+    _pakete_belasten(conn, konto_id, max(0, verbraucht - budget) - bereits, zeitpunkt)
 
 
 def starte_kontingent_neu(konto_id: int) -> None:
@@ -708,7 +802,7 @@ def pakete_rest(konto_id: int) -> int:
 KOSTEN_PRO_CREDIT_EUR = float(os.environ.get("KOSTEN_PRO_CREDIT_EUR", "0.012"))
 
 
-def pruefe_kontingent(user_id: int) -> dict:
+def pruefe_kontingent(user_id: int, streng: bool = False) -> dict:
     """Prueft, ob eine kostenpflichtige Aktion stattfinden darf.
 
     Rueckgabe immer ein dict:
@@ -730,6 +824,8 @@ def pruefe_kontingent(user_id: int) -> dict:
 
     Wirft NIE eine Exception nach oben — im Zweifel wird erlaubt
     (Verfuegbarkeit schlaegt Abrechnung, Fehler landet im Log).
+    Ausnahme streng=True (Express-Bestellung, 05.10.2026): Handarbeit soll nicht ohne Guthabenpruefung durchgehen —
+    dann wirft ein Fehler (auch eine fehlende Konto-Zeile) eine Exception (fail-closed).
     """
     ergebnis = {
         "erlaubt": True, "grund": "", "plan": "free",
@@ -772,6 +868,8 @@ def pruefe_kontingent(user_id: int) -> dict:
             finally:
                 conn.close()
             if row is None:
+                if streng:
+                    raise LookupError("Konto fehlt")
                 return ergebnis
         # Auto-Rueckfall (Punkt 8): abgelaufener Bezahl-Plan zaehlt als Free.
         plan = effektiver_plan(row)
@@ -791,7 +889,8 @@ def pruefe_kontingent(user_id: int) -> dict:
                 verbraucht = _domain_monats_verbrauch(_dom)
         uebertrag = _uebertrag(konto_id, plan, kontingent)
         pakete = pakete_rest(konto_id)
-        reserviert = vorgemerkt(konto_id)
+        # Domain-Buendelung: auch die Vormerkungen je Domain (Befund 7), sonst je Topf.
+        reserviert = vorgemerkt_domain(domain_pool) if domain_pool else vorgemerkt(konto_id)
         verfuegbar = None if kontingent is None else kontingent + uebertrag
         ergebnis.update({
             "plan": plan,
@@ -816,6 +915,8 @@ def pruefe_kontingent(user_id: int) -> dict:
             ergebnis["grund"] = "kontingent_erschoepft"
         return ergebnis
     except Exception:
+        if streng:
+            raise
         log.exception("pruefe_kontingent fehlgeschlagen — Aktion wird erlaubt")
         return ergebnis
 
@@ -959,7 +1060,12 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
         f"WHERE a.konto_user_id = ? AND a.created_at >= {_abrechnungsbeginn_sql()}",
         (konto_id,),
     ).fetchone()[0])
-    abzug_gesamt = soll - bereits
+    _pakete_belasten(conn, konto_id, soll - bereits)
+
+
+def _pakete_belasten(conn, konto_id: int, abzug_gesamt: int, zeitpunkt: str = None) -> None:
+    """Zieht `abzug_gesamt` Credits von den Paketen ab und protokolliert jede Teilbuchung in paket_abbuchungen
+    (zeitpunkt = created_at der Protokollzeilen; None = jetzt)."""
     if abzug_gesamt <= 0:
         return
     # Gekaufte Pakete (verfaellt_am NULL) sind IMMER nutzbar — auch im
@@ -981,11 +1087,15 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
             "UPDATE quota_pakete SET verbleibend = verbleibend - ? WHERE id = ?",
             (teil, paket["id"]),
         )
-        conn.execute(
-            "INSERT INTO paket_abbuchungen (paket_id, konto_user_id, betrag) "
-            "VALUES (?, ?, ?)",
-            (paket["id"], konto_id, teil),
-        )
+        if zeitpunkt:
+            conn.execute("INSERT INTO paket_abbuchungen (paket_id, konto_user_id, betrag, created_at) VALUES (?, ?, ?, ?)",
+                         (paket["id"], konto_id, teil, zeitpunkt))
+        else:
+            conn.execute(
+                "INSERT INTO paket_abbuchungen (paket_id, konto_user_id, betrag) "
+                "VALUES (?, ?, ?)",
+                (paket["id"], konto_id, teil),
+            )
         abzug_gesamt -= teil
     if abzug_gesamt > 0:
         # Keine (weiteren) Deckungs-Pakete: nichts geht verloren —

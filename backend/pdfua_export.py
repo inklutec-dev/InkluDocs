@@ -40,11 +40,14 @@ class UmwandlungFehlgeschlagen(Exception):
     pass
 
 
-def _post(pfad: str, feldname: str, dateiname: str, data: bytes, media: str) -> dict:
+def _post(pfad: str, feldname: str, dateiname: str, data: bytes, media: str, timeout: Optional[float] = None) -> dict:
+    """timeout: Sekunden (Standard KONVERTER_TIMEOUT). Kurze Dokumente wie der Express-Nachweis geben weniger vor,
+    damit ein haengender Umwandler keinen Thread minutenlang belegt (Express 05.10.2026)."""
     if not verfuegbar():
         raise UmwandlungFehlgeschlagen("Umwandler nicht eingerichtet (KONVERTER_URL fehlt)")
     try:
-        r = httpx.post(f"{KONVERTER_URL}{pfad}", files={feldname: (dateiname, data, media)}, timeout=KONVERTER_TIMEOUT)
+        r = httpx.post(f"{KONVERTER_URL}{pfad}", files={feldname: (dateiname, data, media)},
+                       timeout=timeout or KONVERTER_TIMEOUT)
     except httpx.HTTPError as e:
         raise UmwandlungFehlgeschlagen(f"Umwandler nicht erreichbar: {e}") from e
     if r.status_code != 200:
@@ -56,11 +59,11 @@ def _post(pfad: str, feldname: str, dateiname: str, data: bytes, media: str) -> 
     return r.json()
 
 
-def konvertiere(docx_path: str, dateiname: str = "dokument.docx") -> tuple[bytes, dict]:
+def konvertiere(docx_path: str, dateiname: str = "dokument.docx", timeout: Optional[float] = None) -> tuple[bytes, dict]:
     """Schickt die Word-Datei zum Umwandler; liefert (PDF-Bytes, veraPDF-Bericht)."""
     with open(docx_path, "rb") as f:
         data = f.read()
-    d = _post("/pdfua", "datei", dateiname, data, DOCX_MEDIA)
+    d = _post("/pdfua", "datei", dateiname, data, DOCX_MEDIA, timeout=timeout)
     return base64.b64decode(d["pdf_b64"]), d.get("verapdf") or {}
 
 

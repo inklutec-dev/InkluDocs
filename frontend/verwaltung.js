@@ -195,6 +195,40 @@
     p.focus();
   }
 
+  // Fehler AM Feld (05.10.2026, Pruefung Barrierefreiheit Befund 4) — das Muster feldFehler aus express.html fuer alle
+  // Verwaltungsformulare: Text in #<id>Fehler (wird bei Bedarf unter dem Feld angelegt), mit dem Feld verknuepft
+  // (aria-describedby) und aria-invalid. Leerer Text nimmt den Fehler weg. Fokus setzt der Aufrufer.
+  function feldFehler(id, text) {
+    const f = byId(id);
+    if (!f) return null;
+    let p = byId(id + 'Fehler');
+    if (!p) {
+      p = el('p', 'verwaltung-fehler');
+      p.id = id + 'Fehler';
+      const feld = f.closest('.dash-field');
+      if (feld) feld.appendChild(p); else f.insertAdjacentElement('afterend', p);
+    }
+    p.textContent = text || '';
+    const ids = (f.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+    if (ids.indexOf(p.id) < 0) { ids.push(p.id); f.setAttribute('aria-describedby', ids.join(' ')); }
+    if (text) f.setAttribute('aria-invalid', 'true'); else f.removeAttribute('aria-invalid');
+    return f;
+  }
+
+  // Serverfehler {detail: {text, feld}} einem Feld zuordnen: felder = { feldname_vom_server: element_id }.
+  // Rueckgabe: das Feld (Fokus setzt der Aufrufer) oder null (Fehler ohne Feld -> allgemeine Meldung).
+  function serverFeldFehler(daten, felder) {
+    const d = daten && daten.detail;
+    if (!d || typeof d !== 'object' || !d.feld || !felder[d.feld]) return null;
+    return feldFehler(felder[d.feld], d.text || '');
+  }
+
+  function detailText(daten, ersatz) {
+    const d = daten && daten.detail;
+    if (!d) return ersatz;
+    return typeof d === 'string' ? d : (d.text || ersatz);
+  }
+
   function meldungWeg() {
     const box = byId('verwaltungMeldungBox');
     if (box && !box.hidden) box.hidden = true;
@@ -406,7 +440,7 @@
   });
 
   window.Verwaltung = {
-    PLAN_NAMEN, meldung, datumLang, datumZeit, monatLang, euro, euroGenau, euroFeld, zahl, el, zeile, leer,
+    PLAN_NAMEN, meldung, feldFehler, serverFeldFehler, detailText, datumLang, datumZeit, monatLang, euro, euroGenau, euroFeld, zahl, el, zeile, leer,
     ladeJson, sendeJson, istVollAdmin, planText, buchungText, buchungTeile, datumKurz, korrekturOeffnen, limitOeffnen,
     buchungKnoepfe, zaehltZumUmsatz: (b) => b.weg !== 'bonus' && (b.status === 'ok' || b.status === 'ausstehend'),
   };

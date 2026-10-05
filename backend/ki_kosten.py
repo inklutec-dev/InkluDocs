@@ -50,6 +50,13 @@ log = logging.getLogger("ki_kosten")
 _KONTEXT: contextvars.ContextVar = contextvars.ContextVar("ki_kosten_kontext", default=None)
 FELDER = ("user_id", "konto_user_id", "project_id", "document_id", "image_id", "zweck")
 
+# „Kosten je Credit“ (Pruefung Entwicklung 05.10.2026, Befund 5): nur Credits, die fuer KI-Arbeit berechnet werden,
+# geteilt durch die KI-Kosten genau dieser Zwecke — beides erst ab Messbeginn. Nicht dabei: Tagging und Pruefung
+# (ueberwiegend PDFix bzw. veraPDF, je Seite berechnet), Exporte, Express (Handarbeit).
+KI_AKTIONEN = ("bild_generierung", "alt_text_aenderung_chatbot", "quickinfo_generierung", "quickinfo_aenderung_chatbot",
+               "uebersetzung")
+KI_ZWECKE_MIT_CREDITS = ("alttext", "chatbot", "quickinfo", "uebersetzung")
+
 # Zwecke, wie sie in der Verwaltung erscheinen (Reihenfolge = Anzeige). Neue Zwecke brauchen nur hier eine Zeile.
 ZWECKE = {
     "alttext": "Alt-Texte",
@@ -581,18 +588,34 @@ def monatsbericht(jahr: int, monat: int, umgebungen=None) -> dict:
             "AND gebucht_am >= ? AND gebucht_am < ? GROUP BY konto_user_id", (von, bis))}
         credits_gesamt = sum(credits.values())
         umsatz_cent = umsatz._summe(conn, von, bis)
+        # Kosten je Credit (Befund 5): Zaehler und Nenner fuer DIESELBE Arbeit im SELBEN Zeitraum — ab Messbeginn.
+        beginn = conn.execute("SELECT MIN(created_at) FROM ki_aufrufe").fetchone()[0]
+        ab = max(von, beginn) if beginn else None
+        ki_credits, ki_kosten_kunden = 0, 0.0
+        if ab and ab < bis:
+            platz_a = ",".join("?" * len(KI_AKTIONEN))
+            ki_credits = int(conn.execute(
+                f"SELECT COALESCE(SUM(credits), 0) FROM usage_events WHERE created_at >= ? AND created_at < ? "
+                f"AND quelle != 'express' AND aktion IN ({platz_a})", (ab, bis, *KI_AKTIONEN)).fetchone()[0])
+            platz_z = ",".join("?" * len(KI_ZWECKE_MIT_CREDITS))
+            ki_kosten_kunden = float(conn.execute(
+                f"SELECT COALESCE(SUM(a.kosten_eur_cent), 0) FROM ki_aufrufe a WHERE {bed} AND a.created_at >= ? "
+                f"AND a.konto_user_id IS NOT NULL AND a.zweck IN ({platz_z})",
+                (*werte, ab, *KI_ZWECKE_MIT_CREDITS)).fetchone()[0])
     finally:
         conn.close()
     for k in kunden:
         k["credits"] = credits.get(k["konto_user_id"], 0) if k["konto_user_id"] else 0
         k["umsatz_cent"] = umsatz_je.get(k["konto_user_id"], 0) if k["konto_user_id"] else 0
-    # Kosten je Credit: nur Kundenkosten (ohne „ohne Zuordnung“) durch die Credits, die dafuer verbraucht wurden.
-    kunden_kosten = sum(k["kosten_cent"] for k in kunden if k["konto_user_id"])
     return {
         "jahr": int(jahr), "monat": int(monat), "von": von, "bis": bis,
+        # Umsatz = Endpreise; InkluTec berechnet nach § 19 UStG keine Umsatzsteuer (preise.html) — Umsatz und KI-Kosten
+        # (Listenpreise netto) sind darum vergleichbar (Befund 13). Offen fuer den Steuerberater: Umsatzsteuer nach
+        # § 13b UStG auf die Leistungen von Google und AWS (docs/KI_KOSTEN.md).
         "gesamt": gesamt, "umsatz_cent": umsatz_cent, "bleibt_cent": umsatz_cent - gesamt["kosten_cent"],
         "credits": credits_gesamt,
-        "kosten_je_credit_cent": (kunden_kosten / credits_gesamt) if credits_gesamt else None,
+        "ki_credits": ki_credits, "ki_kosten_kunden_cent": ki_kosten_kunden, "kosten_je_credit_ab": ab,
+        "kosten_je_credit_cent": (ki_kosten_kunden / ki_credits) if ki_credits else None,
         "nach_zweck": nach_zweck, "nach_modell": nach_modell, "nach_umgebung": nach_umgebung, "kunden": kunden,
     }
 

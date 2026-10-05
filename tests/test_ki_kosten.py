@@ -262,5 +262,110 @@ class Auswertung(unittest.TestCase):
         self.assertAlmostEqual(sum(z["kosten_eur_cent"] or 0 for z in zeilen), vorher)
 
 
+class KostenJeCredit(unittest.TestCase):
+    """Pruefung Entwicklung 05.10.2026, Befund 5: Kosten je Credit nur aus Credits fuer KI-Arbeit und deren Kosten, beides
+    ab Messbeginn — Credits aus Tagging, Exporten und Express und Credits VOR dem ersten erfassten Aufruf zaehlen nicht."""
+
+    def setUp(self):
+        _leeren()
+        conn = sqlite3.connect(_DB)
+        conn.execute("DELETE FROM users")
+        conn.execute("INSERT INTO users (id, email, password_hash, display_name) VALUES (201, 'c@beispiel.invalid', 'x', 'Kundin C')")
+        conn.commit()
+        conn.close()
+
+    def _credits(self, aktion, credits, wann="datetime('now')", quelle="sammellauf"):
+        conn = sqlite3.connect(_DB)
+        conn.execute(f"INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, created_at) "
+                     f"VALUES (201, 201, ?, ?, ?, {wann})", (quelle, aktion, credits))
+        conn.commit()
+        conn.close()
+
+    def test_nur_ki_credits_ab_messbeginn(self):
+        import umsatz
+        jetzt = umsatz.jetzt_lokal()
+        von, _ = umsatz.zeitraum(jetzt.year, jetzt.month)
+        # VOR dem Messbeginn (aber im Monat): zaehlt nicht. Danach: KI-Arbeit zaehlt, Tagging/Export/Express nicht.
+        self._credits("bild_generierung", 1000, wann=f"'{von}'")
+        with ki_kosten.kontext(user_id=201, zweck="alttext"):
+            ki_kosten.erfasse("gemini", "gemini-3.8-flash", {"ein": 1_000_000, "aus": 0})
+        conn = sqlite3.connect(_DB)
+        conn.execute("UPDATE ki_aufrufe SET created_at = datetime('now', '-1 minutes')")
+        conn.commit()
+        conn.close()
+        self._credits("bild_generierung", 10)
+        self._credits("quickinfo_generierung", 5)
+        self._credits("pdf_tagging", 400)
+        self._credits("pdf_export", 25)
+        self._credits("express_aufbereiten", 500, quelle="express")
+        with ki_kosten.kontext(user_id=201, zweck="tagging_ki"):           # KI-Kosten ohne passende Credits
+            ki_kosten.erfasse("gemini", "gemini-3.8-flash", {"ein": 1_000_000, "aus": 0})
+        b = ki_kosten.monatsbericht(jetzt.year, jetzt.month)
+        self.assertEqual(b["ki_credits"], 15)
+        alttext = [z for z in _zeilen() if z["zweck"] == "alttext"][0]["kosten_eur_cent"]
+        self.assertAlmostEqual(b["ki_kosten_kunden_cent"], alttext)
+        self.assertAlmostEqual(b["kosten_je_credit_cent"], alttext / 15)
+        self.assertGreater(b["kosten_je_credit_ab"], von)
+        self.assertEqual(b["credits"], 1000 + 10 + 5 + 400 + 25)          # die Kundenliste zeigt weiter alles ausser Express
+
+    def test_ohne_messung_keine_zahl(self):
+        import umsatz
+        jetzt = umsatz.jetzt_lokal()
+        self._credits("bild_generierung", 10)
+        b = ki_kosten.monatsbericht(jetzt.year, jetzt.month)
+        self.assertIsNone(b["kosten_je_credit_cent"])
+        self.assertEqual(b["ki_credits"], 0)
+
+
+class PreisApi(unittest.TestCase):
+    """Befunde 4 und 8 (Fehler am Feld, kaputter JSON-Koerper) und 12 (Staffel bleibt bei neuer Preisstufe)."""
+
+    def setUp(self):
+        _leeren()
+        import ki_kosten_api
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        app = FastAPI()
+        nutzer = {"id": 1, "email": "admin@beispiel.invalid", "is_admin": True}
+        app.include_router(ki_kosten_api.build_router(ki_kosten_api.Deps(
+            require_admin=lambda request: nutzer, require_full_admin=lambda request: nutzer,
+            pauschale_eur_je_credit=lambda: 0.012)))
+        self.api = ki_kosten_api
+        self.client = TestClient(app)
+
+    def test_staffel_wird_uebernommen(self):
+        r = self.client.post("/api/admin/ki-preise/modell", json={"modell": "gemini-3.1-pro-preview", "ein": "2,50", "aus": "15",
+                                                                  "ab": "2027-01-01", "quelle": "Test"})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertIn("Staffel", r.json()["message"])
+        stufe = next(s for s in ki_kosten.preise()["modelle"]["gemini-3.1-pro-preview"]["stufen"] if s["ab"] == "2027-01-01")
+        self.assertEqual((stufe["ein"], stufe["grenze"], stufe["ein_lang"], stufe["aus_lang"]), (2.5, 200000, 4.0, 18.0))
+        n = ki_kosten.nutzung_gemini(_gemini_antwort(prompt=1_000_000, aus=0, denk=0))
+        self.assertAlmostEqual(ki_kosten.kosten_usd("gemini-3.1-pro-preview", n, heute="2027-02-01"), 4.0)
+
+    def test_vorlage_ist_die_juengste_davor(self):
+        stufen = [{"ab": "2026-01-01", "grenze": 1}, {"ab": "2026-06-01", "grenze": 2}, {"ab": "2027-06-01", "grenze": 3}]
+        self.assertEqual(self.api.staffel_vorlage(stufen, "2027-01-01")["grenze"], 2)
+        self.assertEqual(self.api.staffel_vorlage(stufen, "2025-01-01")["grenze"], 1)
+        self.assertEqual(self.api.staffel_vorlage([], "2027-01-01"), {})
+
+    def test_fehler_nennen_das_feld(self):
+        basis = {"modell": "testmodell-1", "ein": "1", "aus": "2", "ab": "2027-01-01", "quelle": "Test"}
+        for aenderung, feld, anfang in (({"ein": "viel"}, "ein", "Eingabe:"), ({"aus": ""}, "aus", "Ausgabe (mit Denk-Tokens):"),
+                                        ({"ab": "morgen"}, "ab", "Gültig ab:"), ({"quelle": ""}, "quelle", "Quelle:"),
+                                        ({"modell": "Kein Modell!"}, "modell", "Modellkennung:")):
+            r = self.client.post("/api/admin/ki-preise/modell", json=dict(basis, **aenderung))
+            self.assertEqual(r.status_code, 400)
+            self.assertEqual(r.json()["detail"]["feld"], feld)
+            self.assertTrue(r.json()["detail"]["text"].startswith(anfang), r.json()["detail"]["text"])
+        r = self.client.post("/api/admin/ki-preise/kurs", json={"usd_eur": "9", "quelle": "EZB"})
+        self.assertEqual(r.json()["detail"]["feld"], "usd_eur")
+
+    def test_kaputter_json_ist_400(self):
+        for pfad in ("/api/admin/ki-preise/modell", "/api/admin/ki-preise/kurs"):
+            for koerper in ("{kaputt", "[1]"):
+                r = self.client.post(pfad, content=koerper, headers={"Content-Type": "application/json"})
+                self.assertEqual(r.status_code, 400, (pfad, koerper))
+
 if __name__ == "__main__":
     unittest.main()

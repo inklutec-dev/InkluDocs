@@ -10403,8 +10403,6 @@ msgstr "Euro für einen US-Dollar"
 msgid "Gelöschtes Konto"
 msgstr "Gelöschtes Konto"
 
-msgid "Gelöschtes Projekt"
-msgstr "Gelöschtes Projekt"
 
 msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
 msgstr "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
@@ -10433,8 +10431,6 @@ msgstr "KI-Kosten im Monat"
 msgid "KI-Kosten im {monat}"
 msgstr "KI-Kosten im {monat}"
 
-msgid "KI-Kosten {monat}: {betrag}"
-msgstr "KI-Kosten {monat}: {betrag}"
 
 msgid "Keine Einzelheiten."
 msgstr "Keine Einzelheiten."
@@ -10637,17 +10633,11 @@ msgstr "Auftrag {nr}"
 msgid "Aus einem Projekt"
 msgstr "Aus einem Projekt"
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
-msgstr "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
-msgstr "Automatische PDF/UA-Prüfung (veraPDF): {text}"
 
 msgid "Barrierefrei aufbereiten (mit Prüfung)"
 msgstr "Barrierefrei aufbereiten (mit Prüfung)"
 
-msgid "Barrierefrei aufbereiten: Credits je Seite"
-msgstr "Barrierefrei aufbereiten: Credits je Seite"
 
 msgid "Barrierefreie PDF herunterladen"
 msgstr "Barrierefreie PDF herunterladen"
@@ -10700,14 +10690,10 @@ msgstr "Bitte eine Antwort schreiben."
 msgid "Bitte eine E-Mail-Adresse eingeben."
 msgstr "Bitte eine E-Mail-Adresse eingeben."
 
-msgid "Bitte eine Frage schreiben."
-msgstr "Bitte eine Frage schreiben."
 
 msgid "Bitte einen Ansprechpartner angeben."
 msgstr "Bitte einen Ansprechpartner angeben."
 
-msgid "Bitte einen Grund angeben."
-msgstr "Bitte einen Grund angeben."
 
 msgid "Bitte mindestens ein Dokument ankreuzen."
 msgstr "Bitte mindestens ein Dokument ankreuzen."
@@ -10715,8 +10701,6 @@ msgstr "Bitte mindestens ein Dokument ankreuzen."
 msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
 msgstr "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
 
-msgid "Bitte zuerst eine PDF-Datei auswählen."
-msgstr "Bitte zuerst eine PDF-Datei auswählen."
 
 msgid "Credits"
 msgstr "Credits"
@@ -10724,8 +10708,6 @@ msgstr "Credits"
 msgid "Credits kaufen"
 msgstr "Credits kaufen"
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
-msgstr "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
 
 msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
 msgstr "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
@@ -10776,8 +10758,6 @@ msgstr "Die Bestellung ist fehlgeschlagen. Bitte erneut versuchen."
 msgid "Die Datei konnte nicht hochgeladen werden."
 msgstr "Die Datei konnte nicht hochgeladen werden."
 
-msgid "Die Datei wird hochgeladen …"
-msgstr "Die Datei wird hochgeladen …"
 
 msgid "Die Dokumente konnten nicht geladen werden."
 msgstr "Die Dokumente konnten nicht geladen werden."
@@ -10794,8 +10774,6 @@ msgstr "Die Leistung konnte nicht geändert werden."
 msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
 msgstr "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
 
-msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
-msgstr "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
@@ -10836,11 +10814,7 @@ msgstr "Einstellungen speichern"
 msgid "Einverständnis"
 msgstr "Einverständnis"
 
-msgid "Ergebnis (PDF) für {name}"
-msgstr "Ergebnis (PDF) für {name}"
 
-msgid "Ergebnis für „{name}“ gespeichert."
-msgstr "Ergebnis für „{name}“ gespeichert."
 
 msgid "Ergebnis herunterladen"
 msgstr "Ergebnis herunterladen"
@@ -10848,20 +10822,14 @@ msgstr "Ergebnis herunterladen"
 msgid "Ergebnis hochgeladen"
 msgstr "Ergebnis hochgeladen"
 
-msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
-msgstr "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
 
 msgid "Express-Auftrag"
 msgstr "Express-Auftrag"
 
-msgid "Express-Auftrag {nr}: {stand}"
-msgstr "Express-Auftrag {nr}: {stand}"
 
 msgid "Express-Aufträge"
 msgstr "Express-Aufträge"
 
-msgid "Express-Aufträge: {u} überfällig, {n} neu."
-msgstr "Express-Aufträge: {u} überfällig, {n} neu."
 
 msgid "Express-Bearbeiter"
 msgstr "Express-Bearbeiter"
@@ -10869,8 +10837,6 @@ msgstr "Express-Bearbeiter"
 msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
 msgstr "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
 
-msgid "Express-Bearbeiter-Recht entziehen: {name}"
-msgstr "Express-Bearbeiter-Recht entziehen: {name}"
 
 msgid "Express-Service"
 msgstr "Express-Service"
@@ -10878,8 +10844,6 @@ msgstr "Express-Service"
 msgid "Fassung {f}, Sprache {s}"
 msgstr "Fassung {f}, Sprache {s}"
 
-msgid "Frage"
-msgstr "Frage"
 
 msgid "Fällig am"
 msgstr "Fällig am"
@@ -10887,8 +10851,6 @@ msgstr "Fällig am"
 msgid "Geliefert"
 msgstr "Geliefert"
 
-msgid "Geliefert (die letzten 100)"
-msgstr "Geliefert (die letzten 100)"
 
 msgid "Geliefert am"
 msgstr "Geliefert am"
@@ -10902,11 +10864,7 @@ msgstr "Grund"
 msgid "Hinweise für uns (freiwillig)"
 msgstr "Hinweise für uns (freiwillig)"
 
-msgid "Hochgeladen und hinzugefügt."
-msgstr "Hochgeladen und hinzugefügt."
 
-msgid "Hochladen und hinzufügen"
-msgstr "Hochladen und hinzufügen"
 
 msgid "Höchstens Dokumente je Auftrag"
 msgstr "Höchstens Dokumente je Auftrag"
@@ -10983,17 +10941,11 @@ msgstr "Nur hier in der Verwaltung sichtbar, nie für den Kunden."
 msgid "Nur prüfen (Prüfbericht)"
 msgstr "Nur prüfen (Prüfbericht)"
 
-msgid "Nur prüfen: Credits je Seite"
-msgstr "Nur prüfen: Credits je Seite"
 
-msgid "Oder eine PDF hochladen, ohne Projekt"
-msgstr "Oder eine PDF hochladen, ohne Projekt"
 
 msgid "Original herunterladen"
 msgstr "Original herunterladen"
 
-msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
-msgstr "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
 
 msgid "Preise sind festgelegt (kein Platzhalter mehr)"
 msgstr "Preise sind festgelegt (kein Platzhalter mehr)"
@@ -11001,11 +10953,7 @@ msgstr "Preise sind festgelegt (kein Platzhalter mehr)"
 msgid "Prüfbericht"
 msgstr "Prüfbericht"
 
-msgid "Prüfbericht (PDF) für {name}"
-msgstr "Prüfbericht (PDF) für {name}"
 
-msgid "Prüfbericht für „{name}“ gespeichert."
-msgstr "Prüfbericht für „{name}“ gespeichert."
 
 msgid "Prüfbericht herunterladen"
 msgstr "Prüfbericht herunterladen"
@@ -11013,8 +10961,6 @@ msgstr "Prüfbericht herunterladen"
 msgid "Prüfbericht hochgeladen"
 msgstr "Prüfbericht hochgeladen"
 
-msgid "Prüfbericht wird hochgeladen …"
-msgstr "Prüfbericht wird hochgeladen …"
 
 msgid "Recht entziehen"
 msgstr "Recht entziehen"
@@ -11046,8 +10992,6 @@ msgstr "Rückfrage von InkluDocs"
 msgid "Storniert"
 msgstr "Storniert"
 
-msgid "Storniert (die letzten 100)"
-msgstr "Storniert (die letzten 100)"
 
 msgid "Storniert am"
 msgstr "Storniert am"
@@ -11097,8 +11041,6 @@ msgstr "Zum Express-Bearbeiter machen"
 msgid "Zur Auswahl hinzufügen"
 msgstr "Zur Auswahl hinzufügen"
 
-msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
-msgstr "Zurzeit können wir nur PDF-Dateien bearbeiten."
 
 msgid "Zurück zu den Express-Aufträgen"
 msgstr "Zurück zu den Express-Aufträgen"
@@ -11109,8 +11051,6 @@ msgstr "Zurück zu meinen Aufträgen"
 msgid "Zurück zum Express-Service"
 msgstr "Zurück zum Express-Service"
 
-msgid "Zustimmung"
-msgstr "Zustimmung"
 
 msgid "abgebucht"
 msgstr "abgebucht"
@@ -11142,8 +11082,6 @@ msgstr "intern"
 msgid "keine"
 msgstr "keine"
 
-msgid "keine PDF, nicht möglich"
-msgstr "keine PDF, nicht möglich"
 
 msgid "keiner (freiwillig)"
 msgstr "keiner (freiwillig)"
@@ -11169,14 +11107,8 @@ msgstr "schon in deiner Auswahl"
 msgid "storniert am {datum}"
 msgstr "storniert am {datum}"
 
-msgid "veraPDF konnte die Datei nicht prüfen."
-msgstr "veraPDF konnte die Datei nicht prüfen."
 
-msgid "veraPDF: Abweichungen — {text}"
-msgstr "veraPDF: Abweichungen — {text}"
 
-msgid "veraPDF: PDF/UA bestanden."
-msgstr "veraPDF: PDF/UA bestanden."
 
 msgid "vorgemerkt"
 msgstr "vorgemerkt"
@@ -11252,3 +11184,159 @@ msgstr "{seiten}, {leistung}, {c} Credits"
 
 msgid "{dokumente}, {c} Credits"
 msgstr "{dokumente}, {c} Credits"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid " oder "
+msgstr " oder "
+
+msgid "(die letzten 100)"
+msgstr "(die letzten 100)"
+
+msgid "Automatische Prüfung ({pruefung}): bestanden."
+msgstr "Automatische Prüfung ({pruefung}): bestanden."
+
+msgid "Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat."
+msgstr "Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat."
+
+msgid "Bitte warten, bis der vorige Schritt fertig ist."
+msgstr "Bitte warten, bis der vorige Schritt fertig ist."
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
+msgstr "Dafür legen wir ein Projekt „Express-Auftrag“ an."
+
+msgid "Datei auswählen"
+msgstr "Datei auswählen"
+
+msgid "Dateien gelöscht"
+msgstr "Dateien gelöscht"
+
+msgid "Dateien löschen nach Tagen"
+msgstr "Dateien löschen nach Tagen"
+
+msgid "Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte."
+msgstr "Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte."
+
+msgid "Dateityp: {typen}. Eine neue Datei ersetzt die alte."
+msgstr "Dateityp: {typen}. Eine neue Datei ersetzt die alte."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen (Schritt 1)."
+msgstr "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen (Schritt 1)."
+
+msgid "Die PDF ist heruntergeladen."
+msgstr "Die PDF ist heruntergeladen."
+
+msgid "Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen."
+msgstr "Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen."
+
+msgid "Die PDF wird erstellt …"
+msgstr "Die PDF wird erstellt …"
+
+msgid "Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens Eingabe kostet die Eingabe {ein}, die Ausgabe {aus}."
+msgstr "Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens Eingabe kostet die Eingabe {ein}, die Ausgabe {aus}."
+
+msgid "Die automatische Prüfung meldet Abweichungen:"
+msgstr "Die automatische Prüfung meldet Abweichungen:"
+
+msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
+msgstr "Express-Auftrag {nr} – Auftragsübersicht.pdf"
+
+msgid "Frage (Pflicht)"
+msgstr "Frage (Pflicht)"
+
+msgid "Frage: Bitte eine Frage schreiben."
+msgstr "Frage: Bitte eine Frage schreiben."
+
+msgid "Frist ruht bis zur Antwort des Kunden"
+msgstr "Frist ruht bis zur Antwort des Kunden"
+
+msgid "Gelöschtes Projekt {id}"
+msgstr "Gelöschtes Projekt {id}"
+
+msgid "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+msgstr "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+
+msgid "Grund für das Stornieren (Pflicht)"
+msgstr "Grund für das Stornieren (Pflicht)"
+
+msgid "Grund für das Stornieren: Bitte einen Grund angeben."
+msgstr "Grund für das Stornieren: Bitte einen Grund angeben."
+
+msgid "KI-Kosten (Listenpreise netto)"
+msgstr "KI-Kosten (Listenpreise netto)"
+
+msgid "Keine offenen Aufträge."
+msgstr "Keine offenen Aufträge."
+
+msgid "Neue Bestellungen sind zurzeit abgeschaltet. Bestehende Aufträge lassen sich weiter bearbeiten, liefern und stornieren."
+msgstr "Neue Bestellungen sind zurzeit abgeschaltet. Bestehende Aufträge lassen sich weiter bearbeiten, liefern und stornieren."
+
+msgid "Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier."
+msgstr "Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier."
+
+msgid "Offene Aufträge"
+msgstr "Offene Aufträge"
+
+msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
+msgstr "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
+
+msgid "Preise je Seite: {liste}."
+msgstr "Preise je Seite: {liste}."
+
+msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
+msgstr "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
+
+msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
+msgstr "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
+
+msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
+msgstr "Zurzeit können wir nur {typen}-Dateien bearbeiten."
+
+msgid "Zustimmung (beide Häkchen sind nötig)"
+msgstr "Zustimmung (beide Häkchen sind nötig)"
+
+msgid "für {modell}"
+msgstr "für {modell}"
+
+msgid "nicht möglich, nur {typen}"
+msgstr "nicht möglich, nur {typen}"
+
+msgid "{art} für „{name}“ hochladen"
+msgstr "{art} für „{name}“ hochladen"
+
+msgid "{leistung} {c} Credits"
+msgstr "{leistung} {c} Credits"
+
+msgid "{leistung}: Credits je Seite"
+msgstr "{leistung}: Credits je Seite"
+
+msgid "{name}, angelegt am {datum}"
+msgstr "{name}, angelegt am {datum}"
+
+msgid "{pruefung} konnte die Datei nicht prüfen."
+msgstr "{pruefung} konnte die Datei nicht prüfen."
+
+msgid "{pruefung}: Abweichungen — {text}"
+msgstr "{pruefung}: Abweichungen — {text}"
+
+msgid "{pruefung}: bestanden."
+msgstr "{pruefung}: bestanden."
+
+msgid "{pruefung}: läuft noch …"
+msgstr "{pruefung}: läuft noch …"
+
+msgid "{typen} hochladen, ohne Projekt"
+msgstr "{typen} hochladen, ohne Projekt"
+
+msgid "{typ}-Datei auswählen"
+msgstr "{typ}-Datei auswählen"
+
+msgid "„{datei}“ ist als Ergebnis für „{name}“ gespeichert."
+msgstr "„{datei}“ ist als Ergebnis für „{name}“ gespeichert."
+
+msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
+msgstr "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
+
+msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
+msgstr "„{name}“ hochgeladen und zur Auswahl hinzugefügt."

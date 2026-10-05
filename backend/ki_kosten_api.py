@@ -10,6 +10,9 @@ Kern ohne HTTP: ki_kosten.py (Tabelle ki_aufrufe). Doku: docs/KI_KOSTEN.md.
   GET  /api/admin/ki-preise                                  Preisliste
   POST /api/admin/ki-preise/modell   {modell, ein, aus, cache?, ab, quelle}   (Voll-Admin)
   POST /api/admin/ki-preise/kurs     {usd_eur, quelle}                        (Voll-Admin)
+Fehler der Formulare kommen als {"detail": {"text", "feld"}}: der Text beginnt mit der sichtbaren Beschriftung, feld nennt
+das Eingabefeld (Pruefung Barrierefreiheit 05.10.2026, Befund 4). Kaputter JSON-Koerper: 400 (Pruefung Entwicklung,
+Befund 8).
 """
 from __future__ import annotations
 
@@ -72,14 +75,41 @@ def _kennung(wert, name: str):
         raise HTTPException(status_code=400, detail=f"{name} ungültig")
 
 
-def _preis_zahl(wert, name: str, pflicht: bool = True):
+def _feldfehler(feld: str, text: str) -> HTTPException:
+    return HTTPException(status_code=400, detail={"text": text, "feld": feld})
+
+
+async def _json_dict(request: Request) -> dict:
+    try:
+        daten = await request.json()
+    except (ValueError, UnicodeDecodeError):
+        raise HTTPException(status_code=400, detail="Ungültige Anfrage")
+    if not isinstance(daten, dict):
+        raise HTTPException(status_code=400, detail="Ungültige Anfrage")
+    return daten
+
+
+def _preis_zahl(wert, name: str, pflicht: bool = True, feld: str = ""):
     """'2,00' / '2.00' / 2 -> 2.0 (USD je 1 Mio. Tokens); leer -> None, wenn nicht Pflicht."""
     if wert in (None, "") and not pflicht:
         return None
     text = str(wert if wert is not None else "").strip().replace(" ", "").replace(",", ".")
     if not re.fullmatch(r"\d{1,4}(\.\d{1,6})?", text):
-        raise HTTPException(status_code=400, detail=f"{name}: bitte eine Zahl, zum Beispiel 2,50")
+        raise _feldfehler(feld, f"{name}: bitte eine Zahl, zum Beispiel 2,50")
     return float(text)
+
+
+# Felder einer Preisstufe, die das Formular nicht kennt (Staffel ab einer Eingabelaenge, z. B. Gemini Pro ueber 200.000
+# Tokens, und der Cache-Schreibpreis). Sie gehen bei einer neuen Stufe nicht verloren (Pruefung Entwicklung, Befund 12).
+STAFFEL_FELDER = ("grenze", "ein_lang", "aus_lang", "cache_lang", "cache_schreiben")
+
+
+def staffel_vorlage(stufen: list, ab: str) -> dict:
+    """Die Stufe, deren Staffel eine neue Stufe „ab“ uebernimmt: die juengste, die vor oder an diesem Tag beginnt —
+    sonst die frueheste."""
+    sortiert = sorted(stufen or [], key=lambda s: s.get("ab") or "")
+    vorher = [s for s in sortiert if (s.get("ab") or "") <= ab]
+    return (vorher[-1] if vorher else (sortiert[0] if sortiert else {})) or {}
 
 
 def build_router(deps: Deps) -> APIRouter:
@@ -103,6 +133,7 @@ def build_router(deps: Deps) -> APIRouter:
         zeitraeume = await loop.run_in_executor(None, ki_kosten.zeitraeume)
         beginn = await loop.run_in_executor(None, ki_kosten.messbeginn)
         bericht.update({"zeitraeume": zeitraeume, "messbeginn": umsatz.lokal(beginn) or None,
+                        "kosten_je_credit_ab_lokal": umsatz.lokal(bericht.get("kosten_je_credit_ab")) or None,
                         "umgebung": umgebung or "alle", "zwecke": ki_kosten.ZWECKE,
                         "pauschale_cent_je_credit": _d.pauschale_eur_je_credit() * 100})
         return bericht
@@ -131,34 +162,35 @@ def build_router(deps: Deps) -> APIRouter:
     @router.post("/api/admin/ki-preise/modell")
     async def ki_preis_setzen(request: Request, user: dict = Depends(_voll)):
         """Preisstufe eines Modells anlegen oder ersetzen (gleiches „gültig ab“). Neue Modelle sind erlaubt. Die Kosten
-        schon erfasster Aufrufe bleiben unveraendert (festgeschrieben beim Aufruf)."""
-        data = await request.json()
-        if not isinstance(data, dict):
-            raise HTTPException(status_code=400, detail="Ungültige Anfrage")
+        schon erfasster Aufrufe bleiben unveraendert (festgeschrieben beim Aufruf). Staffel und Cache-Schreibpreis
+        uebernimmt die neue Stufe aus der bisherigen (staffel_vorlage) — die Oberflaeche zeigt das im Dialog an."""
+        data = await _json_dict(request)
         modell = str(data.get("modell") or "").strip().lower()
         if not re.fullmatch(r"[a-z0-9][a-z0-9._:\-]{1,99}", modell):
-            raise HTTPException(status_code=400, detail="Modellkennung ungültig (Kleinbuchstaben, Ziffern, Punkt, Bindestrich)")
+            raise _feldfehler("modell", "Modellkennung: ungültig (nur Kleinbuchstaben, Ziffern, Punkt, Doppelpunkt, Bindestrich)")
+        stufe_ein = _preis_zahl(data.get("ein"), "Eingabe", feld="ein")
+        stufe_aus = _preis_zahl(data.get("aus"), "Ausgabe (mit Denk-Tokens)", feld="aus")
+        cache = _preis_zahl(data.get("cache"), "Eingabe aus dem Zwischenspeicher", pflicht=False, feld="cache")
+        cache_schreiben = _preis_zahl(data.get("cache_schreiben"), "Zwischenspeicher schreiben", pflicht=False, feld="cache")
         ab = str(data.get("ab") or "").strip() or datetime.utcnow().strftime("%Y-%m-%d")
         try:
             datetime.strptime(ab, "%Y-%m-%d")
         except ValueError:
-            raise HTTPException(status_code=400, detail="„Gültig ab“ bitte als Datum JJJJ-MM-TT")
-        stufe = {"ab": ab, "ein": _preis_zahl(data.get("ein"), "Eingabe"), "aus": _preis_zahl(data.get("aus"), "Ausgabe")}
-        for feld, name in (("cache", "Zwischenspeicher"), ("cache_schreiben", "Zwischenspeicher schreiben")):
-            wert = _preis_zahl(data.get(feld), name, pflicht=False)
-            if wert is not None:
-                stufe[feld] = wert
+            raise _feldfehler("ab", "Gültig ab: bitte als Datum JJJJ-MM-TT, zum Beispiel 2027-01-01")
         quelle = str(data.get("quelle") or "").strip()
         if not quelle:
-            raise HTTPException(status_code=400, detail="Bitte die Quelle des Preises angeben (z. B. Preisseite und Datum)")
+            raise _feldfehler("quelle", "Quelle: bitte angeben (zum Beispiel Preisseite und Datum)")
+        stufe = {"ab": ab, "ein": stufe_ein, "aus": stufe_aus}
+        if cache is not None:
+            stufe["cache"] = cache
+        if cache_schreiben is not None:
+            stufe["cache_schreiben"] = cache_schreiben
         liste = ki_kosten.preise()
         eintrag = liste["modelle"].setdefault(modell, {"stufen": []})
-        alt = next((s for s in eintrag.get("stufen") or [] if s.get("ab") == ab), None)
-        if alt:
-            # Lange-Eingabe-Staffel (Gemini Pro) und Cache-Schreibpreis behalten, wenn nur die Grundpreise geaendert werden.
-            for k in ("grenze", "ein_lang", "aus_lang", "cache_lang", "cache_schreiben"):
-                if k in alt and k not in stufe:
-                    stufe[k] = alt[k]
+        vorlage = staffel_vorlage(eintrag.get("stufen") or [], ab)
+        uebernommen = [k for k in STAFFEL_FELDER if k in vorlage and k not in stufe]
+        for k in uebernommen:
+            stufe[k] = vorlage[k]
         eintrag["stufen"] = sorted([s for s in eintrag.get("stufen") or [] if s.get("ab") != ab] + [stufe],
                                    key=lambda s: s["ab"])
         eintrag["quelle"] = quelle[:300]
@@ -166,22 +198,23 @@ def build_router(deps: Deps) -> APIRouter:
             ki_kosten.speichere_preise(liste)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
-        log.info("KI-Preis geaendert von %s: %s ab %s", user.get("email"), modell, ab)
-        return {"ok": True, "preise": ki_kosten.preise_fuer_anzeige(),
-                "message": f"Preis für {modell} gespeichert (gültig ab {ab})."}
+        log.info("KI-Preis geaendert von %s: %s ab %s (Staffel uebernommen: %s)", user.get("email"), modell, ab,
+                 ", ".join(uebernommen) or "nichts")
+        meldung = f"Preis für {modell} gespeichert (gültig ab {ab})."
+        if "grenze" in uebernommen:
+            meldung += f" Die Staffel ab {int(stufe['grenze']):,} Tokens Eingabe wurde übernommen.".replace(",", ".")
+        return {"ok": True, "preise": ki_kosten.preise_fuer_anzeige(), "message": meldung}
 
     @router.post("/api/admin/ki-preise/kurs")
     async def ki_kurs_setzen(request: Request, user: dict = Depends(_voll)):
         """Wechselkurs USD -> EUR fuer neue Aufrufe."""
-        data = await request.json()
-        if not isinstance(data, dict):
-            raise HTTPException(status_code=400, detail="Ungültige Anfrage")
+        data = await _json_dict(request)
         text = str(data.get("usd_eur") or "").strip().replace(",", ".")
         if not re.fullmatch(r"\d(\.\d{1,6})?", text) or not (0.2 <= float(text) <= 5.0):
-            raise HTTPException(status_code=400, detail="Wechselkurs bitte als Zahl, zum Beispiel 0,8909")
+            raise _feldfehler("usd_eur", "Euro für einen US-Dollar: bitte eine Zahl zwischen 0,2 und 5, zum Beispiel 0,8909")
         quelle = str(data.get("quelle") or "").strip()
         if not quelle:
-            raise HTTPException(status_code=400, detail="Bitte die Quelle des Kurses angeben (z. B. EZB-Referenzkurs und Datum)")
+            raise _feldfehler("quelle", "Quelle: bitte angeben (zum Beispiel EZB-Referenzkurs und Datum)")
         liste = ki_kosten.preise()
         liste["usd_eur"], liste["usd_eur_quelle"] = float(text), quelle[:300]
         try:

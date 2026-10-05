@@ -10400,8 +10400,6 @@ msgstr "Euros per US dollar"
 msgid "Gelöschtes Konto"
 msgstr "Deleted account"
 
-msgid "Gelöschtes Projekt"
-msgstr "Deleted project"
 
 msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
 msgstr "Exactly as in the “By model” list, for example gemini-3.1-pro-preview."
@@ -10430,8 +10428,6 @@ msgstr "AI costs for the month"
 msgid "KI-Kosten im {monat}"
 msgstr "AI costs in {monat}"
 
-msgid "KI-Kosten {monat}: {betrag}"
-msgstr "AI costs {monat}: {betrag}"
 
 msgid "Keine Einzelheiten."
 msgstr "No details."
@@ -10634,17 +10630,11 @@ msgstr "Order {nr}"
 msgid "Aus einem Projekt"
 msgstr "From a project"
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
-msgstr "Automatic PDF/UA check (veraPDF): passed."
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
-msgstr "Automatic PDF/UA check (veraPDF): {text}"
 
 msgid "Barrierefrei aufbereiten (mit Prüfung)"
 msgstr "Make accessible (including check)"
 
-msgid "Barrierefrei aufbereiten: Credits je Seite"
-msgstr "Make accessible: credits per page"
 
 msgid "Barrierefreie PDF herunterladen"
 msgstr "Download accessible PDF"
@@ -10697,14 +10687,10 @@ msgstr "Please write an answer."
 msgid "Bitte eine E-Mail-Adresse eingeben."
 msgstr "Please enter an email address."
 
-msgid "Bitte eine Frage schreiben."
-msgstr "Please write a question."
 
 msgid "Bitte einen Ansprechpartner angeben."
 msgstr "Please enter a contact person."
 
-msgid "Bitte einen Grund angeben."
-msgstr "Please give a reason."
 
 msgid "Bitte mindestens ein Dokument ankreuzen."
 msgstr "Please tick at least one document."
@@ -10712,8 +10698,6 @@ msgstr "Please tick at least one document."
 msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
 msgstr "Please use only digits, spaces and + ( ) / -."
 
-msgid "Bitte zuerst eine PDF-Datei auswählen."
-msgstr "Please select a PDF file first."
 
 msgid "Credits"
 msgstr "Credits"
@@ -10721,8 +10705,6 @@ msgstr "Credits"
 msgid "Credits kaufen"
 msgstr "Buy credits"
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
-msgstr "We will create a project “Express order” for it. Size up to 50 MB."
 
 msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
 msgstr "Thank you! Your order {nr} has been received. We will deliver within {stunden} hours and send you a confirmation by email."
@@ -10773,8 +10755,6 @@ msgstr "The order failed. Please try again."
 msgid "Die Datei konnte nicht hochgeladen werden."
 msgstr "The file could not be uploaded."
 
-msgid "Die Datei wird hochgeladen …"
-msgstr "Uploading the file …"
 
 msgid "Die Dokumente konnten nicht geladen werden."
 msgstr "The documents could not be loaded."
@@ -10791,8 +10771,6 @@ msgstr "The service could not be changed."
 msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
 msgstr "The prices are still placeholders. Only set them after agreement and tick “Prices are fixed” below."
 
-msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
-msgstr "The automatic PDF/UA check (veraPDF) reports deviations:"
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "The reserved credits are released, nothing is charged. The customer receives an email with the reason."
@@ -10833,11 +10811,7 @@ msgstr "Save settings"
 msgid "Einverständnis"
 msgstr "Consent"
 
-msgid "Ergebnis (PDF) für {name}"
-msgstr "Result (PDF) for {name}"
 
-msgid "Ergebnis für „{name}“ gespeichert."
-msgstr "Result for “{name}” saved."
 
 msgid "Ergebnis herunterladen"
 msgstr "Download result"
@@ -10845,20 +10819,14 @@ msgstr "Download result"
 msgid "Ergebnis hochgeladen"
 msgstr "Result uploaded"
 
-msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
-msgstr "Uploading the result and checking it with veraPDF …"
 
 msgid "Express-Auftrag"
 msgstr "Express order"
 
-msgid "Express-Auftrag {nr}: {stand}"
-msgstr "Express order {nr}: {stand}"
 
 msgid "Express-Aufträge"
 msgstr "Express orders"
 
-msgid "Express-Aufträge: {u} überfällig, {n} neu."
-msgstr "Express orders: {u} overdue, {n} new."
 
 msgid "Express-Bearbeiter"
 msgstr "Express editors"
@@ -10866,8 +10834,6 @@ msgstr "Express editors"
 msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
 msgstr "Express editors only see the express orders in the administration and can work on them, for example a partner who prepares the documents. They do not see customers, revenue or AI costs."
 
-msgid "Express-Bearbeiter-Recht entziehen: {name}"
-msgstr "Remove express editor right: {name}"
 
 msgid "Express-Service"
 msgstr "Express service"
@@ -10875,8 +10841,6 @@ msgstr "Express service"
 msgid "Fassung {f}, Sprache {s}"
 msgstr "version {f}, language {s}"
 
-msgid "Frage"
-msgstr "Question"
 
 msgid "Fällig am"
 msgstr "Due on"
@@ -10884,8 +10848,6 @@ msgstr "Due on"
 msgid "Geliefert"
 msgstr "Delivered"
 
-msgid "Geliefert (die letzten 100)"
-msgstr "Delivered (last 100)"
 
 msgid "Geliefert am"
 msgstr "Delivered on"
@@ -10899,11 +10861,7 @@ msgstr "Reason"
 msgid "Hinweise für uns (freiwillig)"
 msgstr "Notes for us (optional)"
 
-msgid "Hochgeladen und hinzugefügt."
-msgstr "Uploaded and added."
 
-msgid "Hochladen und hinzufügen"
-msgstr "Upload and add"
 
 msgid "Höchstens Dokumente je Auftrag"
 msgstr "Maximum documents per order"
@@ -10980,17 +10938,11 @@ msgstr "Only visible here in the administration, never to the customer."
 msgid "Nur prüfen (Prüfbericht)"
 msgstr "Check only (check report)"
 
-msgid "Nur prüfen: Credits je Seite"
-msgstr "Check only: credits per page"
 
-msgid "Oder eine PDF hochladen, ohne Projekt"
-msgstr "Or upload a PDF, without a project"
 
 msgid "Original herunterladen"
 msgstr "Download original"
 
-msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
-msgstr "Prices per page: make accessible (including check) {a} credits, check only {p} credits."
 
 msgid "Preise sind festgelegt (kein Platzhalter mehr)"
 msgstr "Prices are fixed (no longer placeholders)"
@@ -10998,11 +10950,7 @@ msgstr "Prices are fixed (no longer placeholders)"
 msgid "Prüfbericht"
 msgstr "Check report"
 
-msgid "Prüfbericht (PDF) für {name}"
-msgstr "Check report (PDF) for {name}"
 
-msgid "Prüfbericht für „{name}“ gespeichert."
-msgstr "Check report for “{name}” saved."
 
 msgid "Prüfbericht herunterladen"
 msgstr "Download check report"
@@ -11010,8 +10958,6 @@ msgstr "Download check report"
 msgid "Prüfbericht hochgeladen"
 msgstr "Check report uploaded"
 
-msgid "Prüfbericht wird hochgeladen …"
-msgstr "Uploading the check report …"
 
 msgid "Recht entziehen"
 msgstr "Remove right"
@@ -11043,8 +10989,6 @@ msgstr "Question from InkluDocs"
 msgid "Storniert"
 msgstr "Cancelled"
 
-msgid "Storniert (die letzten 100)"
-msgstr "Cancelled (last 100)"
 
 msgid "Storniert am"
 msgstr "Cancelled on"
@@ -11094,8 +11038,6 @@ msgstr "Make express editor"
 msgid "Zur Auswahl hinzufügen"
 msgstr "Add to selection"
 
-msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
-msgstr "We can currently only process PDF files."
 
 msgid "Zurück zu den Express-Aufträgen"
 msgstr "Back to the express orders"
@@ -11106,8 +11048,6 @@ msgstr "Back to my orders"
 msgid "Zurück zum Express-Service"
 msgstr "Back to the express service"
 
-msgid "Zustimmung"
-msgstr "Consent"
 
 msgid "abgebucht"
 msgstr "charged"
@@ -11139,8 +11079,6 @@ msgstr "internal"
 msgid "keine"
 msgstr "none"
 
-msgid "keine PDF, nicht möglich"
-msgstr "not a PDF, not possible"
 
 msgid "keiner (freiwillig)"
 msgstr "none (optional)"
@@ -11166,14 +11104,8 @@ msgstr "already in your selection"
 msgid "storniert am {datum}"
 msgstr "cancelled on {datum}"
 
-msgid "veraPDF konnte die Datei nicht prüfen."
-msgstr "veraPDF could not check the file."
 
-msgid "veraPDF: Abweichungen — {text}"
-msgstr "veraPDF: deviations — {text}"
 
-msgid "veraPDF: PDF/UA bestanden."
-msgstr "veraPDF: PDF/UA passed."
 
 msgid "vorgemerkt"
 msgstr "reserved"
@@ -11249,3 +11181,159 @@ msgstr "{seiten}, {leistung}, {c} credits"
 
 msgid "{dokumente}, {c} Credits"
 msgstr "{dokumente}, {c} credits"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid " oder "
+msgstr " or "
+
+msgid "(die letzten 100)"
+msgstr "(the last 100)"
+
+msgid "Automatische Prüfung ({pruefung}): bestanden."
+msgstr "Automatic check ({pruefung}): passed."
+
+msgid "Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat."
+msgstr "Automatic check ({pruefung}): with notes that our team has reviewed."
+
+msgid "Bitte warten, bis der vorige Schritt fertig ist."
+msgstr "Please wait until the previous step has finished."
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
+msgstr "We will create a project “Express order” for it."
+
+msgid "Datei auswählen"
+msgstr "Choose file"
+
+msgid "Dateien gelöscht"
+msgstr "Files deleted"
+
+msgid "Dateien löschen nach Tagen"
+msgstr "Delete files after days"
+
+msgid "Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte."
+msgstr "File type: {typen}. The automatic check runs after uploading. A new file replaces the old one."
+
+msgid "Dateityp: {typen}. Eine neue Datei ersetzt die alte."
+msgstr "File type: {typen}. A new file replaces the old one."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen (Schritt 1)."
+msgstr "Your selection is empty. Please add documents first (step 1)."
+
+msgid "Die PDF ist heruntergeladen."
+msgstr "The PDF has been downloaded."
+
+msgid "Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen."
+msgstr "The PDF cannot be created right now. Please use the print view."
+
+msgid "Die PDF wird erstellt …"
+msgstr "Creating the PDF …"
+
+msgid "Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens Eingabe kostet die Eingabe {ein}, die Ausgabe {aus}."
+msgstr "The tier for long inputs is carried over: above {grenze} input tokens, input costs {ein} and output {aus}."
+
+msgid "Die automatische Prüfung meldet Abweichungen:"
+msgstr "The automatic check reports deviations:"
+
+msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
+msgstr "Express order {nr} – order summary.pdf"
+
+msgid "Frage (Pflicht)"
+msgstr "Question (required)"
+
+msgid "Frage: Bitte eine Frage schreiben."
+msgstr "Question: Please write a question."
+
+msgid "Frist ruht bis zur Antwort des Kunden"
+msgstr "Deadline paused until the customer answers"
+
+msgid "Gelöschtes Projekt {id}"
+msgstr "Deleted project {id}"
+
+msgid "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+msgstr "Counted for “cost per credit”: {credits} credits for AI work (alt texts, quick info, translation, changes by the chatbot) and their AI costs, both since {datum}. Tagging, checks, exports and Express are not counted."
+
+msgid "Grund für das Stornieren (Pflicht)"
+msgstr "Reason for cancelling (required)"
+
+msgid "Grund für das Stornieren: Bitte einen Grund angeben."
+msgstr "Reason for cancelling: Please give a reason."
+
+msgid "KI-Kosten (Listenpreise netto)"
+msgstr "AI costs (net list prices)"
+
+msgid "Keine offenen Aufträge."
+msgstr "No open orders."
+
+msgid "Neue Bestellungen sind zurzeit abgeschaltet. Bestehende Aufträge lassen sich weiter bearbeiten, liefern und stornieren."
+msgstr "New orders are currently switched off. Existing orders can still be processed, delivered and cancelled."
+
+msgid "Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier."
+msgstr "New express orders are not possible at the moment. You can find your previous orders here."
+
+msgid "Offene Aufträge"
+msgstr "Open orders"
+
+msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
+msgstr "Originals, results and check reports are deleted this many days after delivery or cancellation; the order itself remains as a record. 0 = never delete."
+
+msgid "Preise je Seite: {liste}."
+msgstr "Prices per page: {liste}."
+
+msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
+msgstr "Revenue (final prices, no VAT under § 19 UStG)"
+
+msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
+msgstr "Too many requests in a short time. Please try again later."
+
+msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
+msgstr "At the moment we can only process {typen} files."
+
+msgid "Zustimmung (beide Häkchen sind nötig)"
+msgstr "Consent (both checkboxes are required)"
+
+msgid "für {modell}"
+msgstr "for {modell}"
+
+msgid "nicht möglich, nur {typen}"
+msgstr "not possible, {typen} only"
+
+msgid "{art} für „{name}“ hochladen"
+msgstr "Upload {art} for “{name}”"
+
+msgid "{leistung} {c} Credits"
+msgstr "{leistung} {c} credits"
+
+msgid "{leistung}: Credits je Seite"
+msgstr "{leistung}: credits per page"
+
+msgid "{name}, angelegt am {datum}"
+msgstr "{name}, created on {datum}"
+
+msgid "{pruefung} konnte die Datei nicht prüfen."
+msgstr "{pruefung} could not check the file."
+
+msgid "{pruefung}: Abweichungen — {text}"
+msgstr "{pruefung}: deviations — {text}"
+
+msgid "{pruefung}: bestanden."
+msgstr "{pruefung}: passed."
+
+msgid "{pruefung}: läuft noch …"
+msgstr "{pruefung}: still running …"
+
+msgid "{typen} hochladen, ohne Projekt"
+msgstr "Upload {typen} without a project"
+
+msgid "{typ}-Datei auswählen"
+msgstr "Choose {typ} file"
+
+msgid "„{datei}“ ist als Ergebnis für „{name}“ gespeichert."
+msgstr "“{datei}” has been saved as the result for “{name}”."
+
+msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
+msgstr "“{datei}” has been saved as the check report for “{name}”."
+
+msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
+msgstr "“{name}” uploaded and added to the selection."

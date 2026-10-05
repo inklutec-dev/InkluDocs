@@ -4,9 +4,11 @@
 
 {% block main %}
 {# VERWALTUNG — EIN EXPRESS-AUFTRAG (05.10.2026): Überblick mit Frist, Arbeitsschritte (Übernehmen, Rückfrage, Liefern,
-   Stornieren), je Dokument Original herunterladen und Ergebnis bzw. Prüfbericht hochladen (veraPDF läuft beim Ergebnis
-   automatisch mit), Angaben und Einverständnis des Kunden, interne Notiz, Verlauf (auch interne Schritte).
-   Nach jeder Aktion: neu laden, Meldung oben mit Fokus (V.meldung) — wie die übrigen Verwaltungsseiten. #}
+   Stornieren), je Dokument Original herunterladen und Ergebnis bzw. Prüfbericht hochladen — mit GENAU der
+   Hochlade-Komponente der Projekte (hochladefeld.js, Steve 05.10.2026); beim Ergebnis läuft die automatische Prüfung
+   seines Dateityps mit (PDF: veraPDF). Dazu Angaben und Einverständnis des Kunden, interne Notiz, Verlauf (auch interne
+   Schritte). Nach jeder Aktion: neu laden, Meldung oben mit Fokus (V.meldung) — wie die übrigen Verwaltungsseiten.
+   Fehler in den Dialogen stehen am Feld (V.feldFehler). #}
 <p class="verwaltung-zurueck"><a href="/verwaltung/express">{{ _('Zurück zu den Express-Aufträgen') }}</a></p>
 <h1>{{ _('Verwaltung') }}: {{ _('Express-Auftrag') }} {{ auftrag_id }}</h1>
 {% include "_verwaltung_nav.html" %}
@@ -15,15 +17,15 @@
 
 {% block dialogs %}
 {% include "_verwaltung_dialoge.html" %}
-<dialog id="exdFrageDialog" class="app-dialog" aria-labelledby="exdFrageTitel">
+<dialog id="exdFrageDialog" class="app-dialog" aria-labelledby="exdFrageTitel" aria-describedby="exdFrageInfo">
   <h2 id="exdFrageTitel">{{ _('Rückfrage an den Kunden') }}</h2>
-  <p class="dash-sub">{{ _('Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet.') }}</p>
+  <p class="dash-sub" id="exdFrageInfo">{{ _('Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet.') }}</p>
   <form id="exdFrageForm" novalidate>
     <div class="dash-field">
-      <label for="exdFrageText">{{ _('Frage') }}</label>
-      <textarea id="exdFrageText" class="dash-input" rows="5" maxlength="2000"></textarea>
+      <label for="exdFrageText">{{ _('Frage (Pflicht)') }}</label>
+      <textarea id="exdFrageText" class="dash-input" rows="5" maxlength="2000" required aria-describedby="exdFrageTextFehler"></textarea>
+      <p id="exdFrageTextFehler" class="verwaltung-fehler"></p>
     </div>
-    <p id="exdFrageFehler" role="alert" class="verwaltung-fehler"></p>
     <div class="dialog-actions">
       <button type="button" class="btn btn-secondary" id="exdFrageAbbrechen">{{ _('Abbrechen') }}</button>
       <button type="submit" class="btn btn-primary">{{ _('Rückfrage senden') }}</button>
@@ -31,15 +33,15 @@
   </form>
 </dialog>
 
-<dialog id="exdStornoDialog" class="app-dialog" aria-labelledby="exdStornoTitel">
+<dialog id="exdStornoDialog" class="app-dialog" aria-labelledby="exdStornoTitel" aria-describedby="exdStornoInfo">
   <h2 id="exdStornoTitel">{{ _('Auftrag stornieren') }}</h2>
-  <p class="dash-sub">{{ _('Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund.') }}</p>
+  <p class="dash-sub" id="exdStornoInfo">{{ _('Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund.') }}</p>
   <form id="exdStornoForm" novalidate>
     <div class="dash-field">
-      <label for="exdStornoGrund">{{ _('Grund für das Stornieren') }}</label>
-      <input type="text" id="exdStornoGrund" class="dash-input" maxlength="500" autocomplete="off">
+      <label for="exdStornoGrund">{{ _('Grund für das Stornieren (Pflicht)') }}</label>
+      <input type="text" id="exdStornoGrund" class="dash-input" maxlength="500" autocomplete="off" required aria-describedby="exdStornoGrundFehler">
+      <p id="exdStornoGrundFehler" class="verwaltung-fehler"></p>
     </div>
-    <p id="exdStornoFehler" role="alert" class="verwaltung-fehler"></p>
     <div class="dialog-actions">
       <button type="button" class="btn btn-secondary" id="exdStornoAbbrechen">{{ _('Abbrechen') }}</button>
       <button type="submit" class="btn btn-danger">{{ _('Ja, stornieren') }}</button>
@@ -49,7 +51,7 @@
 
 <dialog id="exdLieferDialog" class="app-dialog" aria-labelledby="exdLieferTitel" aria-describedby="exdLieferText">
   <h2 id="exdLieferTitel">{{ _('Trotz Abweichungen liefern?') }}</h2>
-  <p id="exdLieferText">{{ _('Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:') }}</p>
+  <p id="exdLieferText">{{ _('Die automatische Prüfung meldet Abweichungen:') }}</p>
   <ul id="exdLieferBefunde"></ul>
   <p class="dash-sub">{{ _('Manche Abweichungen sind bewusst (zum Beispiel Prüfungen, die veraPDF nicht sicher beurteilen kann). Liefern bucht die Credits ab und schickt dem Kunden eine E-Mail.') }}</p>
   <div class="dialog-actions">
@@ -62,6 +64,7 @@
 {% block page_script %}
 <script>window.API_LIMIT_STANDARD = {{ api_limit_standard|int }}; window.EXPRESS_AUFTRAG = {{ auftrag_id|int }};</script>
 <script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script src="/static/hochladefeld.js?v={{ asset_version }}"></script>
 <script>
 {% raw %}
 (function () {
@@ -71,7 +74,7 @@
   const STATUS = { neu: t('Neu'), in_arbeit: t('In Arbeit'), rueckfrage: t('Rückfrage beim Kunden'), geliefert: t('Geliefert'), storniert: t('Storniert') };
   const VERLAUF = { bestellt: t('Bestellt'), uebernommen: t('Übernommen'), rueckfrage: t('Rückfrage'), antwort: t('Antwort des Kunden'),
                     ergebnis: t('Ergebnis hochgeladen'), bericht: t('Prüfbericht hochgeladen'), geliefert: t('Geliefert'),
-                    storniert: t('Storniert'), notiz: t('Interne Notiz geändert') };
+                    storniert: t('Storniert'), notiz: t('Interne Notiz geändert'), dateien_geloescht: t('Dateien gelöscht') };
   let daten = null;
   let laeuft = false;
 
@@ -105,7 +108,9 @@
   }
   const DOK = (n) => mehrzahl(n, '1 Dokument', '{n} Dokumente');
   const SEITEN = (n) => mehrzahl(n, '1 Seite', '{n} Seiten');
-  function leistungText(l) { return l === 'pruefen' ? t('Nur prüfen (Prüfbericht)') : t('Barrierefrei aufbereiten (mit Prüfung)'); }
+  // Name der Leistung kommt vom Server (express.LEISTUNGEN) und wird hier übersetzt.
+  function leistungText(p) { return t(p.leistung_text || p.leistung); }
+  function typenText(typen) { return (typen || []).map((x) => x.name).join(t(' oder ')); }
 
   async function aktion(pfad, body, meldung) {
     if (laeuft) return null;
@@ -122,55 +127,50 @@
     return r;
   }
 
-  async function hochladen(pos, art, feld, fehler) {
-    fehler.textContent = '';
-    if (!feld.files || !feld.files.length) { fehler.textContent = t('Bitte zuerst eine PDF-Datei auswählen.'); feld.focus(); return; }
-    if (laeuft) return;
+  // Hochladen über die Hochlade-Komponente der Projekte (hochladefeld.js): startet mit der Dateiauswahl. Erfolg: Seite
+  // neu laden und Meldung oben mit Fokus (nennt Datei, Dokument und die automatische Prüfung). Fehler: am Feld.
+  async function hochladen(pos, art, datei) {
+    if (laeuft) return { ok: false, text: t('Bitte warten, bis der vorige Schritt fertig ist.') };
     laeuft = true;
-    announce(art === 'ergebnis' ? t('Ergebnis wird hochgeladen und mit veraPDF geprüft …') : t('Prüfbericht wird hochgeladen …'));
     const fd = new FormData();
-    fd.append('file', feld.files[0]);
+    fd.append('file', datei);
     let res;
     try { res = await fetch(API + '/positionen/' + pos.id + '/' + art, { method: 'POST', body: fd }); } catch (e) { res = null; }
     laeuft = false;
     const d = res ? await res.json().catch(() => ({})) : {};
-    if (!res || !res.ok) { fehler.textContent = detailText(d, t('Die Datei konnte nicht hochgeladen werden.')); feld.focus(); return; }
+    if (!res || !res.ok) return { ok: false, text: detailText(d, t('Die Datei konnte nicht hochgeladen werden.')) };
     await laden(true);
     const p = (daten.positionen || []).find((x) => x.id === pos.id) || {};
-    let text = art === 'ergebnis' ? t('Ergebnis für „{name}“ gespeichert.', { name: pos.dokument_name }) : t('Prüfbericht für „{name}“ gespeichert.', { name: pos.dokument_name });
-    if (art === 'ergebnis' && p.verapdf) text += ' ' + veraText(p.verapdf);
+    let text = art === 'ergebnis'
+      ? t('„{datei}“ ist als Ergebnis für „{name}“ gespeichert.', { datei: datei.name, name: pos.dokument_name })
+      : t('„{datei}“ ist als Prüfbericht für „{name}“ gespeichert.', { datei: datei.name, name: pos.dokument_name });
+    if (art === 'ergebnis' && p.verapdf) text += ' ' + pruefText(p.verapdf, p.pruef_name);
     V.meldung(text);
+    return { ok: true, text: '' };
   }
 
-  function veraText(v) {
+  function pruefText(v, name) {
     if (!v) return '';
-    if (v.nicht_geprueft) return t('veraPDF konnte die Datei nicht prüfen.');
-    return v.bestanden ? t('veraPDF: PDF/UA bestanden.') : t('veraPDF: Abweichungen — {text}', { text: v.zusammenfassung || '' });
+    const wer = name || t('Automatische Prüfung');
+    if (v.laeuft) return t('{pruefung}: läuft noch …', { pruefung: wer });
+    if (v.nicht_geprueft) return t('{pruefung} konnte die Datei nicht prüfen.', { pruefung: wer });
+    return v.bestanden ? t('{pruefung}: bestanden.', { pruefung: wer })
+      : t('{pruefung}: Abweichungen — {text}', { pruefung: wer, text: v.zusammenfassung || '' });
   }
 
-  function uploadFeld(li, pos, art, titel) {
-    const form = V.el('form', 'verwaltung-suche');
-    form.noValidate = true;
-    const feld = V.el('div', 'dash-field');
-    const id = 'exd_' + art + '_' + pos.id;
-    const lab = V.el('label', null, titel);
-    lab.htmlFor = id;
-    const inp = V.el('input', 'dash-input');
-    inp.type = 'file';
-    inp.id = id;
-    inp.accept = 'application/pdf,.pdf';
-    feld.appendChild(lab);
-    feld.appendChild(inp);
-    form.appendChild(feld);
-    const btn = V.el('button', 'btn btn-secondary', t('Hochladen'));
-    btn.type = 'submit';
-    btn.appendChild(V.el('span', 'visually-hidden', ': ' + titel));
-    form.appendChild(btn);
-    const fehler = V.el('p', 'verwaltung-fehler');
-    fehler.setAttribute('role', 'alert');
-    form.addEventListener('submit', (e) => { e.preventDefault(); hochladen(pos, art, inp, fehler); });
-    li.appendChild(form);
-    li.appendChild(fehler);
+  function uploadFeld(li, pos, art, typen) {
+    const art_text = art === 'ergebnis' ? t('Ergebnis') : t('Prüfbericht');
+    li.appendChild(window.hochladefeld({
+      id: 'exd_' + art + '_' + pos.id,
+      ebene: 4,
+      titel: t('{art} für „{name}“ hochladen', { art: art_text, name: pos.dokument_name }),
+      knopf: typen.length === 1 ? t('{typ}-Datei auswählen', { typ: typen[0].name }) : t('Datei auswählen'),
+      hinweis: (art === 'ergebnis'
+        ? t('Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte.', { typen: typenText(typen) })
+        : t('Dateityp: {typen}. Eine neue Datei ersetzt die alte.', { typen: typenText(typen) })),
+      accept: typen.map((x) => x.accept).join(','),
+      hochladen: (datei) => hochladen(pos, art, datei),
+    }));
   }
 
   function zeigen(a) {
@@ -193,7 +193,10 @@
     } else V.zeile(s, t('Kunde'), kunde);
     if (a.konto_name && a.konto_name !== a.kunde_name) V.zeile(s, t('Zahlt aus dem Topf von'), a.konto_name);
     V.zeile(s, t('Bestellt am'), V.datumZeit(a.bestellt_am));
-    if (offen(a)) {
+    if (a.frist_ruht) {
+      // Während einer Rückfrage ruht die Frist und verlängert sich bei der Antwort um die Wartezeit (Befund 15).
+      V.zeile(s, t('Fällig am'), t('Frist ruht bis zur Antwort des Kunden'));
+    } else if (offen(a)) {
       V.zeile(s, t('Fällig am'), V.datumZeit(a.faellig_am) + ' — ' + (a.faellig_in_stunden < 0
         ? t('überfällig seit {n} Stunden', { n: V.zahl(Math.abs(Math.round(a.faellig_in_stunden))) })
         : t('noch {n} Stunden', { n: V.zahl(Math.round(a.faellig_in_stunden)) })));
@@ -207,9 +210,9 @@
     if (arbeiten) {
       const akt = V.el('div', 'dash-actions');
       akt.appendChild(knopf(a.bearbeiter_name ? t('Mir zuweisen') : t('Übernehmen'), () => aktion('/uebernehmen', {}, t('Du bearbeitest den Auftrag jetzt.'))));
-      akt.appendChild(knopf(t('Rückfrage stellen'), () => { byId('exdFrageText').value = ''; byId('exdFrageFehler').textContent = ''; byId('exdFrageDialog').showModal(); byId('exdFrageText').focus(); }));
+      akt.appendChild(knopf(t('Rückfrage stellen'), () => { byId('exdFrageText').value = ''; V.feldFehler('exdFrageText', ''); byId('exdFrageDialog').showModal(); byId('exdFrageText').focus(); }));
       akt.appendChild(knopf(t('Liefern'), liefern, 'btn-primary'));
-      akt.appendChild(knopf(t('Stornieren'), () => { byId('exdStornoGrund').value = ''; byId('exdStornoFehler').textContent = ''; byId('exdStornoDialog').showModal(); byId('exdStornoGrund').focus(); }, 'btn-delete'));
+      akt.appendChild(knopf(t('Stornieren'), () => { byId('exdStornoGrund').value = ''; V.feldFehler('exdStornoGrund', ''); byId('exdStornoDialog').showModal(); byId('exdStornoGrund').focus(); }, 'btn-delete'));
       s.appendChild(akt);
       const fehlt = (a.lieferbar && a.lieferbar.fehlt) || [];
       if (fehlt.length) {
@@ -231,18 +234,19 @@
     a.positionen.forEach((p) => {
       const li = V.el('li', 'verwaltung-zeile');
       li.appendChild(V.el('h3', 'verwaltung-unterkopf', p.dokument_name));
-      li.appendChild(V.el('p', null, t('{seiten}, {leistung}, {c} Credits', { seiten: SEITEN(p.seiten), leistung: leistungText(p.leistung), c: V.zahl(p.credits) })));
+      li.appendChild(V.el('p', null, t('{seiten}, {leistung}, {c} Credits', { seiten: SEITEN(p.seiten), leistung: leistungText(p), c: V.zahl(p.credits) })));
       const links = V.el('p', 'dash-actions');
       if (p.original_da) links.appendChild(link(t('Original herunterladen'), API + '/positionen/' + p.id + '/original', p.dokument_name));
       if (p.ergebnis_da) links.appendChild(link(t('Ergebnis herunterladen'), API + '/positionen/' + p.id + '/ergebnis', p.dokument_name));
       if (p.bericht_da) links.appendChild(link(t('Prüfbericht herunterladen'), API + '/positionen/' + p.id + '/bericht', p.dokument_name));
       li.appendChild(links);
       V.zeile(li, t('Ergebnis'), p.ergebnis_da ? t('hochgeladen am {datum} von {name}', { datum: V.datumZeit(p.ergebnis_am), name: p.ergebnis_von }) : t('noch nicht hochgeladen'));
-      if (p.ergebnis_da && p.verapdf) V.zeile(li, t('Automatische Prüfung'), veraText(p.verapdf));
-      V.zeile(li, t('Prüfbericht'), p.bericht_da ? t('hochgeladen am {datum}', { datum: V.datumZeit(p.bericht_am) }) : (p.leistung === 'pruefen' ? t('fehlt noch') : t('keiner (freiwillig)')));
+      if (p.ergebnis_da && p.verapdf) V.zeile(li, t('Automatische Prüfung'), pruefText(p.verapdf, p.pruef_name));
+      V.zeile(li, t('Prüfbericht'), p.bericht_da ? t('hochgeladen am {datum}', { datum: V.datumZeit(p.bericht_am) }) : (p.bericht_pflicht ? t('fehlt noch') : t('keiner (freiwillig)')));
       if (arbeiten) {
-        if (p.leistung === 'aufbereiten') uploadFeld(li, p, 'ergebnis', t('Ergebnis (PDF) für {name}', { name: p.dokument_name }));
-        uploadFeld(li, p, 'bericht', t('Prüfbericht (PDF) für {name}', { name: p.dokument_name }));
+        // Welche Felder und Dateitypen: aus der Leistung (express.LEISTUNGEN), nicht fest verdrahtet.
+        if (p.ergebnis_pflicht && (p.ergebnis_typen || []).length) uploadFeld(li, p, 'ergebnis', p.ergebnis_typen);
+        if ((p.bericht_typen || []).length) uploadFeld(li, p, 'bericht', p.bericht_typen);
       }
       ul.appendChild(li);
     });
@@ -319,7 +323,7 @@
   byId('exdFrageForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = byId('exdFrageText').value.trim();
-    if (!text) { byId('exdFrageFehler').textContent = t('Bitte eine Frage schreiben.'); byId('exdFrageText').focus(); return; }
+    if (!text) { V.feldFehler('exdFrageText', t('Frage: Bitte eine Frage schreiben.')).focus(); return; }
     byId('exdFrageDialog').close();
     await aktion('/rueckfrage', { text: text }, t('Rückfrage gesendet. Die Frist ruht, bis der Kunde antwortet.'));
   });
@@ -327,21 +331,21 @@
   byId('exdStornoForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const grund = byId('exdStornoGrund').value.trim();
-    if (!grund) { byId('exdStornoFehler').textContent = t('Bitte einen Grund angeben.'); byId('exdStornoGrund').focus(); return; }
+    if (!grund) { V.feldFehler('exdStornoGrund', t('Grund für das Stornieren: Bitte einen Grund angeben.')).focus(); return; }
     byId('exdStornoDialog').close();
     await aktion('/stornieren', { grund: grund }, t('Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail.'));
   });
 
-  async function laden(still) {
+  // Keine Ansage beim Laden (Befund 8): Nummer und Stand stehen in Überschrift und Überblick.
+  async function laden() {
     const d = await V.ladeJson(API, byId('exdInhalt'));
     if (!d) return;
     zeigen(d);
-    if (!still) announce(t('Express-Auftrag {nr}: {stand}', { nr: d.id, stand: STATUS[d.status] || d.status }));
   }
 
   (async function start() {
     await loadCurrentUser();
-    await laden(false);
+    await laden();
   })();
 })();
 {% endraw %}

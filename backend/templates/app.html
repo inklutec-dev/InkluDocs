@@ -547,7 +547,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 : t('Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.') + sizeHint;
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
                 + '<div class="dropzone-inner">'
-                + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint projUploadStatus" onchange="uploadInProject(event, ' + project.id + ')">'
                 + '<label for="projUpload" class="upload-btn">' + t('PDF-Datei auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
                 + '</div>'
@@ -566,7 +566,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 : t('Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Danach kannst du Alt-Texte erzeugen, das Dokument übersetzen und es als Word-Datei oder barrierefreie PDF herunterladen.') + sizeHint;
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
                 + '<div class="dropzone-inner">'
-                + '<input type="file" id="projUpload" accept=".docx" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<input type="file" id="projUpload" accept=".docx" aria-describedby="projUploadHint projUploadStatus" onchange="uploadInProject(event, ' + project.id + ')">'
                 + '<label for="projUpload" class="upload-btn">' + t('Word-Datei auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
                 + '</div>'
@@ -584,7 +584,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 : t('Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert.') + sizeHint;
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
                 + '<div class="dropzone-inner">'
-                + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint projUploadStatus" onchange="uploadInProject(event, ' + project.id + ')">'
                 + '<label for="projUpload" class="upload-btn">' + t('PDF-Formular auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
                 + '</div>'
@@ -594,7 +594,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (tool === 'grafik') {
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + t('Bilder hinzufügen') + '</h2>'
                 + '<div class="dropzone-inner">'
-                + '<input type="file" id="projUpload" accept=".jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<input type="file" id="projUpload" accept=".jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-describedby="projUploadHint projUploadStatus" onchange="uploadInProject(event, ' + project.id + ')">'
                 + '<label for="projUpload" class="upload-btn">' + t('Bilddateien auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
                 + '</div>'
@@ -721,6 +721,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     async function uploadFilesToProject(files, projectId) {
         if (!files || files.length === 0) return;
         const status = document.getElementById('projUploadStatus');
+        // Fehler AM Feld (05.10.2026, Hochladefeld-Pruefung fuer Express): Die Statuszeile ist Beschreibung des Dateifelds
+        // (aria-describedby), bei einem Fehler kommt aria-invalid dazu — wer zurueck ins Feld geht, hoert den Grund.
+        const feld = document.getElementById('projUpload');
+        const fehlerAmFeld = (an) => { if (feld) { if (an) feld.setAttribute('aria-invalid', 'true'); else feld.removeAttribute('aria-invalid'); } };
+        fehlerAmFeld(false);
         // Stand VOR dem Upload merken — Grundlage der Nachpruefung im Fehlerfall.
         let before = await projectSnapshot(projectId);
         for (let i = 0; i < files.length; i++) {
@@ -739,6 +744,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (!res.ok) {
                     if (status) status.textContent = t('Fehler: {msg}', { msg: data.detail || t('Upload fehlgeschlagen') });
                     else announce(t('Fehler beim Upload: {msg}', { msg: data.detail || '' }));
+                    fehlerAmFeld(true);
                     return;
                 }
                 if (data.status === 'extracting' && data.document_id) {
@@ -774,6 +780,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                     : t('Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')));
                         if (status) status.textContent = meldung;
                         else announce(meldung);
+                        fehlerAmFeld(true);
                         return;
                     }
                     if (status) status.textContent = '';
@@ -793,6 +800,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     const meldung = t('Verbindungsfehler beim Upload. Die Datei ist bisher nicht angekommen. Bitte prüfe deine Internetverbindung und versuche es erneut. Bei sehr großen PDFs kann die Verarbeitung länger dauern – lade die Seite dann in ein bis zwei Minuten neu und prüfe die Dokumentliste. Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
                     if (status) status.textContent = meldung;
                     else announce(meldung);
+                    fehlerAmFeld(true);
                     return;
                 }
                 // Datei ist trotz Verbindungsfehler angekommen — normal weitermachen.

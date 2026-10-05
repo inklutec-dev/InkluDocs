@@ -1,9 +1,14 @@
 """EXPRESS-SERVICE Stufe 1 (05.10.2026): Kern express.py mit eigener Wegwerf-Datenbank — Warenkorb, Bestellung mit
 Vormerkung, Lieferung bucht genau einmal ab, Storno gibt frei, Besitzpruefungen, Zustandswechsel, Upload-Pruefung,
 Frist ruht bei Rueckfrage, Erinnerungen genau einmal, Kontoloeschung.
+Korrekturrunde (Pruefungen Entwicklung und Barrierefreiheit 05.10.2026): je Befund ein Test — Klasse Korrektur (Monats-
+wechsel, eingefrorener Korb, Fassung/Summe, Idempotenz, Domain-Topf, fail-closed, Topf-Loeschung, Erinnerung erneut,
+Upload nach Lieferung, laufende Pruefung, Aufbewahrung, IP-Netz, Felder der Einstellungen, Texte) und Klasse Erweiterbar
+(ein zweiter Dateityp mit eigener Leistung, nur im Test eingehaengt).
     docker exec -w /app inkludocs-staging python3 -m unittest /app/tests/test_express.py -v
 """
 import os
+import shutil
 import sqlite3
 import sys
 import tempfile
@@ -98,9 +103,26 @@ class Basis(unittest.TestCase):
         _sql("INSERT INTO quota_pakete (user_id, groesse, verbleibend, quelle, notiz, verfaellt_am) VALUES (1, ?, ?, 'admin', 'Test', NULL)",
              credits, credits)
 
-    def _bestellen(self, idem="abcdefgh-1"):
-        return express.bestellen(1, ansprechpartner="Kundin", telefon="+49 40 123", hinweise="bitte Seite 2",
-                                 bedingungen=True, bearbeitung=True, idempotenz=idem)
+    def _bestellen(self, idem="abcdefgh-1", korb=None, uid=1):
+        """Wie die Seite: mit dem Korb, der Summe und der Fassung, die der Kunde gesehen hat."""
+        w = korb or express.warenkorb(uid)
+        return express.bestellen(uid, ansprechpartner="Kundin", telefon="+49 40 123", hinweise="bitte Seite 2",
+                                 bedingungen=True, bearbeitung=True, idempotenz=idem, korb_id=w["id"],
+                                 erwartete_credits=w["credits"], fassung=w["fassung"])
+
+    def _auftrag(self, dokumente=None):
+        express.dokumente_hinzufuegen(1, dokumente or [self.d1, self.d2])
+        self._guthaben(1000)
+        return self._bestellen()["auftrag_id"]
+
+    def _ergebnis(self, aid, bestanden=True):
+        """Ergebnis hochladen und die automatische Pruefung (im Router: veraPDF) mit festem Ergebnis abschliessen."""
+        for p in express.auftrag_fuer_verwaltung(aid)["positionen"]:
+            with open(_pdf(os.path.join(_TMP, f"erg_{p['id']}.pdf"), 1), "rb") as f:
+                inhalt = f.read()
+            erg = express.datei_speichern(aid, p["id"], "ergebnis", inhalt, "../../etc/passwd.pdf", PERSON)
+            self.assertTrue(erg["pruef_kennung"])
+            express.pruefung_merken(p["id"], {"bestanden": bestanden, "zusammenfassung": "Test"}, erg["pruef_kennung"])
 
 
 class Warenkorb(Basis):
@@ -144,10 +166,22 @@ class Warenkorb(Basis):
         self.assertEqual(r["hinzugefuegt"], 0)
 
     def test_grenzen(self):
+        # Alte Feldnamen (preis_<leistung>) werden weiter angenommen.
         express.speichere_einstellungen({"preis_aufbereiten": "50", "preis_pruefen": "25", "frist_stunden": "48",
                                          "max_seiten_auftrag": "2", "max_dokumente_auftrag": "50"})
         with self.assertRaises(express.ExpressFehler):
             express.dokumente_hinzufuegen(1, [self.d1, self.d2])
+
+    def test_dokumentgrenze_vor_dem_oeffnen(self):
+        """Befund 16: zu viele Dokumente -> abgewiesen, ohne eine einzige Datei zum Seitenzaehlen zu oeffnen."""
+        import dataclasses
+        express.speichere_einstellungen({"preise": {"aufbereiten": "50", "pruefen": "25"}, "frist_stunden": "48",
+                                         "max_seiten_auftrag": "500", "max_dokumente_auftrag": "1"})
+        geoeffnet = mock.Mock(return_value=1)
+        with mock.patch.dict(express.DATEITYPEN, {"pdf": dataclasses.replace(express.DATEITYPEN["pdf"], seiten=geoeffnet)}):
+            with self.assertRaises(express.ExpressFehler):
+                express.dokumente_hinzufuegen(1, [self.d1, self.d2])
+        self.assertEqual(geoeffnet.call_count, 0)
 
 
 class Bestellen(Basis):
@@ -173,12 +207,13 @@ class Bestellen(Basis):
         express.dokumente_hinzufuegen(1, [self.d1, self.d2])
         self._guthaben(1000)
         vorher = billing.verfuegbare_credits(1)
-        r = self._bestellen()
+        korb = express.warenkorb(1)
+        r = self._bestellen(korb=korb)
         self.assertTrue(r["neu"])
         self.assertEqual(billing.vorgemerkt(1), 150)
         self.assertEqual(billing.verfuegbare_credits(1), vorher - 150)
         self.assertEqual(_sql("SELECT COUNT(*) AS n FROM usage_events")[0]["n"], 0)   # noch nichts abgebucht
-        nochmal = self._bestellen()
+        nochmal = self._bestellen(korb=korb)        # Doppelklick: gleicher Schluessel, gleicher Korb
         self.assertFalse(nochmal["neu"])
         self.assertEqual(nochmal["auftrag_id"], r["auftrag_id"])
         self.assertEqual(billing.vorgemerkt(1), 150)
@@ -195,10 +230,11 @@ class Bestellen(Basis):
         express.dokumente_hinzufuegen(1, [self.d1])
         self._guthaben(1000)
         ergebnisse = []
+        korb = express.warenkorb(1)
 
         def los():
             try:
-                ergebnisse.append(self._bestellen("gleich-123456"))
+                ergebnisse.append(self._bestellen("gleich-123456", korb=korb))
             except Exception as e:  # noqa: BLE001
                 ergebnisse.append(e)
         threads = [threading.Thread(target=los) for _ in range(4)]
@@ -225,17 +261,6 @@ class Bestellen(Basis):
 
 
 class Ablauf(Basis):
-    def _auftrag(self, dokumente=None):
-        express.dokumente_hinzufuegen(1, dokumente or [self.d1, self.d2])
-        self._guthaben(1000)
-        return self._bestellen()["auftrag_id"]
-
-    def _ergebnis(self, aid):
-        for p in express.auftrag_fuer_verwaltung(aid)["positionen"]:
-            with open(_pdf(os.path.join(_TMP, f"erg_{p['id']}.pdf"), 1), "rb") as f:
-                inhalt = f.read()
-            express.datei_speichern(aid, p["id"], "ergebnis", inhalt, "../../etc/passwd.pdf", PERSON)
-
     def test_kunde_sieht_nur_eigene(self):
         aid = self._auftrag()
         with self.assertRaises(express.NichtGefunden):
@@ -391,10 +416,11 @@ class Einstellungen(Basis):
             daten.update(falsch)
             with self.assertRaises(express.ExpressFehler):
                 express.speichere_einstellungen(daten)
-        e = express.speichere_einstellungen({"preis_aufbereiten": "60", "preis_pruefen": "30", "frist_stunden": "72",
+        e = express.speichere_einstellungen({"preise": {"aufbereiten": "60", "pruefen": "30"}, "frist_stunden": "72",
                                              "max_seiten_auftrag": "300", "max_dokumente_auftrag": "20",
                                              "team_mail": "team@beispiel.invalid", "preise_festgelegt": True})
-        self.assertEqual((e["preis_aufbereiten"], e["frist_stunden"], e["preise_festgelegt"]), (60, 72, True))
+        self.assertEqual((e["preise"]["aufbereiten"], e["frist_stunden"], e["preise_festgelegt"]), (60, 72, True))
+        self.assertEqual(express.einstellungen()["preise"], {"aufbereiten": 60, "pruefen": 30})
         self.assertEqual(express.team_empfaenger("support@beispiel.invalid"), ["team@beispiel.invalid"])
 
     def test_bearbeiter(self):
@@ -406,6 +432,437 @@ class Einstellungen(Basis):
         self.assertFalse(express.ist_bearbeiter(2))
         with self.assertRaises(express.ExpressFehler):
             express.bearbeiter_setzen(email="niemand@beispiel.invalid")
+
+
+def _monat_davor(n=1):
+    """(jahr, monat) n Monate vor dem laufenden (UTC)."""
+    jetzt = express._jetzt()
+    j, m = jetzt.year, jetzt.month - n
+    while m < 1:
+        m, j = m + 12, j - 1
+    return j, m
+
+
+class Korrektur(Basis):
+    """Je Befund der Pruefungen vom 05.10.2026 ein Test (E = Entwicklung, A = Barrierefreiheit)."""
+
+    # ── E1: Monatswechsel ──
+    def test_e1_abbuchung_zaehlt_zum_bestellmonat(self):
+        """Szenario des Befunds: Single (250), 249 Uebertrag in den Bestellmonat, Auftrag 400, geliefert im Folgemonat.
+        Richtig: wie Verbrauch im Bestellmonat -> im laufenden Monat 99 Uebertrag + 250 = 349 frei (vorher nur 100)."""
+        _sql("UPDATE users SET plan = 'single', plan_gueltig_bis = '2099-12-31' WHERE id = 1")
+        j2, m2 = _monat_davor(2)
+        _sql("INSERT INTO usage_events (user_id, konto_user_id, quelle, aktion, credits, created_at) "
+             "VALUES (1, 1, 'web', 'bild_generierung', 1, ?)", f"{j2:04d}-{m2:02d}-15 10:00:00")
+        d = self._dokument(self.pid, "Gross.pdf", 8)                  # 8 Seiten x 50 = 400
+        aid = self._auftrag([d])
+        j1, m1 = _monat_davor(1)
+        bestellt = f"{j1:04d}-{m1:02d}-28 10:00:00"
+        _sql("UPDATE express_auftraege SET bestellt_am = ? WHERE id = ?", bestellt, aid)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        ev = _sql("SELECT created_at, credits FROM usage_events WHERE quelle = 'express'")
+        self.assertEqual([(e["created_at"], e["credits"]) for e in ev], [(bestellt, 400)])
+        z = billing.pruefe_kontingent(1)
+        self.assertEqual((z["uebertrag"], z["verbraucht"], z["rest"]), (99, 0, 349))
+
+    def test_e1_paket_ueberhang_im_bestellmonat(self):
+        """Free (50 im Monat), Paket 1000, Auftrag 100 im Vormonat bestellt: der Ueberhang 50 geht im VORMONAT vom
+        Paket ab; der laufende Monat bleibt unberuehrt."""
+        aid = self._auftrag([self.d1])                               # 100 Credits, _auftrag schenkt 1000 Paket
+        j1, m1 = _monat_davor(1)
+        bestellt = f"{j1:04d}-{m1:02d}-20 09:00:00"
+        _sql("UPDATE express_auftraege SET bestellt_am = ? WHERE id = ?", bestellt, aid)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        ab = _sql("SELECT betrag, created_at FROM paket_abbuchungen")
+        self.assertEqual([(a["betrag"], a["created_at"]) for a in ab], [(50, bestellt)])
+        self.assertEqual(billing.pakete_rest(1), 950)
+        self.assertEqual(billing.pruefe_kontingent(1)["verbraucht"], 0)
+
+    # ── E2: Korb waehrend des Bestellens ──
+    def test_e2_korb_ist_waehrend_der_bestellung_eingefroren(self):
+        express.dokumente_hinzufuegen(1, [self.d1])                   # 100 Credits
+        self._guthaben(1000)
+        korb = express.warenkorb(1)
+        pos = korb["positionen"][0]["id"]
+        echt = shutil.copyfile
+        zweiter_tab = {}
+
+        def kopieren(quelle, ziel):
+            # Waehrend die Originale kopiert werden, arbeitet ein zweiter Tab am Korb.
+            if not zweiter_tab:
+                with self.assertRaises(express.NichtGefunden):
+                    express.position_entfernen(1, pos)
+                with self.assertRaises(express.NichtGefunden):
+                    express.leistung_setzen(1, pos, "pruefen")
+                zweiter_tab["neu"] = express.dokumente_hinzufuegen(1, [self.d2])["warenkorb"]
+            return echt(quelle, ziel)
+        with mock.patch.object(express.shutil, "copyfile", side_effect=kopieren):
+            r = self._bestellen(korb=korb)
+        a = express.auftrag_fuer_verwaltung(r["auftrag_id"])
+        self.assertEqual([p["document_id"] for p in a["positionen"]], [self.d1])
+        self.assertEqual((a["credits_gesamt"], a["seiten_gesamt"]), (100, 2))
+        neu = express.warenkorb(1)
+        self.assertNotEqual(neu["id"], r["auftrag_id"])
+        self.assertEqual([p["document_id"] for p in neu["positionen"]], [self.d2])   # landet im NEUEN Korb
+
+    def test_e2_fehlschlag_gibt_den_korb_frei(self):
+        express.dokumente_hinzufuegen(1, [self.d1])
+        korb = express.warenkorb(1)                                    # kein Guthaben: Free 50 < 100
+        with self.assertRaises(express.KeinGuthaben):
+            self._bestellen(korb=korb)
+        self.assertEqual(_sql("SELECT status FROM express_auftraege WHERE id = ?", korb["id"])[0]["status"], "entwurf")
+        self.assertEqual(express.warenkorb(1)["id"], korb["id"])
+
+    def test_e2_haengender_korb_wird_wieder_frei(self):
+        express.dokumente_hinzufuegen(1, [self.d1])
+        wid = express.warenkorb(1)["id"]
+        _sql("UPDATE express_auftraege SET status = 'bestellung', updated_at = datetime('now', '-30 minutes') WHERE id = ?", wid)
+        self.assertEqual(express.warenkorb(1)["id"], wid)
+
+    # ── E3: Preis/Fassung ──
+    def test_e3_anderer_preis_als_angezeigt_wird_nicht_bestellt(self):
+        express.dokumente_hinzufuegen(1, [self.d1])
+        self._guthaben(1000)
+        gesehen = express.warenkorb(1)                                 # 100 Credits
+        express.speichere_einstellungen({"preise": {"aufbereiten": "80", "pruefen": "25"}, "frist_stunden": "48",
+                                         "max_seiten_auftrag": "500", "max_dokumente_auftrag": "50"})
+        with self.assertRaises(express.ExpressFehler) as e:
+            self._bestellen(korb=gesehen)
+        self.assertEqual(e.exception.status, 409)
+        self.assertTrue(e.exception.extra.get("veraltet"))
+        self.assertEqual(e.exception.extra.get("neu_credits"), 160)
+        self.assertEqual(_sql("SELECT COUNT(*) AS n FROM express_auftraege WHERE status = 'neu'")[0]["n"], 0)
+        r = self._bestellen("abcdefgh-neu")                           # mit dem neuen Stand geht es
+        self.assertEqual(express.auftrag_fuer_kunde(1, r["auftrag_id"])["credits"], 160)
+
+    def test_e3_geaenderte_auswahl_wird_nicht_bestellt(self):
+        express.dokumente_hinzufuegen(1, [self.d1])
+        self._guthaben(1000)
+        gesehen = express.warenkorb(1)
+        express.dokumente_hinzufuegen(1, [self.d2])                   # zweiter Tab
+        with self.assertRaises(express.ExpressFehler) as e:
+            self._bestellen(korb=gesehen)
+        self.assertEqual(e.exception.status, 409)
+
+    # ── E4: Idempotenz an den Korb gebunden ──
+    def test_e4_alter_schluessel_bestellt_nicht_still_den_alten_auftrag(self):
+        express.dokumente_hinzufuegen(1, [self.d1])
+        self._guthaben(1000)
+        erster = self._bestellen("schluessel-1")
+        express.dokumente_hinzufuegen(1, [self.d2])                   # neuer Korb
+        with self.assertRaises(express.ExpressFehler) as e:
+            self._bestellen("schluessel-1")                            # Seite aus dem Zurueck-Speicher
+        self.assertEqual(e.exception.status, 409)
+        self.assertTrue(e.exception.extra.get("veraltet"))
+        self.assertEqual(express.warenkorb(1)["dokumente"], 1)        # neuer Korb unbestellt, aber sichtbar
+        zweiter = self._bestellen("schluessel-2")
+        self.assertNotEqual(zweiter["auftrag_id"], erster["auftrag_id"])
+
+    # ── E7: Free-Domain-Topf ──
+    def test_e7_domain_topf_wird_nicht_doppelt_vorgemerkt(self):
+        _sql("UPDATE users SET email = 'a@firma-test-beispiel.de' WHERE id = 1")
+        _sql("UPDATE users SET email = 'b@firma-test-beispiel.de' WHERE id = 2")
+        d_a = self._dokument(self.pid, "Eins.pdf", 1)                 # 50 Credits = das ganze Domain-Volumen
+        d_b = self._dokument(self.fremd_pid, "Zwei.pdf", 1)
+        express.dokumente_hinzufuegen(1, [d_a])
+        self._bestellen()
+        express.dokumente_hinzufuegen(2, [d_b])
+        with self.assertRaises(express.KeinGuthaben):
+            self._bestellen("abcdefgh-b", uid=2)
+        self.assertEqual(billing.vorgemerkt_domain("firma-test-beispiel.de"), 50)
+
+    # ── E18: fail-closed ──
+    def test_e18_datenbankfehler_sperrt_die_bestellung(self):
+        express.dokumente_hinzufuegen(1, [self.d1])
+        self._guthaben(1000)
+        korb = express.warenkorb(1)
+        with mock.patch.object(billing, "monats_verbrauch", side_effect=sqlite3.OperationalError("database is locked")):
+            with self.assertRaises(express.ExpressFehler) as e:
+                self._bestellen(korb=korb)
+        self.assertEqual(e.exception.status, 503)
+        self.assertEqual(_sql("SELECT status FROM express_auftraege WHERE id = ?", korb["id"])[0]["status"], "entwurf")
+        self.assertEqual(billing.vorgemerkt(1), 0)
+
+    # ── E6: Topf-Inhaber geloescht ──
+    def test_e6_topf_inhaber_geloescht_storniert_statt_umhaengen(self):
+        _sql("INSERT INTO users (id, email, password_hash, display_name, plan) VALUES (3, 'inhaber@beispiel.invalid', 'x', 'Inhaber', 'team')")
+        aid = self._auftrag([self.d1])
+        _sql("UPDATE express_auftraege SET konto_user_id = 3 WHERE id = ?", aid)
+        info = express.vor_kontoloeschung(3)
+        self.assertEqual((info["topf"], info["eigene"]), ([aid], []))
+        database.delete_user_data(3)
+        a = _sql("SELECT status, konto_user_id, storno_grund FROM express_auftraege WHERE id = ?", aid)[0]
+        self.assertEqual((a["status"], a["konto_user_id"]), ("storniert", None))
+        self.assertIn("gelöscht", a["storno_grund"])
+        self.assertEqual(billing.vorgemerkt(1), 0)                    # das Mitglied ist nicht belastet
+        self.assertTrue(billing.aktion_pruefung(1, "bild_generierung")["erlaubt"])
+        self.assertEqual(_sql("SELECT COUNT(*) AS n FROM express_verlauf WHERE auftrag_id = ? AND art = 'storniert'", aid)[0]["n"], 1)
+
+    def test_e6_eigene_offene_auftraege_werden_gemeldet(self):
+        aid = self._auftrag([self.d1])
+        info = express.vor_kontoloeschung(1)
+        self.assertEqual([a["id"] for a in info["eigene"]], [aid])
+        betreff, inhalt = express.mail_team("entfallen", info["eigene"][0], "https://beispiel.invalid")
+        self.assertIn(str(aid), betreff)
+        self.assertIn("gelöscht", inhalt)
+
+    # ── E9: Schalter aus, Auftraege bleiben erreichbar ──
+    def test_e9_bestellte_auftraege_erkennen(self):
+        self.assertFalse(express.gibt_bestellte())
+        express.dokumente_hinzufuegen(1, [self.d1])
+        self.assertFalse(express.gibt_bestellte())                    # ein Warenkorb zaehlt nicht
+        self._auftrag([self.d2])
+        self.assertTrue(express.gibt_bestellte())
+        self.assertTrue(express.hat_bestellte(1))
+        self.assertFalse(express.hat_bestellte(2))
+        self.assertEqual(express.offene_anzahl(), 1)
+
+    # ── E10: Erinnerung nach Fehlversand erneut ──
+    def test_e10_freigegebene_erinnerung_kommt_wieder(self):
+        aid = self._auftrag()
+        _sql("UPDATE express_auftraege SET faellig_am = ? WHERE id = ?", express._utc(express._jetzt() + timedelta(hours=5)), aid)
+        self.assertEqual(express.faellige_meldungen(), [("erinnerung", aid)])
+        express.meldung_freigeben("erinnerung", aid)                  # Versand ging an niemanden
+        self.assertEqual(express.faellige_meldungen(), [("erinnerung", aid)])
+        self.assertEqual(express.faellige_meldungen(), [])
+
+    def test_e10_wiederholung_nur_ohne_jeden_erfolg(self):
+        import express_api
+        aid = self._auftrag()
+        with mock.patch.object(express_api, "_mails_nach", return_value=0), \
+                mock.patch.object(express, "meldung_freigeben") as frei:
+            express_api._meldung_versuche.clear()
+            for _ in range(express_api.MELDUNG_VERSUCHE):
+                express_api._meldung_senden("ueberfaellig", aid)
+            self.assertEqual(frei.call_count, express_api.MELDUNG_VERSUCHE - 1)   # danach aufgegeben
+        with mock.patch.object(express_api, "_mails_nach", return_value=1), \
+                mock.patch.object(express, "meldung_freigeben") as frei:
+            express_api._meldung_senden("ueberfaellig", aid)
+            frei.assert_not_called()                                   # an einen ging es raus: keine Doppelmails
+
+    # ── E11: nach der Lieferung nichts mehr ersetzen; laufende Pruefung ──
+    def test_e11_upload_nach_lieferung_abgewiesen(self):
+        aid = self._auftrag([self.d1])
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        pos = express.auftrag_fuer_verwaltung(aid)["positionen"][0]["id"]
+        vorher = _sql("SELECT ergebnis_pfad, ergebnis_am, verapdf FROM express_positionen WHERE id = ?", pos)[0]
+        with open(_pdf(os.path.join(_TMP, "spaet.pdf"), 1), "rb") as f:
+            with self.assertRaises(express.ExpressFehler) as e:
+                express.datei_speichern(aid, pos, "ergebnis", f.read(), "spaet.pdf", PERSON)
+        self.assertEqual(e.exception.status, 409)
+        self.assertEqual(_sql("SELECT ergebnis_pfad, ergebnis_am, verapdf FROM express_positionen WHERE id = ?", pos)[0], vorher)
+
+    def test_e11_liefern_wartet_auf_laufende_pruefung(self):
+        aid = self._auftrag([self.d1])
+        pos = express.auftrag_fuer_verwaltung(aid)["positionen"][0]["id"]
+        with open(_pdf(os.path.join(_TMP, "e1.pdf"), 1), "rb") as f:
+            erst = express.datei_speichern(aid, pos, "ergebnis", f.read(), "e1.pdf", PERSON)
+        with self.assertRaises(express.ExpressFehler) as e:
+            express.liefern(aid, PERSON)
+        self.assertEqual(e.exception.status, 409)
+        self.assertTrue(e.exception.extra.get("pruefung_laeuft"))
+        with open(_pdf(os.path.join(_TMP, "e2.pdf"), 1), "rb") as f:
+            zweit = express.datei_speichern(aid, pos, "ergebnis", f.read(), "e2.pdf", PERSON)
+        # Das Ergebnis der ERSTEN Pruefung gehoert zu einer ersetzten Datei und wird verworfen.
+        self.assertIsNone(express.pruefung_merken(pos, {"bestanden": True}, erst["pruef_kennung"]))
+        self.assertTrue(express.lieferbar(express.auftrag_fuer_verwaltung(aid))["pruefung_laeuft"])
+        self.assertIsNotNone(express.pruefung_merken(pos, {"bestanden": False, "zusammenfassung": "2 Regeln"}, zweit["pruef_kennung"]))
+        with self.assertRaises(express.ExpressFehler) as e:
+            express.liefern(aid, PERSON)                              # Befund: einmal nachfragen
+        self.assertTrue(e.exception.extra.get("nachfrage"))
+        express.liefern(aid, PERSON, trotz_befunden=True)
+
+    def test_e11_haengende_pruefung_blockiert_nicht_ewig(self):
+        aid = self._auftrag([self.d1])
+        pos = express.auftrag_fuer_verwaltung(aid)["positionen"][0]["id"]
+        with open(_pdf(os.path.join(_TMP, "h.pdf"), 1), "rb") as f:
+            express.datei_speichern(aid, pos, "ergebnis", f.read(), "h.pdf", PERSON)
+        alt = express._utc(express._jetzt() - timedelta(minutes=express.PRUEFUNG_HAENGT_MIN + 1))
+        _sql("UPDATE express_positionen SET verapdf = ? WHERE id = ?", '{"laeuft": "x", "seit": "%s"}' % alt, pos)
+        express.liefern(aid, PERSON)
+        p = express.auftrag_fuer_kunde(1, aid)["positionen"][0]
+        self.assertIsNone(p["verapdf"])                               # Kunde sieht kein Pruefergebnis
+
+    # ── E14: Aufbewahrung und IP-Netz ──
+    def test_e14_aufbewahrung(self):
+        aid = self._auftrag([self.d1])
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        _sql("UPDATE express_auftraege SET geliefert_am = datetime('now', '-3 days') WHERE id = ?", aid)
+        self.assertEqual(express.aufraeumen(), 0)                     # Standard 0 = nichts loeschen
+        self.assertTrue(os.path.isdir(express.ordner(1, aid)))
+        express.speichere_einstellungen({"preise": {"aufbereiten": "50", "pruefen": "25"}, "frist_stunden": "48",
+                                         "max_seiten_auftrag": "500", "max_dokumente_auftrag": "50", "aufbewahrung_tage": "2"})
+        self.assertEqual(express.aufraeumen(), 1)
+        self.assertFalse(os.path.isdir(express.ordner(1, aid)))
+        p = _sql("SELECT original_pfad, ergebnis_pfad FROM express_positionen WHERE auftrag_id = ?", aid)[0]
+        self.assertEqual((p["original_pfad"], p["ergebnis_pfad"]), ("", ""))
+        a = express.auftrag_fuer_kunde(1, aid)
+        self.assertEqual(a["status"], "geliefert")                    # Auftrag bleibt als Nachweis
+        self.assertIn("dateien_geloescht", [v["art"] for v in a["verlauf"]])
+        self.assertEqual(express.aufraeumen(), 0)                     # nur einmal
+
+    def test_e14_ip_netz_gekuerzt(self):
+        self.assertEqual(express.netz_kurz("203.0.113.77"), "203.0.113.0/24")
+        self.assertEqual(express.netz_kurz("2001:db8:abcd:12::1"), "2001:db8:abcd::/48")
+        self.assertEqual(express.netz_kurz("kein netz"), "")
+        aid = self._auftrag([self.d1])
+        self.assertEqual(_sql("SELECT zustimmung_absender FROM express_auftraege WHERE id = ?", aid)[0]["zustimmung_absender"], "")
+
+    # ── E15: Frist ruht bei Rueckfrage ──
+    def test_e15_frist_ruht_in_der_anzeige(self):
+        aid = self._auftrag([self.d1])
+        _sql("UPDATE express_auftraege SET faellig_am = ? WHERE id = ?", express._utc(express._jetzt() - timedelta(hours=1)), aid)
+        express.rueckfrage(aid, PERSON, "Frage")
+        a = express.auftrag_fuer_verwaltung(aid)
+        self.assertEqual((a["frist_ruht"], a["ueberfaellig"], a["faellig_in_stunden"]), (True, False, None))
+        g = express.liste_fuer_verwaltung()
+        self.assertEqual([x["id"] for x in g["rueckfrage"]], [aid])
+        self.assertEqual(g["ueberfaellig"], [])
+
+    def test_e15_kein_guthaben_text_nennt_vormerkung(self):
+        express.dokumente_hinzufuegen(1, [self.d1])
+        self._guthaben(60)
+        self._bestellen()                                              # 100 vorgemerkt, 10 frei
+        p = billing.aktion_pruefung(1, "pdf_tagging")                  # 20 > 10
+        self.assertFalse(p["erlaubt"])
+        self.assertIn("vorgemerkt", billing.credits_fehlen_text(p))
+        self.assertIn("vorgemerkt", billing.credits_fehlen_detail(p)["text"])
+
+    # ── Einstellungen: Fehler am Feld (A4) und alte Preis-Schluessel ──
+    def test_a4_einstellungen_nennen_das_feld(self):
+        basis = {"preise": {"aufbereiten": "50", "pruefen": "25"}, "frist_stunden": "48", "max_seiten_auftrag": "500",
+                 "max_dokumente_auftrag": "50"}
+        for aenderung, feld, anfang in (({"frist_stunden": "x"}, "frist_stunden", "Lieferfrist in Stunden"),
+                                        ({"preise": {"aufbereiten": "0", "pruefen": "25"}}, "preis_aufbereiten", "Barrierefrei aufbereiten"),
+                                        ({"aufbewahrung_tage": "-1"}, "aufbewahrung_tage", "Dateien löschen nach Tagen"),
+                                        ({"team_mail": "kein mail"}, "team_mail", "Benachrichtigung an")):
+            daten = dict(basis, **aenderung)
+            with self.assertRaises(express.ExpressFehler) as e:
+                express.speichere_einstellungen(daten)
+            self.assertEqual(e.exception.extra.get("feld"), feld)
+            self.assertTrue(e.exception.text.startswith(anfang), e.exception.text)
+
+    def test_alte_preis_schluessel_werden_uebernommen(self):
+        _sql("INSERT INTO system_kv (key, value) VALUES ('express_einstellungen', ?)",
+             '{"preis_aufbereiten": 70, "preis_pruefen": 30, "frist_stunden": 24}')
+        e = express.einstellungen()
+        self.assertEqual((e["preise"], e["frist_stunden"], e["aufbewahrung_tage"]), ({"aufbereiten": 70, "pruefen": 30}, 24, 0))
+
+    # ── Texte: Einzahl, deutsches Datum, Tausenderpunkt (A11, A22) ──
+    def test_a11_texte(self):
+        self.assertEqual(express.datum_deutsch("2026-10-05 12:04"), "5. Oktober 2026, 12:04")
+        self.assertEqual(express.datum_deutsch("2026-03-01"), "1. März 2026")
+        self.assertEqual(express._seiten(1), "1 Seite")
+        self.assertEqual(express._seiten(1200), "1.200 Seiten")
+        aid = self._auftrag([self.d2])                                 # 1 Seite
+        a = express.auftrag_fuer_kunde(1, aid)
+        ziel = os.path.join(_TMP, "nachweis2.docx")
+        express.nachweis_docx(a, ziel)
+        import zipfile
+        with zipfile.ZipFile(ziel) as z:
+            doc = z.read("word/document.xml").decode()
+        self.assertIn("1 Seite,", doc)
+        self.assertNotIn("1 Seiten", doc)
+        self.assertNotRegex(doc, r"Bestellt am: \d{4}-\d{2}-\d{2}")
+        betreff, inhalt = express.mail_kunde("bestellt", express.auftrag_fuer_verwaltung(aid), "https://beispiel.invalid")
+        self.assertIn("1 Dokument, 1 Seite", inhalt)
+
+    def test_a12_kunde_sieht_keine_technik_zusammenfassung(self):
+        aid = self._auftrag([self.d1])
+        self._ergebnis(aid, bestanden=False)
+        express.liefern(aid, PERSON, trotz_befunden=True)
+        p = express.auftrag_fuer_kunde(1, aid)["positionen"][0]
+        self.assertEqual(p["verapdf"], {"bestanden": False})
+        self.assertEqual((p["pruef_name"], p["ergebnis_typ"]), ("veraPDF", "pdf"))
+
+
+class Erweiterbar(Basis):
+    """Steve 05.10.2026: vorerst nur PDF, aber jederzeit erweiterbar. Hier wird — NUR im Test — ein zweiter Dateityp
+    mit eigener Leistung eingehaengt; Warenkorb, Preise, Bestellung, Upload, Liefern und Download muessen ohne
+    Code-Aenderung damit umgehen."""
+
+    def setUp(self):
+        super().setUp()
+        self.txt = express.Dateityp(schluessel="txt", name="Text", endung=".txt", endungen=(".txt",), mime="text/plain",
+                                    accept=".txt", projekt_typen=("pdf",), erkennen=lambda kopf: kopf.startswith(b"TXT:"),
+                                    seiten=lambda pfad: max(1, os.path.getsize(pfad) // 100))
+        self.lesen = express.Leistung(schluessel="vorlesen", name="Vorlesen lassen", preis_standard=7, dateitypen=("txt",),
+                                      aktion="express_vorlesen", ergebnis_pflicht=True, bericht_pflicht=False,
+                                      bericht_typen=("pdf",), ergebnis_zusatz=" (gelesen)")
+        self._p1 = mock.patch.dict(express.DATEITYPEN, {"txt": self.txt})
+        self._p2 = mock.patch.dict(express.LEISTUNGEN, {"vorlesen": self.lesen})
+        self._p1.start()
+        self._p2.start()
+        pfad = os.path.join(_TMP, "notiz.txt")
+        with open(pfad, "wb") as f:
+            f.write(b"TXT:" + b"x" * 296)                              # 300 Bytes = 3 „Seiten“
+        conn = sqlite3.connect(_DB)
+        cur = conn.execute("INSERT INTO documents (project_id, doc_index, original_filename, original_path) VALUES (?, 5, 'notiz.txt', ?)",
+                           (self.pid, pfad))
+        conn.commit()
+        conn.close()
+        self.dtxt = cur.lastrowid
+
+    def tearDown(self):
+        self._p2.stop()
+        self._p1.stop()
+
+    def test_neuer_typ_durch_den_ganzen_ablauf(self):
+        self.assertEqual(express.typen_text(), "PDF oder Text")
+        r = express.dokumente_hinzufuegen(1, [self.d1, self.dtxt])
+        pos = {p["dateityp"]: p for p in r["warenkorb"]["positionen"]}
+        self.assertEqual((pos["txt"]["leistung"], pos["txt"]["seiten"], pos["txt"]["credits"]), ("vorlesen", 3, 21))
+        self.assertEqual(pos["txt"]["leistungen"], ["vorlesen"])
+        self.assertEqual(pos["pdf"]["leistungen"], ["aufbereiten", "pruefen"])
+        with self.assertRaises(express.ExpressFehler):
+            express.leistung_setzen(1, pos["pdf"]["id"], "vorlesen")      # nicht fuer PDF
+        with self.assertRaises(express.ExpressFehler):
+            express.leistung_setzen(1, pos["txt"]["id"], "aufbereiten")   # nicht fuer Text
+        e = express.speichere_einstellungen({"preise": {"aufbereiten": "50", "pruefen": "25", "vorlesen": "9"},
+                                             "frist_stunden": "48", "max_seiten_auftrag": "500", "max_dokumente_auftrag": "50"})
+        self.assertEqual(e["preise"]["vorlesen"], 9)
+        self._guthaben(1000)
+        aid = self._bestellen()["auftrag_id"]
+        a = express.auftrag_fuer_verwaltung(aid)
+        p_txt = next(p for p in a["positionen"] if p["dateityp"] == "txt")
+        self.assertEqual(p_txt["credits"], 27)
+        self.assertEqual([t["schluessel"] for t in p_txt["ergebnis_typen"]], ["txt"])
+        orig = _sql("SELECT original_pfad FROM express_positionen WHERE id = ?", p_txt["id"])[0]["original_pfad"]
+        self.assertTrue(orig.endswith("_original.txt"))
+        with self.assertRaises(express.ExpressFehler) as fe:
+            express.datei_speichern(aid, p_txt["id"], "ergebnis", b"%PDF-1.7", "x.pdf", PERSON)
+        self.assertIn("Text", fe.exception.text)
+        erg = express.datei_speichern(aid, p_txt["id"], "ergebnis", b"TXT: fertig", "fertig.txt", PERSON)
+        self.assertEqual(erg["pruef_kennung"], "")                      # Typ ohne automatische Pruefung
+        p_pdf = next(p for p in a["positionen"] if p["dateityp"] == "pdf")
+        with open(_pdf(os.path.join(_TMP, "erg_x.pdf"), 1), "rb") as f:
+            k = express.datei_speichern(aid, p_pdf["id"], "ergebnis", f.read(), "e.pdf", PERSON)["pruef_kennung"]
+        express.pruefung_merken(p_pdf["id"], {"bestanden": True}, k)
+        express.liefern(aid, PERSON)
+        ev = {x["aktion"]: x["credits"] for x in _sql("SELECT aktion, credits FROM usage_events WHERE quelle = 'express'")}
+        self.assertEqual(ev, {"express_vorlesen": 27, "express_aufbereiten": 100})
+        pfad, name = express.datei_fuer_kunde(1, aid, p_txt["id"], "ergebnis")
+        self.assertEqual((name, express.mime_der_datei(pfad)), ("notiz (gelesen).txt", "text/plain"))
+
+    def test_upload_ohne_projekt_erkennt_den_typ(self):
+        self.assertEqual(express.dateityp_fuer_upload("a.txt", b"TXT:abc").schluessel, "txt")
+        self.assertEqual(express.dateityp_fuer_upload("a.PDF", b"%PDF-1.4").schluessel, "pdf")
+        with self.assertRaises(express.ExpressFehler):
+            express.dateityp_fuer_upload("a.txt", b"%PDF-1.4")         # Endung und Inhalt passen nicht
+        with self.assertRaises(express.ExpressFehler):
+            express.dateityp_fuer_upload("a.docx", b"PK\x03\x04")
+
+
+class NurPdf(unittest.TestCase):
+    def test_heute_nur_pdf(self):
+        self.assertEqual([t.schluessel for t in express.angebotene_dateitypen()], ["pdf"])
+        self.assertEqual(express.typen_text(), "PDF")
+        self.assertEqual(list(express.LEISTUNGEN), ["aufbereiten", "pruefen"])
+        self.assertEqual(express.AKTION_JE_LEISTUNG, {"aufbereiten": "express_aufbereiten", "pruefen": "express_pruefen"})
 
 
 class Schalter(unittest.TestCase):

@@ -10099,8 +10099,6 @@ msgstr "Euro pr. amerikansk dollar"
 msgid "Gelöschtes Konto"
 msgstr "Slettet konto"
 
-msgid "Gelöschtes Projekt"
-msgstr "Slettet projekt"
 
 msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
 msgstr "Præcis som i listen „Efter model“, fx gemini-3.1-pro-preview."
@@ -10129,8 +10127,6 @@ msgstr "AI-omkostninger for måneden"
 msgid "KI-Kosten im {monat}"
 msgstr "AI-omkostninger i {monat}"
 
-msgid "KI-Kosten {monat}: {betrag}"
-msgstr "AI-omkostninger {monat}: {betrag}"
 
 msgid "Keine Einzelheiten."
 msgstr "Ingen detaljer."
@@ -10333,17 +10329,11 @@ msgstr "Ordre {nr}"
 msgid "Aus einem Projekt"
 msgstr "Fra et projekt"
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
-msgstr "Automatisk PDF/UA-kontrol (veraPDF): bestået."
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
-msgstr "Automatisk PDF/UA-kontrol (veraPDF): {text}"
 
 msgid "Barrierefrei aufbereiten (mit Prüfung)"
 msgstr "Gør tilgængelig (inkl. kontrol)"
 
-msgid "Barrierefrei aufbereiten: Credits je Seite"
-msgstr "Gør tilgængelig: kreditter pr. side"
 
 msgid "Barrierefreie PDF herunterladen"
 msgstr "Download tilgængelig PDF"
@@ -10396,14 +10386,10 @@ msgstr "Skriv venligst et svar."
 msgid "Bitte eine E-Mail-Adresse eingeben."
 msgstr "Indtast en e-mailadresse."
 
-msgid "Bitte eine Frage schreiben."
-msgstr "Skriv venligst et spørgsmål."
 
 msgid "Bitte einen Ansprechpartner angeben."
 msgstr "Angiv en kontaktperson."
 
-msgid "Bitte einen Grund angeben."
-msgstr "Angiv en grund."
 
 msgid "Bitte mindestens ein Dokument ankreuzen."
 msgstr "Sæt flueben ved mindst ét dokument."
@@ -10411,8 +10397,6 @@ msgstr "Sæt flueben ved mindst ét dokument."
 msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
 msgstr "Brug kun cifre, mellemrum og + ( ) / -."
 
-msgid "Bitte zuerst eine PDF-Datei auswählen."
-msgstr "Vælg først en PDF-fil."
 
 msgid "Credits"
 msgstr "Kreditter"
@@ -10420,8 +10404,6 @@ msgstr "Kreditter"
 msgid "Credits kaufen"
 msgstr "Køb kreditter"
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
-msgstr "Vi opretter et projekt „Ekspresordre“ til det. Størrelse op til 50 MB."
 
 msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
 msgstr "Tak! Din ordre {nr} er modtaget. Vi leverer inden for {stunden} timer og sender dig en bekræftelse pr. e-mail."
@@ -10472,8 +10454,6 @@ msgstr "Bestillingen mislykkedes. Prøv igen."
 msgid "Die Datei konnte nicht hochgeladen werden."
 msgstr "Filen kunne ikke uploades."
 
-msgid "Die Datei wird hochgeladen …"
-msgstr "Filen uploades …"
 
 msgid "Die Dokumente konnten nicht geladen werden."
 msgstr "Dokumenterne kunne ikke indlæses."
@@ -10490,8 +10470,6 @@ msgstr "Ydelsen kunne ikke ændres."
 msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
 msgstr "Priserne er stadig pladsholdere. Fastsæt dem først efter aftale, og sæt flueben ved „Priserne er fastsat“ nedenfor."
 
-msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
-msgstr "Den automatiske PDF/UA-kontrol (veraPDF) melder afvigelser:"
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "De reserverede kreditter frigives, intet trækkes. Kunden får en e-mail med begrundelsen."
@@ -10532,11 +10510,7 @@ msgstr "Gem indstillinger"
 msgid "Einverständnis"
 msgstr "Samtykke"
 
-msgid "Ergebnis (PDF) für {name}"
-msgstr "Resultat (PDF) for {name}"
 
-msgid "Ergebnis für „{name}“ gespeichert."
-msgstr "Resultat for „{name}“ gemt."
 
 msgid "Ergebnis herunterladen"
 msgstr "Download resultat"
@@ -10544,20 +10518,14 @@ msgstr "Download resultat"
 msgid "Ergebnis hochgeladen"
 msgstr "Resultat uploadet"
 
-msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
-msgstr "Resultatet uploades og kontrolleres med veraPDF …"
 
 msgid "Express-Auftrag"
 msgstr "Ekspresordre"
 
-msgid "Express-Auftrag {nr}: {stand}"
-msgstr "Ekspresordre {nr}: {stand}"
 
 msgid "Express-Aufträge"
 msgstr "Ekspresordrer"
 
-msgid "Express-Aufträge: {u} überfällig, {n} neu."
-msgstr "Ekspresordrer: {u} forsinkede, {n} nye."
 
 msgid "Express-Bearbeiter"
 msgstr "Ekspresbehandlere"
@@ -10565,8 +10533,6 @@ msgstr "Ekspresbehandlere"
 msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
 msgstr "Ekspresbehandlere ser kun ekspresordrerne i administrationen og kan behandle dem, fx en partner, der klargør dokumenterne. De ser ikke kunder, omsætning eller AI-omkostninger."
 
-msgid "Express-Bearbeiter-Recht entziehen: {name}"
-msgstr "Fjern ekspresbehandlerret: {name}"
 
 msgid "Express-Service"
 msgstr "Ekspresservice"
@@ -10574,8 +10540,6 @@ msgstr "Ekspresservice"
 msgid "Fassung {f}, Sprache {s}"
 msgstr "version {f}, sprog {s}"
 
-msgid "Frage"
-msgstr "Spørgsmål"
 
 msgid "Fällig am"
 msgstr "Forfalder den"
@@ -10583,8 +10547,6 @@ msgstr "Forfalder den"
 msgid "Geliefert"
 msgstr "Leveret"
 
-msgid "Geliefert (die letzten 100)"
-msgstr "Leveret (de seneste 100)"
 
 msgid "Geliefert am"
 msgstr "Leveret den"
@@ -10598,11 +10560,7 @@ msgstr "Grund"
 msgid "Hinweise für uns (freiwillig)"
 msgstr "Bemærkninger til os (valgfrit)"
 
-msgid "Hochgeladen und hinzugefügt."
-msgstr "Uploadet og tilføjet."
 
-msgid "Hochladen und hinzufügen"
-msgstr "Upload og tilføj"
 
 msgid "Höchstens Dokumente je Auftrag"
 msgstr "Højst dokumenter pr. ordre"
@@ -10679,17 +10637,11 @@ msgstr "Kun synlig her i administrationen, aldrig for kunden."
 msgid "Nur prüfen (Prüfbericht)"
 msgstr "Kun kontrol (kontrolrapport)"
 
-msgid "Nur prüfen: Credits je Seite"
-msgstr "Kun kontrol: kreditter pr. side"
 
-msgid "Oder eine PDF hochladen, ohne Projekt"
-msgstr "Eller upload en PDF uden projekt"
 
 msgid "Original herunterladen"
 msgstr "Download original"
 
-msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
-msgstr "Priser pr. side: gør tilgængelig (inkl. kontrol) {a} kreditter, kun kontrol {p} kreditter."
 
 msgid "Preise sind festgelegt (kein Platzhalter mehr)"
 msgstr "Priserne er fastsat (ikke længere pladsholdere)"
@@ -10697,11 +10649,7 @@ msgstr "Priserne er fastsat (ikke længere pladsholdere)"
 msgid "Prüfbericht"
 msgstr "Kontrolrapport"
 
-msgid "Prüfbericht (PDF) für {name}"
-msgstr "Kontrolrapport (PDF) for {name}"
 
-msgid "Prüfbericht für „{name}“ gespeichert."
-msgstr "Kontrolrapport for „{name}“ gemt."
 
 msgid "Prüfbericht herunterladen"
 msgstr "Download kontrolrapport"
@@ -10709,8 +10657,6 @@ msgstr "Download kontrolrapport"
 msgid "Prüfbericht hochgeladen"
 msgstr "Kontrolrapport uploadet"
 
-msgid "Prüfbericht wird hochgeladen …"
-msgstr "Kontrolrapporten uploades …"
 
 msgid "Recht entziehen"
 msgstr "Fjern ret"
@@ -10742,8 +10688,6 @@ msgstr "Spørgsmål fra InkluDocs"
 msgid "Storniert"
 msgstr "Annulleret"
 
-msgid "Storniert (die letzten 100)"
-msgstr "Annulleret (de seneste 100)"
 
 msgid "Storniert am"
 msgstr "Annulleret den"
@@ -10793,8 +10737,6 @@ msgstr "Gør til ekspresbehandler"
 msgid "Zur Auswahl hinzufügen"
 msgstr "Føj til udvalg"
 
-msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
-msgstr "Lige nu kan vi kun behandle PDF-filer."
 
 msgid "Zurück zu den Express-Aufträgen"
 msgstr "Tilbage til ekspresordrerne"
@@ -10805,8 +10747,6 @@ msgstr "Tilbage til mine ordrer"
 msgid "Zurück zum Express-Service"
 msgstr "Tilbage til ekspresservicen"
 
-msgid "Zustimmung"
-msgstr "Samtykke"
 
 msgid "abgebucht"
 msgstr "trukket"
@@ -10838,8 +10778,6 @@ msgstr "internt"
 msgid "keine"
 msgstr "ingen"
 
-msgid "keine PDF, nicht möglich"
-msgstr "ikke en PDF, ikke muligt"
 
 msgid "keiner (freiwillig)"
 msgstr "ingen (valgfrit)"
@@ -10865,14 +10803,8 @@ msgstr "allerede i dit udvalg"
 msgid "storniert am {datum}"
 msgstr "annulleret den {datum}"
 
-msgid "veraPDF konnte die Datei nicht prüfen."
-msgstr "veraPDF kunne ikke kontrollere filen."
 
-msgid "veraPDF: Abweichungen — {text}"
-msgstr "veraPDF: afvigelser — {text}"
 
-msgid "veraPDF: PDF/UA bestanden."
-msgstr "veraPDF: PDF/UA bestået."
 
 msgid "vorgemerkt"
 msgstr "reserveret"
@@ -10948,3 +10880,159 @@ msgstr "{seiten}, {leistung}, {c} kreditter"
 
 msgid "{dokumente}, {c} Credits"
 msgstr "{dokumente}, {c} kreditter"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid " oder "
+msgstr " eller "
+
+msgid "(die letzten 100)"
+msgstr "(de seneste 100)"
+
+msgid "Automatische Prüfung ({pruefung}): bestanden."
+msgstr "Automatisk kontrol ({pruefung}): bestået."
+
+msgid "Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat."
+msgstr "Automatisk kontrol ({pruefung}): med bemærkninger, som vores team har gennemgået."
+
+msgid "Bitte warten, bis der vorige Schritt fertig ist."
+msgstr "Vent, til det forrige trin er færdigt."
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
+msgstr "Vi opretter et projekt „Ekspresordre“ til det."
+
+msgid "Datei auswählen"
+msgstr "Vælg fil"
+
+msgid "Dateien gelöscht"
+msgstr "Filer slettet"
+
+msgid "Dateien löschen nach Tagen"
+msgstr "Slet filer efter dage"
+
+msgid "Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte."
+msgstr "Filtype: {typen}. Den automatiske kontrol kører efter upload. En ny fil erstatter den gamle."
+
+msgid "Dateityp: {typen}. Eine neue Datei ersetzt die alte."
+msgstr "Filtype: {typen}. En ny fil erstatter den gamle."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen (Schritt 1)."
+msgstr "Dit udvalg er tomt. Tilføj først dokumenter (trin 1)."
+
+msgid "Die PDF ist heruntergeladen."
+msgstr "PDF’en er downloadet."
+
+msgid "Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen."
+msgstr "PDF’en kan ikke oprettes lige nu. Brug udskriftsvisningen."
+
+msgid "Die PDF wird erstellt …"
+msgstr "PDF’en oprettes …"
+
+msgid "Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens Eingabe kostet die Eingabe {ein}, die Ausgabe {aus}."
+msgstr "Trinnet for lange input overtages: over {grenze} input-tokens koster input {ein} og output {aus}."
+
+msgid "Die automatische Prüfung meldet Abweichungen:"
+msgstr "Den automatiske kontrol melder afvigelser:"
+
+msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
+msgstr "Ekspresordre {nr} – ordreoversigt.pdf"
+
+msgid "Frage (Pflicht)"
+msgstr "Spørgsmål (påkrævet)"
+
+msgid "Frage: Bitte eine Frage schreiben."
+msgstr "Spørgsmål: Skriv venligst et spørgsmål."
+
+msgid "Frist ruht bis zur Antwort des Kunden"
+msgstr "Fristen står stille, indtil kunden svarer"
+
+msgid "Gelöschtes Projekt {id}"
+msgstr "Slettet projekt {id}"
+
+msgid "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+msgstr "Talt med i „omkostning pr. kredit“: {credits} kreditter til AI-arbejde (alt-tekster, quickinfo, oversættelse, ændringer fra chatbotten) og deres AI-omkostninger, begge siden {datum}. Tagging, kontrol, eksport og Express tælles ikke med."
+
+msgid "Grund für das Stornieren (Pflicht)"
+msgstr "Årsag til annulleringen (påkrævet)"
+
+msgid "Grund für das Stornieren: Bitte einen Grund angeben."
+msgstr "Årsag til annulleringen: Angiv venligst en årsag."
+
+msgid "KI-Kosten (Listenpreise netto)"
+msgstr "AI-omkostninger (listepriser netto)"
+
+msgid "Keine offenen Aufträge."
+msgstr "Ingen åbne ordrer."
+
+msgid "Neue Bestellungen sind zurzeit abgeschaltet. Bestehende Aufträge lassen sich weiter bearbeiten, liefern und stornieren."
+msgstr "Nye bestillinger er slået fra i øjeblikket. Eksisterende ordrer kan stadig behandles, leveres og annulleres."
+
+msgid "Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier."
+msgstr "Nye ekspresordrer er ikke mulige i øjeblikket. Dine tidligere ordrer finder du her."
+
+msgid "Offene Aufträge"
+msgstr "Åbne ordrer"
+
+msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
+msgstr "Originaler, resultater og kontrolrapporter slettes så mange dage efter levering eller annullering; selve ordren bevares som dokumentation. 0 = slet aldrig."
+
+msgid "Preise je Seite: {liste}."
+msgstr "Priser pr. side: {liste}."
+
+msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
+msgstr "Omsætning (slutpriser, uden moms efter § 19 UStG)"
+
+msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
+msgstr "For mange forespørgsler på kort tid. Prøv igen senere."
+
+msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
+msgstr "Lige nu kan vi kun behandle {typen}-filer."
+
+msgid "Zustimmung (beide Häkchen sind nötig)"
+msgstr "Samtykke (begge flueben er påkrævet)"
+
+msgid "für {modell}"
+msgstr "for {modell}"
+
+msgid "nicht möglich, nur {typen}"
+msgstr "ikke muligt, kun {typen}"
+
+msgid "{art} für „{name}“ hochladen"
+msgstr "Upload {art} til „{name}“"
+
+msgid "{leistung} {c} Credits"
+msgstr "{leistung} {c} kreditter"
+
+msgid "{leistung}: Credits je Seite"
+msgstr "{leistung}: kreditter pr. side"
+
+msgid "{name}, angelegt am {datum}"
+msgstr "{name}, oprettet den {datum}"
+
+msgid "{pruefung} konnte die Datei nicht prüfen."
+msgstr "{pruefung} kunne ikke kontrollere filen."
+
+msgid "{pruefung}: Abweichungen — {text}"
+msgstr "{pruefung}: afvigelser — {text}"
+
+msgid "{pruefung}: bestanden."
+msgstr "{pruefung}: bestået."
+
+msgid "{pruefung}: läuft noch …"
+msgstr "{pruefung}: kører stadig …"
+
+msgid "{typen} hochladen, ohne Projekt"
+msgstr "Upload {typen} uden projekt"
+
+msgid "{typ}-Datei auswählen"
+msgstr "Vælg {typ}-fil"
+
+msgid "„{datei}“ ist als Ergebnis für „{name}“ gespeichert."
+msgstr "„{datei}“ er gemt som resultat for „{name}“."
+
+msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
+msgstr "„{datei}“ er gemt som kontrolrapport for „{name}“."
+
+msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
+msgstr "„{name}“ uploadet og føjet til udvalget."

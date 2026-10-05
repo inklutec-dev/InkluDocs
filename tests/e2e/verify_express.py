@@ -3,6 +3,9 @@
 Bestellen mit Vormerkung, Uebernehmen, Rueckfrage, Antwort, Ergebnis mit veraPDF, Liefern, Download, Nachweis-PDF,
 ZIP, Storno) und die Sicherheitsfaelle: fremde Kunden (IDOR), Nur-Einsicht-Admin, Express-Bearbeiter ohne Admin-Recht,
 Upload-Pruefungen, Doppel-Bestellung, Doppel-Lieferung, Storno nach Lieferung.
+Korrekturrunde 05.10.2026: Bestellen nur mit Korb, Summe und Fassung (409 bei geaendertem Preis oder altem Schluessel),
+kaputter JSON-Koerper 400, Fehler der Einstellungen mit Feld, no-store auf den Seiten, Projektliste nur mit PDF-Projekten,
+ZIP ungepackt (ZIP_STORED), automatische Pruefung beim Hochladen fertig, bevor die Antwort kommt.
     docker cp tests/e2e/verify_express.py inkludocs-staging:/tmp/ && docker exec inkludocs-staging python3 /tmp/verify_express.py
 Testkonten auf .invalid (Mails werden unterdrueckt); Team-Mails gehen waehrend des Tests an eine .invalid-Adresse.
 Alles wird am Ende entfernt, die Einstellungen werden zurueckgesetzt."""
@@ -84,19 +87,31 @@ sql("UPDATE users SET is_admin = 1, admin_level = 'view' WHERE email = ?", SICHT
 
 try:
     kunde, fremd, voll, sicht, bearb = (client(m) for m in (KUNDE, FREMD, VOLL, SICHT, BEARB))
-    r = voll.post("/api/admin/express/einstellungen", json={
-        "preis_aufbereiten": "50", "preis_pruefen": "25", "frist_stunden": "48", "max_seiten_auftrag": "500",
-        "max_dokumente_auftrag": "50", "team_mail": f"team@{DOM}", "preise_festgelegt": False})
+    EINST = {"preise": {"aufbereiten": "50", "pruefen": "25"}, "frist_stunden": "48", "max_seiten_auftrag": "500",
+             "max_dokumente_auftrag": "50", "team_mail": f"team@{DOM}", "preise_festgelegt": False}
+    r = voll.post("/api/admin/express/einstellungen", json=EINST)
     check("Voll-Admin setzt Einstellungen (Team-Mail auf Testadresse)", r.status_code == 200, r.text)
+    r = voll.post("/api/admin/express/einstellungen", json=dict(EINST, frist_stunden="bald"))
+    d = r.json().get("detail") or {}
+    check("Einstellungen: Fehler nennt Feld und Beschriftung", r.status_code == 400 and d.get("feld") == "frist_stunden"
+          and d.get("text", "").startswith("Lieferfrist in Stunden"), r.text)
+    e = voll.get("/api/admin/express/einstellungen").json()
+    check("Einstellungen: Leistungen aus der Liste, Aufbewahrung 0", [l["schluessel"] for l in e["leistungen"]] == ["aufbereiten", "pruefen"]
+          and e["aufbewahrung_tage"] == 0, e)
 
     print("== A. Seiten und Stand ==")
     for pfad in ("/express", "/express/bedingungen"):
         r = kunde.get(pfad)
         check(f"Seite {pfad} 200", r.status_code == 200 and "Express" in r.text, r.status_code)
+    check("Seite /express: Cache-Control no-store (Zurueck-Speicher)", kunde.get("/express").headers.get("cache-control") == "no-store")
+    check("Bedingungen: Datenschutz und Mail verlinkt", 'href="/datensicherheit"' in kunde.get("/express/bedingungen").text
+          and 'href="mailto:support@inkludocs.de"' in kunde.get("/express/bedingungen").text)
     r = kunde.get("/api/express/stand")
     st = r.json()
     check("Stand: Preise, Frist, Texte", r.status_code == 200 and st["preise"]["aufbereiten"] == 50 and st["frist_stunden"] == 48
           and st["texte"]["bearbeitung"].startswith("Ich bin einverstanden"), st)
+    check("Stand: Leistungen und Dateitypen aus der Liste", [l["schluessel"] for l in st["leistungen"]] == ["aufbereiten", "pruefen"]
+          and [t["schluessel"] for t in st["dateitypen"]] == ["pdf"], (st.get("leistungen"), st.get("dateitypen")))
     check("/api/me meldet express", kunde.get("/api/me").json()["user"]["express"] is True)
 
     print("== B. Upload ohne Projekt + Pruefungen ==")
@@ -118,6 +133,14 @@ try:
     pos2 = korb["positionen"][1]["id"]
     r = kunde.post(f"/api/express/warenkorb/positionen/{pos2}/leistung", json={"leistung": "pruefen"})
     check("Leistung „Nur prüfen“ gesetzt", r.status_code == 200 and r.json()["credits"] == 175, r.text)
+    for koerper in ("{kaputt", "[1]"):
+        r = kunde.post(f"/api/express/warenkorb/positionen/{pos2}/leistung", content=koerper, headers={"Content-Type": "application/json"})
+        check(f"Kaputter JSON-Koerper {koerper!r}: 400 statt 500", r.status_code == 400, r.status_code)
+    # Projektliste: nur PDF-Projekte mit Dokumenten (Word-Projekt und leeres Projekt erscheinen nicht).
+    sql("INSERT INTO projects (user_id, filename, original_path, name, tool, project_type) VALUES (?, 'w', '', 'Word fiktiv', 'word', 'docx')", k_id)
+    sql("INSERT INTO projects (user_id, filename, original_path, name, tool, project_type) VALUES (?, 'l', '', 'Leer fiktiv', 'pdf', 'pdf')", k_id)
+    pl = kunde.get("/api/express/projekte").json()["projekte"]
+    check("Projektliste: nur PDF-Projekte mit Dokumenten, mit Anlagedatum", [p["id"] for p in pl] == [pid] and pl[0]["angelegt_am"], pl)
 
     print("== C. Fremde Kunden (IDOR) ==")
     check("Fremder sieht Projekt-Dokumente nicht (404)", fremd.get(f"/api/express/projekte/{pid}/dokumente").status_code == 404)
@@ -128,13 +151,27 @@ try:
     check("Ohne Anmeldung: 401", httpx.get(BASE + "/api/express/stand").status_code == 401)
 
     print("== D. Bestellen ==")
-    bestellung = {"ansprechpartner": "Kim Muster (fiktiv)", "telefon": "+49 40 0000", "hinweise": "Seite 2 bitte genau",
-                  "bedingungen": True, "bearbeitung": True, "idempotenz": "e2e-express-0001"}
+
+    def mit_korb(daten):
+        """Wie die Seite: Korb, angezeigte Summe und Fassung mitschicken."""
+        w = kunde.get("/api/express/stand").json()["warenkorb"]
+        return dict(daten, korb_id=w["id"], erwartete_credits=w["credits"], fassung=w["fassung"])
+    bestellung = mit_korb({"ansprechpartner": "Kim Muster (fiktiv)", "telefon": "+49 40 0000", "hinweise": "Seite 2 bitte genau",
+                           "bedingungen": True, "bearbeitung": True, "idempotenz": "e2e-express-0001"})
     r = kunde.post("/api/express/bestellen", json=dict(bestellung, bearbeitung=False))
-    check("Ohne Einverstaendnis: 400", r.status_code == 400, r.text)
+    check("Ohne Einverstaendnis: 400 mit Feld", r.status_code == 400 and r.json()["detail"].get("feld") == "zustimmung", r.text)
+    r = kunde.post("/api/express/bestellen", content="{kaputt", headers={"Content-Type": "application/json"})
+    check("Bestellen mit kaputtem JSON: 400", r.status_code == 400, r.status_code)
     r = kunde.post("/api/express/bestellen", json=bestellung)
     check("Zu wenig Guthaben: 402 mit Zahlen", r.status_code == 402 and r.json()["detail"]["preis"] == 175, r.text)
     sql("INSERT INTO quota_pakete (user_id, groesse, verbleibend, quelle, notiz, verfaellt_am) VALUES (?, 1000, 1000, 'admin', 'Express-Test', NULL)", k_id)
+    # Preis aendert sich nach dem Anzeigen: nicht bestellen, 409 mit dem neuen Betrag (§ 312j BGB).
+    voll.post("/api/admin/express/einstellungen", json=dict(EINST, preise={"aufbereiten": "60", "pruefen": "25"}))
+    r = kunde.post("/api/express/bestellen", json=dict(bestellung, idempotenz="e2e-express-0000"))
+    d = r.json().get("detail") or {}
+    check("Geaenderter Preis: 409 mit neuem Betrag, nichts bestellt", r.status_code == 409 and d.get("veraltet") and d.get("neu_credits") == 205
+          and not sql("SELECT id FROM express_auftraege WHERE user_id = ? AND status NOT IN ('entwurf', 'bestellung')", k_id), r.text)
+    voll.post("/api/admin/express/einstellungen", json=EINST)
     verf_vorher = kunde.get("/api/express/stand").json()["guthaben"]
     r = kunde.post("/api/express/bestellen", json=bestellung)
     aid = r.json().get("auftrag_id")
@@ -200,6 +237,7 @@ try:
     r = bearb.get(f"/api/admin/express/auftraege/{aid}/originale.zip")
     z = zipfile.ZipFile(io.BytesIO(r.content)) if r.status_code == 200 else None
     check("Originale als ZIP (2 Dateien, keine Pfade)", z and len(z.namelist()) == 2 and all("/" not in n for n in z.namelist()), z and z.namelist())
+    check("ZIP ungepackt gespeichert (PDFs sind schon komprimiert)", z and all(i.compress_type == zipfile.ZIP_STORED for i in z.infolist()))
     r = bearb.post(f"/api/admin/express/auftraege/{aid}/positionen/{p1['id']}/ergebnis", files={"file": ("x.pdf", b"kein pdf", "application/pdf")})
     check("Ergebnis: keine PDF -> 400", r.status_code == 400, r.text)
     r = bearb.post(f"/api/admin/express/auftraege/{aid}/positionen/{p1['id']}/skript", files={"file": ("x.pdf", pdf_bytes(1), "application/pdf")})
@@ -207,7 +245,10 @@ try:
     r = bearb.post(f"/api/admin/express/auftraege/{aid}/positionen/{p1['id']}/ergebnis",
                    files={"file": ("../../../etc/ergebnis.pdf", pdf_bytes(3, "Aufbereitet"), "application/pdf")})
     pos = next(p for p in r.json()["positionen"] if p["id"] == p1["id"]) if r.status_code == 200 else {}
-    check("Ergebnis hochgeladen, veraPDF gelaufen", r.status_code == 200 and pos.get("ergebnis_da") and pos.get("verapdf"), r.text[:300])
+    check("Ergebnis hochgeladen, veraPDF gelaufen (nicht mehr „laeuft“)", r.status_code == 200 and pos.get("ergebnis_da") and pos.get("verapdf")
+          and not pos["verapdf"].get("laeuft") and pos.get("pruef_name") == "veraPDF", r.text[:300])
+    check("Hochladefelder je Leistung: Ergebnis PDF, Pruefbericht PDF", [t["schluessel"] for t in pos.get("ergebnis_typen", [])] == ["pdf"]
+          and [t["schluessel"] for t in pos.get("bericht_typen", [])] == ["pdf"], pos)
     check("Dateiname ohne Pfad", pos.get("ergebnis_name") == "ergebnis.pdf", pos.get("ergebnis_name"))
     pfad = sql("SELECT ergebnis_pfad FROM express_positionen WHERE id = ?", p1["id"])[0]["ergebnis_pfad"]
     check("Ablage im Auftragsordner", pfad.startswith(f"/app/data/results/{k_id}/_express/{aid}/") and ".." not in pfad, pfad)
@@ -234,6 +275,8 @@ try:
     check("Kunde laedt das Ergebnis", r.status_code == 200 and r.content.startswith(b"%PDF")
           and "barrierefrei" in r.headers.get("content-disposition", ""), r.headers.get("content-disposition"))
     check("Kunde: Pruefbericht", kunde.get(f"/api/express/auftraege/{aid}/positionen/{p2['id']}/bericht").status_code == 200)
+    pk = next(p for p in kunde.get(f"/api/express/auftraege/{aid}").json()["positionen"] if p["id"] == p1["id"])
+    check("Kunde sieht nur bestanden ja/nein, keine Technik-Zusammenfassung", set((pk.get("verapdf") or {"bestanden": 1}).keys()) == {"bestanden"}, pk)
     check("Kunde: Original ist kein Kunden-Download (404)", kunde.get(f"/api/express/auftraege/{aid}/positionen/{p1['id']}/original").status_code == 404)
     check("Fremder: Ergebnis 404", fremd.get(f"/api/express/auftraege/{aid}/positionen/{p1['id']}/ergebnis").status_code == 404)
     r = kunde.get(f"/api/express/auftraege/{aid}/nachweis.pdf")
@@ -249,7 +292,10 @@ try:
     print("== G. Storno gibt frei ==")
     r = kunde.post("/api/express/warenkorb/dokumente", json={"document_ids": [docs[0]["id"]]})
     check("Neue Auswahl", r.status_code == 200 and r.json()["hinzugefuegt"] == 1, r.text)
-    r = kunde.post("/api/express/bestellen", json=dict(bestellung, idempotenz="e2e-express-0002"))
+    r = kunde.post("/api/express/bestellen", json=mit_korb(dict(bestellung, idempotenz="e2e-express-0001")))
+    check("Alter Schluessel mit neuem Korb (Zurueck-Speicher): 409, nicht still der alte Auftrag",
+          r.status_code == 409 and (r.json().get("detail") or {}).get("veraltet"), r.text[:200])
+    r = kunde.post("/api/express/bestellen", json=mit_korb(dict(bestellung, idempotenz="e2e-express-0002")))
     aid2 = r.json().get("auftrag_id")
     check("Zweiter Auftrag, 150 vorgemerkt", r.status_code == 200 and kunde.get("/api/me").json()["abo"]["vorgemerkt"] == 150, r.text)
     check("Storno ohne Grund: 400", voll.post(f"/api/admin/express/auftraege/{aid2}/stornieren", json={"grund": ""}).status_code == 400)

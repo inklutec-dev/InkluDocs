@@ -10402,8 +10402,6 @@ msgstr "Euros por un dólar estadounidense"
 msgid "Gelöschtes Konto"
 msgstr "Cuenta eliminada"
 
-msgid "Gelöschtes Projekt"
-msgstr "Proyecto eliminado"
 
 msgid "Genau wie in der Liste „Nach Modell“, zum Beispiel gemini-3.1-pro-preview."
 msgstr "Exactamente como en la lista «Por modelo», por ejemplo gemini-3.1-pro-preview."
@@ -10432,8 +10430,6 @@ msgstr "Costes de IA del mes"
 msgid "KI-Kosten im {monat}"
 msgstr "Costes de IA en {monat}"
 
-msgid "KI-Kosten {monat}: {betrag}"
-msgstr "Costes de IA {monat}: {betrag}"
 
 msgid "Keine Einzelheiten."
 msgstr "Sin detalles."
@@ -10636,17 +10632,11 @@ msgstr "Pedido {nr}"
 msgid "Aus einem Projekt"
 msgstr "De un proyecto"
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): bestanden."
-msgstr "Comprobación PDF/UA automática (veraPDF): superada."
 
-msgid "Automatische PDF/UA-Prüfung (veraPDF): {text}"
-msgstr "Comprobación PDF/UA automática (veraPDF): {text}"
 
 msgid "Barrierefrei aufbereiten (mit Prüfung)"
 msgstr "Hacer accesible (con revisión)"
 
-msgid "Barrierefrei aufbereiten: Credits je Seite"
-msgstr "Hacer accesible: créditos por página"
 
 msgid "Barrierefreie PDF herunterladen"
 msgstr "Descargar PDF accesible"
@@ -10699,14 +10689,10 @@ msgstr "Escribe una respuesta."
 msgid "Bitte eine E-Mail-Adresse eingeben."
 msgstr "Introduce una dirección de correo."
 
-msgid "Bitte eine Frage schreiben."
-msgstr "Escribe una pregunta."
 
 msgid "Bitte einen Ansprechpartner angeben."
 msgstr "Indica una persona de contacto."
 
-msgid "Bitte einen Grund angeben."
-msgstr "Indica un motivo."
 
 msgid "Bitte mindestens ein Dokument ankreuzen."
 msgstr "Marca al menos un documento."
@@ -10714,8 +10700,6 @@ msgstr "Marca al menos un documento."
 msgid "Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden."
 msgstr "Usa solo cifras, espacios y + ( ) / -."
 
-msgid "Bitte zuerst eine PDF-Datei auswählen."
-msgstr "Selecciona primero un archivo PDF."
 
 msgid "Credits"
 msgstr "Créditos"
@@ -10723,8 +10707,6 @@ msgstr "Créditos"
 msgid "Credits kaufen"
 msgstr "Comprar créditos"
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an. Größe bis 50 MB."
-msgstr "Para ello creamos un proyecto «Pedido exprés». Tamaño hasta 50 MB."
 
 msgid "Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail."
 msgstr "¡Gracias! Hemos recibido tu pedido {nr}. Lo entregamos en un plazo de {stunden} horas y te enviamos una confirmación por correo."
@@ -10775,8 +10757,6 @@ msgstr "El pedido ha fallado. Inténtalo de nuevo."
 msgid "Die Datei konnte nicht hochgeladen werden."
 msgstr "No se pudo subir el archivo."
 
-msgid "Die Datei wird hochgeladen …"
-msgstr "Subiendo el archivo …"
 
 msgid "Die Dokumente konnten nicht geladen werden."
 msgstr "No se pudieron cargar los documentos."
@@ -10793,8 +10773,6 @@ msgstr "No se pudo cambiar el servicio."
 msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
 msgstr "Los precios son todavía provisionales. Fíjalos solo tras acordarlos y marca «Precios fijados» abajo."
 
-msgid "Die automatische PDF/UA-Prüfung (veraPDF) meldet Abweichungen:"
-msgstr "La comprobación PDF/UA automática (veraPDF) indica desviaciones:"
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "Los créditos reservados quedan libres, no se cobra nada. El cliente recibe un correo con el motivo."
@@ -10835,11 +10813,7 @@ msgstr "Guardar ajustes"
 msgid "Einverständnis"
 msgstr "Consentimiento"
 
-msgid "Ergebnis (PDF) für {name}"
-msgstr "Resultado (PDF) para {name}"
 
-msgid "Ergebnis für „{name}“ gespeichert."
-msgstr "Resultado de «{name}» guardado."
 
 msgid "Ergebnis herunterladen"
 msgstr "Descargar resultado"
@@ -10847,20 +10821,14 @@ msgstr "Descargar resultado"
 msgid "Ergebnis hochgeladen"
 msgstr "Resultado subido"
 
-msgid "Ergebnis wird hochgeladen und mit veraPDF geprüft …"
-msgstr "Subiendo el resultado y comprobándolo con veraPDF …"
 
 msgid "Express-Auftrag"
 msgstr "Pedido exprés"
 
-msgid "Express-Auftrag {nr}: {stand}"
-msgstr "Pedido exprés {nr}: {stand}"
 
 msgid "Express-Aufträge"
 msgstr "Pedidos exprés"
 
-msgid "Express-Aufträge: {u} überfällig, {n} neu."
-msgstr "Pedidos exprés: {u} atrasados, {n} nuevos."
 
 msgid "Express-Bearbeiter"
 msgstr "Responsables exprés"
@@ -10868,8 +10836,6 @@ msgstr "Responsables exprés"
 msgid "Express-Bearbeiter sehen in der Verwaltung nur die Express-Aufträge und können sie bearbeiten, zum Beispiel ein Partner, der die Dokumente aufbereitet. Kunden, Umsatz und KI-Kosten sehen sie nicht."
 msgstr "Los responsables exprés solo ven los pedidos exprés en la administración y pueden trabajar en ellos, por ejemplo un socio que prepara los documentos. No ven clientes, ingresos ni costes de IA."
 
-msgid "Express-Bearbeiter-Recht entziehen: {name}"
-msgstr "Quitar el permiso de responsable exprés: {name}"
 
 msgid "Express-Service"
 msgstr "Servicio exprés"
@@ -10877,8 +10843,6 @@ msgstr "Servicio exprés"
 msgid "Fassung {f}, Sprache {s}"
 msgstr "versión {f}, idioma {s}"
 
-msgid "Frage"
-msgstr "Pregunta"
 
 msgid "Fällig am"
 msgstr "Vence el"
@@ -10886,8 +10850,6 @@ msgstr "Vence el"
 msgid "Geliefert"
 msgstr "Entregado"
 
-msgid "Geliefert (die letzten 100)"
-msgstr "Entregados (los últimos 100)"
 
 msgid "Geliefert am"
 msgstr "Entregado el"
@@ -10901,11 +10863,7 @@ msgstr "Motivo"
 msgid "Hinweise für uns (freiwillig)"
 msgstr "Indicaciones para nosotros (opcional)"
 
-msgid "Hochgeladen und hinzugefügt."
-msgstr "Subido y añadido."
 
-msgid "Hochladen und hinzufügen"
-msgstr "Subir y añadir"
 
 msgid "Höchstens Dokumente je Auftrag"
 msgstr "Máximo de documentos por pedido"
@@ -10982,17 +10940,11 @@ msgstr "Solo visible aquí en la administración, nunca para el cliente."
 msgid "Nur prüfen (Prüfbericht)"
 msgstr "Solo revisar (informe)"
 
-msgid "Nur prüfen: Credits je Seite"
-msgstr "Solo revisar: créditos por página"
 
-msgid "Oder eine PDF hochladen, ohne Projekt"
-msgstr "O subir un PDF, sin proyecto"
 
 msgid "Original herunterladen"
 msgstr "Descargar original"
 
-msgid "Preise je Seite: Barrierefrei aufbereiten (mit Prüfung) {a} Credits, nur prüfen {p} Credits."
-msgstr "Precios por página: hacer accesible (con revisión) {a} créditos, solo revisar {p} créditos."
 
 msgid "Preise sind festgelegt (kein Platzhalter mehr)"
 msgstr "Precios fijados (ya no son provisionales)"
@@ -11000,11 +10952,7 @@ msgstr "Precios fijados (ya no son provisionales)"
 msgid "Prüfbericht"
 msgstr "Informe de revisión"
 
-msgid "Prüfbericht (PDF) für {name}"
-msgstr "Informe de revisión (PDF) para {name}"
 
-msgid "Prüfbericht für „{name}“ gespeichert."
-msgstr "Informe de revisión de «{name}» guardado."
 
 msgid "Prüfbericht herunterladen"
 msgstr "Descargar informe de revisión"
@@ -11012,8 +10960,6 @@ msgstr "Descargar informe de revisión"
 msgid "Prüfbericht hochgeladen"
 msgstr "Informe de revisión subido"
 
-msgid "Prüfbericht wird hochgeladen …"
-msgstr "Subiendo el informe de revisión …"
 
 msgid "Recht entziehen"
 msgstr "Quitar permiso"
@@ -11045,8 +10991,6 @@ msgstr "Consulta de InkluDocs"
 msgid "Storniert"
 msgstr "Cancelado"
 
-msgid "Storniert (die letzten 100)"
-msgstr "Cancelados (los últimos 100)"
 
 msgid "Storniert am"
 msgstr "Cancelado el"
@@ -11096,8 +11040,6 @@ msgstr "Nombrar responsable exprés"
 msgid "Zur Auswahl hinzufügen"
 msgstr "Añadir a la selección"
 
-msgid "Zurzeit können wir nur PDF-Dateien bearbeiten."
-msgstr "De momento solo podemos procesar archivos PDF."
 
 msgid "Zurück zu den Express-Aufträgen"
 msgstr "Volver a los pedidos exprés"
@@ -11108,8 +11050,6 @@ msgstr "Volver a mis pedidos"
 msgid "Zurück zum Express-Service"
 msgstr "Volver al servicio exprés"
 
-msgid "Zustimmung"
-msgstr "Conformidad"
 
 msgid "abgebucht"
 msgstr "cobrados"
@@ -11141,8 +11081,6 @@ msgstr "interno"
 msgid "keine"
 msgstr "ninguna"
 
-msgid "keine PDF, nicht möglich"
-msgstr "no es un PDF, no es posible"
 
 msgid "keiner (freiwillig)"
 msgstr "ninguno (opcional)"
@@ -11168,14 +11106,8 @@ msgstr "ya está en tu selección"
 msgid "storniert am {datum}"
 msgstr "cancelado el {datum}"
 
-msgid "veraPDF konnte die Datei nicht prüfen."
-msgstr "veraPDF no pudo comprobar el archivo."
 
-msgid "veraPDF: Abweichungen — {text}"
-msgstr "veraPDF: desviaciones — {text}"
 
-msgid "veraPDF: PDF/UA bestanden."
-msgstr "veraPDF: PDF/UA superado."
 
 msgid "vorgemerkt"
 msgstr "reservados"
@@ -11251,3 +11183,159 @@ msgstr "{seiten}, {leistung}, {c} créditos"
 
 msgid "{dokumente}, {c} Credits"
 msgstr "{dokumente}, {c} créditos"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid " oder "
+msgstr " o "
+
+msgid "(die letzten 100)"
+msgstr "(los últimos 100)"
+
+msgid "Automatische Prüfung ({pruefung}): bestanden."
+msgstr "Comprobación automática ({pruefung}): superada."
+
+msgid "Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat."
+msgstr "Comprobación automática ({pruefung}): con observaciones que nuestro equipo ha revisado."
+
+msgid "Bitte warten, bis der vorige Schritt fertig ist."
+msgstr "Espera a que termine el paso anterior."
+
+msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
+msgstr "Para ello creamos un proyecto «Pedido exprés»."
+
+msgid "Datei auswählen"
+msgstr "Seleccionar archivo"
+
+msgid "Dateien gelöscht"
+msgstr "Archivos eliminados"
+
+msgid "Dateien löschen nach Tagen"
+msgstr "Eliminar archivos después de (días)"
+
+msgid "Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte."
+msgstr "Tipo de archivo: {typen}. La comprobación automática se ejecuta tras la subida. Un archivo nuevo sustituye al anterior."
+
+msgid "Dateityp: {typen}. Eine neue Datei ersetzt die alte."
+msgstr "Tipo de archivo: {typen}. Un archivo nuevo sustituye al anterior."
+
+msgid "Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen (Schritt 1)."
+msgstr "Tu selección está vacía. Añade primero documentos (paso 1)."
+
+msgid "Die PDF ist heruntergeladen."
+msgstr "El PDF se ha descargado."
+
+msgid "Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen."
+msgstr "Ahora mismo no se puede crear el PDF. Usa la vista de impresión."
+
+msgid "Die PDF wird erstellt …"
+msgstr "Creando el PDF …"
+
+msgid "Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens Eingabe kostet die Eingabe {ein}, die Ausgabe {aus}."
+msgstr "Se mantiene el tramo para entradas largas: por encima de {grenze} tokens de entrada, la entrada cuesta {ein} y la salida {aus}."
+
+msgid "Die automatische Prüfung meldet Abweichungen:"
+msgstr "La comprobación automática informa de desviaciones:"
+
+msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
+msgstr "Pedido exprés {nr} – resumen del pedido.pdf"
+
+msgid "Frage (Pflicht)"
+msgstr "Pregunta (obligatoria)"
+
+msgid "Frage: Bitte eine Frage schreiben."
+msgstr "Pregunta: escribe una pregunta."
+
+msgid "Frist ruht bis zur Antwort des Kunden"
+msgstr "Plazo en pausa hasta que responda el cliente"
+
+msgid "Gelöschtes Projekt {id}"
+msgstr "Proyecto eliminado {id}"
+
+msgid "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+msgstr "Contado para «coste por crédito»: {credits} créditos de trabajo de IA (textos alternativos, información rápida, traducción, cambios del chatbot) y sus costes de IA, ambos desde {datum}. El etiquetado, la comprobación, las exportaciones y Express no cuentan."
+
+msgid "Grund für das Stornieren (Pflicht)"
+msgstr "Motivo de la cancelación (obligatorio)"
+
+msgid "Grund für das Stornieren: Bitte einen Grund angeben."
+msgstr "Motivo de la cancelación: indica un motivo."
+
+msgid "KI-Kosten (Listenpreise netto)"
+msgstr "Costes de IA (precios de lista netos)"
+
+msgid "Keine offenen Aufträge."
+msgstr "No hay pedidos abiertos."
+
+msgid "Neue Bestellungen sind zurzeit abgeschaltet. Bestehende Aufträge lassen sich weiter bearbeiten, liefern und stornieren."
+msgstr "Los pedidos nuevos están desactivados por ahora. Los pedidos existentes se pueden seguir tramitando, entregando y cancelando."
+
+msgid "Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier."
+msgstr "Por ahora no es posible hacer nuevos pedidos exprés. Aquí encontrarás tus pedidos anteriores."
+
+msgid "Offene Aufträge"
+msgstr "Pedidos abiertos"
+
+msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
+msgstr "Los originales, resultados e informes de comprobación se eliminan tantos días después de la entrega o cancelación; el pedido se conserva como justificante. 0 = no eliminar nunca."
+
+msgid "Preise je Seite: {liste}."
+msgstr "Precios por página: {liste}."
+
+msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
+msgstr "Ingresos (precios finales, sin IVA según el § 19 UStG)"
+
+msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
+msgstr "Demasiadas solicitudes en poco tiempo. Inténtalo de nuevo más tarde."
+
+msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
+msgstr "Por ahora solo podemos procesar archivos {typen}."
+
+msgid "Zustimmung (beide Häkchen sind nötig)"
+msgstr "Consentimiento (las dos casillas son obligatorias)"
+
+msgid "für {modell}"
+msgstr "para {modell}"
+
+msgid "nicht möglich, nur {typen}"
+msgstr "no es posible, solo {typen}"
+
+msgid "{art} für „{name}“ hochladen"
+msgstr "Subir {art} para «{name}»"
+
+msgid "{leistung} {c} Credits"
+msgstr "{leistung} {c} créditos"
+
+msgid "{leistung}: Credits je Seite"
+msgstr "{leistung}: créditos por página"
+
+msgid "{name}, angelegt am {datum}"
+msgstr "{name}, creado el {datum}"
+
+msgid "{pruefung} konnte die Datei nicht prüfen."
+msgstr "{pruefung} no pudo comprobar el archivo."
+
+msgid "{pruefung}: Abweichungen — {text}"
+msgstr "{pruefung}: desviaciones — {text}"
+
+msgid "{pruefung}: bestanden."
+msgstr "{pruefung}: superada."
+
+msgid "{pruefung}: läuft noch …"
+msgstr "{pruefung}: todavía en curso …"
+
+msgid "{typen} hochladen, ohne Projekt"
+msgstr "Subir {typen} sin proyecto"
+
+msgid "{typ}-Datei auswählen"
+msgstr "Seleccionar archivo {typ}"
+
+msgid "„{datei}“ ist als Ergebnis für „{name}“ gespeichert."
+msgstr "«{datei}» se ha guardado como resultado de «{name}»."
+
+msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
+msgstr "«{datei}» se ha guardado como informe de comprobación de «{name}»."
+
+msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
+msgstr "«{name}» subido y añadido a la selección."

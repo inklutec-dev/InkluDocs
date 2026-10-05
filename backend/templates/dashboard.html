@@ -369,7 +369,9 @@
       h3.appendChild(link);
       const meta = document.createElement('p');
       meta.className = 'dash-meta';
-      meta.textContent = (stand[a.status] || a.status) + ' · ' + t('{dokumente}, {c} Credits', { dokumente: Number(a.dokumente) === 1 ? t('1 Dokument') : t('{n} Dokumente', { n: a.dokumente }), c: a.credits_gesamt });
+      // Zahlen mit Tausenderpunkt wie überall sonst („1.000 Credits“, Prüfung Barrierefreiheit 05.10.2026, Befund 22).
+      const zahl = (n) => { try { return new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0); } catch (e) { return String(n); } };
+      meta.textContent = (stand[a.status] || a.status) + ' · ' + t('{dokumente}, {c} Credits', { dokumente: Number(a.dokumente) === 1 ? t('1 Dokument') : t('{n} Dokumente', { n: zahl(a.dokumente) }), c: zahl(a.credits_gesamt) });
       li.appendChild(h3);
       li.appendChild(meta);
       ul.appendChild(li);

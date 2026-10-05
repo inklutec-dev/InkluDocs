@@ -13,6 +13,10 @@
     --text: #1e293b;
     --text-muted: #2d4a7a;
     --border: #e2e8f0;
+    /* Rahmen von Eingabefeldern (05.10.2026, Pruefung Barrierefreiheit Befund 7): #e2e8f0 hatte 1,23:1 auf Weiss —
+       leere Felder waren fuer Menschen mit wenig Sehrest kaum zu finden. #767f8f hat 4,0:1 (WCAG 1.4.11 verlangt 3:1).
+       Kartenrahmen und Trennlinien bleiben hell (--border). */
+    --feldrand: #767f8f;
     --error: #dc2626;
     --success: #16a34a;
     --focus: #c75000;
@@ -65,7 +69,7 @@ label {
 input[type="text"], input[type="email"], input[type="password"], input[type="url"] {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid var(--border);
+    border: 2px solid var(--feldrand);
     border-radius: 8px;
     font-size: 1rem;
     transition: border-color 0.2s;
@@ -341,7 +345,10 @@ header h1 { font-size: 1.3rem; color: white; }
 }
 .upload-btn:hover { background: var(--primary-hover); }
 .upload-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
-input[type="file"] {
+/* Dateifeld der Hochladeflaeche (Projekte, Express): versteckt — sichtbar bedient wird es ueber den Etikett-Knopf
+   .upload-btn direkt dahinter. Bis 05.10.2026 galt die Regel fuer JEDES Dateifeld der App; ein Feld ohne Etikett-Knopf
+   war dann fuer Sehende unsichtbar (Pruefung Barrierefreiheit 05.10.2026, Befund 1). Jetzt nur noch hier. */
+.dropzone-inner input[type="file"], .upload-area input[type="file"] {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -402,6 +409,9 @@ input[type="file"] {
     transition: background 0.2s;
 }
 .btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.3); }
+/* Tastaturfokus deutlich (05.10.2026, Pruefung Barrierefreiheit Befund 2): Der Schimmer oben hat etwa 1,3:1 und schaltete
+   den Ring aus dashboard.css ab (hoehere Spezifitaet). Gilt fuer jeden Knopf und jeden a.btn der App. */
+.btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background: var(--primary); color: white; }
 .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
@@ -670,7 +680,7 @@ input[type="file"] {
     width: 100%;
     padding: 0.55rem 0.7rem;
     font-size: 1rem;
-    border: 1px solid var(--border, #ccc);
+    border: 1px solid var(--feldrand, #767f8f);
     border-radius: 8px;
     box-sizing: border-box;
 }
@@ -1106,8 +1116,14 @@ input[type="file"] {
     background: rgba(0, 0, 0, 0.02);
 }
 .dropzone-or { color: var(--text-muted); margin: 0; }
-/* Sichtbarer Fokusring auf dem Label-Knopf, wenn das (versteckte) Feld Tastaturfokus hat. */
+/* Hinweis unter der Hochladeflaeche — wie in app.html (dort zusaetzlich inline); hier fuer alle Seiten mit Hochladefeld. */
+.feld-hinweis { color: var(--text-muted); font-size: 0.85rem; margin: 0.4rem 0 0; }
+/* Sichtbarer Fokusring auf dem Label-Knopf, wenn das (versteckte) Feld Tastaturfokus hat. Der Schatten allein hatte
+   etwa 2,3:1 — dazu jetzt derselbe Ring wie an allen Knoepfen (05.10.2026, Hochladefeld fuer Express). */
 input[type="file"]:focus + .upload-btn { box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
+input[type="file"]:focus-visible + .upload-btn { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* Fehler am Hochladefeld (aria-invalid): Rahmen der Flaeche in Fehlerfarbe — nicht nur Farbe, der Text steht darunter. */
+.proj-dropzone.hochladefeld-fehler .dropzone-inner { border-color: var(--error); }
 
 /* Gast-Rollen-Workflow (10.07.2026) */
 /* Freigeben gedrueckt = gruen (Steve-Wunsch); Weiss auf #1e7e34 = 5,3:1 (AA). */

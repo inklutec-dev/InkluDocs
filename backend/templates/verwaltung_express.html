@@ -3,16 +3,18 @@
 {% block title %}{{ _('Express-Aufträge') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
 
 {% block main %}
-{# VERWALTUNG — EXPRESS-AUFTRÄGE (05.10.2026): Posteingang nach Dringlichkeit (überfällig, neu, in Arbeit, Rückfrage;
-   geliefert und storniert zum Aufklappen), darunter die Einstellungen (Preise je Seite, Frist, Grenzen,
-   Benachrichtigung) und das Recht „Express-Bearbeiter“. Lesen: Admins und Bearbeiter; Einstellungen und Bearbeiter
-   vergeben: nur Voll-Admins. Wie die anderen Verwaltungsseiten ohne Tabellen. #}
+{# VERWALTUNG — EXPRESS-AUFTRÄGE (05.10.2026): Posteingang nach Dringlichkeit (überfällig, neu, in Arbeit, Rückfrage —
+   leere Gruppen nur als eine Zeile; geliefert und storniert zum Aufklappen, mit Überschrift im summary), darunter die
+   Einstellungen (Preise je Leistung aus express.LEISTUNGEN, Frist, Grenzen, Aufbewahrung, Benachrichtigung) und das
+   Recht „Express-Bearbeiter“. Lesen: Admins und Bearbeiter; Einstellungen und Bearbeiter vergeben: nur Voll-Admins.
+   Wie die anderen Verwaltungsseiten ohne Tabellen. Fehler stehen am Feld (V.feldFehler). #}
 <h1>{{ _('Verwaltung') }}: {{ _('Express-Aufträge') }}</h1>
 {% include "_verwaltung_nav.html" %}
 
 <section class="verwaltung-bereich" aria-labelledby="h-ex-blick">
   <h2 id="h-ex-blick" class="sr-only">{{ _('Auf einen Blick') }}</h2>
   <div id="exvZahlen" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+  <p id="exvAus" class="verwaltung-warnung" hidden>{{ _('Neue Bestellungen sind zurzeit abgeschaltet. Bestehende Aufträge lassen sich weiter bearbeiten, liefern und stornieren.') }}</p>
 </section>
 <div id="exvGruppen"></div>
 
@@ -20,25 +22,24 @@
   <h2 id="h-ex-einst" tabindex="-1">{{ _('Einstellungen des Express-Service') }}</h2>
   <p id="exvPlatzhalter" class="verwaltung-warnung" hidden>{{ _('Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen.') }}</p>
   <form id="exvEinstForm" novalidate>
-    <div class="dash-field">
-      <label for="exvPreisA">{{ _('Barrierefrei aufbereiten: Credits je Seite') }}</label>
-      <input type="text" id="exvPreisA" class="dash-input" inputmode="numeric" maxlength="7" autocomplete="off">
-    </div>
-    <div class="dash-field">
-      <label for="exvPreisP">{{ _('Nur prüfen: Credits je Seite') }}</label>
-      <input type="text" id="exvPreisP" class="dash-input" inputmode="numeric" maxlength="7" autocomplete="off">
-    </div>
+    {# Preisfelder je Leistung baut das Skript aus der Liste der Leistungen (express.LEISTUNGEN). #}
+    <div id="exvPreisFelder"></div>
     <div class="dash-field">
       <label for="exvFrist">{{ _('Lieferfrist in Stunden') }}</label>
-      <input type="text" id="exvFrist" class="dash-input" inputmode="numeric" maxlength="4" autocomplete="off">
+      <input type="text" id="exvFrist" class="dash-input" inputmode="numeric" maxlength="4" autocomplete="off" required>
     </div>
     <div class="dash-field">
       <label for="exvMaxSeiten">{{ _('Höchstens Seiten je Auftrag') }}</label>
-      <input type="text" id="exvMaxSeiten" class="dash-input" inputmode="numeric" maxlength="6" autocomplete="off">
+      <input type="text" id="exvMaxSeiten" class="dash-input" inputmode="numeric" maxlength="6" autocomplete="off" required>
     </div>
     <div class="dash-field">
       <label for="exvMaxDok">{{ _('Höchstens Dokumente je Auftrag') }}</label>
-      <input type="text" id="exvMaxDok" class="dash-input" inputmode="numeric" maxlength="3" autocomplete="off">
+      <input type="text" id="exvMaxDok" class="dash-input" inputmode="numeric" maxlength="3" autocomplete="off" required>
+    </div>
+    <div class="dash-field">
+      <label for="exvAufbewahrung">{{ _('Dateien löschen nach Tagen') }}</label>
+      <input type="text" id="exvAufbewahrung" class="dash-input" inputmode="numeric" maxlength="4" autocomplete="off" required aria-describedby="exvAufbewahrungHinweis">
+      <p class="dash-sub" id="exvAufbewahrungHinweis">{{ _('Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen.') }}</p>
     </div>
     <div class="dash-field">
       <label for="exvMail">{{ _('Benachrichtigungen an (leer = Support-Postfach)') }}</label>
@@ -76,10 +77,12 @@
 {% raw %}
 (function () {
   const V = window.Verwaltung;
-  const GRUPPEN = [
-    ['ueberfaellig', t('Überfällig')], ['neu', t('Neu')], ['in_arbeit', t('In Arbeit')], ['rueckfrage', t('Rückfrage beim Kunden')],
-    ['geliefert', t('Geliefert (die letzten 100)')], ['storniert', t('Storniert (die letzten 100)')],
-  ];
+  const OFFENE = [['ueberfaellig', t('Überfällig')], ['neu', t('Neu')], ['in_arbeit', t('In Arbeit')], ['rueckfrage', t('Rückfrage beim Kunden')]];
+  const FERTIGE = [['geliefert', t('Geliefert')], ['storniert', t('Storniert')]];
+  // Feldname des Servers -> Eingabefeld (Fehler am Feld). Die Preisfelder kommen in einstZeigen dazu.
+  const FELDER = { frist_stunden: 'exvFrist', max_seiten_auftrag: 'exvMaxSeiten', max_dokumente_auftrag: 'exvMaxDok',
+                   aufbewahrung_tage: 'exvAufbewahrung', team_mail: 'exvMail' };
+  let leistungen = [];
 
   function mehrzahl(n, eins, viele) {
     // „1 Dokument“ statt „1 Dokumente“ (Hörtest-Tauglichkeit, 05.10.2026)
@@ -87,9 +90,11 @@
   }
   const DOK = (n) => mehrzahl(n, '1 Dokument', '{n} Dokumente');
   const SEITEN = (n) => mehrzahl(n, '1 Seite', '{n} Seiten');
+  const AUFTRAEGE = (n) => mehrzahl(n, '1 Auftrag', '{n} Aufträge');
   function stunden(h) { return V.zahl(Math.abs(Math.round(h))); }
 
   function fristText(a) {
+    if (a.frist_ruht) return t('Frist ruht bis zur Antwort des Kunden');
     if (a.faellig_in_stunden === null || a.faellig_in_stunden === undefined) return '';
     return a.faellig_in_stunden < 0 ? t('überfällig seit {n} Stunden', { n: stunden(a.faellig_in_stunden) })
       : t('fällig in {n} Stunden', { n: stunden(a.faellig_in_stunden) });
@@ -110,6 +115,12 @@
     return li;
   }
 
+  function auftragsListe(liste) {
+    const ul = V.el('ul', 'verwaltung-liste');
+    liste.forEach((a) => ul.appendChild(eintrag(a)));
+    return ul;
+  }
+
   function zeigen(d) {
     const g = d.gruppen;
     const z = byId('exvZahlen');
@@ -117,33 +128,79 @@
     z.setAttribute('aria-busy', 'false');
     V.zeile(z, t('Offen'), t('{u} überfällig, {n} neu, {a} in Arbeit, {r} mit Rückfrage', {
       u: g.ueberfaellig.length, n: g.neu.length, a: g.in_arbeit.length, r: g.rueckfrage.length }));
+    byId('exvAus').hidden = d.bestellen_moeglich !== false;
     const ziel = byId('exvGruppen');
     ziel.innerHTML = '';
-    GRUPPEN.forEach(([schluessel, titel]) => {
+    // Offene Gruppen: nur die mit Aufträgen als eigener Abschnitt (Befund 14 — vorher viermal „Keine Aufträge.“).
+    const belegt = OFFENE.filter(([k]) => (g[k] || []).length);
+    if (!belegt.length) {
+      const kasten = V.el('section', 'dash-card verwaltung-karte');
+      const h = V.el('h2', null, t('Offene Aufträge'));
+      h.id = 'exv-h-offen';
+      kasten.setAttribute('aria-labelledby', h.id);
+      kasten.appendChild(h);
+      kasten.appendChild(V.el('p', 'dash-empty', t('Keine offenen Aufträge.')));
+      ziel.appendChild(kasten);
+    }
+    belegt.forEach(([schluessel, titel]) => {
+      const liste = g[schluessel];
+      const kasten = V.el('section', 'dash-card verwaltung-karte');
+      const h = V.el('h2', null, titel + ': ' + AUFTRAEGE(liste.length));
+      h.id = 'exv-h-' + schluessel;
+      kasten.setAttribute('aria-labelledby', h.id);
+      kasten.appendChild(h);
+      kasten.appendChild(auftragsListe(liste));
+      ziel.appendChild(kasten);
+    });
+    // Geliefert und storniert zum Aufklappen — mit Überschrift IM summary, damit die Überschriften-Navigation sie
+    // findet (Befund 13).
+    FERTIGE.forEach(([schluessel, titel]) => {
       const liste = g[schluessel] || [];
-      const fertig = schluessel === 'geliefert' || schluessel === 'storniert';
-      const kasten = fertig ? V.el('details', 'dash-card verwaltung-karte verwaltung-klappe') : V.el('section', 'dash-card verwaltung-karte');
-      const kopf = fertig ? V.el('summary', null, titel + ' (' + liste.length + ')') : V.el('h2', null, titel + ' (' + liste.length + ')');
-      if (!fertig) { kopf.id = 'exv-h-' + schluessel; kasten.setAttribute('aria-labelledby', kopf.id); }
+      const kasten = V.el('details', 'dash-card verwaltung-karte verwaltung-klappe');
+      const kopf = V.el('summary');
+      const h = V.el('h2', 'verwaltung-klappe-titel', titel + ': ' + AUFTRAEGE(liste.length) + (liste.length >= 100 ? ' ' + t('(die letzten 100)') : ''));
+      h.id = 'exv-h-' + schluessel;
+      kopf.appendChild(h);
       kasten.appendChild(kopf);
-      if (!liste.length) kasten.appendChild(V.el('p', 'dash-empty', t('Keine Aufträge.')));
-      else {
-        const ul = V.el('ul', 'verwaltung-liste');
-        liste.forEach((a) => ul.appendChild(eintrag(a)));
-        kasten.appendChild(ul);
-      }
+      if (liste.length) kasten.appendChild(auftragsListe(liste));
+      else kasten.appendChild(V.el('p', 'dash-empty', t('Keine Aufträge.')));
       ziel.appendChild(kasten);
     });
   }
 
   // ── Einstellungen ──
+  function preisFelder(e, darf) {
+    const ziel = byId('exvPreisFelder');
+    ziel.innerHTML = '';
+    leistungen = e.leistungen || [];
+    leistungen.forEach((l) => {
+      const id = 'exvPreis_' + l.schluessel;
+      FELDER['preis_' + l.schluessel] = id;
+      const feld = V.el('div', 'dash-field');
+      const lab = V.el('label', null, t('{leistung}: Credits je Seite', { leistung: t(l.name) }));
+      lab.htmlFor = id;
+      const inp = V.el('input', 'dash-input');
+      inp.type = 'text';
+      inp.id = id;
+      inp.inputMode = 'numeric';
+      inp.maxLength = 7;
+      inp.autocomplete = 'off';
+      inp.required = true;
+      inp.value = l.preis;
+      inp.disabled = !darf;
+      feld.appendChild(lab);
+      feld.appendChild(inp);
+      ziel.appendChild(feld);
+    });
+  }
+
   function einstZeigen(e, darf) {
     byId('exvEinstellungen').hidden = false;
-    byId('exvPreisA').value = e.preis_aufbereiten;
-    byId('exvPreisP').value = e.preis_pruefen;
+    preisFelder(e, darf);
     byId('exvFrist').value = e.frist_stunden;
     byId('exvMaxSeiten').value = e.max_seiten_auftrag;
     byId('exvMaxDok').value = e.max_dokumente_auftrag;
+    byId('exvAufbewahrung').value = e.aufbewahrung_tage || 0;
     byId('exvMail').value = e.team_mail || '';
     byId('exvFest').checked = !!e.preise_festgelegt;
     byId('exvPlatzhalter').hidden = !!e.preise_festgelegt;
@@ -156,13 +213,23 @@
     ev.preventDefault();
     if (einstLaeuft) return;
     byId('exvEinstFehler').textContent = '';
+    Object.values(FELDER).forEach((id) => V.feldFehler(id, ''));
+    const preise = {};
+    leistungen.forEach((l) => { preise[l.schluessel] = byId('exvPreis_' + l.schluessel).value; });
     einstLaeuft = true;
     const r = await V.sendeJson('/api/admin/express/einstellungen', 'POST', {
-      preis_aufbereiten: byId('exvPreisA').value, preis_pruefen: byId('exvPreisP').value, frist_stunden: byId('exvFrist').value,
+      preise: preise, frist_stunden: byId('exvFrist').value,
       max_seiten_auftrag: byId('exvMaxSeiten').value, max_dokumente_auftrag: byId('exvMaxDok').value,
+      aufbewahrung_tage: byId('exvAufbewahrung').value,
       team_mail: byId('exvMail').value, preise_festgelegt: byId('exvFest').checked });
     einstLaeuft = false;
-    if (!r.ok) { byId('exvEinstFehler').textContent = (r.daten.detail && (r.daten.detail.text || r.daten.detail)) || t('Die Einstellungen konnten nicht gespeichert werden.'); return; }
+    if (!r.ok) {
+      // Fehler am Feld, Fokus dorthin; ohne Feld bleibt die Meldung unter dem Formular (Befund 4).
+      const feld = V.serverFeldFehler(r.daten, FELDER);
+      if (feld) { feld.focus(); return; }
+      byId('exvEinstFehler').textContent = V.detailText(r.daten, t('Die Einstellungen konnten nicht gespeichert werden.'));
+      return;
+    }
     einstZeigen(r.daten.einstellungen, true);
     V.meldung(r.daten.message || t('Gespeichert.'));
   });
@@ -177,10 +244,11 @@
       const li = V.el('li', 'verwaltung-zeile', (b.display_name || b.email) + ' (' + b.email + ') ');
       const k = V.el('button', 'btn btn-secondary btn-small', t('Recht entziehen'));
       k.type = 'button';
-      k.setAttribute('aria-label', t('Express-Bearbeiter-Recht entziehen: {name}', { name: b.display_name || b.email }));
+      // Sichtbarer Text + versteckter Zusatz wie bei „Entfernen“ und „Hochladen“ (Befund 17), kein aria-label.
+      k.appendChild(V.el('span', 'visually-hidden', ': ' + (b.display_name || b.email)));
       k.addEventListener('click', async () => {
         const r = await V.sendeJson('/api/admin/express/bearbeiter/' + b.id, 'DELETE');
-        if (!r.ok) { byId('exvBearbFehler').textContent = (r.daten.detail && (r.daten.detail.text || r.daten.detail)) || t('Das hat nicht geklappt.'); return; }
+        if (!r.ok) { byId('exvBearbFehler').textContent = V.detailText(r.daten, t('Das hat nicht geklappt.')); return; }
         bearbZeigen(r.daten.bearbeiter);
         V.meldung(r.daten.message);
       });
@@ -192,11 +260,11 @@
 
   byId('exvBearbForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    byId('exvBearbFehler').textContent = '';
+    V.feldFehler('exvBearbMail', '');
     const mail = byId('exvBearbMail').value.trim();
-    if (!mail) { byId('exvBearbFehler').textContent = t('Bitte eine E-Mail-Adresse eingeben.'); byId('exvBearbMail').focus(); return; }
+    if (!mail) { V.feldFehler('exvBearbMail', t('Bitte eine E-Mail-Adresse eingeben.')).focus(); return; }
     const r = await V.sendeJson('/api/admin/express/bearbeiter', 'POST', { email: mail });
-    if (!r.ok) { byId('exvBearbFehler').textContent = (r.daten.detail && (r.daten.detail.text || r.daten.detail)) || t('Das hat nicht geklappt.'); byId('exvBearbMail').focus(); return; }
+    if (!r.ok) { V.feldFehler('exvBearbMail', V.detailText(r.daten, t('Das hat nicht geklappt.'))).focus(); return; }
     byId('exvBearbMail').value = '';
     bearbZeigen(r.daten.bearbeiter);
     V.meldung(r.daten.message);
@@ -214,7 +282,7 @@
       const b = await V.ladeJson('/api/admin/express/bearbeiter', byId('exvBearbListe'));
       if (b) bearbZeigen(b.bearbeiter);
     }
-    announce(t('Express-Aufträge: {u} überfällig, {n} neu.', { u: d.gruppen.ueberfaellig.length, n: d.gruppen.neu.length }));
+    // Keine Ansage beim Laden (Befund 8): Die Zahlen stehen sichtbar unter der Überschrift.
   })();
 })();
 {% endraw %}

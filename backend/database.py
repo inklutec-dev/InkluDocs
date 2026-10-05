@@ -1053,6 +1053,8 @@ def _migrate_columns(conn):
         # EXPRESS-SERVICE (05.10.2026): Recht „Express-Bearbeiter“ — sieht in der Verwaltung NUR die Express-Auftraege
         # (z. B. ein Partner, der die Dokumente aufbereitet), nicht Kunden, Umsatz oder KI-Kosten.
         ("users", "express_bearbeiter", "ALTER TABLE users ADD COLUMN express_bearbeiter INTEGER DEFAULT 0"),
+        # Express erweiterbar (Steve 05.10.2026): Dateityp je Position aus express.DATEITYPEN (heute nur 'pdf').
+        ("express_positionen", "dateityp", "ALTER TABLE express_positionen ADD COLUMN dateityp TEXT NOT NULL DEFAULT 'pdf'"),
     ]
 
     for table, column, sql in migrations:
@@ -1389,8 +1391,13 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM express_positionen WHERE auftrag_id IN (SELECT id FROM express_auftraege WHERE user_id = ?)", (user_id,))
     conn.execute("DELETE FROM express_auftraege WHERE user_id = ?", (user_id,))
     conn.execute("UPDATE express_auftraege SET bearbeiter_id = NULL WHERE bearbeiter_id = ?", (user_id,))
-    # Zahlte das Konto als Team-Inhaber fuer Auftraege eines Mitglieds, zahlt kuenftig das Mitglied selbst.
-    conn.execute("UPDATE express_auftraege SET konto_user_id = user_id WHERE konto_user_id = ?", (user_id,))
+    # Zahlte das Konto als Team-Inhaber fuer OFFENE Auftraege eines Mitglieds, werden sie storniert (Pruefung Entwicklung
+    # 05.10.2026, Befund 6): Die Vormerkung darf nicht beim Mitglied landen, das dafuer kein Guthaben hat und sonst fuer
+    # alles gesperrt waere. Kunde und Team bekommen die Storno-Mail vom Aufrufer (express.vor_kontoloeschung).
+    import express  # noqa: E402 — erst hier, express importiert database
+    express.topf_auftraege_stornieren(conn, user_id)
+    # Abgeschlossene Auftraege behalten ihren Stand; der Topf-Bezug verweist auf kein Konto mehr.
+    conn.execute("UPDATE express_auftraege SET konto_user_id = NULL WHERE konto_user_id = ?", (user_id,))
     # KI-Kosten (05.10.2026): die Kosten sind angefallen und bleiben in der Monatssumme, aber ohne Bezug zur Person
     # (zaehlen danach „ohne Zuordnung“).
     conn.execute("UPDATE ki_aufrufe SET user_id = NULL, konto_user_id = NULL, project_id = NULL, document_id = NULL, "

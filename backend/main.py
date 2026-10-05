@@ -421,9 +421,9 @@ async def lifespan(app: FastAPI):
                 await asyncio.sleep(600)  # alle 10 Minuten
         asyncio.create_task(_demo_cleanup_loop())
 
-    # Express-Service (05.10.2026): Erinnerung 12 h vor der Frist und Meldung bei Ueberfaelligkeit (nur wenn an).
-    if funktionen.EXPRESS:
-        asyncio.create_task(express_api.erinnerungs_schleife())
+    # Express-Service (05.10.2026): Erinnerung 12 h vor der Frist, Meldung bei Ueberfaelligkeit, Aufbewahrungsfrist.
+    # Immer — auch bei ausgeschaltetem Schalter laufen offene Auftraege weiter (Befund 9); ohne Auftraege tut sie nichts.
+    asyncio.create_task(express_api.erinnerungs_schleife())
 
     yield
 
@@ -889,9 +889,11 @@ async def me(user: dict = Depends(get_current_user)):
             "is_admin": db_user["is_admin"],
             "admin_level": db_user.get("admin_level", "full"),
             "pdf_creator": db_user.get("pdf_creator") or "",
-            # Express-Service (05.10.2026): Menuepunkt „Express-Service“ und Recht „Express-Bearbeiter“
-            "express": funktionen.EXPRESS,
-            "express_bearbeiter": bool(db_user.get("express_bearbeiter")) and funktionen.EXPRESS,
+            # Express-Service (05.10.2026): Menuepunkt „Express-Service“ (Schalter an ODER eigene Auftraege — die bleiben
+            # auch nach dem Abschalten erreichbar, Befund 9), Neu-Bestellen nur bei Schalter an, Recht „Express-Bearbeiter“.
+            "express": bool(funktionen.EXPRESS) or express.hat_bestellte(db_user["id"]),
+            "express_bestellen": bool(funktionen.EXPRESS),
+            "express_bearbeiter": bool(db_user.get("express_bearbeiter")) and express_api.aktiv(),
         },
         # deprecated: altes Tages-Limit — bleibt bis zur Frontend-Umstellung
         # auf den "abo"-Block mitgeliefert, danach entfernen.
@@ -1125,7 +1127,10 @@ async def konto_loeschen(request: Request, user: dict = Depends(get_current_user
                 shutil.rmtree(pfad)
         except Exception:
             logger.exception("Dateien beim Loeschen nicht entfernt: %s", pfad)
+    # Express (Befund 6): offene Auftraege aus dem Topf dieses Kontos werden beim Loeschen storniert; danach Mails.
+    express_info = express_api.vor_kontoloeschung(db_user["id"])
     delete_user_data(db_user["id"])
+    express_api.nach_kontoloeschung(express_info)
     antwort = JSONResponse({"ok": True, "message": "Konto wurde gelöscht"})
     antwort.delete_cookie("token")
     return antwort
@@ -1680,8 +1685,11 @@ async def admin_delete_user(user_id: int, user: dict = Depends(require_full_admi
         shutil.rmtree(user_upload_dir)
     if os.path.exists(user_results_dir):
         shutil.rmtree(user_results_dir)
-    # Delete from DB (DSGVO-konform: alle Daten werden geloescht)
+    # Delete from DB (DSGVO-konform: alle Daten werden geloescht). Express (Befund 6): offene Auftraege aus dem Topf
+    # dieses Kontos werden dabei storniert; Kunde und Team bekommen danach die Mail.
+    express_info = express_api.vor_kontoloeschung(user_id)
     delete_user_data(user_id)
+    express_api.nach_kontoloeschung(express_info)
     return {"ok": True, "message": f"User {target['email']} und alle Daten wurden geloescht"}
 
 
@@ -2003,6 +2011,10 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
         m = dict(r)
         m["ist_inhaber"] = (r["id"] == inhaber["id"])
         mitglieder.append(m)
+    # Express (Pruefung Entwicklung 05.10.2026, Befund 15): Credits, die fuer offene Express-Auftraege aus diesem Topf
+    # vorgemerkt sind, stehen nicht mehr zur Verfuegung — wie bei billing.verfuegbare_credits.
+    vorgemerkt = billing.vorgemerkt(inhaber["id"])
+    rest = max(0, verfuegbar - verbraucht)
     return {
         "ok": True,
         "plan": plan,
@@ -2012,7 +2024,9 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
         "uebertrag": uebertrag,
         "verfuegbar_monat": verfuegbar,
         "verbraucht_gesamt": verbraucht,
-        "rest": max(0, verfuegbar - verbraucht),
+        "rest": rest,
+        "vorgemerkt": vorgemerkt,
+        "verfuegbar_nach_vormerkung": max(0, rest + pakete - vorgemerkt),
         "pakete_rest": pakete,
         "zeitraum_ende": billing._monatsende_iso(),
         "sitze_belegt": len(mitglieder),
@@ -10222,6 +10236,7 @@ app.include_router(ki_kosten_api.build_router(ki_kosten_api.Deps(
 
 # Express-Service Stufe 1 (05.10.2026): eigener Router, Kern express.py, docs/EXPRESS_SERVICE.md. Die Seiten-Funktionen
 # (_render_protected_template, _verwaltung_seite) stehen weiter unten — darum ueber lambda erst zur Laufzeit aufgeloest.
+import express  # noqa: E402
 import express_api  # noqa: E402
 app.include_router(express_api.build_router(express_api.Deps(
     get_current_user=get_current_user,
@@ -10233,8 +10248,10 @@ app.include_router(express_api.build_router(express_api.Deps(
     results_dir=RESULTS_DIR,
     upload_dir=UPLOAD_DIR,
     max_upload_size=MAX_UPLOAD_SIZE,
-    handle_pdf_upload=lambda pfad, name, user, pid: _handle_pdf_upload(pfad, name, user, pid),
-    pdf_vorpruefung=lambda pfad, _: pdf_vorpruefung(pfad, _),
+    # Upload ohne Projekt je Dateityp (express.DATEITYPEN): _handle_pdf_upload kann pdf und docx (art=…). Ein neuer Typ
+    # braucht hier seine Vorpruefung (docs/EXPRESS_SERVICE.md, „Erweitern“).
+    upload_uebernehmen=lambda typ, pfad, name, user, pid: _handle_pdf_upload(pfad, name, user, pid, art=typ),
+    upload_vorpruefung=lambda typ, pfad, _: pdf_vorpruefung(pfad, _) if typ == "pdf" else None,
     get_gettext=get_gettext,
     resolve_ui_language=lambda request: resolve_ui_language(request),
     render_seite=lambda request, vorlage, **extra: _render_protected_template(request, vorlage, **extra),
@@ -11811,7 +11828,7 @@ def _verwaltung_seite(request: Request, vorlage: str, bereich: str, **extra):
     # Express-Service (05.10.2026): Link „Express-Aufträge“ nur, wenn die Funktion an ist; Express-Bearbeiter ohne
     # Admin-Recht sehen in der Bereichs-Navigation NUR diesen Link (nur_express).
     nutzer = get_optional_user(request)
-    extra.setdefault("express_an", funktionen.EXPRESS)
+    extra.setdefault("express_an", express_api.aktiv())
     extra.setdefault("nur_express", bool(nutzer) and not nutzer.get("is_admin"))
     return _render_protected_template(
         request, vorlage, verwaltung_bereich=bereich, api_limit_standard=DAILY_IMAGE_LIMIT,
