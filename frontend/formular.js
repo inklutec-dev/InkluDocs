@@ -997,7 +997,7 @@
         if (!gast() && (project.status === 'extracting' || project.status === 'processing')) {
             setTimeout(async () => {
                 try {
-                    const r = await fetch('/api/projects/' + projectId);
+                    const r = await fetch('/api/projects/' + projectId + '/kopf');   // Status genuegt (05.10.2026)
                     if (!r.ok) return;
                     const d = await r.json();
                     if (d.project && d.project.status !== project.status) {

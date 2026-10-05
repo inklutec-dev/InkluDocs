@@ -336,7 +336,10 @@ async def _dokument_status(user: dict, project_id: int) -> dict:
                       "without_text": sum(1 for r in rows if not (r.get("quickinfo") or "").strip()),
                       "decorative": 0, "done": None, "pending": None, "failed": None}
         else:
-            rows = [dict(r) for r in conn.execute("SELECT * FROM images WHERE project_id = ?", (project_id,)).fetchall()]
+            # Nur die Felder fuer Textstand und Status (05.10.2026): `SELECT *` las den KI-Kontext aller Bilder mit.
+            rows = [dict(r) for r in conn.execute(
+                "SELECT id, status, alt_text, alt_text_edited, original_alt, image_type FROM images WHERE project_id = ?",
+                (project_id,)).fetchall()]
             st = [_text_status(r) for r in rows]
             counts = {"items": len(rows),
                       "with_text": st.count("mit_text"), "without_text": st.count("offen"), "decorative": st.count("dekorativ"),

@@ -11449,3 +11449,13 @@ msgstr "– pedido «{name}»"
 
 msgid "„{name}“ ist gelöscht."
 msgstr "«{name}» se ha eliminado."
+
+# Ansichtswechsel-Umbau 05.10.2026: Seitentext beim Aufklappen (templates/app.html)
+msgid "Seitentext wird geladen …"
+msgstr "Cargando el texto de la página …"
+
+msgid "Seitentext geladen."
+msgstr "Texto de la página cargado."
+
+msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
+msgstr "No se ha podido cargar el texto de la página. Pliégalo y vuelve a desplegarlo."

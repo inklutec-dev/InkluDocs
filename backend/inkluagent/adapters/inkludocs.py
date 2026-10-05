@@ -126,8 +126,10 @@ def get_project_context(project_id: int, user_id: int) -> Optional[dict]:
         # ungeeignet, weil ein angehaengtes zweites Dokument hoehere ids hat
         # und damit der globale nr-Index falsch nach hinten waeren.
         rows = conn.execute(
+            # Ohne i.context_text (05.10.2026): wurde bei JEDER Chat-Nachricht fuer alle Bilder gelesen (bei 7 PDF
+            # ohne Ueberschriften 40 MB), aber nirgends genutzt; das Bild-Detail-Werkzeug holt den Kontext selbst.
             "SELECT i.id, i.image_type, i.alt_text, i.alt_text_edited, i.langbeschreibung, "
-            "i.context_text, i.width, i.height, i.image_path, i.page_number, i.image_index, "
+            "i.width, i.height, i.image_path, i.page_number, i.image_index, "
             "i.document_id, d.doc_index AS doc_index "
             "FROM images i "
             "LEFT JOIN documents d ON d.id = i.document_id "

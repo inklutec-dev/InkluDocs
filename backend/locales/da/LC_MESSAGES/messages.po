@@ -11146,3 +11146,13 @@ msgstr "– ordre „{name}“"
 
 msgid "„{name}“ ist gelöscht."
 msgstr "„{name}“ er slettet."
+
+# Ansichtswechsel-Umbau 05.10.2026: Seitentext beim Aufklappen (templates/app.html)
+msgid "Seitentext wird geladen …"
+msgstr "Sideteksten indlæses …"
+
+msgid "Seitentext geladen."
+msgstr "Sideteksten er indlæst."
+
+msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
+msgstr "Sideteksten kunne ikke indlæses. Fold den sammen, og fold den ud igen."

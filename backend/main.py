@@ -6450,46 +6450,50 @@ def pdf_langbeschreibung_enabled():
     return os.getenv("PDF_LANGBESCHREIBUNG", "off").strip().lower() in ("1", "true", "on", "yes")
 
 
-@app.get("/api/projects/{project_id}")
-async def get_project(project_id: int, user: dict = Depends(get_current_user)):
-    conn = get_db()
-    project = conn.execute(
-        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
-    ).fetchone()
-    if not project:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+# ─── Projektdaten fuer die Ansichten (Ansichtswechsel-Umbau 05.10.2026, docs/ANSICHTEN_LEISTUNG.md) ───────────
+# Bis 05.10. lieferte get_project jede Bildzeile mit `SELECT i.*` — samt KI-Kontext (bei PDFs ohne Ueberschrift-Tags
+# das ganze Dokument, je Bild kopiert), Seitentext, Pipeline-Protokoll und Serverpfaden: bei 7 PDF mit 269 Bildern
+# 43,8 MB je Ansichtswechsel. Die Oberflaeche zeigt davon nichts an; den Seitentext holt sie jetzt beim Aufklappen
+# (/api/images/{id}/seitentext), die Ansichten Dokument/Tagging/Pruefung brauchen nur den Kopf (/kopf).
+# NICHT in der Bildliste: schwere Felder und Serverpfade. Alle anderen Spalten bleiben (app.html, API v1 _bild_item).
+_BILDLISTE_OHNE = frozenset({"context_text", "page_text", "pipeline_steps", "validation_result",
+                             "image_path", "page_view_path", "kontext_id", "seitentext_id"})
+_bildliste_spalten_cache: list = []
 
-    # Multi-Datei Phase 1 (08.06.2026): Bilder werden weiter geordnet nach
-    # Seite/image_index zurueckgegeben — das Frontend gruppiert sie pro Dokument.
-    # Reihenfolge: doc_index, page_number, image_index (stabil pro Dokument).
+
+def _bildliste_spalten(conn) -> list:
+    """Spalten der Bildliste: alle images-Spalten ausser _BILDLISTE_OHNE (einmal je Prozess aus dem Schema)."""
+    if not _bildliste_spalten_cache:
+        _bildliste_spalten_cache.extend(r[1] for r in conn.execute("PRAGMA table_info(images)").fetchall()
+                                        if r[1] not in _BILDLISTE_OHNE)
+    return _bildliste_spalten_cache
+
+
+def _bildliste(conn, project_id: int) -> list:
+    """Bilder eines Projekts fuer die Ansicht Alt-Texte (Besitzer und Gast): schlanke Felder + Merker
+    hat_seitenansicht / hat_seitentext, Pruefstatus je Rolle (reviews) und Nachrichten-Verlauf (thread).
+    Reihenfolge: doc_index, page_number, image_index (stabil pro Dokument, Multi-Datei 08.06.2026)."""
+    spalten = ", ".join(f"i.{s}" for s in _bildliste_spalten(conn))
+    hat_seitentext = "COALESCE(i.page_text, '') <> ''"
+    if any(r[1] == "seitentext_id" for r in conn.execute("PRAGMA table_info(images)").fetchall()):
+        hat_seitentext = "(" + hat_seitentext + " OR i.seitentext_id IS NOT NULL)"
     images = conn.execute(
-        """SELECT i.*, (SELECT body FROM messages m WHERE m.image_id = i.id AND m.msg_type = 'review_note' LIMIT 1) AS review_note FROM images i
+        f"""SELECT {spalten},
+                  CASE WHEN COALESCE(i.page_view_path, '') <> '' THEN 1 ELSE 0 END AS hat_seitenansicht,
+                  CASE WHEN {hat_seitentext} THEN 1 ELSE 0 END AS hat_seitentext,
+                  (SELECT body FROM messages m WHERE m.image_id = i.id AND m.msg_type = 'review_note' LIMIT 1) AS review_note
+           FROM images i
            LEFT JOIN documents d ON d.id = i.document_id
            WHERE i.project_id = ?
            ORDER BY COALESCE(d.doc_index, 0), i.page_number, i.image_index""",
         (project_id,)
     ).fetchall()
-    documents = conn.execute(
-        """SELECT id, doc_index, original_filename, display_name, extraction_method,
-                  total_images, created_at, source_url, page_text, hinweise, getaggt, original_path
-           FROM documents WHERE project_id = ? ORDER BY doc_index""",
-        (project_id,)
-    ).fetchall()
-    # Rollen-Workflow Etappe 2 (13.07.2026): Pruefstatus PRO ROLLE auch fuer den
-    # Besitzer — Datenbasis der Badges „Lektorat: X / Herausgeber: Y" und der
-    # Filterleiste. Zusaetzlich die aktiven Gast-Rollen des Projekts, damit das
-    # Frontend weiss, welche Rollen-Badges/Filter es anbieten soll.
+    # Rollen-Workflow Etappe 2 (13.07.2026): Pruefstatus PRO ROLLE (auch fuer den Besitzer).
     review_rows = conn.execute(
         """SELECT r.image_id, r.role, r.status, r.reviewed_at FROM image_reviews r
            JOIN images i ON i.id = r.image_id WHERE i.project_id = ?""",
         (project_id,)
     ).fetchall()
-    share_roles = [row["role"] for row in conn.execute(
-        """SELECT DISTINCT COALESCE(NULLIF(role, ''), 'kunde') AS role FROM shares
-           WHERE project_id = ? AND status IN ('active', 'completed') ORDER BY role""",
-        (project_id,)
-    ).fetchall()]
     # Rollen-Workflow Etappe 4 (15.07.2026): Nachrichten-Verlauf pro Bild.
     thread_rows = conn.execute(
         """SELECT m.image_id, COALESCE(m.sender_role, '') AS sender_role,
@@ -6499,8 +6503,6 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
            ORDER BY m.created_at, m.id""",
         (project_id,)
     ).fetchall()
-    conn.close()
-
     thread_by_image = {}
     for m in thread_rows:
         thread_by_image.setdefault(m["image_id"], []).append({
@@ -6513,12 +6515,29 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     image_dicts = []
     for img in images:
         d = dict(img)
+        d["hat_seitenansicht"] = bool(d["hat_seitenansicht"])
+        d["hat_seitentext"] = bool(d["hat_seitentext"])
         d["reviews"] = reviews_by_image.get(d["id"], {})
         d["thread"] = thread_by_image.get(d["id"], [])
         image_dicts.append(d)
+    return image_dicts
 
-    # Schalter PDF_LANGBESCHREIBUNG (Standard aus): Langbeschreibung im Frontend nur zeigen,
-    # wenn kein PDF-Projekt ODER der Schalter an ist (siehe pdf_langbeschreibung_enabled).
+
+def _projekt_kopfdaten(conn, project, project_id: int) -> tuple:
+    """Projekt-dict (wie bisher alle Spalten + lauf_art + hat_felder), Dokumente ohne Serverpfad, Freigabe-Rollen.
+    Gemeinsam fuer get_project und /kopf."""
+    documents = conn.execute(
+        """SELECT id, doc_index, original_filename, display_name, extraction_method,
+                  total_images, created_at, source_url, page_text, hinweise, getaggt, original_path
+           FROM documents WHERE project_id = ? ORDER BY doc_index""",
+        (project_id,)
+    ).fetchall()
+    # Aktive Gast-Rollen des Projekts (Rollen-Workflow Etappe 2): welche Rollen-Badges/Filter das Frontend anbietet.
+    share_roles = [row["role"] for row in conn.execute(
+        """SELECT DISTINCT COALESCE(NULLIF(role, ''), 'kunde') AS role FROM shares
+           WHERE project_id = ? AND status IN ('active', 'completed') ORDER BY role""",
+        (project_id,)
+    ).fetchall()]
     proj_dict = dict(project)
     # Welcher Lauf laeuft (Testumbau 18.09.2026): 'uebersetzung' | 'alttexte' | None — beide Word-Ansichten
     # teilen sich projects.status und reagieren nur auf ihren eigenen Lauf (Review 2, Befund 3).
@@ -6526,25 +6545,107 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
     # Ansichts-Wahl (22.09.2026): „Quickinfos“ nur, wenn eine Datei des Projekts Formularfelder hat.
     proj_dict["hat_felder"] = _felder_anzahl(project_id) if _is_pdf else 0
-    # Review-Status nur zeigen, wenn das Projekt ueberhaupt zur Pruefung freigegeben
-    # wurde (Steve 20.06.) -> Solo-Arbeit ohne Einladung bleibt frei von Pruef-Badges.
-    # share_roles traegt dieselbe Information pro Rolle; der bool bleibt fuer
-    # Bestands-Codepfade erhalten.
     doc_dicts = [dict(d) for d in documents]
     for d in doc_dicts:
         if _is_pdf and d.get("getaggt") is None and (d.get("original_path") or "").lower().endswith(".pdf"):
             _dokument_getaggt(d)   # Altbestand: jetzt bestimmen und nachtragen
         d.pop("original_path", None)   # Serverpfad bleibt im Haus
+    return proj_dict, doc_dicts, share_roles, _is_pdf
+
+
+def _projekt_daten(project_id: int, user_id: int) -> dict:
+    """Datenquelle der Ansicht Alt-Texte (und der Public API v1 _items_list). Synchron — laeuft im Executor."""
+    conn = get_db()
+    try:
+        project = conn.execute(
+            "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)
+        ).fetchone()
+        if not project:
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        image_dicts = _bildliste(conn, project_id)
+        proj_dict, doc_dicts, share_roles, _is_pdf = _projekt_kopfdaten(conn, project, project_id)
+    finally:
+        conn.close()
     return {
         "project": proj_dict,
         "images": image_dicts,
         "documents": doc_dicts,
+        # Schalter PDF_LANGBESCHREIBUNG (Standard aus): Langbeschreibung im Frontend nur zeigen,
+        # wenn kein PDF-Projekt ODER der Schalter an ist (siehe pdf_langbeschreibung_enabled).
         "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
+        # Review-Status nur zeigen, wenn das Projekt ueberhaupt zur Pruefung freigegeben wurde (Steve 20.06.);
+        # share_roles traegt dieselbe Information pro Rolle, der bool bleibt fuer Bestands-Codepfade.
         "in_review": bool(share_roles),
         "share_roles": share_roles,
         # Meine Ausgaben (11.09.2026): Zaehler fuer den Reiter „Ausgaben (n)" im Projektkopf.
         "ausgaben_anzahl": _ausgaben_anzahl(project_id),
     }
+
+
+@app.get("/api/projects/{project_id}")
+async def get_project(project_id: int, user: dict = Depends(get_current_user)):
+    # Bleibt async: die Public API v1 ruft diese Funktion direkt mit await auf (api_dokumente_v1._items_list).
+    # Die Arbeit (SQLite) laeuft im Executor, damit der Event-Loop fuer andere Anfragen frei bleibt.
+    return await asyncio.get_running_loop().run_in_executor(None, _projekt_daten, project_id, user["id"])
+
+
+def _projekt_kopf(project_id: int, user_id: int) -> dict:
+    """Kopf eines Projekts ohne Bildliste (wenige KB): Weiche der Ansichten in app.html, Upload-/Lauf-Polls."""
+    conn = get_db()
+    try:
+        project = conn.execute(
+            "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)
+        ).fetchone()
+        if not project:
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        proj_dict, doc_dicts, share_roles, _is_pdf = _projekt_kopfdaten(conn, project, project_id)
+        status = {r[0]: r[1] for r in conn.execute(
+            "SELECT status, COUNT(*) FROM images WHERE project_id = ? GROUP BY status", (project_id,)).fetchall()}
+    finally:
+        conn.close()
+    return {
+        "project": proj_dict,
+        "documents": [{k: d.get(k) for k in ("id", "doc_index", "original_filename", "display_name",
+                                             "extraction_method", "total_images", "created_at", "getaggt")}
+                      for d in doc_dicts],
+        "bilder_status": status,
+        "bilder_gesamt": sum(status.values()),
+        "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
+        "in_review": bool(share_roles),
+        "share_roles": share_roles,
+        "ausgaben_anzahl": _ausgaben_anzahl(project_id),
+    }
+
+
+@app.get("/api/projects/{project_id}/kopf")
+async def get_project_kopf(project_id: int, user: dict = Depends(get_current_user)):
+    """Projektkopf ohne Bildliste (05.10.2026): app.html waehlt damit die Ansicht; die Ansichten Dokument, Tagging,
+    Pruefung, Quickinfos und Uebersetzung laden danach nur ihre eigenen Daten."""
+    return await asyncio.get_running_loop().run_in_executor(None, _projekt_kopf, project_id, user["id"])
+
+
+def _seitentext_lesen(image_id: int, user_id: Optional[int] = None, project_id: Optional[int] = None) -> dict:
+    """Seitentext zu einem Bild (Klappe „Seitentext anzeigen“): Besitzer (user_id) oder Gast (project_id der Freigabe)."""
+    conn = get_db()
+    try:
+        if user_id is not None:
+            img = conn.execute(
+                "SELECT i.* FROM images i JOIN projects p ON i.project_id = p.id WHERE i.id = ? AND p.user_id = ?",
+                (image_id, user_id)).fetchone()
+        else:
+            img = conn.execute("SELECT * FROM images WHERE id = ? AND project_id = ?", (image_id, project_id)).fetchone()
+        if not img:
+            raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+        text = img["page_text"]
+    finally:
+        conn.close()
+    return {"image_id": image_id, "seite": img["page_number"], "text": text or ""}
+
+
+@app.get("/api/images/{image_id}/seitentext")
+async def get_image_seitentext(image_id: int, user: dict = Depends(get_current_user)):
+    """Seitentext erst beim Aufklappen laden (05.10.2026) — vorher stand er in jeder Bildzeile der Projektantwort."""
+    return await asyncio.get_running_loop().run_in_executor(None, _seitentext_lesen, image_id, user["id"], None)
 
 
 @app.patch("/api/projects/{project_id}/documents/{document_id}")
@@ -6901,8 +7002,9 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
 @app.get("/api/images/{image_id}/file")
 async def get_image_file(image_id: int, user: dict = Depends(get_current_user)):
     conn = get_db()
+    # Nur der Pfad (05.10.2026): `SELECT i.*` las bei jeder Bildvorschau auch den KI-Kontext mit (bis 380.000 Zeichen).
     img = conn.execute(
-        """SELECT i.* FROM images i
+        """SELECT i.image_path FROM images i
            JOIN projects p ON i.project_id = p.id
            WHERE i.id = ? AND p.user_id = ?""",
         (image_id, user["id"])
@@ -12102,74 +12204,33 @@ def _require_guest(request, token):
     return share
 
 
-@app.get("/api/freigabe/{token}")
-async def freigabe_data(token: str, request: Request):
-    """Projektdaten fuer den Gast — nur mit gueltiger Gast-Sitzung, nur das eine
-    Projekt dieser Freigabe. Spiegelt get_project, aber token- statt user-begrenzt."""
-    share = _require_guest(request, token)
-    pid = share["project_id"]
+def _freigabe_daten(pid: int, rolle: str) -> dict:
+    """Synchroner Teil von freigabe_data (Executor). Dieselbe schlanke Bildliste wie get_project (_bildliste)."""
     conn = get_db()
-    project = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
-    if not project:
+    try:
+        project = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+        if not project:
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden.")
+        if project["tool"] == "formular":
+            # Gast-Ansicht Formulare (28.08.2026): die Felder holt formular.js ueber
+            # /api/freigabe/{token}/felder; hier nur der Projektkopf OHNE Serverpfade,
+            # damit app.html die Weiche auf die Formular-Ansicht nehmen kann.
+            proj_dict = dict(project)
+            aussen = {k: proj_dict.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type",
+                                                     "alt_language", "created_at", "updated_at")}
+            return {"project": aussen, "images": [], "documents": [], "guest": True,
+                    "role": rolle, "formular": True}
+        # Rollen-Workflow (10.07./15.07.2026): Pruefstatus pro Rolle und Nachrichten-Verlauf haengen an jedem
+        # Bild (_bildliste) — der Gast sieht denselben Stand wie der Besitzer, strikt auf DIESES Projekt begrenzt.
+        image_dicts = _bildliste(conn, pid)
+        documents = conn.execute(
+            """SELECT id, doc_index, original_filename, display_name, extraction_method,
+                      total_images, created_at, source_url, page_text, hinweise
+               FROM documents WHERE project_id = ? ORDER BY doc_index""",
+            (pid,)
+        ).fetchall()
+    finally:
         conn.close()
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden.")
-    if project["tool"] == "formular":
-        # Gast-Ansicht Formulare (28.08.2026): die Felder holt formular.js ueber
-        # /api/freigabe/{token}/felder; hier nur der Projektkopf OHNE Serverpfade,
-        # damit app.html die Weiche auf die Formular-Ansicht nehmen kann.
-        conn.close()
-        proj_dict = dict(project)
-        aussen = {k: proj_dict.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type",
-                                                 "alt_language", "created_at", "updated_at")}
-        return {"project": aussen, "images": [], "documents": [], "guest": True,
-                "role": (dict(share).get("role") or "kunde"), "formular": True}
-    images = conn.execute(
-        """SELECT i.*, (SELECT body FROM messages m WHERE m.image_id = i.id AND m.msg_type = 'review_note' LIMIT 1) AS review_note FROM images i
-           LEFT JOIN documents d ON d.id = i.document_id
-           WHERE i.project_id = ?
-           ORDER BY COALESCE(d.doc_index, 0), i.page_number, i.image_index""",
-        (pid,)
-    ).fetchall()
-    documents = conn.execute(
-        """SELECT id, doc_index, original_filename, display_name, extraction_method,
-                  total_images, created_at, source_url, page_text, hinweise
-           FROM documents WHERE project_id = ? ORDER BY doc_index""",
-        (pid,)
-    ).fetchall()
-    # Rollen-Workflow (10.07.2026): Pruefstatus pro Rolle an jedes Bild haengen —
-    # der Gast sieht seinen eigenen Stand, der Kunde zusaetzlich die Lektorat-
-    # Vorgeschichte. Wie alles hier strikt auf DIESES Projekt begrenzt.
-    review_rows = conn.execute(
-        """SELECT r.image_id, r.role, r.status, r.reviewed_at FROM image_reviews r
-           JOIN images i ON i.id = r.image_id WHERE i.project_id = ?""",
-        (pid,)
-    ).fetchall()
-    # Rollen-Workflow Etappe 4 (15.07.2026): Nachrichten-Verlauf pro Bild —
-    # Gaeste sehen denselben gemeinsamen Verlauf wie der Besitzer.
-    thread_rows = conn.execute(
-        """SELECT m.image_id, COALESCE(m.sender_role, '') AS sender_role,
-                  COALESCE(m.sender_name, '') AS sender_name, m.body, m.created_at
-           FROM messages m JOIN images i ON i.id = m.image_id
-           WHERE i.project_id = ? AND m.msg_type = 'chat'
-           ORDER BY m.created_at, m.id""",
-        (pid,)
-    ).fetchall()
-    conn.close()
-    thread_by_image = {}
-    for m in thread_rows:
-        thread_by_image.setdefault(m["image_id"], []).append({
-            "sender_role": m["sender_role"], "sender_name": m["sender_name"],
-            "body": m["body"], "created_at": m["created_at"]})
-    reviews_by_image = {}
-    for r in review_rows:
-        reviews_by_image.setdefault(r["image_id"], {})[r["role"]] = {
-            "status": r["status"], "reviewed_at": r["reviewed_at"]}
-    image_dicts = []
-    for i in images:
-        d = dict(i)
-        d["reviews"] = reviews_by_image.get(d["id"], {})
-        d["thread"] = thread_by_image.get(d["id"], [])
-        image_dicts.append(d)
     proj_dict = dict(project)
     _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
     return {
@@ -12178,8 +12239,24 @@ async def freigabe_data(token: str, request: Request):
         "documents": [dict(d) for d in documents],
         "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
         "guest": True,
-        "role": (dict(share).get("role") or "kunde"),
+        "role": rolle,
     }
+
+
+@app.get("/api/freigabe/{token}")
+async def freigabe_data(token: str, request: Request):
+    """Projektdaten fuer den Gast — nur mit gueltiger Gast-Sitzung, nur das eine
+    Projekt dieser Freigabe. Spiegelt get_project, aber token- statt user-begrenzt."""
+    share = _require_guest(request, token)
+    return await asyncio.get_running_loop().run_in_executor(
+        None, _freigabe_daten, share["project_id"], (dict(share).get("role") or "kunde"))
+
+
+@app.get("/api/freigabe/{token}/images/{image_id}/seitentext")
+async def freigabe_image_seitentext(token: str, image_id: int, request: Request):
+    """Seitentext fuer den Gast beim Aufklappen (05.10.2026) — gast-begrenzt + projektgebunden."""
+    share = _require_guest(request, token)
+    return await asyncio.get_running_loop().run_in_executor(None, _seitentext_lesen, image_id, None, share["project_id"])
 
 
 @app.get("/api/freigabe/{token}/images/{image_id}/file")
@@ -12187,7 +12264,8 @@ async def freigabe_image_file(token: str, image_id: int, request: Request):
     """Bild-Datei fuer den Gast — gast-begrenzt + nur Bilder DES freigegebenen Projekts."""
     share = _require_guest(request, token)
     conn = get_db()
-    img = conn.execute("SELECT * FROM images WHERE id = ? AND project_id = ?",
+    # Nur der Pfad (05.10.2026): `SELECT *` las bei jeder Bildvorschau auch den KI-Kontext mit.
+    img = conn.execute("SELECT image_path FROM images WHERE id = ? AND project_id = ?",
                        (image_id, share["project_id"])).fetchone()
     conn.close()
     if not img or not os.path.exists(img["image_path"]):

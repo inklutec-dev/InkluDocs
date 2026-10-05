@@ -11017,3 +11017,13 @@ msgstr "– beställning ”{name}”"
 
 msgid "„{name}“ ist gelöscht."
 msgstr "”{name}” är raderad."
+
+# Ansichtswechsel-Umbau 05.10.2026: Seitentext beim Aufklappen (templates/app.html)
+msgid "Seitentext wird geladen …"
+msgstr "Sidtexten läses in …"
+
+msgid "Seitentext geladen."
+msgstr "Sidtexten har lästs in."
+
+msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
+msgstr "Sidtexten kunde inte läsas in. Fäll ihop den och fäll ut den igen."

@@ -11450,3 +11450,13 @@ msgstr "– Auftrag „{name}“"
 
 msgid "„{name}“ ist gelöscht."
 msgstr "„{name}“ ist gelöscht."
+
+# Ansichtswechsel-Umbau 05.10.2026: Seitentext beim Aufklappen (templates/app.html)
+msgid "Seitentext wird geladen …"
+msgstr "Seitentext wird geladen …"
+
+msgid "Seitentext geladen."
+msgstr "Seitentext geladen."
+
+msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
+msgstr "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."

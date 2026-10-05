@@ -262,6 +262,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function _projectDataUrl(projectId) {
         return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN) : ('/api/projects/' + projectId);
     }
+    // Projektkopf ohne Bildliste (05.10.2026): fuer die Weiche der Ansichten und fuer Polls. Gaeste haben keinen
+    // eigenen Kopf-Abruf (sie sehen nur Alt-Texte bzw. Formular) und nehmen die Freigabe-Daten.
+    function _projectKopfUrl(projectId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN) : ('/api/projects/' + projectId + '/kopf');
+    }
     function imgFileUrl(imageId) {
         return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/file') : ('/api/images/' + imageId + '/file');
     }
@@ -270,6 +275,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
     function altTextSaveUrl(imageId) {
         return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/alttext') : ('/api/images/' + imageId + '/alt-text');
+    }
+    // Seitentext erst beim Aufklappen (05.10.2026, docs/ANSICHTEN_LEISTUNG.md) — vorher stand er in jeder Bildzeile.
+    function seitentextUrl(imageId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/seitentext') : ('/api/images/' + imageId + '/seitentext');
     }
 
     // ─── Init ────────────────────────────────────────
@@ -660,7 +669,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Upload-Nachpruefung. Liefert null, wenn das Projekt nicht abrufbar ist.
     async function projectSnapshot(projectId) {
         try {
-            const res = await fetch(_projectDataUrl(projectId));
+            const res = await fetch(_projectKopfUrl(projectId));   // Kopf genuegt (05.10.2026; vorher ganze Bildliste)
             if (!res.ok) return null;
             const data = await res.json();
             return {
@@ -700,7 +709,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             await new Promise((resolve) => setTimeout(resolve, 2500));
             let data = null;
             try {
-                const res = await fetch(_projectDataUrl(projectId));
+                const res = await fetch(_projectKopfUrl(projectId));   // alle 2,5 s: nur der Kopf (05.10.2026)
                 if (!res.ok) continue;
                 data = await res.json();
             } catch (_) { continue; }
@@ -872,6 +881,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // es Fehler gab: "Fertig (mit Fehlern)" — der Sonderfall, dass das Projekt
     // technisch abgeschlossen ist, aber nicht jedes Bild einen Alt-Text hat.
     function countByStatus(images, st) {
+        if (images && !Array.isArray(images)) return Number(images[st]) || 0;   // Zaehler aus /kopf (bilder_status)
         return (images || []).filter(i => i.status === st).length;
     }
     function computeStatusBadge(project, images) {
@@ -911,11 +921,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Nutzer verliert den Scroll-Kontext.
     async function updateProjectHeader(projectId) {
         try {
-            const res = await fetch('/api/projects/' + projectId);
+            const res = await fetch('/api/projects/' + projectId + '/kopf');   // Zaehler genuegen (05.10.2026)
             if (!res.ok) return;
             const data = await res.json();
             const project = data.project;
-            const images = data.images || [];
+            const images = data.bilder_status || {};
             const extractionText = (project.project_type === 'pdf')
                 ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
                 : (project.project_type === 'docx' ? 'Word (OOXML)' : null);
@@ -932,6 +942,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     // erneut (Pruefung 4, M2): stilles Nachziehen nach einer Chat-Aktion — die Unteransichten setzen dann keinen Fokus auf die H1.
+    let _showProjectLauf = 0;   // Zaehler je Aufruf: nur der juengste Aufruf zeichnet (schnelle Wechsel, 05.10.2026)
     async function showProject(projectId, erneut) {
         erneut = erneut === true;
         if (window.vorlesenStopp) vorlesenStopp();   // Vorlesen endet mit der Ansicht (Pruefbericht 24.09.2026)
@@ -943,10 +954,19 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         currentDocProjectId = projectId;
         highlightNav(null);
 
-        const res = await fetch(_projectDataUrl(projectId));
+        // Ansichtswechsel-Umbau (05.10.2026, docs/ANSICHTEN_LEISTUNG.md): Fuer die Weiche genuegt der Projektkopf
+        // (wenige KB); die Bildliste braucht nur die Ansicht Alt-Texte. Steht sie schon in der Adresse (oder Gast),
+        // gleich die Bildliste holen — sie enthaelt den Kopf. Vorher kam hier bei JEDEM Wechsel die ganze Projekt-
+        // antwort (bei 7 PDF 43,8 MB, KI-Kontext je Bild kopiert).
+        const lauf = ++_showProjectLauf;
+        const gewuenscht = new URLSearchParams(window.location.search).get('ansicht');
+        let res = await fetch((window.GUEST_MODE || gewuenscht === 'alttexte') ? _projectDataUrl(projectId) : _projectKopfUrl(projectId));
+        if (lauf !== _showProjectLauf) return;   // inzwischen neuer Aufruf (schneller Wechsel): der zeichnet
         if (res.status === 401) { if (window.GUEST_MODE) { return initGuest(); } window.location.href = '/login'; return; }
-        const data = await res.json();
-        const project = data.project;
+        if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
+        let data = await res.json();
+        if (lauf !== _showProjectLauf) return;
+        let project = data.project;
         currentProjectFuerAnsicht = project;
         // Die aufgeloeste Ansicht (Adresse -> gemerkt -> Start) in die Adresse schreiben, ohne neuen
         // Verlaufseintrag: So fuehrt „Zurueck“ im Browser immer zur vorherigen Ansicht, auch wenn das Projekt
@@ -995,6 +1015,17 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // PDF-Projekt, Station „Quickinfos“ (22.09.2026): dieselbe Ansicht wie das Formular-Werkzeug (formular.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'quickinfos') {
             return Formular.showProject(projectId, erneut);
+        }
+        // Ansicht Alt-Texte: Bildliste nachladen, wenn bisher nur der Kopf da ist.
+        if (!Array.isArray(data.images)) {
+            res = await fetch(_projectDataUrl(projectId));
+            if (lauf !== _showProjectLauf) return;
+            if (res.status === 401) { window.location.href = '/login'; return; }
+            if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
+            data = await res.json();
+            if (lauf !== _showProjectLauf) return;
+            project = data.project;
+            currentProjectFuerAnsicht = project;
         }
         const images = data.images;
         const documents = data.documents || [];
@@ -2609,6 +2640,58 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
              + `<div style="padding:0.4rem 0;white-space:pre-wrap;">${escHtml(note)}</div></details>`;
     }
 
+    // ─── Seitentext beim Aufklappen (05.10.2026) ─────────────────────────────
+    // Ablauf fuer Screenreader: Die Klappe „Seitentext anzeigen“ steht wie bisher da. Wird die SEITE aufgeklappt, holt
+    // die Ansicht den Seitentext schon im Hintergrund (ein kleiner Abruf je Seite) — bis man die Klappe erreicht, ist er
+    // da. Klappt jemand schneller auf, steht im Bereich „Seitentext wird geladen …“ (aria-busy), der Fokus bleibt auf dem
+    // Schalter; der Text ersetzt den Platzhalter. Nur wenn das Laden laenger als 1 s dauerte, sagt eine kurze Meldung
+    // „Seitentext geladen.“ an. Fehler: verstaendlicher Satz im Bereich, erneutes Aufklappen versucht es noch einmal.
+    const _seitentextCache = new Map();   // Bild-ID -> Text (ueberlebt das Neu-Zeichnen waehrend eines Laufs)
+    async function seitentextLaden(det, ansagen) {
+        const id = Number(det.dataset.seitentextBild);
+        const ziel = det.querySelector('.page-text-content');
+        if (!id || !ziel || det.dataset.geladen) return;
+        det.dataset.geladen = 'laedt';
+        const start = performance.now();
+        try {
+            let text = _seitentextCache.get(id);
+            if (text == null) {
+                const r = await fetch(seitentextUrl(id), { credentials: 'same-origin' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                text = ((await r.json()).text) || '';
+                _seitentextCache.set(id, text);
+            }
+            ziel.textContent = text;   // Text, kein HTML (vorher esc() im Markup)
+            ziel.removeAttribute('aria-busy');
+            det.dataset.geladen = '1';
+            if (ansagen && det.open && performance.now() - start > 1000) announce(t('Seitentext geladen.'));
+        } catch (e) {
+            ziel.textContent = t('Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen.');
+            ziel.removeAttribute('aria-busy');
+            delete det.dataset.geladen;
+        }
+    }
+    function seitentextVorladen(seite) {
+        const st = seite && seite.querySelector(':scope > details.page-text-details[data-seitentext-bild]');
+        if (st) seitentextLaden(st, false);
+    }
+    function seitentexteAnbinden(list) {
+        if (!list) return;
+        if (!list.dataset.seitentextGebunden) {
+            list.dataset.seitentextGebunden = '1';
+            // toggle blubbert nicht — Erfassung am Container (capture) faengt alle Klappen der Liste
+            list.addEventListener('toggle', (ev) => {
+                const det = ev.target;
+                if (!det || !det.open || !det.matches) return;
+                if (det.matches('details.page-text-details[data-seitentext-bild]')) seitentextLaden(det, true);
+                else if (det.matches('details.page-section')) seitentextVorladen(det);
+            }, true);
+        }
+        // Schon offen gezeichnete Seiten (Neu-Zeichnen waehrend eines Laufs): gleich vorladen
+        list.querySelectorAll('details.page-section[open]').forEach(seitentextVorladen);
+    }
+    window.seitentextLaden = seitentextLaden;
+
     function renderImages(images, projectId, showLang, documents, project) {
         const list = document.getElementById('imageList');
         if (!images.length) {
@@ -2853,16 +2936,25 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const pageId = `${docKey}_${pageNum}`;
             const isOpen = openPages.has(pageId) ? ' open' : '';
             const count = imgs.length === 1 ? t('1 Bild') : t('{n} Bilder', { n: imgs.length });
-            const pageView = first.page_view_path
+            // Seitenansicht und Seitentext erst beim Aufklappen (05.10.2026, docs/ANSICHTEN_LEISTUNG.md): Das Bild hat
+            // loading="lazy" — in einer zugeklappten Klappe laedt der Browser es erst beim Aufklappen (vorher lud die
+            // Ansicht beim ersten Oeffnen ALLE Seitenbilder, bei 7 PDF 119 Bilder mit 46 MB). Der Seitentext kommt aus
+            // /seitentext, sobald die Seite aufgeklappt wird (seitentextVorladen), spaetestens beim Aufklappen der Klappe.
+            const pageView = (first.hat_seitenansicht || first.page_view_path)
                 ? `<details class="page-view-details">
                     <summary>${t('Seitenansicht anzeigen')}</summary>
-                    <img src="${pageViewUrl(first.id)}" alt="" class="page-view-image">
+                    <img src="${pageViewUrl(first.id)}" alt="" class="page-view-image" loading="lazy">
                 </details>` : '';
-            const pageTextBlock = first.page_text ? `
+            const seitentextBekannt = first.page_text || _seitentextCache.get(first.id);
+            const pageTextBlock = seitentextBekannt ? `
                 <details class="page-text-details">
                     <summary>${t('Seitentext anzeigen')}</summary>
-                    <div class="page-text-content" role="region" aria-label="${t('Seitentext')}" tabindex="0">${esc(first.page_text)}</div>
-                </details>` : '';
+                    <div class="page-text-content" role="region" aria-label="${t('Seitentext')}" tabindex="0">${esc(seitentextBekannt)}</div>
+                </details>` : (first.hat_seitentext ? `
+                <details class="page-text-details" data-seitentext-bild="${first.id}">
+                    <summary>${t('Seitentext anzeigen')}</summary>
+                    <div class="page-text-content" role="region" aria-label="${t('Seitentext')}" tabindex="0" aria-busy="true">${t('Seitentext wird geladen …')}</div>
+                </details>` : '');
             const pageH = pageHeadingLevel || 'h2';
             return `
                 <details class="page-section" data-page="${pageId}"${isOpen}>
@@ -3113,6 +3205,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         list.innerHTML = html;
         // Erst jetzt stehen die Knoepfe im Dokument und lassen sich messen.
         dokumentKoepfeAusrichten();
+        seitentexteAnbinden(list);
 
         // Auto-save alt-text on edit
         document.querySelectorAll('.alt-text-field:not(.langtext-field)').forEach(ta => {
