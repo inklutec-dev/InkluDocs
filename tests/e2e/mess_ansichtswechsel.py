@@ -216,7 +216,7 @@ async ([sel, art]) => {
     return true;
   };
   let platzhalter = null;
-  if (art === 'text') { const z = det.querySelector('.page-text-content'); platzhalter = z ? { busy: z.getAttribute('aria-busy'), text: z.textContent.trim() } : null; }
+  if (art === 'text') { const z = det.querySelector('.page-text-content'); platzhalter = z ? { busy: z.getAttribute('aria-busy'), text: z.textContent.trim().slice(0, 40) } : null; }
   const ende = t0 + 20000;
   while (!fertig() && performance.now() < ende) await new Promise(r => requestAnimationFrame(r));
   return { ms: Math.round(performance.now() - t0), fertig: fertig(), fokus_auf_schalter: document.activeElement === sum, platzhalter };
