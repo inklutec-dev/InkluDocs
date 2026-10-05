@@ -528,6 +528,7 @@
         if (!gast() && typeof mitProjektKopf === 'function' && mitProjektKopf(project)) {
             return projektKopfHtml(project, 'quickinfos', title, infoHtml) + funktionenKarteHtml(besitzerAktionen);
         }
+        if (typeof seitentitelProjekt === 'function') seitentitelProjekt(title);   // Seitentitel mit Projektname (Befund 10, 05.10.2026)
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
@@ -545,7 +546,7 @@
             ta.addEventListener('input', () => {
                 const feldId = Number(ta.dataset.feldId);
                 // Offene Speicherung beim Ansichtswechsel sofort ausloesen (app.html, 05.10.2026)
-                if (typeof speicherungVormerken === 'function') { speicherungVormerken('quickinfo_' + feldId, () => speichern(feldId, ta.value)); return; }
+                if (typeof speicherungVormerken === 'function') { speicherungVormerken('quickinfo_' + feldId, (o) => speichern(feldId, ta.value, o)); return; }
                 clearTimeout(timer);
                 timer = setTimeout(() => speichern(feldId, ta.value), 800);
             });
@@ -744,12 +745,14 @@
         } catch (e) { announce(t('Verbindungsfehler.')); if (btn) btn.disabled = false; }
     }
 
-    async function speichern(feldId, text) {
+    // Rueckgabe true/false fuer das Register offener Speicherungen (app.html, 05.10.2026); keepalive beim Verlassen der Seite.
+    async function speichern(feldId, text, optionen) {
+        const keepalive = !!(optionen && optionen.keepalive);
         try {
             const res = gast()
-                ? await fetch(gastBasis() + '/felder/' + feldId + '/quickinfo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ quickinfo: text }) })
-                : await fetch('/api/felder/' + feldId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quickinfo: text }) });
-            if (!res.ok) { announce(t('Speichern fehlgeschlagen.')); return; }
+                ? await fetch(gastBasis() + '/felder/' + feldId + '/quickinfo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', keepalive: keepalive, body: JSON.stringify({ quickinfo: text }) })
+                : await fetch('/api/felder/' + feldId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', keepalive: keepalive, body: JSON.stringify({ quickinfo: text }) });
+            if (!res.ok) { announce(t('Speichern fehlgeschlagen.')); return false; }
             const d = await res.json();
             statusSetzen(feldId, d);
             if (!gast()) kiKnopf(feldId, !!(d.quickinfo_ki && d.quickinfo_ki !== d.quickinfo));
@@ -762,7 +765,8 @@
             }
             const ind = document.getElementById('feld_saved_' + feldId);
             if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
-        } catch (e) { announce(t('Verbindungsfehler beim Speichern.')); }
+            return true;
+        } catch (e) { announce(t('Verbindungsfehler beim Speichern.')); return false; }
     }
 
     function kiKnopf(feldId, sichtbar) {
@@ -963,12 +967,16 @@
     }
 
     async function showProject(projectId, erneut) {
+        const lauf = typeof ansichtLaufMerken === 'function' ? ansichtLaufMerken() : 0;   // Befund 1 (05.10.2026): nur der juengste Ansichtswechsel zeichnet
+        const veraltet = () => typeof ansichtNochAktuell === 'function' && !ansichtNochAktuell(lauf);
         // Im Gast-Modus ist projectId der Freigabe-Token (app.html reicht ihn durch).
         const main = document.getElementById('main');
         const res = await fetch(felderUrl(projectId), { credentials: 'same-origin' });
+        if (veraltet()) return;
         if (res.status === 401) { if (gast() && typeof initGuest === 'function') { return initGuest(); } window.location.href = '/login'; return; }
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
+        if (veraltet()) return;
         const project = data.project;
         projektStatus = project.status || '';
         aktuelleDocs = data.documents || [];

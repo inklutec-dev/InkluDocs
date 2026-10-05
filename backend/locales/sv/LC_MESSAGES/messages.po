@@ -11027,3 +11027,28 @@ msgstr "Sidtexten har lästs in."
 
 msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
 msgstr "Sidtexten kunde inte läsas in. Fäll ihop den och fäll ut den igen."
+
+# Ansichtswechsel-Korrektur 05.10.2026 (Pruefung Barrierefreiheit, Befunde 4, 7, 9)
+msgid "Achtung: 1 Eingabe konnte nicht gespeichert werden."
+msgstr "Obs: 1 inmatning kunde inte sparas."
+
+msgid "Achtung: {n} Eingaben konnten nicht gespeichert werden."
+msgstr "Obs: {n} inmatningar kunde inte sparas."
+
+msgid "Die Ansicht bleibt offen, damit nichts verloren geht. Ein zweiter Klick wechselt ohne Speichern."
+msgstr "Vyn förblir öppen så att inget går förlorat. Ett andra klick byter utan att spara."
+
+msgid "Die Seite bleibt offen, damit nichts verloren geht. Ein zweiter Klick verlässt sie ohne Speichern."
+msgstr "Sidan förblir öppen så att inget går förlorat. Ett andra klick lämnar den utan att spara."
+
+msgid "Du bist noch angemeldet, damit nichts verloren geht. Ein zweiter Klick meldet ohne Speichern ab."
+msgstr "Du är fortfarande inloggad så att inget går förlorat. Ett andra klick loggar ut utan att spara."
+
+msgid "Nicht gespeichert"
+msgstr "Inte sparat"
+
+msgid "Seitenansicht: {seite} als Bild"
+msgstr "Sidvy: {seite} som bild"
+
+msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
+msgstr "Texten på den här sidan finns under ”Visa sidtext”."

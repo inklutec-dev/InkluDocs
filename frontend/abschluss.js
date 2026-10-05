@@ -454,6 +454,8 @@
     }
 
     async function showProject(projectId, erneut) {
+        const lauf = typeof ansichtLaufMerken === 'function' ? ansichtLaufMerken() : 0;   // Befund 1 (05.10.2026): nur der juengste Ansichtswechsel zeichnet
+        const veraltet = () => typeof ansichtNochAktuell === 'function' && !ansichtNochAktuell(lauf);
         projectId = Number(projectId);   // Adresse liefert Text, Knoepfe eine Zahl — ohne das ging der Zustand verloren
         if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
         pollGen++;
@@ -465,10 +467,12 @@
             fetch('/api/projects/' + projectId + '/abschluss', { credentials: 'same-origin' }),
             fetch('/api/projects/' + projectId + '/dokument-ansicht', { credentials: 'same-origin' }).catch(() => null),
         ]);
+        if (veraltet()) return;
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
         const dokJson = (resDok && resDok.ok) ? await resDok.json().catch(() => null) : null;
+        if (veraltet()) return;
         dokDaten = {};
         dokProjekt = dokJson ? dokJson.project : null;
         ((dokJson && dokJson.documents) || []).forEach(x => { dokDaten[x.id] = x; });
@@ -691,6 +695,8 @@
         } catch (e) { return null; }
     }
     async function showWordProject(projectId, erneut) {
+        const lauf = typeof ansichtLaufMerken === 'function' ? ansichtLaufMerken() : 0;   // Befund 1 (05.10.2026): nur der juengste Ansichtswechsel zeichnet
+        const veraltet = () => typeof ansichtNochAktuell === 'function' && !ansichtNochAktuell(lauf);
         projectId = Number(projectId);
         if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
         pollGen++;
@@ -699,10 +705,11 @@
         const gen = ++wordGen;
         const main = document.getElementById('main');
         const res = await fetch('/api/projects/' + projectId + '/dokument-ansicht', { credentials: 'same-origin' });
-        if (!wordNochGewuenscht(gen, projectId)) return;   // inzwischen andere Ansicht gewählt (Prüfung 30.09.2026)
+        if (!wordNochGewuenscht(gen, projectId) || veraltet()) return;   // inzwischen andere Ansicht gewählt (Prüfung 30.09.2026)
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
+        if (veraltet()) return;
         const project = data.project;
         const docs = data.documents || [];
         if (zustandProjekt !== projectId) {
@@ -712,7 +719,7 @@
         docs.forEach(x => { dokDaten[x.id] = x; });
         // Prüfbericht + Hörprobe je Dokument (kostenlos, ändert nichts); scheitert eines, zeigt nur seine Karte „Prüfung nicht möglich“
         const geladen = await Promise.all(docs.map(d => wordVorschauLaden(projectId, d.id)));
-        if (!wordNochGewuenscht(gen, projectId)) return;
+        if (!wordNochGewuenscht(gen, projectId) || veraltet()) return;
         wordVorschau = {};
         docs.forEach((d, i) => { if (geladen[i]) wordVorschau[d.id] = geladen[i]; });
         const title = (project.name && project.name.trim()) ? project.name : project.filename;

@@ -11459,3 +11459,28 @@ msgstr "Texte de la page chargé."
 
 msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
 msgstr "Le texte de la page n’a pas pu être chargé. Veuillez le replier puis le déplier à nouveau."
+
+# Ansichtswechsel-Korrektur 05.10.2026 (Pruefung Barrierefreiheit, Befunde 4, 7, 9)
+msgid "Achtung: 1 Eingabe konnte nicht gespeichert werden."
+msgstr "Attention : 1 saisie n’a pas pu être enregistrée."
+
+msgid "Achtung: {n} Eingaben konnten nicht gespeichert werden."
+msgstr "Attention : {n} saisies n’ont pas pu être enregistrées."
+
+msgid "Die Ansicht bleibt offen, damit nichts verloren geht. Ein zweiter Klick wechselt ohne Speichern."
+msgstr "La vue reste ouverte pour que rien ne se perde. Un deuxième clic change de vue sans enregistrer."
+
+msgid "Die Seite bleibt offen, damit nichts verloren geht. Ein zweiter Klick verlässt sie ohne Speichern."
+msgstr "La page reste ouverte pour que rien ne se perde. Un deuxième clic la quitte sans enregistrer."
+
+msgid "Du bist noch angemeldet, damit nichts verloren geht. Ein zweiter Klick meldet ohne Speichern ab."
+msgstr "Tu es toujours connecté pour que rien ne se perde. Un deuxième clic te déconnecte sans enregistrer."
+
+msgid "Nicht gespeichert"
+msgstr "Non enregistré"
+
+msgid "Seitenansicht: {seite} als Bild"
+msgstr "Aperçu de la page : {seite} en image"
+
+msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
+msgstr "Le texte de cette page se trouve sous « Afficher le texte de la page »."

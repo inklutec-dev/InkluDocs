@@ -11459,3 +11459,28 @@ msgstr "Texto de la página cargado."
 
 msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
 msgstr "No se ha podido cargar el texto de la página. Pliégalo y vuelve a desplegarlo."
+
+# Ansichtswechsel-Korrektur 05.10.2026 (Pruefung Barrierefreiheit, Befunde 4, 7, 9)
+msgid "Achtung: 1 Eingabe konnte nicht gespeichert werden."
+msgstr "Atención: no se ha podido guardar 1 entrada."
+
+msgid "Achtung: {n} Eingaben konnten nicht gespeichert werden."
+msgstr "Atención: no se han podido guardar {n} entradas."
+
+msgid "Die Ansicht bleibt offen, damit nichts verloren geht. Ein zweiter Klick wechselt ohne Speichern."
+msgstr "La vista sigue abierta para que no se pierda nada. Un segundo clic cambia sin guardar."
+
+msgid "Die Seite bleibt offen, damit nichts verloren geht. Ein zweiter Klick verlässt sie ohne Speichern."
+msgstr "La página sigue abierta para que no se pierda nada. Un segundo clic la abandona sin guardar."
+
+msgid "Du bist noch angemeldet, damit nichts verloren geht. Ein zweiter Klick meldet ohne Speichern ab."
+msgstr "Sigues conectado para que no se pierda nada. Un segundo clic cierra la sesión sin guardar."
+
+msgid "Nicht gespeichert"
+msgstr "No guardado"
+
+msgid "Seitenansicht: {seite} als Bild"
+msgstr "Vista de la página: {seite} como imagen"
+
+msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
+msgstr "El texto de esta página está en «Mostrar texto de la página»."

@@ -863,6 +863,21 @@ header h1 { font-size: 1.3rem; color: white; }
     transition: opacity 0.3s;
 }
 .save-indicator.visible { opacity: 1; }
+/* Speichern fehlgeschlagen (Ansichtswechsel-Korrektur 05.10.2026): „Nicht gespeichert“ in Fehlerrot, 5,9:1 auf Weiss. */
+.save-indicator.fehler { color: #b91c1c; font-weight: 600; }
+/* Meldung „Achtung: … konnte nicht gespeichert werden“ unter dem Projektkopf (Befund 4): sichtbar fuer alle, bleibt
+   stehen bis zum naechsten Zeichnen der Ansicht; angesagt wird sie einmal ueber die Live-Region (announce). */
+.speicher-warnung {
+    margin: 0.75rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-left: 4px solid #b91c1c;
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text);
+    font-weight: 600;
+    line-height: 1.5;
+}
 
 /* Navigation */
 .back-btn {

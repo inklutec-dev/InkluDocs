@@ -11156,3 +11156,28 @@ msgstr "Sideteksten er indlæst."
 
 msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
 msgstr "Sideteksten kunne ikke indlæses. Fold den sammen, og fold den ud igen."
+
+# Ansichtswechsel-Korrektur 05.10.2026 (Pruefung Barrierefreiheit, Befunde 4, 7, 9)
+msgid "Achtung: 1 Eingabe konnte nicht gespeichert werden."
+msgstr "Bemærk: 1 indtastning kunne ikke gemmes."
+
+msgid "Achtung: {n} Eingaben konnten nicht gespeichert werden."
+msgstr "Bemærk: {n} indtastninger kunne ikke gemmes."
+
+msgid "Die Ansicht bleibt offen, damit nichts verloren geht. Ein zweiter Klick wechselt ohne Speichern."
+msgstr "Visningen forbliver åben, så intet går tabt. Et ekstra klik skifter uden at gemme."
+
+msgid "Die Seite bleibt offen, damit nichts verloren geht. Ein zweiter Klick verlässt sie ohne Speichern."
+msgstr "Siden forbliver åben, så intet går tabt. Et ekstra klik forlader den uden at gemme."
+
+msgid "Du bist noch angemeldet, damit nichts verloren geht. Ein zweiter Klick meldet ohne Speichern ab."
+msgstr "Du er stadig logget ind, så intet går tabt. Et ekstra klik logger ud uden at gemme."
+
+msgid "Nicht gespeichert"
+msgstr "Ikke gemt"
+
+msgid "Seitenansicht: {seite} als Bild"
+msgstr "Sidevisning: {seite} som billede"
+
+msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
+msgstr "Teksten på denne side findes under „Vis sidetekst“."

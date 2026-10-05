@@ -323,6 +323,15 @@ function renderSidebar() {
   btn.type = 'button';
   btn.textContent = t('Abmelden');
   btn.addEventListener('click', async () => {
+    // Offene Eingaben (Alt-Text, Quickinfo, Uebersetzung) erst speichern — nach dem Abmelden ginge das nicht mehr
+    // (Befund 7 der Pruefung 05.10.2026). Schlaegt es fehl, bleibt man angemeldet und hoert, warum.
+    if (typeof window.alleAusstehendenSpeichern === 'function') {
+      const fehler = await window.alleAusstehendenSpeichern();
+      if (fehler && typeof window.speicherFehlerMelden === 'function') {
+        window.speicherFehlerMelden(fehler, t('Du bist noch angemeldet, damit nichts verloren geht. Ein zweiter Klick meldet ohne Speichern ab.'));
+        return;
+      }
+    }
     await fetch('/api/logout', { method: 'POST' });
     window.location.href = '/';
   });

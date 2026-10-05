@@ -11457,3 +11457,28 @@ msgstr "Page text loaded."
 
 msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
 msgstr "The page text could not be loaded. Please collapse and expand it again."
+
+# Ansichtswechsel-Korrektur 05.10.2026 (Pruefung Barrierefreiheit, Befunde 4, 7, 9)
+msgid "Achtung: 1 Eingabe konnte nicht gespeichert werden."
+msgstr "Attention: 1 entry could not be saved."
+
+msgid "Achtung: {n} Eingaben konnten nicht gespeichert werden."
+msgstr "Attention: {n} entries could not be saved."
+
+msgid "Die Ansicht bleibt offen, damit nichts verloren geht. Ein zweiter Klick wechselt ohne Speichern."
+msgstr "The view stays open so nothing is lost. A second click switches without saving."
+
+msgid "Die Seite bleibt offen, damit nichts verloren geht. Ein zweiter Klick verlässt sie ohne Speichern."
+msgstr "The page stays open so nothing is lost. A second click leaves it without saving."
+
+msgid "Du bist noch angemeldet, damit nichts verloren geht. Ein zweiter Klick meldet ohne Speichern ab."
+msgstr "You are still signed in so nothing is lost. A second click signs out without saving."
+
+msgid "Nicht gespeichert"
+msgstr "Not saved"
+
+msgid "Seitenansicht: {seite} als Bild"
+msgstr "Page view: {seite} as an image"
+
+msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
+msgstr "The text of this page is available under “Show page text”."

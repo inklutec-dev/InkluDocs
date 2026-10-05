@@ -238,7 +238,7 @@
             + '<fieldset class="filter-fieldset" id="segFilterFieldset" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;margin:0;">'
             +   '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Übersetzungsstand filtern') + '</legend>' + filterChipsHtml()
             + '</fieldset>'
-            + '<p id="segFilterStatus" role="status" aria-live="polite" style="margin:0.5rem 0 0;color:var(--text-muted);"></p>'
+            + '<p id="segFilterStatus" style="margin:0.5rem 0 0;color:var(--text-muted);"></p>'
             + '</section>';
     }
     function rebuildFilterChips() {
@@ -510,15 +510,17 @@
     }
 
     // ─── Speichern (Handkorrektur), Filter ───
-    async function speichern(segId, text) {
+    // Rueckgabe true/false fuer das Register offener Speicherungen (app.html, 05.10.2026); keepalive beim Verlassen der Seite.
+    async function speichern(segId, text, optionen) {
         try {
-            const res = await fetch('/api/uebersetzung/segmente/' + segId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uebersetzung: text }) });
-            if (!res.ok) { announce(t('Speichern fehlgeschlagen.')); return; }
+            const res = await fetch('/api/uebersetzung/segmente/' + segId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', keepalive: !!(optionen && optionen.keepalive), body: JSON.stringify({ uebersetzung: text }) });
+            if (!res.ok) { announce(t('Speichern fehlgeschlagen.')); return false; }
             const d = await res.json();
             statusSetzen(segId, d);
             const ind = document.getElementById('seg_saved_' + segId);
             if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
-        } catch (e) { announce(t('Verbindungsfehler beim Speichern.')); }
+            return true;
+        } catch (e) { announce(t('Verbindungsfehler beim Speichern.')); return false; }
     }
 
     function statusSetzen(segId, d) {
@@ -557,6 +559,8 @@
         const st = document.getElementById('segFilterStatus');
         const text = filterModus === 'alle' ? t('Alle {n} Absätze angezeigt.', { n: sichtbar })
             : (filterModus === 'hinweis' ? t('{n} Absätze mit Hinweis werden angezeigt.', { n: sichtbar }) : t('{n} noch nicht übersetzte Absätze werden angezeigt.', { n: sichtbar }));
+        // Befund 6 (05.10.2026): Die Statuszeile ist keine Live-Region mehr — sie kam beim Oeffnen der Ansicht vor
+        // „Ansicht Übersetzung geöffnet.“ zu Wort. Gesprochen wird nur bei einer Filteraenderung, einmal ueber announce().
         if (st) st.textContent = text;
         if (!still) announce(text);
     }
@@ -567,7 +571,7 @@
             ta.addEventListener('input', () => {
                 const segId = Number(ta.dataset.segId);
                 // Offene Speicherung beim Ansichtswechsel sofort ausloesen (app.html, 05.10.2026)
-                if (typeof speicherungVormerken === 'function') { speicherungVormerken('segment_' + segId, () => speichern(segId, ta.value)); return; }
+                if (typeof speicherungVormerken === 'function') { speicherungVormerken('segment_' + segId, (o) => speichern(segId, ta.value, o)); return; }
                 clearTimeout(timer); timer = setTimeout(() => speichern(segId, ta.value), 800);
             });
         });
@@ -599,12 +603,16 @@
     }
 
     async function showProject(projectId, erneut) {
+        const lauf = typeof ansichtLaufMerken === 'function' ? ansichtLaufMerken() : 0;   // Befund 1 (05.10.2026): nur der juengste Ansichtswechsel zeichnet
+        const veraltet = () => typeof ansichtNochAktuell === 'function' && !ansichtNochAktuell(lauf);
         pollStoppen();
         const main = document.getElementById('main');
         const res = await fetch('/api/projects/' + projectId + '/uebersetzung', { credentials: 'same-origin' });
+        if (veraltet()) return;
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
+        if (veraltet()) return;
         const project = data.project;
         projektStatus = project.status || '';
         aktuelleDocs = data.documents || [];

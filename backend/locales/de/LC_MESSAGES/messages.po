@@ -11460,3 +11460,28 @@ msgstr "Seitentext geladen."
 
 msgid "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
 msgstr "Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen."
+
+# Ansichtswechsel-Korrektur 05.10.2026 (Pruefung Barrierefreiheit, Befunde 4, 7, 9)
+msgid "Achtung: 1 Eingabe konnte nicht gespeichert werden."
+msgstr "Achtung: 1 Eingabe konnte nicht gespeichert werden."
+
+msgid "Achtung: {n} Eingaben konnten nicht gespeichert werden."
+msgstr "Achtung: {n} Eingaben konnten nicht gespeichert werden."
+
+msgid "Die Ansicht bleibt offen, damit nichts verloren geht. Ein zweiter Klick wechselt ohne Speichern."
+msgstr "Die Ansicht bleibt offen, damit nichts verloren geht. Ein zweiter Klick wechselt ohne Speichern."
+
+msgid "Die Seite bleibt offen, damit nichts verloren geht. Ein zweiter Klick verlässt sie ohne Speichern."
+msgstr "Die Seite bleibt offen, damit nichts verloren geht. Ein zweiter Klick verlässt sie ohne Speichern."
+
+msgid "Du bist noch angemeldet, damit nichts verloren geht. Ein zweiter Klick meldet ohne Speichern ab."
+msgstr "Du bist noch angemeldet, damit nichts verloren geht. Ein zweiter Klick meldet ohne Speichern ab."
+
+msgid "Nicht gespeichert"
+msgstr "Nicht gespeichert"
+
+msgid "Seitenansicht: {seite} als Bild"
+msgstr "Seitenansicht: {seite} als Bild"
+
+msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
+msgstr "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."

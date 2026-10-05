@@ -1031,14 +1031,18 @@
     }
 
     async function showProject(projectId, erneut, neuerModus) {
+        const lauf = typeof ansichtLaufMerken === 'function' ? ansichtLaufMerken() : 0;   // Befund 1 (05.10.2026): nur der juengste Ansichtswechsel zeichnet
+        const veraltet = () => typeof ansichtNochAktuell === 'function' && !ansichtNochAktuell(lauf);
         if (neuerModus === 'dokument' || neuerModus === 'tagging') modus = neuerModus;
         projectId = Number(projectId);   // Adresse liefert Text, Knoepfe eine Zahl — ohne das ging der Klapp-Zustand verloren
         pollStoppen();
         const main = document.getElementById('main');
         const res = await fetch('/api/projects/' + projectId + '/dokument-ansicht', { credentials: 'same-origin' });
+        if (veraltet()) return;
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
+        if (veraltet()) return;
         const project = data.project;
         aktuelleDaten = data;
         istWord = project.project_type === 'docx';

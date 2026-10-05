@@ -281,20 +281,24 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/seitentext') : ('/api/images/' + imageId + '/seitentext');
     }
 
-    // ─── Offene Speicherungen (Ansichtswechsel-Umbau 05.10.2026) ─────────────
-    // Textfelder speichern 800 ms nach der letzten Eingabe. Bis 05.10. wartete darum jeder Ansichtswechsel fest
-    // 900 ms. Jetzt merkt sich jedes Feld seine anstehende Speicherung hier (Alt-Text hier, Quickinfo in formular.js,
-    // Uebersetzung in uebersetzen.js); der Wechsel loest sie SOFORT aus und wartet nur auf deren Antwort — ohne offene
-    // Eingabe 0 ms. Schon abgeschickte Speicherungen werden ebenso abgewartet (die neue Ansicht zeigt den neuen Stand).
+    // ─── Offene Speicherungen (Ansichtswechsel-Umbau 05.10.2026; Korrektur nach den Pruefungen, 05.10.2026) ────
+    // Textfelder speichern 800 ms nach der letzten Eingabe. Jedes Feld meldet seine anstehende Speicherung hier an
+    // (Alt-Text hier, Quickinfo in formular.js, Uebersetzung in uebersetzen.js). Die Speicherfunktion bekommt
+    // { keepalive } und liefert true (gespeichert) oder false (Fehler; die Meldung am Feld macht sie selbst).
+    // - Ansichtswechsel und Browser-Zurueck/Vor: alleAusstehendenSpeichern() loest sofort aus, wartet auf die Antworten
+    //   und liefert die Zahl der Fehlschlaege. Beim Ansichtswechsel bleibt die Ansicht dann offen (kein Datenverlust).
+    // - Seite verlassen (Neuladen, Tab schliessen, Zurueck auf eine andere Seite): pagehide/visibilitychange schicken
+    //   anstehende Speicherungen mit fetch(keepalive) ab. Interne Links (Seitenleiste) und „Abmelden“ warten vorher.
     const _ausstehendeSpeicherungen = new Map();   // Schluessel -> { fn, timer }
-    const _laufendeSpeicherungen = new Set();      // Promises abgeschickter Speicherungen
-    function _speicherungAusfuehren(schluessel, eintrag) {
+    const _laufendeSpeicherungen = new Set();      // Promises (true = gespeichert, false = Fehler)
+    function _speicherungAusfuehren(schluessel, eintrag, optionen) {
         if (_ausstehendeSpeicherungen.get(schluessel) === eintrag) _ausstehendeSpeicherungen.delete(schluessel);
         clearTimeout(eintrag.timer);
         let p;
-        try { p = Promise.resolve(eintrag.fn()); } catch (e) { p = Promise.resolve(); }
-        const q = p.catch(() => {}).finally(() => _laufendeSpeicherungen.delete(q));
+        try { p = Promise.resolve(eintrag.fn(optionen || {})); } catch (e) { p = Promise.resolve(false); }
+        const q = p.then(ok => ok !== false, () => false);
         _laufendeSpeicherungen.add(q);
+        q.then(() => _laufendeSpeicherungen.delete(q));
         return q;
     }
     function speicherungVormerken(schluessel, fn, verzoegerungMs) {
@@ -304,14 +308,63 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         eintrag.timer = setTimeout(() => _speicherungAusfuehren(schluessel, eintrag), verzoegerungMs == null ? 800 : verzoegerungMs);
         _ausstehendeSpeicherungen.set(schluessel, eintrag);
     }
+    // Liefert die Zahl der fehlgeschlagenen Speicherungen (0 = alles gespeichert oder nichts offen).
     async function alleAusstehendenSpeichern() {
         Array.from(_ausstehendeSpeicherungen.entries()).forEach(([k, e]) => _speicherungAusfuehren(k, e));
-        if (!_laufendeSpeicherungen.size) return;
+        if (!_laufendeSpeicherungen.size) return 0;
         // Obergrenze 8 s: haengt das Netz, laeuft das Speichern im Hintergrund weiter, der Wechsel wartet nicht ewig.
-        await Promise.race([Promise.all(Array.from(_laufendeSpeicherungen)), new Promise(r => setTimeout(r, 8000))]);
+        const ergebnis = await Promise.race([Promise.all(Array.from(_laufendeSpeicherungen)), new Promise(r => setTimeout(() => r(null), 8000))]);
+        return ergebnis ? ergebnis.filter(ok => !ok).length : 0;
     }
+    // Seite wird verlassen oder verdeckt: sofort und mit keepalive abschicken (der Browser fuehrt die Anfrage zu Ende).
+    function _speichernBeimVerlassen() {
+        Array.from(_ausstehendeSpeicherungen.entries()).forEach(([k, e]) => _speicherungAusfuehren(k, e, { keepalive: true }));
+    }
+    window.addEventListener('pagehide', _speichernBeimVerlassen);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _speichernBeimVerlassen(); });
+    // Sichtbare und angesagte Meldung, wenn Speichern fehlschlug (Befund 4): steht unter dem Projektkopf der Ansicht.
+    function speicherFehlerSatz(anzahl) {
+        return anzahl === 1 ? t('Achtung: 1 Eingabe konnte nicht gespeichert werden.')
+            : t('Achtung: {n} Eingaben konnten nicht gespeichert werden.', { n: anzahl });
+    }
+    function speicherFehlerMelden(anzahl, zusatz, ansage) {
+        const text = speicherFehlerSatz(anzahl) + (zusatz ? ' ' + zusatz : '');
+        let box = document.getElementById('speicherWarnung');
+        if (!box) {
+            box = document.createElement('p');
+            box.id = 'speicherWarnung';
+            box.className = 'speicher-warnung';
+            const kopf = main.querySelector('.projekt-kopf') || main.querySelector('.card');
+            if (kopf) kopf.after(box); else main.prepend(box);
+        }
+        box.textContent = text;
+        box.hidden = false;
+        if (ansage !== false) announce(text);
+        return text;
+    }
+    // Interne Links (Seitenleiste, Ablage, Dashboard …): erst speichern, dann gehen (Befund 7). Neuer Tab/Fenster,
+    // Download, reine Sprungmarken und Links mit eigenem Klick-Handler (Ansichts-Knoepfe) bleiben unberuehrt.
+    document.addEventListener('click', async (ev) => {
+        if (!_ausstehendeSpeicherungen.size && !_laufendeSpeicherungen.size) return;
+        if (ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+        const a = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
+        if (!a || a.hasAttribute('onclick') || a.target === '_blank' || a.hasAttribute('download')) return;
+        const roh = a.getAttribute('href') || '';
+        if (roh.startsWith('#') || roh.startsWith('javascript:')) return;
+        const ziel = new URL(a.href, window.location.href);
+        if (ziel.origin !== window.location.origin) return;
+        ev.preventDefault();
+        const fehler = await alleAusstehendenSpeichern();
+        if (fehler) {
+            // Die fehlgeschlagene Speicherung ist damit erledigt: ein zweiter Klick findet nichts Offenes und geht.
+            speicherFehlerMelden(fehler, t('Die Seite bleibt offen, damit nichts verloren geht. Ein zweiter Klick verlässt sie ohne Speichern.'));
+            return;
+        }
+        window.location.href = ziel.href;
+    }, true);
     window.speicherungVormerken = speicherungVormerken;
     window.alleAusstehendenSpeichern = alleAusstehendenSpeichern;
+    window.speicherFehlerMelden = speicherFehlerMelden;
 
     // ─── Init ────────────────────────────────────────
     async function init() {
@@ -476,6 +529,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // zuerst, wo man ist („Abschlussprüfung – Projekt: …“), ohne erst die Knoepfe abzusuchen (WCAG 2.4.2 Seitentitel,
     // 2.4.6 Ueberschriften). Der Seitentitel behaelt den Zusatz der Grundseite („InkluDocs“, auf Staging „(Testumgebung)“).
     const _basisTitel = document.title;
+    // Seitentitel mit Projektname auch dort, wo kein Projektkopf mit Ansichts-Wahl steht (Gastansicht, Grafik, Web,
+    // eigenstaendige Formulare; Befund 10, WCAG 2.4.2).
+    function seitentitelProjekt(name) {
+        document.title = t('Projekt: {name}', { name: name }) + ' · ' + _basisTitel;
+    }
+    window.seitentitelProjekt = seitentitelProjekt;
     function projektKopfHtml(project, ansicht, titel, zusatz) {
         const station = ansichtNamen()[ansicht] || '';
         const projekt = t('Projekt: {name}', { name: titel });
@@ -497,14 +556,30 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     window.mitProjektKopf = mitProjektKopf;
     window.projektKopfHtml = projektKopfHtml;
     window.funktionenKarteHtml = funktionenKarteHtml;
+    // Ansage nach einem Wechsel (eine einzige, Review 2 Befund 6).
+    function ansichtGeoeffnetText(ziel) {
+        return ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : ziel === 'tagging' ? t('Ansicht Tagging geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Barrierefreiheitsprüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.'))));
+    }
+    // Wechsel-Zaehler (Befunde 1 und 2 der Pruefung 05.10.2026): Nur der juengste Wechsel (Knopf oder Browser-
+    // Zurueck/Vor) setzt die Adresse, den Fokus und die Ansage; ein ueberholter Aufruf endet still.
+    let _wechselLauf = 0;
     async function wechsleAnsicht(projectId, zielAnsicht) {
         const ziel = zielAnsicht || 'alttexte';
         const grund = ansichtGesperrtWeil(currentProjectFuerAnsicht || {}, ziel);
         if (grund) { announce(t('Diese Ansicht ist nicht verfügbar: {grund}', { grund: grund })); return; }
         if (ziel === aktuelleAnsicht(currentProjectFuerAnsicht || {})) { announce(t('Diese Ansicht ist schon geöffnet.')); return; }
+        const wl = ++_wechselLauf;
         // Offene Eingaben SOFORT speichern und auf die Antwort warten (05.10.2026; vorher feste 900 ms Wartezeit
         // fuer das Auto-Speichern mit 800 ms Entprellung — bei jedem Wechsel, auch ohne Eingabe).
-        await alleAusstehendenSpeichern();
+        const fehler = await alleAusstehendenSpeichern();
+        if (wl !== _wechselLauf) return;
+        if (fehler) {
+            // Speichern schlug fehl: Ansicht bleibt offen, die Eingabe steht noch im Feld (Befund 4). Die fehlgeschlagene
+            // Speicherung ist erledigt — ein zweiter Klick findet nichts Offenes und wechselt ohne Speichern; wer neu tippt,
+            // bekommt beim naechsten Fehlschlag wieder diese Meldung.
+            speicherFehlerMelden(fehler, t('Die Ansicht bleibt offen, damit nichts verloren geht. Ein zweiter Klick wechselt ohne Speichern.'));
+            return;
+        }
         const url = new URL(window.location.href);
         url.searchParams.set('projekt', projectId);
         url.searchParams.set('ansicht', ziel);
@@ -513,17 +588,32 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (currentProjectFuerAnsicht) currentProjectFuerAnsicht.letzte_ansicht = ziel;
         fetch('/api/projects/' + projectId + '/ansicht', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ansicht: ziel }) }).catch(() => {});
         await showProject(projectId);
+        if (wl !== _wechselLauf) return;   // ueberholt: kein Fokus, keine Ansage (der juengste Wechsel sagt an)
         // Fokus einheitlich auf die H1 der neuen Ansicht (Review 2, Befund 6), danach die Ansage —
         // sonst landet VoiceOver nach dem Wechsel auf „Alt-Texte“ auf dem Seitenanfang.
         const h1 = document.getElementById('projectName');
         if (h1) h1.focus();
-        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : ziel === 'tagging' ? t('Ansicht Tagging geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Barrierefreiheitsprüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.')))));
+        announce(ansichtGeoeffnetText(ziel));
     }
     window.wechsleAnsicht = wechsleAnsicht;
     let currentProjectFuerAnsicht = null;
+    // Browser-Zurueck/Vor innerhalb des Projekts (Befund 8): wie ein Wechsel — offene Eingaben speichern, Ansicht
+    // zeichnen, dann Fokus auf die H1 und EINE Ansage. Die Adresse ist hier schon gewechselt; schlug Speichern fehl,
+    // steht die Meldung sichtbar in der neuen Ansicht und haengt an der Ansage.
     window.addEventListener('popstate', async () => {
         const pid = new URLSearchParams(window.location.search).get('projekt');
-        if (pid && !window.GUEST_MODE) { await alleAusstehendenSpeichern(); showProject(pid); }
+        if (!pid || window.GUEST_MODE) return;
+        const wl = ++_wechselLauf;
+        const fehler = await alleAusstehendenSpeichern();
+        if (wl !== _wechselLauf) return;
+        await showProject(pid);
+        if (wl !== _wechselLauf) return;
+        const h1 = document.getElementById('projectName');
+        if (h1) h1.focus();
+        const mehrereAnsichten = currentProjectFuerAnsicht && ansichtenFuer(currentProjectFuerAnsicht).length > 1;
+        const text = mehrereAnsichten ? ansichtGeoeffnetText(aktuelleAnsicht(currentProjectFuerAnsicht)) : '';
+        if (fehler) { speicherFehlerMelden(fehler, '', false); announce((text ? text + ' ' : '') + speicherFehlerSatz(fehler)); }
+        else if (text) announce(text);
     });
 
     // ─── Project Detail ──────────────────────────────
@@ -975,6 +1065,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
     // erneut (Pruefung 4, M2): stilles Nachziehen nach einer Chat-Aktion — die Unteransichten setzen dann keinen Fokus auf die H1.
     let _showProjectLauf = 0;   // Zaehler je Aufruf: nur der juengste Aufruf zeichnet (schnelle Wechsel, 05.10.2026)
+    // Die Unteransichten (dokument.js, abschluss.js, uebersetzen.js, formular.js) merken sich beim Start den Stand und
+    // zeichnen nur, solange kein neuerer showProject-Aufruf begonnen hat (Befund 1 der Pruefung 05.10.2026).
+    function ansichtLaufMerken() { return _showProjectLauf; }
+    function ansichtNochAktuell(lauf) { return lauf === _showProjectLauf; }
+    window.ansichtLaufMerken = ansichtLaufMerken;
+    window.ansichtNochAktuell = ansichtNochAktuell;
     async function showProject(projectId, erneut) {
         erneut = erneut === true;
         if (window.vorlesenStopp) vorlesenStopp();   // Vorlesen endet mit der Ansicht (Pruefbericht 24.09.2026)
@@ -1166,6 +1262,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // (updateProjectHeader schreibt hinein), nur unsichtbar. Korb C (Steve 17.07.2026): die fruehere
         // Gast-Rollenzeile „Du prüfst dieses Projekt als …" unter der H1 ist entfallen.
         const headInfoHtml = `<div class="card-info" id="projectHeadInfo" hidden>${headInfo}</div>`;
+        if (!mitProjektKopf(project)) seitentitelProjekt(headTitle);
         const kopfHtml = mitProjektKopf(project)
             ? projektKopfHtml(project, 'alttexte', headTitle, headInfoHtml) + funktionenKarteHtml(aktionenHtml)
             : `<div class="card">
@@ -2679,15 +2776,23 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Schalter; der Text ersetzt den Platzhalter. Nur wenn das Laden laenger als 1 s dauerte, sagt eine kurze Meldung
     // „Seitentext geladen.“ an. Fehler: verstaendlicher Satz im Bereich, erneutes Aufklappen versucht es noch einmal.
     const _seitentextCache = new Map();   // Bild-ID -> Text (ueberlebt das Neu-Zeichnen waehrend eines Laufs)
+    // Ansage „Seitentext geladen.“, wenn jemand die Klappe geoeffnet hat und spuerbar warten musste (Befund 3 der
+    // Pruefung 05.10.2026: vorher kam die Ansage nie, weil das Vorladen schon lief).
+    const SEITENTEXT_ANSAGE_AB_MS = 500;
     async function seitentextLaden(det, ansagen) {
         const id = Number(det.dataset.seitentextBild);
         const ziel = det.querySelector('.page-text-content');
-        if (!id || !ziel || det.dataset.geladen) return;
-        det.dataset.geladen = 'laedt';
-        const start = performance.now();
+        if (!id || !ziel || det.dataset.geladen === '1') return;
+        // Merker: Die Klappe ist offen, ab jetzt wartet jemand. Laeuft das Laden schon (Vorladen beim Aufklappen der
+        // Seite), sagt der laufende Abruf am Ende an.
+        if (ansagen && det.open && !det._wartetSeit) det._wartetSeit = performance.now();
+        if (det._laedt) return;
+        det._laedt = true;
         try {
             let text = _seitentextCache.get(id);
             if (text == null) {
+                ziel.setAttribute('aria-busy', 'true');
+                ziel.textContent = t('Seitentext wird geladen …');
                 const r = await fetch(seitentextUrl(id), { credentials: 'same-origin' });
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 text = ((await r.json()).text) || '';
@@ -2696,11 +2801,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             ziel.textContent = text;   // Text, kein HTML (vorher esc() im Markup)
             ziel.removeAttribute('aria-busy');
             det.dataset.geladen = '1';
-            if (ansagen && det.open && performance.now() - start > 1000) announce(t('Seitentext geladen.'));
+            if (det.open && det._wartetSeit && performance.now() - det._wartetSeit >= SEITENTEXT_ANSAGE_AB_MS) announce(t('Seitentext geladen.'));
         } catch (e) {
-            ziel.textContent = t('Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen.');
+            const satz = t('Der Seitentext konnte nicht geladen werden. Bitte zuklappen und erneut aufklappen.');
+            ziel.textContent = satz;
             ziel.removeAttribute('aria-busy');
-            delete det.dataset.geladen;
+            if (det.open) announce(satz);   // Befund 5: Fehler auch ansagen, wenn die Klappe offen ist
+        } finally {
+            det._laedt = false;
+            det._wartetSeit = 0;
         }
     }
     function seitentextVorladen(seite) {
@@ -2972,10 +3081,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // loading="lazy" — in einer zugeklappten Klappe laedt der Browser es erst beim Aufklappen (vorher lud die
             // Ansicht beim ersten Oeffnen ALLE Seitenbilder, bei 7 PDF 119 Bilder mit 46 MB). Der Seitentext kommt aus
             // /seitentext, sobald die Seite aufgeklappt wird (seitentextVorladen), spaetestens beim Aufklappen der Klappe.
+            // Befund 9 (05.10.2026): das Seitenbild hat einen Namen; der Hinweis nennt die Textfassung der Seite.
+            const seitenName = wordAbschnitt(first.document_id) ? t('Abschnitt {n}', { n: pageNum }) : t('Seite {n}', { n: pageNum });
             const pageView = (first.hat_seitenansicht || first.page_view_path)
                 ? `<details class="page-view-details">
                     <summary>${t('Seitenansicht anzeigen')}</summary>
-                    <img src="${pageViewUrl(first.id)}" alt="" class="page-view-image" loading="lazy">
+                    <img src="${pageViewUrl(first.id)}" alt="${t('Seitenansicht: {seite} als Bild', { seite: seitenName })}" class="page-view-image" loading="lazy">
+                    ${(first.hat_seitentext || first.page_text) ? '<p class="feld-hinweis">' + t('Den Text dieser Seite gibt es unter „Seitentext anzeigen“.') + '</p>' : ''}
                 </details>` : '';
             const seitentextBekannt = first.page_text || _seitentextCache.get(first.id);
             const pageTextBlock = seitentextBekannt ? `
@@ -3243,13 +3355,26 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // sofort aus (speicherungVormerken/alleAusstehendenSpeichern, 05.10.2026).
         document.querySelectorAll('.alt-text-field:not(.langtext-field)').forEach(ta => {
             ta.addEventListener('input', () => {
-                speicherungVormerken('alttext_' + ta.dataset.imageId, async () => {
+                speicherungVormerken('alttext_' + ta.dataset.imageId, async (optionen) => {
                     const id = ta.dataset.imageId;
-                    const res = await fetch(altTextSaveUrl(id), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ alt_text: ta.value }),
-                    });
+                    const ind = document.getElementById('saved_' + id);
+                    let res;
+                    try {
+                        res = await fetch(altTextSaveUrl(id), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            keepalive: !!(optionen && optionen.keepalive),   // Seite wird verlassen (pagehide)
+                            body: JSON.stringify({ alt_text: ta.value }),
+                        });
+                    } catch (e) { res = null; }
+                    // Befund 4 (05.10.2026): nie „Gespeichert“ bei einem Fehler; am Feld sichtbar und angesagt.
+                    if (!res || !res.ok) {
+                        if (ind) { ind.textContent = t('Nicht gespeichert'); ind.classList.add('visible', 'fehler'); }
+                        announce(res ? t('Speichern fehlgeschlagen.') : t('Verbindungsfehler beim Speichern.'));
+                        return false;
+                    }
+                    if (ind && ind.classList.contains('fehler')) { ind.textContent = t('Gespeichert'); ind.classList.remove('fehler'); }
                     // Rollen-Workflow: Editieren ohne Status -> Server meldet 'in_bearbeitung'.
                     if (window.GUEST_MODE && res.ok) {
                         // Etappe-3-Glaettung: erstes Fuellen eines leeren Alt-Felds blendet
@@ -3278,8 +3403,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             }
                         } catch (e) { /* reine Anzeige */ }
                     }
-                    const ind = document.getElementById('saved_' + id);
                     if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
+                    return true;
                 });
             });
         });
