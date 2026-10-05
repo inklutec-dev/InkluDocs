@@ -99,6 +99,7 @@ Die sechs Bausteine:
 - Abrechnung: `backend/billing.py` (AKTIONS_PREISE: eine Zeile je kostenpflichtiger Aktion, GUELTIGE_QUELLEN)
 - KI-Kosten je Aufruf: `backend/ki_kosten.py` (Kern, Kontext, Preise), `backend/ki_kosten_api.py`, `templates/verwaltung_ki_kosten.html`, `docs/KI_KOSTEN.md` — neue KI-Funktionen: Zweck eintragen, Fachfunktion mit `@ki_kosten.fuer_zweck` versehen
 - Datenbank und Migrationen: `backend/database.py`
+- Leistung der Ansichten, Texte einmal je Projekt (05.10.2026): `backend/projekt_texte.py` (KI-Kontext und Seitentext in `projekt_texte`, Bild verweist darauf), `backend/scripts/texte_migration.py`, Projektkopf `/api/projects/{id}/kopf`, Seitentext beim Aufklappen; Messreihe `tests/e2e/mess_ansichtswechsel.py`, Klicktest `ui_ansichtswechsel.py`, `docs/ANSICHTEN_LEISTUNG.md` — Bildliste ohne große Felder, Kontext nur über `projekt_texte.bild_kontext`
 - Ablage („Meine Ablage“): `main.py` (`_ausgabe_anlegen`, `_pdf_in_ablage`), `templates/ablage.html`
 - Chatbot-Kern: `backend/inkluagent/agent_loop.py` (Weiche `_werkzeugsatz`), `chat_engine.py`, `providers/`
 - Übersetzungen der Oberfläche: `backend/locales/<lang>/LC_MESSAGES/messages.po`, Prüfung `backend/scripts/check_i18n.py`
