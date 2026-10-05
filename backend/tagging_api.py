@@ -543,14 +543,16 @@ def urteil(doc: dict, struktur: dict, pruef: dict, verapdf: dict) -> dict:
     return {"stufe": "pruefung_empfohlen", "aktion": "pruefung", "technisch": technisch, "ki_hoch": None}
 
 
-def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
-    """Alles, was die Ansicht „Dokument“ zum Tagging braucht."""
+def stand(conn, project: dict, doc: dict, user_id: int, vorab: Optional[dict] = None) -> dict:
+    """Alles, was die Ansicht „Dokument“ zum Tagging braucht. vorab: gemerkte Kennzahlen aus _struktur_daten
+    (Seitenzahl, quelle_getaggt) — dann wird die Datei nicht noch einmal geoeffnet (05.10.2026)."""
     try:
         _verapdf_beim_upload(conn, doc)
     except Exception as e:  # noqa: BLE001
         log.warning("[tagging] veraPDF beim Upload nicht moeglich: %r", e)
-    seiten = _seiten(doc)
-    schon_getaggt = quelle_getaggt(doc)
+    vorab = vorab or {}
+    seiten = vorab["seiten"] if "seiten" in vorab else _seiten(doc)
+    schon_getaggt = vorab["quelle_getaggt"] if "quelle_getaggt" in vorab else quelle_getaggt(doc)
     pruefung = _d.billing.aktion_pruefung(user_id, AKTION, seiten) if seiten else None
     # „mit Alt-Text“ wie im Herunterladen-Dialog und in der Hoerprobe (Pruefung Barrierefreiheit 30.09.2026, Punkt 11):
     # sichtbarer Text = eigener Text, sonst KI-Text, sonst der Text aus der Datei (main._display_alt_text); dekorativ zaehlt
@@ -590,8 +592,8 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
     }
 
 
-def stand_mit_urteil(conn, project: dict, doc: dict, user_id: int, struktur: dict) -> dict:
-    s = stand(conn, project, doc, user_id)
+def stand_mit_urteil(conn, project: dict, doc: dict, user_id: int, struktur: dict, vorab: Optional[dict] = None) -> dict:
+    s = stand(conn, project, doc, user_id, vorab)
     s["urteil"] = urteil(doc, struktur, s["pruefung"], _verapdf_stand(doc))
     return s
 
@@ -636,6 +638,54 @@ def _metadaten(doc: dict) -> dict:
     return out
 
 
+# ─── Gemerkte Struktur-Kennzahlen (Ansichtswechsel-Umbau 05.10.2026, docs/ANSICHTEN_LEISTUNG.md) ──────────────
+# tag_statistik liest den ganzen Strukturbaum (pikepdf), _metadaten und _seiten oeffnen die Dateien mit fitz — bisher bei
+# JEDEM Aufruf der Ansichten Dokument, Tagging und Pruefung (bei 7 PDF rund 0,2 s). Jetzt einmal je Dateistand in
+# documents.struktur_json; struktur_stand haelt Pfad, Aenderungszeit und Groesse beider Dateien fest. Schreibt das
+# Tagging, die Korrektur oder ein neuer Upload die Datei neu, passt der Stempel nicht mehr und es wird neu gerechnet —
+# ohne dass jeder Schreibweg daran denken muss. _STRUKTUR_VERSION erhoehen, wenn sich die Berechnung aendert.
+_STRUKTUR_VERSION = 1
+
+
+def _datei_stempel(doc: dict) -> str:
+    teile = []
+    for k in ("original_path", "roh_path"):
+        pfad = doc.get(k) or ""
+        if not pfad:
+            teile.append(f"{k}=")
+            continue
+        try:
+            st = os.stat(pfad)
+            teile.append(f"{k}={pfad}:{st.st_mtime_ns}:{st.st_size}")
+        except OSError:
+            teile.append(f"{k}={pfad}:fehlt")
+    return "|".join(teile) + f"|v{_STRUKTUR_VERSION}"
+
+
+def _struktur_daten(conn, doc: dict) -> dict:
+    """Seitenzahl, Struktur, Metadaten (und bei Rohdatei quelle_getaggt) eines Dokuments — gemerkt je Dateistand."""
+    stempel = _datei_stempel(doc)
+    if doc.get("struktur_stand") == stempel and doc.get("struktur_json"):
+        try:
+            gemerkt = json.loads(doc["struktur_json"])
+            if isinstance(gemerkt, dict) and "struktur" in gemerkt:
+                return gemerkt
+        except Exception:  # noqa: BLE001
+            pass
+    daten = {"seiten": _seiten(doc), "struktur": _struktur(doc), "meta": _metadaten(doc)}
+    if doc.get("roh_path"):
+        daten["quelle_getaggt"] = quelle_getaggt(doc)
+    # Nur ein gelungenes Lesen merken (leere Struktur = Lesefehler: beim naechsten Aufruf erneut versuchen).
+    if daten["struktur"] and doc.get("id"):
+        try:
+            conn.execute("UPDATE documents SET struktur_json = ?, struktur_stand = ? WHERE id = ?",
+                         (json.dumps(daten, ensure_ascii=False), stempel, doc["id"]))
+            conn.commit()
+        except Exception as e:  # noqa: BLE001
+            log.warning("[tagging] Struktur-Kennzahlen fuer Dokument %s nicht gemerkt: %r", doc.get("id"), e)
+    return daten
+
+
 _PROJEKT_FELDER = ("id", "name", "filename", "status", "tool", "project_type", "total_images", "processed_images",
                    "alt_language", "use_context", "prompt_id", "created_at", "updated_at", "lauf_hinweis", "letzte_ansicht")
 
@@ -656,10 +706,11 @@ def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
         eintrag["quickinfos_bearbeitet"] = sum(
             1 for f in conn.execute("SELECT quickinfo, quickinfo_original FROM formularfelder WHERE document_id = ?", (d["id"],)).fetchall()
             if " ".join((f["quickinfo"] or "").split()) and " ".join((f["quickinfo"] or "").split()) != " ".join((f["quickinfo_original"] or "").split()))
-        eintrag["seiten"] = _seiten(d)
-        eintrag["struktur"] = _struktur(d)
-        eintrag["meta"] = _metadaten(d)
-        eintrag["tagging"] = stand_mit_urteil(conn, project, d, user_id, eintrag["struktur"])
+        kennzahlen = _struktur_daten(conn, d)   # gemerkt je Dateistand (05.10.2026)
+        eintrag["seiten"] = kennzahlen["seiten"]
+        eintrag["struktur"] = kennzahlen["struktur"]
+        eintrag["meta"] = kennzahlen["meta"]
+        eintrag["tagging"] = stand_mit_urteil(conn, project, d, user_id, eintrag["struktur"], kennzahlen)
         aussen.append(eintrag)
     projekt_aussen = {k: project.get(k) for k in _PROJEKT_FELDER}
     projekt_aussen["hat_felder"] = sum(e["felder"] for e in aussen)
@@ -1223,28 +1274,32 @@ def build_router(deps: Deps) -> APIRouter:
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, lesen)
 
-    @router.get("/api/projects/{project_id}/dokument-ansicht")
-    async def ansicht(project_id: int, user: dict = Depends(_user())):
-        """Datenquelle der Ansicht „Dokument“ (nur Besitzer). PDF-Projekte: dokument_ansicht (hier). Word-Projekte seit
-        30.09.2026 ueber dieselbe Adresse, Daten aus main._word_dokument_ansicht (Dokumentinfos ohne KI, letzte
-        barrierefreie PDF) — im Executor, weil sie die Word-Dateien liest."""
+    def _ansicht_sync(project_id: int, user_id: int) -> dict:
+        """Synchroner Teil der Route (Executor, eigene Verbindung im Worker-Thread; 05.10.2026: vorher lief die ganze
+        Ansicht — Dateien oeffnen, Strukturbaum lesen — im Event-Loop und hielt alle anderen Anfragen an)."""
         conn = _d.get_db()
         try:
-            project = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
+            project = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
             if not project:
                 raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
             project = dict(project)
             if project.get("project_type") == "docx" and _d.word_ansicht:
                 conn.close()
                 conn = None
-                loop = asyncio.get_running_loop()
-                return await loop.run_in_executor(None, _d.word_ansicht, project, user["id"])
+                return _d.word_ansicht(project, user_id)
             if project.get("project_type") not in TAGGING_PROJEKTE or project.get("tool") not in TAGGING_WERKZEUGE:
                 raise HTTPException(status_code=400, detail="Die Ansicht Dokument gibt es nur für PDF-Projekte")
-            return dokument_ansicht(conn, project, user["id"])
+            return dokument_ansicht(conn, project, user_id)
         finally:
             if conn is not None:
                 conn.close()
+
+    @router.get("/api/projects/{project_id}/dokument-ansicht")
+    async def ansicht(project_id: int, user: dict = Depends(_user())):
+        """Datenquelle der Ansicht „Dokument“ (nur Besitzer). PDF-Projekte: dokument_ansicht (hier). Word-Projekte seit
+        30.09.2026 ueber dieselbe Adresse, Daten aus main._word_dokument_ansicht (Dokumentinfos ohne KI, letzte
+        barrierefreie PDF). Beides im Executor."""
+        return await asyncio.get_running_loop().run_in_executor(None, _ansicht_sync, project_id, user["id"])
 
     @router.get("/api/projects/{project_id}/documents/{document_id}/vorschau")
     async def vorschau(project_id: int, document_id: int, user: dict = Depends(_user())):
