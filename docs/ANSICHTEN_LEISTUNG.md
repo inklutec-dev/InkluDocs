@@ -141,6 +141,18 @@ Probe auf einer Kopie der Staging-Datenbank (05.10.2026, 2.717 Bilder):
   `tests/test_projekt_schlank.py` (schlanke Antwort, Kopf, Seitentext, API v1, Chatbot und Pipeline mit byte-gleichem
   Kontext, Struktur-Merker).
 
+Staging 05.10.2026 (nach Rebuild und Migration, 7 PDF, Median je Ansicht):
+- vorher ohne Leitungsgrenze 2,05 bis 2,69 s (bei 50 Mbit/s 9,1 bis 9,8 s, bei 16 Mbit/s 24 bis 25 s, Messung vom Mittag);
+- nachher ohne Leitungsgrenze 130 bis 202 ms, bei 50 Mbit/s 153 bis 246 ms, bei 16 Mbit/s 185 bis 269 ms;
+- Projektantwort 195 KB statt 43,8 MB; beim ersten Öffnen der Alt-Texte keine Seitenansicht-Anfrage;
+- Aufklappen: Seite 55 bis 66 ms, Seitentext ohne Vorlauf 10 bis 41 ms, Seitenansicht 34 ms (50 Mbit/s 117 ms, 16 Mbit/s 300 ms).
+
+Migration auf Staging (05.10.2026, 2.448 Bilder in 100 Projekten):
+- Phase A 0,8 s, Phase B 0,3 s, Prüfung ohne Befund, Fingerabdruck 0 Abweichungen;
+- 1.639 Texte mit 2,2 Mio. Zeichen statt 41,7 Mio. Zeichen Kontext und 2,4 Mio. Zeichen Seitentext;
+- Datei 97,6 → 6,9 MB, gesamt 2 s;
+- Kundenprojekt 957: Projektantwort 233 KB statt 40,2 MB.
+
 Gemessen nach dem Umbau (Wegwerf-Container mit Kopie der Staging-Daten, 7 PDF, nach der Migration):
 - ohne Leitungsgrenze 150 bis 210 ms;
 - 50 Mbit/s 155 bis 220 ms;
