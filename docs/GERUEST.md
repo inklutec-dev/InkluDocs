@@ -87,9 +87,9 @@ Die sechs Bausteine:
 
 ## Express-Service (Profis bereiten auf, Stufe 1, nur Staging)
 
-- Kern: `backend/express.py` (Warenkorb, Bestellung, Vormerkung, Liefern, Storno, Erinnerungen, Nachweis)
+- Kern: `backend/express.py` (Dateitypen und Leistungen als erweiterbare Liste `DATEITYPEN`/`LEISTUNGEN`, Warenkorb, Bestellung, Vormerkung, Liefern, Storno, Erinnerungen, Aufbewahrung, Nachweis)
 - Endpunkte: `backend/express_api.py` (Kunde und Verwaltung, Mails); Guthaben `billing.vorgemerkt`; Schalter `funktionen.EXPRESS`
-- Oberfläche: `templates/express.html`, `express_auftrag.html`, `express_bedingungen.html`, `verwaltung_express.html`, `verwaltung_express_auftrag.html`; Link in `frontend/dokument.js`
+- Oberfläche: `templates/express.html`, `express_auftrag.html`, `express_bedingungen.html`, `verwaltung_express.html`, `verwaltung_express_auftrag.html`; Hochlade-Komponente `frontend/hochladefeld.js` (wie die Projekt-Hochladefläche); Link in `frontend/dokument.js`
 - Prompt und Schema: keine (Handarbeit)
 - Chatbot: bewusst noch keiner (zahlungspflichtige Bestellung nur über den Knopf), siehe Doku
 - Tests und Doku: `tests/test_express.py`, `tests/e2e/verify_express.py`, `ui_express.py`, `docs/EXPRESS_SERVICE.md`

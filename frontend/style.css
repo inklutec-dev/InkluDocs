@@ -95,6 +95,8 @@ input:focus {
 }
 .btn-full:hover { background: var(--accent-hover); }
 .btn-full:focus { outline: none; box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.4); }
+/* Tastaturfokus deutlich (05.10.2026, wie .btn): der Schimmer allein hatte deutlich unter 3:1. */
+.btn-full:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .error-message {
     color: var(--error);
     font-weight: 600;
@@ -310,6 +312,8 @@ header h1 { font-size: 1.3rem; color: white; }
 }
 .header-btn:hover { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.1); }
 .header-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.5); }
+/* Auf dem dunklen Kopf: weisser Ring (wie die Seitenleiste in dashboard.css). */
+.header-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .header-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
 /* Main content */
@@ -870,6 +874,7 @@ header h1 { font-size: 1.3rem; color: white; }
     font-weight: 600;
 }
 .back-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.3); border-radius: 4px; }
+.back-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* Empty state */
 .empty-state { text-align: center; color: var(--text-muted); padding: 2rem; }
@@ -1122,6 +1127,8 @@ header h1 { font-size: 1.3rem; color: white; }
    etwa 2,3:1 — dazu jetzt derselbe Ring wie an allen Knoepfen (05.10.2026, Hochladefeld fuer Express). */
 input[type="file"]:focus + .upload-btn { box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
 input[type="file"]:focus-visible + .upload-btn { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* Hochladefeld ausserhalb einer Karte (Express): Abstand zum Folgenden wie bei den Karten. */
+.proj-dropzone.hochladefeld:not(.card) { margin: 1rem 0 1.75rem; }
 /* Fehler am Hochladefeld (aria-invalid): Rahmen der Flaeche in Fehlerfarbe — nicht nur Farbe, der Text steht darunter. */
 .proj-dropzone.hochladefeld-fehler .dropzone-inner { border-color: var(--error); }
 

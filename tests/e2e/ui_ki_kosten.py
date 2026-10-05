@@ -97,7 +97,10 @@ try:
               pg.locator(".verwaltung-nav a[aria-current=page]").inner_text().strip() == "KI-Kosten")
         check("Monatsüberschrift nennt den Monat", pg.locator("#h-ki-monat").inner_text().startswith("KI-Kosten im "), pg.locator("#h-ki-monat").inner_text())
         zahlen = pg.locator("#kiZahlen").inner_text()
-        check("Kennzahlen: KI-Kosten, Umsatz, Bleibt, Aufrufe", all(w in zahlen for w in ("KI-Kosten:", "Umsatz:", "Bleibt nach KI-Kosten:", "KI-Aufrufe:")), zahlen)
+        # Beschriftung seit der Korrekturrunde 05.10.2026: netto/§ 19 UStG ausdruecklich (Pruefung Entwicklung, Befund 13).
+        check("Kennzahlen: KI-Kosten, Umsatz, Bleibt, Aufrufe", all(w in zahlen for w in (
+            "KI-Kosten (Listenpreise netto):", "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG):", "Bleibt nach KI-Kosten:",
+            "KI-Aufrufe:")), zahlen)
         check("Monatsauswahl hat Einträge", pg.locator("#kiZeitraum option").count() >= 1)
         check("Zweck Alt-Texte gelistet", "Alt-Texte:" in pg.locator("#kiZwecke").inner_text())
         check("„Ohne Zuordnung“ gelistet", "Ohne Zuordnung" in pg.locator("#kiKunden").inner_text())
@@ -111,7 +114,8 @@ try:
         kunde = eintrag.locator("details").first
         kunde.locator("summary").first.click()
         pg.wait_for_timeout(1000)
-        projekt = kunde.locator("details", has=pg.locator("summary", has_text="2 Aufrufe"))
+        # Gelöschte Projekte tragen seit 05.10.2026 ihre Nummer (Prüfung Barrierefreiheit, Befund 16) — eindeutig.
+        projekt = kunde.locator("details", has=pg.locator("summary", has_text="Gelöschtes Projekt 999001:"))
         check("Projekte des Kunden geladen (fiktives Projekt mit 2 Aufrufen)", projekt.count() == 1, kunde.inner_text())
         projekt.locator("summary").click()
         pg.wait_for_timeout(1000)
@@ -121,11 +125,15 @@ try:
         # Preisliste + Dialoge (ohne zu speichern)
         check("Preisliste nennt gemini-3.1-pro-preview", "gemini-3.1-pro-preview" in pg.locator("#kiPreise").inner_text())
         check("Wechselkurs genannt", "1 US-Dollar =" in pg.locator("#kiPreise").inner_text())
-        knopf = pg.locator("#kiPreise button", has_text="Preis ändern").first
-        check("Voll-Admin sieht „Preis ändern“", knopf.count() == 1)
+        # Knopf von Gemini Pro (hat die Staffel über 200.000 Tokens); sichtbarer Text + versteckter Modellname (Befund 17).
+        knopf = pg.locator("#kiPreise li", has_text="gemini-3.1-pro-preview:").locator("button", has_text="Preis ändern").first
+        check("Voll-Admin sieht „Preis ändern“ (Name mit Modell, ohne aria-label)", knopf.count() == 1
+              and knopf.get_attribute("aria-label") is None and "für gemini-3.1-pro-preview" in knopf.inner_text())
         knopf.click()
         pg.wait_for_timeout(300)
         check("Preisdialog offen, Fokus auf „Eingabe“", pg.evaluate("() => document.activeElement.id") == "kiPreisEin")
+        check("Preisdialog nennt die übernommene Staffel (Befund 12)", pg.locator("#kiPreisStaffel").is_visible()
+              and "200.000" in pg.locator("#kiPreisStaffel").inner_text(), pg.locator("#kiPreisStaffel").inner_text())
         check("Modellfeld schreibgeschützt", pg.locator("#kiPreisModell").evaluate("e => e.readOnly"))
         check("Keine Zahlen-Stepper", pg.locator("dialog input[type=number]").count() == 0)
         axe(pg, "Preisdialog")
@@ -133,10 +141,14 @@ try:
         pg.fill("#kiPreisQuelle", "UI-Test")
         pg.click("#kiPreisForm button[type=submit]")
         pg.wait_for_timeout(600)
-        check("Fehlermeldung bei Unsinn", "Zahl" in pg.locator("#kiPreisFehler").inner_text(), pg.locator("#kiPreisFehler").inner_text())
+        # Fehler am Feld „Eingabe“, Fokus dorthin (Befund 4).
+        check("Fehlermeldung bei Unsinn am Feld, Fokus dorthin", pg.evaluate("() => document.activeElement.id") == "kiPreisEin"
+              and pg.locator("#kiPreisEin").get_attribute("aria-invalid") == "true"
+              and pg.locator("#kiPreisEinFehler").inner_text().startswith("Eingabe:") and "Zahl" in pg.locator("#kiPreisEinFehler").inner_text(),
+              pg.locator("#kiPreisEinFehler").inner_text() if pg.locator("#kiPreisEinFehler").count() else "kein Feldfehler")
         pg.click("#kiPreisAbbrechen")
         pg.wait_for_timeout(300)
-        check("Abbrechen: Fokus zurück auf den Knopf", pg.evaluate("() => document.activeElement.textContent.trim()") == "Preis ändern")
+        check("Abbrechen: Fokus zurück auf den Knopf", pg.evaluate("() => document.activeElement.textContent.trim()").startswith("Preis ändern"))
         pg.click("#kiKursAendern")
         pg.wait_for_timeout(300)
         check("Kursdialog offen, Fokus im Kursfeld", pg.evaluate("() => document.activeElement.id") == "kiKursWert")

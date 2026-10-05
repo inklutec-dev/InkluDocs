@@ -249,7 +249,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Ueberschrift IM summary (Express „Geliefert“/„Storniert“, 05.10.2026): bleibt neben dem Aufklapp-Pfeil in der Zeile. */
 .verwaltung-klappe > summary > .verwaltung-klappe-titel { display: inline; font-size: 1.15rem; margin: 0; }
 .verwaltung-karte .dash-actions { margin-top: .9rem; }
-.verwaltung-fehler { color: var(--error); font-weight: 600; margin: .25rem 0 .5rem; }
+/* #b91c1c statt --error (#dc2626): auch auf dem grauen Seitenhintergrund ueber 4,5:1 (05.10.2026, Fehler neben dem
+   PDF-Link der Express-Auftragsuebersicht stehen ausserhalb einer Karte). */
+.verwaltung-fehler { color: #b91c1c; font-weight: 600; margin: .25rem 0 .5rem; }
 .verwaltung-fehler:empty { display: none; }
 .verwaltung-bestaetigung { font-size: 1.05rem; font-weight: 600; line-height: 1.5; margin: .25rem 0 1rem; }
 .verwaltung-download { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }

@@ -1,4 +1,4 @@
-# Express-Service Stufe 1 (Stand 05.10.2026)
+# Express-Service Stufe 1 (Stand 05.10.2026, mit Korrekturrunde)
 
 Wunsch von Michael Karbe, Skizze mit Steve am 05.10.2026: Kunden, die ihre Dokumente lieber von Profis barrierefrei
 aufbereiten oder prüfen lassen, bestellen das in InkluDocs. Lieferung innerhalb von 48 Stunden — dem Kunden wird bewusst
@@ -6,31 +6,50 @@ aufbereiten oder prüfen lassen, bestellen das in InkluDocs. Lieferung innerhalb
 Credits. Stufe 1 = der Kernablauf: bestellen, Posteingang in der Verwaltung, liefern, Mails, Credits.
 
 **Nur auf Staging an.** Schalter `funktionen.EXPRESS` über die Umgebungsvariable `EXPRESS_SERVICE=an`
-(`docker-compose.staging.yml`). Prod und Demo haben die Variable nicht → aus; dann antworten alle Express-Endpunkte und
--Seiten mit 404, Menüpunkte und Links fehlen. In der Demo ist er auch mit Variable aus.
+(`docker-compose.staging.yml`). Prod und Demo haben die Variable nicht → aus. In der Demo ist er auch mit Variable aus.
+
+**Was der Schalter abschaltet** (Prüfung Entwicklung 05.10.2026, Befund 9 — die sichere Variante): nur das
+**Neu-Bestellen** (Warenkorb, Projektauswahl, Hochladen, Bestellen; Link im Projekt). Sobald es **einen bestellten Auftrag**
+gibt (`express.gibt_bestellte()`), bleiben Auftragsübersichten, Downloads, Antwort auf Rückfragen und die ganze Verwaltung
+(Liefern, Stornieren, Hochladen) erreichbar, und die Erinnerungsschleife läuft weiter. So bleiben vorgemerkte Credits nach
+dem Abschalten nie hängen, Kunden kommen an ihre Ergebnisse, und offene Aufträge lassen sich zu Ende führen. Die Seite
+`/express` zeigt dann nur „Meine Aufträge“ mit dem Hinweis „Neue Express-Aufträge sind zurzeit nicht möglich“, die
+Verwaltung einen entsprechenden Hinweis. Gab es nie einen Auftrag (Prod, Demo), antwortet alles mit 404 wie bisher.
+Menüpunkt „Express-Service“ (`/api/me` `user.express`): Schalter an oder eigene Aufträge vorhanden.
 
 ## Ablauf für den Kunden
 
 1. **Wege hinein:** Seitenleiste „Express-Service“ (`/express`), Link „Vom Express-Service bearbeiten lassen“ in der
    Projektansicht „Dokument“ (öffnet `/express?projekt=<id>` mit allen Dokumenten des Projekts angehakt), Abschnitt
    „Meine Express-Aufträge“ auf der Startseite.
-2. **Dokumente wählen:** Projekt in einer Auswahlliste, dann Kontrollkästchen je Dokument (Name, Seitenzahl) und
-   „Alle Dokumente dieses Projekts“. Nur PDFs (andere Dateien und passwortgeschützte PDFs sind gesperrt, mit Grund).
-   Oder eine PDF **ohne Projekt** hochladen: InkluDocs legt dafür ein Projekt „Express-Auftrag <Nr>“ an (weitere
-   Uploads in denselben Auftrag landen im selben Projekt). Bewusst **kein** „alle Dokumente aus allen Projekten“.
+2. **Dokumente wählen:** Projekt in einer Auswahlliste (nur Projekte eines angebotenen Dateityps — heute PDF — mit
+   mindestens einem Dokument; gleichnamige mit Anlagedatum unterschieden), dann Kontrollkästchen je Dokument (Name,
+   Seitenzahl) und „Alle Dokumente dieses Projekts“. Andere Dateitypen und passwortgeschützte PDFs sind gesperrt, mit
+   Grund. Oder eine Datei **ohne Projekt** hochladen — mit **genau der Hochlade-Komponente der Projekte**
+   (`frontend/hochladefeld.js`, Steve 05.10.2026: Etikett-Knopf „PDF-Datei auswählen“, „oder Datei hierher ziehen“,
+   Hinweis, Statuszeile; das Hochladen startet mit der Auswahl). InkluDocs legt dafür ein Projekt „Express-Auftrag <Nr>“
+   an (weitere Uploads in denselben Auftrag landen im selben Projekt). Bewusst **kein** „alle Dokumente aus allen
+   Projekten“.
 3. **Deine Auswahl** (= Warenkorb, serverseitig gespeichert, bleibt beim Verlassen der Seite): je Dokument die Leistung
-   „Barrierefrei aufbereiten (mit Prüfung)“ oder „Nur prüfen (Prüfbericht)“, Entfernen-Knopf; jede Änderung sagt Anzahl,
-   Seiten und Credits an.
+   aus der Liste der Leistungen, die es für seinen Dateityp gibt (heute „Barrierefrei aufbereiten (mit Prüfung)“ oder
+   „Nur prüfen (Prüfbericht)“), Entfernen-Knopf. Hinzufügen und Leistungswechsel sagen Anzahl, Seiten, Credits und —
+   wenn es nicht reicht — das fehlende Guthaben an; Entfernen zeigt eine sichtbare Meldung und setzt den Fokus darauf.
+   Die Leistungsauswahl speichert erst, wenn die Auswahl einen Moment steht (Pfeiltasten unter Windows: eine Anfrage).
 4. **Angaben:** Ansprechpartner (vorbelegt mit dem Kontonamen), Telefon (freiwillig), Hinweise (freiwillig).
 5. **Prüfen und bestellen:** Aufstellung je Dokument, Summe, verfügbares Guthaben, „Lieferung innerhalb von 48 Stunden“,
-   bei zu wenig Guthaben Hinweis mit Link „Credits kaufen“. Zwei Pflicht-Kontrollkästchen, nicht vorab angehakt:
-   Bedingungen (Seite `/express/bedingungen`, als ENTWURF gekennzeichnet) und Einverständnis zur Bearbeitung durch
-   Mitarbeiter von InkluTec und Actino. Knopf „Zahlungspflichtig bestellen“ (§ 312j BGB).
+   bei zu wenig Guthaben Hinweis mit Link „Credits kaufen“. Zwei Pflicht-Kontrollkästchen (`required`, Legende
+   „Zustimmung (beide Häkchen sind nötig)“, Fehler an jedem Kästchen), nicht vorab angehakt: Bedingungen (Seite
+   `/express/bedingungen`, als ENTWURF gekennzeichnet) und Einverständnis zur Bearbeitung durch Mitarbeiter von InkluTec
+   und Actino. Knopf „Zahlungspflichtig bestellen“ (§ 312j BGB). Die Seite schickt Korb-Nummer, angezeigte Summe und
+   Korb-Fassung mit; hat sich etwas geändert (Preis, zweiter Tab, Seite aus dem Zurück-Speicher), bestellt der Server
+   nicht, sondern antwortet 409, und die Seite zeigt die neue Aufstellung.
 6. **Auftragsübersicht** `/express/auftrag/<id>` (Nachweis, **keine Rechnung**): Stand, Credits (vorgemerkt / abgebucht /
    wieder frei), Dokumente mit Downloads nach der Lieferung, Angaben, Einverständnis mit Fassung und Zeitpunkt, Verlauf.
-   Rückfragen beantwortet der Kunde direkt dort. **Drucken** (Druck-CSS blendet Seitenleiste und Knöpfe aus) und
-   **Als PDF herunterladen** — die PDF wird nur ausgeliefert, wenn sie die PDF/UA-Prüfung (veraPDF) besteht, sonst
-   bleibt die Druckansicht (Antwort 503 mit Hinweis).
+   Rückfragen beantwortet der Kunde direkt dort. **Drucken** (Druck-CSS blendet Seitenleiste, Knöpfe und Meldungen aus)
+   und **Als PDF herunterladen** — die PDF wird nur ausgeliefert, wenn sie die PDF/UA-Prüfung (veraPDF) besteht. Der
+   Download läuft per `fetch`: ein Fehler (Umwandler aus, Bremse) steht als Satz neben dem Link (Fokus dorthin), nicht
+   als rohe JSON-Seite. Datum im PDF ausgeschrieben („5. Oktober 2026, 12:04“), „1 Seite“ in der Einzahl. Das Ergebnis
+   der automatischen Prüfung sieht der Kunde nur als „bestanden“ bzw. „mit Hinweisen, die unser Team geprüft hat“.
 
 ## Credits: vormerken, abbuchen, freigeben
 
@@ -42,28 +61,48 @@ Credits. Stufe 1 = der Kernablauf: bestellen, Posteingang in der Verwaltung, lie
   danach `billing._pakete_abbuchen` für einen Überhang. Ein zweites Liefern findet den Auftrag nicht mehr offen
   (Vergleichen-und-Tauschen im UPDATE) und bucht nichts.
 - **Storno gibt frei** (nur vor der Lieferung): die Vormerkung fällt mit dem Status weg, abgebucht wurde nichts.
-- Preis und Seiten werden beim Bestellen frisch gezählt und festgeschrieben; spätere Preisänderungen betreffen nur neue
-  Aufträge. Team-Konten: es zahlt der Topf, aus dem das Konto beim Bestellen arbeitet (`billing._konto_fuer`).
-- Startseite und Abo-Seite nennen „Davon für Express-Aufträge vorgemerkt: N Credits“.
+- **Monatswechsel** (Befund 1): Die Abbuchung zählt zum Monat der **Bestellung** — dort war das Guthaben vorgemerkt.
+  Liegt die Bestellung in einem früheren Kalendermonat, tragen die Verbrauchs-Ereignisse den Bestellzeitpunkt, und ein
+  Überhang wird für jenen Monat von den Paketen abgebucht (`billing.pakete_abbuchen_fuer_monat`). Sonst verfiele beim
+  Monatswechsel Übertrag, den der Kunde im Bestellmonat nicht nutzen durfte.
+- **Bestellen in Schritten** (Befunde 2–4, 18): Der Korb wird zuerst eingefroren (Zwischenstand `bestellung` — Änderungen
+  aus einem zweiten Tab landen in einem neuen Korb), Seiten frisch gezählt, Summe und Fassung mit dem verglichen, was
+  der Kunde gesehen hat (sonst 409), das Guthaben **streng** geprüft (ein Datenbankfehler sperrt mit 503, statt alles zu
+  erlauben), die Originale kopiert und in EINER Transaktion die Positionen neu gelesen, verglichen und vorgemerkt.
+  Scheitert etwas, wird der Korb wieder freigegeben. Hängt ein Korb nach einem Absturz länger als 10 Minuten im
+  Zwischenstand, wird er wieder zum Korb. Der Idempotenz-Schlüssel gilt nur für den Korb, zu dem er gehört.
+- Preis und Seiten werden beim Bestellen festgeschrieben; spätere Preisänderungen betreffen nur neue Aufträge.
+  Team-Konten: es zahlt der Topf, aus dem das Konto beim Bestellen arbeitet (`billing._konto_fuer`); die Topf-Übersicht
+  des Inhabers (`/api/team`) nennt `vorgemerkt` und `verfuegbar_nach_vormerkung`. Free-Konten einer Firmen-Domain teilen
+  sich das Volumen — und damit auch die Vormerkung (`billing.vorgemerkt_domain`, Befund 7).
+- Startseite und Abo-Seite nennen „Davon für Express-Aufträge vorgemerkt: N Credits“; reicht das Guthaben für eine andere
+  Aktion nicht, nennt die Meldung die Vormerkung mit.
 - Grenze: Das Guthaben wird beim Bestellen geprüft. Eine im selben Augenblick parallel laufende Generierung kann es
   noch verbrauchen; dann bucht die Lieferung trotzdem ab (Überhang wie bei jeder Aktion), nie doppelt.
 
 ## Verwaltung „Express-Aufträge“
 
-- `/verwaltung/express`: Posteingang nach Dringlichkeit — Überfällig, Neu, In Arbeit, Rückfrage beim Kunden; Geliefert
-  und Storniert (je die letzten 100) zum Aufklappen. Je Auftrag Kunde, Dokumente, Seiten, „fällig in N Stunden“ bzw.
-  „überfällig seit N Stunden“, Bearbeiter.
+- `/verwaltung/express`: Posteingang nach Dringlichkeit — Überfällig, Neu, In Arbeit, Rückfrage beim Kunden (nur Gruppen
+  mit Aufträgen; sind alle leer, eine Zeile „Keine offenen Aufträge“); Geliefert und Storniert (je die letzten 100) zum
+  Aufklappen, mit Überschrift im `summary`. Je Auftrag Kunde, Dokumente, Seiten, „fällig in N Stunden“ bzw. „überfällig
+  seit N Stunden“ — bei einer Rückfrage „Frist ruht bis zur Antwort des Kunden“ —, Bearbeiter.
 - `/verwaltung/express/<id>`: Überblick mit Frist, Knöpfe **Übernehmen / Mir zuweisen**, **Rückfrage stellen** (Dialog),
-  **Liefern**, **Stornieren** (Dialog, Grund Pflicht). Je Dokument: Original herunterladen, alle Originale als ZIP,
-  **Ergebnis (PDF) hochladen** (nur bei „aufbereiten“) und **Prüfbericht (PDF) hochladen**. Beim Ergebnis läuft veraPDF
-  automatisch mit; meldet es Abweichungen, fragt „Liefern“ einmal nach („Trotzdem liefern?“). Fehlt ein Ergebnis bzw.
-  bei „Nur prüfen“ der Bericht, nennt die Seite das, und Liefern lehnt ab. Interne Notiz (nie für den Kunden), Verlauf
-  mit internen Schritten.
+  **Liefern**, **Stornieren** (Dialog, Grund Pflicht). Je Dokument: Original herunterladen, alle Originale als ZIP
+  (ungepackt gespeichert, Bremse 20/h, Platzprüfung, Reste abgebrochener Downloads werden nach einer Stunde gelöscht),
+  **Ergebnis hochladen** (wenn die Leistung ein Ergebnis verlangt) und **Prüfbericht hochladen** — beide mit der
+  Hochlade-Komponente der Projekte; Dateityp und Beschriftung kommen aus der Leistung. Beim Ergebnis läuft die
+  automatische Prüfung seines Dateityps mit (PDF: veraPDF), bevor die Antwort kommt; solange sie läuft, wartet „Liefern“
+  (409). Meldet sie Abweichungen, fragt „Liefern“ einmal nach („Trotzdem liefern?“). Hochladen und Liefern laufen unter
+  derselben Schreibsperre; nach der Lieferung wird nichts mehr ersetzt (Befund 11). Fehlt ein Ergebnis bzw. bei „Nur
+  prüfen“ der Bericht, nennt die Seite das, und Liefern lehnt ab. Interne Notiz (nie für den Kunden), Verlauf mit internen
+  Schritten. Fehler in Dialogen und Formularen stehen am Feld (`aria-invalid`, Beschreibung), der Fokus geht dorthin.
 - **Frist:** Standard 48 Stunden ab Bestellung (Einstellung). Während einer Rückfrage ruht sie und verlängert sich bei
   der Antwort um die Wartezeit (so steht es in den Bedingungen). Intern gibt es Datum und Uhrzeit, dem Kunden nicht.
-- **Einstellungen** (nur Voll-Admins): Credits je Seite für beide Leistungen (**Platzhalter 50 und 25**, Hinweis bis
-  „Preise sind festgelegt“ angekreuzt ist), Frist in Stunden, höchstens Seiten und Dokumente je Auftrag (500 / 50),
-  Adresse für Team-Benachrichtigungen (leer = Support-Postfach). Gespeichert in `system_kv` `express_einstellungen`.
+- **Einstellungen** (nur Voll-Admins): Credits je Seite **je Leistung** (ein Feld je Eintrag der Liste; **Platzhalter 50
+  und 25**, Hinweis bis „Preise sind festgelegt“ angekreuzt ist), Frist in Stunden, höchstens Seiten und Dokumente je
+  Auftrag (500 / 50), **Dateien löschen nach Tagen** (0 = nie, Standard bis Steve entscheidet), Adresse für
+  Team-Benachrichtigungen (leer = Support-Postfach). Gespeichert in `system_kv` `express_einstellungen`; Preise unter
+  `preise` (die alten Schlüssel `preis_aufbereiten`/`preis_pruefen` werden beim Lesen übernommen). Fehler nennen das Feld.
 - **Recht „Express-Bearbeiter“** (Spalte `users.express_bearbeiter`, vergibt nur ein Voll-Admin unter „Einstellungen des
   Express-Service“): für z. B. einen Partner, der die Dokumente aufbereitet. Sieht in der Verwaltung **nur** die
   Express-Aufträge (Navigation und Seitenleiste nur dieser Punkt), kann sie bearbeiten, sieht aber keine Kunden-,
@@ -76,7 +115,12 @@ Credits. Stufe 1 = der Kernablauf: bestellen, Posteingang in der Verwaltung, lie
 werden nie versandt (Tests). Kunde: Bestellbestätigung, Rückfrage, Lieferung, Storno. Team (Einstellungsadresse bzw.
 Support-Postfach plus alle Express-Bearbeiter): neuer Auftrag, Antwort des Kunden, **Erinnerung 12 Stunden vor der
 Frist** und **Überfällig** — je genau einmal (die Meldung wird vor dem Versand atomar in der Datenbank beansprucht).
-Die Erinnerungen prüft eine Schleife alle 10 Minuten (gestartet in `main.lifespan`, nur wenn der Schalter an ist).
+Ging sie an **keinen** Empfänger raus (SMTP gestört), wird sie freigegeben und im nächsten Durchlauf erneut versucht,
+höchstens sechsmal; ging sie an mindestens einen, bleibt es dabei (keine Doppelmails, Befund 10). Die Schleife läuft alle
+10 Minuten (gestartet in `main.lifespan`, immer — auch bei ausgeschaltetem Schalter) und räumt dabei auch Dateien nach der
+Aufbewahrungsfrist und ZIP-Reste weg. Wird das Konto eines Team-Inhabers gelöscht, werden offene Aufträge seiner
+Mitglieder aus seinem Topf storniert (Kunde und Team bekommen die Storno-Mail); wird ein Kundenkonto mit offenem Auftrag
+gelöscht, bekommt das Team die Mail „Entfallen“.
 
 ## Datenmodell (`database.init_db`)
 
@@ -85,14 +129,25 @@ Die Erinnerungen prüft eine Schleife alle 10 Minuten (gestartet in `main.lifesp
   Fälligkeit, Zustimmung (Wortlaut beider Häkchen, Fassung `express.ZUSTIMMUNG_FASSUNG`, Sprache, Zeitpunkt,
   Absender-Kennung), Idempotenz-Schlüssel (eindeutig je Konto), Bearbeiter, Liefer- und Storno-Angaben, interne Notiz,
   Erinnerungs-Vermerke, Rückfrage-Beginn.
-- `express_positionen`: je Dokument Quelle (Projekt, Dokument, Name als Momentaufnahme), Seiten, Leistung, Credits,
-  Pfade für Original, Ergebnis, Prüfbericht, veraPDF-Ergebnis.
+  Status `bestellung` = Korb während des Bestellens (nicht vorgemerkt, nicht sichtbar).
+- `express_positionen`: je Dokument Quelle (Projekt, Dokument, Name als Momentaufnahme), **Dateityp** (`dateityp`,
+  Schlüssel aus `express.DATEITYPEN`, Migration 05.10.2026, Standard `pdf`), Seiten, Leistung, Credits, Pfade für
+  Original, Ergebnis, Prüfbericht, Ergebnis der automatischen Prüfung (Spalte `verapdf`: leer, `{"laeuft": Kennung,
+  "seit"}`, `{"nicht_geprueft": true}` oder `{"bestanden", "zusammenfassung", "regeln_fehlgeschlagen"}`).
 - `express_verlauf`: Schritte mit Zeit, Person, Text; `fuer_kunde = 0` für interne Schritte.
-- Dateien: `results/<konto>/_express/<auftrag>/pos<id>_(original|ergebnis|bericht).pdf` — Pfade nur aus Zahlen, nie
-  aus Dateinamen. Die Originale werden beim Bestellen kopiert (unveränderte Kundendatei `roh_path`, sonst die
+- Dateien: `results/<konto>/_express/<auftrag>/pos<id>_(original|ergebnis|bericht)<endung>` — Pfade nur aus Zahlen und der
+  Endung des Dateityps, nie aus Dateinamen. Die Originale werden beim Bestellen kopiert (unveränderte Kundendatei `roh_path`, sonst die
   Arbeitsdatei): Was die Profis bekommen, ändert sich nicht mehr, auch wenn der Kunde das Projekt weiter bearbeitet oder
   löscht.
-- Konto löschen: Aufträge, Positionen, Verlauf und der Ordner gehen mit; war das Konto Bearbeiter, bleibt nur der Name.
+- Konto löschen: Aufträge, Positionen, Verlauf und der Ordner gehen mit; war das Konto Bearbeiter, bleibt nur der Name;
+  war es zahlender Topf, werden offene Aufträge anderer Konten storniert (Befund 6), abgeschlossene verlieren den
+  Topf-Bezug.
+- **Aufbewahrung** (Befund 14): Einstellung „Dateien löschen nach Tagen“ (`aufbewahrung_tage`, Standard 0 = nichts
+  löschen, bis Steve entscheidet). Ist sie gesetzt, löscht die Schleife Originale, Ergebnisse und Prüfberichte so viele
+  Tage nach Lieferung bzw. Storno; Auftrag, Positionen und Verlauf bleiben als Nachweis (Verlauf „Dateien gelöscht“).
+- **Absender der Zustimmung** (Befund 14): gespeichert wird nur das gekürzte Netz (IPv4 /24, IPv6 /48,
+  `express.netz_kurz`) — genug als Indiz, ohne den einzelnen Anschluss festzuhalten. Es bleibt mit dem Auftrag als
+  Nachweis der Zustimmung.
 
 ## Sicherheit
 
@@ -100,12 +155,17 @@ Die Erinnerungen prüft eine Schleife alle 10 Minuten (gestartet in `main.lifesp
   geprüft für Projekt-Dokumente, Auswahl, Positionen, Aufträge, Antwort, Downloads und Nachweis.
 - Rechte frisch aus der Datenbank je Anfrage (`get_current_user` liest `is_admin`, die Bearbeiter-Prüfung liest
   `express_bearbeiter` und `is_active`).
-- Uploads: Dateiendung und Magic Bytes (`%PDF-`), Größe (Kunde 50 MB, Ergebnis 100 MB), lesbar und ohne
-  Öffnungspasswort (PyMuPDF), Vorprüfung wie beim normalen PDF-Upload. Dateinamen werden nur angezeigt (Pfadteile und
+- Uploads: Dateityp am Inhalt erkannt (`Dateityp.erkennen`, bei PDF `%PDF-`; beim Kunden zusätzlich die Endung), Größe
+  (Kunde 50 MB, Ergebnis 100 MB), lesbar und ohne Öffnungspasswort (`Dateityp.seiten`, bei PDF PyMuPDF), Vorprüfung wie
+  beim normalen PDF-Upload. Kaputter oder falsch geformter JSON-Körper: 400 (Befund 8). Dateinamen werden nur angezeigt (Pfadteile und
   Steuerzeichen entfernt), Downloads mit `Content-Disposition: attachment` (RFC 6266/5987) und `nosniff`.
 - Doppelbestellung: Knopf sperrt im Browser, Server über Idempotenz-Schlüssel (eindeutiger Index) und eine Sperre um
   Prüfen-und-Vormerken; Doppel-Lieferung über Vergleichen-und-Tauschen in einer Transaktion.
-- Bremsen je Konto: Bestellen 10/h, Upload 30/h, Antwort 20/h, Nachweis-PDF 30/h (429).
+- Bremsen je Konto: Bestellen 10/h, Upload 30/h, Antwort 20/h, Nachweis-PDF 30/h, Originale-ZIP 20/h (429). Der
+  Nachweis läuft in einem eigenen kleinen Thread-Pool mit 60 Sekunden Zeitlimit zum Umwandler (Befund 16); die
+  Dokumentgrenze wird vor dem Öffnen der PDFs geprüft.
+- Seiten mit Bestell-Zustand senden `Cache-Control: no-store`; kommt eine Seite doch aus dem Zurück-Speicher
+  (`pageshow`), erneuert sie Stand und Idempotenz-Schlüssel.
 - CSRF wie im Bestand: Sitzungs-Cookie `SameSite=Lax`, JSON-Anfragen; Multipart-Uploads gehen ohne Cookie nicht durch.
 - Fehlertexte ohne Interna (Pfade, SQL); Details nur im Server-Log.
 
@@ -122,41 +182,107 @@ Die Erinnerungen prüft eine Schleife alle 10 Minuten (gestartet in `main.lifesp
   Fassung“ gibt es nicht; das Ergebnis darüber zu legen, würde den Arbeitsstand des Kunden still ersetzen. Darum bleibt
   das Projekt unberührt, und die fertigen Dateien stehen in der Auftragsübersicht (Link in der Liefer-Mail, auf der
   Startseite und unter „Meine Aufträge“). Eine echte Versionierung am Dokument ist ein eigener Schritt.
-- **Nur PDF** in Stufe 1 (Word/PowerPoint später).
+- **Nur PDF** in Stufe 1 (Steve 05.10.2026: vorerst nur PDF, aber jederzeit erweiterbar) — siehe „Erweitern um neue
+  Dateitypen und Leistungen“.
 - **Bedingungen nur auf Deutsch** wie die übrigen Rechtstexte (I18N.md).
 - Express-Credits zählen in der Verwaltung „KI-Kosten“ nicht zur Kennzahl „Kosten je Credit“ (Handarbeit, keine KI).
 
+## Erweitern um neue Dateitypen und Leistungen
+
+Alles Typ- und Produkt-Spezifische steht in **einer** Liste in `backend/express.py`; Warenkorb, Preise, Einstellungen,
+Uploads, Lieferung, Abbuchung, Downloads, Mails und Oberfläche lesen daraus. Nichts davon ist im Ablauf fest verdrahtet.
+
+- **`Dateityp`** (`DATEITYPEN`): `schluessel` (gespeichert je Position), `name` (Anzeige, mit `N_()` für die Kataloge),
+  `endung` (gespeicherte Dateien und Downloads), `endungen` (Vorfilter beim Hochladen), `mime`, `accept` (Dateifeld),
+  `projekt_typen` (welche `projects.project_type` in der Projektauswahl erscheinen), `erkennen(kopf)` (am Inhalt, nie nur
+  am Namen), `seiten(pfad)` (Preisgrundlage; wirft `ExpressFehler` bei unlesbarer oder geschützter Datei), optional
+  `pruefen(pfad)` (automatische Prüfung eines Ergebnisses, Rückgabe `{"bestanden", "zusammenfassung",
+  "regeln_fehlgeschlagen"}` oder `None`) und `pruef_name` (z. B. „veraPDF“).
+- **`Leistung`** (`LEISTUNGEN`): `schluessel`, `name`, `preis_standard` (Credits je Seite, bis zur Einstellung),
+  `dateitypen` (erlaubte Originale), `aktion` (Name in `usage_events` beim Abbuchen), `ergebnis_pflicht`,
+  `bericht_pflicht`, `ergebnis_typen` (leer = wie das Original), `bericht_typen` (Standard PDF), `ergebnis_zusatz`
+  (Zusatz im Download-Namen, Standard „ (barrierefrei)“).
+
+**Beispiel Word** (heute auskommentiert in `DATEITYPEN`):
+1. `Dateityp(schluessel="docx", name=N_("Word"), endung=".docx", endungen=(".docx",), mime=…, accept=".docx",
+   projekt_typen=("docx",), erkennen=<ZIP mit word/document.xml>, seiten=<Seiten zählen>)` eintragen. Für die Seiten
+   gibt es zwei Wege: aus `docProps/app.xml` (schnell, aber nur so genau wie die letzte Speicherung in Word) oder per
+   Umwandlung mit dem Konverter (`pdfua_export`) — Steve/Michael entscheiden, was als Preisgrundlage gilt.
+2. Eine Leistung erlaubt `"docx"` — eine bestehende (`dateitypen=("pdf", "docx")`) oder eine neue, z. B.
+   „Word barrierefrei aufbereiten“ mit `ergebnis_typen=("docx",)` oder `("pdf",)`, wenn als PDF/UA geliefert wird.
+3. Hochladen ohne Projekt: `main.py` → `express_api.Deps.upload_vorpruefung` um die Vorprüfung für Word ergänzen
+   (`upload_uebernehmen` kann über `_handle_pdf_upload(…, art="docx")` schon Word).
+4. Übersetzungen der neuen Namen in alle sechs Kataloge (`backend/locales/*`), `scripts/check_i18n.py`.
+5. Preise in der Verwaltung festlegen (das Feld je Leistung erscheint von selbst), Bedingungen anpassen
+   (`ZUSTIMMUNG_FASSUNG` hochzählen).
+6. Tests: Vorlage ist `tests/test_express.py`, Klasse `Erweiterbar` — sie hängt im Test einen zweiten Dateityp mit eigener
+   Leistung ein und prüft Korb, Leistungswahl je Typ, Preise, Bestellung, Upload, Liefern, Abbuchung und Download.
+
+**Weitere Produkte** (z. B. „Übersetzen lassen“, „Formular aufbereiten“) sind neue `Leistung`-Einträge; Preis, Pflicht-
+Dateien und Abbuchungs-Aktion kommen aus dem Eintrag. Eine neue Leistung mit anderer Preislogik als „je Seite“ bräuchte
+zusätzlich eine eigene Preisfunktion in `express.preis`.
+
+## Offene Rechtspunkte
+
+1. **Widerruf (§ 356 Abs. 4 BGB):** Für Verbraucher beginnt die menschliche Dienstleistung sofort. Ist der
+   Express-Service ein eigener Dienstleistungsvertrag, fehlt ein ausdrückliches Verlangen auf Beginn vor Ablauf der
+   Widerrufsfrist mit Bestätigung der Kenntnis vom Erlöschen des Widerrufsrechts (Prüfung Entwicklung, Befund 17). Mit
+   dem Bedingungstext klären; ggf. drittes Häkchen nur für Verbraucher.
+2. **AVV und Partner:** Datenschutzerklärung und AVV müssen die menschliche Bearbeitung durch InkluTec und Actino
+   abdecken — Kategorien (Dokumente **und** Kontaktdaten: Ansprechpartner, Telefon, Hinweise, E-Mail-Adresse, die der
+   Express-Bearbeiter sieht und per Team-Mail bekommt), Zweck, Speicherdauer (Einstellung „Dateien löschen nach Tagen“),
+   Vertraulichkeitsvereinbarung mit dem Partner. Die Bedingungen (Fassung `2026-10-05-entwurf-2`) nennen die
+   Kontaktdaten schon; das Häkchen selbst spricht weiter nur von „Dokumenten“ — mit dem Rechtstext abstimmen.
+3. **Nachweis statt Rechnung** und Umsatzsteuer: siehe „Bewusste Entscheidungen“; von Michael/Steuerberater bestätigen
+   lassen. Zur Kennzahl „Bleibt nach KI-Kosten“ und § 13b UStG siehe `docs/KI_KOSTEN.md`.
+4. **Bedingungstext** abstimmen und rechtlich prüfen, dann `ZUSTIMMUNG_FASSUNG` hochzählen und „ENTWURF“ entfernen.
+
 ## Offen vor Prod (nur auf Steves Wort)
 
-1. **Wer bearbeitet?** Datenschutzerklärung und AVV müssen die menschliche Bearbeitung durch InkluTec und Actino
-   abdecken (Kategorien, Zweck, Speicherdauer), Vertraulichkeitsvereinbarung mit dem Partner.
+1. **Wer bearbeitet?** — siehe „Offene Rechtspunkte“ 2.
 2. **Echte Preise** (Platzhalter 50/25 Credits je Seite; zum Vergleich: automatisches Tagging 20 je Seite) und
    **Frist** (48 Stunden oder 2 Werktage — Wochenenden).
-3. **Bedingungstext** abstimmen und rechtlich prüfen, dann `ZUSTIMMUNG_FASSUNG` hochzählen und „ENTWURF“ entfernen.
-4. **Aufbewahrung:** Wie lange bleiben Originale und Ergebnisse liegen (heute bis zur Kontolöschung)?
-5. **Verrechnung InkluTec ↔ Actino** für Express-Aufträge.
-6. Prod: `EXPRESS_SERVICE=an` in `docker-compose.yml` setzen, Rollout wie üblich.
+3. **Aufbewahrung:** Frist für Originale und Ergebnisse festlegen (Einstellung vorhanden, heute 0 = nie löschen).
+4. **Verrechnung InkluTec ↔ Actino** für Express-Aufträge.
+5. Prod: `EXPRESS_SERVICE=an` in `docker-compose.yml` setzen, Rollout wie üblich. Vorher die Migration
+   `express_positionen.dateityp` (läuft beim Start von selbst, idempotent).
 
-Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projekte komfortabler, Word/PowerPoint,
-Ergebnis als neue Fassung am Dokument im Projekt (braucht Versionierung), Lese-Werkzeug im InkluAgent.
+Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projekte komfortabler, Word/PowerPoint (siehe
+„Erweitern“), Ergebnis als neue Fassung am Dokument im Projekt (braucht Versionierung), Lese-Werkzeug im InkluAgent.
 
 ## Dateien
 
-- Kern: `backend/express.py`; Endpunkte und Mails: `backend/express_api.py`; Guthaben: `backend/billing.py`
-  (`vorgemerkt`, `EXPRESS_OFFEN`); Schalter: `backend/funktionen.py` (`EXPRESS`)
+- Kern mit `DATEITYPEN`/`LEISTUNGEN`: `backend/express.py`; Endpunkte, Mails, Erinnerungsschleife, Kontolöschung:
+  `backend/express_api.py`; Guthaben: `backend/billing.py` (`vorgemerkt`, `vorgemerkt_domain`,
+  `pakete_abbuchen_fuer_monat`, `EXPRESS_OFFEN`); Schalter: `backend/funktionen.py` (`EXPRESS`)
 - Seiten: `templates/express.html`, `express_auftrag.html`, `express_bedingungen.html`, `verwaltung_express.html`,
-  `verwaltung_express_auftrag.html`; Link im Projekt `frontend/dokument.js`; Startseite `templates/dashboard.html`;
-  Seitenleiste `frontend/dashboard.js`; Druck-CSS `frontend/dashboard.css`
+  `verwaltung_express_auftrag.html`; Hochlade-Komponente `frontend/hochladefeld.js` (Vorbild `app.html`
+  `uploadBlockHtml`/`setupProjectDropzone`); Fehler am Feld in der Verwaltung `frontend/verwaltung.js` (`feldFehler`,
+  `serverFeldFehler`); Link im Projekt `frontend/dokument.js`; Startseite `templates/dashboard.html`; Seitenleiste
+  `frontend/dashboard.js`; Druck-CSS `frontend/dashboard.css`
 
 ## Tests
 
-- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 26): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
+- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 56): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
   Vormerkung und Idempotenz (auch 4 gleichzeitige Klicks), Vormerkung sperrt andere Ausgaben, Liefern bucht genau einmal
   (auch 4 gleichzeitig), Storno, Dateinamen nie Pfad, Upload-Prüfung, Downloads erst nach Lieferung, Frist ruht bei
-  Rückfrage, Erinnerung/Überfällig je einmal, Nachweis-OOXML, Kontolöschung, Einstellungen, Bearbeiter, Schalter
-- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 90): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
-  IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno
-- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging): Link im Projekt, Auswahl, Leistung, Entfernen mit Fokus,
-  Pflichtfelder mit Fokus, Bestellen, Danke-Meldung, Startseite, Verwaltung (Liste, Auftrag, Dialoge, Upload, Liefern),
-  Download beim Kunden — axe 0 Verstöße auf jeder Seite und in jedem Dialog
+  Rückfrage, Erinnerung/Überfällig je einmal, Nachweis-OOXML, Kontolöschung, Einstellungen, Bearbeiter, Schalter.
+  Klasse `Korrektur`: je Befund der Prüfungen vom 05.10.2026 ein Test (Monatswechsel mit Übertrag und Paket-Überhang,
+  eingefrorener Korb mit zweitem Tab, Preis-/Auswahländerung 409, alter Schlüssel 409, Domain-Topf, fail-closed,
+  Topf-Inhaber gelöscht, Erinnerung erneut ohne Doppelmails, Upload nach Lieferung, laufende/hängende Prüfung,
+  Aufbewahrung, IP-Netz, Frist ruht in der Anzeige, Vormerkung im Guthaben-Text, Fehler am Feld, alte Preis-Schlüssel,
+  Einzahl/Datum/Tausenderpunkt, Kundentext der Prüfung). Klasse `Erweiterbar`: zweiter Dateityp mit eigener Leistung.
+- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 104): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
+  IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno,
+  dazu Preisänderung und alter Schlüssel (409), kaputter JSON-Körper (400), Feldfehler der Einstellungen, no-store,
+  Projektliste, ZIP_STORED, Prüfergebnis für Kunden
+- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 68): Link im Projekt, Auswahl, Hochlade-Komponente
+  (Etikett-Knopf, Fokusring, Dateiname in der Statuszeile, Fehler am Feld) beim Kunden und in der Verwaltung,
+  Leistung entprellt, Entfernen mit Meldung und Fokus, Pflichtfelder und Häkchen mit Fehler am Feld, Fokusring an
+  „Zahlungspflichtig bestellen“, Rahmen der Eingabefelder, keine Ansage beim Laden, Bestellen, Danke-Meldung (nicht im
+  Druck), Startseite, Verwaltung (Liste mit Überschrift im summary, Feldfehler der Einstellungen, Dialoge mit
+  Beschreibung und Pflichtfeld, Upload, Liefern), Download, PDF-Fehler neben dem Link — axe 0 Verstöße
+- `tests/e2e/ui_bildschirmfotos.py`: Fotos vorher/nachher der globalen CSS-Änderungen (Projekt-Hochladefläche, Knöpfe,
+  Formulare) mit berechneten Stilen
+- `verify_abo3.py` (Server, Team-Reihe) prüft die Vormerkung im Team-Topf (`/api/team`)
 - `tests/e2e/ui_smoke.py` kennt `/express`, `/express/bedingungen`, `/verwaltung/express`

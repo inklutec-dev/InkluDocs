@@ -211,9 +211,11 @@ Schätzung). Einzelheiten: `docs/KI_KOSTEN.md`.
 
 # EXPRESS-AUFTRÄGE (Stand 05.10.2026, nur Staging)
 
-Bereich `/verwaltung/express` (Link „Express-Aufträge“, nur wenn `EXPRESS_SERVICE=an`): Posteingang des Express-Service
-nach Dringlichkeit, je Auftrag Übernehmen, Rückfrage, Ergebnis/Prüfbericht hochladen (veraPDF läuft mit), Liefern,
-Stornieren; darunter die Einstellungen (Preise je Seite — Platzhalter —, Frist, Grenzen, Benachrichtigung) und das Recht
-„Express-Bearbeiter“ (sieht nur die Express-Aufträge). Lesen: Admins und Bearbeiter; arbeiten: Voll-Admins und
+Bereich `/verwaltung/express` (Link „Express-Aufträge“, wenn `EXPRESS_SERVICE=an` ist oder es schon bestellte Aufträge
+gibt — offene Aufträge lassen sich auch nach dem Abschalten liefern oder stornieren): Posteingang des Express-Service
+nach Dringlichkeit, je Auftrag Übernehmen, Rückfrage, Ergebnis/Prüfbericht hochladen (Hochlade-Komponente wie in den
+Projekten; die automatische Prüfung des Dateityps läuft mit, bei PDF veraPDF), Liefern, Stornieren; darunter die
+Einstellungen (Preise je Seite für jede Leistung — Platzhalter —, Frist, Grenzen, „Dateien löschen nach Tagen“,
+Benachrichtigung) und das Recht „Express-Bearbeiter“ (sieht nur die Express-Aufträge). Lesen: Admins und Bearbeiter; arbeiten: Voll-Admins und
 Bearbeiter; Einstellungen und Bearbeiter vergeben: nur Voll-Admins. Einzelheiten: `docs/EXPRESS_SERVICE.md`.
 

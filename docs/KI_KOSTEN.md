@@ -1,4 +1,4 @@
-# KI-Kosten (Stand 05.10.2026)
+# KI-Kosten (Stand 05.10.2026, mit Korrekturrunde)
 
 Steves Auftrag (05.10.2026): „Kann man das verbinden, dass wir sehen, welcher User wie viel mit KI generiert hat,
 welche KI-Kosten angelaufen sind und die Gesamt-KI-Kosten, zum Beispiel für den Monat — so wie beim Umsatz?“ Gezählt
@@ -69,7 +69,12 @@ Abgerufen am 05.10.2026:
 - Wechselkurs: EZB-Referenzkurs 02.10.2026, 1 EUR = 1,1225 USD → 1 USD = 0,8909 EUR
 
 Die Verwaltung (Voll-Admins) kann Preise je Modell ändern oder neue Modelle eintragen (immer mit Quelle) und den
-Kurs ändern; gespeichert in `system_kv` unter `ki_preise`, 60 Sekunden zwischengespeichert. Modellkennungen werden
+Kurs ändern; gespeichert in `system_kv` unter `ki_preise`, 60 Sekunden zwischengespeichert. Eine **neue Preisstufe**
+(anderes „gültig ab“) übernimmt Staffel und Cache-Schreibpreis (`grenze`, `ein_lang`, `aus_lang`, `cache_lang`,
+`cache_schreiben`) aus der jüngsten Stufe davor (`ki_kosten_api.staffel_vorlage`) — sonst würden lange Prompts bei
+Gemini Pro nach einer Preisänderung zum Grundpreis gerechnet (Prüfung Entwicklung 05.10.2026, Befund 12). Der Dialog
+sagt, welche Staffel übernommen wird; die Meldung nach dem Speichern auch. Fehler nennen das Feld (Text beginnt mit der
+Beschriftung, Fokus dorthin), ein kaputter JSON-Körper gibt 400. Modellkennungen werden
 erst exakt gesucht, dann ohne Versionsendung, ohne Regionsvorsatz und ohne `anthropic.`.
 
 ## Verwaltung „KI-Kosten“ (`/verwaltung/ki-kosten`)
@@ -78,10 +83,24 @@ Rechte wie beim Umsatz: lesen jeder Admin, Preise ändern nur Voll-Admins. Wie d
 Tabellen (Überschriften, „Begriff: Wert“, Listen), Kunden und Projekte zum Aufklappen, Einzelheiten werden erst beim
 Öffnen geladen.
 
-- Monat wählbar (deutsche Monatsgrenzen wie beim Umsatz): KI-Kosten, Umsatz, was bleibt, Aufrufe, verbrauchte
-  Credits, **Kosten je Credit im Schnitt** neben der bisherigen Pauschale (ohne Express-Credits — die bezahlen
-  Handarbeit, keine KI), erfasst seit
-- Nach Zweck, nach Kunde (teuerste zuerst; je Kunde Credits und Umsatz im Monat; Projekte → Bilder), nach Modell
+- Monat wählbar (deutsche Monatsgrenzen wie beim Umsatz): „KI-Kosten (Listenpreise netto)“, „Umsatz (Endpreise, ohne
+  Umsatzsteuer nach § 19 UStG)“, was bleibt, Aufrufe, verbrauchte Credits, **Kosten je Credit im Schnitt** neben der
+  bisherigen Pauschale, erfasst seit.
+- **Kosten je Credit** (Befund 5): Zähler und Nenner für DIESELBE Arbeit im SELBEN Zeitraum. Nenner = Credits aus
+  KI-Aktionen (`ki_kosten.KI_AKTIONEN`: Alt-Texte `bild_generierung`, `alt_text_aenderung_chatbot`, Quickinfos
+  `quickinfo_generierung`, `quickinfo_aenderung_chatbot`, `uebersetzung`), Zähler = KI-Kosten der Kunden für die Zwecke
+  `alttext`, `chatbot`, `quickinfo`, `uebersetzung` — beides erst **ab Messbeginn** (sonst wäre die Zahl im
+  Einführungsmonat um ein Vielfaches zu niedrig). Nicht dabei: Tagging und Prüfung (überwiegend PDFix bzw. veraPDF,
+  je Seite berechnet), Exporte, Express (Handarbeit). Die Seite schreibt darunter, was gezählt wird.
+- **Umsatz und KI-Kosten vergleichbar** (Befund 13): InkluTec berechnet als Kleinunternehmer nach § 19 UStG keine
+  Umsatzsteuer (Preisseite: „Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet“); der
+  Umsatz in `buchungen` ist also netto gleich brutto. Die KI-Kosten sind Listenpreise netto. **Offen für den
+  Steuerberater:** Google (und AWS) rechnen als ausländische Unternehmer ab; für deren Leistungen schuldet InkluTec die
+  Umsatzsteuer nach § 13b UStG und kann sie als Kleinunternehmer nicht als Vorsteuer abziehen — die echten Kosten wären
+  dann rund 19 % höher als hier angezeigt. Bitte klären; danach ggf. einen Aufschlag in die Rechnung nehmen.
+- Nach Zweck, nach Kunde (teuerste zuerst; je Kunde Credits und Umsatz im Monat; Projekte → Bilder; gelöschte Projekte
+  mit Nummer „Gelöschtes Projekt 812“), nach Modell. Keine Ansage beim Laden; nach „Anzeigen“ Fokus auf die Überschrift
+  mit dem Monat, beim Blättern auf „Seite X von Y“.
 - Preisliste mit Quelle, künftigen Stufen und den Dialogen „Preis ändern“ / „Wechselkurs ändern“
 
 Kundenseite (`/verwaltung/kunden/<id>`): „KI-Kosten dieses Kontos“ gemessen seit Messbeginn plus — nur für die
@@ -112,8 +131,9 @@ den Monatssummen (sie sind angefallen), zählen danach „ohne Zuordnung“.
 
 ## Tests
 
-- `tests/test_ki_kosten.py` (Unit, eigene Wegwerf-Datenbank): Preisrechnung inkl. Staffel und Stufen, unbekannte
-  Preise, Kontext durch Executor/Threads/Dekoratoren, Gemini-Client-Haken, Auswertung, Kontolöschung
+- `tests/test_ki_kosten.py` (Unit, eigene Wegwerf-Datenbank, 23): Preisrechnung inkl. Staffel und Stufen, unbekannte
+  Preise, Kontext durch Executor/Threads/Dekoratoren, Gemini-Client-Haken, Auswertung, Kontolöschung; Kosten je Credit
+  nur aus KI-Credits ab Messbeginn, Staffel bleibt bei neuer Stufe, Fehler mit Feld, kaputter JSON-Körper 400
 - `tests/e2e/verify_ki_kosten.py` (im Staging-Container, echter Alt-Text-Lauf): Erfassung mit Kunde/Bild/Zweck,
   Neu-Generieren, Bericht und Drill-down, Kundenseite, Rechte (Kunde/Nur-Einsicht/Voll-Admin), Eingabeprüfungen
 - `tests/e2e/ui_ki_kosten.py` (Playwright + axe, nur Staging): Seite, Aufklappen, beide Dialoge, Fokus, Englisch

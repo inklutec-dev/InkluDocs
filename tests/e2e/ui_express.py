@@ -215,8 +215,11 @@ try:
                   and pg.locator(f"#{i}").get_attribute("required") is not None for i in ("exBedingungen", "exBearbeitung"))
               and "beide Häkchen sind nötig" in pg.locator("#exBestellForm legend").inner_text())
         check("Häkchen nicht vorab gesetzt", not pg.locator("#exBedingungen").is_checked() and not pg.locator("#exBearbeitung").is_checked())
-        pg.evaluate("() => document.getElementById('exBestellen').focus()")
-        check("Fokusring an „Zahlungspflichtig bestellen“ (3px #c75000)", ring(pg, "#exBestellen").startswith("solid 3px rgb(199, 80, 0)"), ring(pg, "#exBestellen"))
+        # Mit der Tastatur auf den Knopf (Tab vom zweiten Häkchen): :focus-visible greift wie bei echter Tastaturbedienung.
+        pg.evaluate("() => document.getElementById('exBearbeitung').focus()")
+        pg.keyboard.press("Tab")
+        check("Fokusring an „Zahlungspflichtig bestellen“ (3px #c75000)", fokus(pg) == "exBestellen"
+              and ring(pg, "#exBestellen").startswith("solid 3px rgb(199, 80, 0)"), (fokus(pg), ring(pg, "#exBestellen")))
         check("Knopf „Zahlungspflichtig bestellen“", pg.locator("#exBestellen").inner_text() == "Zahlungspflichtig bestellen")
         pg.check("#exBedingungen")
         pg.check("#exBearbeitung")
@@ -325,6 +328,7 @@ try:
         check("PDF-Fehler: Meldung neben dem Link mit Fokus, Seite bleibt", fokus(pg) == "exaPdfFehler" and "Druckansicht" in pg.locator("#exaPdfFehler").inner_text()
               and pg.url.endswith(f"/express/auftrag/{aid}"), (fokus(pg), pg.url))
         pg.unroute("**/nachweis.pdf")
+        js_fehler[:] = [x for x in js_fehler if "status of 503" not in x]     # die 503 oben war gewollt (nachgestellt)
         axe(pg, "Auftragsübersicht geliefert")
         check("Keine JS-Fehler", not js_fehler, js_fehler)
         b.close()
