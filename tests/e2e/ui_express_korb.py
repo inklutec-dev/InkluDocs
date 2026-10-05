@@ -159,6 +159,7 @@ try:
         pg.wait_for_timeout(1800)
         check("Warenkorb-Seite: Titel und Fokus auf „2. Deine Auswahl“", pg.title().startswith("Express-Warenkorb") and fokus() == "h-auswahl",
               (pg.title(), fokus()))
+        check("Warenkorb-Seite: H1 passt zum Titel (N5)", pg.locator("h1").inner_text().strip() == "Express-Warenkorb", pg.locator("h1").inner_text())
         check("Warenkorb-Seite: das Dokument ist in der Auswahl", "1 Dokument" in pg.locator("#exSumme").inner_text(), pg.locator("#exSumme").inner_text())
         check("aria-current nur am Eintrag „Express-Warenkorb“", pg.locator(".app-nav a[aria-current=page]").count() == 1
               and pg.locator(".app-nav a[aria-current=page]").get_attribute("data-express-korb") is not None)

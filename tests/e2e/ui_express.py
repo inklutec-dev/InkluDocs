@@ -180,25 +180,17 @@ try:
         check("Entfernen der Beilage: Meldung mit Fokus", fokus(pg) == "exMeldung" and "„Beilage fiktiv.pdf“ entfernt." in pg.locator("#exMeldung").inner_text(),
               (fokus(pg), pg.locator("#exMeldung").inner_text()))
         check("Dokumente als „schon in deiner Auswahl“ gesperrt", pg.locator("input[name=exDok]:disabled").count() == 2)
-        anfragen = []
-        pg.on("request", lambda r: anfragen.append(r.url) if "/leistung" in r.url else None)
-        sel = pg.locator("#exAuswahl select").first
-        sel.focus()
-        for _ in range(3):                                  # Pfeiltasten in der geschlossenen Liste (Windows-Verhalten)
-            sel.press("ArrowDown")
-            sel.press("ArrowUp")
-        sel.press("ArrowDown")
-        pg.wait_for_timeout(1500)
-        check("Leistung per Pfeiltasten: EINE Speicheranfrage (entprellt)", len(anfragen) == 1, anfragen)
-        check("Leistung geändert: Summe 100", "100 Credits" in pg.locator("#exSumme").inner_text(), pg.locator("#exSumme").inner_text())
+        # Michael Karbe 05.10.2026: nur Aufbereitung — reine Dokumentliste ohne Leistungswahl (Punkt 3), unter „Prüfen und
+        # bestellen“ nur Summen (Punkt 4), nirgends „nur PDF“ (Punkt 6)
+        check("Auswahl: reine Dokumentliste, keine Leistungswahl", pg.locator("#exAuswahl select").count() == 0)
+        check("Prüfen und bestellen: keine zweite Dokumentliste, nur Summen", pg.locator("#exAufstellung").count() == 0
+              and pg.locator("#exGesamt").inner_text() == "2 Dokumente, 3 Seiten, Summe: 150 Credits", pg.locator("#exGesamt").inner_text())
+        check("Kein „derzeit nur PDF“ auf der Seite", "nur PDF" not in pg.locator("main").inner_text()
+              and "Zurzeit" not in pg.locator("main").inner_text())
         pg.locator("#exAuswahl button", has_text="Entfernen").nth(1).click()
         pg.wait_for_timeout(800)
         check("Entfernen: Fokus auf die sichtbare Meldung", fokus(pg) == "exMeldung" and "entfernt" in pg.locator("#exMeldung").inner_text(), fokus(pg))
-        check("Nach Entfernen: „1 Dokument“ (Einzahl)", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 1 Dokument, 2 Seiten, 50 Credits.",
-              pg.locator("#exSumme").inner_text())
-        pg.locator("#exAuswahl select").first.select_option("aufbereiten")
-        pg.wait_for_timeout(1500)
-        check("Wieder „aufbereiten“: 100 Credits", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 1 Dokument, 2 Seiten, 100 Credits.",
+        check("Nach Entfernen: „1 Dokument“ (Einzahl)", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 1 Dokument, 2 Seiten, 100 Credits.",
               pg.locator("#exSumme").inner_text())
         axe(pg, "Express-Seite mit Auswahl")
         pg.fill("#exName", "")
@@ -209,20 +201,25 @@ try:
         pg.fill("#exName", "Kim Muster (fiktiv)")
         pg.click("#exBestellen")
         pg.wait_for_timeout(400)
-        check("Häkchen fehlen: Fokus auf das erste", fokus(pg) == "exBedingungen" and "Häkchen" in pg.locator("#exZustimmungFehler").inner_text(), fokus(pg))
-        check("Häkchen: Fehler am Kästchen (aria-invalid, Beschreibung), required, Legende nennt Pflicht",
-              all(pg.locator(f"#{i}").get_attribute("aria-invalid") == "true" and pg.locator(f"#{i}").get_attribute("aria-describedby") == "exZustimmungFehler"
-                  and pg.locator(f"#{i}").get_attribute("required") is not None for i in ("exBedingungen", "exBearbeitung"))
-              and "beide Häkchen sind nötig" in pg.locator("#exBestellForm legend").inner_text())
-        check("Häkchen nicht vorab gesetzt", not pg.locator("#exBedingungen").is_checked() and not pg.locator("#exBearbeitung").is_checked())
-        # Mit der Tastatur auf den Knopf (Tab vom zweiten Häkchen): :focus-visible greift wie bei echter Tastaturbedienung.
-        pg.evaluate("() => document.getElementById('exBearbeitung').focus()")
+        # EIN Pflicht-Häkchen (Punkt 5): Fehler am Kästchen, Fokus dorthin, required, Legende nennt Pflicht
+        check("Häkchen fehlt: Fehler am Kästchen, Fokus dorthin", fokus(pg) == "exBedingungen"
+              and pg.locator("#exBedingungen").get_attribute("aria-invalid") == "true"
+              and pg.locator("#exBedingungen").get_attribute("aria-describedby") == "exBedingungenFehler"
+              and "Bedingungen akzeptieren" in pg.locator("#exBedingungenFehler").inner_text(), fokus(pg))
+        check("Nur ein Häkchen, required, Legende „Zustimmung (Pflicht)“", pg.locator("#exBestellForm input[type=checkbox]").count() == 1
+              and pg.locator("#exBedingungen").get_attribute("required") is not None
+              and pg.locator("#exBestellForm legend").inner_text().strip() == "Zustimmung (Pflicht)")
+        check("Häkchen nicht vorab gesetzt", not pg.locator("#exBedingungen").is_checked())
+        pg.check("#exBedingungen")
+        pg.wait_for_timeout(200)
+        check("Fehler verschwindet beim Ankreuzen (N3)", pg.locator("#exBedingungen").get_attribute("aria-invalid") is None
+              and pg.locator("#exBedingungenFehler").inner_text().strip() == "", pg.locator("#exBedingungenFehler").inner_text())
+        # Mit der Tastatur auf den Knopf (Tab vom Häkchen): :focus-visible greift wie bei echter Tastaturbedienung.
+        pg.evaluate("() => document.getElementById('exBedingungen').focus()")
         pg.keyboard.press("Tab")
         check("Fokusring an „Zahlungspflichtig bestellen“ (3px #c75000)", fokus(pg) == "exBestellen"
               and ring(pg, "#exBestellen").startswith("solid 3px rgb(199, 80, 0)"), (fokus(pg), ring(pg, "#exBestellen")))
         check("Knopf „Zahlungspflichtig bestellen“", pg.locator("#exBestellen").inner_text() == "Zahlungspflichtig bestellen")
-        pg.check("#exBedingungen")
-        pg.check("#exBearbeitung")
         pg.fill("#exHinweise", "Bitte Seite 2 genau prüfen (Test)")
         pg.click("#exBestellen")
         pg.wait_for_url("**/express/auftrag/*", timeout=20000)
@@ -230,7 +227,8 @@ try:
         aid = int(pg.url.rstrip("/").split("/")[-1].split("?")[0])
         check("Danke-Meldung mit Fokus", fokus(pg) == "exaNeuText" and "ist eingegangen" in pg.locator("#exaNeuText").inner_text())
         check("Übersicht: vorgemerkt, Einverständnis, Verlauf", all(w in pg.locator("main").inner_text() for w in
-              ("vorgemerkt, abgebucht wird erst bei der Lieferung", "Ich bin einverstanden", "Bestellt", "keine Rechnung")))
+              ("vorgemerkt, abgebucht wird erst bei der Lieferung", "Ich akzeptiere die Bedingungen", "Bestellt", "keine Rechnung"))
+              and "Ich bin einverstanden" not in pg.locator("main").inner_text())        # seit Fassung -3 nur ein Häkchen
         check("Drucken und PDF angeboten", pg.locator("#exaDrucken").count() == 1 and pg.locator("#exaPdf").count() == 1)
         pg.emulate_media(media="print")
         check("Druck: Danke-Kasten nicht dabei", not pg.locator("#exaNeu").is_visible())
@@ -256,7 +254,7 @@ try:
         check("Platzhalter-Hinweis bei Preisen", ap.locator("#exvPlatzhalter").is_visible())
         check("Verwaltung: keine Ansage beim Laden", live(ap) == "", live(ap))
         check("Geliefert/Storniert: Überschrift im summary", ap.locator("details summary h2").count() == 2)
-        check("Preisfelder aus der Liste der Leistungen", ap.locator("#exvPreis_aufbereiten").count() == 1 and ap.locator("#exvPreis_pruefen").count() == 1)
+        check("Preisfelder aus der Liste der Leistungen (nur eingeschaltete)", ap.locator("#exvPreis_aufbereiten").count() == 1 and ap.locator("#exvPreis_pruefen").count() == 0)
         ap.fill("#exvFrist", "bald")
         ap.click("#exvEinstKnopf")
         ap.wait_for_timeout(1000)
@@ -286,8 +284,13 @@ try:
         ap.wait_for_timeout(300)
         zonen = ap.locator(".proj-dropzone.hochladefeld")
         check("Verwaltung: Hochladefelder = Komponente der Projekte (Ergebnis und Prüfbericht)", zonen.count() == 2
-              and zonen.first.locator("label.upload-btn").is_visible() and zonen.first.locator("label.upload-btn").inner_text().strip() == "PDF-Datei auswählen"
+              and zonen.first.locator("label.upload-btn").is_visible()
+              and zonen.first.locator("label.upload-btn").evaluate("e => e.firstChild.textContent.trim()") == "PDF-Datei auswählen"
               and "Ergebnis für „Jahresbericht fiktiv.pdf“ hochladen" in zonen.first.locator("h4").inner_text(), zonen.count())
+        namen = [z.locator("input[type=file]").evaluate("e => e.labels[0].textContent.trim()") for z in zonen.all()]
+        check("Hochladeknöpfe eindeutig benannt (versteckter Zusatz, N2), keine eigene Landmarke je Fläche",
+              namen == ["PDF-Datei auswählen: Ergebnis für „Jahresbericht fiktiv.pdf“", "PDF-Datei auswählen: Prüfbericht für „Jahresbericht fiktiv.pdf“"]
+              and all(z.get_attribute("aria-labelledby") is None for z in zonen.all()), namen)
         feld = zonen.first.locator("input[type=file]")
         fid = feld.get_attribute("id")
         ap.evaluate("(i) => document.getElementById(i).focus()", fid)
@@ -330,6 +333,68 @@ try:
         pg.unroute("**/nachweis.pdf")
         js_fehler[:] = [x for x in js_fehler if "status of 503" not in x]     # die 503 oben war gewollt (nachgestellt)
         axe(pg, "Auftragsübersicht geliefert")
+
+        # ── Kunde: „Meine Aufträge“ als Karten wie die Dokumente, umbenennen und löschen (Punkte 1 und 2) ──
+        pg.goto(f"{BASE}/express", wait_until="networkidle")
+        pg.wait_for_timeout(1500)
+        karte = pg.locator(f"#exa_karte_{aid}")
+        check("Meine Aufträge: Karte mit <details>, H3 im summary, Stand-Abzeichen", karte.count() == 1
+              and karte.locator("details.dok-klappe > summary h3").count() == 1 and "Geliefert" in karte.locator(".badge").inner_text())
+        karte.locator("details.dok-klappe > summary").first.evaluate("e => { e.parentElement.open = true; }")
+        inhalte = karte.locator("details.ex-dok-klappe")
+        check("Inhalte des Auftrags aufklappbar (Dokumente mit Seiten, Stand, Download)", inhalte.count() == 1
+              and "Dokumente dieses Auftrags (1)" in inhalte.locator("summary").inner_text())
+        inhalte.evaluate("e => { e.open = true; }")
+        check("Dokument in der Karte: Seiten, Stand, Download", all(w in inhalte.inner_text() for w in ("Jahresbericht fiktiv.pdf", "Seiten: 2", "fertig, zum Herunterladen"))
+              and inhalte.locator("a", has_text="Barrierefreie PDF herunterladen").count() == 1, inhalte.inner_text())
+        knopf = karte.locator("button", has_text="Umbenennen")
+        check("Knöpfe Umbenennen und Löschen (geliefert)", knopf.count() == 1 and karte.locator("button", has_text="Löschen").count() == 1)
+        axe(pg, "Meine Aufträge als Karten")
+        knopf.click()
+        pg.wait_for_timeout(300)
+        check("Umbenennen: Dialog, Fokus im Feld", pg.locator("#exaRenameDialog").evaluate("d => d.open") and fokus(pg) == "exaRenameName")
+        axe(pg, "Dialog Umbenennen")
+        pg.fill("#exaRenameName", "Jahresberichte (fiktiv)")
+        pg.click("#exaRenameForm button[type=submit]")
+        pg.wait_for_timeout(1200)
+        check("Umbenannt: Meldung mit Fokus, Name in der Karte", fokus(pg) == "exAuftragMeldung"
+              and "Jahresberichte (fiktiv)" in pg.locator("#exAuftragMeldung").inner_text()
+              and "Jahresberichte (fiktiv)" in pg.locator(f"#exa_karte_{aid} summary").first.inner_text(), fokus(pg))
+        pg.locator(f"#exa_karte_{aid} details.dok-klappe").first.evaluate("e => { e.open = true; }")
+        pg.locator(f"#exa_karte_{aid} button", has_text="Löschen").click()
+        pg.wait_for_timeout(300)
+        check("Löschen: Bestätigungsdialog, Fokus auf „Abbrechen“", pg.locator("#exaLoeschDialog").evaluate("d => d.open")
+              and fokus(pg) == "exaLoeschAbbrechen" and "Buchhaltung" in pg.locator("#exaLoeschText").inner_text(), fokus(pg))
+        axe(pg, "Dialog Löschen")
+        pg.click("#exaLoeschJa")
+        pg.wait_for_timeout(1500)
+        check("Gelöscht: Meldung mit Fokus, Karte weg", fokus(pg) == "exAuftragMeldung" and "ist gelöscht" in pg.locator("#exAuftragMeldung").inner_text()
+              and pg.locator(f"#exa_karte_{aid}").count() == 0, fokus(pg))
+        ap.goto(f"{BASE}/verwaltung/express/{aid}", wait_until="networkidle")
+        ap.wait_for_timeout(1200)
+        check("Verwaltung sieht „vom Kunden gelöscht“", "Vom Kunden gelöscht am" in ap.locator("main").inner_text())
+        axe(ap, "Verwaltung: vom Kunden gelöschter Auftrag")
+
+        # ── Feld-Fokus auf Anmelden, Registrieren, Passwort vergessen (Nachprüfung Barrierefreiheit, N1) ──
+        oc = b.new_context(locale="de-DE")
+        op = oc.new_page()
+        for pfad in ("/login", "/register", "/forgot"):
+            op.goto(f"{BASE}{pfad}", wait_until="networkidle")
+            feld = op.locator("main input[type=email], form input[type=email]").first
+            if not feld.count():
+                check(f"{pfad}: E-Mail-Feld gefunden", False)
+                continue
+            feld.evaluate("e => e.blur()")
+            op.keyboard.press("Tab")                         # Tastatur-Modus
+            op.evaluate("() => document.querySelector('form input[type=email]').focus()")
+            st = op.evaluate("() => { const c = getComputedStyle(document.activeElement); return c.outlineStyle + ' ' + c.outlineWidth + ' ' + c.outlineColor; }")
+            check(f"{pfad}: Textfeld mit 3-px-Fokusring", st.startswith("solid 3px rgb(199, 80, 0)"), st)
+            box = op.locator("form input[type=checkbox]").first
+            if box.count():
+                box.evaluate("e => e.focus()")
+                st = op.evaluate("() => { const c = getComputedStyle(document.activeElement); return c.outlineStyle + ' ' + c.outlineWidth; }")
+                check(f"{pfad}: Kästchen mit Fokusring", st.startswith("solid 3px"), st)
+        oc.close()
         check("Keine JS-Fehler", not js_fehler, js_fehler)
         b.close()
 finally:

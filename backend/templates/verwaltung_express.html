@@ -119,6 +119,7 @@
     if (a.status === 'geliefert') teile.push(t('geliefert am {datum}', { datum: V.datumZeit(a.geliefert_am) }));
     if (a.status === 'storniert') teile.push(t('storniert am {datum}', { datum: V.datumZeit(a.storniert_am) }));
     else teile.push(a.bearbeiter_name ? t('Bearbeiter: {name}', { name: a.bearbeiter_name }) : t('noch niemand zugewiesen'));
+    if (a.kunde_geloescht_am) teile.push(t('vom Kunden gelöscht'));
     li.appendChild(document.createTextNode(' · ' + teile.join(' · ')));
     return li;
   }

@@ -70,8 +70,8 @@ Abgerufen am 05.10.2026:
 
 Die Verwaltung (Voll-Admins) kann Preise je Modell ändern oder neue Modelle eintragen (immer mit Quelle) und den
 Kurs ändern; gespeichert in `system_kv` unter `ki_preise`, 60 Sekunden zwischengespeichert. Eine **neue Preisstufe**
-(anderes „gültig ab“) übernimmt Staffel und Cache-Schreibpreis (`grenze`, `ein_lang`, `aus_lang`, `cache_lang`,
-`cache_schreiben`) aus der jüngsten Stufe davor (`ki_kosten_api.staffel_vorlage`) — sonst würden lange Prompts bei
+(anderes „gültig ab“) übernimmt Staffel und Cache-Preise (`grenze`, `ein_lang`, `aus_lang`, `cache_lang`,
+`cache_schreiben`, `cache` — Letzteres seit der Nachprüfung N5, wenn das Feld leer bleibt) aus der jüngsten Stufe davor (`ki_kosten_api.staffel_vorlage`) — sonst würden lange Prompts bei
 Gemini Pro nach einer Preisänderung zum Grundpreis gerechnet (Prüfung Entwicklung 05.10.2026, Befund 12). Der Dialog
 sagt, welche Staffel übernommen wird; die Meldung nach dem Speichern auch. Fehler nennen das Feld (Text beginnt mit der
 Beschriftung, Fokus dorthin), ein kaputter JSON-Körper gibt 400. Modellkennungen werden
@@ -131,9 +131,10 @@ den Monatssummen (sie sind angefallen), zählen danach „ohne Zuordnung“.
 
 ## Tests
 
-- `tests/test_ki_kosten.py` (Unit, eigene Wegwerf-Datenbank, 23): Preisrechnung inkl. Staffel und Stufen, unbekannte
+- `tests/test_ki_kosten.py` (Unit, eigene Wegwerf-Datenbank, 24): Preisrechnung inkl. Staffel und Stufen, unbekannte
   Preise, Kontext durch Executor/Threads/Dekoratoren, Gemini-Client-Haken, Auswertung, Kontolöschung; Kosten je Credit
-  nur aus KI-Credits ab Messbeginn, Staffel bleibt bei neuer Stufe, Fehler mit Feld, kaputter JSON-Körper 400
+  nur aus KI-Credits ab Messbeginn, Staffel und Cache-Preis bleiben bei neuer Stufe, Fehler mit Feld, kaputter
+  JSON-Körper 400
 - `tests/e2e/verify_ki_kosten.py` (im Staging-Container, echter Alt-Text-Lauf): Erfassung mit Kunde/Bild/Zweck,
   Neu-Generieren, Bericht und Drill-down, Kundenseite, Rechte (Kunde/Nur-Einsicht/Voll-Admin), Eingabeprüfungen
 - `tests/e2e/ui_ki_kosten.py` (Playwright + axe, nur Staging): Seite, Aufklappen, beide Dialoge, Fokus, Englisch

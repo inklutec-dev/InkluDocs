@@ -12,10 +12,12 @@ Kunde (angemeldet):
   POST /api/express/warenkorb/hochladen           Datei ohne Projekt (legt „Express-Auftrag <Nr>“ an)
   POST /api/express/warenkorb/positionen/{id}/leistung   {leistung}
   DELETE /api/express/warenkorb/positionen/{id}
-  POST /api/express/bestellen                     {ansprechpartner, telefon, hinweise, bedingungen, bearbeitung, idempotenz,
+  POST /api/express/bestellen                     {ansprechpartner, telefon, hinweise, bedingungen, idempotenz,
                                                    korb_id, erwartete_credits, fassung}
   GET  /api/express/auftraege, /api/express/auftraege/{id}
   POST /api/express/auftraege/{id}/antwort        {text}
+  POST /api/express/auftraege/{id}/name           {name} eigener Name (leer = „Auftrag <Nr>“)
+  DELETE /api/express/auftraege/{id}              nur geliefert/storniert; intern bleibt ein Buchungsnachweis
   GET  /api/express/auftraege/{id}/positionen/{pos}/(ergebnis|bericht)
   GET  /api/express/auftraege/{id}/nachweis.pdf   Auftragsuebersicht als PDF/UA (LibreOffice-Umwandler)
 Verwaltung (Admins lesen; Voll-Admins und Express-Bearbeiter arbeiten; Einstellungen und Bearbeiter nur Voll-Admins):
@@ -93,9 +95,9 @@ _nachweis_pool = concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_nam
 NACHWEIS_TIMEOUT = 60
 ZIP_PREFIX = "express_zip_"
 ZIP_PLATZ_RESERVE = 512 * 1024 * 1024   # so viel muss nach dem ZIP auf der Platte frei bleiben
-# Befund 10: Eine Meldung, die an niemanden rausging, wird so oft erneut versucht (alle 10 Minuten), dann aufgegeben.
-MELDUNG_VERSUCHE = 6
-_meldung_versuche: dict = defaultdict(int)
+# Befund 10: Eine Meldung, die an niemanden rausging, wird so oft erneut versucht (alle 10 Minuten), dann aufgegeben;
+# der Zaehler steht in der Datenbank (express.meldung_freigeben).
+MELDUNG_VERSUCHE = express.MELDUNG_VERSUCHE
 
 
 def _bremsen(art: str, user_id: int) -> None:
@@ -267,17 +269,14 @@ def _meldung_senden(art: str, auftrag_id: int) -> None:
     Durchlauf erneut versucht — hoechstens MELDUNG_VERSUCHE-mal (Befund 10). Doppelmails gibt es nicht: freigegeben wird
     nur, wenn KEINE Mail rausging."""
     erfolge = _mails_nach("", art, auftrag_id)
-    schluessel = (art, auftrag_id)
     if erfolge != 0:
-        _meldung_versuche.pop(schluessel, None)
+        if erfolge > 0:
+            express.meldung_erfolg(auftrag_id)
         return
-    _meldung_versuche[schluessel] += 1
-    if _meldung_versuche[schluessel] < MELDUNG_VERSUCHE:
+    if express.meldung_freigeben(art, auftrag_id):
         log.warning("Express-%s fuer Auftrag %s ging an niemanden raus — neuer Versuch im naechsten Durchlauf", art, auftrag_id)
-        express.meldung_freigeben(art, auftrag_id)
     else:
         log.error("Express-%s fuer Auftrag %s nach %d Versuchen aufgegeben", art, auftrag_id, MELDUNG_VERSUCHE)
-        _meldung_versuche.pop(schluessel, None)
 
 
 def _zip_reste_wegraeumen(alter_s: int = 3600) -> None:
@@ -389,7 +388,7 @@ def build_router(deps: Deps) -> APIRouter:
                 "frist_stunden": e["frist_stunden"], "max_seiten": e["max_seiten_auftrag"],
                 "max_dokumente": e["max_dokumente_auftrag"], "guthaben": verf, "max_upload_mb": _d.max_upload_size // (1024 * 1024),
                 "ansprechpartner": (db.get("display_name") or "").strip(),
-                "texte": {"bedingungen": _(express.TEXT_BEDINGUNGEN), "bearbeitung": _(express.TEXT_BEARBEITUNG)}}
+                "texte": {"bedingungen": _(express.TEXT_BEDINGUNGEN)}}
 
     @router.get("/api/express/projekte")
     async def projekte(user: dict = Depends(_kunde_neu)):
@@ -518,10 +517,10 @@ def build_router(deps: Deps) -> APIRouter:
         try:
             erg = await _im_thread(
                 express.bestellen, user["id"], ansprechpartner=daten.get("ansprechpartner"), telefon=daten.get("telefon"),
-                hinweise=daten.get("hinweise"), bedingungen=daten.get("bedingungen"), bearbeitung=daten.get("bearbeitung"),
+                hinweise=daten.get("hinweise"), bedingungen=daten.get("bedingungen"),
                 idempotenz=daten.get("idempotenz"), korb_id=daten.get("korb_id"),
                 erwartete_credits=daten.get("erwartete_credits"), fassung=daten.get("fassung"), sprache=sprache,
-                texte={"bedingungen": _(express.TEXT_BEDINGUNGEN), "bearbeitung": _(express.TEXT_BEARBEITUNG)},
+                texte={"bedingungen": _(express.TEXT_BEDINGUNGEN)},
                 absender=_d.absender_kennung(request))
         except express.ExpressFehler as e:
             raise _fehler(e)
@@ -554,6 +553,25 @@ def build_router(deps: Deps) -> APIRouter:
             raise _fehler(e)
         _hintergrund(_mails_nach, "", "antwort", auftrag_id, text.strip())
         return a
+
+    @router.post("/api/express/auftraege/{auftrag_id}/name")
+    async def umbenennen(auftrag_id: int, request: Request, user: dict = Depends(_kunde)):
+        """Eigener Name des Kunden fuer den Auftrag (leer = „Auftrag <Nr>“)."""
+        daten = await _json_dict(request)
+        try:
+            return await _im_thread(express.umbenennen, user["id"], auftrag_id, daten.get("name"))
+        except express.ExpressFehler as e:
+            raise _fehler(e)
+
+    @router.delete("/api/express/auftraege/{auftrag_id}")
+    async def kunde_loeschen(auftrag_id: int, user: dict = Depends(_kunde)):
+        """Nur gelieferte oder stornierte Auftraege; intern bleibt ein Buchungsnachweis (express.kunde_loeschen)."""
+        try:
+            await _im_thread(express.kunde_loeschen, user["id"], auftrag_id)
+        except express.ExpressFehler as e:
+            raise _fehler(e)
+        log.info("Express-Auftrag %s vom Kunden %s geloescht", auftrag_id, user["id"])
+        return {"ok": True}
 
     @router.get("/api/express/auftraege/{auftrag_id}/positionen/{pos_id}/{art}")
     async def kunde_datei(auftrag_id: int, pos_id: int, art: str, user: dict = Depends(_kunde)):

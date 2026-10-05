@@ -10675,8 +10675,6 @@ msgstr "Bestätigt am {datum} (Fassung {fassung}):"
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Bezahlt aus dem Team-Guthaben von"
 
-msgid "Bitte beide Häkchen setzen."
-msgstr "Bitte beide Häkchen setzen."
 
 msgid "Bitte ein Projekt wählen"
 msgstr "Bitte ein Projekt wählen"
@@ -10884,8 +10882,6 @@ msgstr "Interne Notiz geändert"
 msgid "Keine Aufträge."
 msgstr "Keine Aufträge."
 
-msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
-msgstr "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
 
 msgid "Leistung für {name}"
 msgstr "Leistung für {name}"
@@ -10902,8 +10898,6 @@ msgstr "Liefern"
 msgid "Lieferung"
 msgstr "Lieferung"
 
-msgid "Lieferung innerhalb von {stunden} Stunden"
-msgstr "Lieferung innerhalb von {stunden} Stunden"
 
 msgid "Lieferung innerhalb von {stunden} Stunden."
 msgstr "Lieferung innerhalb von {stunden} Stunden."
@@ -10999,8 +10993,6 @@ msgstr "Storniert am"
 msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
 msgstr "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
 
-msgid "Summe: {c} Credits"
-msgstr "Summe: {c} Credits"
 
 msgid "Telefon"
 msgstr "Telefon"
@@ -11055,8 +11047,6 @@ msgstr "Zurück zum Express-Service"
 msgid "abgebucht"
 msgstr "abgebucht"
 
-msgid "bestellt am {datum}"
-msgstr "bestellt am {datum}"
 
 msgid "fehlt noch"
 msgstr "fehlt noch"
@@ -11158,8 +11148,6 @@ msgstr "„{name}“ entfernt."
 msgid "Ich akzeptiere die Bedingungen für den Express-Service."
 msgstr "Ich akzeptiere die Bedingungen für den Express-Service."
 
-msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
-msgstr "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
 
 msgid "1 Dokument"
 msgstr "1 Dokument"
@@ -11176,8 +11164,6 @@ msgstr "Hinzugefügt: {dokumente}."
 msgid "Im Projekt: {dokumente}, davon wählbar: {w}."
 msgstr "Im Projekt: {dokumente}, davon wählbar: {w}."
 
-msgid "{name}: {seiten}, {leistung}, {c} Credits"
-msgstr "{name}: {seiten}, {leistung}, {c} Credits"
 
 msgid "{seiten}, {leistung}, {c} Credits"
 msgstr "{seiten}, {leistung}, {c} Credits"
@@ -11290,17 +11276,11 @@ msgstr "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
 msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
 msgstr "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
 
-msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
-msgstr "Zurzeit können wir nur {typen}-Dateien bearbeiten."
 
-msgid "Zustimmung (beide Häkchen sind nötig)"
-msgstr "Zustimmung (beide Häkchen sind nötig)"
 
 msgid "für {modell}"
 msgstr "für {modell}"
 
-msgid "nicht möglich, nur {typen}"
-msgstr "nicht möglich, nur {typen}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "{art} für „{name}“ hochladen"
@@ -11317,8 +11297,6 @@ msgstr "{name}, angelegt am {datum}"
 msgid "{pruefung} konnte die Datei nicht prüfen."
 msgstr "{pruefung} konnte die Datei nicht prüfen."
 
-msgid "{pruefung}: Abweichungen — {text}"
-msgstr "{pruefung}: Abweichungen — {text}"
 
 msgid "{pruefung}: bestanden."
 msgstr "{pruefung}: bestanden."
@@ -11379,3 +11357,96 @@ msgstr "„{name}“ liegt jetzt im Express-Warenkorb."
 
 msgid "„{name}“ liegt schon im Express-Warenkorb."
 msgstr "„{name}“ liegt schon im Express-Warenkorb."
+
+msgid "Auftrag löschen?"
+msgstr "Auftrag löschen?"
+
+msgid "Auftrag umbenennen"
+msgstr "Auftrag umbenennen"
+
+msgid "Auftragsübersicht öffnen"
+msgstr "Auftragsübersicht öffnen"
+
+msgid "Bitte die Bedingungen akzeptieren."
+msgstr "Bitte die Bedingungen akzeptieren."
+
+msgid "Der Auftrag heißt jetzt „{name}“."
+msgstr "Der Auftrag heißt jetzt „{name}“."
+
+msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
+msgstr "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
+
+msgid "Dokumente dieses Auftrags ({n})"
+msgstr "Dokumente dieses Auftrags ({n})"
+
+msgid "Express-Auftrag {nr}: {name}"
+msgstr "Express-Auftrag {nr}: {name}"
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+
+msgid "Leer lassen, um wieder „Auftrag“ mit der Nummer zu verwenden. Die Auftragsnummer bleibt immer daneben stehen."
+msgstr "Leer lassen, um wieder „Auftrag“ mit der Nummer zu verwenden. Die Auftragsnummer bleibt immer daneben stehen."
+
+msgid "Leistung"
+msgstr "Leistung"
+
+msgid "Möchtest du „{name}“ wirklich löschen? Die Dateien und Angaben dieses Auftrags werden gelöscht und er verschwindet aus deiner Liste. Für die Buchhaltung bleibt nur ein knapper Nachweis (Nummer, Datum, Credits). Das lässt sich nicht rückgängig machen."
+msgstr "Möchtest du „{name}“ wirklich löschen? Die Dateien und Angaben dieses Auftrags werden gelöscht und er verschwindet aus deiner Liste. Für die Buchhaltung bleibt nur ein knapper Nachweis (Nummer, Datum, Credits). Das lässt sich nicht rückgängig machen."
+
+msgid "Name des Auftrags"
+msgstr "Name des Auftrags"
+
+msgid "Name des Kunden für den Auftrag"
+msgstr "Name des Kunden für den Auftrag"
+
+msgid "Preis: {c} Credits je Seite."
+msgstr "Preis: {c} Credits je Seite."
+
+msgid "Umfang"
+msgstr "Umfang"
+
+msgid "Vom Kunden gelöscht"
+msgstr "Vom Kunden gelöscht"
+
+msgid "Vom Kunden gelöscht am"
+msgstr "Vom Kunden gelöscht am"
+
+msgid "Zustimmung (Pflicht)"
+msgstr "Zustimmung (Pflicht)"
+
+msgid "fertig, zum Herunterladen"
+msgstr "fertig, zum Herunterladen"
+
+msgid "geliefert"
+msgstr "geliefert"
+
+msgid "nicht auswählbar, der Express-Service bearbeitet {typen}-Dateien"
+msgstr "nicht auswählbar, der Express-Service bearbeitet {typen}-Dateien"
+
+msgid "storniert"
+msgstr "storniert"
+
+msgid "vom Kunden gelöscht"
+msgstr "vom Kunden gelöscht"
+
+msgid "{art} für „{name}“"
+msgstr "{art} für „{name}“"
+
+msgid "{dokumente}, {seiten}, Summe: {c} Credits"
+msgstr "{dokumente}, {seiten}, Summe: {c} Credits"
+
+msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
+msgstr "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
+
+msgid "{pruefung}: Abweichungen vom Standard, {n} Regeln nicht erfüllt."
+msgstr "{pruefung}: Abweichungen vom Standard, {n} Regeln nicht erfüllt."
+
+msgid "{pruefung}: Abweichungen vom Standard."
+msgstr "{pruefung}: Abweichungen vom Standard."
+
+msgid "– Auftrag „{name}“"
+msgstr "– Auftrag „{name}“"
+
+msgid "„{name}“ ist gelöscht."
+msgstr "„{name}“ ist gelöscht."

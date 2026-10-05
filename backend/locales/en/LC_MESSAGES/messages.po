@@ -10672,8 +10672,6 @@ msgstr "Confirmed on {datum} (version {fassung}):"
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Paid from the team credit of"
 
-msgid "Bitte beide Häkchen setzen."
-msgstr "Please tick both boxes."
 
 msgid "Bitte ein Projekt wählen"
 msgstr "Please choose a project"
@@ -10881,8 +10879,6 @@ msgstr "Internal note changed"
 msgid "Keine Aufträge."
 msgstr "No orders."
 
-msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
-msgstr "Have professionals make your documents accessible or check them. We deliver within {stunden} hours. Payment is made with credits: they are reserved when you order and only charged on delivery."
 
 msgid "Leistung für {name}"
 msgstr "Service for {name}"
@@ -10899,8 +10895,6 @@ msgstr "Deliver"
 msgid "Lieferung"
 msgstr "Delivery"
 
-msgid "Lieferung innerhalb von {stunden} Stunden"
-msgstr "delivery within {stunden} hours"
 
 msgid "Lieferung innerhalb von {stunden} Stunden."
 msgstr "Delivery within {stunden} hours."
@@ -10996,8 +10990,6 @@ msgstr "Cancelled on"
 msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
 msgstr "Cancelled. The credits are released, the customer receives an email."
 
-msgid "Summe: {c} Credits"
-msgstr "Total: {c} credits"
 
 msgid "Telefon"
 msgstr "Phone"
@@ -11052,8 +11044,6 @@ msgstr "Back to the express service"
 msgid "abgebucht"
 msgstr "charged"
 
-msgid "bestellt am {datum}"
-msgstr "ordered on {datum}"
 
 msgid "fehlt noch"
 msgstr "still missing"
@@ -11155,8 +11145,6 @@ msgstr "“{name}” removed."
 msgid "Ich akzeptiere die Bedingungen für den Express-Service."
 msgstr "I accept the terms for the express service."
 
-msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
-msgstr "I agree that staff of InkluTec and our partner Actino may view, edit and check my documents."
 
 msgid "1 Dokument"
 msgstr "1 document"
@@ -11173,8 +11161,6 @@ msgstr "Added: {dokumente}."
 msgid "Im Projekt: {dokumente}, davon wählbar: {w}."
 msgstr "In the project: {dokumente}, selectable: {w}."
 
-msgid "{name}: {seiten}, {leistung}, {c} Credits"
-msgstr "{name}: {seiten}, {leistung}, {c} credits"
 
 msgid "{seiten}, {leistung}, {c} Credits"
 msgstr "{seiten}, {leistung}, {c} credits"
@@ -11287,17 +11273,11 @@ msgstr "Revenue (final prices, no VAT under § 19 UStG)"
 msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
 msgstr "Too many requests in a short time. Please try again later."
 
-msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
-msgstr "At the moment we can only process {typen} files."
 
-msgid "Zustimmung (beide Häkchen sind nötig)"
-msgstr "Consent (both checkboxes are required)"
 
 msgid "für {modell}"
 msgstr "for {modell}"
 
-msgid "nicht möglich, nur {typen}"
-msgstr "not possible, {typen} only"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Upload {art} for “{name}”"
@@ -11314,8 +11294,6 @@ msgstr "{name}, created on {datum}"
 msgid "{pruefung} konnte die Datei nicht prüfen."
 msgstr "{pruefung} could not check the file."
 
-msgid "{pruefung}: Abweichungen — {text}"
-msgstr "{pruefung}: deviations — {text}"
 
 msgid "{pruefung}: bestanden."
 msgstr "{pruefung}: passed."
@@ -11376,3 +11354,96 @@ msgstr "“{name}” is now in the express cart."
 
 msgid "„{name}“ liegt schon im Express-Warenkorb."
 msgstr "“{name}” is already in the express cart."
+
+msgid "Auftrag löschen?"
+msgstr "Delete order?"
+
+msgid "Auftrag umbenennen"
+msgstr "Rename order"
+
+msgid "Auftragsübersicht öffnen"
+msgstr "Open order summary"
+
+msgid "Bitte die Bedingungen akzeptieren."
+msgstr "Please accept the terms."
+
+msgid "Der Auftrag heißt jetzt „{name}“."
+msgstr "The order is now called “{name}”."
+
+msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
+msgstr "The customer deleted this order: files, document list, details and history have been removed. The booking record with number, date, account, pages, credits and status remains."
+
+msgid "Dokumente dieses Auftrags ({n})"
+msgstr "Documents in this order ({n})"
+
+msgid "Express-Auftrag {nr}: {name}"
+msgstr "Express order {nr}: {name}"
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Have professionals make your documents accessible. We deliver within {stunden} hours. Payment is made in credits: they are reserved when you order and only deducted on delivery."
+
+msgid "Leer lassen, um wieder „Auftrag“ mit der Nummer zu verwenden. Die Auftragsnummer bleibt immer daneben stehen."
+msgstr "Leave empty to use “Order” with the number again. The order number is always shown next to it."
+
+msgid "Leistung"
+msgstr "Service"
+
+msgid "Möchtest du „{name}“ wirklich löschen? Die Dateien und Angaben dieses Auftrags werden gelöscht und er verschwindet aus deiner Liste. Für die Buchhaltung bleibt nur ein knapper Nachweis (Nummer, Datum, Credits). Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete “{name}”? The files and details of this order will be deleted and it will disappear from your list. Only a brief record (number, date, credits) remains for accounting. This cannot be undone."
+
+msgid "Name des Auftrags"
+msgstr "Name of the order"
+
+msgid "Name des Kunden für den Auftrag"
+msgstr "Customer’s name for the order"
+
+msgid "Preis: {c} Credits je Seite."
+msgstr "Price: {c} credits per page."
+
+msgid "Umfang"
+msgstr "Scope"
+
+msgid "Vom Kunden gelöscht"
+msgstr "Deleted by the customer"
+
+msgid "Vom Kunden gelöscht am"
+msgstr "Deleted by the customer on"
+
+msgid "Zustimmung (Pflicht)"
+msgstr "Consent (required)"
+
+msgid "fertig, zum Herunterladen"
+msgstr "ready to download"
+
+msgid "geliefert"
+msgstr "delivered"
+
+msgid "nicht auswählbar, der Express-Service bearbeitet {typen}-Dateien"
+msgstr "not selectable, the express service processes {typen} files"
+
+msgid "storniert"
+msgstr "cancelled"
+
+msgid "vom Kunden gelöscht"
+msgstr "deleted by the customer"
+
+msgid "{art} für „{name}“"
+msgstr "{art} for “{name}”"
+
+msgid "{dokumente}, {seiten}, Summe: {c} Credits"
+msgstr "{dokumente}, {seiten}, total: {c} credits"
+
+msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
+msgstr "{pruefung}: deviations from the standard, 1 rule not met."
+
+msgid "{pruefung}: Abweichungen vom Standard, {n} Regeln nicht erfüllt."
+msgstr "{pruefung}: deviations from the standard, {n} rules not met."
+
+msgid "{pruefung}: Abweichungen vom Standard."
+msgstr "{pruefung}: deviations from the standard."
+
+msgid "– Auftrag „{name}“"
+msgstr "– order “{name}”"
+
+msgid "„{name}“ ist gelöscht."
+msgstr "“{name}” has been deleted."

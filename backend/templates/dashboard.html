@@ -365,7 +365,8 @@
       const h3 = document.createElement('h3');
       const link = document.createElement('a');
       link.href = '/express/auftrag/' + encodeURIComponent(a.id);
-      link.textContent = t('Auftrag {nr}', { nr: a.id });
+      // eigener Name des Kunden (Umbenennen in „Meine Aufträge“), die Nummer bleibt dabei
+      link.textContent = a.auftrag_name ? a.auftrag_name + ' (' + t('Auftrag {nr}', { nr: a.id }) + ')' : t('Auftrag {nr}', { nr: a.id });
       h3.appendChild(link);
       const meta = document.createElement('p');
       meta.className = 'dash-meta';

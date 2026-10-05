@@ -30,21 +30,46 @@ Menüpunkt „Express-Service“ (`/api/me` `user.express`): Schalter an oder ei
    Hinweis, Statuszeile; das Hochladen startet mit der Auswahl). InkluDocs legt dafür ein Projekt „Express-Auftrag <Nr>“
    an (weitere Uploads in denselben Auftrag landen im selben Projekt). Bewusst **kein** „alle Dokumente aus allen
    Projekten“.
-3. **Deine Auswahl** (= Warenkorb, serverseitig gespeichert, bleibt beim Verlassen der Seite): je Dokument die Leistung
-   aus der Liste der Leistungen, die es für seinen Dateityp gibt (heute „Barrierefrei aufbereiten (mit Prüfung)“ oder
-   „Nur prüfen (Prüfbericht)“), Entfernen-Knopf. Hinzufügen und Leistungswechsel sagen Anzahl, Seiten, Credits und —
-   wenn es nicht reicht — das fehlende Guthaben an; Entfernen zeigt eine sichtbare Meldung und setzt den Fokus darauf.
-   Die Leistungsauswahl speichert erst, wenn die Auswahl einen Moment steht (Pfeiltasten unter Windows: eine Anfrage).
+3. **Deine Auswahl** (= Warenkorb, serverseitig gespeichert, bleibt beim Verlassen der Seite): eine **reine
+   Dokumentliste** — Name, Seiten, Entfernen-Knopf (Michael Karbe 05.10.2026, Punkt 3: „Wir bieten nur die Aufbereitung
+   an.“). Eine Leistungswahl je Dokument erscheint nur, wenn es für den Dateityp mehr als eine eingeschaltete Leistung
+   gibt (dann speichert sie erst, wenn die Auswahl einen Moment steht). Hinzufügen sagt Anzahl, Seiten, Credits und — wenn
+   es nicht reicht — das fehlende Guthaben an; Entfernen zeigt eine sichtbare Meldung und setzt den Fokus darauf.
 4. **Angaben:** Ansprechpartner (vorbelegt mit dem Kontonamen), Telefon (freiwillig), Hinweise (freiwillig).
-5. **Prüfen und bestellen:** Aufstellung je Dokument, Summe, verfügbares Guthaben, „Lieferung innerhalb von 48 Stunden“,
-   bei zu wenig Guthaben Hinweis mit Link „Credits kaufen“. Zwei Pflicht-Kontrollkästchen (`required`, Legende
-   „Zustimmung (beide Häkchen sind nötig)“, Fehler an jedem Kästchen), nicht vorab angehakt: Bedingungen (Seite
-   `/express/bedingungen`, als ENTWURF gekennzeichnet) und Einverständnis zur Bearbeitung durch Mitarbeiter von InkluTec
-   und Actino. Knopf „Zahlungspflichtig bestellen“ (§ 312j BGB). Die Seite schickt Korb-Nummer, angezeigte Summe und
-   Korb-Fassung mit; hat sich etwas geändert (Preis, zweiter Tab, Seite aus dem Zurück-Speicher), bestellt der Server
+5. **Prüfen und bestellen:** nur Summen — Dokumente, Seiten, Credits, verfügbares Guthaben, „Lieferung innerhalb von 48
+   Stunden“ (die Dokumente stehen schon unter „Deine Auswahl“, Punkt 4); bei zu wenig Guthaben Hinweis mit Link „Credits
+   kaufen“. **Ein** Pflicht-Kontrollkästchen „Ich akzeptiere die Bedingungen für den Express-Service.“ (`required`,
+   Legende „Zustimmung (Pflicht)“, Fehler am Kästchen, der Fehler verschwindet beim Ankreuzen), nicht vorab angehakt. Die
+   Bearbeitung durch Mitarbeiter von InkluTec und Actino steht ausdrücklich in den Bedingungen (Seite
+   `/express/bedingungen`, als ENTWURF gekennzeichnet, Fassung `2026-10-05-entwurf-3`; Punkt 5) — beim Auftrag
+   gespeichert werden wie bisher Wortlaut, Fassung, Sprache, Zeitpunkt und gekürztes Netz. Aufträge bis Fassung -2
+   behalten ihr zweites Häkchen im Nachweis. Knopf „Zahlungspflichtig bestellen“ (§ 312j BGB). Die Seite schickt
+   Korb-Nummer, angezeigte Summe und Korb-Fassung mit; hat sich etwas geändert (Preis, zweiter Tab, Seite aus dem Zurück-Speicher), bestellt der Server
    nicht, sondern antwortet 409, und die Seite zeigt die neue Aufstellung.
-6. **Auftragsübersicht** `/express/auftrag/<id>` (Nachweis, **keine Rechnung**): Stand, Credits (vorgemerkt / abgebucht /
-   wieder frei), Dokumente mit Downloads nach der Lieferung, Angaben, Einverständnis mit Fassung und Zeitpunkt, Verlauf.
+6. **Meine Aufträge** (Michael Karbe 05.10.2026, Punkte 1 und 2): Karten wie die Dokumente der Projektansicht „Dokument“
+   (`section.card.dok-karte` > `details.dok-klappe`, H3 mit Stand-Abzeichen im `summary`, Infos als Liste, Linie,
+   Knöpfe darunter). Darin aufklappbar „Dokumente dieses Auftrags (N)“ mit Name, Seiten, Stand und Downloads. Knöpfe:
+   „Auftragsübersicht öffnen“, **„Umbenennen“** und — nur bei gelieferten oder stornierten Aufträgen — **„Löschen“**.
+   - **Umbenennen:** eigener Name des Kunden (Spalte `auftrag_name`, höchstens 120 Zeichen, leer = „Auftrag <Nr>“). Er
+     steht in der Liste, auf der Startseite, als H1 der Auftragsübersicht („Express-Auftrag 11: Jahresberichte“) und im
+     Nachweis-PDF („Name des Auftrags“); die Nummer bleibt immer daneben. Die Verwaltung sieht ihn als „Name des Kunden
+     für den Auftrag“.
+   - **Löschen** (Bestätigungsdialog wie beim Dokument-Löschen, Fokus auf „Abbrechen“): laufende Aufträge nie (kein Knopf,
+     Server 409). Gelöscht werden für den Kunden der Auftrag, alle Dateien (Originale, Ergebnisse, Prüfberichte), die
+     Dokumentliste, Ansprechpartner, Telefon, Hinweise, interne Notiz, Storno-Grund, Name, Verlauf und die Wortlaute der
+     Zustimmung (`express.kunde_loeschen`). Intern bleibt ein **knapper Buchungsnachweis**: Nummer, Kunde und zahlender
+     Topf, Bestell- und Liefer- bzw. Stornodatum, Seiten, Credits, Stand, Fassung und Zeitpunkt der Zustimmung, dazu
+     `kunde_geloescht_am`. Die Verwaltung zeigt „vom Kunden gelöscht“ (Liste) bzw. „Vom Kunden gelöscht am …“ mit
+     diesem Nachweis und einem Verlaufseintrag; die Credits-Buchung bleibt unberührt. Danach antworten Auftrag,
+     Downloads und Nachweis für den Kunden mit 404.
+   Rückmeldungen nach Umbenennen und Löschen: sichtbare Meldung über der Liste, Fokus darauf, keine Live-Ansage.
+7. **Auftragsübersicht** `/express/auftrag/<id>` (Nachweis, **keine Rechnung**): Stand, Credits (vorgemerkt / abgebucht /
+   wieder frei), Dokumente — je Dokument aufklappbar mit Seiten, Leistung, Credits, Stand, Prüfung und Downloads (beim
+   Drucken alle aufgeklappt) —, Angaben, Einverständnis mit Fassung und Zeitpunkt, Verlauf.
+
+App-weit (Nachprüfung Barrierefreiheit N1): Eingabefelder, Auswahllisten und Textfelder zeigen bei Tastaturfokus einen
+3-px-Fokusring (`input:focus-visible, select:focus-visible, textarea:focus-visible` in `frontend/style.css`), auch auf
+Anmelden, Registrieren und Passwort vergessen.
    Rückfragen beantwortet der Kunde direkt dort. **Drucken** (Druck-CSS blendet Seitenleiste, Knöpfe und Meldungen aus)
    und **Als PDF herunterladen** — die PDF wird nur ausgeliefert, wenn sie die PDF/UA-Prüfung (veraPDF) besteht. Der
    Download läuft per `fetch`: ein Fehler (Umwandler aus, Bremse) steht als Satz neben dem Link (Fokus dorthin), nicht
@@ -91,12 +116,22 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   Liegt die Bestellung in einem früheren Kalendermonat, tragen die Verbrauchs-Ereignisse den Bestellzeitpunkt, und ein
   Überhang wird für jenen Monat von den Paketen abgebucht (`billing.pakete_abbuchen_fuer_monat`). Sonst verfiele beim
   Monatswechsel Übertrag, den der Kunde im Bestellmonat nicht nutzen durfte.
+- **Vormerkungen über den Monatswechsel** (Nachprüfung Entwicklung 05.10.2026, N1 und N2): Eine offene Bestellung
+  aus einem Vormonat zählt bei der Guthaben-Prüfung im Übertrag ihres Bestellmonats wie Verbrauch
+  (`billing._uebertrag(…, mit_vormerkung=True)`); gegen den laufenden Monat zählt nur, was der Bestellmonat nicht deckt
+  (`billing.vormerkung_laufend`). So sperrt die Vormerkung nach dem Monatswechsel nicht das neue Budget, und das
+  Guthaben ist vor und nach der Lieferung gleich. Buchungswege (Paket-Abbuchungen) rechnen dagegen nur mit echten
+  Ereignissen — ein späterer Storno kostet so keine Paket-Credits. Beim Liefern eines Vormonats-Auftrags wird außer dem
+  Bestellmonat auch der laufende Monat abgeglichen (`_pakete_abbuchen`), damit kein Phantom-Guthaben stehen bleibt.
+  `pruefe_kontingent` liefert dazu `vorgemerkt` (alle offenen) und `vorgemerkt_laufend` (was diesen Monat bindet).
 - **Bestellen in Schritten** (Befunde 2–4, 18): Der Korb wird zuerst eingefroren (Zwischenstand `bestellung` — Änderungen
   aus einem zweiten Tab landen in einem neuen Korb), Seiten frisch gezählt, Summe und Fassung mit dem verglichen, was
   der Kunde gesehen hat (sonst 409), das Guthaben **streng** geprüft (ein Datenbankfehler sperrt mit 503, statt alles zu
   erlauben), die Originale kopiert und in EINER Transaktion die Positionen neu gelesen, verglichen und vorgemerkt.
   Scheitert etwas, wird der Korb wieder freigegeben. Hängt ein Korb nach einem Absturz länger als 10 Minuten im
-  Zwischenstand, wird er wieder zum Korb. Der Idempotenz-Schlüssel gilt nur für den Korb, zu dem er gehört.
+  Zwischenstand, wird er wieder zum Korb — gibt es inzwischen einen neuen, wandern seine Dokumente dorthin (N3). Der
+  Idempotenz-Schlüssel gilt nur für den Korb, zu dem er gehört. Ist der Korb einer Seite inzwischen bestellt (zweiter
+  Tab), antwortet der Server 409 „veraltet“ mit dem aktuellen (leeren) Korb, und die Seite lädt ihren Stand neu (N4).
 - Preis und Seiten werden beim Bestellen festgeschrieben; spätere Preisänderungen betreffen nur neue Aufträge.
   Team-Konten: es zahlt der Topf, aus dem das Konto beim Bestellen arbeitet (`billing._konto_fuer`); die Topf-Übersicht
   des Inhabers (`/api/team`) nennt `vorgemerkt` und `verfuegbar_nach_vormerkung`. Free-Konten einer Firmen-Domain teilen
@@ -122,6 +157,12 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   derselben Schreibsperre; nach der Lieferung wird nichts mehr ersetzt (Befund 11). Fehlt ein Ergebnis bzw. bei „Nur
   prüfen“ der Bericht, nennt die Seite das, und Liefern lehnt ab. Interne Notiz (nie für den Kunden), Verlauf mit internen
   Schritten. Fehler in Dialogen und Formularen stehen am Feld (`aria-invalid`, Beschreibung), der Fokus geht dorthin.
+  Die Hochladeknöpfe haben je Dokument einen eindeutigen Namen (versteckter Zusatz „: Ergebnis für „Jahresbericht.pdf““,
+  Option `zusatz` in `hochladefeld.js`), ohne eigene Landmarke je Fläche (Nachprüfung Barrierefreiheit N2). Das
+  Prüfergebnis nennt die Zahl der nicht erfüllten Regeln („3 Regeln nicht erfüllt“, N4).
+- **Vom Kunden gelöschte Aufträge** (Runde 3): In der Liste mit dem Zusatz „vom Kunden gelöscht“; die Detailseite zeigt
+  nur den Buchungsnachweis (Nummer, Kunde, Topf, Daten, Seiten, Credits, Stand, Zustimmung) mit „Vom Kunden gelöscht am
+  …“ und den Verlaufseintrag — keine Dateien, keine Knöpfe.
 - **Frist:** Standard 48 Stunden ab Bestellung (Einstellung). Während einer Rückfrage ruht sie und verlängert sich bei
   der Antwort um die Wartezeit (so steht es in den Bedingungen). Intern gibt es Datum und Uhrzeit, dem Kunden nicht.
 - **Einstellungen** (nur Voll-Admins): Credits je Seite **je Leistung** (ein Feld je Eintrag der Liste; **Platzhalter 50
@@ -142,7 +183,8 @@ werden nie versandt (Tests). Kunde: Bestellbestätigung, Rückfrage, Lieferung, 
 Support-Postfach plus alle Express-Bearbeiter): neuer Auftrag, Antwort des Kunden, **Erinnerung 12 Stunden vor der
 Frist** und **Überfällig** — je genau einmal (die Meldung wird vor dem Versand atomar in der Datenbank beansprucht).
 Ging sie an **keinen** Empfänger raus (SMTP gestört), wird sie freigegeben und im nächsten Durchlauf erneut versucht,
-höchstens sechsmal; ging sie an mindestens einen, bleibt es dabei (keine Doppelmails, Befund 10). Die Schleife läuft alle
+höchstens sechsmal (Zähler `meldung_fehlversuche` in der Datenbank, übersteht Neustarts); ging sie an mindestens einen,
+bleibt es dabei (keine Doppelmails, Befund 10). Die Schleife läuft alle
 10 Minuten (gestartet in `main.lifespan`, immer — auch bei ausgeschaltetem Schalter) und räumt dabei auch Dateien nach der
 Aufbewahrungsfrist und ZIP-Reste weg. Wird das Konto eines Team-Inhabers gelöscht, werden offene Aufträge seiner
 Mitglieder aus seinem Topf storniert (Kunde und Team bekommen die Storno-Mail); wird ein Kundenkonto mit offenem Auftrag
@@ -150,11 +192,15 @@ gelöscht, bekommt das Team die Mail „Entfallen“.
 
 ## Datenmodell (`database.init_db`)
 
-- `express_auftraege`: ein Auftrag; Status `entwurf` (= Warenkorb, höchstens einer je Konto, eindeutiger Index) |
+- `express_auftraege`: ein Auftrag (Runde 3: `auftrag_name`, `kunde_geloescht_am`, `meldung_fehlversuche`); Status
+  `entwurf` (= Warenkorb, höchstens einer je Konto, eindeutiger Index) |
   `neu` | `in_arbeit` | `rueckfrage` | `geliefert` | `storniert`. Kunde, zahlender Topf, Angaben, Seiten, Credits, Frist,
-  Fälligkeit, Zustimmung (Wortlaut beider Häkchen, Fassung `express.ZUSTIMMUNG_FASSUNG`, Sprache, Zeitpunkt,
-  Absender-Kennung), Idempotenz-Schlüssel (eindeutig je Konto), Bearbeiter, Liefer- und Storno-Angaben, interne Notiz,
-  Erinnerungs-Vermerke, Rückfrage-Beginn.
+  Fälligkeit, Zustimmung (Wortlaut des Häkchens, Fassung `express.ZUSTIMMUNG_FASSUNG`, Sprache, Zeitpunkt,
+  Absender-Kennung; Spalte `zustimmung_bearbeitung` ist ab Fassung -3 leer und bleibt für alte Aufträge),
+  Idempotenz-Schlüssel (eindeutig je Konto), Bearbeiter, Liefer- und Storno-Angaben, interne Notiz,
+  Erinnerungs-Vermerke mit Zähler der Fehlversuche (`meldung_fehlversuche`), Rückfrage-Beginn, Name des Kunden für den
+  Auftrag (`auftrag_name`, leer = „Auftrag <Nr>“), `kunde_geloescht_am` (Kunde hat gelöscht; die Zeile bleibt als
+  Buchungsnachweis, Kundensicht filtert sie aus).
   Status `bestellung` = Korb während des Bestellens (nicht vorgemerkt, nicht sichtbar).
 - `express_positionen`: je Dokument Quelle (Projekt, Dokument, Name als Momentaufnahme), **Dateityp** (`dateityp`,
   Schlüssel aus `express.DATEITYPEN`, Migration 05.10.2026, Standard `pdf`), Seiten, Leistung, Credits, Pfade für
@@ -171,14 +217,16 @@ gelöscht, bekommt das Team die Mail „Entfallen“.
 - **Aufbewahrung** (Befund 14): Einstellung „Dateien löschen nach Tagen“ (`aufbewahrung_tage`, Standard 0 = nichts
   löschen, bis Steve entscheidet). Ist sie gesetzt, löscht die Schleife Originale, Ergebnisse und Prüfberichte so viele
   Tage nach Lieferung bzw. Storno; Auftrag, Positionen und Verlauf bleiben als Nachweis (Verlauf „Dateien gelöscht“).
-- **Absender der Zustimmung** (Befund 14): gespeichert wird nur das gekürzte Netz (IPv4 /24, IPv6 /48,
-  `express.netz_kurz`) — genug als Indiz, ohne den einzelnen Anschluss festzuhalten. Es bleibt mit dem Auftrag als
-  Nachweis der Zustimmung.
+- **Absender der Zustimmung** (Befund 14): gespeichert wird nur das gekürzte Netz (IPv4 /24, IPv6 /48; IPv4 in
+  IPv6-Form wie IPv4, N7; `express.netz_kurz`) — genug als Indiz, ohne den einzelnen Anschluss festzuhalten. Es
+  bleibt mit dem Auftrag als Nachweis der Zustimmung, auch wenn der Kunde den Auftrag löscht.
 
 ## Sicherheit
 
 - Jede Kundenfunktion prüft den Besitz **im SQL** (Auftrag/Position/Dokument + `user_id`), Fremdes antwortet 404 —
-  geprüft für Projekt-Dokumente, Auswahl, Positionen, Aufträge, Antwort, Downloads und Nachweis.
+  geprüft für Projekt-Dokumente, Auswahl, Positionen, Aufträge, Antwort, Downloads und Nachweis, Umbenennen
+  (`POST /api/express/auftraege/<id>/name`) und Löschen (`DELETE /api/express/auftraege/<id>`, zusätzlich nur bei
+  geliefert/storniert, sonst 409). Vom Kunden gelöschte Aufträge gibt es für ihn nicht mehr (404 überall).
 - Rechte frisch aus der Datenbank je Anfrage (`get_current_user` liest `is_admin`, die Bearbeiter-Prüfung liest
   `express_bearbeiter` und `is_active`).
 - Uploads: Dateityp am Inhalt erkannt (`Dateityp.erkennen`, bei PDF `%PDF-`; beim Kunden zusätzlich die Endung), Größe
@@ -190,6 +238,9 @@ gelöscht, bekommt das Team die Mail „Entfallen“.
 - Bremsen je Konto: Bestellen 10/h, Upload 30/h, Antwort 20/h, Nachweis-PDF 30/h, Originale-ZIP 20/h (429). Der
   Nachweis läuft in einem eigenen kleinen Thread-Pool mit 60 Sekunden Zeitlimit zum Umwandler (Befund 16); die
   Dokumentgrenze wird vor dem Öffnen der PDFs geprüft.
+- **Kein Einrahmen** (Nachprüfung N6, ganze App): jede Antwort trägt `X-Frame-Options: DENY` und
+  `Content-Security-Policy: frame-ancestors 'none'` (ASGI-Schicht `_RahmenSchutz` in `main.py`). Die App bettet sich
+  nirgends selbst ein; vor einem Prod- oder Demo-Rollout prüfen, ob eine andere Seite die Demo einrahmt.
 - Seiten mit Bestell-Zustand senden `Cache-Control: no-store`; kommt eine Seite doch aus dem Zurück-Speicher
   (`pageshow`), erneuert sie Stand und Idempotenz-Schlüssel.
 - CSRF wie im Bestand: Sitzungs-Cookie `SameSite=Lax`, JSON-Anfragen; Multipart-Uploads gehen ohne Cookie nicht durch.
@@ -201,7 +252,7 @@ gelöscht, bekommt das Team die Mail „Entfallen“.
 - **Nachweis statt Rechnung:** Die Rechnung entsteht beim Credit-Kauf; eine zweite Rechnung würde die Umsatzsteuer
   doppelt ausweisen. Die Übersicht sagt das ausdrücklich. (Bitte von Michael/Steuerberater bestätigen lassen.)
 - **Kein Bestellen über den Chatbot** (Abweichung vom Grundsatz „Chatbot = Oberfläche“): Eine zahlungspflichtige
-  Bestellung braucht den gesetzlich beschrifteten Knopf und zwei bewusst gesetzte Häkchen. Der InkluAgent kennt den
+  Bestellung braucht den gesetzlich beschrifteten Knopf und das bewusst gesetzte Häkchen. Der InkluAgent kennt den
   Express-Service in Stufe 1 noch nicht; ein Lese-Werkzeug („Stand meiner Aufträge“) wäre unkritisch und kann folgen.
 - **Lieferung in die Auftragsübersicht, nicht als neue Fassung im Projekt** (Abweichung von der Skizze): InkluDocs
   kennt je Dokument genau eine Arbeitsdatei, an der Tags, Alt-Texte und Quickinfos des Kunden hängen. Eine „neue
@@ -209,7 +260,14 @@ gelöscht, bekommt das Team die Mail „Entfallen“.
   das Projekt unberührt, und die fertigen Dateien stehen in der Auftragsübersicht (Link in der Liefer-Mail, auf der
   Startseite und unter „Meine Aufträge“). Eine echte Versionierung am Dokument ist ein eigener Schritt.
 - **Nur PDF** in Stufe 1 (Steve 05.10.2026: vorerst nur PDF, aber jederzeit erweiterbar) — siehe „Erweitern um neue
-  Dateitypen und Leistungen“.
+  Dateitypen und Leistungen“. Die Oberfläche sagt nirgends „derzeit nur PDF“, sondern positiv, was geht („PDF-Datei
+  auswählen“, Fehler „Bitte wähle eine PDF-Datei aus.“; Michael Karbe 05.10.2026, Punkt 6). Gleiches gilt für den
+  Upload in ein Projekt: die Meldung passt zum Projekt (PDF-, Word- oder Bild-Projekt).
+- **„Nur prüfen (Prüfbericht)“ ist abgeschaltet** (Michael Karbe 05.10.2026, Punkt 3), nicht gelöscht: In
+  `express.LEISTUNGEN` steht `aktiv=False`. Abgeschaltete Leistungen sind nicht wählbar, fehlen in Seite, Stand und
+  Einstellungen (ihr Preis bleibt in `preise` gespeichert), und eine solche Position in einem alten Warenkorb wechselt
+  beim Laden auf die Standard-Leistung ihres Dateityps. Bestehende Aufträge mit „Nur prüfen“ laufen unverändert weiter.
+  Wiedereinschalten: `aktiv=True` setzen — Leistungswahl je Dokument und Preisfeld erscheinen dann von selbst.
 - **Bedingungen nur auf Deutsch** wie die übrigen Rechtstexte (I18N.md).
 - Express-Credits zählen in der Verwaltung „KI-Kosten“ nicht zur Kennzahl „Kosten je Credit“ (Handarbeit, keine KI).
 
@@ -224,7 +282,8 @@ Uploads, Lieferung, Abbuchung, Downloads, Mails und Oberfläche lesen daraus. Ni
   am Namen), `seiten(pfad)` (Preisgrundlage; wirft `ExpressFehler` bei unlesbarer oder geschützter Datei), optional
   `pruefen(pfad)` (automatische Prüfung eines Ergebnisses, Rückgabe `{"bestanden", "zusammenfassung",
   "regeln_fehlgeschlagen"}` oder `None`) und `pruef_name` (z. B. „veraPDF“).
-- **`Leistung`** (`LEISTUNGEN`): `schluessel`, `name`, `preis_standard` (Credits je Seite, bis zur Einstellung),
+- **`Leistung`** (`LEISTUNGEN`): `schluessel`, `name`, `aktiv` (`False` = abgeschaltet, bleibt in der Liste, siehe
+  „Bewusste Entscheidungen“), `preis_standard` (Credits je Seite, bis zur Einstellung),
   `dateitypen` (erlaubte Originale), `aktion` (Name in `usage_events` beim Abbuchen), `ergebnis_pflicht`,
   `bericht_pflicht`, `ergebnis_typen` (leer = wie das Original), `bericht_typen` (Standard PDF), `ergebnis_zusatz`
   (Zusatz im Download-Namen, Standard „ (barrierefrei)“).
@@ -253,12 +312,14 @@ zusätzlich eine eigene Preisfunktion in `express.preis`.
 1. **Widerruf (§ 356 Abs. 4 BGB):** Für Verbraucher beginnt die menschliche Dienstleistung sofort. Ist der
    Express-Service ein eigener Dienstleistungsvertrag, fehlt ein ausdrückliches Verlangen auf Beginn vor Ablauf der
    Widerrufsfrist mit Bestätigung der Kenntnis vom Erlöschen des Widerrufsrechts (Prüfung Entwicklung, Befund 17). Mit
-   dem Bedingungstext klären; ggf. drittes Häkchen nur für Verbraucher.
+   dem Bedingungstext klären; ggf. ein zweites Häkchen nur für Verbraucher.
 2. **AVV und Partner:** Datenschutzerklärung und AVV müssen die menschliche Bearbeitung durch InkluTec und Actino
    abdecken — Kategorien (Dokumente **und** Kontaktdaten: Ansprechpartner, Telefon, Hinweise, E-Mail-Adresse, die der
    Express-Bearbeiter sieht und per Team-Mail bekommt), Zweck, Speicherdauer (Einstellung „Dateien löschen nach Tagen“),
-   Vertraulichkeitsvereinbarung mit dem Partner. Die Bedingungen (Fassung `2026-10-05-entwurf-2`) nennen die
-   Kontaktdaten schon; das Häkchen selbst spricht weiter nur von „Dokumenten“ — mit dem Rechtstext abstimmen.
+   Vertraulichkeitsvereinbarung mit dem Partner. Die Bedingungen (Fassung `2026-10-05-entwurf-3`) nennen die
+   Kontaktdaten und sagen ausdrücklich, dass Mitarbeiter von InkluTec und Actino die Dokumente sehen und bearbeiten;
+   seit Runde 3 gibt es dafür kein eigenes Häkchen mehr (Michael Karbe 05.10.2026, Punkt 5) — die Zustimmung läuft über
+   das eine Häkchen „Ich akzeptiere die Bedingungen“. Ob das für die Einwilligung genügt, mit dem Rechtstext klären.
 3. **Nachweis statt Rechnung** und Umsatzsteuer: siehe „Bewusste Entscheidungen“; von Michael/Steuerberater bestätigen
    lassen. Zur Kennzahl „Bleibt nach KI-Kosten“ und § 13b UStG siehe `docs/KI_KOSTEN.md`.
 4. **Bedingungstext** abstimmen und rechtlich prüfen, dann `ZUSTIMMUNG_FASSUNG` hochzählen und „ENTWURF“ entfernen.
@@ -270,8 +331,11 @@ zusätzlich eine eigene Preisfunktion in `express.preis`.
    **Frist** (48 Stunden oder 2 Werktage — Wochenenden).
 3. **Aufbewahrung:** Frist für Originale und Ergebnisse festlegen (Einstellung vorhanden, heute 0 = nie löschen).
 4. **Verrechnung InkluTec ↔ Actino** für Express-Aufträge.
-5. Prod: `EXPRESS_SERVICE=an` in `docker-compose.yml` setzen, Rollout wie üblich. Vorher die Migration
-   `express_positionen.dateityp` (läuft beim Start von selbst, idempotent).
+5. Prod: `EXPRESS_SERVICE=an` in `docker-compose.yml` setzen, Rollout wie üblich. Vorher die Migrationen
+   `express_positionen.dateityp`, `express_auftraege.auftrag_name`, `kunde_geloescht_am`, `meldung_fehlversuche`
+   (laufen beim Start von selbst, idempotent).
+6. **Einrahmen-Schutz** (`X-Frame-Options: DENY`, `frame-ancestors 'none'`) gilt app-weit: vor Prod und Demo prüfen,
+   ob irgendeine Seite (z. B. inklutec.de) die Demo oder die App in einem iframe zeigt.
 
 Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projekte komfortabler, Word/PowerPoint (siehe
 „Erweitern“), Ergebnis als neue Fassung am Dokument im Projekt (braucht Versionierung), Lese-Werkzeug im InkluAgent.
@@ -289,7 +353,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
 
 ## Tests
 
-- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 56): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
+- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 74): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
   Vormerkung und Idempotenz (auch 4 gleichzeitige Klicks), Vormerkung sperrt andere Ausgaben, Liefern bucht genau einmal
   (auch 4 gleichzeitig), Storno, Dateinamen nie Pfad, Upload-Prüfung, Downloads erst nach Lieferung, Frist ruht bei
   Rückfrage, Erinnerung/Überfällig je einmal, Nachweis-OOXML, Kontolöschung, Einstellungen, Bearbeiter, Schalter.
@@ -298,16 +362,28 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   Topf-Inhaber gelöscht, Erinnerung erneut ohne Doppelmails, Upload nach Lieferung, laufende/hängende Prüfung,
   Aufbewahrung, IP-Netz, Frist ruht in der Anzeige, Vormerkung im Guthaben-Text, Fehler am Feld, alte Preis-Schlüssel,
   Einzahl/Datum/Tausenderpunkt, Kundentext der Prüfung). Klasse `Erweiterbar`: zweiter Dateityp mit eigener Leistung.
-- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 104): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
+  Klasse `Runde3`: Umbenennen (Name in Liste, Übersicht, Nachweis, Grenzen), Löschen nur geliefert/storniert mit
+  Buchungsnachweis und 404 danach, Dokumente in der Liste, „Nur prüfen“ abgeschaltet (nicht wählbar, alte Position
+  wechselt), ein Häkchen, positive Meldungen, N1 (laufender Monat beim Liefern abgeglichen), N2 (Vormonats-Vormerkung,
+  Single vor und nach der Lieferung gleich), N3, N4, N7, Prüftext für Bearbeiter. Hilfsfunktion `_pruefen_an()` schaltet
+  „Nur prüfen“ für die alten Tests im Test wieder ein.
+- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 127): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
   IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno,
   dazu Preisänderung und alter Schlüssel (409), kaputter JSON-Körper (400), Feldfehler der Einstellungen, no-store,
-  Projektliste, ZIP_STORED, Prüfergebnis für Kunden
-- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 68): Link im Projekt, Auswahl, Hochlade-Komponente
+  Projektliste, ZIP_STORED, Prüfergebnis für Kunden; Abschnitt G2 Umbenennen/Löschen (fremd 404, laufend 409, danach
+  404, Verwaltung sieht Nachweis), G3 zweiter Tab 409 „veraltet“ und Einrahmen-Kopfzeilen auf `/express`,
+  `/express/warenkorb`, `/app`, `/api/express/stand`
+- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 88): Link im Projekt, Auswahl, Hochlade-Komponente
   (Etikett-Knopf, Fokusring, Dateiname in der Statuszeile, Fehler am Feld) beim Kunden und in der Verwaltung,
   Leistung entprellt, Entfernen mit Meldung und Fokus, Pflichtfelder und Häkchen mit Fehler am Feld, Fokusring an
   „Zahlungspflichtig bestellen“, Rahmen der Eingabefelder, keine Ansage beim Laden, Bestellen, Danke-Meldung (nicht im
   Druck), Startseite, Verwaltung (Liste mit Überschrift im summary, Feldfehler der Einstellungen, Dialoge mit
-  Beschreibung und Pflichtfeld, Upload, Liefern), Download, PDF-Fehler neben dem Link — axe 0 Verstöße
+  Beschreibung und Pflichtfeld, Upload, Liefern), Download, PDF-Fehler neben dem Link; Runde 3: keine Leistungswahl,
+  nur Summen, kein „nur PDF“, ein Häkchen (Fehler verschwindet beim Ankreuzen), Fokusring per Tab, eindeutige
+  Hochlade-Namen ohne Landmarke, Auftragskarten mit Umbenennen-/Lösch-Dialog, Verwaltung sieht „vom Kunden gelöscht“,
+  Fokusring an Feldern und Kästchen auf Anmelden, Registrieren und Passwort vergessen — axe 0 Verstöße
+- `tests/e2e/ui_express_korb.py` (25): Knopf am Dokument, Navigationseintrag in drei Modi, H1 „Express-Warenkorb“ auf
+  `/express/warenkorb` passend zum Seitentitel (N5)
 - `tests/e2e/ui_bildschirmfotos.py`: Fotos vorher/nachher der globalen CSS-Änderungen (Projekt-Hochladefläche, Knöpfe,
   Formulare) mit berechneten Stilen
 - `verify_abo3.py` (Server, Team-Reihe) prüft die Vormerkung im Team-Topf (`/api/team`)

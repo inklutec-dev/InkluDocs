@@ -79,6 +79,10 @@ input:focus {
     border-color: var(--focus);
     box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.25);
 }
+/* Tastaturfokus in Feldern deutlich (Nachpruefung Barrierefreiheit 05.10.2026, N1): seit dem dunkleren Feldrand
+   (#767f8f) war der Wechsel zu --focus nur noch ein Farbwechsel bei fast gleicher Helligkeit (1,14:1) — auf Anmelden,
+   Registrieren und Passwort vergessen. Jetzt ein 3-px-Ring wie an den Knoepfen, auch fuer Kaestchen und Auswahllisten. */
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 /* Buttons: Navy statt Orange für WCAG AA Kontrast (weiß auf navy = 14.22:1) */
 .btn-full {
     width: 100%;

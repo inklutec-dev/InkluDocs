@@ -10242,8 +10242,6 @@ msgstr "Bekräftat den {datum} (version {fassung}):"
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Betalt från teamkrediten hos"
 
-msgid "Bitte beide Häkchen setzen."
-msgstr "Kryssa i båda rutorna."
 
 msgid "Bitte ein Projekt wählen"
 msgstr "Välj ett projekt"
@@ -10451,8 +10449,6 @@ msgstr "Intern anteckning ändrad"
 msgid "Keine Aufträge."
 msgstr "Inga beställningar."
 
-msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
-msgstr "Låt proffs göra dina dokument tillgängliga eller granska dem. Vi levererar inom {stunden} timmar. Betalning sker med krediter: de reserveras vid beställningen och dras först vid leveransen."
 
 msgid "Leistung für {name}"
 msgstr "Tjänst för {name}"
@@ -10469,8 +10465,6 @@ msgstr "Leverera"
 msgid "Lieferung"
 msgstr "Leverans"
 
-msgid "Lieferung innerhalb von {stunden} Stunden"
-msgstr "leverans inom {stunden} timmar"
 
 msgid "Lieferung innerhalb von {stunden} Stunden."
 msgstr "Leverans inom {stunden} timmar."
@@ -10566,8 +10560,6 @@ msgstr "Avbruten den"
 msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
 msgstr "Avbruten. Krediterna har frigjorts, kunden får ett e-postmeddelande."
 
-msgid "Summe: {c} Credits"
-msgstr "Summa: {c} krediter"
 
 msgid "Telefon"
 msgstr "Telefon"
@@ -10622,8 +10614,6 @@ msgstr "Tillbaka till expresstjänsten"
 msgid "abgebucht"
 msgstr "dragna"
 
-msgid "bestellt am {datum}"
-msgstr "beställd den {datum}"
 
 msgid "fehlt noch"
 msgstr "saknas fortfarande"
@@ -10725,8 +10715,6 @@ msgstr "”{name}” borttaget."
 msgid "Ich akzeptiere die Bedingungen für den Express-Service."
 msgstr "Jag godkänner villkoren för expresstjänsten."
 
-msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
-msgstr "Jag godkänner att medarbetare på InkluTec och vår partner Actino ser, bearbetar och granskar mina dokument."
 
 msgid "1 Dokument"
 msgstr "1 dokument"
@@ -10743,8 +10731,6 @@ msgstr "Tillagt: {dokumente}."
 msgid "Im Projekt: {dokumente}, davon wählbar: {w}."
 msgstr "I projektet: {dokumente}, valbara: {w}."
 
-msgid "{name}: {seiten}, {leistung}, {c} Credits"
-msgstr "{name}: {seiten}, {leistung}, {c} krediter"
 
 msgid "{seiten}, {leistung}, {c} Credits"
 msgstr "{seiten}, {leistung}, {c} krediter"
@@ -10857,17 +10843,11 @@ msgstr "Omsättning (slutpriser, utan moms enligt § 19 UStG)"
 msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
 msgstr "För många förfrågningar på kort tid. Försök igen senare."
 
-msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
-msgstr "Just nu kan vi bara bearbeta {typen}-filer."
 
-msgid "Zustimmung (beide Häkchen sind nötig)"
-msgstr "Samtycke (båda kryssrutorna krävs)"
 
 msgid "für {modell}"
 msgstr "för {modell}"
 
-msgid "nicht möglich, nur {typen}"
-msgstr "inte möjligt, endast {typen}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Ladda upp {art} för ”{name}”"
@@ -10884,8 +10864,6 @@ msgstr "{name}, skapat den {datum}"
 msgid "{pruefung} konnte die Datei nicht prüfen."
 msgstr "{pruefung} kunde inte kontrollera filen."
 
-msgid "{pruefung}: Abweichungen — {text}"
-msgstr "{pruefung}: avvikelser — {text}"
 
 msgid "{pruefung}: bestanden."
 msgstr "{pruefung}: godkänd."
@@ -10946,3 +10924,96 @@ msgstr "”{name}” ligger nu i expressvagnen."
 
 msgid "„{name}“ liegt schon im Express-Warenkorb."
 msgstr "”{name}” ligger redan i expressvagnen."
+
+msgid "Auftrag löschen?"
+msgstr "Radera beställningen?"
+
+msgid "Auftrag umbenennen"
+msgstr "Byt namn på beställningen"
+
+msgid "Auftragsübersicht öffnen"
+msgstr "Öppna beställningsöversikten"
+
+msgid "Bitte die Bedingungen akzeptieren."
+msgstr "Godkänn villkoren."
+
+msgid "Der Auftrag heißt jetzt „{name}“."
+msgstr "Beställningen heter nu ”{name}”."
+
+msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
+msgstr "Kunden har raderat beställningen: filer, dokumentlista, uppgifter och historik är borttagna. Bokföringsunderlaget med nummer, datum, konto, sidor, krediter och status finns kvar."
+
+msgid "Dokumente dieses Auftrags ({n})"
+msgstr "Dokument i beställningen ({n})"
+
+msgid "Express-Auftrag {nr}: {name}"
+msgstr "Expressbeställning {nr}: {name}"
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Låt proffs göra dina dokument tillgängliga. Vi levererar inom {stunden} timmar. Du betalar med krediter: de reserveras vid beställningen och dras först vid leveransen."
+
+msgid "Leer lassen, um wieder „Auftrag“ mit der Nummer zu verwenden. Die Auftragsnummer bleibt immer daneben stehen."
+msgstr "Lämna tomt för att åter använda ”Beställning” med numret. Beställningsnumret står alltid bredvid."
+
+msgid "Leistung"
+msgstr "Tjänst"
+
+msgid "Möchtest du „{name}“ wirklich löschen? Die Dateien und Angaben dieses Auftrags werden gelöscht und er verschwindet aus deiner Liste. Für die Buchhaltung bleibt nur ein knapper Nachweis (Nummer, Datum, Credits). Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen radera ”{name}”? Beställningens filer och uppgifter raderas och den försvinner från din lista. För bokföringen finns bara ett kort underlag kvar (nummer, datum, krediter). Det går inte att ångra."
+
+msgid "Name des Auftrags"
+msgstr "Beställningens namn"
+
+msgid "Name des Kunden für den Auftrag"
+msgstr "Kundens namn på beställningen"
+
+msgid "Preis: {c} Credits je Seite."
+msgstr "Pris: {c} krediter per sida."
+
+msgid "Umfang"
+msgstr "Omfattning"
+
+msgid "Vom Kunden gelöscht"
+msgstr "Raderad av kunden"
+
+msgid "Vom Kunden gelöscht am"
+msgstr "Raderad av kunden den"
+
+msgid "Zustimmung (Pflicht)"
+msgstr "Samtycke (obligatoriskt)"
+
+msgid "fertig, zum Herunterladen"
+msgstr "klar att ladda ner"
+
+msgid "geliefert"
+msgstr "levererad"
+
+msgid "nicht auswählbar, der Express-Service bearbeitet {typen}-Dateien"
+msgstr "kan inte väljas, expresstjänsten bearbetar {typen}-filer"
+
+msgid "storniert"
+msgstr "avbokad"
+
+msgid "vom Kunden gelöscht"
+msgstr "raderad av kunden"
+
+msgid "{art} für „{name}“"
+msgstr "{art} för ”{name}”"
+
+msgid "{dokumente}, {seiten}, Summe: {c} Credits"
+msgstr "{dokumente}, {seiten}, summa: {c} krediter"
+
+msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
+msgstr "{pruefung}: avvikelser från standarden, 1 regel inte uppfylld."
+
+msgid "{pruefung}: Abweichungen vom Standard, {n} Regeln nicht erfüllt."
+msgstr "{pruefung}: avvikelser från standarden, {n} regler inte uppfyllda."
+
+msgid "{pruefung}: Abweichungen vom Standard."
+msgstr "{pruefung}: avvikelser från standarden."
+
+msgid "– Auftrag „{name}“"
+msgstr "– beställning ”{name}”"
+
+msgid "„{name}“ ist gelöscht."
+msgstr "”{name}” är raderad."

@@ -209,6 +209,88 @@ def vorgemerkt(konto_id: int, conn=None) -> int:
             conn.close()
 
 
+def _vormerkungen_je_monat(konto_id=None, domain=None, conn=None) -> dict:
+    """Offene Express-Vormerkungen nach Bestellmonat {'JJJJ-MM': credits} (UTC wie usage_events) — je Topf oder je
+    Free-Domain (gleicher Kontofilter wie vorgemerkt_domain). {} bei fehlender Tabelle oder Lesefehler."""
+    eigene_conn = conn is None
+    try:
+        if eigene_conn:
+            conn = get_db()
+        if domain:
+            rows = conn.execute(
+                "SELECT strftime('%Y-%m', a.bestellt_am) AS monat, COALESCE(SUM(a.credits_gesamt), 0) AS c "
+                "FROM express_auftraege a JOIN users u ON u.id = a.konto_user_id "
+                "WHERE substr(u.email, instr(u.email, '@') + 1) = ? "
+                "AND (COALESCE(u.plan, 'free') = 'free' "
+                "     OR (u.plan_gueltig_bis IS NOT NULL AND date(u.plan_gueltig_bis) < date('now'))) "
+                "AND u.is_admin = 0 AND a.status IN ('neu', 'in_arbeit', 'rueckfrage') GROUP BY monat", (domain,)).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT strftime('%Y-%m', bestellt_am) AS monat, COALESCE(SUM(credits_gesamt), 0) AS c "
+                "FROM express_auftraege WHERE konto_user_id = ? AND status IN ('neu', 'in_arbeit', 'rueckfrage') "
+                "GROUP BY monat", (konto_id,)).fetchall()
+        return {r["monat"]: int(r["c"] or 0) for r in rows if r["monat"]}
+    except Exception:  # noqa: BLE001
+        return {}
+    finally:
+        if eigene_conn and conn is not None:
+            conn.close()
+
+
+def _vormerkungen_einrechnen(verbrauch_je_monat: dict, konto_id: int, bis_monat: str, conn=None) -> None:
+    """Vormerkungen der Monate VOR bis_monat ('JJJJ-MM') in verbrauch_je_monat addieren (fuer die Uebertrag-Rekurrenz)."""
+    for monat, credits in _vormerkungen_je_monat(konto_id=konto_id, conn=conn).items():
+        if monat < bis_monat and credits:
+            verbrauch_je_monat[monat] = verbrauch_je_monat.get(monat, 0) + credits
+
+
+def _monats_verbrauch_in(konto_id, domain, monat: str, conn=None) -> int:
+    """Verbrauch eines Topfs (oder einer Free-Domain) im Kalendermonat monat ('JJJJ-MM', UTC)."""
+    j, m = int(monat[:4]), int(monat[5:7])
+    von, bis = f"{j:04d}-{m:02d}-01", f"{j + (m == 12):04d}-{m % 12 + 1:02d}-01"
+    eigene_conn = conn is None
+    try:
+        if eigene_conn:
+            conn = get_db()
+        if domain:
+            row = conn.execute(
+                "SELECT COALESCE(SUM(e.credits), 0) FROM usage_events e JOIN users u ON u.id = e.konto_user_id "
+                "WHERE substr(u.email, instr(u.email, '@') + 1) = ? "
+                "AND (COALESCE(u.plan, 'free') = 'free' "
+                "     OR (u.plan_gueltig_bis IS NOT NULL AND date(u.plan_gueltig_bis) < date('now'))) "
+                "AND u.is_admin = 0 AND e.created_at >= ? AND e.created_at < ?", (domain, von, bis)).fetchone()
+        else:
+            row = conn.execute("SELECT COALESCE(SUM(credits), 0) FROM usage_events WHERE konto_user_id = ? "
+                               "AND created_at >= ? AND created_at < ?", (konto_id, von, bis)).fetchone()
+        return int(row[0] or 0)
+    finally:
+        if eigene_conn and conn is not None:
+            conn.close()
+
+
+def vormerkung_laufend(konto_id: int, plan: str, kontingent, domain=None, conn=None) -> int:
+    """Der Teil der offenen Express-Vormerkungen, der das Guthaben des LAUFENDEN Monats bindet (Nachpruefung
+    Entwicklung 05.10.2026, N2): Bestellungen dieses Monats ganz; Bestellungen frueherer Monate nur, soweit sie das
+    Budget ihres Bestellmonats uebersteigen (dieser Rest geht bei der Lieferung von den Paketen ab). Was der
+    Bestellmonat deckt, steckt schon im kleineren Uebertrag (_uebertrag rechnet die Vormerkung dort wie Verbrauch)."""
+    je_monat = _vormerkungen_je_monat(konto_id=konto_id, domain=domain, conn=conn)
+    if not je_monat:
+        return 0
+    jetzt = datetime.now(timezone.utc)
+    laufender = f"{jetzt.year:04d}-{jetzt.month:02d}"
+    gesamt = sum(c for m, c in je_monat.items() if m >= laufender)
+    if kontingent is None:
+        return gesamt + sum(c for m, c in je_monat.items() if m < laufender)
+    for monat in sorted(m for m in je_monat if m < laufender):
+        r = je_monat[monat]
+        ueb = 0 if (plan == "free" or domain) else _uebertrag_bis(konto_id, kontingent, int(monat[:4]), int(monat[5:7]), conn,
+                                                                    mit_vormerkung=True)
+        budget = kontingent + ueb
+        v = _monats_verbrauch_in(konto_id, domain, monat, conn)
+        gesamt += max(0, v + r - budget) - max(0, v - budget)
+    return gesamt
+
+
 def vorgemerkt_domain(domain: str, conn=None) -> int:
     """Vormerkungen ALLER Free-Konten einer Firmen-Domain (Pruefung Entwicklung 05.10.2026, Befund 7): Der Verbrauch wird
     bei der Free-Buendelung je Domain gerechnet (_domain_monats_verbrauch) — die Vormerkung muss es genauso, sonst koennten
@@ -338,8 +420,10 @@ def _verfuegbar_aus(z: dict, user_id: int):
         return None
     if not ABO_ENFORCEMENT or _ist_admin(user_id):
         return None
-    # Express (05.10.2026): vorgemerkte Credits offener Auftraege stehen nicht mehr zur Verfuegung.
-    return max(0, int(z.get("rest") or 0) + int(z.get("pakete_rest") or 0) - int(z.get("vorgemerkt") or 0))
+    # Express (05.10.2026): vorgemerkte Credits offener Auftraege stehen nicht mehr zur Verfuegung — soweit sie diesen
+    # Monat binden (vorgemerkt_laufend, N2); fehlt der Wert (aeltere Aufrufer), die ganze Vormerkung.
+    gebunden = z.get("vorgemerkt_laufend", z.get("vorgemerkt"))
+    return max(0, int(z.get("rest") or 0) + int(z.get("pakete_rest") or 0) - int(gebunden or 0))
 
 
 def verfuegbare_credits(user_id: int, streng: bool = False):
@@ -594,7 +678,7 @@ def _monatsende_iso() -> str:
     return f"{jetzt.year:04d}-{jetzt.month:02d}-{letzter_tag:02d}"
 
 
-def _uebertrag(konto_id: int, plan: str, kontingent, conn=None, bis=None) -> int:
+def _uebertrag(konto_id: int, plan: str, kontingent, conn=None, bis=None, mit_vormerkung: bool = False) -> int:
     """Uebertrag ("Rollover") ins laufende Monatsbudget, ZUSTANDSLOS berechnet.
 
     Fachregel (Steve/Michael 31.07.2026): maximal EIN Monatskontingent darf
@@ -619,11 +703,14 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None, bis=None) -> int
     conn: optional eine bestehende Verbindung (siehe monats_verbrauch).
     bis (05.10.2026, Express ueber den Monatswechsel): (jahr, monat) — Uebertrag IN diesen Monat statt in den laufenden.
     Die Neustart-Regel (kontingent_reset_am) gilt nur fuer den laufenden Monat.
+    mit_vormerkung (Nachpruefung 05.10.2026, N2): offene Express-Vormerkungen frueherer Monate wie Verbrauch ihres
+    Bestellmonats zaehlen — NUR fuer die Guthaben-Pruefung (pruefe_kontingent), nie fuer Buchungen: Paket-Abbuchungen
+    richten sich nach echten Ereignissen, damit ein spaeterer Storno keine Paket-Credits kostet.
     """
     if plan == "free" or not kontingent:
         return 0
     if bis is not None:
-        return _uebertrag_bis(konto_id, kontingent, int(bis[0]), int(bis[1]), conn)
+        return _uebertrag_bis(konto_id, kontingent, int(bis[0]), int(bis[1]), conn, mit_vormerkung)
     # Review-Befund 3 (07.08.): Nach einem Kontingent-Neustart im laufenden
     # Monat gibt es KEINEN Uebertrag mehr — "frischer Topf" heisst frisch.
     # Sonst wuerde der Uebertrag aus den Vormonaten ein zweites Mal gewaehrt
@@ -656,12 +743,17 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None, bis=None) -> int
     finally:
         if eigene_conn:
             conn.close()
-    if not rows:
+    jetzt = datetime.now(timezone.utc)
+    verbrauch_je_monat = {r["monat"]: int(r["verbrauch"]) for r in rows}
+    # Express (Nachpruefung 05.10.2026, N2): offene Vormerkungen frueherer Monate zaehlen im Monat ihrer Bestellung wie
+    # Verbrauch — dort werden sie bei der Lieferung abgebucht (express.liefern datiert die Ereignisse zurueck).
+    if mit_vormerkung:
+        _vormerkungen_einrechnen(verbrauch_je_monat, konto_id, f"{jetzt.year:04d}-{jetzt.month:02d}")
+    if not verbrauch_je_monat:
         # Keine Historie vor dem laufenden Monat -> nichts anzusparen.
         return 0
-    verbrauch_je_monat = {r["monat"]: int(r["verbrauch"]) for r in rows}
-    jahr, monat = int(rows[0]["monat"][:4]), int(rows[0]["monat"][5:7])
-    jetzt = datetime.now(timezone.utc)
+    erster = min(verbrauch_je_monat)
+    jahr, monat = int(erster[:4]), int(erster[5:7])
     u = 0
     # Kalendermonate LUECKENLOS durchlaufen (auch ereignislose Monate),
     # bis exklusive des laufenden Monats.
@@ -674,7 +766,7 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None, bis=None) -> int
     return u
 
 
-def _uebertrag_bis(konto_id: int, kontingent: int, jahr: int, monat: int, conn=None) -> int:
+def _uebertrag_bis(konto_id: int, kontingent: int, jahr: int, monat: int, conn=None, mit_vormerkung: bool = False) -> int:
     """Uebertrag in den Monat (jahr, monat) — dieselbe Rekurrenz wie _uebertrag, nur mit festem Zielmonat."""
     eigene_conn = conn is None
     if eigene_conn:
@@ -687,10 +779,13 @@ def _uebertrag_bis(konto_id: int, kontingent: int, jahr: int, monat: int, conn=N
     finally:
         if eigene_conn:
             conn.close()
-    if not rows:
-        return 0
     verbrauch_je_monat = {r["monat"]: int(r["verbrauch"]) for r in rows}
-    j, m = int(rows[0]["monat"][:4]), int(rows[0]["monat"][5:7])
+    if mit_vormerkung:
+        _vormerkungen_einrechnen(verbrauch_je_monat, konto_id, f"{jahr:04d}-{monat:02d}", conn)
+    if not verbrauch_je_monat:
+        return 0
+    erster = min(verbrauch_je_monat)
+    j, m = int(erster[:4]), int(erster[5:7])
     u = 0
     while (j, m) < (jahr, monat):
         u = max(0, min(kontingent, kontingent + u - verbrauch_je_monat.get(f"{j:04d}-{m:02d}", 0)))
@@ -831,7 +926,7 @@ def pruefe_kontingent(user_id: int, streng: bool = False) -> dict:
         "erlaubt": True, "grund": "", "plan": "free",
         "kontingent": PLAN_KONTINGENTE["free"], "verbraucht": 0, "rest": None,
         "uebertrag": 0, "verfuegbar_monat": PLAN_KONTINGENTE["free"],
-        "pakete_rest": 0, "zeitraum_ende": None, "domain_pool": None, "vorgemerkt": 0,
+        "pakete_rest": 0, "zeitraum_ende": None, "domain_pool": None, "vorgemerkt": 0, "vorgemerkt_laufend": 0,
     }
     try:
         ergebnis["zeitraum_ende"] = _monatsende_iso()
@@ -887,10 +982,13 @@ def pruefe_kontingent(user_id: int, streng: bool = False) -> dict:
             if _dom and "." in _dom and not ist_freemail_domain(_dom):
                 domain_pool = _dom
                 verbraucht = _domain_monats_verbrauch(_dom)
-        uebertrag = _uebertrag(konto_id, plan, kontingent)
+        # mit_vormerkung (N2): eine offene Express-Bestellung aus dem Vormonat zaehlt dort wie Verbrauch.
+        uebertrag = _uebertrag(konto_id, plan, kontingent, mit_vormerkung=True)
         pakete = pakete_rest(konto_id)
         # Domain-Buendelung: auch die Vormerkungen je Domain (Befund 7), sonst je Topf.
         reserviert = vorgemerkt_domain(domain_pool) if domain_pool else vorgemerkt(konto_id)
+        # Was davon das Guthaben DIESES Monats bindet (N2): Vormerkungen aus Vormonaten deckt meist ihr Bestellmonat.
+        reserviert_laufend = (vormerkung_laufend(konto_id, plan, kontingent, domain_pool) if reserviert else 0)
         verfuegbar = None if kontingent is None else kontingent + uebertrag
         ergebnis.update({
             "plan": plan,
@@ -902,6 +1000,7 @@ def pruefe_kontingent(user_id: int, streng: bool = False) -> dict:
             "pakete_rest": pakete,
             "domain_pool": domain_pool,
             "vorgemerkt": reserviert,
+            "vorgemerkt_laufend": reserviert_laufend,
         })
         # Admins werden nie gesperrt; ohne Enforcement wird nie gesperrt.
         if not ABO_ENFORCEMENT or row["is_admin"]:

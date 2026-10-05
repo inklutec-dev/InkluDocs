@@ -10371,8 +10371,6 @@ msgstr "Bekræftet den {datum} (version {fassung}):"
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Betalt af teamkreditten hos"
 
-msgid "Bitte beide Häkchen setzen."
-msgstr "Sæt venligst begge flueben."
 
 msgid "Bitte ein Projekt wählen"
 msgstr "Vælg et projekt"
@@ -10580,8 +10578,6 @@ msgstr "Intern note ændret"
 msgid "Keine Aufträge."
 msgstr "Ingen ordrer."
 
-msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
-msgstr "Lad professionelle gøre dine dokumenter tilgængelige eller kontrollere dem. Vi leverer inden for {stunden} timer. Der betales med kreditter: De reserveres ved bestillingen og trækkes først ved leveringen."
 
 msgid "Leistung für {name}"
 msgstr "Ydelse for {name}"
@@ -10598,8 +10594,6 @@ msgstr "Lever"
 msgid "Lieferung"
 msgstr "Levering"
 
-msgid "Lieferung innerhalb von {stunden} Stunden"
-msgstr "levering inden for {stunden} timer"
 
 msgid "Lieferung innerhalb von {stunden} Stunden."
 msgstr "Levering inden for {stunden} timer."
@@ -10695,8 +10689,6 @@ msgstr "Annulleret den"
 msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
 msgstr "Annulleret. Kreditterne er frigivet, kunden får en e-mail."
 
-msgid "Summe: {c} Credits"
-msgstr "I alt: {c} kreditter"
 
 msgid "Telefon"
 msgstr "Telefon"
@@ -10751,8 +10743,6 @@ msgstr "Tilbage til ekspresservicen"
 msgid "abgebucht"
 msgstr "trukket"
 
-msgid "bestellt am {datum}"
-msgstr "bestilt den {datum}"
 
 msgid "fehlt noch"
 msgstr "mangler stadig"
@@ -10854,8 +10844,6 @@ msgstr "„{name}“ fjernet."
 msgid "Ich akzeptiere die Bedingungen für den Express-Service."
 msgstr "Jeg accepterer betingelserne for ekspresservicen."
 
-msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
-msgstr "Jeg accepterer, at medarbejdere hos InkluTec og vores partner Actino ser, behandler og kontrollerer mine dokumenter."
 
 msgid "1 Dokument"
 msgstr "1 dokument"
@@ -10872,8 +10860,6 @@ msgstr "Tilføjet: {dokumente}."
 msgid "Im Projekt: {dokumente}, davon wählbar: {w}."
 msgstr "I projektet: {dokumente}, kan vælges: {w}."
 
-msgid "{name}: {seiten}, {leistung}, {c} Credits"
-msgstr "{name}: {seiten}, {leistung}, {c} kreditter"
 
 msgid "{seiten}, {leistung}, {c} Credits"
 msgstr "{seiten}, {leistung}, {c} kreditter"
@@ -10986,17 +10972,11 @@ msgstr "Omsætning (slutpriser, uden moms efter § 19 UStG)"
 msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
 msgstr "For mange forespørgsler på kort tid. Prøv igen senere."
 
-msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
-msgstr "Lige nu kan vi kun behandle {typen}-filer."
 
-msgid "Zustimmung (beide Häkchen sind nötig)"
-msgstr "Samtykke (begge flueben er påkrævet)"
 
 msgid "für {modell}"
 msgstr "for {modell}"
 
-msgid "nicht möglich, nur {typen}"
-msgstr "ikke muligt, kun {typen}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Upload {art} til „{name}“"
@@ -11013,8 +10993,6 @@ msgstr "{name}, oprettet den {datum}"
 msgid "{pruefung} konnte die Datei nicht prüfen."
 msgstr "{pruefung} kunne ikke kontrollere filen."
 
-msgid "{pruefung}: Abweichungen — {text}"
-msgstr "{pruefung}: afvigelser — {text}"
 
 msgid "{pruefung}: bestanden."
 msgstr "{pruefung}: bestået."
@@ -11075,3 +11053,96 @@ msgstr "„{name}“ ligger nu i ekspres-kurven."
 
 msgid "„{name}“ liegt schon im Express-Warenkorb."
 msgstr "„{name}“ ligger allerede i ekspres-kurven."
+
+msgid "Auftrag löschen?"
+msgstr "Slet ordre?"
+
+msgid "Auftrag umbenennen"
+msgstr "Omdøb ordre"
+
+msgid "Auftragsübersicht öffnen"
+msgstr "Åbn ordreoversigt"
+
+msgid "Bitte die Bedingungen akzeptieren."
+msgstr "Accepter venligst betingelserne."
+
+msgid "Der Auftrag heißt jetzt „{name}“."
+msgstr "Ordren hedder nu „{name}“."
+
+msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
+msgstr "Kunden har slettet denne ordre: filer, dokumentliste, oplysninger og historik er fjernet. Bogføringsbeviset med nummer, dato, konto, sider, kreditter og status bliver tilbage."
+
+msgid "Dokumente dieses Auftrags ({n})"
+msgstr "Dokumenter i denne ordre ({n})"
+
+msgid "Express-Auftrag {nr}: {name}"
+msgstr "Ekspresordre {nr}: {name}"
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Få professionelle til at gøre dine dokumenter tilgængelige. Vi leverer inden for {stunden} timer. Der betales med kreditter: De reserveres ved bestillingen og trækkes først ved leveringen."
+
+msgid "Leer lassen, um wieder „Auftrag“ mit der Nummer zu verwenden. Die Auftragsnummer bleibt immer daneben stehen."
+msgstr "Lad feltet være tomt for igen at bruge „Ordre“ med nummeret. Ordrenummeret står altid ved siden af."
+
+msgid "Leistung"
+msgstr "Ydelse"
+
+msgid "Möchtest du „{name}“ wirklich löschen? Die Dateien und Angaben dieses Auftrags werden gelöscht und er verschwindet aus deiner Liste. Für die Buchhaltung bleibt nur ein knapper Nachweis (Nummer, Datum, Credits). Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette „{name}“? Filerne og oplysningerne i denne ordre slettes, og den forsvinder fra din liste. Til bogføringen bliver kun et kort bevis tilbage (nummer, dato, kreditter). Det kan ikke fortrydes."
+
+msgid "Name des Auftrags"
+msgstr "Ordrens navn"
+
+msgid "Name des Kunden für den Auftrag"
+msgstr "Kundens navn for ordren"
+
+msgid "Preis: {c} Credits je Seite."
+msgstr "Pris: {c} kreditter pr. side."
+
+msgid "Umfang"
+msgstr "Omfang"
+
+msgid "Vom Kunden gelöscht"
+msgstr "Slettet af kunden"
+
+msgid "Vom Kunden gelöscht am"
+msgstr "Slettet af kunden den"
+
+msgid "Zustimmung (Pflicht)"
+msgstr "Samtykke (påkrævet)"
+
+msgid "fertig, zum Herunterladen"
+msgstr "klar til download"
+
+msgid "geliefert"
+msgstr "leveret"
+
+msgid "nicht auswählbar, der Express-Service bearbeitet {typen}-Dateien"
+msgstr "kan ikke vælges, ekspresservicen behandler {typen}-filer"
+
+msgid "storniert"
+msgstr "annulleret"
+
+msgid "vom Kunden gelöscht"
+msgstr "slettet af kunden"
+
+msgid "{art} für „{name}“"
+msgstr "{art} til „{name}“"
+
+msgid "{dokumente}, {seiten}, Summe: {c} Credits"
+msgstr "{dokumente}, {seiten}, i alt: {c} kreditter"
+
+msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
+msgstr "{pruefung}: afvigelser fra standarden, 1 regel ikke opfyldt."
+
+msgid "{pruefung}: Abweichungen vom Standard, {n} Regeln nicht erfüllt."
+msgstr "{pruefung}: afvigelser fra standarden, {n} regler ikke opfyldt."
+
+msgid "{pruefung}: Abweichungen vom Standard."
+msgstr "{pruefung}: afvigelser fra standarden."
+
+msgid "– Auftrag „{name}“"
+msgstr "– ordre „{name}“"
+
+msgid "„{name}“ ist gelöscht."
+msgstr "„{name}“ er slettet."

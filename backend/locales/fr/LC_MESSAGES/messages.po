@@ -10674,8 +10674,6 @@ msgstr "Confirmé le {datum} (version {fassung}) :"
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Payé avec le crédit d’équipe de"
 
-msgid "Bitte beide Häkchen setzen."
-msgstr "Veuillez cocher les deux cases."
 
 msgid "Bitte ein Projekt wählen"
 msgstr "Veuillez choisir un projet"
@@ -10883,8 +10881,6 @@ msgstr "Note interne modifiée"
 msgid "Keine Aufträge."
 msgstr "Aucune commande."
 
-msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
-msgstr "Faites rendre vos documents accessibles ou vérifier par des professionnels. Nous livrons sous {stunden} heures. Le paiement se fait en crédits : ils sont réservés à la commande et débités seulement à la livraison."
 
 msgid "Leistung für {name}"
 msgstr "Prestation pour {name}"
@@ -10901,8 +10897,6 @@ msgstr "Livrer"
 msgid "Lieferung"
 msgstr "Livraison"
 
-msgid "Lieferung innerhalb von {stunden} Stunden"
-msgstr "livraison sous {stunden} heures"
 
 msgid "Lieferung innerhalb von {stunden} Stunden."
 msgstr "Livraison sous {stunden} heures."
@@ -10998,8 +10992,6 @@ msgstr "Annulée le"
 msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
 msgstr "Annulée. Les crédits sont libérés, le client reçoit un e-mail."
 
-msgid "Summe: {c} Credits"
-msgstr "Total : {c} crédits"
 
 msgid "Telefon"
 msgstr "Téléphone"
@@ -11054,8 +11046,6 @@ msgstr "Retour au service express"
 msgid "abgebucht"
 msgstr "débités"
 
-msgid "bestellt am {datum}"
-msgstr "commandée le {datum}"
 
 msgid "fehlt noch"
 msgstr "manque encore"
@@ -11157,8 +11147,6 @@ msgstr "« {name} » retiré."
 msgid "Ich akzeptiere die Bedingungen für den Express-Service."
 msgstr "J’accepte les conditions du service express."
 
-msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
-msgstr "J’accepte que des collaborateurs d’InkluTec et de notre partenaire Actino consultent, modifient et vérifient mes documents."
 
 msgid "1 Dokument"
 msgstr "1 document"
@@ -11175,8 +11163,6 @@ msgstr "Ajouté : {dokumente}."
 msgid "Im Projekt: {dokumente}, davon wählbar: {w}."
 msgstr "Dans le projet : {dokumente}, sélectionnables : {w}."
 
-msgid "{name}: {seiten}, {leistung}, {c} Credits"
-msgstr "{name} : {seiten}, {leistung}, {c} crédits"
 
 msgid "{seiten}, {leistung}, {c} Credits"
 msgstr "{seiten}, {leistung}, {c} crédits"
@@ -11289,17 +11275,11 @@ msgstr "Chiffre d’affaires (prix finaux, sans TVA selon le § 19 UStG)"
 msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
 msgstr "Trop de demandes en peu de temps. Veuillez réessayer plus tard."
 
-msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
-msgstr "Pour le moment, nous ne pouvons traiter que des fichiers {typen}."
 
-msgid "Zustimmung (beide Häkchen sind nötig)"
-msgstr "Consentement (les deux cases sont obligatoires)"
 
 msgid "für {modell}"
 msgstr "pour {modell}"
 
-msgid "nicht möglich, nur {typen}"
-msgstr "impossible, uniquement {typen}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Envoyer {art} pour « {name} »"
@@ -11316,8 +11296,6 @@ msgstr "{name}, créé le {datum}"
 msgid "{pruefung} konnte die Datei nicht prüfen."
 msgstr "{pruefung} n’a pas pu vérifier le fichier."
 
-msgid "{pruefung}: Abweichungen — {text}"
-msgstr "{pruefung} : écarts — {text}"
 
 msgid "{pruefung}: bestanden."
 msgstr "{pruefung} : réussi."
@@ -11378,3 +11356,96 @@ msgstr "« {name} » est maintenant dans le panier express."
 
 msgid "„{name}“ liegt schon im Express-Warenkorb."
 msgstr "« {name} » est déjà dans le panier express."
+
+msgid "Auftrag löschen?"
+msgstr "Supprimer la commande ?"
+
+msgid "Auftrag umbenennen"
+msgstr "Renommer la commande"
+
+msgid "Auftragsübersicht öffnen"
+msgstr "Ouvrir le récapitulatif"
+
+msgid "Bitte die Bedingungen akzeptieren."
+msgstr "Veuillez accepter les conditions."
+
+msgid "Der Auftrag heißt jetzt „{name}“."
+msgstr "La commande s’appelle désormais « {name} »."
+
+msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
+msgstr "Le client a supprimé cette commande : fichiers, liste des documents, informations et historique ont été supprimés. Il reste le justificatif comptable avec numéro, date, compte, pages, crédits et statut."
+
+msgid "Dokumente dieses Auftrags ({n})"
+msgstr "Documents de cette commande ({n})"
+
+msgid "Express-Auftrag {nr}: {name}"
+msgstr "Commande express {nr} : {name}"
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Faites rendre vos documents accessibles par des professionnels. Nous livrons sous {stunden} heures. Le paiement se fait en crédits : ils sont réservés à la commande et débités seulement à la livraison."
+
+msgid "Leer lassen, um wieder „Auftrag“ mit der Nummer zu verwenden. Die Auftragsnummer bleibt immer daneben stehen."
+msgstr "Laissez vide pour réutiliser « Commande » avec le numéro. Le numéro de commande reste toujours affiché à côté."
+
+msgid "Leistung"
+msgstr "Prestation"
+
+msgid "Möchtest du „{name}“ wirklich löschen? Die Dateien und Angaben dieses Auftrags werden gelöscht und er verschwindet aus deiner Liste. Für die Buchhaltung bleibt nur ein knapper Nachweis (Nummer, Datum, Credits). Das lässt sich nicht rückgängig machen."
+msgstr "Voulez-vous vraiment supprimer « {name} » ? Les fichiers et informations de cette commande seront supprimés et elle disparaîtra de votre liste. Seul un bref justificatif (numéro, date, crédits) reste pour la comptabilité. Cette action est irréversible."
+
+msgid "Name des Auftrags"
+msgstr "Nom de la commande"
+
+msgid "Name des Kunden für den Auftrag"
+msgstr "Nom donné par le client à la commande"
+
+msgid "Preis: {c} Credits je Seite."
+msgstr "Prix : {c} crédits par page."
+
+msgid "Umfang"
+msgstr "Volume"
+
+msgid "Vom Kunden gelöscht"
+msgstr "Supprimée par le client"
+
+msgid "Vom Kunden gelöscht am"
+msgstr "Supprimée par le client le"
+
+msgid "Zustimmung (Pflicht)"
+msgstr "Consentement (obligatoire)"
+
+msgid "fertig, zum Herunterladen"
+msgstr "prêt à télécharger"
+
+msgid "geliefert"
+msgstr "livré"
+
+msgid "nicht auswählbar, der Express-Service bearbeitet {typen}-Dateien"
+msgstr "non sélectionnable, le service express traite les fichiers {typen}"
+
+msgid "storniert"
+msgstr "annulée"
+
+msgid "vom Kunden gelöscht"
+msgstr "supprimée par le client"
+
+msgid "{art} für „{name}“"
+msgstr "{art} pour « {name} »"
+
+msgid "{dokumente}, {seiten}, Summe: {c} Credits"
+msgstr "{dokumente}, {seiten}, total : {c} crédits"
+
+msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
+msgstr "{pruefung} : écarts par rapport à la norme, 1 règle non respectée."
+
+msgid "{pruefung}: Abweichungen vom Standard, {n} Regeln nicht erfüllt."
+msgstr "{pruefung} : écarts par rapport à la norme, {n} règles non respectées."
+
+msgid "{pruefung}: Abweichungen vom Standard."
+msgstr "{pruefung} : écarts par rapport à la norme."
+
+msgid "– Auftrag „{name}“"
+msgstr "– commande « {name} »"
+
+msgid "„{name}“ ist gelöscht."
+msgstr "« {name} » a été supprimée."

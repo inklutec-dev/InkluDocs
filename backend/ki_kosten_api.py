@@ -101,7 +101,9 @@ def _preis_zahl(wert, name: str, pflicht: bool = True, feld: str = ""):
 
 # Felder einer Preisstufe, die das Formular nicht kennt (Staffel ab einer Eingabelaenge, z. B. Gemini Pro ueber 200.000
 # Tokens, und der Cache-Schreibpreis). Sie gehen bei einer neuen Stufe nicht verloren (Pruefung Entwicklung, Befund 12).
-STAFFEL_FELDER = ("grenze", "ein_lang", "aus_lang", "cache_lang", "cache_schreiben")
+# Seit der Nachpruefung (05.10.2026, N5) auch „cache“: bleibt das Feld im Dialog leer, gilt der bisherige Cache-Preis —
+# sonst wuerden gecachte Tokens zum vollen Eingabepreis gerechnet (bei Gemini Pro 10-fach).
+STAFFEL_FELDER = ("grenze", "ein_lang", "aus_lang", "cache_lang", "cache_schreiben", "cache")
 
 
 def staffel_vorlage(stufen: list, ab: str) -> dict:

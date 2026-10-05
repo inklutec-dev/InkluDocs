@@ -1055,6 +1055,11 @@ def _migrate_columns(conn):
         ("users", "express_bearbeiter", "ALTER TABLE users ADD COLUMN express_bearbeiter INTEGER DEFAULT 0"),
         # Express erweiterbar (Steve 05.10.2026): Dateityp je Position aus express.DATEITYPEN (heute nur 'pdf').
         ("express_positionen", "dateityp", "ALTER TABLE express_positionen ADD COLUMN dateityp TEXT NOT NULL DEFAULT 'pdf'"),
+        # Runde 3 (05.10.2026): eigener Name des Kunden fuer den Auftrag, Loeschen durch den Kunden (nur geliefert/storniert;
+        # es bleibt ein knapper Buchungsnachweis), Fehlversuche der Team-Meldungen (Zaehler uebersteht Neustarts).
+        ("express_auftraege", "auftrag_name", "ALTER TABLE express_auftraege ADD COLUMN auftrag_name TEXT NOT NULL DEFAULT ''"),
+        ("express_auftraege", "kunde_geloescht_am", "ALTER TABLE express_auftraege ADD COLUMN kunde_geloescht_am TEXT"),
+        ("express_auftraege", "meldung_fehlversuche", "ALTER TABLE express_auftraege ADD COLUMN meldung_fehlversuche INTEGER NOT NULL DEFAULT 0"),
     ]
 
     for table, column, sql in migrations:

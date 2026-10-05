@@ -93,8 +93,11 @@ PRUEFUNG_HAENGT_MIN = 15                  # so lange darf eine automatische Prue
 
 # Fassung der beiden Pflicht-Haekchen. Bei jeder inhaltlichen Aenderung der Texte oder der Bedingungen hochzaehlen —
 # im Auftrag steht, welcher Wortlaut galt (wie WIDERRUFSBELEHRUNG_FASSUNG in main.py).
-ZUSTIMMUNG_FASSUNG = "2026-10-05-entwurf-2"   # -2: Bedingungen nennen die Angaben, die der Partner sieht (Befund 14)
+# -2: Bedingungen nennen die Angaben, die der Partner sieht (Befund 14). -3: nur noch EIN Haekchen; die Bearbeitung durch
+# Mitarbeiter von InkluTec und Actino steht ausdruecklich in den Bedingungen (Michael Karbe 05.10.2026, Punkt 5).
+ZUSTIMMUNG_FASSUNG = "2026-10-05-entwurf-3"
 TEXT_BEDINGUNGEN = N_("Ich akzeptiere die Bedingungen für den Express-Service.")
+# Bis Fassung -2 ein eigenes Haekchen; seit -3 Teil der Bedingungen. Bleibt fuer aeltere Auftraege (dort gespeichert).
 TEXT_BEARBEITUNG = N_("Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente "
                       "ansehen, bearbeiten und prüfen.")
 
@@ -159,6 +162,8 @@ class Leistung:
     ergebnis_typen: tuple = ()              # Dateitypen des Ergebnisses; leer = wie das Original
     bericht_typen: tuple = ("pdf",)         # Dateitypen des Pruefberichts
     ergebnis_zusatz: str = " (barrierefrei)"   # Zusatz im Download-Namen des Ergebnisses
+    aktiv: bool = True                      # False = abgeschaltet: nicht waehlbar, nicht in den Einstellungen; Eintrag
+    #                                         und Preis bleiben, bestehende Auftraege laufen weiter
 
 
 def ist_pdf_datei(pfad: str) -> bool:
@@ -207,8 +212,10 @@ DATEITYPEN = {t.schluessel: t for t in (
 LEISTUNGEN = {l.schluessel: l for l in (
     Leistung(schluessel="aufbereiten", name=N_("Barrierefrei aufbereiten (mit Prüfung)"), preis_standard=50,
              dateitypen=("pdf",), aktion="express_aufbereiten", ergebnis_pflicht=True, bericht_pflicht=False),
+    # ABGESCHALTET (Michael Karbe, Mail „Erstes Express Service Feedback“ 05.10.2026, Punkt 3: „Wir bieten nur die
+    # Aufbereitung an. Prüfung hatte ich noch nicht geplant.“) — zum Wiedereinschalten aktiv=True setzen.
     Leistung(schluessel="pruefen", name=N_("Nur prüfen (Prüfbericht)"), preis_standard=25,
-             dateitypen=("pdf",), aktion="express_pruefen", ergebnis_pflicht=False, bericht_pflicht=True),
+             dateitypen=("pdf",), aktion="express_pruefen", ergebnis_pflicht=False, bericht_pflicht=True, aktiv=False),
 )}
 # Fuer Auswertungen (Aktion je Leistung), abgeleitet — nicht von Hand pflegen.
 AKTION_JE_LEISTUNG = {k: l.aktion for k, l in LEISTUNGEN.items()}
@@ -220,13 +227,14 @@ def dateityp(schluessel) -> Optional[Dateityp]:
 
 
 def angebotene_dateitypen() -> list:
-    """Dateitypen, fuer die es mindestens eine Leistung gibt — in der Reihenfolge von DATEITYPEN."""
-    erlaubt = {k for l in LEISTUNGEN.values() for k in l.dateitypen}
+    """Dateitypen, fuer die es mindestens eine EINGESCHALTETE Leistung gibt — in der Reihenfolge von DATEITYPEN."""
+    erlaubt = {k for l in LEISTUNGEN.values() if l.aktiv for k in l.dateitypen}
     return [t for k, t in DATEITYPEN.items() if k in erlaubt]
 
 
 def leistungen_fuer(typ_schluessel: str) -> list:
-    return [l for l in LEISTUNGEN.values() if typ_schluessel in l.dateitypen]
+    """Eingeschaltete Leistungen fuer einen Dateityp (Auswahl im Warenkorb; die erste ist der Standard)."""
+    return [l for l in LEISTUNGEN.values() if l.aktiv and typ_schluessel in l.dateitypen]
 
 
 def typen_text(schluessel=None) -> str:
@@ -259,11 +267,12 @@ def dateityp_fuer_upload(dateiname: str, kopf: bytes) -> Dateityp:
     """Kunden-Upload ohne Projekt: angebotener Typ nach Endung UND Inhalt, sonst ExpressFehler."""
     endung = os.path.splitext(str(dateiname or "").lower())[1]
     passend = [t for t in angebotene_dateitypen() if endung in t.endungen]
+    # Positiv formuliert, was geht (Michael Karbe 05.10.2026, Punkt 6: „Wir müssen nicht sagen, was wir nicht können.“)
     if not passend:
-        raise ExpressFehler(f"Im Express-Service können zurzeit nur {typen_text()}-Dateien bearbeitet werden.")
+        raise ExpressFehler(f"Bitte wähle eine {typen_text()}-Datei aus.")
     typ = _typ_der_bytes(kopf, [t.schluessel for t in passend])
     if not typ:
-        raise ExpressFehler(f"Die Datei ist keine {typen_text([t.schluessel for t in passend])}-Datei.")
+        raise ExpressFehler(f"Bitte wähle eine {typen_text([t.schluessel for t in passend])}-Datei aus.")
     return typ
 
 
@@ -302,7 +311,7 @@ def _text(wert, name: str, maximal: int, pflicht: bool = False) -> str:
 
 
 _ZEITFELDER = ("bestellt_am", "geliefert_am", "storniert_am", "faellig_am", "uebernommen_am", "zugestimmt_am", "am",
-               "created_at", "ergebnis_am", "bericht_am")
+               "created_at", "ergebnis_am", "bericht_am", "kunde_geloescht_am")
 
 
 def _lokal(d: dict) -> dict:
@@ -375,7 +384,7 @@ def leistungen_liste(e: dict = None) -> list:
     """Fuer Oberflaeche und Endpunkte: [{schluessel, name, preis, dateitypen}] in der Reihenfolge von LEISTUNGEN."""
     e = e or einstellungen()
     return [{"schluessel": k, "name": l.name, "preis": int(e["preise"].get(k, l.preis_standard)),
-             "dateitypen": list(l.dateitypen)} for k, l in LEISTUNGEN.items()]
+             "dateitypen": list(l.dateitypen)} for k, l in LEISTUNGEN.items() if l.aktiv]
 
 
 def _ganzzahl(wert, name: str, minimum: int, maximum: int, feld: str = "") -> int:
@@ -398,8 +407,12 @@ def speichere_einstellungen(daten: dict) -> dict:
     preise_ein = daten.get("preise") if isinstance(daten.get("preise"), dict) else {}
     preise = {}
     for k, l in LEISTUNGEN.items():
-        preise[k] = _ganzzahl(preise_ein.get(k, daten.get(f"preis_{k}")), f"{l.name}: Credits je Seite", 1, 100000,
-                              feld=f"preis_{k}")
+        wert = preise_ein.get(k, daten.get(f"preis_{k}"))
+        if not l.aktiv and wert is None:
+            # Abgeschaltete Leistung: kein Feld in der Verwaltung — ihr Preis bleibt fuer spaeter stehen.
+            preise[k] = int(e["preise"].get(k, l.preis_standard))
+            continue
+        preise[k] = _ganzzahl(wert, f"{l.name}: Credits je Seite", 1, 100000, feld=f"preis_{k}")
     e["preise"] = preise
     e["frist_stunden"] = _ganzzahl(daten.get("frist_stunden"), "Lieferfrist in Stunden", 1, 24 * 60, feld="frist_stunden")
     e["max_seiten_auftrag"] = _ganzzahl(daten.get("max_seiten_auftrag"), "Höchstens Seiten je Auftrag", 1, 100000,
@@ -445,13 +458,25 @@ def preis(leistung: str, seiten: int, e: dict = None) -> int:
 # ─── Warenkorb ───────────────────────────────────────────────────────────
 
 def _haengende_bestellung_freigeben(conn, user_id: int) -> None:
-    """Ein Korb, der nach einem Absturz im Zwischenstand „bestellung“ haengt, wird wieder zum Korb — nur wenn es keinen
-    neueren gibt (hoechstens ein Entwurf je Konto)."""
-    conn.execute("UPDATE express_auftraege SET status = 'entwurf' WHERE user_id = ? AND status = 'bestellung' "
-                 "AND updated_at < datetime('now', ?) AND NOT EXISTS "
-                 "(SELECT 1 FROM express_auftraege x WHERE x.user_id = ? AND x.status = 'entwurf')",
-                 (user_id, f"-{BESTELLUNG_HAENGT_MIN} minutes", user_id))
-    conn.commit()
+    """Ein Korb, der nach einem Absturz im Zwischenstand „bestellung“ haengt, wird wieder zum Korb. Gibt es inzwischen
+    einen neuen Korb, wandern seine Positionen dorthin (doppelte Dokumente bleiben einmal), und der haengende
+    Zwischenstand verschwindet samt kopierten Originalen (Nachpruefung Entwicklung 05.10.2026, N3)."""
+    grenze = f"-{BESTELLUNG_HAENGT_MIN} minutes"
+    haengend = [r[0] for r in conn.execute("SELECT id FROM express_auftraege WHERE user_id = ? AND status = 'bestellung' "
+                                           "AND updated_at < datetime('now', ?) ORDER BY id", (user_id, grenze))]
+    for hid in haengend:
+        entwurf = conn.execute("SELECT id FROM express_auftraege WHERE user_id = ? AND status = 'entwurf'", (user_id,)).fetchone()
+        if not entwurf:
+            conn.execute("UPDATE express_auftraege SET status = 'entwurf', updated_at = datetime('now') WHERE id = ? "
+                         "AND status = 'bestellung'", (hid,))
+        else:
+            conn.execute("UPDATE OR IGNORE express_positionen SET auftrag_id = ?, original_pfad = '' WHERE auftrag_id = ?",
+                         (entwurf[0], hid))
+            conn.execute("DELETE FROM express_positionen WHERE auftrag_id = ?", (hid,))
+            conn.execute("DELETE FROM express_auftraege WHERE id = ? AND status = 'bestellung'", (hid,))
+            shutil.rmtree(ordner(user_id, hid), ignore_errors=True)
+    if haengend:
+        conn.commit()
 
 
 def _fassung(positionen: list, e: dict) -> str:
@@ -487,6 +512,15 @@ def warenkorb(user_id: int) -> dict:
                 "LEFT JOIN documents d ON d.id = x.document_id "
                 "LEFT JOIN projects pr ON pr.id = d.project_id AND pr.user_id = ? "
                 "WHERE x.auftrag_id = ? ORDER BY x.id", (user_id, wid))]
+            # Liegt eine inzwischen abgeschaltete Leistung im Korb (z. B. „Nur prüfen“ seit 05.10.2026), wechselt die
+            # Position auf die Standard-Leistung ihres Dateityps — sonst haenge der Korb ohne Auswahlmoeglichkeit fest.
+            for p in positionen:
+                moeglich = leistungen_fuer(p["dateityp"])
+                if moeglich and p["leistung"] not in [l.schluessel for l in moeglich]:
+                    p["leistung"] = moeglich[0].schluessel
+                    conn.execute("UPDATE express_positionen SET leistung = ? WHERE id = ? AND auftrag_id = ?",
+                                 (p["leistung"], p["id"], wid))
+                    conn.commit()
     finally:
         conn.close()
     for p in positionen:
@@ -561,8 +595,8 @@ def dokumente_hinzufuegen(user_id: int, document_ids: list) -> dict:
             quelle = _quelle_des_dokuments(doc)
             typ = dateityp_der_datei(quelle) if quelle else None
             if not typ:
-                hinweise.append(f"„{name}“ kann im Express-Service noch nicht bearbeitet werden. "
-                                f"Möglich sind zurzeit {typen_text()}-Dateien.")
+                # Positiv: was geht (Michael Karbe 05.10.2026, Punkt 6)
+                hinweise.append(f"„{name}“ wurde nicht hinzugefügt. Bitte wähle eine {typen_text()}-Datei aus.")
                 continue
             try:
                 seiten = typ.seiten(quelle)
@@ -587,7 +621,7 @@ def dokumente_hinzufuegen(user_id: int, document_ids: list) -> dict:
 
 def leistung_setzen(user_id: int, pos_id: int, leistung: str) -> dict:
     l = LEISTUNGEN.get(str(leistung or ""))
-    if not l:
+    if not l or not l.aktiv:
         raise ExpressFehler("Unbekannte Leistung.")
     conn = get_db()
     try:
@@ -666,7 +700,7 @@ def _veraltet(text: str, user_id: int) -> ExpressFehler:
     return ExpressFehler(text, 409, warenkorb=warenkorb(user_id), veraltet=True)
 
 
-def bestellen(user_id: int, *, ansprechpartner, telefon, hinweise, bedingungen, bearbeitung, idempotenz,
+def bestellen(user_id: int, *, ansprechpartner, telefon, hinweise, bedingungen, idempotenz, bearbeitung=None,
               korb_id=None, erwartete_credits=None, fassung=None, sprache: str = "de", texte: dict = None,
               absender: str = "") -> dict:
     """Warenkorb zahlungspflichtig bestellen. Rueckgabe {"auftrag_id", "neu": bool} (neu=False: dieselbe Bestellung
@@ -683,9 +717,10 @@ def bestellen(user_id: int, *, ansprechpartner, telefon, hinweise, bedingungen, 
     if tel and not _TELEFON_RE.match(tel):
         raise ExpressFehler("Telefon: bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden.", feld="telefon")
     notiz = _text(hinweise, "Hinweise", MAX_HINWEISE)
-    if bedingungen is not True or bearbeitung is not True:
-        raise ExpressFehler("Bitte beide Häkchen setzen: Bedingungen und Einverständnis zur Bearbeitung durch Menschen.",
-                            feld="zustimmung")
+    # EIN Pflicht-Haekchen (Michael Karbe 05.10.2026, Punkt 5): die Bearbeitung durch Mitarbeiter von InkluTec und Actino
+    # steht ausdruecklich in den Bedingungen (Fassung -3). „bearbeitung“ wird nicht mehr abgefragt und ignoriert.
+    if bedingungen is not True:
+        raise ExpressFehler("Bitte die Bedingungen akzeptieren.", feld="bedingungen")
     idem = str(idempotenz or "")
     if not _IDEM_RE.match(idem):
         raise ExpressFehler("Ungültige Anfrage, bitte die Seite neu laden.")
@@ -709,7 +744,9 @@ def bestellen(user_id: int, *, ansprechpartner, telefon, hinweise, bedingungen, 
                                 user_id)
             wid = _warenkorb_id(conn, user_id, anlegen=False)
             if not wid:
-                raise ExpressFehler("Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen.")
+                # Der Korb dieser Seite ist inzwischen bestellt (zweiter Tab) — veraltet, mit leerem Korb zum Neuladen
+                # (Nachpruefung Entwicklung 05.10.2026, N4).
+                raise _veraltet("Deine Auswahl wurde inzwischen bestellt oder geleert. Bitte prüfe die Aufstellung.", user_id)
             if wid != korb_id:
                 raise _veraltet("Deine Auswahl hat sich geändert. Bitte prüfe die Aufstellung und bestelle dann erneut.", user_id)
             # Korb einfrieren: Aendern/Entfernen greift nur im Entwurf, Hinzufuegen legt ab jetzt einen neuen Korb an.
@@ -760,7 +797,7 @@ def _bestellbar_pruefen(p: dict) -> None:
     if not typ:
         raise ExpressFehler(f"„{p['dokument_name']}“ kann im Express-Service nicht mehr bearbeitet werden. "
                             "Bitte aus der Auswahl entfernen.")
-    if not l or typ.schluessel not in l.dateitypen:
+    if not l or not l.aktiv or typ.schluessel not in l.dateitypen:
         raise ExpressFehler(f"Für „{p['dokument_name']}“ gibt es die gewählte Leistung nicht mehr. Bitte eine andere wählen.")
 
 
@@ -842,7 +879,7 @@ def _bestellen_eingefroren(user_id, wid, name, tel, notiz, idem, erwartet, fassu
             "zustimmung_absender = ?, zugestimmt_am = ?, idempotenz = ?, bestellt_am = ?, updated_at = ? "
             "WHERE id = ? AND user_id = ? AND status = 'bestellung'",
             (konto, name, tel, notiz, seiten, summe_tx, int(e["frist_stunden"]), _utc(faellig), ZUSTIMMUNG_FASSUNG,
-             str(texte.get("bedingungen") or TEXT_BEDINGUNGEN)[:500], str(texte.get("bearbeitung") or TEXT_BEARBEITUNG)[:500],
+             str(texte.get("bedingungen") or TEXT_BEDINGUNGEN)[:500], "",
              (sprache or "de")[:10], netz_kurz(absender), _utc(jetzt), idem, _utc(jetzt), _utc(jetzt), wid, user_id))
         if cur.rowcount != 1:
             conn.execute("ROLLBACK")
@@ -871,6 +908,9 @@ def netz_kurz(absender: str) -> str:
         netz = ipaddress.ip_network(roh, strict=False)
     except ValueError:
         return ""
+    # IPv4 in IPv6-Form („::ffff:203.0.113.9“) wie IPv4 kuerzen, sonst bliebe nur „::/48“ (Nachpruefung, N7).
+    if netz.version == 6 and netz.prefixlen == 128 and netz.network_address.ipv4_mapped:
+        netz = ipaddress.ip_network(str(netz.network_address.ipv4_mapped))
     praefix = 24 if netz.version == 4 else 48
     return str(netz.supernet(new_prefix=min(praefix, netz.prefixlen))) if netz.prefixlen > praefix else str(netz)
 
@@ -884,7 +924,8 @@ def _auftrag_zeile(conn, auftrag_id: int, user_id: int = None):
            "WHERE a.id = ? AND a.status NOT IN ('entwurf', 'bestellung')")
     werte = [int(auftrag_id)]
     if user_id is not None:
-        sql += " AND a.user_id = ?"
+        # Kundensicht: vom Kunden geloeschte Auftraege gibt es fuer ihn nicht mehr (nur noch den Buchungsnachweis intern).
+        sql += " AND a.user_id = ? AND a.kunde_geloescht_am IS NULL"
         werte.append(int(user_id))
     return conn.execute(sql, werte).fetchone()
 
@@ -1003,6 +1044,7 @@ def auftrag_fuer_kunde(user_id: int, auftrag_id: int) -> dict:
         _lokal(v)
     return {
         "id": a["id"], "status": a["status"], "status_text": STATUS_KUNDE.get(a["status"], a["status"]),
+        "auftrag_name": a["auftrag_name"], "loeschbar": a["status"] in LOESCHBAR,
         "bestellt_am": a["bestellt_am"], "geliefert_am": a["geliefert_am"], "storniert_am": a["storniert_am"],
         "storno_grund": a["storno_grund"] if a["status"] == STORNIERT else "",
         "frist_stunden": a["frist_stunden"], "ansprechpartner": a["ansprechpartner"], "telefon": a["telefon"],
@@ -1018,18 +1060,100 @@ def auftrag_fuer_kunde(user_id: int, auftrag_id: int) -> dict:
 
 
 def auftraege_des_kunden(user_id: int) -> list:
+    """Meine Auftraege (Kunde): mit eigenem Namen, ob loeschbar (nur geliefert/storniert) und den Dokumenten zum
+    Aufklappen — Name, Seiten, Stand, Downloads (Michael Karbe 05.10.2026, Punkte 1 und 2)."""
     conn = get_db()
     try:
         rows = [dict(r) for r in conn.execute(
-            "SELECT a.id, a.status, a.bestellt_am, a.geliefert_am, a.seiten_gesamt, a.credits_gesamt, a.frist_stunden, "
+            "SELECT a.id, a.status, a.auftrag_name, a.bestellt_am, a.geliefert_am, a.storniert_am, a.seiten_gesamt, "
+            "a.credits_gesamt, a.frist_stunden, "
             "(SELECT COUNT(*) FROM express_positionen p WHERE p.auftrag_id = a.id) AS dokumente "
-            "FROM express_auftraege a WHERE a.user_id = ? AND a.status NOT IN ('entwurf', 'bestellung') ORDER BY a.id DESC", (user_id,))]
+            "FROM express_auftraege a WHERE a.user_id = ? AND a.status NOT IN ('entwurf', 'bestellung') "
+            "AND a.kunde_geloescht_am IS NULL ORDER BY a.id DESC LIMIT 500", (user_id,))]
+        positionen = {}
+        if rows:
+            platz = ",".join("?" * len(rows))
+            for p in conn.execute(f"SELECT * FROM express_positionen WHERE auftrag_id IN ({platz}) ORDER BY id",
+                                  [r["id"] for r in rows]):
+                positionen.setdefault(p["auftrag_id"], []).append(dict(p))
     finally:
         conn.close()
     for r in rows:
         r["status_text"] = STATUS_KUNDE.get(r["status"], r["status"])
+        r["loeschbar"] = r["status"] in LOESCHBAR
+        r["positionen"] = [_lokal(_position_dict(p, True, r["status"])) for p in positionen.get(r["id"], [])]
         _lokal(r)
     return rows
+
+
+# ─── Kunde: Auftrag umbenennen und loeschen (Michael Karbe 05.10.2026, Punkt 1) ──
+
+MAX_AUFTRAG_NAME = 120
+LOESCHBAR = (GELIEFERT, STORNIERT)       # laufende Auftraege kann der Kunde nicht loeschen
+
+
+def umbenennen(user_id: int, auftrag_id: int, name) -> dict:
+    """Eigener Name des Kunden fuer seinen Auftrag (leer = Standard „Auftrag <Nr>“). Erscheint in „Meine Auftraege“,
+    in der Auftragsuebersicht und im Nachweis; die Auftragsnummer bleibt daneben stehen."""
+    neu = re.sub(r"[\x00-\x1f\x7f]", "", str(name or "")).strip()
+    if len(neu) > MAX_AUFTRAG_NAME:
+        raise ExpressFehler(f"Name des Auftrags: höchstens {MAX_AUFTRAG_NAME} Zeichen.", feld="name")
+    conn = get_db()
+    try:
+        cur = conn.execute("UPDATE express_auftraege SET auftrag_name = ?, updated_at = datetime('now') WHERE id = ? "
+                           "AND user_id = ? AND status NOT IN ('entwurf', 'bestellung') AND kunde_geloescht_am IS NULL",
+                           (neu, int(auftrag_id), int(user_id)))
+        conn.commit()
+    finally:
+        conn.close()
+    if cur.rowcount != 1:
+        raise NichtGefunden()
+    return auftrag_fuer_kunde(user_id, auftrag_id)
+
+
+KUNDE_GELOESCHT_TEXT = "Vom Kunden gelöscht: Dateien, Angaben und Verlauf entfernt, der Buchungsnachweis bleibt."
+
+
+def kunde_loeschen(user_id: int, auftrag_id: int) -> None:
+    """Der Kunde loescht einen GELIEFERTEN oder STORNIERTEN Auftrag (laufende: 409). Weg sind fuer ihn der Auftrag,
+    alle Dateien (Originale, Ergebnisse, Pruefberichte), die Dokumentliste, seine Angaben, der eigene Name, der Verlauf
+    und die Wortlaute der Zustimmung. Intern bleibt ein knapper BUCHUNGSNACHWEIS fuer die Buchhaltung: Nummer, Konto
+    (Kunde und zahlender Topf), Bestell- und Liefer- bzw. Stornodatum, Seiten, Credits, Status, Fassung und Zeitpunkt der
+    Zustimmung — und der Vermerk „vom Kunden geloescht“ (kunde_geloescht_am) fuer die Verwaltung. Die Credits-Buchung
+    (usage_events) bleibt unberuehrt."""
+    conn = get_db()
+    try:
+        conn.isolation_level = None
+        conn.execute("BEGIN IMMEDIATE")
+        a = conn.execute("SELECT id, user_id, status FROM express_auftraege WHERE id = ? AND user_id = ? "
+                         "AND status NOT IN ('entwurf', 'bestellung') AND kunde_geloescht_am IS NULL",
+                         (int(auftrag_id), int(user_id))).fetchone()
+        if not a:
+            conn.execute("ROLLBACK")
+            raise NichtGefunden()
+        if a["status"] not in LOESCHBAR:
+            conn.execute("ROLLBACK")
+            raise ExpressFehler("Ein laufender Auftrag kann nicht gelöscht werden. Löschen geht nach der Lieferung "
+                                "oder nach einem Storno.", 409)
+        conn.execute("UPDATE express_auftraege SET kunde_geloescht_am = datetime('now'), auftrag_name = '', "
+                     "ansprechpartner = '', telefon = '', hinweise = '', interne_notiz = '', storno_grund = '', "
+                     "zustimmung_bedingungen = '', zustimmung_bearbeitung = '', zustimmung_absender = '', "
+                     "updated_at = datetime('now') WHERE id = ?", (a["id"],))
+        conn.execute("DELETE FROM express_positionen WHERE auftrag_id = ?", (a["id"],))
+        conn.execute("DELETE FROM express_verlauf WHERE auftrag_id = ?", (a["id"],))
+        _verlauf_eintrag(conn, a["id"], "kunde_geloescht", KUNDE_GELOESCHT_TEXT, "Kunde", False)
+        conn.execute("COMMIT")
+    except ExpressFehler:
+        raise
+    except Exception:
+        try:
+            conn.execute("ROLLBACK")
+        except Exception:  # noqa: BLE001
+            pass
+        raise
+    finally:
+        conn.close()
+    shutil.rmtree(ordner(user_id, auftrag_id), ignore_errors=True)
 
 
 def auftrag_fuer_verwaltung(auftrag_id: int) -> dict:
@@ -1048,7 +1172,7 @@ def auftrag_fuer_verwaltung(auftrag_id: int) -> dict:
                              "bearbeiter_id", "bearbeiter_name", "uebernommen_am", "geliefert_am", "geliefert_von",
                              "storniert_am", "storniert_von", "storno_grund", "interne_notiz", "kunde_email", "kunde_name",
                              "konto_name", "zustimmung_fassung", "zustimmung_bedingungen", "zustimmung_bearbeitung",
-                             "zustimmung_sprache", "zugestimmt_am")}
+                             "zustimmung_sprache", "zugestimmt_am", "auftrag_name", "kunde_geloescht_am")}
     out["status_text"] = STATUS_VERWALTUNG.get(a["status"], a["status"])
     out.update(_faellig_info(a))
     _lokal(out)
@@ -1070,6 +1194,7 @@ def liste_fuer_verwaltung() -> dict:
             "WHERE a.status IN ('neu', 'in_arbeit', 'rueckfrage') ORDER BY a.faellig_am, a.id")]
         fertig = [dict(r) for r in conn.execute(
             "SELECT a.id, a.status, a.bestellt_am, a.geliefert_am, a.storniert_am, a.seiten_gesamt, a.credits_gesamt, "
+            "a.kunde_geloescht_am, "
             "a.bearbeiter_name, COALESCE(NULLIF(TRIM(u.display_name), ''), u.email) AS kunde_name, "
             "(SELECT COUNT(*) FROM express_positionen p WHERE p.auftrag_id = a.id) AS dokumente "
             "FROM express_auftraege a LEFT JOIN users u ON u.id = a.user_id "
@@ -1144,7 +1269,8 @@ def antwort_kunde(user_id: int, auftrag_id: int, text) -> dict:
             "ELSE 'in_arbeit' END, "
             "faellig_am = CASE WHEN rueckfrage_seit IS NULL OR faellig_am IS NULL THEN faellig_am ELSE "
             "  datetime(faellig_am, '+' || CAST(MAX(0, (julianday('now') - julianday(rueckfrage_seit)) * 86400) AS INTEGER) || ' seconds') END, "
-            "rueckfrage_seit = NULL, erinnert_am = NULL, ueberfaellig_gemeldet_am = NULL, updated_at = datetime('now') "
+            "rueckfrage_seit = NULL, erinnert_am = NULL, ueberfaellig_gemeldet_am = NULL, meldung_fehlversuche = 0, "
+            "updated_at = datetime('now') "
             "WHERE id = ? AND user_id = ? AND status = 'rueckfrage'",
             (int(auftrag_id), int(user_id)))
         if cur.rowcount != 1:
@@ -1315,8 +1441,17 @@ def _lieferbar_aus(zeilen: list) -> dict:
         if p["ergebnis_da"] and _pruefung_laeuft(v):
             laeuft.append(p["dokument_name"])
         if p["ergebnis_da"] and v.get("bestanden") is False:
-            befunde.append(f"„{p['dokument_name']}“: {v.get('zusammenfassung') or 'Abweichungen, siehe Bericht'}")
+            # Fuer Bearbeiter knapp und ohne den Kundensatz der Pruefung („… prüfst du in der Barrierefreiheitsprüfung“,
+            # Nachpruefung Barrierefreiheit 05.10.2026, N4)
+            befunde.append(f"„{p['dokument_name']}“: " + _regeln_text(v))
     return {"fehlt": fehlt, "befunde": befunde, "pruefung_laeuft": laeuft}
+
+
+def _regeln_text(v: dict) -> str:
+    n = int(v.get("regeln_fehlgeschlagen") or 0)
+    if n == 1:
+        return "1 Regel nicht erfüllt"
+    return f"{n} Regeln nicht erfüllt" if n else "Abweichungen vom Standard"
 
 
 def lieferbar(a: dict) -> dict:
@@ -1398,8 +1533,10 @@ def liefern(auftrag_id: int, person: dict, trotz_befunden: bool = False) -> dict
                              "VALUES (?, ?, 'express', ?, ?, NULL)", (user_id, konto, aktion, credits))
         if frueherer_monat:
             billing.pakete_abbuchen_fuer_monat(conn, konto, bestellt)
-        else:
-            billing._pakete_abbuchen(conn, konto)
+        # Immer auch der laufende Monat (Nachpruefung Entwicklung 05.10.2026, N1): die rueckdatierten Ereignisse senken den
+        # Uebertrag in diesen Monat; ein so entstandener Ueberhang geht gleich von den Paketen ab, nicht erst bei der
+        # naechsten Buchung (sonst zeigte InkluDocs bis dahin zu viel Guthaben).
+        billing._pakete_abbuchen(conn, konto)
         _verlauf_eintrag(conn, int(auftrag_id), "geliefert", "Ergebnisse stehen zum Herunterladen bereit", person["name"], True)
         conn.execute("COMMIT")
     except ExpressFehler:
@@ -1431,8 +1568,8 @@ def datei_fuer_kunde(user_id: int, auftrag_id: int, pos_id: int, art: str):
     try:
         r = conn.execute(f"SELECT p.{art}_pfad AS pfad, p.dokument_name, p.leistung FROM express_positionen p "
                          "JOIN express_auftraege a ON a.id = p.auftrag_id "
-                         "WHERE p.id = ? AND a.id = ? AND a.user_id = ? AND a.status = 'geliefert'",
-                         (int(pos_id), int(auftrag_id), int(user_id))).fetchone()
+                         "WHERE p.id = ? AND a.id = ? AND a.user_id = ? AND a.status = 'geliefert' "
+                         "AND a.kunde_geloescht_am IS NULL", (int(pos_id), int(auftrag_id), int(user_id))).fetchone()
     finally:
         conn.close()
     if not r or not r["pfad"] or not os.path.isfile(r["pfad"]):
@@ -1566,15 +1703,35 @@ def faellige_meldungen() -> list:
     return out
 
 
-def meldung_freigeben(art: str, auftrag_id: int) -> None:
+MELDUNG_VERSUCHE = 6                      # so oft wird eine Meldung ohne jeden Empfaenger erneut versucht
+
+
+def meldung_freigeben(art: str, auftrag_id: int) -> bool:
     """Befund 10 (05.10.2026): Ging eine Erinnerung oder Ueberfaellig-Meldung an KEINEN Empfaenger raus (SMTP gestoert),
-    wird sie wieder freigegeben und beim naechsten Durchlauf erneut versucht. Ging sie an mindestens einen, bleibt sie
-    beansprucht — lieber eine fehlende Kopie als Doppelmails."""
+    wird sie wieder freigegeben und beim naechsten Durchlauf erneut versucht — hoechstens MELDUNG_VERSUCHE-mal. Ging sie
+    an mindestens einen, bleibt sie beansprucht (lieber eine fehlende Kopie als Doppelmails). Der Zaehler steht in der
+    Datenbank (meldung_fehlversuche) und uebersteht Neustarts (Nachpruefung Entwicklung 05.10.2026).
+    Rueckgabe: True = freigegeben, False = aufgegeben."""
     spalte = {"erinnerung": "erinnert_am", "ueberfaellig": "ueberfaellig_gemeldet_am"}[art]
     conn = get_db()
     try:
         # Bei „ueberfaellig“ bleibt erinnert_am gesetzt (es wurde nur mit beansprucht, nie getrennt verschickt).
-        conn.execute(f"UPDATE express_auftraege SET {spalte} = NULL WHERE id = ?", (int(auftrag_id),))
+        cur = conn.execute(f"UPDATE express_auftraege SET {spalte} = NULL, meldung_fehlversuche = meldung_fehlversuche + 1 "
+                           "WHERE id = ? AND meldung_fehlversuche + 1 < ?", (int(auftrag_id), MELDUNG_VERSUCHE))
+        if cur.rowcount != 1:
+            conn.execute("UPDATE express_auftraege SET meldung_fehlversuche = 0 WHERE id = ?", (int(auftrag_id),))
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
+def meldung_erfolg(auftrag_id: int) -> None:
+    """Eine Meldung ging raus: Fehlversuche zuruecksetzen (fuer die naechste Meldung dieses Auftrags)."""
+    conn = get_db()
+    try:
+        conn.execute("UPDATE express_auftraege SET meldung_fehlversuche = 0 WHERE id = ? AND meldung_fehlversuche != 0",
+                     (int(auftrag_id),))
         conn.commit()
     finally:
         conn.close()
@@ -1599,7 +1756,7 @@ def hat_bestellte(user_id: int) -> bool:
     conn = get_db()
     try:
         return conn.execute("SELECT 1 FROM express_auftraege WHERE user_id = ? AND status NOT IN ('entwurf', 'bestellung') "
-                            "LIMIT 1", (int(user_id),)).fetchone() is not None
+                            "AND kunde_geloescht_am IS NULL LIMIT 1", (int(user_id),)).fetchone() is not None
     except sqlite3.OperationalError:
         return False
     finally:
@@ -1848,6 +2005,8 @@ def nachweis_docx(a: dict, ziel: str, zeit_text=None) -> str:
              _absatz("Nachweis über einen Auftrag an den Express-Service von InkluDocs. Dies ist keine Rechnung: "
                      "Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."),
              _absatz("Auftrag", "Heading2")]
+    if a.get("auftrag_name"):
+        teile.append(_absatz(f"Name des Auftrags: {a['auftrag_name']}"))
     stand = {"vorgemerkt": "vorgemerkt", "abgebucht": "abgebucht", "frei": "wieder frei (storniert)"}[a["credits_stand"]]
     for zeile in (f"Auftragsnummer: {a['id']}", f"Bestellt am: {zeit_text(a['bestellt_am'])}", f"Stand: {a['status_text']}",
                   (f"Geliefert am: {zeit_text(a['geliefert_am'])}" if a.get("geliefert_am")
@@ -1869,8 +2028,9 @@ def nachweis_docx(a: dict, ziel: str, zeit_text=None) -> str:
     teile.append(_absatz("Einverständnis", "Heading2"))
     z = a["zustimmung"]
     teile.append(_absatz(f"Bestätigt am {zeit_text(z['am'])} (Fassung {z['fassung']}):"))
-    teile.append(_absatz(z["bedingungen"], "ListParagraph", liste=True))
-    teile.append(_absatz(z["bearbeitung"], "ListParagraph", liste=True))
+    for satz in (z["bedingungen"], z["bearbeitung"]):
+        if satz:                                     # seit Fassung -3 nur noch ein Haekchen
+            teile.append(_absatz(satz, "ListParagraph", liste=True))
     teile.append(_absatz("Verlauf", "Heading2"))
     for v in a["verlauf"]:
         teile.append(_absatz(f"{zeit_text(v['created_at'])}: {VERLAUF_TEXT.get(v['art'], v['art'])}"
@@ -1920,4 +2080,5 @@ def nachweis_docx(a: dict, ziel: str, zeit_text=None) -> str:
 
 VERLAUF_TEXT = {"bestellt": "Bestellt", "uebernommen": "In Bearbeitung", "rueckfrage": "Rückfrage", "antwort": "Antwort",
                 "ergebnis": "Ergebnis hochgeladen", "bericht": "Prüfbericht hochgeladen", "geliefert": "Geliefert",
-                "storniert": "Storniert", "notiz": "Interne Notiz", "dateien_geloescht": "Dateien gelöscht"}
+                "storniert": "Storniert", "notiz": "Interne Notiz", "dateien_geloescht": "Dateien gelöscht",
+                "kunde_geloescht": "Vom Kunden gelöscht"}

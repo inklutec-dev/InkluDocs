@@ -246,6 +246,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .verwaltung-klappe { margin-top: 1rem; }
 .verwaltung-klappe > summary { cursor: pointer; font-weight: 700; padding: .2rem 0; }
 .verwaltung-klappe[open] > summary { margin-bottom: .75rem; }
+/* Karten zum Aufklappen wie die Dokumente der Projektansicht „Dokument“ (gleiche Regeln wie in app.html, dort inline) —
+   hier fuer „Meine Auftraege“ und die Dokumente eines Express-Auftrags (Michael Karbe 05.10.2026, Punkte 1 und 2). */
+.dok-klappe > summary { cursor: pointer; padding: 0.2rem 0; }
+.dok-klappe > summary:focus-visible { outline: 2px solid var(--focus, #c75000); outline-offset: 2px; }
+.dok-klappe[open] > summary { margin-bottom: 0.75rem; }
+.dok-meta { list-style: none; margin: 0 0 0.6rem; padding: 0; font-size: 0.92rem; line-height: 1.5; overflow-wrap: anywhere; }
+.dok-meta li { margin: 0; }
+.dok-kopfzeile { display: inline-flex !important; align-items: center; justify-content: space-between; gap: 0.75rem;
+                 width: calc(100% - 1.6rem); vertical-align: middle; flex-wrap: wrap; }
+.dok-kopfzeile .badge { margin-left: auto; }
+.dok-kopfzeile > span:first-child { overflow-wrap: anywhere; min-width: 0; }
+.dok-werkbank { border-top: 1px solid #9ca3af; margin-top: 0.9rem; padding-top: 0.2rem; }
+.ex-dok-klappe { margin: 0.4rem 0 0; }
+.ex-dok-klappe > summary .ex-dok-titel { display: inline; font-size: 1.05rem; margin: 0; overflow-wrap: anywhere; }
 /* Ueberschrift IM summary (Express „Geliefert“/„Storniert“, 05.10.2026): bleibt neben dem Aufklapp-Pfeil in der Zeile. */
 .verwaltung-klappe > summary > .verwaltung-klappe-titel { display: inline; font-size: 1.15rem; margin: 0; }
 .verwaltung-karte .dash-actions { margin-top: .9rem; }

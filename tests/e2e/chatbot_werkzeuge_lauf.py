@@ -86,9 +86,11 @@ try:
         schalter = {}
     # „express“ (05.10.2026) haengt an der Umgebung (EXPRESS_SERVICE, Staging an) — nur pruefen, dass er da ist.
     express_an = schalter.pop("express", None)
+    # „express_korb_knopf“ (Zusatz 05.10.2026) ist eine Einstellung der Verwaltung, kein Code-Schalter — nur der Typ zaehlt.
+    korb_knopf = schalter.pop("express_korb_knopf", None)
     check("Seite bekommt die Schalter aus funktionen.py (window.FUNKTIONEN, alles aus; express je Umgebung)",
           set(schalter) == {"ki_pruefung", "korrektur", "eigene_pruefungen", "urteil", "kette", "text_zurueck", "strukturansicht"}
-          and not any(schalter.values()) and isinstance(express_an, bool), schalter)
+          and not any(schalter.values()) and isinstance(express_an, bool) and isinstance(korb_knopf, bool), schalter)
 
     print("== Chatbot-Werkzeuge im Container ==")
     subprocess.run(["sudo", "-n", "bash", "-c", "cat /home/openclaw/.openclaw/workspace/InkluDocs/tests/e2e/chatbot_werkzeuge_probe.py > /tmp/cwp.py && "

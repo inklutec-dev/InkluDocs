@@ -442,6 +442,38 @@ app.add_middleware(
                     "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"],
 )
 
+
+
+class _RahmenSchutz:
+    """Kein Einrahmen der App in fremde Seiten (Nachpruefung Entwicklung 05.10.2026, N6, Clickjacking): jede Antwort
+    bekommt X-Frame-Options DENY und CSP frame-ancestors 'none' — ausser sie setzt selbst etwas. Geprueft: die App bettet
+    sich nirgends selbst in einen Rahmen ein (kein iframe/embed/object in Templates und Skripten), darum 'none' statt
+    'self'. Reine ASGI-Schicht (nur die Kopfzeilen), damit Streaming und Hintergrund-Aufgaben unberuehrt bleiben.
+    Vor einem Prod- oder Demo-Rollout pruefen, ob eine andere Seite die Demo einrahmt (dann frame-ancestors erweitern)."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def senden(nachricht):
+            if nachricht.get("type") == "http.response.start":
+                kopf = list(nachricht.get("headers") or [])
+                namen = {k.lower() for k, _ in kopf}
+                if b"x-frame-options" not in namen:
+                    kopf.append((b"x-frame-options", b"DENY"))
+                if b"content-security-policy" not in namen:
+                    kopf.append((b"content-security-policy", b"frame-ancestors 'none'"))
+                nachricht["headers"] = kopf
+            await send(nachricht)
+        await self.app(scope, receive, senden)
+
+
+app.add_middleware(_RahmenSchutz)
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="/app/frontend"), name="static")
 
@@ -1983,7 +2015,7 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
     inhaber = _require_team_inhaber(user)
     plan = billing.effektiver_plan(inhaber)
     kontingent = billing.PLAN_KONTINGENTE[plan]
-    uebertrag = billing._uebertrag(inhaber["id"], plan, kontingent)
+    uebertrag = billing._uebertrag(inhaber["id"], plan, kontingent, mit_vormerkung=True)
     verbraucht = billing.monats_verbrauch(inhaber["id"])
     pakete = billing.pakete_rest(inhaber["id"])
     verfuegbar = kontingent + uebertrag
@@ -2016,6 +2048,8 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
     # Express (Pruefung Entwicklung 05.10.2026, Befund 15): Credits, die fuer offene Express-Auftraege aus diesem Topf
     # vorgemerkt sind, stehen nicht mehr zur Verfuegung — wie bei billing.verfuegbare_credits.
     vorgemerkt = billing.vorgemerkt(inhaber["id"])
+    # Nur der Teil, der diesen Monat bindet (Nachpruefung 05.10.2026, N2) — wie billing.verfuegbare_credits.
+    vorgemerkt_laufend = billing.vormerkung_laufend(inhaber["id"], plan, kontingent) if vorgemerkt else 0
     rest = max(0, verfuegbar - verbraucht)
     return {
         "ok": True,
@@ -2028,7 +2062,7 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
         "verbraucht_gesamt": verbraucht,
         "rest": rest,
         "vorgemerkt": vorgemerkt,
-        "verfuegbar_nach_vormerkung": max(0, rest + pakete - vorgemerkt),
+        "verfuegbar_nach_vormerkung": max(0, rest + pakete - vorgemerkt_laufend),
         "pakete_rest": pakete,
         "zeitraum_ende": billing._monatsende_iso(),
         "sitze_belegt": len(mitglieder),
@@ -5072,6 +5106,20 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
     if ext in (".docm", ".dotm", ".dotx"):
         raise HTTPException(status_code=400, detail="Word-Vorlagen und Dateien mit Makros (.docm, .dotm, .dotx) werden nicht verarbeitet. Bitte als normale .docx-Datei speichern.")
     if not is_pdf and not is_docx and not is_image:
+        # Im Projekt passend zum Projekt und positiv formuliert (Nachpruefung Barrierefreiheit 05.10.2026, N6; Michael
+        # Karbe 05.10.2026: „Wir müssen nicht sagen, was wir nicht können.“) — ohne Projekt die allgemeine Liste.
+        if project_id:
+            _c = get_db()
+            try:
+                _pt = _c.execute("SELECT project_type FROM projects WHERE id = ? AND user_id = ?",
+                                 (project_id, user["id"])).fetchone()
+            finally:
+                _c.close()
+            _je_typ = {"pdf": "Bitte wähle eine PDF-Datei aus.", "pdfform": "Bitte wähle eine PDF-Datei aus.",
+                       "docx": "Bitte wähle eine Word-Datei (.docx) aus.",
+                       "images": "Bitte wähle eine Bilddatei aus (JPG, PNG, GIF, SVG, WebP, HEIC, BMP oder TIFF)."}
+            if _pt and _pt["project_type"] in _je_typ:
+                raise HTTPException(status_code=400, detail=_je_typ[_pt["project_type"]])
         raise HTTPException(
             status_code=400,
             detail="Nur PDF-, Word- und Bilddateien erlaubt (PDF, DOCX, JPG, PNG, GIF, SVG, WebP, HEIC, BMP, TIFF)"

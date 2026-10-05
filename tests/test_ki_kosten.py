@@ -343,6 +343,18 @@ class PreisApi(unittest.TestCase):
         n = ki_kosten.nutzung_gemini(_gemini_antwort(prompt=1_000_000, aus=0, denk=0))
         self.assertAlmostEqual(ki_kosten.kosten_usd("gemini-3.1-pro-preview", n, heute="2027-02-01"), 4.0)
 
+    def test_cache_preis_bleibt_wenn_feld_leer(self):
+        """Nachpruefung Entwicklung 05.10.2026, N5: leeres Feld „Zwischenspeicher“ -> bisheriger Cache-Preis."""
+        r = self.client.post("/api/admin/ki-preise/modell", json={"modell": "gemini-3.1-pro-preview", "ein": "2,50", "aus": "15",
+                                                                  "cache": "", "ab": "2027-03-01", "quelle": "Test"})
+        self.assertEqual(r.status_code, 200, r.text)
+        stufe = next(s for s in ki_kosten.preise()["modelle"]["gemini-3.1-pro-preview"]["stufen"] if s["ab"] == "2027-03-01")
+        self.assertEqual(stufe["cache"], 0.2)
+        r = self.client.post("/api/admin/ki-preise/modell", json={"modell": "gemini-3.1-pro-preview", "ein": "2,50", "aus": "15",
+                                                                  "cache": "0,25", "ab": "2027-04-01", "quelle": "Test"})
+        stufe = next(s for s in ki_kosten.preise()["modelle"]["gemini-3.1-pro-preview"]["stufen"] if s["ab"] == "2027-04-01")
+        self.assertEqual(stufe["cache"], 0.25)                           # eingetragener Wert gewinnt
+
     def test_vorlage_ist_die_juengste_davor(self):
         stufen = [{"ab": "2026-01-01", "grenze": 1}, {"ab": "2026-06-01", "grenze": 2}, {"ab": "2027-06-01", "grenze": 3}]
         self.assertEqual(self.api.staffel_vorlage(stufen, "2027-01-01")["grenze"], 2)

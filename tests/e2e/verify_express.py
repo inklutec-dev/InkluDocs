@@ -96,7 +96,7 @@ try:
     check("Einstellungen: Fehler nennt Feld und Beschriftung", r.status_code == 400 and d.get("feld") == "frist_stunden"
           and d.get("text", "").startswith("Lieferfrist in Stunden"), r.text)
     e = voll.get("/api/admin/express/einstellungen").json()
-    check("Einstellungen: Leistungen aus der Liste, Aufbewahrung 0", [l["schluessel"] for l in e["leistungen"]] == ["aufbereiten", "pruefen"]
+    check("Einstellungen: nur eingeschaltete Leistungen („Nur prüfen“ aus), Aufbewahrung 0", [l["schluessel"] for l in e["leistungen"]] == ["aufbereiten"]
           and e["aufbewahrung_tage"] == 0, e)
 
     print("== A. Seiten und Stand ==")
@@ -109,8 +109,8 @@ try:
     r = kunde.get("/api/express/stand")
     st = r.json()
     check("Stand: Preise, Frist, Texte", r.status_code == 200 and st["preise"]["aufbereiten"] == 50 and st["frist_stunden"] == 48
-          and st["texte"]["bearbeitung"].startswith("Ich bin einverstanden"), st)
-    check("Stand: Leistungen und Dateitypen aus der Liste", [l["schluessel"] for l in st["leistungen"]] == ["aufbereiten", "pruefen"]
+          and set(st["texte"]) == {"bedingungen"}, st)
+    check("Stand: Leistungen und Dateitypen aus der Liste (nur Aufbereiten)", [l["schluessel"] for l in st["leistungen"]] == ["aufbereiten"]
           and [t["schluessel"] for t in st["dateitypen"]] == ["pdf"], (st.get("leistungen"), st.get("dateitypen")))
     check("/api/me meldet express", kunde.get("/api/me").json()["user"]["express"] is True)
     # Zusatz 05.10.2026: Navigations-Eintrag „Express-Warenkorb“ und Knopf am Dokument (Einstellungen, ohne Codeaenderung)
@@ -144,7 +144,10 @@ try:
     check("Dokumente des Projekts: beide schon in der Auswahl", all(d["im_warenkorb"] for d in docs), docs)
     pos2 = korb["positionen"][1]["id"]
     r = kunde.post(f"/api/express/warenkorb/positionen/{pos2}/leistung", json={"leistung": "pruefen"})
-    check("Leistung „Nur prüfen“ gesetzt", r.status_code == 200 and r.json()["credits"] == 175, r.text)
+    check("„Nur prüfen“ ist abgeschaltet: 400, Auswahl unverändert 200 Credits", r.status_code == 400
+          and kunde.get("/api/express/stand").json()["warenkorb"]["credits"] == 200, r.text)
+    r = kunde.post("/api/express/warenkorb/hochladen", files={"file": ("notiz.txt", b"kein pdf", "text/plain")})
+    check("Falscher Dateityp: positiv formulierte Meldung", r.status_code == 400 and r.json()["detail"] == "Bitte wähle eine PDF-Datei aus.", r.text)
     for koerper in ("{kaputt", "[1]"):
         r = kunde.post(f"/api/express/warenkorb/positionen/{pos2}/leistung", content=koerper, headers={"Content-Type": "application/json"})
         check(f"Kaputter JSON-Koerper {koerper!r}: 400 statt 500", r.status_code == 400, r.status_code)
@@ -169,19 +172,19 @@ try:
         w = kunde.get("/api/express/stand").json()["warenkorb"]
         return dict(daten, korb_id=w["id"], erwartete_credits=w["credits"], fassung=w["fassung"])
     bestellung = mit_korb({"ansprechpartner": "Kim Muster (fiktiv)", "telefon": "+49 40 0000", "hinweise": "Seite 2 bitte genau",
-                           "bedingungen": True, "bearbeitung": True, "idempotenz": "e2e-express-0001"})
-    r = kunde.post("/api/express/bestellen", json=dict(bestellung, bearbeitung=False))
-    check("Ohne Einverstaendnis: 400 mit Feld", r.status_code == 400 and r.json()["detail"].get("feld") == "zustimmung", r.text)
+                           "bedingungen": True, "idempotenz": "e2e-express-0001"})
+    r = kunde.post("/api/express/bestellen", json=dict(bestellung, bedingungen=False))
+    check("Ohne Häkchen „Bedingungen“: 400 mit Feld", r.status_code == 400 and r.json()["detail"].get("feld") == "bedingungen", r.text)
     r = kunde.post("/api/express/bestellen", content="{kaputt", headers={"Content-Type": "application/json"})
     check("Bestellen mit kaputtem JSON: 400", r.status_code == 400, r.status_code)
     r = kunde.post("/api/express/bestellen", json=bestellung)
-    check("Zu wenig Guthaben: 402 mit Zahlen", r.status_code == 402 and r.json()["detail"]["preis"] == 175, r.text)
+    check("Zu wenig Guthaben: 402 mit Zahlen", r.status_code == 402 and r.json()["detail"]["preis"] == 200, r.text)
     sql("INSERT INTO quota_pakete (user_id, groesse, verbleibend, quelle, notiz, verfaellt_am) VALUES (?, 1000, 1000, 'admin', 'Express-Test', NULL)", k_id)
     # Preis aendert sich nach dem Anzeigen: nicht bestellen, 409 mit dem neuen Betrag (§ 312j BGB).
     voll.post("/api/admin/express/einstellungen", json=dict(EINST, preise={"aufbereiten": "60", "pruefen": "25"}))
     r = kunde.post("/api/express/bestellen", json=dict(bestellung, idempotenz="e2e-express-0000"))
     d = r.json().get("detail") or {}
-    check("Geaenderter Preis: 409 mit neuem Betrag, nichts bestellt", r.status_code == 409 and d.get("veraltet") and d.get("neu_credits") == 205
+    check("Geaenderter Preis: 409 mit neuem Betrag, nichts bestellt", r.status_code == 409 and d.get("veraltet") and d.get("neu_credits") == 240
           and not sql("SELECT id FROM express_auftraege WHERE user_id = ? AND status NOT IN ('entwurf', 'bestellung')", k_id), r.text)
     voll.post("/api/admin/express/einstellungen", json=EINST)
     verf_vorher = kunde.get("/api/express/stand").json()["guthaben"]
@@ -192,8 +195,11 @@ try:
     check("Doppelklick: derselbe Auftrag, nicht zweimal", r.status_code == 200 and r.json()["auftrag_id"] == aid and r.json()["schon_bestellt"], r.text)
     check("Genau ein Auftrag", len(sql("SELECT id FROM express_auftraege WHERE user_id = ? AND status != 'entwurf'", k_id)) == 1)
     st = kunde.get("/api/express/stand").json()
-    check("Guthaben um 175 gemindert (vorgemerkt)", st["guthaben"] == verf_vorher - 175, (verf_vorher, st["guthaben"]))
-    check("/api/me: 175 vorgemerkt", kunde.get("/api/me").json()["abo"]["vorgemerkt"] == 175)
+    check("Guthaben um 200 gemindert (vorgemerkt)", st["guthaben"] == verf_vorher - 200, (verf_vorher, st["guthaben"]))
+    check("/api/me: 200 vorgemerkt", kunde.get("/api/me").json()["abo"]["vorgemerkt"] == 200)
+    zu = kunde.get(f"/api/express/auftraege/{aid}").json()["zustimmung"]
+    check("Zustimmung: Fassung -3, ein Häkchen (Bedingungen)", zu["fassung"] == "2026-10-05-entwurf-3" and zu["bearbeitung"] == ""
+          and zu["bedingungen"].startswith("Ich akzeptiere"), zu)
     check("Noch nichts abgebucht", sql("SELECT COUNT(*) AS n FROM usage_events WHERE quelle = 'express'")[0]["n"] == 0)
     a = kunde.get(f"/api/express/auftraege/{aid}").json()
     check("Auftragsuebersicht: eingegangen, vorgemerkt, Einverstaendnis mit Zeitpunkt",
@@ -264,8 +270,10 @@ try:
     check("Dateiname ohne Pfad", pos.get("ergebnis_name") == "ergebnis.pdf", pos.get("ergebnis_name"))
     pfad = sql("SELECT ergebnis_pfad FROM express_positionen WHERE id = ?", p1["id"])[0]["ergebnis_pfad"]
     check("Ablage im Auftragsordner", pfad.startswith(f"/app/data/results/{k_id}/_express/{aid}/") and ".." not in pfad, pfad)
+    r = bearb.post(f"/api/admin/express/auftraege/{aid}/positionen/{p2['id']}/ergebnis", files={"file": ("flyer.pdf", pdf_bytes(1, "Aufbereitet"), "application/pdf")})
+    check("Ergebnis fuer das zweite Dokument", r.status_code == 200, r.text[:200])
     r = bearb.post(f"/api/admin/express/auftraege/{aid}/positionen/{p2['id']}/bericht", files={"file": ("bericht.pdf", pdf_bytes(1, "Pruefbericht"), "application/pdf")})
-    check("Pruefbericht fuer „Nur pruefen“", r.status_code == 200, r.text[:200])
+    check("Pruefbericht (freiwillig) dazu", r.status_code == 200, r.text[:200])
     check("Kunde: Ergebnis vor der Lieferung 404", kunde.get(f"/api/express/auftraege/{aid}/positionen/{p1['id']}/ergebnis").status_code == 404)
     r = bearb.post(f"/api/admin/express/auftraege/{aid}/liefern", json={})
     if r.status_code == 409 and r.json().get("detail", {}).get("nachfrage"):
@@ -274,12 +282,12 @@ try:
         r = bearb.post(f"/api/admin/express/auftraege/{aid}/liefern", json={"trotz_befunden": True})
     check("Geliefert", r.status_code == 200 and r.json()["status"] == "geliefert", r.text[:300])
     ev = sql("SELECT aktion, credits, konto_user_id FROM usage_events WHERE quelle = 'express' AND user_id = ?", k_id)
-    check("Abgebucht: 175 Credits (150 aufbereiten + 25 pruefen) auf den Topf der Bestellung",
-          sorted((e["aktion"], e["credits"]) for e in ev) == [("express_aufbereiten", 150), ("express_pruefen", 25)]
+    check("Abgebucht: 200 Credits (aufbereiten) auf den Topf der Bestellung",
+          sorted((e["aktion"], e["credits"]) for e in ev) == [("express_aufbereiten", 200)]
           and all(e["konto_user_id"] == k_id for e in ev), ev)
     check("Vormerkung weg", kunde.get("/api/me").json()["abo"]["vorgemerkt"] == 0)
     r = bearb.post(f"/api/admin/express/auftraege/{aid}/liefern", json={"trotz_befunden": True})
-    check("Zweites Liefern: 409, nichts doppelt", r.status_code == 409 and len(sql("SELECT id FROM usage_events WHERE quelle = 'express' AND user_id = ?", k_id)) == 2)
+    check("Zweites Liefern: 409, nichts doppelt", r.status_code == 409 and len(sql("SELECT id FROM usage_events WHERE quelle = 'express' AND user_id = ?", k_id)) == 1)
     check("Storno nach Lieferung: 409", bearb.post(f"/api/admin/express/auftraege/{aid}/stornieren", json={"grund": "Test"}).status_code == 409)
     check("Upload nach Lieferung: 409", bearb.post(f"/api/admin/express/auftraege/{aid}/positionen/{p1['id']}/ergebnis",
                                                   files={"file": ("x.pdf", pdf_bytes(1), "application/pdf")}).status_code == 409)
@@ -313,8 +321,45 @@ try:
     check("Storno ohne Grund: 400", voll.post(f"/api/admin/express/auftraege/{aid2}/stornieren", json={"grund": ""}).status_code == 400)
     r = voll.post(f"/api/admin/express/auftraege/{aid2}/stornieren", json={"grund": "Test-Storno"})
     check("Storniert, Vormerkung frei, nichts abgebucht", r.status_code == 200 and kunde.get("/api/me").json()["abo"]["vorgemerkt"] == 0
-          and len(sql("SELECT id FROM usage_events WHERE quelle = 'express' AND user_id = ?", k_id)) == 2, r.text[:200])
+          and len(sql("SELECT id FROM usage_events WHERE quelle = 'express' AND user_id = ?", k_id)) == 1, r.text[:200])
     check("Kunde sieht Storno mit Grund", kunde.get(f"/api/express/auftraege/{aid2}").json()["storno_grund"] == "Test-Storno")
+
+    print("== G2. Umbenennen und Löschen (Michael Karbe, Punkt 1) ==")
+    r = kunde.post(f"/api/express/auftraege/{aid}/name", json={"name": "Jahresberichte (fiktiv)"})
+    check("Umbenennen: Name in Auftrag und Liste", r.status_code == 200 and r.json()["auftrag_name"] == "Jahresberichte (fiktiv)"
+          and kunde.get("/api/express/auftraege").json()["auftraege"][-1]["auftrag_name"] == "Jahresberichte (fiktiv)", r.text[:200])
+    check("Umbenennen fremder Auftrag: 404", fremd.post(f"/api/express/auftraege/{aid}/name", json={"name": "x"}).status_code == 404)
+    check("Umbenennen kaputter JSON: 400", kunde.post(f"/api/express/auftraege/{aid}/name", content="[1]",
+                                                      headers={"Content-Type": "application/json"}).status_code == 400)
+    liste = {a["id"]: a for a in kunde.get("/api/express/auftraege").json()["auftraege"]}
+    check("Liste: Dokumente je Auftrag zum Aufklappen, Löschen nur für geliefert/storniert",
+          len(liste[aid]["positionen"]) == 2 and liste[aid]["loeschbar"] and liste[aid2]["loeschbar"], list(liste))
+    check("Löschen fremder Auftrag: 404", fremd.delete(f"/api/express/auftraege/{aid}").status_code == 404)
+    r = kunde.delete(f"/api/express/auftraege/{aid}")
+    check("Gelieferten Auftrag gelöscht", r.status_code == 200, r.text[:200])
+    check("Kunde: Auftrag, Downloads und Nachweis weg (404)", kunde.get(f"/api/express/auftraege/{aid}").status_code == 404
+          and kunde.get(f"/api/express/auftraege/{aid}/positionen/{p1['id']}/ergebnis").status_code == 404
+          and kunde.get(f"/api/express/auftraege/{aid}/nachweis.pdf").status_code == 404
+          and aid not in [a["id"] for a in kunde.get("/api/express/auftraege").json()["auftraege"]])
+    check("Dateien des Auftrags gelöscht", not os.path.isdir(f"/app/data/results/{k_id}/_express/{aid}"))
+    va = voll.get(f"/api/admin/express/auftraege/{aid}").json()
+    check("Verwaltung: Buchungsnachweis mit Vermerk „vom Kunden gelöscht“", va.get("kunde_geloescht_am") and va["credits_gesamt"] == 200
+          and va["status"] == "geliefert" and va["positionen"] == [] and va["ansprechpartner"] == "", va)
+    check("Credits-Buchung bleibt", len(sql("SELECT id FROM usage_events WHERE quelle = 'express' AND user_id = ?", k_id)) == 1)
+
+    print("== G3. Zweiter Tab nach der Bestellung, Rahmen-Schutz ==")
+    kunde.post("/api/express/warenkorb/dokumente", json={"document_ids": [docs[1]["id"]]})
+    alter_stand = mit_korb(dict(bestellung, idempotenz="e2e-express-tab1"))
+    r = kunde.post("/api/express/bestellen", json=alter_stand)
+    aid3 = r.json().get("auftrag_id")
+    r = kunde.post("/api/express/bestellen", json=dict(alter_stand, idempotenz="e2e-express-tab2"))
+    check("Zweiter Tab mit dem bestellten Korb: 409 veraltet mit leerem Korb (N4)", r.status_code == 409
+          and r.json()["detail"].get("veraltet") and r.json()["detail"]["warenkorb"]["dokumente"] == 0, r.text[:200])
+    voll.post(f"/api/admin/express/auftraege/{aid3}/stornieren", json={"grund": "Test"})
+    for pfad in ("/express", "/express/warenkorb", "/app", "/api/express/stand"):
+        h = kunde.get(pfad).headers
+        check(f"Rahmen-Schutz {pfad}: X-Frame-Options DENY, frame-ancestors 'none' (N6)", h.get("x-frame-options") == "DENY"
+              and "frame-ancestors 'none'" in h.get("content-security-policy", ""), dict(h))
 
     print("== H. Recht wieder entziehen ==")
     r = voll.delete(f"/api/admin/express/bearbeiter/{b_id}")

@@ -74,7 +74,8 @@
   const STATUS = { neu: t('Neu'), in_arbeit: t('In Arbeit'), rueckfrage: t('Rückfrage beim Kunden'), geliefert: t('Geliefert'), storniert: t('Storniert') };
   const VERLAUF = { bestellt: t('Bestellt'), uebernommen: t('Übernommen'), rueckfrage: t('Rückfrage'), antwort: t('Antwort des Kunden'),
                     ergebnis: t('Ergebnis hochgeladen'), bericht: t('Prüfbericht hochgeladen'), geliefert: t('Geliefert'),
-                    storniert: t('Storniert'), notiz: t('Interne Notiz geändert'), dateien_geloescht: t('Dateien gelöscht') };
+                    storniert: t('Storniert'), notiz: t('Interne Notiz geändert'), dateien_geloescht: t('Dateien gelöscht'),
+                    kunde_geloescht: t('Vom Kunden gelöscht') };
   let daten = null;
   let laeuft = false;
 
@@ -154,8 +155,12 @@
     const wer = name || t('Automatische Prüfung');
     if (v.laeuft) return t('{pruefung}: läuft noch …', { pruefung: wer });
     if (v.nicht_geprueft) return t('{pruefung} konnte die Datei nicht prüfen.', { pruefung: wer });
-    return v.bestanden ? t('{pruefung}: bestanden.', { pruefung: wer })
-      : t('{pruefung}: Abweichungen — {text}', { pruefung: wer, text: v.zusammenfassung || '' });
+    if (v.bestanden) return t('{pruefung}: bestanden.', { pruefung: wer });
+    // Für Bearbeiter knapp: Zahl der verletzten Regeln statt des Kundensatzes der Prüfung (Nachprüfung, N4)
+    const n = Number(v.regeln_fehlgeschlagen) || 0;
+    return n === 1 ? t('{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt.', { pruefung: wer })
+      : (n ? t('{pruefung}: Abweichungen vom Standard, {n} Regeln nicht erfüllt.', { pruefung: wer, n: V.zahl(n) })
+        : t('{pruefung}: Abweichungen vom Standard.', { pruefung: wer }));
   }
 
   function uploadFeld(li, pos, art, typen) {
@@ -165,6 +170,8 @@
       ebene: 4,
       titel: t('{art} für „{name}“ hochladen', { art: art_text, name: pos.dokument_name }),
       knopf: typen.length === 1 ? t('{typ}-Datei auswählen', { typ: typen[0].name }) : t('Datei auswählen'),
+      // versteckter Zusatz: vier Knöpfe „PDF-Datei auswählen“ bei zwei Dokumenten sind sonst gleichnamig (N2)
+      zusatz: ': ' + t('{art} für „{name}“', { art: art_text, name: pos.dokument_name }),
       hinweis: (art === 'ergebnis'
         ? t('Dateityp: {typen}. Die automatische Prüfung läuft nach dem Hochladen mit. Eine neue Datei ersetzt die alte.', { typen: typenText(typen) })
         : t('Dateityp: {typen}. Eine neue Datei ersetzt die alte.', { typen: typenText(typen) })),
@@ -192,6 +199,7 @@
       s.appendChild(p);
     } else V.zeile(s, t('Kunde'), kunde);
     if (a.konto_name && a.konto_name !== a.kunde_name) V.zeile(s, t('Zahlt aus dem Topf von'), a.konto_name);
+    if (a.auftrag_name) V.zeile(s, t('Name des Kunden für den Auftrag'), a.auftrag_name);
     V.zeile(s, t('Bestellt am'), V.datumZeit(a.bestellt_am));
     if (a.frist_ruht) {
       // Während einer Rückfrage ruht die Frist und verlängert sich bei der Antwort um die Wartezeit (Befund 15).
@@ -221,6 +229,15 @@
         fehlt.forEach((f) => ul.appendChild(V.el('li', null, f)));
         s.appendChild(ul);
       }
+    }
+
+    // Vom Kunden gelöscht (nur geliefert/storniert möglich): es bleibt der knappe Buchungsnachweis, ohne Dateien,
+    // Dokumentliste und Angaben (Michael Karbe 05.10.2026, Punkt 1).
+    if (a.kunde_geloescht_am) {
+      V.zeile(s, t('Vom Kunden gelöscht am'), V.datumZeit(a.kunde_geloescht_am));
+      s.appendChild(V.el('p', 'dash-sub', t('Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand.')));
+      verlaufZeigen(ziel, a);
+      return;
     }
 
     // 2. Dokumente
@@ -260,8 +277,8 @@
     s.appendChild(V.el('h3', 'verwaltung-unterkopf', t('Einverständnis')));
     V.zeile(s, t('Bestätigt am'), V.datumZeit(a.zugestimmt_am) + ' (' + t('Fassung {f}, Sprache {s}', { f: a.zustimmung_fassung, s: a.zustimmung_sprache }) + ')');
     const zu = V.el('ul');
-    zu.appendChild(V.el('li', null, a.zustimmung_bedingungen));
-    zu.appendChild(V.el('li', null, a.zustimmung_bearbeitung));
+    // seit Fassung -3 nur noch ein Häkchen (Bedingungen); ältere Aufträge haben zwei
+    [a.zustimmung_bedingungen, a.zustimmung_bearbeitung].filter(Boolean).forEach((satz) => zu.appendChild(V.el('li', null, satz)));
     s.appendChild(zu);
 
     // 4. Interne Notiz
@@ -290,8 +307,12 @@
       s.appendChild(V.el('p', null, a.interne_notiz || t('keine')));
     }
 
+    verlaufZeigen(ziel, a);
+  }
+
+  function verlaufZeigen(ziel, a) {
     // 5. Verlauf
-    s = abschnitt(ziel, t('Verlauf'), 'exd-h-verlauf');
+    const s = abschnitt(ziel, t('Verlauf'), 'exd-h-verlauf');
     const ol = V.el('ol', 'verwaltung-liste');
     a.verlauf.forEach((v) => {
       let text = VERLAUF[v.art] || v.art;

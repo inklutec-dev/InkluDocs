@@ -39,6 +39,7 @@
   const VERLAUF = { bestellt: t('Bestellt'), uebernommen: t('In Bearbeitung genommen'), rueckfrage: t('Rückfrage von InkluDocs'),
                     antwort: t('Deine Antwort'), geliefert: t('Geliefert'), storniert: t('Storniert'),
                     dateien_geloescht: t('Dateien gelöscht') };
+  // (Ein vom Kunden gelöschter Auftrag ist für ihn nicht mehr aufrufbar — der Server antwortet 404.)
   let laeuft = false;
 
   function el(tag, klasse, text) {
@@ -92,6 +93,8 @@
     ziel.innerHTML = '';
     ziel.setAttribute('aria-busy', 'false');
 
+    // Eigener Name des Kunden (Umbenennen in „Meine Aufträge“): in der Hauptüberschrift, die Nummer bleibt
+    if (a.auftrag_name) byId('exaTitel').textContent = t('Express-Auftrag {nr}: {name}', { nr: a.id, name: a.auftrag_name });
     let s = abschnitt(ziel, t('Überblick'), 'exa-h-ueberblick');
     zeile(s, t('Stand'), STATUS[a.status] || a.status);
     zeile(s, t('Bestellt am'), datumZeit(a.bestellt_am));
@@ -154,14 +157,27 @@
       s.appendChild(form);
     }
 
+    // Je Dokument aufklappbar (Michael Karbe 05.10.2026, Punkt 2): Name im summary, darin Seiten, Leistung, Stand,
+    // Prüfung und Downloads. Beim Drucken sind alle aufgeklappt (beforeprint).
     s = abschnitt(ziel, t('Dokumente'), 'exa-h-dokumente');
     const ul = el('ul', 'verwaltung-liste');
     a.positionen.forEach((p) => {
       const li = el('li', 'verwaltung-zeile');
-      li.appendChild(el('p', 'verwaltung-meta', t('{name}: {seiten}, {leistung}, {c} Credits',
-        { name: p.dokument_name, seiten: SEITEN(p.seiten), leistung: leistungText(p), c: zahl(p.credits) })));
+      const det = el('details', 'dok-klappe ex-dok-klappe');
+      det.open = a.positionen.length === 1;
+      const sum = el('summary');
+      sum.appendChild(el('h3', 'doc-heading ex-dok-titel', p.dokument_name));
+      det.appendChild(sum);
+      const meta = el('ul', 'dok-meta');
+      meta.appendChild(el('li', null, t('Seiten') + ': ' + zahl(p.seiten)));
+      meta.appendChild(el('li', null, t('Leistung') + ': ' + leistungText(p)));
+      meta.appendChild(el('li', null, t('Credits') + ': ' + zahl(p.credits)));
+      meta.appendChild(el('li', null, t('Stand') + ': ' + (a.status === 'geliefert' ? (p.ergebnis_da || p.bericht_da ? t('fertig, zum Herunterladen') : t('geliefert'))
+        : (STATUS[a.status] || a.status))));
+      det.appendChild(meta);
+      li.appendChild(det);
       // Kurz und ohne Technik-Zusammenfassung (Befund 12): bestanden — oder Hinweise, die das Team geprüft hat.
-      if (p.verapdf) li.appendChild(el('p', 'dash-sub', p.verapdf.bestanden
+      if (p.verapdf) det.appendChild(el('p', 'dash-sub', p.verapdf.bestanden
         ? t('Automatische Prüfung ({pruefung}): bestanden.', { pruefung: p.pruef_name || 'veraPDF' })
         : t('Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat.', { pruefung: p.pruef_name || 'veraPDF' })));
       const links = el('p', 'no-print ex-aktionen');
@@ -177,7 +193,7 @@
         l.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
         links.appendChild(l);
       }
-      if (links.children.length) li.appendChild(links);
+      if (links.children.length) det.appendChild(links);
       ul.appendChild(li);
     });
     s.appendChild(ul);
@@ -190,8 +206,8 @@
     s = abschnitt(ziel, t('Einverständnis'), 'exa-h-zustimmung');
     s.appendChild(el('p', null, t('Bestätigt am {datum} (Fassung {fassung}):', { datum: datumZeit(a.zustimmung.am), fassung: a.zustimmung.fassung })));
     const zu = el('ul');
-    zu.appendChild(el('li', null, a.zustimmung.bedingungen));
-    zu.appendChild(el('li', null, a.zustimmung.bearbeitung));
+    // seit Fassung -3 nur noch ein Häkchen; ältere Aufträge zeigen beide
+    [a.zustimmung.bedingungen, a.zustimmung.bearbeitung].filter(Boolean).forEach((satz) => zu.appendChild(el('li', null, satz)));
     s.appendChild(zu);
 
     s = abschnitt(ziel, t('Verlauf'), 'exa-h-verlauf');
@@ -204,6 +220,13 @@
   }
 
   byId('exaDrucken').addEventListener('click', () => window.print());
+  // Drucken (auch über das Browser-Menü): alle Dokumente aufgeklappt, danach wie vorher
+  let zuVorDemDruck = [];
+  window.addEventListener('beforeprint', () => {
+    zuVorDemDruck = Array.from(document.querySelectorAll('details.ex-dok-klappe:not([open])'));
+    zuVorDemDruck.forEach((d) => { d.open = true; });
+  });
+  window.addEventListener('afterprint', () => { zuVorDemDruck.forEach((d) => { d.open = false; }); zuVorDemDruck = []; });
 
   // „Als PDF herunterladen“ (Befund 6): per fetch, damit ein Fehler (Umwandler aus, zu viele Anfragen) als Satz neben
   // dem Link steht — nicht als rohe JSON-Seite ohne Titel. Ohne Skript bleibt der normale Link.

@@ -12,7 +12,8 @@
    (feldFehler), Ansagen sparsam — interne Neuladungen sind still, Bestätigungen sind sichtbare Meldungen (mit Fokus)
    oder EINE Ansage, nie zwei gleichzeitig. Ist der Schalter aus (express_bestellen falsch), bleibt nur „Meine Aufträge“.
    Daten: /api/express/…, Kern express.py. #}
-<h1 id="exTitel" tabindex="-1">{{ _('Express-Service') }}</h1>
+{# Titel und Hauptüberschrift passen zusammen, auch auf /express/warenkorb (Nachprüfung Barrierefreiheit 05.10.2026, N5) #}
+<h1 id="exTitel" tabindex="-1">{% if warenkorb_ansicht %}{{ _('Express-Warenkorb') }}{% else %}{{ _('Express-Service') }}{% endif %}</h1>
 <p class="dash-sub" id="exIntro"></p>
 <p class="dash-sub" id="exPreise"></p>
 {% if express_bestellen %}
@@ -22,7 +23,6 @@
   <h2 id="h-neu">{{ _('Neuer Auftrag') }}</h2>
 
   <h3 id="h-schritt1" tabindex="-1">{{ _('1. Dokumente auswählen') }}</h3>
-  <p class="dash-sub" id="exTypen"></p>
   <form id="exProjektForm" class="verwaltung-suche" novalidate>
     <div class="dash-field">
       <label for="exProjekt">{{ _('Aus einem Projekt') }}</label>
@@ -66,17 +66,18 @@
     </div>
 
     <h3 id="h-pruefen">{{ _('4. Prüfen und bestellen') }}</h3>
-    <ul id="exAufstellung" class="verwaltung-liste"></ul>
+    {# Nur Summen — die Dokumente stehen schon unter „2. Deine Auswahl“ (Michael Karbe 05.10.2026, Punkt 4) #}
     <p id="exGesamt" class="verwaltung-bestaetigung"></p>
     <p id="exGuthaben"></p>
     <p id="exLieferung"></p>
     <p id="exZuWenig" class="verwaltung-warnung" hidden></p>
     <p><a href="/express/bedingungen" target="_blank" rel="noopener">{{ _('Bedingungen für den Express-Service lesen (öffnet in neuem Tab)') }}</a></p>
+    {# EIN Pflicht-Häkchen (Michael Karbe 05.10.2026, Punkt 5): die Bearbeitung durch Mitarbeiter von InkluTec und Actino
+       steht ausdrücklich in den Bedingungen. #}
     <fieldset class="ex-fieldset">
-      <legend>{{ _('Zustimmung (beide Häkchen sind nötig)') }}</legend>
-      <p><input type="checkbox" id="exBedingungen" required aria-describedby="exZustimmungFehler"> <label for="exBedingungen" id="exBedingungenText"></label></p>
-      <p><input type="checkbox" id="exBearbeitung" required aria-describedby="exZustimmungFehler"> <label for="exBearbeitung" id="exBearbeitungText"></label></p>
-      <p id="exZustimmungFehler" class="verwaltung-fehler"></p>
+      <legend>{{ _('Zustimmung (Pflicht)') }}</legend>
+      <p><input type="checkbox" id="exBedingungen" required aria-describedby="exBedingungenFehler"> <label for="exBedingungen" id="exBedingungenText"></label></p>
+      <p id="exBedingungenFehler" class="verwaltung-fehler"></p>
     </fieldset>
     <p id="exBestellFehler" role="alert" class="verwaltung-fehler"></p>
     <button type="submit" class="btn btn-primary" id="exBestellen">{{ _('Zahlungspflichtig bestellen') }}</button>
@@ -88,8 +89,37 @@
 
 <section class="dash-card verwaltung-karte" aria-labelledby="h-auftraege">
   <h2 id="h-auftraege" tabindex="-1">{{ _('Meine Aufträge') }}</h2>
+  {# Aufträge wie die Dokument-Karten der Projektansicht „Dokument“ (Michael Karbe 05.10.2026, Punkte 1 und 2) #}
+  <p id="exAuftragMeldung" class="verwaltung-bestaetigung" tabindex="-1" hidden></p>
   <div id="exAuftraege" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
 </section>
+{% endblock %}
+
+{% block dialogs %}
+{# Wie „Dokument umbenennen“ / „Dokument löschen“ in der Projektansicht (app.html docRenameDialog, docDeleteDialog) #}
+<dialog id="exaRenameDialog" class="app-dialog" aria-labelledby="exaRenameTitel" aria-describedby="exaRenameHinweis">
+  <form id="exaRenameForm" novalidate>
+    <h2 id="exaRenameTitel">{{ _('Auftrag umbenennen') }}</h2>
+    <div class="dash-field">
+      <label for="exaRenameName">{{ _('Name des Auftrags') }}</label>
+      <input type="text" id="exaRenameName" class="dash-input" maxlength="120" autocomplete="off" aria-describedby="exaRenameHinweis exaRenameNameFehler">
+      <p class="dialog-hint" id="exaRenameHinweis">{{ _('Leer lassen, um wieder „Auftrag“ mit der Nummer zu verwenden. Die Auftragsnummer bleibt immer daneben stehen.') }}</p>
+      <p id="exaRenameNameFehler" class="verwaltung-fehler"></p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="exaRenameAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="exaLoeschDialog" class="app-dialog" aria-labelledby="exaLoeschTitel" aria-describedby="exaLoeschText">
+  <h2 id="exaLoeschTitel">{{ _('Auftrag löschen?') }}</h2>
+  <p id="exaLoeschText"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="exaLoeschAbbrechen">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="exaLoeschJa">{{ _('Löschen') }}</button>
+  </div>
+</dialog>
 {% endblock %}
 
 {% block page_script %}
@@ -127,7 +157,6 @@
   const DOK = (n) => mehrzahl(n, '1 Dokument', '{n} Dokumente');
   const SEITEN = (n) => mehrzahl(n, '1 Seite', '{n} Seiten');
   function leistung(schluessel) { return ((stand && stand.leistungen) || []).find((l) => l.schluessel === schluessel); }
-  function leistungText(schluessel) { const l = leistung(schluessel); return l ? t(l.name) : schluessel; }
   function typenText() { return ((stand && stand.dateitypen) || []).map((x) => x.name).join(t(' oder ')); }
   function datumZeit(s) {
     // 'JJJJ-MM-TT HH:MM' (deutsche Zeit vom Server) -> '5. Oktober 2026, 11:41'
@@ -167,11 +196,12 @@
 
   // ── Kopf ──
   function kopf() {
-    byId('exIntro').textContent = t('Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht.', { stunden: stand.frist_stunden });
-    byId('exPreise').textContent = t('Preise je Seite: {liste}.', { liste: stand.leistungen.map((l) => t('{leistung} {c} Credits', { leistung: t(l.name), c: zahl(l.preis) })).join(', ') });
-    byId('exTypen').textContent = t('Zurzeit können wir nur {typen}-Dateien bearbeiten.', { typen: typenText() });
+    byId('exIntro').textContent = t('Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht.', { stunden: stand.frist_stunden });
+    // Eine Leistung: nur der Preis; mehrere: die Liste (Leistungen kommen vom Server, abgeschaltete fehlen).
+    byId('exPreise').textContent = stand.leistungen.length === 1
+      ? t('Preis: {c} Credits je Seite.', { c: zahl(stand.leistungen[0].preis) })
+      : t('Preise je Seite: {liste}.', { liste: stand.leistungen.map((l) => t('{leistung} {c} Credits', { leistung: t(l.name), c: zahl(l.preis) })).join(', ') });
     byId('exBedingungenText').textContent = stand.texte.bedingungen;
-    byId('exBearbeitungText').textContent = stand.texte.bearbeitung;
     if (!byId('exName').value) byId('exName').value = stand.ansprechpartner || '';
   }
 
@@ -234,7 +264,8 @@
       if (d.im_warenkorb) { box.disabled = true; text += ' — ' + t('schon in deiner Auswahl'); }
       else if (!d.seiten) {
         box.disabled = true;
-        text += ' — ' + (d.grund === 'dateityp' ? t('nicht möglich, nur {typen}', { typen: r.daten.moeglich || typenText() }) : d.grund);
+        // Positiv: was der Express-Service bearbeitet (Michael Karbe 05.10.2026, Punkt 6)
+        text += ' — ' + (d.grund === 'dateityp' ? t('nicht auswählbar, der Express-Service bearbeitet {typen}-Dateien', { typen: r.daten.moeglich || typenText() }) : d.grund);
       }
       else { waehlbar++; if (anhaken) box.checked = true; }
       label.appendChild(box);
@@ -251,6 +282,8 @@
   function meldungWeg() { byId('exMeldung').hidden = true; byId('exMeldung').textContent = ''; }
 
   function einrichtenBestellen() {
+    // Fehler am Häkchen verschwindet, sobald es gesetzt ist (Nachprüfung Barrierefreiheit 05.10.2026, N3)
+    byId('exBedingungen').addEventListener('change', () => { if (byId('exBedingungen').checked) feldFehler('exBedingungen', ''); });
     byId('exProjektForm').addEventListener('submit', (e) => {
       e.preventDefault();
       meldungWeg();
@@ -342,6 +375,26 @@
     }, 600);
   }
 
+  function leistungsFeld(p) {
+    const feld = el('div', 'dash-field');
+    const lab = el('label', null, t('Leistung für {name}', { name: p.dokument_name }));
+    lab.htmlFor = 'exLeistung' + p.id;
+    const sel = el('select', 'dash-input');
+    sel.id = 'exLeistung' + p.id;
+    (p.leistungen || []).forEach((k) => {
+      const l = leistung(k);
+      if (!l) return;
+      const o = el('option', null, t(l.name) + ' — ' + t('{c} Credits', { c: zahl(l.preis * p.seiten) }));
+      o.value = k;
+      sel.appendChild(o);
+    });
+    sel.value = p.leistung;
+    sel.addEventListener('change', () => leistungGeaendert(p, sel));
+    feld.appendChild(lab);
+    feld.appendChild(sel);
+    return feld;
+  }
+
   function auswahl() {
     const w = stand.warenkorb;
     const ul = byId('exAuswahl');
@@ -353,24 +406,11 @@
       const li = el('li', 'verwaltung-zeile');
       li.appendChild(el('p', 'verwaltung-meta', p.dokument_name + ', ' + SEITEN(p.seiten)
         + (p.vorhanden ? '' : ' — ' + t('nicht mehr vorhanden, bitte entfernen'))));
-      const feld = el('div', 'dash-field');
-      const lab = el('label', null, t('Leistung für {name}', { name: p.dokument_name }));
-      lab.htmlFor = 'exLeistung' + p.id;
-      const sel = el('select', 'dash-input');
-      sel.id = 'exLeistung' + p.id;
-      (p.leistungen || []).forEach((k) => {
-        const l = leistung(k);
-        if (!l) return;
-        const o = el('option', null, t(l.name) + ' — ' + t('{c} Credits', { c: zahl(l.preis * p.seiten) }));
-        o.value = k;
-        sel.appendChild(o);
-      });
-      sel.value = p.leistung;
-      sel.addEventListener('change', () => leistungGeaendert(p, sel));
-      feld.appendChild(lab);
-      feld.appendChild(sel);
-      li.appendChild(feld);
+      // Reine Dokumentliste (Michael Karbe 05.10.2026, Punkt 3); eine Leistungswahl erscheint nur, wenn es für den
+      // Dateityp mehr als eine eingeschaltete Leistung gibt (express.LEISTUNGEN).
+      if ((p.leistungen || []).length > 1) li.appendChild(leistungsFeld(p));
       const weg = el('button', 'btn btn-secondary btn-small');
+
       weg.type = 'button';
       weg.textContent = t('Entfernen');
       weg.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
@@ -395,14 +435,12 @@
     aufstellung();
   }
 
-  // ── Schritt 4: Aufstellung ──
+  // ── Schritt 4: nur Summen ──
   function aufstellung() {
     const w = stand.warenkorb;
-    const ul = byId('exAufstellung');
-    ul.innerHTML = '';
-    w.positionen.forEach((p) => ul.appendChild(el('li', 'verwaltung-zeile',
-      t('{name}: {seiten}, {leistung}, {c} Credits', { name: p.dokument_name, seiten: SEITEN(p.seiten), leistung: leistungText(p.leistung), c: zahl(p.credits) }))));
-    byId('exGesamt').textContent = w.dokumente ? t('Summe: {c} Credits', { c: zahl(w.credits) }) : t('Deine Auswahl ist leer.');
+    byId('exGesamt').textContent = w.dokumente
+      ? t('{dokumente}, {seiten}, Summe: {c} Credits', { dokumente: DOK(w.dokumente), seiten: SEITEN(w.seiten), c: zahl(w.credits) })
+      : t('Deine Auswahl ist leer.');
     byId('exGuthaben').textContent = stand.guthaben === null || stand.guthaben === undefined
       ? t('Dein Guthaben: unbegrenzt.') : t('Dein verfügbares Guthaben: {c} Credits.', { c: zahl(stand.guthaben) });
     byId('exLieferung').textContent = t('Lieferung innerhalb von {stunden} Stunden.', { stunden: stand.frist_stunden });
@@ -433,19 +471,15 @@
     byId('exBestellFehler').textContent = '';
     feldFehler('exName', '');
     feldFehler('exTelefon', '');
-    feldFehler('exBedingungen', '', 'exZustimmungFehler');
-    feldFehler('exBearbeitung', '', 'exZustimmungFehler');
+    feldFehler('exBedingungen', '');
     let erstes = null;
     // Leere Auswahl: Meldung am Knopf, der Fokus bleibt, nichts scrollt weg (Befund 19).
     if (!stand.warenkorb.dokumente) { byId('exBestellFehler').textContent = t('Deine Auswahl ist leer. Bitte zuerst Dokumente hinzufügen (Schritt 1).'); return; }
     if (!byId('exName').value.trim()) { feldFehler('exName', t('Bitte einen Ansprechpartner angeben.')); erstes = erstes || byId('exName'); }
     const tel = byId('exTelefon').value.trim();
     if (tel && !/^[0-9+()\/\-. ]{3,40}$/.test(tel)) { feldFehler('exTelefon', t('Bitte nur Ziffern, Leerzeichen und + ( ) / - verwenden.')); erstes = erstes || byId('exTelefon'); }
-    // Häkchen: Fehler an JEDEM fehlenden Kästchen (aria-invalid, Beschreibung = Fehlertext), Fokus auf das erste (Befund 4).
-    const zustimmung = t('Bitte beide Häkchen setzen.');
-    ['exBedingungen', 'exBearbeitung'].forEach((id) => {
-      if (!byId(id).checked) { feldFehler(id, zustimmung, 'exZustimmungFehler'); erstes = erstes || byId(id); }
-    });
+    // Häkchen: Fehler am Kästchen (aria-invalid, Beschreibung = Fehlertext), Fokus dorthin (Befund 4).
+    if (!byId('exBedingungen').checked) { feldFehler('exBedingungen', t('Bitte die Bedingungen akzeptieren.')); erstes = erstes || byId('exBedingungen'); }
     if (erstes) { erstes.focus(); return; }
     laeuft = true;
     byId('exBestellen').setAttribute('aria-disabled', 'true');
@@ -454,14 +488,16 @@
     // (Befunde 3 und 4, § 312j BGB).
     const r = await senden('/api/express/bestellen', 'POST', {
       ansprechpartner: byId('exName').value, telefon: tel, hinweise: byId('exHinweise').value,
-      bedingungen: byId('exBedingungen').checked, bearbeitung: byId('exBearbeitung').checked, idempotenz: idempotenz,
+      bedingungen: byId('exBedingungen').checked, idempotenz: idempotenz,
       korb_id: stand.warenkorb.id, erwartete_credits: stand.warenkorb.credits, fassung: stand.warenkorb.fassung });
     if (r.ok) { window.location.href = '/express/auftrag/' + r.daten.auftrag_id + '?neu=1'; return; }
     laeuft = false;
     byId('exBestellen').removeAttribute('aria-disabled');
     const detail = (r.daten && r.daten.detail) || {};
     if (r.status === 409 && detail.veraltet) idempotenz = neuerSchluessel();
-    if (r.status === 402 || r.status === 409) {
+    // Jeder Fehler mit geänderter Lage lädt den Stand neu (Nachprüfung Entwicklung 05.10.2026, N4: sonst zeigte ein
+    // zweiter Tab nach einer Bestellung im ersten weiter den alten Korb).
+    if (r.status === 400 || r.status === 402 || r.status === 409) {
       // Der Stand hat sich geändert (Preis, Auswahl, zweiter Tab, Guthaben): neue Aufstellung zeigen — der Kunde
       // bestellt nur, was er gesehen hat. Die Meldung unten nennt den neuen Betrag.
       if (await standLaden()) { kopf(); auswahl(); }
@@ -470,29 +506,164 @@
     byId('exBestellen').focus();
   }
 
-  // ── Meine Aufträge ──
+  // ── Meine Aufträge: Karten wie die Dokumente in der Projektansicht „Dokument“ (Michael Karbe 05.10.2026, 1 und 2) ──
+  function auftragName(a) { return (a.auftrag_name || '').trim() || t('Auftrag {nr}', { nr: a.id }); }
+  function standKlasse(a) {
+    return { geliefert: 'badge-done', storniert: 'badge-inactive', rueckfrage: 'badge-processing' }[a.status] || 'badge-ready';
+  }
+  function metaZeile(begriff, wert) { return el('li', null, begriff + ': ' + wert); }
+  let auftraege = [];
+  let aktion = null;           // {a, knopf} für die Dialoge
+
+  function dokumentStand(a, p) {
+    if (a.status === 'geliefert') return p.ergebnis_da || p.bericht_da ? t('fertig, zum Herunterladen') : t('geliefert');
+    if (a.status === 'storniert') return t('storniert');
+    return STATUS[a.status] || a.status;
+  }
+
+  function dokumenteKlappe(a) {
+    // Inhalte des Auftrags aufklappbar: je Dokument Name, Seiten, Stand und Downloads (Punkt 2)
+    const det = el('details', 'dok-klappe ex-dok-klappe');
+    const sum = el('summary');
+    sum.appendChild(el('h4', 'doc-heading ex-dok-titel', t('Dokumente dieses Auftrags ({n})', { n: zahl((a.positionen || []).length) })));
+    det.appendChild(sum);
+    const ul = el('ul', 'verwaltung-liste');
+    (a.positionen || []).forEach((p) => {
+      const li = el('li', 'verwaltung-zeile');
+      li.appendChild(el('p', 'verwaltung-meta', p.dokument_name));
+      const meta = el('ul', 'dok-meta');
+      meta.appendChild(metaZeile(t('Seiten'), zahl(p.seiten)));
+      meta.appendChild(metaZeile(t('Stand'), dokumentStand(a, p)));
+      li.appendChild(meta);
+      const links = el('p', 'ex-aktionen');
+      if (p.ergebnis_da) {
+        const l = el('a', 'btn btn-secondary btn-small', p.ergebnis_typ === 'pdf' ? t('Barrierefreie PDF herunterladen') : t('Ergebnis herunterladen'));
+        l.href = '/api/express/auftraege/' + a.id + '/positionen/' + p.id + '/ergebnis';
+        l.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
+        links.appendChild(l);
+      }
+      if (p.bericht_da) {
+        const l = el('a', 'btn btn-secondary btn-small', t('Prüfbericht herunterladen'));
+        l.href = '/api/express/auftraege/' + a.id + '/positionen/' + p.id + '/bericht';
+        l.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
+        links.appendChild(l);
+      }
+      if (links.children.length) li.appendChild(links);
+      ul.appendChild(li);
+    });
+    det.appendChild(ul);
+    return det;
+  }
+
+  function auftragKarte(a, offen) {
+    const name = auftragName(a);
+    const vh = t('– Auftrag „{name}“', { name: name });
+    const karte = el('section', 'card dok-karte ex-auftrag-karte');
+    karte.id = 'exa_karte_' + a.id;
+    const det = el('details', 'dok-klappe');
+    det.open = !!offen;
+    const sum = el('summary');
+    const h = el('h3', 'doc-heading dok-kopfzeile');
+    h.id = 'exa_heading_' + a.id;
+    const titel = el('span', null, (a.auftrag_name ? name + ' (' + t('Auftrag {nr}', { nr: a.id }) + ')' : name));
+    titel.appendChild(el('span', 'visually-hidden', ', ' + t('Stand') + ':'));
+    h.appendChild(titel);
+    h.appendChild(document.createTextNode(' '));
+    h.appendChild(el('span', 'badge ' + standKlasse(a), STATUS[a.status] || a.status));
+    sum.appendChild(h);
+    det.appendChild(sum);
+    const meta = el('ul', 'dok-meta');
+    meta.appendChild(metaZeile(t('Bestellt am'), datumZeit(a.bestellt_am)));
+    meta.appendChild(metaZeile(t('Umfang'), t('{dokumente}, {c} Credits', { dokumente: DOK(a.dokumente), c: zahl(a.credits_gesamt) })));
+    if (a.status === 'geliefert' && a.geliefert_am) meta.appendChild(metaZeile(t('Geliefert am'), datumZeit(a.geliefert_am)));
+    else if (a.status === 'storniert' && a.storniert_am) meta.appendChild(metaZeile(t('Storniert am'), datumZeit(a.storniert_am)));
+    else meta.appendChild(metaZeile(t('Lieferung'), t('innerhalb von {stunden} Stunden', { stunden: a.frist_stunden })));
+    det.appendChild(meta);
+    det.appendChild(dokumenteKlappe(a));
+    const werk = el('div', 'dok-werkbank');
+    const akt = el('div', 'ausgabe-aktionen');
+    const link = el('a', 'btn btn-secondary', t('Auftragsübersicht öffnen'));
+    link.href = '/express/auftrag/' + a.id;
+    link.appendChild(el('span', 'visually-hidden', ' ' + vh));
+    akt.appendChild(link);
+    const um = el('button', 'doc-action-btn', t('Umbenennen'));
+    um.type = 'button';
+    um.appendChild(el('span', 'visually-hidden', ' ' + vh));
+    um.addEventListener('click', () => umbenennenOeffnen(a, um));
+    akt.appendChild(um);
+    // Löschen nur bei gelieferten oder stornierten Aufträgen — bei laufenden gibt es den Knopf nicht (Punkt 1)
+    if (a.loeschbar) {
+      const weg = el('button', 'doc-action-btn doc-action-danger', t('Löschen'));
+      weg.type = 'button';
+      weg.appendChild(el('span', 'visually-hidden', ' ' + vh));
+      weg.addEventListener('click', () => loeschenOeffnen(a, weg));
+      akt.appendChild(weg);
+    }
+    werk.appendChild(akt);
+    det.appendChild(werk);
+    karte.appendChild(det);
+    return karte;
+  }
+
   async function auftraegeLaden() {
     const ziel = byId('exAuftraege');
+    const offen = new Set(Array.from(ziel.querySelectorAll('details.dok-klappe[open]')).map((d) => d.closest('section') && d.closest('section').id));
     const r = await json('/api/express/auftraege');
     ziel.innerHTML = '';
     ziel.setAttribute('aria-busy', 'false');
-    const liste = r.ok ? r.daten.auftraege : [];
-    if (!liste.length) { ziel.appendChild(el('p', 'dash-empty', t('Du hast noch keine Express-Aufträge.'))); return; }
-    const ul = el('ul', 'verwaltung-liste');
-    liste.forEach((a) => {
-      const li = el('li', 'verwaltung-zeile');
-      const link = el('a', null, t('Auftrag {nr}', { nr: a.id }));
-      link.href = '/express/auftrag/' + a.id;
-      li.appendChild(link);
-      let text = ': ' + t('bestellt am {datum}', { datum: datumZeit(a.bestellt_am) }) + ', ' + (STATUS[a.status] || a.status)
-        + ', ' + t('{dokumente}, {c} Credits', { dokumente: DOK(a.dokumente), c: zahl(a.credits_gesamt) });
-      if (a.status === 'neu' || a.status === 'in_arbeit' || a.status === 'rueckfrage') text += ', ' + t('Lieferung innerhalb von {stunden} Stunden', { stunden: a.frist_stunden });
-      if (a.status === 'geliefert' && a.geliefert_am) text += ', ' + t('geliefert am {datum}', { datum: datumZeit(a.geliefert_am) });
-      li.appendChild(document.createTextNode(text));
-      ul.appendChild(li);
-    });
-    ziel.appendChild(ul);
+    auftraege = r.ok ? r.daten.auftraege : [];
+    if (!auftraege.length) { ziel.appendChild(el('p', 'dash-empty', t('Du hast noch keine Express-Aufträge.'))); return; }
+    // Wie in der Projektansicht: ein einzelner Auftrag ist aufgeklappt, mehrere sind zu (bis auf zuvor geöffnete)
+    auftraege.forEach((a) => ziel.appendChild(auftragKarte(a, auftraege.length === 1 || offen.has('exa_karte_' + a.id))));
   }
+
+  function auftragMeldung(text) {
+    // Sichtbare Meldung mit Fokus statt Live-Ansage (Muster der Korrekturrunde)
+    const m = byId('exAuftragMeldung');
+    m.textContent = text;
+    m.hidden = false;
+    m.focus();
+  }
+
+  function umbenennenOeffnen(a, knopf) {
+    aktion = { a: a, knopf: knopf };
+    byId('exaRenameName').value = a.auftrag_name || '';
+    feldFehler('exaRenameName', '');
+    byId('exaRenameDialog').showModal();
+    byId('exaRenameName').focus();
+    byId('exaRenameName').select();
+  }
+
+  function loeschenOeffnen(a, knopf) {
+    aktion = { a: a, knopf: knopf };
+    byId('exaLoeschText').textContent = t('Möchtest du „{name}“ wirklich löschen? Die Dateien und Angaben dieses Auftrags werden gelöscht und er verschwindet aus deiner Liste. Für die Buchhaltung bleibt nur ein knapper Nachweis (Nummer, Datum, Credits). Das lässt sich nicht rückgängig machen.', { name: auftragName(a) });
+    byId('exaLoeschDialog').showModal();
+  }
+
+  byId('exaRenameAbbrechen').addEventListener('click', () => byId('exaRenameDialog').close());
+  byId('exaRenameDialog').addEventListener('close', () => { if (aktion && aktion.knopf && document.contains(aktion.knopf) && !aktion.fertig) aktion.knopf.focus(); });
+  byId('exaRenameForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!aktion) return;
+    const r = await senden('/api/express/auftraege/' + aktion.a.id + '/name', 'POST', { name: byId('exaRenameName').value });
+    if (!r.ok) { feldFehler('exaRenameName', fehlertext(r.daten, t('Umbenennen fehlgeschlagen.'))); byId('exaRenameName').focus(); return; }
+    aktion.fertig = true;
+    byId('exaRenameDialog').close();
+    await auftraegeLaden();
+    auftragMeldung(t('Der Auftrag heißt jetzt „{name}“.', { name: auftragName(r.daten) }));
+  });
+  byId('exaLoeschAbbrechen').addEventListener('click', () => byId('exaLoeschDialog').close());
+  byId('exaLoeschDialog').addEventListener('close', () => { if (aktion && aktion.knopf && document.contains(aktion.knopf) && !aktion.fertig) aktion.knopf.focus(); });
+  byId('exaLoeschJa').addEventListener('click', async () => {
+    if (!aktion) return;
+    const name = auftragName(aktion.a);
+    const r = await senden('/api/express/auftraege/' + aktion.a.id, 'DELETE');
+    aktion.fertig = true;
+    byId('exaLoeschDialog').close();
+    if (!r.ok) { auftragMeldung(fehlertext(r.daten, t('Löschen fehlgeschlagen.'))); return; }
+    await auftraegeLaden();
+    auftragMeldung(t('„{name}“ ist gelöscht.', { name: name }));
+  });
 
   // Seite aus dem Zurück-Speicher des Browsers (bfcache): Stand und Schlüssel erneuern (Befund 4).
   window.addEventListener('pageshow', async (e) => {

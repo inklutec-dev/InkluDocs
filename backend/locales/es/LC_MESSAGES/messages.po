@@ -10674,8 +10674,6 @@ msgstr "Confirmado el {datum} (versión {fassung}):"
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Pagado con el saldo de equipo de"
 
-msgid "Bitte beide Häkchen setzen."
-msgstr "Marca las dos casillas."
 
 msgid "Bitte ein Projekt wählen"
 msgstr "Elige un proyecto"
@@ -10883,8 +10881,6 @@ msgstr "Nota interna modificada"
 msgid "Keine Aufträge."
 msgstr "No hay pedidos."
 
-msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten oder prüfen. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
-msgstr "Deja que profesionales hagan accesibles tus documentos o los revisen. Entregamos en un plazo de {stunden} horas. Se paga con créditos: se reservan al pedir y se cobran solo en la entrega."
 
 msgid "Leistung für {name}"
 msgstr "Servicio para {name}"
@@ -10901,8 +10897,6 @@ msgstr "Entregar"
 msgid "Lieferung"
 msgstr "Entrega"
 
-msgid "Lieferung innerhalb von {stunden} Stunden"
-msgstr "entrega en un plazo de {stunden} horas"
 
 msgid "Lieferung innerhalb von {stunden} Stunden."
 msgstr "Entrega en un plazo de {stunden} horas."
@@ -10998,8 +10992,6 @@ msgstr "Cancelado el"
 msgid "Storniert. Die Credits sind wieder frei, der Kunde bekommt eine E-Mail."
 msgstr "Cancelado. Los créditos quedan libres; el cliente recibe un correo."
 
-msgid "Summe: {c} Credits"
-msgstr "Total: {c} créditos"
 
 msgid "Telefon"
 msgstr "Teléfono"
@@ -11054,8 +11046,6 @@ msgstr "Volver al servicio exprés"
 msgid "abgebucht"
 msgstr "cobrados"
 
-msgid "bestellt am {datum}"
-msgstr "pedido el {datum}"
 
 msgid "fehlt noch"
 msgstr "falta todavía"
@@ -11157,8 +11147,6 @@ msgstr "«{name}» quitado."
 msgid "Ich akzeptiere die Bedingungen für den Express-Service."
 msgstr "Acepto las condiciones del servicio exprés."
 
-msgid "Ich bin einverstanden, dass Mitarbeiter von InkluTec und unserem Partner Actino meine Dokumente ansehen, bearbeiten und prüfen."
-msgstr "Acepto que empleados de InkluTec y de nuestro socio Actino vean, editen y revisen mis documentos."
 
 msgid "1 Dokument"
 msgstr "1 documento"
@@ -11175,8 +11163,6 @@ msgstr "Añadido: {dokumente}."
 msgid "Im Projekt: {dokumente}, davon wählbar: {w}."
 msgstr "En el proyecto: {dokumente}, seleccionables: {w}."
 
-msgid "{name}: {seiten}, {leistung}, {c} Credits"
-msgstr "{name}: {seiten}, {leistung}, {c} créditos"
 
 msgid "{seiten}, {leistung}, {c} Credits"
 msgstr "{seiten}, {leistung}, {c} créditos"
@@ -11289,17 +11275,11 @@ msgstr "Ingresos (precios finales, sin IVA según el § 19 UStG)"
 msgid "Zu viele Anfragen in kurzer Zeit. Bitte später erneut versuchen."
 msgstr "Demasiadas solicitudes en poco tiempo. Inténtalo de nuevo más tarde."
 
-msgid "Zurzeit können wir nur {typen}-Dateien bearbeiten."
-msgstr "Por ahora solo podemos procesar archivos {typen}."
 
-msgid "Zustimmung (beide Häkchen sind nötig)"
-msgstr "Consentimiento (las dos casillas son obligatorias)"
 
 msgid "für {modell}"
 msgstr "para {modell}"
 
-msgid "nicht möglich, nur {typen}"
-msgstr "no es posible, solo {typen}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Subir {art} para «{name}»"
@@ -11316,8 +11296,6 @@ msgstr "{name}, creado el {datum}"
 msgid "{pruefung} konnte die Datei nicht prüfen."
 msgstr "{pruefung} no pudo comprobar el archivo."
 
-msgid "{pruefung}: Abweichungen — {text}"
-msgstr "{pruefung}: desviaciones — {text}"
 
 msgid "{pruefung}: bestanden."
 msgstr "{pruefung}: superada."
@@ -11378,3 +11356,96 @@ msgstr "«{name}» ya está en el carrito exprés."
 
 msgid "„{name}“ liegt schon im Express-Warenkorb."
 msgstr "«{name}» ya estaba en el carrito exprés."
+
+msgid "Auftrag löschen?"
+msgstr "¿Eliminar el pedido?"
+
+msgid "Auftrag umbenennen"
+msgstr "Cambiar el nombre del pedido"
+
+msgid "Auftragsübersicht öffnen"
+msgstr "Abrir el resumen del pedido"
+
+msgid "Bitte die Bedingungen akzeptieren."
+msgstr "Acepta las condiciones."
+
+msgid "Der Auftrag heißt jetzt „{name}“."
+msgstr "El pedido ahora se llama «{name}»."
+
+msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
+msgstr "El cliente eliminó este pedido: se han borrado los archivos, la lista de documentos, los datos y el historial. Queda el justificante contable con número, fecha, cuenta, páginas, créditos y estado."
+
+msgid "Dokumente dieses Auftrags ({n})"
+msgstr "Documentos de este pedido ({n})"
+
+msgid "Express-Auftrag {nr}: {name}"
+msgstr "Pedido exprés {nr}: {name}"
+
+msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
+msgstr "Deja que profesionales hagan accesibles tus documentos. Entregamos en un plazo de {stunden} horas. Se paga con créditos: se reservan al hacer el pedido y solo se descuentan en la entrega."
+
+msgid "Leer lassen, um wieder „Auftrag“ mit der Nummer zu verwenden. Die Auftragsnummer bleibt immer daneben stehen."
+msgstr "Déjalo vacío para volver a usar «Pedido» con el número. El número de pedido siempre aparece al lado."
+
+msgid "Leistung"
+msgstr "Servicio"
+
+msgid "Möchtest du „{name}“ wirklich löschen? Die Dateien und Angaben dieses Auftrags werden gelöscht und er verschwindet aus deiner Liste. Für die Buchhaltung bleibt nur ein knapper Nachweis (Nummer, Datum, Credits). Das lässt sich nicht rückgängig machen."
+msgstr "¿Seguro que quieres eliminar «{name}»? Se borrarán los archivos y datos de este pedido y desaparecerá de tu lista. Para la contabilidad solo queda un breve justificante (número, fecha, créditos). No se puede deshacer."
+
+msgid "Name des Auftrags"
+msgstr "Nombre del pedido"
+
+msgid "Name des Kunden für den Auftrag"
+msgstr "Nombre del pedido según el cliente"
+
+msgid "Preis: {c} Credits je Seite."
+msgstr "Precio: {c} créditos por página."
+
+msgid "Umfang"
+msgstr "Volumen"
+
+msgid "Vom Kunden gelöscht"
+msgstr "Eliminado por el cliente"
+
+msgid "Vom Kunden gelöscht am"
+msgstr "Eliminado por el cliente el"
+
+msgid "Zustimmung (Pflicht)"
+msgstr "Consentimiento (obligatorio)"
+
+msgid "fertig, zum Herunterladen"
+msgstr "listo para descargar"
+
+msgid "geliefert"
+msgstr "entregado"
+
+msgid "nicht auswählbar, der Express-Service bearbeitet {typen}-Dateien"
+msgstr "no seleccionable, el servicio exprés procesa archivos {typen}"
+
+msgid "storniert"
+msgstr "cancelado"
+
+msgid "vom Kunden gelöscht"
+msgstr "eliminado por el cliente"
+
+msgid "{art} für „{name}“"
+msgstr "{art} para «{name}»"
+
+msgid "{dokumente}, {seiten}, Summe: {c} Credits"
+msgstr "{dokumente}, {seiten}, total: {c} créditos"
+
+msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
+msgstr "{pruefung}: desviaciones de la norma, 1 regla no cumplida."
+
+msgid "{pruefung}: Abweichungen vom Standard, {n} Regeln nicht erfüllt."
+msgstr "{pruefung}: desviaciones de la norma, {n} reglas no cumplidas."
+
+msgid "{pruefung}: Abweichungen vom Standard."
+msgstr "{pruefung}: desviaciones de la norma."
+
+msgid "– Auftrag „{name}“"
+msgstr "– pedido «{name}»"
+
+msgid "„{name}“ ist gelöscht."
+msgstr "«{name}» se ha eliminado."

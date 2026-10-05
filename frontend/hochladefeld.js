@@ -12,7 +12,8 @@
  * Fehler am Feld (aria-describedby zeigt auf Hinweis UND Statuszeile, aria-invalid bei Fehler).
  *
  * window.hochladefeld({
- *   id, titel, ebene (2–6, Standard 2), karte (true = .card wie in den Projekten), knopf, hinweis, accept,
+ *   id, titel, ebene (2–6, Standard 2), karte (true = .card wie in den Projekten), knopf, zusatz (versteckter Teil des
+ *   Knopfnamens, z. B. „: Ergebnis für Jahresbericht.pdf“ — damit mehrere Felder unterscheidbar sind), hinweis, accept,
  *   hochladen: async (datei) => ({ ok: true, text: 'Erfolgsmeldung' }) | ({ ok: false, text: 'Fehlertext' }),
  * }) -> HTMLElement (section). Für Express: express.html (Kunde) und verwaltung_express_auftrag.html (Ergebnis,
  * Prüfbericht). Texte über t() aus window.I18N (scripts/check_i18n.py prüft sie mit).
@@ -30,7 +31,8 @@
   window.hochladefeld = function (o) {
     const zone = el('section', 'proj-dropzone hochladefeld' + (o.karte ? ' card' : ''));
     zone.id = o.id + 'Zone';
-    zone.setAttribute('aria-labelledby', o.id + 'Titel');
+    // Bewusst OHNE Namen (kein aria-labelledby): sonst wäre jede Fläche ein eigener Bereich (Landmarke) — bei mehreren
+    // Dokumenten in der Verwaltung zu viele (Nachprüfung Barrierefreiheit 05.10.2026, N2). Die Überschrift bleibt.
     const h = el('h' + Math.min(6, Math.max(2, o.ebene || 2)), 'section-title', o.titel);
     h.id = o.id + 'Titel';
     zone.appendChild(h);
@@ -43,6 +45,8 @@
     feld.setAttribute('aria-describedby', o.id + 'Hinweis ' + o.id + 'Status');
     const knopf = el('label', 'upload-btn', o.knopf);
     knopf.htmlFor = o.id;
+    // Eindeutiger Name je Feld bei gleichem sichtbarem Text (N2): der sichtbare Text bleibt vorn (WCAG 2.5.3).
+    if (o.zusatz) knopf.appendChild(el('span', 'visually-hidden', o.zusatz));
     innen.appendChild(feld);
     innen.appendChild(knopf);
     innen.appendChild(el('p', 'dropzone-or', t('oder Datei hierher ziehen')));
