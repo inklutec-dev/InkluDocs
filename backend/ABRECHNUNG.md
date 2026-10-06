@@ -394,11 +394,44 @@ Umsetzung (`backend/billing.py`, Abschnitt „Free-Domain mit Zusatz-Paketen“)
 - **Anzeige/Sperre** (`_domain_bindung`): `verfügbar(A) = max(0, 50 − V) + Pakete(A) − Paket-Teile der offenen
   Aufträge von A`. Fremde Paket-Teile binden die eigenen Pakete nicht; offene Aufträge anderer Konten belegen nur das
   gemeinsame Volumen.
-- Bewusst nicht erstattet: Wer gebucht hat, während ein später stornierter Auftrag das Volumen belegte, hat dafür aus
-  seinem Paket gezahlt (selten; zugunsten der Deckung).
+- **Storno-Ausgleich** (Runde 6, Nachkontrolle Runde 5, Befund 1, Variante a): Wird ein Express-Auftrag eines
+  Free-Domain-Kontos storniert, gleicht `billing.storno_ausgleich` → `_domain_monat_ausgleichen` den Bestellmonat der
+  Domain in derselben Transaktion neu aus. Die Reihenfolge des Monats wird ohne den stornierten Auftrag nachgerechnet
+  (Verbrauchs-Ereignisse nach Zeitpunkt, noch offene Aufträge nach Bestellzeitpunkt). Je Konto ist „soll“ die Summe der
+  Überhänge seiner Ereignisse über das gemeinsame Volumen, „ist“ das, was es im Monat aus Paketen bezahlt hat. Den
+  Überschuss bekommt das Konto zurück — auf die Pakete seiner jüngsten Abbuchungen, je Paket höchstens das dort netto
+  Abgebuchte, nie in ein verfallenes, per Umsatz-Storno zurückgenommenes oder per Rücklastschrift gesperrtes Paket.
+  Protokoll: `paket_abbuchungen` mit negativem Betrag und dem Zeitpunkt der erstatteten Abbuchung (bleibt im
+  Bestellmonat, auch bei einem Storno nach dem Monatswechsel). Idempotent: ein zweiter Lauf findet ist = soll.
+  Nachbelastet wird nie. Am Auftrag steht ein interner Verlaufseintrag „Paket-Ausgleich der Firmen-Domain nach dem
+  Storno: N Credits an … zurück“ (ohne Konto-Kennungen, die ein Express-Bearbeiter nicht sieht).
+  - Summe der Erstattungen = was im Monat aus Paketen bezahlt wurde − (max(0, Verbrauch + offene Aufträge − 50) −
+    Paket-Teile der offenen Aufträge). Wer zuerst verbraucht hat, liegt zuerst im Volumen (Beispiel: Anna bestellt 50,
+    Ben verbraucht 40, Carl 20, Anna storniert → Ben bekommt 40 zurück, Carl 10).
+  - Anzeige: Verwaltung (Pakete des Kunden: Größe/verbleibend) und Umsatz (Spalte „Rest“ = `verbleibend` des Pakets)
+    zeigen die Rückbuchung als wieder verfügbare Credits. Eine Liste der Einzel-Abbuchungen gibt es in der Oberfläche
+    nicht; `paket_abbuchungen` liest nur billing.py (Summen, die negative Zeilen mitrechnen).
+  - Einzel- und Team-Konten: kein Ausgleich nötig — ein Storno hat dort nie etwas abgebucht.
 
 Geprüft: `tests/test_express.py` Klasse `Runde5` (Anna und Ben: genau 100; abwechselnd in krummen Schritten genau
 50 + 70 + 30; Pakete nur beim Käufer; Express-Vormonat: Anna und Ben zusammen höchstens 50, nach der Lieferung nichts
 ungedeckt; Express im selben Monat: Ben zahlt aus seinem Paket, was Annas Auftrag schon belegt; Paket-Teil bindet nur
 die Bestellerin; Storno lässt den späteren Auftrag nachrücken; Freemailer; Admin; gleichzeitige Buchungen; ein Stand
 während einer Lieferung). „Ungedeckt“ = Domain-Überhang des Monats minus Paket-Abbuchungen der Domain-Konten = 0.
+
+## BEKANNTE GRENZEN DER GUTHABEN-PRÜFUNG (dokumentiert 06.10.2026, nicht umgebaut)
+
+- **Prüfen, dann buchen:** Jede kostenpflichtige Aktion prüft das Guthaben VOR der Aktion (`aktion_pruefung`,
+  `export_pruefung` …) und bucht erst NACH erfolgreicher Aktion (`verbuche`, in BEGIN IMMEDIATE). Laufen zwei Aktionen
+  desselben Topfs gleichzeitig, sehen beide noch dasselbe Guthaben, und beide werden gebucht. Der Überhang wird von den
+  Paketen abgebucht, soweit vorhanden; der Rest bleibt ungedeckt (nur protokolliert in usage_events und im Log).
+  - Bei Free-Domains ist das wahrscheinlicher (mehrere Personen arbeiten gleichzeitig). Der Schaden ist auf das
+    gemeinsame Gratis-Volumen des Monats begrenzt (50 je Domain), weil Pakete nur das buchende Konto belasten (Probe:
+    Anna und Ben sehen beide 50 und verbrauchen beide 50; Ben ohne Pakete → 50 ungedeckt).
+  - Einzel- und Team-Konten: begrenzt auf den Preis der parallel laufenden Aktionen.
+  - Express-Service: Er merkt die Credits beim Bestellen vor; danach kann keine andere Aktion sie mehr verbrauchen. Nur
+    im Augenblick des Bestellens selbst gilt dieselbe Grenze (`docs/EXPRESS_SERVICE.md`, „Grenze“). Eine kurze
+    Vormerkung zu Beginn teurer Läufe wäre die Abhilfe für alle Wege, ist aber bewusst nicht gebaut.
+- **Fail-open bei Lesefehlern:** `pruefe_kontingent` erlaubt die Aktion, wenn das Guthaben nicht gelesen werden kann
+  (Datenbankfehler, fehlende Konto-Zeile ohne eigene Nutzer-Zeile): „Verfügbarkeit schlägt Abrechnung“, der Fehler steht
+  im Log. Gebucht wird danach trotzdem. Nur die Express-Bestellung prüft streng (`streng=True`, fail-closed: 503).

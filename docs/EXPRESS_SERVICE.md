@@ -111,7 +111,9 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   (`usage_events`, Quelle `express`, Aktionen `express_aufbereiten` / `express_pruefen`) auf den Topf der Bestellung,
   danach `billing._pakete_abbuchen` für einen Überhang. Ein zweites Liefern findet den Auftrag nicht mehr offen
   (Vergleichen-und-Tauschen im UPDATE) und bucht nichts.
-- **Storno gibt frei** (nur vor der Lieferung): die Vormerkung fällt mit dem Status weg, abgebucht wurde nichts.
+- **Storno gibt frei** (nur vor der Lieferung): die Vormerkung fällt mit dem Status weg, abgebucht wurde nichts. Bei
+  Free-Domain-Konten bekommt zurück, wer im Bestellmonat danach aus Paketen gezahlt hat, was ohne den Auftrag gratis
+  gewesen wäre (Storno-Ausgleich, Runde 6; `backend/ABRECHNUNG.md`).
 - **Monatswechsel** (Befund 1): Die Abbuchung zählt zum Monat der **Bestellung** — dort war das Guthaben vorgemerkt.
   Liegt die Bestellung in einem früheren Kalendermonat, tragen die Verbrauchs-Ereignisse den Bestellzeitpunkt, und ein
   Überhang wird für jenen Monat von den Paketen abgebucht (`billing.pakete_abbuchen_fuer_monat`). Sonst verfiele beim
@@ -371,7 +373,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
 
 ## Tests
 
-- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 97): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
+- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 105): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
   Vormerkung und Idempotenz (auch 4 gleichzeitige Klicks), Vormerkung sperrt andere Ausgaben, Liefern bucht genau einmal
   (auch 4 gleichzeitig), Storno, Dateinamen nie Pfad, Upload-Prüfung, Downloads erst nach Lieferung, Frist ruht bei
   Rückfrage, Erinnerung/Überfällig je einmal, Nachweis-OOXML, Kontolöschung, Einstellungen, Bearbeiter, Schalter.
@@ -388,7 +390,8 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   immer wieder, was angezeigt wird, bis 0 — Summe genau wie Monatsbudget + Pakete abzüglich Bestellung (Single, auch in
   kleinen Schritten, Free-Einzelkonto, Free-Domain, Team-Topf), Storno nach dem Monatswechsel kostet nichts, Lieferung
   ändert das Guthaben nicht, Auftrag über zwei Monatswechsel, Sperre und Meldung nennen dieselbe Zahl (R2), ohne
-  Vormerkung alles wie bisher. Klasse `Runde5` (Free-Domain mit Paketen und ein Stand): siehe `backend/ABRECHNUNG.md`.
+  Vormerkung alles wie bisher. Klasse `Runde5` (Free-Domain mit Paketen und ein Stand) und `Runde6` (Storno-Ausgleich): siehe
+  `backend/ABRECHNUNG.md`.
 - `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 129): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
   IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno,
   dazu Preisänderung und alter Schlüssel (409), kaputter JSON-Körper (400), Feldfehler der Einstellungen, no-store,

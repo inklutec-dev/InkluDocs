@@ -1332,10 +1332,8 @@ class Runde4(_Guthabenhilfe, Basis):
         self.assertEqual(self._alles_verbrauchen(1, schritt=90), 440)
         self.assertEqual(billing.pakete_rest(1), 0)
 
-class Runde5(_Guthabenhilfe, Basis):
-    """Abrechnung Free-Domain mit Zusatz-Paketen (Steves Regel 05.10.2026): Die 50 Gratis-Credits im Monat gehoeren allen
-    Free-Konten einer Firmen-Domain gemeinsam, gekaufte Pakete nur dem kaufenden Konto; ist das gemeinsame Volumen
-    verbraucht, zahlt jedes Konto alles Weitere aus seinen eigenen Paketen. Dazu R4-1: guthaben() liest einen Stand."""
+class _DomainHilfe(_Guthabenhilfe):
+    """Anna (1) und Ben (2) teilen eine Firmen-Domain (Free)."""
     DOM = "firma-runde5-beispiel.de"
 
     def setUp(self):
@@ -1380,6 +1378,12 @@ class Runde5(_Guthabenhilfe, Basis):
             summe[uid] += c
             i += 1
         self.fail("verfuegbar wird nie 0")
+
+
+class Runde5(_DomainHilfe, Basis):
+    """Abrechnung Free-Domain mit Zusatz-Paketen (Steves Regel 05.10.2026): Die 50 Gratis-Credits im Monat gehoeren allen
+    Free-Konten einer Firmen-Domain gemeinsam, gekaufte Pakete nur dem kaufenden Konto; ist das gemeinsame Volumen
+    verbraucht, zahlt jedes Konto alles Weitere aus seinen eigenen Paketen. Dazu R4-1: guthaben() liest einen Stand."""
 
     def test_anna_und_ben(self):
         """Ben verbraucht das gemeinsame Volumen (50); Anna mit 100 Paket-Credits darf danach genau 100."""
@@ -1522,6 +1526,122 @@ class Runde5(_Guthabenhilfe, Basis):
         self.assertEqual(geliefert, ["geliefert"])
         self.assertEqual((mitten["verfuegbar_gesamt"], mitten["pakete_rest"], mitten["vorgemerkt"]), (300, 300, 500))
         self.assertEqual(self._stimmig(1), 300)                          # nach der Lieferung derselbe Betrag
+
+class Runde6(_DomainHilfe, Basis):
+    """Nachkontrolle Runde 5, Befund 1 (Variante a): Faellt ein Domain-Auftrag durch Storno weg, bekommt zurueck, wer
+    in seinem Bestellmonat danach aus Paketen gezahlt hat, was ohne ihn gratis gewesen waere — je Konto nach der
+    Reihenfolge des Monats, auf die juengsten Abbuchungen, als negative Zeile in paket_abbuchungen, idempotent."""
+
+    def _ausgleich_erneut(self, aid):
+        a = _sql("SELECT konto_user_id, bestellt_am FROM express_auftraege WHERE id = ?", aid)[0]
+        conn = database.get_db()
+        try:
+            r = billing.storno_ausgleich(conn, a["konto_user_id"], a["bestellt_am"])
+            conn.commit()
+            return r
+        finally:
+            conn.close()
+
+    def test_fall_a_fremder_verbrauch_wird_erstattet(self):
+        """Anna bestellt 50 (das ganze Volumen), Ben verbraucht 40 aus seinen Paketen, Anna storniert: Ben bekommt 40
+        zurueck (der Domain-Verbrauch 40 liegt im Volumen)."""
+        self._paket(2, 40)
+        anna = self._vormonats_auftrag(1, monat_davor=0)
+        self.assertEqual(self._alles_verbrauchen(2), 40)
+        self.assertEqual(billing.pakete_rest(2), 0)
+        express.stornieren(anna, PERSON, "Test")
+        self.assertEqual(billing.pakete_rest(2), 40)
+        self.assertEqual([a["betrag"] for a in _sql("SELECT betrag FROM paket_abbuchungen ORDER BY id")], [40, -40])
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (10, 50))   # 10 Volumen frei, Ben dazu seine 40
+        self.assertEqual(self._ausgleich_erneut(anna), {})                 # idempotent
+        v = _sql("SELECT text, fuer_kunde FROM express_verlauf WHERE auftrag_id = ? AND art = 'notiz'", anna)
+        self.assertEqual([(x["text"], x["fuer_kunde"]) for x in v],
+                         [("Paket-Ausgleich der Firmen-Domain nach dem Storno: 40 Credits an ein Konto zurück.", 0)])
+
+    def test_fall_b_gelieferter_fremder_auftrag_wird_erstattet(self):
+        """Anna bestellt 50, Ben (50 Paket-Credits) bestellt 50 — sein Paket-Teil ist 50; Bens Auftrag wird geliefert
+        (50 abgebucht), dann storniert Anna: Bens 50 haetten im Volumen gelegen, er bekommt sie zurueck."""
+        self._paket(2, 50)
+        anna = self._vormonats_auftrag(1, monat_davor=0)
+        ben = self._vormonats_auftrag(1, monat_davor=0, uid=2)
+        self._ergebnis(ben)
+        express.liefern(ben, PERSON)
+        self.assertEqual(billing.pakete_rest(2), 0)
+        express.stornieren(anna, PERSON, "Test")
+        self.assertEqual((billing.pakete_rest(2), self._ungedeckt(self._monat())), (50, 0))
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (0, 50))
+
+    def test_storno_ohne_fremden_verbrauch_gibt_nichts_zurueck(self):
+        self._paket(1, 50)
+        anna = self._vormonats_auftrag(2, monat_davor=0)                  # 100: 50 Volumen, 50 Paket-Teil (offen)
+        express.stornieren(anna, PERSON, "Test")
+        self.assertEqual((billing.pakete_rest(1), _sql("SELECT COUNT(*) AS n FROM paket_abbuchungen")[0]["n"]), (50, 0))
+        self.assertEqual(_sql("SELECT COUNT(*) AS n FROM express_verlauf WHERE art = 'notiz'")[0]["n"], 0)
+
+    def test_nur_was_im_volumen_gelegen_haette(self):
+        """Anna bestellt 30, Ben (20 Paket-Credits) verbraucht alles Angezeigte (40: 20 Volumen + 20 Paket). Nach dem
+        Storno liegen Bens 40 im Volumen: 20 zurueck."""
+        self._paket(2, 20)
+        _sql("UPDATE users SET plan = 'free' WHERE id = 1")
+        express.dokumente_hinzufuegen(1, [self._dokument(self.pid, "Dreissig.pdf", 1)])
+        express.speichere_einstellungen({"preise": {"aufbereiten": "30"}, "frist_stunden": "48",
+                                         "max_seiten_auftrag": "500", "max_dokumente_auftrag": "50"})
+        anna = self._bestellen("runde6-anna-0001")["auftrag_id"]
+        self.assertEqual(_sql("SELECT credits_gesamt FROM express_auftraege WHERE id = ?", anna)[0]["credits_gesamt"], 30)
+        self.assertEqual(self._alles_verbrauchen(2), 40)
+        express.stornieren(anna, PERSON, "Test")
+        self.assertEqual((billing.pakete_rest(2), self._ungedeckt(self._monat())), (20, 0))
+
+    def test_reihenfolge_des_monats_entscheidet(self):
+        """Anna bestellt 50, Ben verbraucht 40, danach Carl 20 (beide aus Paketen). Nach dem Storno: Ben lag zuerst im
+        Volumen (0 faellig, 40 zurueck), Carl ueberschreitet es um 10 (10 faellig, 10 zurueck)."""
+        _sql("INSERT INTO users (id, email, password_hash, display_name, plan) VALUES (3, ?, 'x', 'Carl', 'free')",
+             f"carl@{self.DOM}")
+        self._paket(2, 40)
+        self._paket(3, 20)
+        anna = self._vormonats_auftrag(1, monat_davor=0)
+        self.assertEqual(self._alles_verbrauchen(2), 40)
+        self.assertEqual(self._alles_verbrauchen(3), 20)
+        express.stornieren(anna, PERSON, "Test")
+        self.assertEqual((billing.pakete_rest(2), billing.pakete_rest(3)), (40, 10))
+        self.assertEqual(self._ungedeckt(self._monat()), 0)
+
+    def test_storno_nach_dem_monatswechsel(self):
+        """Bestellt und fremd verbraucht im Vormonat, storniert jetzt: der Ausgleich gilt dem Bestellmonat, die
+        Erstattung steht in jenem Monat (idempotent auch spaeter)."""
+        self._paket(2, 40)
+        anna = self._vormonats_auftrag(1, monat_davor=0)
+        self.assertEqual(self._alles_verbrauchen(2), 40)
+        vorher = f"{self._monat(1)}-20 10:00:00"
+        _sql("UPDATE usage_events SET created_at = ?", vorher)
+        _sql("UPDATE paket_abbuchungen SET created_at = ?", vorher)
+        _sql("UPDATE express_auftraege SET bestellt_am = ? WHERE id = ?", f"{self._monat(1)}-10 10:00:00", anna)
+        express.stornieren(anna, PERSON, "Test")
+        self.assertEqual(billing.pakete_rest(2), 40)
+        self.assertEqual(self._abbuchungen(), [(40, self._monat(1)), (-40, self._monat(1))])
+        self.assertEqual(self._ausgleich_erneut(anna), {})
+
+    def test_kein_ausgleich_in_ein_zurueckgenommenes_paket(self):
+        """Wurde Bens Paket inzwischen in der Verwaltung storniert (Umsatz-Storno: Rest zurueckgenommen), lebt es durch den
+        Ausgleich nicht wieder auf."""
+        self._paket(2, 40)
+        pid = _sql("SELECT id FROM quota_pakete WHERE user_id = 2")[0]["id"]
+        _sql("DELETE FROM buchungen")
+        _sql("INSERT INTO buchungen (konto_user_id, art, weg, credits, status, paket_id) VALUES (2, 'paket', 'rechnung', 40, 'storniert', ?)",
+             pid)
+        anna = self._vormonats_auftrag(1, monat_davor=0)
+        self.assertEqual(self._alles_verbrauchen(2), 40)
+        express.stornieren(anna, PERSON, "Test")
+        self.assertEqual((billing.pakete_rest(2), [a["betrag"] for a in _sql("SELECT betrag FROM paket_abbuchungen")]), (0, [40]))
+        _sql("DELETE FROM buchungen")
+
+    def test_einzelkonto_storno_unveraendert(self):
+        """Kein Free-Domain-Konto (Freemailer): Storno gleicht nichts aus — es wurde nichts abgebucht."""
+        _sql("UPDATE users SET email = 'anna-runde6@gmail.com' WHERE id = 1")
+        self._paket(1, 100)
+        anna = self._vormonats_auftrag(2, monat_davor=0)
+        express.stornieren(anna, PERSON, "Test")
+        self.assertEqual((billing.pakete_rest(1), self._abbuchungen()), (100, []))
 
 class NurPdf(unittest.TestCase):
     def test_heute_nur_pdf(self):

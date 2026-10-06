@@ -468,6 +468,85 @@ def _domain_abbuchen(conn, konto_id: int, domain: str, neu: int) -> None:
     _pakete_belasten(conn, konto_id, _domain_teil(v_nachher - neu, neu, PLAN_KONTINGENTE["free"]))
 
 
+def _domain_monat_ausgleichen(conn, domain: str, monat: str) -> dict:
+    """Bestellmonat einer Free-Domain neu ausgleichen (Runde 6, nach einem Storno; in der offenen Transaktion).
+
+    Ein offener Auftrag belegt das gemeinsame Volumen schon vor der Lieferung; wer danach bucht, zahlt den Ueberhang aus
+    seinen Paketen. Faellt der Auftrag durch Storno weg, waere ein Teil davon gratis gewesen. Darum: die Reihenfolge des
+    Monats ohne den stornierten Auftrag nachrechnen — Verbrauchs-Ereignisse (Zeitpunkt, id) und noch offene Auftraege
+    (Bestellzeitpunkt) — und je Konto „soll“ = Summe der Ueberhaenge seiner Ereignisse gegen „ist“ = was es im Monat aus
+    Paketen bezahlt hat. Den Ueberschuss bekommt das Konto zurueck: auf die Pakete seiner juengsten Abbuchungen,
+    protokolliert in paket_abbuchungen mit negativem Betrag und dem Zeitpunkt der erstatteten Abbuchung (bleibt im
+    Monat). Idempotent: ein zweiter Lauf findet ist = soll. Nachbelastet wird nie.
+    Summe ueber alle Konten = ist - (max(0, Verbrauch + offene Auftraege - Volumen) - Paket-Teile der offenen Auftraege).
+    Rueckgabe {konto_id: erstattet}."""
+    k = PLAN_KONTINGENTE["free"]
+    von, bis = _monatsgrenzen(monat)
+    folge = [(r["created_at"], 1, r["id"], r["konto_user_id"], int(r["credits"] or 0)) for r in conn.execute(
+        "SELECT e.id, e.konto_user_id, e.credits, e.created_at FROM usage_events e JOIN users u ON u.id = e.konto_user_id "
+        f"WHERE {_DOMAIN_KONTEN} AND e.created_at >= ? AND e.created_at < ?", (domain, von, bis))]
+    folge += [(r["bestellt_am"], 0, r["id"], None, int(r["credits_gesamt"] or 0)) for r in conn.execute(
+        "SELECT a.id, a.credits_gesamt, a.bestellt_am FROM express_auftraege a JOIN users u ON u.id = a.konto_user_id "
+        f"WHERE {_DOMAIN_KONTEN} AND a.status IN ('neu', 'in_arbeit', 'rueckfrage') AND a.bestellt_am >= ? AND a.bestellt_am < ?",
+        (domain, von, bis))]
+    soll, v = {}, 0
+    for _zeit, _art, _id, konto, credits in sorted(folge):      # Auftrag vor Ereignis mit gleichem Zeitpunkt (wie Teil)
+        if konto is not None:
+            soll[konto] = soll.get(konto, 0) + _domain_teil(v, credits, k)
+        v += credits
+    erstattet = {}
+    for r in conn.execute(
+            "SELECT a.konto_user_id, COALESCE(SUM(a.betrag), 0) AS ist FROM paket_abbuchungen a JOIN users u ON u.id = a.konto_user_id "
+            f"WHERE {_DOMAIN_KONTEN} AND a.created_at >= ? AND a.created_at < ? GROUP BY a.konto_user_id", (domain, von, bis)).fetchall():
+        zurueck = int(r["ist"]) - soll.get(r["konto_user_id"], 0)
+        if zurueck > 0:
+            erstattet[r["konto_user_id"]] = _pakete_erstatten(conn, r["konto_user_id"], zurueck, von, bis)
+    return {kid: n for kid, n in erstattet.items() if n}
+
+
+def _pakete_erstatten(conn, konto_id: int, menge: int, von: str, bis: str) -> int:
+    """`menge` Credits an die Pakete der juengsten Abbuchungen des Kontos im Zeitraum zurueck (je Paket hoechstens, was
+    dort netto abgebucht ist; nie in ein verfallenes oder zurueckgenommenes Paket — der Rest verfaellt dann, Log).
+    Rueckgabe: erstattet."""
+    netto = {r["paket_id"]: int(r["n"]) for r in conn.execute(
+        "SELECT paket_id, SUM(betrag) AS n FROM paket_abbuchungen WHERE konto_user_id = ? AND created_at >= ? AND created_at < ? "
+        "GROUP BY paket_id", (konto_id, von, bis))}
+    erstattet = 0
+    for r in conn.execute("SELECT paket_id, created_at FROM paket_abbuchungen WHERE konto_user_id = ? AND betrag > 0 "
+                          "AND created_at >= ? AND created_at < ? ORDER BY created_at DESC, id DESC",
+                          (konto_id, von, bis)).fetchall():
+        if erstattet >= menge:
+            break
+        teil = min(menge - erstattet, netto.get(r["paket_id"], 0))
+        # Nicht in ein verfallenes, storniertes (Umsatz-Storno) oder per Ruecklastschrift gesperrtes Paket.
+        if teil <= 0 or conn.execute(
+                "UPDATE quota_pakete SET verbleibend = verbleibend + ? WHERE id = ? "
+                "AND (verfaellt_am IS NULL OR verfaellt_am > datetime('now')) AND COALESCE(notiz, '') NOT LIKE '%Paket gesperrt%' "
+                "AND NOT EXISTS (SELECT 1 FROM buchungen b WHERE b.paket_id = quota_pakete.id AND b.status = 'storniert')",
+                (teil, r["paket_id"])).rowcount != 1:
+            continue
+        conn.execute("INSERT INTO paket_abbuchungen (paket_id, konto_user_id, betrag, created_at) VALUES (?, ?, ?, ?)",
+                     (r["paket_id"], konto_id, -teil, r["created_at"]))
+        netto[r["paket_id"]] -= teil
+        erstattet += teil
+    if erstattet < menge:
+        log.info("Storno-Ausgleich: %s von %s Credits nicht erstattbar (Paket verfallen/zurueckgenommen, konto=%s)",
+                 menge - erstattet, menge, konto_id)
+    return erstattet
+
+
+def storno_ausgleich(conn, konto_id: int, bestellt: str) -> dict:
+    """Nach dem Storno eines Express-Auftrags (in dessen Transaktion): bei Free-Domain-Konten den Bestellmonat neu
+    ausgleichen (_domain_monat_ausgleichen); sonst nichts (Einzel- und Team-Konten: es wurde nichts abgebucht)."""
+    domain = _domain_von(conn, konto_id) if konto_id else None
+    if not domain or not bestellt:
+        return {}
+    erstattet = _domain_monat_ausgleichen(conn, domain, str(bestellt)[:7])
+    if erstattet:
+        log.info("Storno-Ausgleich Domain %s, Monat %s: %s", domain, str(bestellt)[:7], erstattet)
+    return erstattet
+
+
 def lieferung_buchen(conn, user_id: int, konto_id: int, posten: dict, bestellt: str, auftrag_id: int) -> None:
     """Verbrauch einer Express-Lieferung buchen und von den Paketen abbuchen (in der Transaktion von express.liefern,
     nachdem der Auftrag auf „geliefert“ steht). posten = {aktion: credits}.

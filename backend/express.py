@@ -1219,8 +1219,9 @@ def _verlauf_eintrag(conn, auftrag_id: int, art: str, text: str, von: str, fuer_
                  (auftrag_id, art, (text or "")[:MAX_TEXT], (von or "")[:120], 1 if fuer_kunde else 0))
 
 
-def _zustand_wechseln(auftrag_id: int, erlaubt: tuple, setzen: str, werte: tuple, verlauf: tuple = None) -> dict:
-    """UPDATE nur aus erlaubten Zustaenden (Vergleichen-und-Tauschen); NichtGefunden bzw. 409 sonst."""
+def _zustand_wechseln(auftrag_id: int, erlaubt: tuple, setzen: str, werte: tuple, verlauf: tuple = None, danach=None) -> dict:
+    """UPDATE nur aus erlaubten Zustaenden (Vergleichen-und-Tauschen); NichtGefunden bzw. 409 sonst.
+    danach(conn): laeuft in derselben Transaktion nach dem Wechsel (Storno-Ausgleich)."""
     conn = get_db()
     try:
         platz = ",".join("?" * len(erlaubt))
@@ -1234,6 +1235,8 @@ def _zustand_wechseln(auftrag_id: int, erlaubt: tuple, setzen: str, werte: tuple
             raise ExpressFehler(f"Das geht im Stand „{STATUS_VERWALTUNG.get(gibt_es['status'], gibt_es['status'])}“ nicht.", 409)
         if verlauf:
             _verlauf_eintrag(conn, int(auftrag_id), *verlauf)
+        if danach:
+            danach(conn)
         conn.commit()
     finally:
         conn.close()
@@ -1539,11 +1542,22 @@ def liefern(auftrag_id: int, person: dict, trotz_befunden: bool = False) -> dict
 
 
 def stornieren(auftrag_id: int, person: dict, grund) -> dict:
-    """Storno nur vor der Lieferung; die Vormerkung faellt mit dem Status weg (nichts wurde abgebucht)."""
+    """Storno nur vor der Lieferung; die Vormerkung faellt mit dem Status weg (nichts wurde abgebucht).
+    Free-Domain (Runde 6): Der Auftrag hatte das gemeinsame Volumen belegt — wer danach gebucht hat, bekommt zurueck, was
+    ohne ihn gratis gewesen waere (billing.storno_ausgleich, in derselben Transaktion; interner Verlaufseintrag)."""
     text = _text(grund, "einen Grund", 500, pflicht=True)
+
+    def ausgleich(conn):
+        a = conn.execute("SELECT konto_user_id, bestellt_am FROM express_auftraege WHERE id = ?", (int(auftrag_id),)).fetchone()
+        erstattet = billing.storno_ausgleich(conn, a["konto_user_id"], a["bestellt_am"]) if a else {}
+        if erstattet:
+            # Ohne Konto-Kennungen (die sieht ein Express-Bearbeiter nicht); Einzelheiten in paket_abbuchungen.
+            _verlauf_eintrag(conn, int(auftrag_id), "notiz", f"Paket-Ausgleich der Firmen-Domain nach dem Storno: "
+                             f"{sum(erstattet.values())} Credits an "
+                             + ("ein Konto" if len(erstattet) == 1 else f"{len(erstattet)} Konten") + " zurück.", "InkluDocs", False)
     return _zustand_wechseln(auftrag_id, OFFEN,
                              "status = 'storniert', storniert_am = datetime('now'), storniert_von = ?, storno_grund = ?",
-                             (person["name"][:120], text), ("storniert", text, person["name"], True))
+                             (person["name"][:120], text), ("storniert", text, person["name"], True), danach=ausgleich)
 
 
 def datei_fuer_kunde(user_id: int, auftrag_id: int, pos_id: int, art: str):
