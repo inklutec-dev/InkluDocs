@@ -13,7 +13,10 @@ wackelten am 05./06.10.2026. Ursache laut Staging-, Proxy- und Kernel-Protokoll,
    jeweils 499 (Anfrage vom Browser geschlossen). Nachbau ohne Staging: tests/e2e/netzwechsel_nachweis/nachweis.sh.
 
 Darum wartet ki_klick() auf Antwort oder Abbruch DER Anfrage (grosszuegige Obergrenze), gibt Dauer und Ursache aus
-(Zeilen beginnen mit „KI-Anfrage“, die Aufrufer-Skripte reichen sie durch) und klickt NUR bei einem Transportabbruch
+(Zeilen beginnen mit „KI-Anfrage“, die Aufrufer-Skripte reichen sie durch). Seit dem Produkt-Fix vom 06.10.2026 holt
+die Seite nach einem Abbruch das Ergebnis selbst ab (app.html kiErgebnisAbholen, backend/ki_abholung.py): ki_klick
+wartet dann, bis der Knopf wieder frei ist, und prueft mit `ergebnis_da`, ob das Ergebnis angekommen ist — dann
+KEIN zweiter Klick (kein doppeltes Generieren). Nur wenn nichts ankam, klickt es bei einem Transportabbruch
 des Browsers noch einmal. Antworten des Servers mit Fehlerstatus (4xx/5xx) werden nie wiederholt — sie bleiben ein
 Befund. Loest der Klick gar keine Anfrage aus, steht auch das im Protokoll (dann liegt es an der Seite).
 
@@ -76,13 +79,16 @@ def _stoerung_planen():
     threading.Thread(target=los, daemon=True).start()
 
 
-def ki_klick(pg, knopf, url_teil, name, grenze_s=180, wiederholungen=1, bild=None):
+def ki_klick(pg, knopf, url_teil, name, grenze_s=180, wiederholungen=1, bild=None, ergebnis_da=None):
     """Klickt `knopf` und wartet auf die POST-Anfrage, deren URL `url_teil` enthaelt — bis Antwort oder Abbruch.
 
     Rueckgabe: dict(status=int|None, grund=str|None, sekunden=float, versuche=int, kurz=str)
       status   HTTP-Status der Antwort (None: keine Antwort binnen grenze_s oder Abbruch)
       grund    Abbruchgrund des Browsers (z. B. net::ERR_NETWORK_CHANGED) oder Beschreibung des Ausbleibens
       kurz     ein Satz fuer die Fehlermeldung des Checks
+      abgeholt True, wenn die Seite das Ergebnis nach einem Abbruch selbst abgeholt hat (ergebnis_da() wurde wahr)
+      posts    Zahl der POST-Anfragen, die der Browser fuer diesen Knopf geschickt hat
+    ergebnis_da: Funktion ohne Argumente -> bool, „die Ansicht zeigt das neue Ergebnis“ (fuer die Abholung).
     Nach einer Antwort zeichnet die Seite das Ergebnis selbst; der Aufrufer prueft danach die Ansicht."""
     ereignisse = []
 
@@ -104,7 +110,7 @@ def ki_klick(pg, knopf, url_teil, name, grenze_s=180, wiederholungen=1, bild=Non
     pg.on("request", bei_anfrage)
     pg.on("response", bei_antwort)
     pg.on("requestfailed", bei_abbruch)
-    erg = dict(status=None, grund=None, sekunden=0.0, versuche=0, kurz="")
+    erg = dict(status=None, grund=None, sekunden=0.0, versuche=0, kurz="", abgeholt=False, posts=0)
     try:
         for versuch in range(1, wiederholungen + 2):
             erg["versuche"] = versuch
@@ -136,16 +142,26 @@ def ki_klick(pg, knopf, url_teil, name, grenze_s=180, wiederholungen=1, bild=Non
                 erg["kurz"] = (f"vom Browser abgebrochen nach {_sek(erg['sekunden'])}: {ende[1]}"
                                + (" (Netzwechsel/Verbindungsabbruch auf dem Testrechner, nicht der Server)" if transport else ""))
                 nochmal = transport and versuch <= wiederholungen
-                print(f"      KI-Anfrage {name}: Versuch {versuch} {erg['kurz']}" + (" — neuer Klick" if nochmal else ""), flush=True)
+                print(f"      KI-Anfrage {name}: Versuch {versuch} {erg['kurz']}", flush=True)
                 if bild:
                     pg.screenshot(path=bild)
+                # Die Seite holt das Ergebnis ab und gibt den Knopf danach (finally) wieder frei — darauf warten.
+                t1 = time.monotonic()
+                while time.monotonic() - t1 < grenze_s and not knopf.is_enabled():
+                    pg.wait_for_timeout(250)
+                if ergebnis_da and ergebnis_da():
+                    erg.update(abgeholt=True)
+                    erg["kurz"] += f"; Seite holte das Ergebnis nach {_sek(time.monotonic() - t1)} ab (kein zweiter Klick)"
+                    n_posts = sum(1 for e in ereignisse if e[0] == "anfrage")
+                    print(f"      KI-Anfrage {name}: Ergebnis von der Seite abgeholt nach {_sek(time.monotonic() - t1)}, "
+                          f"kein zweiter Klick (POST-Anfragen insgesamt: {n_posts})", flush=True)
+                    break
                 if not nochmal:
                     break
-                # Die Seite gibt den Knopf im finally wieder frei; erst dann neu klicken.
-                for _ in range(40):
-                    if knopf.is_enabled():
-                        break
-                    pg.wait_for_timeout(250)
+                # Ein Netzwechsel kommt selten allein (Container-Start = Netz, veth, Adressen): erst zur Ruhe kommen
+                # lassen, sonst faellt der neue Klick in dieselbe Stoerung (Stoerlauf 06.10.2026, 09:24).
+                print(f"      KI-Anfrage {name}: kein Ergebnis angekommen — neuer Klick in 10 s", flush=True)
+                pg.wait_for_timeout(10000)
                 continue
             # Keine Antwort binnen Grenze oder gar keine Anfrage
             erg.update(status=None, grund=("keine Anfrage nach dem Klick" if not gesendet
@@ -157,10 +173,26 @@ def ki_klick(pg, knopf, url_teil, name, grenze_s=180, wiederholungen=1, bild=Non
                 pg.screenshot(path=bild)
             break
     finally:
+        erg["posts"] = sum(1 for e in ereignisse if e[0] == "anfrage")
         pg.remove_listener("request", bei_anfrage)
         pg.remove_listener("response", bei_antwort)
         pg.remove_listener("requestfailed", bei_abbruch)
     return erg
+
+
+ANSAGEN_JS = """(() => { if (window.__ansagen) return; window.__ansagen = [];
+  const r = document.getElementById('liveRegion'); if (!r) return;
+  new MutationObserver(() => { const t = (r.textContent || '').trim(); if (t) window.__ansagen.push(t); })
+    .observe(r, { childList: true, characterData: true, subtree: true }); })()"""
+
+
+def ansagen_beobachten(pg):
+    """Sammelt ab jetzt alle Ansagen der Live-Region (#liveRegion) in window.__ansagen (bis zum Neuladen)."""
+    pg.evaluate(ANSAGEN_JS)
+
+
+def ansagen(pg):
+    return pg.evaluate("window.__ansagen || []")
 
 
 def warten_bis(pg, bedingung, sekunden=10):

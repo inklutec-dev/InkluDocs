@@ -9,7 +9,7 @@ from playwright.sync_api import sync_playwright
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # KI-Knoepfe: auf die Antwort warten statt fester Zeit, Ursache protokollieren (06.10.2026, siehe ki_klick.py)
-from ki_klick import ki_klick, warten_bis, mitschnitt_anhaengen  # noqa: E402
+from ki_klick import ki_klick, warten_bis, mitschnitt_anhaengen, ansagen_beobachten, ansagen  # noqa: E402
 B =os.environ.get("INKLUDOCS_E2E_URL", "https://staging.inkludocs.inklutec.de"); PID = sys.argv[1]; TOKEN = sys.argv[2] if len(sys.argv) > 2 else ""
 MAIL, PW = os.environ.get("INKLUDOCS_E2E_MAIL", ""), os.environ.get("INKLUDOCS_E2E_PW", "")
 if not MAIL or not PW: sys.exit("Zugangsdaten fehlen: INKLUDOCS_E2E_MAIL / INKLUDOCS_E2E_PW setzen")
@@ -127,7 +127,8 @@ with sync_playwright() as p:
     # Seit 06.10.2026: auf die Antwort der KI-Anfrage warten statt fest 45 s. Die Zeile „KI-Anfrage …“ nennt Dauer
     # und ggf. den Abbruchgrund (KI-Latenz bis 54 s gesehen; Netzwechsel auf dem Testrechner -> ein neuer Klick).
     erg = ki_klick(pg, nn.locator("button[id^=feld_gen_]"), "/api/felder/" + leer[0].split("_")[1] + "/generieren",
-                   "Feld generieren", bild=os.path.join(SHOTS, "f_ki_abbruch.png"))
+                   "Feld generieren", bild=os.path.join(SHOTS, "f_ki_abbruch.png"),
+                   ergebnis_da=lambda: nn.locator("textarea.quickinfo-field").input_value() not in ("", vorher))
     warten_bis(pg, lambda: nn.locator("textarea.quickinfo-field").input_value() not in ("", vorher))
     text = nn.locator("textarea.quickinfo-field").input_value()
     check("KI-Text im Feld (>3 Zeichen, anders als vorher)", len(text) > 3 and text != vorher, (text, nn.locator("h4").inner_text(), nn.locator("[id^=feld_msg_]").inner_text(), erg["kurz"]))
@@ -145,13 +146,42 @@ with sync_playwright() as p:
     # sichtbar); entscheidend ist das Verhalten beim Generieren am Feld: Hand-Text bleibt, Meldung kommt.
     check("Feld 1 traegt einen Hand-Text", vorher1.strip() != "", vorher1)
     erg1 = ki_klick(pg, c1.locator("button[id^=feld_gen_]"), "/api/felder/" + c1.get_attribute("id").split("_")[1] + "/generieren",
-                    "Feld 1 generieren (Hand-Text)", bild=os.path.join(SHOTS, "f_ki_abbruch_feld1.png"))
+                    "Feld 1 generieren (Hand-Text)", bild=os.path.join(SHOTS, "f_ki_abbruch_feld1.png"),
+                    ergebnis_da=lambda: "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text())
     warten_bis(pg, lambda: "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text())
     check("Hand-Text bleibt nach Generieren", c1.locator("textarea.quickinfo-field").input_value() == vorher1, c1.locator("textarea.quickinfo-field").input_value())
     check("Knopf 'KI-Vorschlag uebernehmen' sichtbar + Meldung", c1.locator("button[id^=feld_ki_]").evaluate("b=>!b.hidden") and "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text(), (c1.locator("[id^=feld_msg_]").inner_text(), erg1["kurz"]))
     c1.locator("button[id^=feld_ki_]").click(); pg.wait_for_timeout(1000)
     # (Der KI-Text kann dem Hand-Text gleichen — die bestaetigte Fassung gilt als Vorgabe; entscheidend: Badge KI, Knopf weg)
     check("KI-Vorschlag uebernommen (Badge KI, Knopf versteckt)", "KI-Vorschlag" in c1.locator("[id^=feld_status_]").inner_text() and c1.locator("button[id^=feld_ki_]").evaluate("b=>b.hidden") is True, c1.locator("[id^=feld_status_]").inner_text())
+    print("== C3. Verbindungsabbruch beim Generieren (06.10.2026): Ergebnis wird abgeholt ==")
+    # Die Route laesst die Anfrage den Server erreichen (route.fetch: er rechnet, speichert, bucht) und kappt dann die
+    # Verbindung zum Browser — so wie ein Netzwechsel. Die Seite muss das Ergebnis abholen, ohne neu zu generieren.
+    ansagen_beobachten(pg)
+    gen_url = "**/api/felder/" + leer[0].split("_")[1] + "/generieren"
+    posts = []
+    def nach_server_kappen(route):
+        posts.append(1)
+        try:
+            route.fetch(timeout=180000)
+        finally:
+            route.abort("connectionreset")
+    pg.route(gen_url, nach_server_kappen)
+    nn.locator("button[id^=feld_gen_]").click()
+    warten_bis(pg, lambda: "trotzdem da" in nn.locator("[id^=feld_msg_]").inner_text(), 200)
+    pg.unroute(gen_url)
+    m3 = nn.locator("[id^=feld_msg_]").inner_text()
+    check("Abbruch nach Serverempfang: Seite holt die Quickinfo ab und zeigt sie", "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da." in m3 and len(nn.locator("textarea.quickinfo-field").input_value()) > 3, (m3, nn.locator("textarea.quickinfo-field").input_value()))
+    check("... und sagt es an", any("Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da." in a for a in ansagen(pg)), ansagen(pg)[-3:])
+    check("... ohne zweites Generieren (genau ein POST)", len(posts) == 1, len(posts))
+    # Abbruch, BEVOR die Anfrage den Server erreicht: nichts abzuholen -> bisherige Fehlermeldung, jetzt auch angesagt.
+    pg.route(gen_url, lambda route: route.abort("connectionreset"))
+    vorher4 = nn.locator("textarea.quickinfo-field").input_value()
+    nn.locator("button[id^=feld_gen_]").click()
+    warten_bis(pg, lambda: nn.locator("[id^=feld_msg_]").inner_text().strip() == "Verbindungsfehler." and nn.locator("button[id^=feld_gen_]").is_enabled(), 20)
+    pg.unroute(gen_url)
+    check("Abbruch vor dem Server: „Verbindungsfehler.“ sichtbar, Text unveraendert", nn.locator("[id^=feld_msg_]").inner_text().strip() == "Verbindungsfehler." and nn.locator("textarea.quickinfo-field").input_value() == vorher4, (nn.locator("[id^=feld_msg_]").inner_text(), nn.locator("textarea.quickinfo-field").input_value()))
+    check("... und angesagt (Barrierefreiheit)", any("Verbindungsfehler" in a for a in ansagen(pg)), ansagen(pg)[-3:])
     print("== D. Filter ==")
     pg.locator("#fNurOffene").check(); pg.wait_for_timeout(400)
     sichtbar = pg.locator("section.feld-review:not([hidden])").count(); alle = pg.locator("section.feld-review").count()

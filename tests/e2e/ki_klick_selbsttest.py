@@ -7,6 +7,7 @@ Eine kleine Seite bildet den KI-Knopf von formular.js nach (fetch POST, Ergebnis
   3. Server antwortet 500                    -> HTTP 500, KEIN neuer Klick (ein Serverfehler bleibt ein Befund)
   4. Antwort dauert laenger als die Grenze   -> „keine Antwort binnen …“ (Latenz)
   5. Klick loest keine Anfrage aus           -> „keine Anfrage“ (dann laege es an der Seite)
+  6. Abbruch, die Seite holt das Ergebnis selbst ab (wie app.html seit 06.10.2026) -> KEIN zweiter Klick
 Aufruf: python tests/e2e/ki_klick_selbsttest.py   (Python mit Playwright; laeuft auch in formular_tests.sh)"""
 import http.server
 import os
@@ -22,6 +23,7 @@ SEITE = b"""<!doctype html><html lang="de"><title>KI-Knopf</title>
 <textarea id="ta"></textarea><p id="msg"></p>
 <button type="button" id="gen" onclick="gen()">Generieren</button>
 <button type="button" id="tot">Ohne Anfrage</button>
+<button type="button" id="gen2" onclick="gen2()">Generieren mit Abholung</button>
 <script>
 async function gen() {
   const b = document.getElementById('gen'); b.disabled = true;
@@ -32,6 +34,16 @@ async function gen() {
     document.getElementById('ta').value = d.text; document.getElementById('msg').textContent = 'fertig';
   } catch (e) { document.getElementById('msg').textContent = 'Verbindungsfehler.'; }
   finally { b.disabled = false; }
+}
+async function gen2() {
+  const b = document.getElementById('gen2'); b.disabled = true;
+  try {
+    let res;
+    try { res = await fetch('/api/felder/2/generieren', { method: 'POST', body: '{}' }); }
+    catch (e) { await new Promise(r => setTimeout(r, 1000)); res = await fetch('/abholen'); }
+    const d = await res.json();
+    document.getElementById('ta').value = d.text;
+  } finally { b.disabled = false; }
 }
 </script></html>"""
 
@@ -51,6 +63,9 @@ class Seite(http.server.BaseHTTPRequestHandler):
         self.wfile.write(('{"text": "KI-Text %d"}' % MODUS["n"]).encode())
 
     def do_GET(self):
+        if self.path.startswith("/abholen"):
+            self.send_response(200); self.send_header("Content-Type", "application/json"); self.end_headers()
+            self.wfile.write(b'{"text": "abgeholt"}'); return
         self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8"); self.end_headers()
         self.wfile.write(SEITE)
 
@@ -114,6 +129,13 @@ with sync_playwright() as p:
     print("== 5. Klick ohne Anfrage ==")
     e = ki_klick(pg, pg.locator("#tot"), "/generieren", "Fall 5", grenze_s=20)
     check("Kein Request erkannt (Klick kam nicht an)", e["status"] is None and "keine Anfrage" in e["kurz"], e)
+    print("== 6. Abbruch, Seite holt das Ergebnis selbst ab ==")
+    MODUS.update(art="ok", verzoegerung=0.0, n=0)
+    pg.route("**/api/felder/2/generieren", lambda route: route.abort("connectionreset"))
+    pg.evaluate("document.getElementById('ta').value=''")
+    e = ki_klick(pg, pg.locator("#gen2"), "/api/felder/2/generieren", "Fall 6", grenze_s=20,
+                 ergebnis_da=lambda: pg.locator("#ta").input_value() == "abgeholt")
+    check("Abgeholt erkannt, KEIN zweiter Klick (ein POST)", e["abgeholt"] and e["versuche"] == 1 and e["posts"] == 1, e)
     br.close()
 srv.shutdown()
 print(f"\nErgebnis: {ok} OK, {fehler} FEHLER")
