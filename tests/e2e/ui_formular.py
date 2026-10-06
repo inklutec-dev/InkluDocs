@@ -172,6 +172,8 @@ with sync_playwright() as p:
     pg.unroute(gen_url)
     m3 = nn.locator("[id^=feld_msg_]").inner_text()
     check("Abbruch nach Serverempfang: Seite holt die Quickinfo ab und zeigt sie", "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da." in m3 and len(nn.locator("textarea.quickinfo-field").input_value()) > 3, (m3, nn.locator("textarea.quickinfo-field").input_value()))
+    # announce() setzt den Text 100 ms verzoegert: auf die Ansage warten, nicht sofort pruefen
+    warten_bis(pg, lambda: any("Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da." in a for a in ansagen(pg)), 3)
     check("... und sagt es an", any("Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da." in a for a in ansagen(pg)), ansagen(pg)[-3:])
     check("... ohne zweites Generieren (genau ein POST)", len(posts) == 1, len(posts))
     # Abbruch, BEVOR die Anfrage den Server erreicht: nichts abzuholen -> bisherige Fehlermeldung, jetzt auch angesagt.
@@ -181,6 +183,7 @@ with sync_playwright() as p:
     warten_bis(pg, lambda: nn.locator("[id^=feld_msg_]").inner_text().strip() == "Verbindungsfehler." and nn.locator("button[id^=feld_gen_]").is_enabled(), 20)
     pg.unroute(gen_url)
     check("Abbruch vor dem Server: „Verbindungsfehler.“ sichtbar, Text unveraendert", nn.locator("[id^=feld_msg_]").inner_text().strip() == "Verbindungsfehler." and nn.locator("textarea.quickinfo-field").input_value() == vorher4, (nn.locator("[id^=feld_msg_]").inner_text(), nn.locator("textarea.quickinfo-field").input_value()))
+    warten_bis(pg, lambda: any("Verbindungsfehler" in a for a in ansagen(pg)), 3)
     check("... und angesagt (Barrierefreiheit)", any("Verbindungsfehler" in a for a in ansagen(pg)), ansagen(pg)[-3:])
     print("== D. Filter ==")
     pg.locator("#fNurOffene").check(); pg.wait_for_timeout(400)
