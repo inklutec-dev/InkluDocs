@@ -11052,3 +11052,7 @@ msgstr "Sidvy: {seite} som bild"
 
 msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
 msgstr "Texten på den här sidan finns under ”Visa sidtext”."
+
+# KI-Knoepfe: Ergebnis nach Verbindungsabbruch abgeholt (06.10.2026)
+msgid "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da."
+msgstr "Anslutningen bröts kortvarigt, men resultatet kom fram ändå."

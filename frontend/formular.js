@@ -634,7 +634,24 @@
         meldungSchliessen();
         announce(t('Quickinfo wird generiert …'));
         try {
-            const res = await fetch('/api/felder/' + feldId + '/generieren', { method: 'POST' });
+            // Verbindungsabbruch (06.10.2026, app.html kiErgebnisAbholen): Ergebnis abholen statt verlieren — der Server
+            // hat weitergerechnet und gebucht; kein zweites Generieren. Ohne die Helfer (alte Seite) wie bisher.
+            const abholbar = typeof kiAnfrageKennung === 'function' && typeof kiErgebnisAbholen === 'function';
+            const kennung = abholbar ? kiAnfrageKennung() : '';
+            let res, nachAbbruch = false;
+            try {
+                res = await fetch('/api/felder/' + feldId + '/generieren', { method: 'POST', headers: kennung ? { 'X-KI-Anfrage': kennung } : {} });
+            } catch (netz) {
+                res = abholbar ? await kiErgebnisAbholen(kennung) : null;
+                if (!res) {
+                    if (msg) msg.textContent = t('Verbindungsfehler.');
+                    // Barrierefreiheit (06.10.2026): der Fehler wird auch angesagt, nicht nur angezeigt.
+                    announce(t('Verbindungsfehler. Bitte erneut versuchen.'));
+                    return;
+                }
+                nachAbbruch = true;
+            }
+            const vorweg = nachAbbruch ? t('Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da.') + ' ' : '';
             if (await creditsAbgefangen(res)) { if (msg) msg.textContent = ''; return; }
             const d = await res.json().catch(() => ({}));
             if (!res.ok) { const m = d.detail || t('Generieren fehlgeschlagen.'); if (msg) msg.textContent = m; announce(m); return; }
@@ -642,7 +659,7 @@
             if (d.uebernommen === false) {
                 // KI-Fach: der eigene Text bleibt, der Vorschlag wartet hinter dem Knopf.
                 kiKnopf(feldId, true);
-                const m2 = t('KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“.', { s: SICHERHEIT[d.sicherheit] ? SICHERHEIT[d.sicherheit]() : '', q: d.ki_vorschlag || '' });
+                const m2 = vorweg + t('KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“.', { s: SICHERHEIT[d.sicherheit] ? SICHERHEIT[d.sicherheit]() : '', q: d.ki_vorschlag || '' });
                 if (msg) msg.textContent = m2;
                 announce(m2);
                 const kb = document.getElementById('feld_ki_' + feldId); if (kb) kb.focus();
@@ -651,11 +668,13 @@
             if (ta) ta.value = d.quickinfo || '';
             statusSetzen(feldId, d);
             kiKnopf(feldId, false);
-            if (msg) msg.textContent = '';
-            announce(t('Quickinfo generiert, {s}: {q}', { s: SICHERHEIT[d.sicherheit] ? SICHERHEIT[d.sicherheit]() : '', q: d.quickinfo }));
+            if (msg) msg.textContent = nachAbbruch ? t('Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da.') : '';
+            announce(vorweg + t('Quickinfo generiert, {s}: {q}', { s: SICHERHEIT[d.sicherheit] ? SICHERHEIT[d.sicherheit]() : '', q: d.quickinfo }));
             if (ta) ta.focus();
         } catch (e) {
+            // Antwort kam an, liess sich aber nicht verarbeiten.
             if (msg) msg.textContent = t('Verbindungsfehler.');
+            announce(t('Verbindungsfehler. Bitte erneut versuchen.'));
         } finally {
             if (btn) btn.disabled = false;
         }

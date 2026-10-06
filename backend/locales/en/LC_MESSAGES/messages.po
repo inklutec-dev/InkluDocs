@@ -11482,3 +11482,7 @@ msgstr "Page view: {seite} as an image"
 
 msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
 msgstr "The text of this page is available under “Show page text”."
+
+# KI-Knoepfe: Ergebnis nach Verbindungsabbruch abgeholt (06.10.2026)
+msgid "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da."
+msgstr "The connection was briefly interrupted, but the result arrived anyway."

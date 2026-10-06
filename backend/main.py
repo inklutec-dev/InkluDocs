@@ -75,6 +75,7 @@ import abschluss    # Station „Abschlussprüfung“ (24.09.2026)
 import kette_api    # Kette „Komplett barrierefrei machen“ (22.09.2026)
 import api_dokumente_v1   # Public API v1: Dokumente (17.09.2026)
 import projekt_texte      # KI-Kontext und Seitentext einmal je Projekt (05.10.2026, docs/ANSICHTEN_LEISTUNG.md)
+import ki_abholung       # Ergebnis-Abholung nach Verbindungsabbruch bei KI-Knoepfen (06.10.2026)
 from formular_processor import validiere_formular, FormularFehler
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, get_gettext, SUPPORTED_LANGUAGES
@@ -7998,7 +7999,19 @@ def _fehler_protokoll(vorgang: str, e: BaseException, **bezug) -> None:
     print(traceback.format_exc(), flush=True)
 
 
+@app.get("/api/ki-anfragen/{anfrage_id}")
+async def ki_anfrage_stand(anfrage_id: str, user: dict = Depends(get_current_user)):
+    """Stand einer KI-Anfrage nach einem Verbindungsabbruch (06.10.2026, ki_abholung.py): {"stand": "laeuft"} oder
+    {"stand": "fertig", "status": <HTTP-Status des POST>, "daten": <seine Antwort>}. 404, wenn die Anfrage den Server
+    nie erreicht hat, einem anderen Konto gehoert oder abgelaufen ist. Erzeugt und bucht nichts."""
+    stand = ki_abholung.abfragen(anfrage_id, user["id"])
+    if stand is None:
+        raise HTTPException(status_code=404, detail="Anfrage unbekannt")
+    return stand
+
+
 @app.post("/api/projects/{project_id}/regenerate/{image_id}")
+@ki_abholung.abholbar   # Ergebnis bleibt nach einem Verbindungsabbruch abholbar (06.10.2026)
 async def regenerate_image(project_id: int, image_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Regenerate alt-text for a single image with optional specialized prompt."""
     data = await request.json()

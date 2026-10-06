@@ -70,6 +70,7 @@ from fastapi.responses import FileResponse, Response
 import formular_export
 import formular_ki
 import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
+import ki_abholung  # Ergebnis-Abholung nach Verbindungsabbruch (06.10.2026)
 from formular_processor import extract_formular
 
 log = logging.getLogger(__name__)
@@ -1090,7 +1091,8 @@ def build_router(deps: Deps) -> APIRouter:
         return quickinfos_vorschau_daten(project_id, user["id"], document_id)
 
     @router.post("/api/felder/{feld_id}/generieren")
-    async def feld_generieren(feld_id: int, user: dict = Depends(_user)):
+    @ki_abholung.abholbar   # Ergebnis bleibt nach einem Verbindungsabbruch abholbar (06.10.2026)
+    async def feld_generieren(feld_id: int, request: Request, user: dict = Depends(_user)):
         """Ein Feld (neu) generieren — ueberschreibt bewusst (Variation), 1 Credit.
         "Zurueck auf Original" bleibt moeglich (quickinfo_original)."""
         conn = _d.get_db()

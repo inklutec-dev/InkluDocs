@@ -11484,3 +11484,7 @@ msgstr "Aperçu de la page : {seite} en image"
 
 msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
 msgstr "Le texte de cette page se trouve sous « Afficher le texte de la page »."
+
+# KI-Knoepfe: Ergebnis nach Verbindungsabbruch abgeholt (06.10.2026)
+msgid "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da."
+msgstr "La connexion a été brièvement interrompue, mais le résultat est bien arrivé."

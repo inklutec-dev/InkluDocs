@@ -366,6 +366,43 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     window.alleAusstehendenSpeichern = alleAusstehendenSpeichern;
     window.speicherFehlerMelden = speicherFehlerMelden;
 
+    // ─── KI-Knoepfe: Ergebnis nach Verbindungsabbruch abholen (06.10.2026, backend/ki_abholung.py) ────────────
+    // Bricht die Verbindung waehrend „Alt-Text (neu) generieren“ oder „Quickinfo generieren“ ab, rechnet der Server
+    // zu Ende, speichert und bucht. Damit niemand doppelt generiert und bezahlt, schickt die Seite eine eigene
+    // Kennung mit (Kopf X-KI-Anfrage) und fragt nach einem Abbruch den Stand ab: laeuft -> weiter warten (der Knopf
+    // bleibt gesperrt), fertig -> die Antwort des Servers so behandeln, als waere sie normal angekommen; unbekannt
+    // -> die Anfrage kam nie an, bisherige Fehlermeldung. Das Abholen erzeugt und bucht nichts.
+    const KI_ABHOLEN_HOECHSTENS_MS = 150000;   // laengste gesehene KI-Antwort 92 s, dazu Reserve
+    function kiAnfrageKennung() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+        return 'ki-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+    }
+    // Liefert eine Response mit Status und Antwort des urspruenglichen POST oder null (nicht abholbar).
+    async function kiErgebnisAbholen(kennung) {
+        const bis = Date.now() + KI_ABHOLEN_HOECHSTENS_MS;
+        let netzfehler = 0;
+        while (Date.now() < bis) {
+            await new Promise(r => setTimeout(r, 2000));
+            let r;
+            try {
+                r = await fetch('/api/ki-anfragen/' + encodeURIComponent(kennung), { cache: 'no-store', credentials: 'same-origin' });
+            } catch (e) {
+                if (++netzfehler >= 5) return null;   // Netz weiter weg: aufgeben, bisherige Fehlermeldung
+                continue;
+            }
+            if (!r.ok) return null;                   // 404: Anfrage kam nie an (oder abgelaufen), 401: abgemeldet
+            const stand = await r.json().catch(() => null);
+            if (!stand) return null;
+            if (stand.stand === 'fertig') {
+                return new Response(JSON.stringify(stand.daten || {}), { status: stand.status || 200, headers: { 'Content-Type': 'application/json' } });
+            }
+            // 'laeuft': der Server rechnet noch
+        }
+        return null;
+    }
+    window.kiAnfrageKennung = kiAnfrageKennung;
+    window.kiErgebnisAbholen = kiErgebnisAbholen;
+
     // ─── Init ────────────────────────────────────────
     async function init() {
         // Gast: erst direkt das Projekt versuchen — bei gültiger Gast-Sitzung
@@ -3503,11 +3540,25 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const body = {};
             if (imageType) body.image_type = imageType;
 
-            const res = await fetch('/api/projects/' + projectId + '/regenerate/' + imageId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
+            // Verbindungsabbruch (06.10.2026): Ergebnis abholen statt verlieren — kein zweites Generieren.
+            const kennung = kiAnfrageKennung();
+            let res, nachAbbruch = false;
+            try {
+                res = await fetch('/api/projects/' + projectId + '/regenerate/' + imageId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-KI-Anfrage': kennung },
+                    body: JSON.stringify(body),
+                });
+            } catch (netz) {
+                res = await kiErgebnisAbholen(kennung);
+                if (!res) {
+                    if (statusEl) statusEl.textContent = t('Verbindungsfehler');
+                    // Barrierefreiheit (06.10.2026): der Fehler wird auch angesagt, nicht nur angezeigt.
+                    announce((wasDone ? t('Fehler bei der Neugenerierung') : t('Fehler bei der Generierung')) + ': ' + t('Verbindungsfehler. Bitte erneut versuchen.'));
+                    return;
+                }
+                nachAbbruch = true;
+            }
             const data = await res.json();
             if (res.ok) {
                 const ta = document.getElementById('alttext_' + imageId);
@@ -3516,8 +3567,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     const lt = document.getElementById('langtext_' + imageId);
                     if (lt) lt.value = data.langbeschreibung;
                 }
-                if (statusEl) statusEl.textContent = (wasDone ? t('Neu generiert') : t('Generiert')) + ' (' + (data.konfidenz || 'mittel') + ')';
-                announce(wasDone ? t('Alt-Text wurde neu generiert') : t('Alt-Text wurde generiert'));
+                if (statusEl) statusEl.textContent = (nachAbbruch ? t('Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da.') + ' ' : '')
+                    + (wasDone ? t('Neu generiert') : t('Generiert')) + ' (' + (data.konfidenz || 'mittel') + ')';
+                announce((nachAbbruch ? t('Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da.') + ' ' : '')
+                    + (wasDone ? t('Alt-Text wurde neu generiert') : t('Alt-Text wurde generiert')));
                 // Ab jetzt gilt das Bild als KI-bearbeitet — nächster Klick lautet "Neu generieren".
                 btn.dataset.status = 'done';
                 // Projekt-Kopf (Badge + "X von Y Bildern generiert") live nachziehen.
@@ -3546,7 +3599,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 }
             }
         } catch (err) {
+            // Antwort kam an, liess sich aber nicht lesen (kein JSON) oder die Anzeige scheiterte.
             if (statusEl) statusEl.textContent = t('Verbindungsfehler');
+            announce((wasDone ? t('Fehler bei der Neugenerierung') : t('Fehler bei der Generierung')) + ': ' + t('Verbindungsfehler. Bitte erneut versuchen.'));
         } finally {
             btn.disabled = false;
             // Beschriftung folgt dem neuen data-status (kann durch Erfolg auf "done" gehoben sein).
@@ -3566,11 +3621,24 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
         try {
             const body = { image_type: imageType || undefined, long_description: true };
-            const res = await fetch('/api/projects/' + projectId + '/regenerate/' + imageId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
+            // Verbindungsabbruch (06.10.2026): derselbe Endpunkt wie „Neu generieren“ — Ergebnis abholen statt verlieren.
+            const kennung = kiAnfrageKennung();
+            let res, nachAbbruch = false;
+            try {
+                res = await fetch('/api/projects/' + projectId + '/regenerate/' + imageId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-KI-Anfrage': kennung },
+                    body: JSON.stringify(body),
+                });
+            } catch (netz) {
+                res = await kiErgebnisAbholen(kennung);
+                if (!res) {
+                    if (statusEl) statusEl.textContent = t('Verbindungsfehler');
+                    announce(t('Verbindungsfehler. Bitte erneut versuchen.'));
+                    return;
+                }
+                nachAbbruch = true;
+            }
             const data = await res.json();
             if (res.ok && data.langbeschreibung) {
                 const container = document.getElementById('langcontainer_' + imageId);
@@ -3583,14 +3651,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     if (ta) ta.value = data.alt_text;
                 }
                 if (btn) btn.style.display = 'none';
-                if (statusEl) statusEl.textContent = t('Langbeschreibung generiert');
-                announce(t('Langbeschreibung wurde generiert'));
+                const vorweg = nachAbbruch ? t('Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da.') + ' ' : '';
+                if (statusEl) statusEl.textContent = vorweg + t('Langbeschreibung generiert');
+                announce(vorweg + t('Langbeschreibung wurde generiert'));
             } else {
                 if (statusEl) statusEl.textContent = t('Keine Langbeschreibung verfügbar');
                 announce(t('Keine Langbeschreibung verfügbar'));
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = t('Verbindungsfehler');
+            announce(t('Verbindungsfehler. Bitte erneut versuchen.'));
         } finally {
             if (btn) { btn.disabled = false; btn.textContent = t('Langbeschreibung (optional)'); }
         }

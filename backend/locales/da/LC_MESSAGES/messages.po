@@ -11181,3 +11181,7 @@ msgstr "Sidevisning: {seite} som billede"
 
 msgid "Den Text dieser Seite gibt es unter „Seitentext anzeigen“."
 msgstr "Teksten på denne side findes under „Vis sidetekst“."
+
+# KI-Knoepfe: Ergebnis nach Verbindungsabbruch abgeholt (06.10.2026)
+msgid "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da."
+msgstr "Forbindelsen blev kortvarigt afbrudt, men resultatet er kommet alligevel."
