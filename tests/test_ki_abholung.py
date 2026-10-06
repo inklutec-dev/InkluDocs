@@ -3,6 +3,8 @@ Prueft: Stand „laeuft“/„fertig“, dieselbe Antwort wie der POST, kein zwe
 beim Abholen, fremde/unbekannte Kennungen, Fehlerantworten (402/404/500), Endpunkte ohne Kopf unveraendert, und dass
 FastAPI die dekorierten Endpunkte richtig verdrahtet (formular_api nutzt `from __future__ import annotations`).
     docker exec -w /app <container> python3 -m unittest /app/tests/test_ki_abholung.py
+Immer im EIGENEN Prozess starten (nicht zusammen mit anderen Testdateien in einem unittest-Aufruf): `database` liest
+den Pfad beim ersten Import; ist es schon geladen, ueberspringt sich der Test, statt fremde Daten anzufassen.
 """
 import asyncio
 import os
@@ -17,10 +19,14 @@ os.environ["INKLUDOCS_DB"] = os.path.join(TMP, "test.db")
 sys.path.insert(0, "/app")
 os.chdir("/app")
 import database  # noqa: E402
-database.init_db()
-import main  # noqa: E402
-import formular_api  # noqa: E402
-import ki_abholung  # noqa: E402
+# Hat im selben Prozess schon ein anderer Test `database` mit einer anderen Datenbank geladen, nichts anfassen
+# (06.10.2026: so landeten zwei Testprojekte in der Staging-Datenbank) — die Klasse ueberspringt sich dann.
+FREMDE_DB = os.path.abspath(database.DB_PATH) != os.path.abspath(os.environ["INKLUDOCS_DB"])
+if not FREMDE_DB:
+    database.init_db()
+    import main  # noqa: E402
+    import formular_api  # noqa: E402
+    import ki_abholung  # noqa: E402
 from fastapi import HTTPException, Request  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -38,6 +44,8 @@ class _Anfrage:
 class KiAbholungTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if FREMDE_DB:
+            raise unittest.SkipTest("database ist schon mit einer anderen Datenbank geladen — bitte im eigenen Prozess starten")
         c = database.get_db()
         for u in (NUTZER, FREMD):
             c.execute("INSERT OR IGNORE INTO users (id, email, password_hash, display_name) VALUES (?, ?, 'x', 'Test')", (u["id"], u["email"]))

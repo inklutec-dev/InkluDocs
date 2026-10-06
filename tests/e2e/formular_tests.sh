@@ -14,7 +14,9 @@ echo "=== unit (Container $C)"
 sudo docker exec "$C" mkdir -p /app/tests/fixtures
 sudo docker cp "$D/tests/test_formular_roundtrip.py" "$C":/app/tests/ >/dev/null; sudo docker cp "$D/tests/test_formular_ki.py" "$C":/app/tests/ >/dev/null; sudo docker cp "$D/tests/test_billing_export.py" "$C":/app/tests/ >/dev/null; sudo docker cp "$D/tests/test_ki_abholung.py" "$C":/app/tests/ >/dev/null
 sudo docker cp "$D/tests/fixtures/testformular_inkludocs.pdf" "$C":/app/tests/fixtures/ >/dev/null
-sudo docker exec -w /app "$C" python3 -m unittest /app/tests/test_formular_roundtrip.py /app/tests/test_formular_ki.py /app/tests/test_billing_export.py /app/tests/test_ki_abholung.py 2>&1 | grep -E "^Ran|^OK|FAILED|Error"
+sudo docker exec -w /app "$C" python3 -m unittest /app/tests/test_formular_roundtrip.py /app/tests/test_formular_ki.py /app/tests/test_billing_export.py 2>&1 | grep -E "^Ran|^OK|FAILED|Error"
+# Eigener Prozess (Wegwerf-Datenbank, siehe Kopf der Datei):
+sudo docker exec -w /app "$C" python3 -m unittest /app/tests/test_ki_abholung.py 2>&1 | grep -E "^Ran|^OK|FAILED|Error"
 echo "=== ki_klick Selbsttest (lokal, ohne Staging und KI)"
 "$PYPW" "$D/tests/e2e/ki_klick_selbsttest.py" 2>&1 | grep -E "FEHLT|Ergebnis"
 echo "=== verify_formular (E2E, Projekt bleibt fuer Klicktest)"
