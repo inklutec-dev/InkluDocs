@@ -15,6 +15,8 @@ sudo docker exec "$C" mkdir -p /app/tests/fixtures
 sudo docker cp "$D/tests/test_formular_roundtrip.py" "$C":/app/tests/ >/dev/null; sudo docker cp "$D/tests/test_formular_ki.py" "$C":/app/tests/ >/dev/null; sudo docker cp "$D/tests/test_billing_export.py" "$C":/app/tests/ >/dev/null
 sudo docker cp "$D/tests/fixtures/testformular_inkludocs.pdf" "$C":/app/tests/fixtures/ >/dev/null
 sudo docker exec -w /app "$C" python3 -m unittest /app/tests/test_formular_roundtrip.py /app/tests/test_formular_ki.py /app/tests/test_billing_export.py 2>&1 | grep -E "^Ran|^OK|FAILED|Error"
+echo "=== ki_klick Selbsttest (lokal, ohne Staging und KI)"
+"$PYPW" "$D/tests/e2e/ki_klick_selbsttest.py" 2>&1 | grep -E "FEHLT|Ergebnis"
 echo "=== verify_formular (E2E, Projekt bleibt fuer Klicktest)"
 OUT=$(python3 "$D/tests/e2e/verify_formular.py" "$URL" "$INKLUDOCS_E2E_MAIL" "$INKLUDOCS_E2E_PW" "$D/tests/fixtures/testformular_inkludocs.pdf" --behalten 2>&1)
 echo "$OUT" | grep -E "FEHLT|Ergebnis|Traceback|Error" | head -20
@@ -22,7 +24,8 @@ PID=$(echo "$OUT" | grep -oE "Projekt [0-9]+\)" | grep -oE "[0-9]+" | tail -1)
 TOKEN=$(echo "$OUT" | grep -oE "^Gast-Token: .*" | awk '{print $2}')
 if [ -n "$PID" ]; then
   echo "=== ui_formular (Klicktest, Projekt $PID)"
-  "$PYPW" "$D/tests/e2e/ui_formular.py" "$PID" "$TOKEN" 2>&1 | grep -E "FEHLT|Ergebnis"
+  # „KI-Anfrage …“: Dauer und ggf. Abbruchgrund der KI-Klicks (ki_klick.py, 06.10.2026)
+  "$PYPW" "$D/tests/e2e/ui_formular.py" "$PID" "$TOKEN" 2>&1 | grep -E "FEHLT|Ergebnis|KI-Anfrage"
   python3 - "$PID" "$URL" "$INKLUDOCS_E2E_MAIL" "$INKLUDOCS_E2E_PW" <<'PY2'
 import http.cookiejar, json, sys, urllib.request
 pid, B, mail, pw = sys.argv[1:5]; cj=http.cookiejar.CookieJar(); op=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))

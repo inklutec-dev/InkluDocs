@@ -7,7 +7,10 @@ Gast-Ansicht (28.08.2026): mit Token wird zusaetzlich /freigabe/<token> geprueft
 import sys
 from playwright.sync_api import sync_playwright
 import os
-B = os.environ.get("INKLUDOCS_E2E_URL", "https://staging.inkludocs.inklutec.de"); PID = sys.argv[1]; TOKEN = sys.argv[2] if len(sys.argv) > 2 else ""
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# KI-Knoepfe: auf die Antwort warten statt fester Zeit, Ursache protokollieren (06.10.2026, siehe ki_klick.py)
+from ki_klick import ki_klick, warten_bis, mitschnitt_anhaengen  # noqa: E402
+B =os.environ.get("INKLUDOCS_E2E_URL", "https://staging.inkludocs.inklutec.de"); PID = sys.argv[1]; TOKEN = sys.argv[2] if len(sys.argv) > 2 else ""
 MAIL, PW = os.environ.get("INKLUDOCS_E2E_MAIL", ""), os.environ.get("INKLUDOCS_E2E_PW", "")
 if not MAIL or not PW: sys.exit("Zugangsdaten fehlen: INKLUDOCS_E2E_MAIL / INKLUDOCS_E2E_PW setzen")
 SHOTS = os.environ.get("INKLUDOCS_E2E_SHOTS", "/tmp")
@@ -21,6 +24,7 @@ with sync_playwright() as p:
     br = p.chromium.launch(); ctx = br.new_context(viewport={"width": 1280, "height": 900}, locale="de-DE"); pg = ctx.new_page()
     fehler_js = []
     pg.on("pageerror", lambda e: fehler_js.append(str(e)))
+    mitschnitt_anhaengen(pg, "besitzer")
     # Anmeldung seit dem Startseiten-Rollout (04.09.2026) unter /login, nicht mehr unter /.
     pg.goto(B + "/login"); pg.fill("#email", MAIL); pg.fill("#password", PW); pg.keyboard.press("Enter"); pg.wait_for_timeout(2500)
     print("== A. Werkzeugauswahl ==")
@@ -120,13 +124,13 @@ with sync_playwright() as p:
     check("Sammel-Knopf ohne Preis/Anzahl (Rueckfrage nennt sie)", "Credits" not in pg.locator("#fGenAllBtn").inner_text(), pg.locator("#fGenAllBtn").inner_text())
     check("Sprache der Quickinfos + Gespeicherte Prompts vorhanden", pg.locator("#altLangSelect").count() == 1 and pg.locator("#ownPromptSelect").count() == 1)
     vorher = nn.locator("textarea.quickinfo-field").input_value()
-    nn.locator("button[id^=feld_gen_]").click()
-    text = ""
-    for _ in range(45):
-        pg.wait_for_timeout(1000)
-        text = nn.locator("textarea.quickinfo-field").input_value()
-        if text and text != vorher: break
-    check("KI-Text im Feld (>3 Zeichen, anders als vorher)", len(text) > 3 and text != vorher, (text, nn.locator("h4").inner_text(), nn.locator("[id^=feld_msg_]").inner_text()))
+    # Seit 06.10.2026: auf die Antwort der KI-Anfrage warten statt fest 45 s. Die Zeile „KI-Anfrage …“ nennt Dauer
+    # und ggf. den Abbruchgrund (KI-Latenz bis 54 s gesehen; Netzwechsel auf dem Testrechner -> ein neuer Klick).
+    erg = ki_klick(pg, nn.locator("button[id^=feld_gen_]"), "/api/felder/" + leer[0].split("_")[1] + "/generieren",
+                   "Feld generieren", bild=os.path.join(SHOTS, "f_ki_abbruch.png"))
+    warten_bis(pg, lambda: nn.locator("textarea.quickinfo-field").input_value() not in ("", vorher))
+    text = nn.locator("textarea.quickinfo-field").input_value()
+    check("KI-Text im Feld (>3 Zeichen, anders als vorher)", len(text) > 3 and text != vorher, (text, nn.locator("h4").inner_text(), nn.locator("[id^=feld_msg_]").inner_text(), erg["kurz"]))
     print("      KI:", text)
     check("Badge KI-Vorschlag mit Sicherheit", "KI-Vorschlag" in nn.locator("[id^=feld_status_]").inner_text(), nn.locator("[id^=feld_status_]").inner_text())
     check("Beleg als Klappe vorhanden (Michael P3), zu", nn.locator("details.feld-beleg-details").count() == 1 and not nn.locator("details.feld-beleg-details").evaluate("e=>e.hidden") and nn.locator("details.feld-beleg-details").evaluate("e=>!e.open"))
@@ -140,12 +144,11 @@ with sync_playwright() as p:
     # Seit dem Sammellauf ueber ALLE Felder (09.09.2026) kann Feld 1 schon ein KI-Fach tragen (Knopf
     # sichtbar); entscheidend ist das Verhalten beim Generieren am Feld: Hand-Text bleibt, Meldung kommt.
     check("Feld 1 traegt einen Hand-Text", vorher1.strip() != "", vorher1)
-    c1.locator("button[id^=feld_gen_]").click()
-    for _ in range(45):
-        pg.wait_for_timeout(1000)
-        if "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text(): break
+    erg1 = ki_klick(pg, c1.locator("button[id^=feld_gen_]"), "/api/felder/" + c1.get_attribute("id").split("_")[1] + "/generieren",
+                    "Feld 1 generieren (Hand-Text)", bild=os.path.join(SHOTS, "f_ki_abbruch_feld1.png"))
+    warten_bis(pg, lambda: "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text())
     check("Hand-Text bleibt nach Generieren", c1.locator("textarea.quickinfo-field").input_value() == vorher1, c1.locator("textarea.quickinfo-field").input_value())
-    check("Knopf 'KI-Vorschlag uebernehmen' sichtbar + Meldung", c1.locator("button[id^=feld_ki_]").evaluate("b=>!b.hidden") and "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text(), c1.locator("[id^=feld_msg_]").inner_text())
+    check("Knopf 'KI-Vorschlag uebernehmen' sichtbar + Meldung", c1.locator("button[id^=feld_ki_]").evaluate("b=>!b.hidden") and "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text(), (c1.locator("[id^=feld_msg_]").inner_text(), erg1["kurz"]))
     c1.locator("button[id^=feld_ki_]").click(); pg.wait_for_timeout(1000)
     # (Der KI-Text kann dem Hand-Text gleichen — die bestaetigte Fassung gilt als Vorgabe; entscheidend: Badge KI, Knopf weg)
     check("KI-Vorschlag uebernommen (Badge KI, Knopf versteckt)", "KI-Vorschlag" in c1.locator("[id^=feld_status_]").inner_text() and c1.locator("button[id^=feld_ki_]").evaluate("b=>b.hidden") is True, c1.locator("[id^=feld_status_]").inner_text())
@@ -234,7 +237,7 @@ with sync_playwright() as p:
     if TOKEN:
         print("== H. Gast-Ansicht ==")
         gctx = br.new_context(viewport={"width": 1280, "height": 900}, locale="de-DE"); gp = gctx.new_page()
-        gfehler = []; gp.on("pageerror", lambda e: gfehler.append(str(e)))
+        gfehler = []; gp.on("pageerror", lambda e: gfehler.append(str(e))); mitschnitt_anhaengen(gp, "gast")
         gp.goto(B + "/freigabe/" + TOKEN); gp.wait_for_timeout(2000)
         check("E-Mail-Gate nennt Quickinfos", "Quickinfos" in gp.locator("main").inner_text(), gp.locator("main").inner_text()[:120])
         gp.fill("#gateEmail", "gast-formular@beispiel.invalid"); gp.keyboard.press("Enter"); gp.wait_for_timeout(3000)
