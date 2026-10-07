@@ -81,6 +81,10 @@ class Basis(unittest.TestCase):
         for t in ("express_verlauf", "express_positionen", "express_auftraege", "usage_events", "paket_abbuchungen",
                   "quota_pakete", "documents", "projects", "users", "system_kv"):
             _sql(f"DELETE FROM {t}")
+        # Grundpreis je Dokument (Runde 7) fuer die aelteren Szenarien auf 0 — ihre Zahlen rechnen mit 50 je Seite. Den
+        # echten Standard (50 je Seite + 100 je Dokument) pruefen die Tests der Klasse Runde7.
+        _sql("INSERT INTO system_kv (key, value) VALUES ('express_einstellungen', ?)",
+             '{"grundpreise": {"aufbereiten": 0, "pruefen": 0}}')
         _sql("INSERT INTO users (id, email, password_hash, display_name, plan) VALUES (1, 'kundin@beispiel.invalid', 'x', 'Kundin', 'free')")
         _sql("INSERT INTO users (id, email, password_hash, display_name, plan) VALUES (2, 'fremd@beispiel.invalid', 'x', 'Fremd', 'free')")
         self.pid = self._projekt(1, "Projekt A")
@@ -428,8 +432,9 @@ class Einstellungen(Basis):
                 express.speichere_einstellungen(daten)
         e = express.speichere_einstellungen({"preise": {"aufbereiten": "60", "pruefen": "30"}, "frist_stunden": "72",
                                              "max_seiten_auftrag": "300", "max_dokumente_auftrag": "20",
-                                             "team_mail": "team@beispiel.invalid", "preise_festgelegt": True})
-        self.assertEqual((e["preise"]["aufbereiten"], e["frist_stunden"], e["preise_festgelegt"]), (60, 72, True))
+                                             "team_mail": "team@beispiel.invalid", "grundpreise": {"aufbereiten": "120"}})
+        self.assertEqual((e["preise"]["aufbereiten"], e["frist_stunden"], e["grundpreise"]["aufbereiten"]), (60, 72, 120))
+        self.assertNotIn("preise_festgelegt", e)                          # Platzhalter-Kennzeichen entfallen (Runde 7)
         self.assertEqual(express.einstellungen()["preise"], {"aufbereiten": 60, "pruefen": 30})
         self.assertEqual(express.team_empfaenger("support@beispiel.invalid"), ["team@beispiel.invalid"])
 
@@ -763,10 +768,11 @@ class Korrektur(Basis):
             self.assertTrue(e.exception.text.startswith(anfang), e.exception.text)
 
     def test_alte_preis_schluessel_werden_uebernommen(self):
-        _sql("INSERT INTO system_kv (key, value) VALUES ('express_einstellungen', ?)",
+        _sql("UPDATE system_kv SET value = ? WHERE key = 'express_einstellungen'",
              '{"preis_aufbereiten": 70, "preis_pruefen": 30, "frist_stunden": 24}')
         e = express.einstellungen()
         self.assertEqual((e["preise"], e["frist_stunden"], e["aufbewahrung_tage"]), ({"aufbereiten": 70, "pruefen": 30}, 24, 0))
+        self.assertEqual(e["grundpreise"], {"aufbereiten": 100, "pruefen": 0})   # ohne gespeicherten Grundpreis: Standard
 
     # ── Texte: Einzahl, deutsches Datum, Tausenderpunkt (A11, A22) ──
     def test_a11_texte(self):
@@ -863,14 +869,6 @@ class Erweiterbar(Basis):
         self.assertEqual(ev, {"express_vorlesen": 27, "express_aufbereiten": 100})
         pfad, name = express.datei_fuer_kunde(1, aid, p_txt["id"], "ergebnis")
         self.assertEqual((name, express.mime_der_datei(pfad)), ("notiz (gelesen).txt", "text/plain"))
-
-    def test_upload_ohne_projekt_erkennt_den_typ(self):
-        self.assertEqual(express.dateityp_fuer_upload("a.txt", b"TXT:abc").schluessel, "txt")
-        self.assertEqual(express.dateityp_fuer_upload("a.PDF", b"%PDF-1.4").schluessel, "pdf")
-        with self.assertRaises(express.ExpressFehler):
-            express.dateityp_fuer_upload("a.txt", b"%PDF-1.4")         # Endung und Inhalt passen nicht
-        with self.assertRaises(express.ExpressFehler):
-            express.dateityp_fuer_upload("a.docx", b"PK\x03\x04")
 
 
 class WarenkorbZusatz(Basis):
@@ -1032,10 +1030,6 @@ class Runde3(Basis):
 
     # ── A6: positiv formuliert ──
     def test_a6_positive_meldungen(self):
-        for name, kopf in (("a.docx", b"PK\x03\x04"), ("a.pdf", b"MZ kein pdf")):
-            with self.assertRaises(express.ExpressFehler) as e:
-                express.dateityp_fuer_upload(name, kopf)
-            self.assertEqual(e.exception.text, "Bitte wähle eine PDF-Datei aus.")
         text = os.path.join(_TMP, "keinpdf.txt")
         with open(text, "w") as f:
             f.write("kein pdf")
@@ -1642,6 +1636,89 @@ class Runde6(_DomainHilfe, Basis):
         anna = self._vormonats_auftrag(2, monat_davor=0)
         express.stornieren(anna, PERSON, "Test")
         self.assertEqual((billing.pakete_rest(1), self._abbuchungen()), (100, []))
+
+class Runde7(_Guthabenhilfe, Basis):
+    """Runde 7 (Michael Karbe 06.10.2026): Preis 50 Credits je Seite PLUS 100 Credits je Dokument (Grundpreis als eigene
+    Einstellung), Zusammensetzung in Aufstellung, Auftrag und Nachweis; bestehende Auftraege behalten ihren Preis; Mails
+    nennen das Konto, mit dem bestellt wurde."""
+
+    def setUp(self):
+        super().setUp()
+        _sql("DELETE FROM system_kv WHERE key = 'express_einstellungen'")     # echter Standard
+
+    def test_standardpreis_je_seite_plus_je_dokument(self):
+        self.assertEqual((express.einstellungen()["preise"]["aufbereiten"], express.einstellungen()["grundpreise"]["aufbereiten"]),
+                         (50, 100))
+        w = express.dokumente_hinzufuegen(1, [self.d1, self.d2])["warenkorb"]   # 2 + 1 Seiten
+        self.assertEqual((w["credits"], w["credits_seiten"], w["credits_grund"]), (350, 150, 200))
+        self.assertEqual([(p["seiten"], p["preis_seite"], p["grundpreis"], p["credits"]) for p in w["positionen"]],
+                         [(2, 50, 100, 200), (1, 50, 100, 150)])
+        self.assertEqual(express.leistungen_liste()[0]["grundpreis"], 100)
+
+    def test_bestellung_merkt_zusammensetzung_und_bucht_den_preis(self):
+        aid = self._auftrag()                                            # 350 Credits, Paket 1000
+        a = express.auftrag_fuer_kunde(1, aid)
+        self.assertEqual((a["credits"], [(p["preis_seite"], p["grundpreis"]) for p in a["positionen"]]), (350, [(50, 100), (50, 100)]))
+        self.assertEqual(billing.vorgemerkt(1), 350)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual(_sql("SELECT SUM(credits) AS s FROM usage_events WHERE quelle = 'express'")[0]["s"], 350)
+
+    def test_grundpreis_geaendert_wird_nicht_bestellt(self):
+        express.dokumente_hinzufuegen(1, [self.d1])
+        self._guthaben(1000)
+        gesehen = express.warenkorb(1)                                   # 200
+        express.speichere_einstellungen({"preise": {"aufbereiten": "50"}, "grundpreise": {"aufbereiten": "150"},
+                                         "frist_stunden": "48", "max_seiten_auftrag": "500", "max_dokumente_auftrag": "50"})
+        with self.assertRaises(express.ExpressFehler) as e:
+            self._bestellen(korb=gesehen)
+        self.assertEqual((e.exception.status, e.exception.extra.get("neu_credits")), (409, 250))
+
+    def test_offene_auftraege_behalten_ihren_preis(self):
+        aid = self._auftrag([self.d1])                                   # 200
+        express.speichere_einstellungen({"preise": {"aufbereiten": "80"}, "grundpreise": {"aufbereiten": "300"},
+                                         "frist_stunden": "48", "max_seiten_auftrag": "500", "max_dokumente_auftrag": "50"})
+        self.assertEqual(express.auftrag_fuer_kunde(1, aid)["credits"], 200)
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual(_sql("SELECT SUM(credits) AS s FROM usage_events WHERE quelle = 'express'")[0]["s"], 200)
+
+    def test_grundpreis_pruefung_und_null(self):
+        basis = {"preise": {"aufbereiten": "50"}, "frist_stunden": "48", "max_seiten_auftrag": "500", "max_dokumente_auftrag": "50"}
+        for falsch in ("-1", "viel", "100001"):
+            with self.assertRaises(express.ExpressFehler) as e:
+                express.speichere_einstellungen({**basis, "grundpreise": {"aufbereiten": falsch}})
+            self.assertEqual(e.exception.extra.get("feld"), "grundpreis_aufbereiten")
+        express.speichere_einstellungen({**basis, "grundpreise": {"aufbereiten": "0"}})
+        self.assertEqual(express.preis("aufbereiten", 3), 150)               # 0 = kein Grundpreis
+
+    def test_free_domain_mit_grundpreis(self):
+        """Free-Domain, 100 Paket-Credits: ein Dokument mit 1 Seite kostet 150 (50 gemeinsames Volumen + 100 Paket-Teil);
+        danach ist nichts mehr frei, nach der Lieferung ist nichts ungedeckt."""
+        self._paket(1, 100)
+        aid = self._vormonats_auftrag(1, monat_davor=0)
+        self.assertEqual(_sql("SELECT credits_gesamt FROM express_auftraege WHERE id = ?", aid)[0]["credits_gesamt"], 150)
+        self.assertEqual((self._stimmig(1), self._stimmig(2)), (0, 0))
+        self._ergebnis(aid)
+        express.liefern(aid, PERSON)
+        self.assertEqual((billing.pakete_rest(1), self._stimmig(1)), (0, 0))
+
+    def test_mails_nennen_das_konto(self):
+        aid = self._auftrag([self.d1])
+        a = express.auftrag_fuer_verwaltung(aid)
+        for art in ("bestellt", "rueckfrage", "geliefert", "storniert"):
+            betreff, inhalt = express.mail_kunde(art, a, "https://beispiel.invalid", "Testtext")
+            self.assertIn("Bestellt mit dem Konto kundin@beispiel.invalid.", inhalt, art)
+            self.assertIn("https://beispiel.invalid/express/auftrag/%d" % aid, inhalt)
+
+    def test_nachweis_nennt_zusammensetzung(self):
+        aid = self._auftrag([self.d1])
+        ziel = os.path.join(_TMP, "nachweis_r7.docx")
+        express.nachweis_docx(express.auftrag_fuer_kunde(1, aid), ziel)
+        import zipfile
+        with zipfile.ZipFile(ziel) as z:
+            xml = z.read("word/document.xml").decode()
+        self.assertIn("2 × 50 Credits je Seite plus 100 Credits je Dokument", xml)
 
 class NurPdf(unittest.TestCase):
     def test_heute_nur_pdf(self):

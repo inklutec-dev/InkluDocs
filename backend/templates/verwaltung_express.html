@@ -20,9 +20,9 @@
 
 <section class="dash-card verwaltung-karte" aria-labelledby="h-ex-einst" id="exvEinstellungen" hidden>
   <h2 id="h-ex-einst" tabindex="-1">{{ _('Einstellungen des Express-Service') }}</h2>
-  <p id="exvPlatzhalter" class="verwaltung-warnung" hidden>{{ _('Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen.') }}</p>
   <form id="exvEinstForm" novalidate>
-    {# Preisfelder je Leistung baut das Skript aus der Liste der Leistungen (express.LEISTUNGEN). #}
+    {# Preisfelder je Leistung baut das Skript aus der Liste der Leistungen (express.LEISTUNGEN): Credits je Seite und
+       (Runde 7, Michaels Richtpreis) Grundpreis je Dokument. #}
     <div id="exvPreisFelder"></div>
     <div class="dash-field">
       <label for="exvFrist">{{ _('Lieferfrist in Stunden') }}</label>
@@ -45,7 +45,6 @@
       <label for="exvMail">{{ _('Benachrichtigungen an (leer = Support-Postfach)') }}</label>
       <input type="email" id="exvMail" class="dash-input" maxlength="254" autocomplete="off">
     </div>
-    <p class="verwaltung-wahl"><label><input type="checkbox" id="exvFest"> {{ _('Preise sind festgelegt (kein Platzhalter mehr)') }}</label></p>
     {# Zusatz 05.10.2026 (Steve): ohne Codeänderung umschaltbar; wirkt nur, solange Neu-Bestellen an ist. #}
     <p class="verwaltung-wahl"><label><input type="checkbox" id="exvKorbKnopf"> {{ _('Knopf „In den Express-Warenkorb“ an jedem PDF-Dokument (Projektansicht „Dokument“)') }}</label></p>
     <fieldset class="ex-fieldset" id="exvKorbNav">
@@ -178,28 +177,33 @@
   }
 
   // ── Einstellungen ──
+  function preisFeld(ziel, id, feldname, beschriftung, wert, darf) {
+    FELDER[feldname] = id;
+    const feld = V.el('div', 'dash-field');
+    const lab = V.el('label', null, beschriftung);
+    lab.htmlFor = id;
+    const inp = V.el('input', 'dash-input');
+    inp.type = 'text';
+    inp.id = id;
+    inp.inputMode = 'numeric';
+    inp.maxLength = 7;
+    inp.autocomplete = 'off';
+    inp.required = true;
+    inp.value = wert;
+    inp.disabled = !darf;
+    feld.appendChild(lab);
+    feld.appendChild(inp);
+    ziel.appendChild(feld);
+  }
+
   function preisFelder(e, darf) {
     const ziel = byId('exvPreisFelder');
     ziel.innerHTML = '';
     leistungen = e.leistungen || [];
     leistungen.forEach((l) => {
-      const id = 'exvPreis_' + l.schluessel;
-      FELDER['preis_' + l.schluessel] = id;
-      const feld = V.el('div', 'dash-field');
-      const lab = V.el('label', null, t('{leistung}: Credits je Seite', { leistung: t(l.name) }));
-      lab.htmlFor = id;
-      const inp = V.el('input', 'dash-input');
-      inp.type = 'text';
-      inp.id = id;
-      inp.inputMode = 'numeric';
-      inp.maxLength = 7;
-      inp.autocomplete = 'off';
-      inp.required = true;
-      inp.value = l.preis;
-      inp.disabled = !darf;
-      feld.appendChild(lab);
-      feld.appendChild(inp);
-      ziel.appendChild(feld);
+      preisFeld(ziel, 'exvPreis_' + l.schluessel, 'preis_' + l.schluessel, t('{leistung}: Credits je Seite', { leistung: t(l.name) }), l.preis, darf);
+      // Runde 7: Grundpreis je Dokument (0 = keiner)
+      preisFeld(ziel, 'exvGrund_' + l.schluessel, 'grundpreis_' + l.schluessel, t('{leistung}: Grundpreis je Dokument (Credits)', { leistung: t(l.name) }), l.grundpreis || 0, darf);
     });
   }
 
@@ -211,8 +215,6 @@
     byId('exvMaxDok').value = e.max_dokumente_auftrag;
     byId('exvAufbewahrung').value = e.aufbewahrung_tage || 0;
     byId('exvMail').value = e.team_mail || '';
-    byId('exvFest').checked = !!e.preise_festgelegt;
-    byId('exvPlatzhalter').hidden = !!e.preise_festgelegt;
     byId('exvKorbKnopf').checked = e.korb_knopf !== false;
     const nav = byId('exvKorbNav_' + (e.korb_navigation || 'immer'));
     if (nav) nav.checked = true;
@@ -227,13 +229,17 @@
     byId('exvEinstFehler').textContent = '';
     Object.values(FELDER).forEach((id) => V.feldFehler(id, ''));
     const preise = {};
-    leistungen.forEach((l) => { preise[l.schluessel] = byId('exvPreis_' + l.schluessel).value; });
+    const grundpreise = {};
+    leistungen.forEach((l) => {
+      preise[l.schluessel] = byId('exvPreis_' + l.schluessel).value;
+      grundpreise[l.schluessel] = byId('exvGrund_' + l.schluessel).value;
+    });
     einstLaeuft = true;
     const r = await V.sendeJson('/api/admin/express/einstellungen', 'POST', {
-      preise: preise, frist_stunden: byId('exvFrist').value,
+      preise: preise, grundpreise: grundpreise, frist_stunden: byId('exvFrist').value,
       max_seiten_auftrag: byId('exvMaxSeiten').value, max_dokumente_auftrag: byId('exvMaxDok').value,
       aufbewahrung_tage: byId('exvAufbewahrung').value,
-      team_mail: byId('exvMail').value, preise_festgelegt: byId('exvFest').checked,
+      team_mail: byId('exvMail').value,
       korb_knopf: byId('exvKorbKnopf').checked,
       // Eine der drei Möglichkeiten ist immer gewählt (vorbelegt aus den Einstellungen).
       korb_navigation: (document.querySelector('input[name="exvKorbNav"]:checked') || {}).value || undefined });

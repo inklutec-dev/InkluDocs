@@ -63,14 +63,20 @@ uid = get_user_by_email({KUNDE!r})['id']
 k = httpx.Client(base_url='http://127.0.0.1:8001', timeout=120)
 r = k.post('/api/login', json={{'email': {KUNDE!r}, 'password': {KPW!r}}})
 k.headers['Cookie'] = 'token=' + r.cookies.get('token')
+import time
+pid = None
+# Runde 7: kein Hochladen ohne Projekt mehr — die Dokumente kommen in ein Projekt.
 for name, seiten in (('Bericht fiktiv.pdf', 2), ('Flyer fiktiv.pdf', 1)):
     d = fitz.open()
     for i in range(seiten):
         d.new_page().insert_text((72, 72), 'Fiktives Dokument, Seite %d' % (i + 1))
-    k.post('/api/express/warenkorb/hochladen', files={{'file': (name, d.tobytes(), 'application/pdf')}}).raise_for_status()
-for p in k.get('/api/express/stand').json()['warenkorb']['positionen']:
-    k.delete('/api/express/warenkorb/positionen/%d' % p['id']).raise_for_status()
-c = get_db(); pid = c.execute('SELECT id FROM projects WHERE user_id = ?', (uid,)).fetchone()[0]; c.close()
+    r = k.post('/api/upload', files={{'file': (name, d.tobytes(), 'application/pdf')}}, data={{'project_id': str(pid)}} if pid else None)
+    r.raise_for_status()
+    pid = r.json()['project_id']
+    for _ in range(120):
+        if k.get('/api/projects/%d/status' % pid).json().get('status') != 'extracting':
+            break
+        time.sleep(0.5)
 print(pid)
 """
 SICHERN = """
@@ -169,8 +175,8 @@ try:
         check("Entfernen: Navigation still auf „Express-Warenkorb“", nav_korb() == "Express-Warenkorb" and fokus() == "exMeldung", (nav_korb(), fokus()))
         pg.goto(f"{BASE}/express", wait_until="networkidle")
         pg.wait_for_timeout(1000)
-        check("Auf /express: aria-current am „Express-Service“, nicht am Warenkorb",
-              pg.locator(".app-nav a[aria-current=page]").inner_text().strip() == "Express-Service")
+        check("Auf /express: aria-current am „Meine Aufträge“, nicht am Warenkorb",
+              pg.locator(".app-nav a[aria-current=page]").inner_text().strip() == "Meine Aufträge")
 
         # Modus „nur wenn etwas im Warenkorb liegt“
         einstellen(korb_navigation="mit_inhalt")

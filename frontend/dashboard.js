@@ -98,6 +98,14 @@ function buildCreditLines(abo, kurz) {
 
 let currentUser = null;
 
+// Zur Anmeldung MIT Ruecksprung auf die aktuelle Seite (Express Runde 7): nach der Anmeldung geht es hierher zurueck.
+// Der Server prueft das Ziel (nur interne Pfade); /login selbst ist nie Ziel.
+function zurAnmeldung(ziel) {
+  const hier = ziel || (window.location.pathname + window.location.search + window.location.hash);
+  window.location.href = (!hier || hier.indexOf('/login') === 0) ? '/login' : '/login?weiter=' + encodeURIComponent(hier);
+}
+window.zurAnmeldung = zurAnmeldung;
+
 async function loadCurrentUser() {
   if (window.GUEST_MODE) { currentUser = null; return null; }  // Gast: kein /api/me, keine Weiterleitung
   let res;
@@ -113,7 +121,7 @@ async function loadCurrentUser() {
     // Oeffentliche Seite: kein Login noetig, keine Weiterleitung — die Huelle
     // rendert gleich die oeffentliche Navigation (renderSidebar).
     if (window.OEFFENTLICH) { currentUser = null; return null; }
-    window.location.href = '/login';
+    zurAnmeldung();
     return null;
   }
   const data = await res.json();
@@ -177,7 +185,8 @@ const NAV_ITEMS = [
   { href: '/projekte', label: t('Meine Projekte') },
   { href: '/ablage', label: t('Meine Ablage') },   // Sicherung der barrierefreien Office-Dokumente inkl. Pruefbericht (11.09.2026)
   // EXPRESS-SERVICE (05.10.2026): Profis bereiten Dokumente auf — nur, wenn die Funktion an ist (/api/me user.express).
-  { href: '/express', label: t('Express-Service'), express: true, bereich: '/express', ausser: ['/express/warenkorb'] },
+  // Runde 7 (Michael Karbe 06.10.2026): heißt „Meine Aufträge“ wie „Meine Projekte“ / „Meine Ablage“.
+  { href: '/express', label: t('Meine Aufträge'), express: true, bereich: '/express', ausser: ['/express/warenkorb'] },
   // Express-Warenkorb (Zusatz 05.10.2026, Steve): fester Eintrag mit Anzahl als Text; Anzeige-Modus in der Verwaltung
   // (immer / nur mit Inhalt / aus, /api/me user.express_warenkorb). Text siehe expressKorbText().
   { href: '/express/warenkorb', label: '', korb: true },

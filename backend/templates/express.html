@@ -1,28 +1,33 @@
 {% extends "base_app.html" %}
 
-{% block title %}{% if warenkorb_ansicht %}{{ _('Express-Warenkorb') }}{% else %}{{ _('Express-Service') }}{% endif %} · InkluDocs{% endblock %}
+{% block title %}{% if warenkorb_ansicht %}{{ _('Express-Warenkorb') }}{% else %}{{ _('Meine Aufträge') }}{% endif %} · InkluDocs{% endblock %}
 
 {% block main %}
-{# EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Profis bereiten Dokumente auf oder prüfen sie. Ein Auftrag in vier
-   Schritten auf EINER Seite (Dokumente wählen, Auswahl mit Leistung je Dokument, Angaben, Prüfen und zahlungspflichtig
-   bestellen), darunter „Meine Aufträge“. Dem Kunden wird nur „innerhalb von 48 Stunden“ genannt, keine Uhrzeit (Steve).
-   Leistungen, Preise und Dateitypen kommen vom Server (express.LEISTUNGEN/DATEITYPEN) — nichts davon steht hier fest.
-   Hochladen ohne Projekt: GENAU die Hochlade-Komponente der Projekte (hochladefeld.js, Steve 05.10.2026).
-   Barrierefreiheit: natives HTML (fieldset/legend, echte Kontrollkästchen, select, button), Fehler am Feld verknüpft
-   (feldFehler), Ansagen sparsam — interne Neuladungen sind still, Bestätigungen sind sichtbare Meldungen (mit Fokus)
-   oder EINE Ansage, nie zwei gleichzeitig. Ist der Schalter aus (express_bestellen falsch), bleibt nur „Meine Aufträge“.
-   Daten: /api/express/…, Kern express.py. #}
-{# Titel und Hauptüberschrift passen zusammen, auch auf /express/warenkorb (Nachprüfung Barrierefreiheit 05.10.2026, N5) #}
-<h1 id="exTitel" tabindex="-1">{% if warenkorb_ansicht %}{{ _('Express-Warenkorb') }}{% else %}{{ _('Express-Service') }}{% endif %}</h1>
+{# EXPRESS-SERVICE (05.10.2026, Steve/Michael): Profis bereiten Dokumente barrierefrei auf. Dem Kunden wird nur
+   „innerhalb von 48 Stunden“ genannt, keine Uhrzeit (Steve). Leistungen, Preise und Dateitypen kommen vom Server
+   (express.LEISTUNGEN/DATEITYPEN) — nichts davon steht hier fest.
+   Runde 7 (Michael Karbe 06.10.2026): zwei Seiten aus dieser Vorlage.
+   - /express = „Meine Aufträge“ (Navigation, wie „Meine Projekte“): GANZ OBEN die Aufträge als Karten wie die
+     Dokument-Karten der Projekte, standardmäßig zu (auch bei nur einem Auftrag); offen nach dem Bestellen (?neu=<id>)
+     und beim Sprung auf einen Auftrag (?auftrag=<id> bzw. #exa_karte_<id>). Darunter nur der Weg zum Warenkorb.
+   - /express/warenkorb = Express-Warenkorb (warenkorb_ansicht): neuer Auftrag in vier Schritten. Kein Hochladen ohne
+     Projekt mehr — Dateien kommen aus Projekten (Knopf am Dokument oder Auswahl hier).
+   Barrierefreiheit: natives HTML (fieldset/legend, echte Kontrollkästchen, select, button, details/summary), Fehler am
+   Feld verknüpft (feldFehler), Ansagen sparsam — interne Neuladungen sind still, Bestätigungen sind sichtbare Meldungen
+   (mit Fokus) oder EINE Ansage, nie zwei gleichzeitig. Daten: /api/express/…, Kern express.py. #}
+{% if warenkorb_ansicht %}
+<p class="verwaltung-zurueck"><a href="/express">{{ _('Zu meinen Aufträgen') }}</a></p>
+{# Titel und Hauptüberschrift passen zusammen (Nachprüfung Barrierefreiheit 05.10.2026, N5) #}
+<h1 id="exTitel" tabindex="-1">{{ _('Express-Warenkorb') }}</h1>
 <p class="dash-sub" id="exIntro"></p>
 <p class="dash-sub" id="exPreise"></p>
-{% if express_bestellen %}
-<p><a href="#h-auftraege">{{ _('Zu meinen Aufträgen') }}</a></p>
 
 <section class="dash-card verwaltung-karte" aria-labelledby="h-neu" id="exNeu">
   <h2 id="h-neu">{{ _('Neuer Auftrag') }}</h2>
 
   <h3 id="h-schritt1" tabindex="-1">{{ _('1. Dokumente auswählen') }}</h3>
+  {# Kein Hochladen hier (Michael Karbe 06.10.2026, Punkt 2): neue Dateien kommen zuerst in ein Projekt. #}
+  <p class="dash-sub" id="exProjektHinweis">{{ _('Eine neue Datei lädst du zuerst in ein Projekt hoch. Danach kannst du sie hier auswählen oder im Projekt mit „In den Express-Warenkorb“ hinzufügen.') }} <a href="/projekt-neu">{{ _('Neues Projekt anlegen') }}</a></p>
   <form id="exProjektForm" class="verwaltung-suche" novalidate>
     <div class="dash-field">
       <label for="exProjekt">{{ _('Aus einem Projekt') }}</label>
@@ -39,8 +44,6 @@
     <p id="exDokFehler" class="verwaltung-fehler"></p>
     <button type="submit" class="btn btn-primary" id="exHinzu">{{ _('Zur Auswahl hinzufügen') }}</button>
   </form>
-  {# Hier setzt das Skript die Hochlade-Komponente ein (Überschrift H4 unter „1. Dokumente auswählen“). #}
-  <div id="exHochladen"></div>
 
   <h3 id="h-auswahl" tabindex="-1">{{ _('2. Deine Auswahl') }}</h3>
   <p id="exMeldung" class="verwaltung-bestaetigung" tabindex="-1" hidden></p>
@@ -66,7 +69,8 @@
     </div>
 
     <h3 id="h-pruefen">{{ _('4. Prüfen und bestellen') }}</h3>
-    {# Nur Summen — die Dokumente stehen schon unter „2. Deine Auswahl“ (Michael Karbe 05.10.2026, Punkt 4) #}
+    {# Nur Summen — die Dokumente stehen schon unter „2. Deine Auswahl“ (Michael Karbe 05.10.2026, Punkt 4); seit Runde 7
+       mit der Zusammensetzung aus Seitenpreis und Grundpreis je Dokument. #}
     <p id="exGesamt" class="verwaltung-bestaetigung"></p>
     <p id="exGuthaben"></p>
     <p id="exLieferung"></p>
@@ -84,18 +88,27 @@
   </form>
 </section>
 {% else %}
-<p class="verwaltung-warnung">{{ _('Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier.') }}</p>
-{% endif %}
+{# id h-auftraege: alte Links (/express#h-auftraege aus Mails und der Startseite) springen weiter hierher #}
+<h1 id="h-auftraege" tabindex="-1">{{ _('Meine Aufträge') }}</h1>
+<p class="dash-sub">{{ _('Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen.') }}</p>
+{# Aufträge wie die Dokument-Karten der Projekte (Michael Karbe 05./06.10.2026) #}
+<p id="exAuftragMeldung" class="verwaltung-bestaetigung" tabindex="-1" hidden></p>
+<div id="exAuftraege" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
 
-<section class="dash-card verwaltung-karte" aria-labelledby="h-auftraege">
-  <h2 id="h-auftraege" tabindex="-1">{{ _('Meine Aufträge') }}</h2>
-  {# Aufträge wie die Dokument-Karten der Projektansicht „Dokument“ (Michael Karbe 05.10.2026, Punkte 1 und 2) #}
-  <p id="exAuftragMeldung" class="verwaltung-bestaetigung" tabindex="-1" hidden></p>
-  <div id="exAuftraege" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+<section class="dash-card verwaltung-karte" aria-labelledby="h-neuer-auftrag">
+  <h2 id="h-neuer-auftrag">{{ _('Neuer Express-Auftrag') }}</h2>
+  {% if express_bestellen %}
+  <p>{{ _('Lege Dokumente im Projekt mit dem Knopf „In den Express-Warenkorb“ in deinen Warenkorb oder wähle sie im Express-Warenkorb aus deinen Projekten aus. Eine neue Datei lädst du zuerst in ein Projekt hoch.') }}</p>
+  <p><a class="btn btn-primary" href="/express/warenkorb">{{ _('Zum Express-Warenkorb') }}</a></p>
+  {% else %}
+  <p class="verwaltung-warnung">{{ _('Neue Express-Aufträge sind zurzeit nicht möglich. Deine bisherigen Aufträge findest du hier.') }}</p>
+  {% endif %}
 </section>
+{% endif %}
 {% endblock %}
 
 {% block dialogs %}
+{% if not warenkorb_ansicht %}
 {# Wie „Dokument umbenennen“ / „Dokument löschen“ in der Projektansicht (app.html docRenameDialog, docDeleteDialog) #}
 <dialog id="exaRenameDialog" class="app-dialog" aria-labelledby="exaRenameTitel" aria-describedby="exaRenameHinweis">
   <form id="exaRenameForm" novalidate>
@@ -120,11 +133,11 @@
     <button type="button" class="btn btn-danger" id="exaLoeschJa">{{ _('Löschen') }}</button>
   </div>
 </dialog>
+{% endif %}
 {% endblock %}
 
 {% block page_script %}
 <script>window.EXPRESS_BESTELLEN = {{ 'true' if express_bestellen else 'false' }}; window.EXPRESS_WARENKORB = {{ 'true' if warenkorb_ansicht else 'false' }};</script>
-<script src="/static/hochladefeld.js?v={{ asset_version }}"></script>
 <script>
 {% raw %}
 (function () {
@@ -174,7 +187,7 @@
     let res;
     try { res = await fetch(url, Object.assign({ headers: { 'Accept': 'application/json' } }, opt || {})); }
     catch (e) { return { ok: false, status: 0, daten: { detail: t('Keine Verbindung zum Server. Bitte erneut versuchen.') } }; }
-    if (res.status === 401) { window.location.href = '/login'; return { ok: false, status: 401, daten: {} }; }
+    if (res.status === 401) { window.zurAnmeldung(); return { ok: false, status: 401, daten: {} }; }
     const daten = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, daten: daten };
   }
@@ -198,9 +211,14 @@
   function kopf() {
     byId('exIntro').textContent = t('Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht.', { stunden: stand.frist_stunden });
     // Eine Leistung: nur der Preis; mehrere: die Liste (Leistungen kommen vom Server, abgeschaltete fehlen).
+    // Runde 7 (Michaels Richtpreis): Preis je Seite plus Grundpreis je Dokument.
+    function preisText(l) {
+      return l.grundpreis ? t('{c} Credits je Seite plus {g} Credits je Dokument', { c: zahl(l.preis), g: zahl(l.grundpreis) })
+        : t('{c} Credits je Seite', { c: zahl(l.preis) });
+    }
     byId('exPreise').textContent = stand.leistungen.length === 1
-      ? t('Preis: {c} Credits je Seite.', { c: zahl(stand.leistungen[0].preis) })
-      : t('Preise je Seite: {liste}.', { liste: stand.leistungen.map((l) => t('{leistung} {c} Credits', { leistung: t(l.name), c: zahl(l.preis) })).join(', ') });
+      ? t('Preis: {preis}.', { preis: preisText(stand.leistungen[0]) })
+      : t('Preise: {liste}.', { liste: stand.leistungen.map((l) => t(l.name) + ': ' + preisText(l)).join('; ') });
     byId('exBedingungenText').textContent = stand.texte.bedingungen;
     if (!byId('exName').value) byId('exName').value = stand.ansprechpartner || '';
   }
@@ -240,7 +258,7 @@
     if (vorher && sel.querySelector('option[value="' + vorher + '"]')) sel.value = vorher;
   }
 
-  // still: interne Neuladung (nach Hinzufügen, Entfernen, Hochladen) — keine eigene Ansage, sonst überschreibt sie die
+  // still: interne Neuladung (nach Hinzufügen, Entfernen) — keine eigene Ansage, sonst überschreibt sie die
   // eigentliche Bestätigung (Befund 3). Angesagt wird nur nach „Dokumente anzeigen“.
   async function dokumenteLaden(pid, anhaken, still) {
     const r = await json('/api/express/projekte/' + encodeURIComponent(pid) + '/dokumente');
@@ -318,35 +336,6 @@
       announce(text);
     });
 
-    // Hochladen ohne Projekt: die Hochlade-Komponente der Projekte. Ihre Statuszeile sagt Dateiname und Ergebnis an —
-    // darum hier KEIN announce() (eine Ansage je Schritt).
-    const typen = stand.dateitypen || [];
-    byId('exHochladen').appendChild(window.hochladefeld({
-      id: 'exDatei',
-      ebene: 4,
-      titel: t('{typen} hochladen, ohne Projekt', { typen: typenText() }),
-      knopf: typen.length === 1 ? t('{typ}-Datei auswählen', { typ: typen[0].name }) : t('Datei auswählen'),
-      hinweis: t('Dafür legen wir ein Projekt „Express-Auftrag“ an.') + ' ' + t('Maximal {mb} MB pro Datei.', { mb: stand.max_upload_mb || 50 }),
-      accept: typen.map((x) => x.accept).join(','),
-      hochladen: async (datei) => {
-        if (laeuft) return { ok: false, text: t('Bitte warten, bis der vorige Schritt fertig ist.') };
-        meldungWeg();
-        const fd = new FormData();
-        fd.append('file', datei);
-        laeuft = true;
-        const r = await json('/api/express/warenkorb/hochladen', { method: 'POST', body: fd });
-        laeuft = false;
-        if (!r.ok) return { ok: false, text: fehlertext(r.daten, t('Die Datei konnte nicht hochgeladen werden.')) };
-        stand.warenkorb = r.daten.warenkorb;
-        auswahl();
-        await projekteLaden();
-        if (byId('exProjekt').value && !byId('exDokForm').hidden) await dokumenteLaden(byId('exProjekt').value, false, true);
-        let text = t('„{name}“ hochgeladen und zur Auswahl hinzugefügt.', { name: datei.name }) + ' ' + summeText() + guthabenSatz();
-        if (r.daten.hinweise && r.daten.hinweise.length) text += ' ' + r.daten.hinweise.join(' ');
-        return { ok: true, text: text };
-      },
-    }));
-
     byId('exBestellForm').addEventListener('submit', bestellen);
   }
 
@@ -384,7 +373,7 @@
     (p.leistungen || []).forEach((k) => {
       const l = leistung(k);
       if (!l) return;
-      const o = el('option', null, t(l.name) + ' — ' + t('{c} Credits', { c: zahl(l.preis * p.seiten) }));
+      const o = el('option', null, t(l.name) + ' — ' + t('{c} Credits', { c: zahl(l.preis * p.seiten + (l.grundpreis || 0)) }));
       o.value = k;
       sel.appendChild(o);
     });
@@ -404,7 +393,7 @@
     if (window.expressKorbAnzeigen) window.expressKorbAnzeigen(w.dokumente);
     w.positionen.forEach((p) => {
       const li = el('li', 'verwaltung-zeile');
-      li.appendChild(el('p', 'verwaltung-meta', p.dokument_name + ', ' + SEITEN(p.seiten)
+      li.appendChild(el('p', 'verwaltung-meta', p.dokument_name + ', ' + SEITEN(p.seiten) + ', ' + t('{c} Credits', { c: zahl(p.credits) })
         + (p.vorhanden ? '' : ' — ' + t('nicht mehr vorhanden, bitte entfernen'))));
       // Reine Dokumentliste (Michael Karbe 05.10.2026, Punkt 3); eine Leistungswahl erscheint nur, wenn es für den
       // Dateityp mehr als eine eingeschaltete Leistung gibt (express.LEISTUNGEN).
@@ -435,11 +424,24 @@
     aufstellung();
   }
 
-  // ── Schritt 4: nur Summen ──
+  // ── Schritt 4: nur Summen, mit Zusammensetzung (Runde 7: Seitenpreis + Grundpreis je Dokument) ──
+  function zusammensetzung(w) {
+    const pos = w.positionen || [];
+    if (!w.credits_grund) return '';
+    // Gleiche Preise für alle Dokumente (heute immer: eine Leistung): mit Rechenweg; sonst nur die beiden Teilsummen.
+    const gleich = pos.length && pos.every((p) => p.preis_seite === pos[0].preis_seite && p.grundpreis === pos[0].grundpreis);
+    if (gleich) {
+      return t('Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits.', {
+        seiten: zahl(w.seiten), p: zahl(pos[0].preis_seite), cs: zahl(w.credits_seiten),
+        dokumente: zahl(w.dokumente), g: zahl(pos[0].grundpreis), cg: zahl(w.credits_grund) }) + ' ';
+    }
+    return t('Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits.', { cs: zahl(w.credits_seiten), cg: zahl(w.credits_grund) }) + ' ';
+  }
   function aufstellung() {
     const w = stand.warenkorb;
     byId('exGesamt').textContent = w.dokumente
-      ? t('{dokumente}, {seiten}, Summe: {c} Credits', { dokumente: DOK(w.dokumente), seiten: SEITEN(w.seiten), c: zahl(w.credits) })
+      ? t('{dokumente}, {seiten}.', { dokumente: DOK(w.dokumente), seiten: SEITEN(w.seiten) }) + ' ' + zusammensetzung(w)
+        + t('Summe: {c} Credits.', { c: zahl(w.credits) })
       : t('Deine Auswahl ist leer.');
     byId('exGuthaben').textContent = stand.guthaben === null || stand.guthaben === undefined
       ? t('Dein Guthaben: unbegrenzt.') : t('Dein verfügbares Guthaben: {c} Credits.', { c: zahl(stand.guthaben) });
@@ -490,7 +492,8 @@
       ansprechpartner: byId('exName').value, telefon: tel, hinweise: byId('exHinweise').value,
       bedingungen: byId('exBedingungen').checked, idempotenz: idempotenz,
       korb_id: stand.warenkorb.id, erwartete_credits: stand.warenkorb.credits, fassung: stand.warenkorb.fassung });
-    if (r.ok) { window.location.href = '/express/auftrag/' + r.daten.auftrag_id + '?neu=1'; return; }
+    // Runde 7: nach dem Bestellen in „Meine Aufträge“, der neue Auftrag aufgeklappt, Danke-Meldung oben.
+    if (r.ok) { window.location.href = '/express?neu=' + encodeURIComponent(r.daten.auftrag_id); return; }
     laeuft = false;
     byId('exBestellen').removeAttribute('aria-disabled');
     const detail = (r.daten && r.daten.detail) || {};
@@ -613,8 +616,18 @@
     ziel.setAttribute('aria-busy', 'false');
     auftraege = r.ok ? r.daten.auftraege : [];
     if (!auftraege.length) { ziel.appendChild(el('p', 'dash-empty', t('Du hast noch keine Express-Aufträge.'))); return; }
-    // Wie in der Projektansicht: ein einzelner Auftrag ist aufgeklappt, mehrere sind zu (bis auf zuvor geöffnete)
-    auftraege.forEach((a) => ziel.appendChild(auftragKarte(a, auftraege.length === 1 || offen.has('exa_karte_' + a.id))));
+    // Runde 7 (Michael Karbe 06.10.2026): Karten standardmäßig zu — auch bei nur einem Auftrag, damit die Liste als
+    // aufklappbar erkennbar ist. Offen bleiben zuvor geöffnete und der Auftrag, auf den gesprungen wird.
+    const ziel_id = sprungZiel();
+    auftraege.forEach((a) => ziel.appendChild(auftragKarte(a, offen.has('exa_karte_' + a.id) || String(a.id) === ziel_id)));
+  }
+
+  // Sprungziel: ?neu=<id> (nach dem Bestellen), ?auftrag=<id> (Startseite) oder #exa_karte_<id>; '' = keins.
+  function sprungZiel() {
+    const q = new URLSearchParams(window.location.search);
+    const h = /^#exa_karte_(\d+)$/.exec(window.location.hash || '');
+    const z = q.get('neu') || q.get('auftrag') || (h ? h[1] : '');
+    return /^\d+$/.test(z || '') ? z : '';
   }
 
   function auftragMeldung(text) {
@@ -640,60 +653,95 @@
     byId('exaLoeschDialog').showModal();
   }
 
-  byId('exaRenameAbbrechen').addEventListener('click', () => byId('exaRenameDialog').close());
-  byId('exaRenameDialog').addEventListener('close', () => { if (aktion && aktion.knopf && document.contains(aktion.knopf) && !aktion.fertig) aktion.knopf.focus(); });
-  byId('exaRenameForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!aktion) return;
-    const r = await senden('/api/express/auftraege/' + aktion.a.id + '/name', 'POST', { name: byId('exaRenameName').value });
-    if (!r.ok) { feldFehler('exaRenameName', fehlertext(r.daten, t('Umbenennen fehlgeschlagen.'))); byId('exaRenameName').focus(); return; }
-    aktion.fertig = true;
-    byId('exaRenameDialog').close();
-    await auftraegeLaden();
-    auftragMeldung(t('Der Auftrag heißt jetzt „{name}“.', { name: auftragName(r.daten) }));
-  });
-  byId('exaLoeschAbbrechen').addEventListener('click', () => byId('exaLoeschDialog').close());
-  byId('exaLoeschDialog').addEventListener('close', () => { if (aktion && aktion.knopf && document.contains(aktion.knopf) && !aktion.fertig) aktion.knopf.focus(); });
-  byId('exaLoeschJa').addEventListener('click', async () => {
-    if (!aktion) return;
-    const name = auftragName(aktion.a);
-    const r = await senden('/api/express/auftraege/' + aktion.a.id, 'DELETE');
-    aktion.fertig = true;
-    byId('exaLoeschDialog').close();
-    if (!r.ok) { auftragMeldung(fehlertext(r.daten, t('Löschen fehlgeschlagen.'))); return; }
-    await auftraegeLaden();
-    auftragMeldung(t('„{name}“ ist gelöscht.', { name: name }));
-  });
+  function dialogeEinrichten() {
+    byId('exaRenameAbbrechen').addEventListener('click', () => byId('exaRenameDialog').close());
+    byId('exaRenameDialog').addEventListener('close', () => { if (aktion && aktion.knopf && document.contains(aktion.knopf) && !aktion.fertig) aktion.knopf.focus(); });
+    byId('exaRenameForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!aktion) return;
+      const r = await senden('/api/express/auftraege/' + aktion.a.id + '/name', 'POST', { name: byId('exaRenameName').value });
+      if (!r.ok) { feldFehler('exaRenameName', fehlertext(r.daten, t('Umbenennen fehlgeschlagen.'))); byId('exaRenameName').focus(); return; }
+      aktion.fertig = true;
+      byId('exaRenameDialog').close();
+      await auftraegeLaden();
+      auftragMeldung(t('Der Auftrag heißt jetzt „{name}“.', { name: auftragName(r.daten) }));
+    });
+    byId('exaLoeschAbbrechen').addEventListener('click', () => byId('exaLoeschDialog').close());
+    byId('exaLoeschDialog').addEventListener('close', () => { if (aktion && aktion.knopf && document.contains(aktion.knopf) && !aktion.fertig) aktion.knopf.focus(); });
+    byId('exaLoeschJa').addEventListener('click', async () => {
+      if (!aktion) return;
+      const name = auftragName(aktion.a);
+      const r = await senden('/api/express/auftraege/' + aktion.a.id, 'DELETE');
+      aktion.fertig = true;
+      byId('exaLoeschDialog').close();
+      if (!r.ok) { auftragMeldung(fehlertext(r.daten, t('Löschen fehlgeschlagen.'))); return; }
+      await auftraegeLaden();
+      auftragMeldung(t('„{name}“ ist gelöscht.', { name: name }));
+    });
+  }
+
+  // Nach dem Laden: Danke nach dem Bestellen (sichtbar, Fokus, ohne zweite Ansage) bzw. Fokus auf den Auftrag, auf den
+  // gesprungen wurde (dessen Karte ist offen).
+  function sprungZeigen() {
+    const id = sprungZiel();
+    if (!id) return;
+    const karte = byId('exa_karte_' + id);
+    const neu = new URLSearchParams(window.location.search).get('neu');
+    if (neu) {
+      history.replaceState(null, '', window.location.pathname);
+      const a = auftraege.find((x) => String(x.id) === id);
+      if (a) auftragMeldung(t('Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail.', { nr: a.id, stunden: a.frist_stunden }));
+      return;
+    }
+    if (karte) {
+      karte.scrollIntoView();
+      const sum = karte.querySelector('details.dok-klappe > summary');
+      if (sum) sum.focus();
+    }
+  }
 
   // Seite aus dem Zurück-Speicher des Browsers (bfcache): Stand und Schlüssel erneuern (Befund 4).
   window.addEventListener('pageshow', async (e) => {
-    if (!e.persisted || !window.EXPRESS_BESTELLEN) return;
-    idempotenz = neuerSchluessel();
-    laeuft = false;
-    if (await standLaden()) { kopf(); auswahl(); }
-    await auftraegeLaden();
+    if (!e.persisted) return;
+    if (window.EXPRESS_WARENKORB) {
+      idempotenz = neuerSchluessel();
+      laeuft = false;
+      if (await standLaden()) { kopf(); auswahl(); }
+    } else {
+      await auftraegeLaden();
+    }
   });
 
   (async function start() {
     await loadCurrentUser();
-    if (window.EXPRESS_BESTELLEN) {
-      if (!(await standLaden())) {
-        byId('exIntro').textContent = t('Der Express-Service ist gerade nicht erreichbar.');
-      } else {
-        kopf();
-        auswahl();
-        einrichtenBestellen();
-        const vorwahl = new URLSearchParams(window.location.search).get('projekt');
-        const pid = vorwahl && /^\d+$/.test(vorwahl) ? vorwahl : '';
-        await projekteLaden(pid);
-        // Vorwahl aus dem Projekt („Vom Express-Service bearbeiten lassen“): Dokumente gleich zeigen und ankreuzen —
-        // ohne Ansage, die Liste steht sichtbar da (Befund 8).
-        if (pid && byId('exProjekt').value === pid) await dokumenteLaden(pid, true, true);
-        // /express/warenkorb (Navigation „Express-Warenkorb“, Link „Zum Warenkorb“): gleich bei „2. Deine Auswahl“.
-        if (window.EXPRESS_WARENKORB) { byId('h-auswahl').scrollIntoView(); byId('h-auswahl').focus(); }
-      }
+    if (!window.EXPRESS_WARENKORB) {
+      // „Meine Aufträge“
+      dialogeEinrichten();
+      await auftraegeLaden();
+      sprungZeigen();
+      return;
     }
-    await auftraegeLaden();
+    // Express-Warenkorb
+    if (!(await standLaden())) {
+      byId('exIntro').textContent = t('Der Express-Service ist gerade nicht erreichbar.');
+      return;
+    }
+    kopf();
+    auswahl();
+    einrichtenBestellen();
+    const vorwahl = new URLSearchParams(window.location.search).get('projekt');
+    const pid = vorwahl && /^\d+$/.test(vorwahl) ? vorwahl : '';
+    await projekteLaden(pid);
+    // Vorwahl aus dem Projekt („Vom Express-Service bearbeiten lassen“): Dokumente gleich zeigen und ankreuzen —
+    // ohne Ansage, die Liste steht sichtbar da (Befund 8); Fokus auf Schritt 1. Sonst gleich bei „2. Deine Auswahl“.
+    if (pid && byId('exProjekt').value === pid) {
+      await dokumenteLaden(pid, true, true);
+      byId('h-schritt1').scrollIntoView();
+      byId('h-schritt1').focus();
+    } else {
+      byId('h-auswahl').scrollIntoView();
+      byId('h-auswahl').focus();
+    }
   })();
 })();
 {% endraw %}

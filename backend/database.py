@@ -1079,6 +1079,10 @@ def _migrate_columns(conn):
         # KI-Kontexts bzw. Seitentexts. Die alten Spalten context_text/page_text bleiben (Rueckfall, Migration).
         ("images", "kontext_id", "ALTER TABLE images ADD COLUMN kontext_id INTEGER"),
         ("images", "seitentext_id", "ALTER TABLE images ADD COLUMN seitentext_id INTEGER"),
+        # Express Runde 7 (06.10.2026, Michaels Richtpreis): Preis je Seite und Grundpreis je Dokument zum Zeitpunkt der
+        # Bestellung — fuer die Zusammensetzung in Auftragsuebersicht und Nachweis (credits bleibt der bezahlte Betrag).
+        ("express_positionen", "preis_seite", "ALTER TABLE express_positionen ADD COLUMN preis_seite INTEGER"),
+        ("express_positionen", "grundpreis", "ALTER TABLE express_positionen ADD COLUMN grundpreis INTEGER"),
     ]
 
     for table, column, sql in migrations:

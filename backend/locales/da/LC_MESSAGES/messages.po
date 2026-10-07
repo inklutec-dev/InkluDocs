@@ -10293,9 +10293,6 @@ msgstr "4. Kontrollér og bestil"
 msgid "Alle Dokumente dieses Projekts"
 msgstr "Alle dokumenter i dette projekt"
 
-msgid "Alle Express-Aufträge"
-msgstr "Alle ekspresordrer"
-
 msgid "Alle Originale als ZIP herunterladen"
 msgstr "Download alle originaler som ZIP"
 
@@ -10465,18 +10462,12 @@ msgstr "Indstillingerne kunne ikke gemmes."
 msgid "Die Leistung konnte nicht geändert werden."
 msgstr "Ydelsen kunne ikke ændres."
 
-msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
-msgstr "Priserne er stadig pladsholdere. Fastsæt dem først efter aftale, og sæt flueben ved „Priserne er fastsat“ nedenfor."
-
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "De reserverede kreditter frigives, intet trækkes. Kunden får en e-mail med begrundelsen."
 
 msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
 msgstr "Denne oversigt er en dokumentation, ikke en faktura: Der betales med kreditter, hvis køb er faktureret separat."
-
-msgid "Diesen Auftrag gibt es nicht."
-msgstr "Denne ordre findes ikke."
 
 msgid "Dokumente anzeigen"
 msgstr "Vis dokumenter"
@@ -10604,9 +10595,6 @@ msgstr "Nogle afvigelser er bevidste (fx kontroller, som veraPDF ikke kan vurder
 msgid "Meine Aufträge"
 msgstr "Mine ordrer"
 
-msgid "Meine Express-Aufträge"
-msgstr "Mine ekspresordrer"
-
 msgid "Mir zuweisen"
 msgstr "Tildel til mig"
 
@@ -10636,9 +10624,6 @@ msgstr "Kun kontrol (kontrolrapport)"
 msgid "Original herunterladen"
 msgstr "Download original"
 
-
-msgid "Preise sind festgelegt (kein Platzhalter mehr)"
-msgstr "Priserne er fastsat (ikke længere pladsholdere)"
 
 msgid "Prüfbericht"
 msgstr "Kontrolrapport"
@@ -10885,9 +10870,6 @@ msgstr "Automatisk kontrol ({pruefung}): med bemærkninger, som vores team har g
 msgid "Bitte warten, bis der vorige Schritt fertig ist."
 msgstr "Vent, til det forrige trin er færdigt."
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
-msgstr "Vi opretter et projekt „Ekspresordre“ til det."
-
 msgid "Datei auswählen"
 msgstr "Vælg fil"
 
@@ -10963,9 +10945,6 @@ msgstr "Åbne ordrer"
 msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
 msgstr "Originaler, resultater og kontrolrapporter slettes så mange dage efter levering eller annullering; selve ordren bevares som dokumentation. 0 = slet aldrig."
 
-msgid "Preise je Seite: {liste}."
-msgstr "Priser pr. side: {liste}."
-
 msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
 msgstr "Omsætning (slutpriser, uden moms efter § 19 UStG)"
 
@@ -10980,9 +10959,6 @@ msgstr "for {modell}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Upload {art} til „{name}“"
-
-msgid "{leistung} {c} Credits"
-msgstr "{leistung} {c} kreditter"
 
 msgid "{leistung}: Credits je Seite"
 msgstr "{leistung}: kreditter pr. side"
@@ -11000,9 +10976,6 @@ msgstr "{pruefung}: bestået."
 msgid "{pruefung}: läuft noch …"
 msgstr "{pruefung}: kører stadig …"
 
-msgid "{typen} hochladen, ohne Projekt"
-msgstr "Upload {typen} uden projekt"
-
 msgid "{typ}-Datei auswählen"
 msgstr "Vælg {typ}-fil"
 
@@ -11011,9 +10984,6 @@ msgstr "„{datei}“ er gemt som resultat for „{name}“."
 
 msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
 msgstr "„{datei}“ er gemt som kontrolrapport for „{name}“."
-
-msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
-msgstr "„{name}“ uploadet og føjet til udvalget."
 
 msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
 msgstr "Dokumentet kunne ikke lægges i ekspres-kurven."
@@ -11096,9 +11066,6 @@ msgstr "Ordrens navn"
 msgid "Name des Kunden für den Auftrag"
 msgstr "Kundens navn for ordren"
 
-msgid "Preis: {c} Credits je Seite."
-msgstr "Pris: {c} kreditter pr. side."
-
 msgid "Umfang"
 msgstr "Omfang"
 
@@ -11128,9 +11095,6 @@ msgstr "slettet af kunden"
 
 msgid "{art} für „{name}“"
 msgstr "{art} til „{name}“"
-
-msgid "{dokumente}, {seiten}, Summe: {c} Credits"
-msgstr "{dokumente}, {seiten}, i alt: {c} kreditter"
 
 msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
 msgstr "{pruefung}: afvigelser fra standarden, 1 regel ikke opfyldt."
@@ -11185,3 +11149,64 @@ msgstr "Teksten på denne side findes under „Vis sidetekst“."
 # KI-Knoepfe: Ergebnis nach Verbindungsabbruch abgeholt (06.10.2026)
 msgid "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da."
 msgstr "Forbindelsen blev kortvarigt afbrudt, men resultatet er kommet alligevel."
+
+# Express Runde 7 (06.10.2026): Meine Auftraege, Grundpreis, Anmeldung ueber Links
+msgid "Abmelden und anders anmelden"
+msgstr "Log ud og log ind med en anden konto"
+
+msgid "Alle Aufträge"
+msgstr "Alle ordrer"
+
+msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
+msgstr "Dine Express-ordrer: Fagfolk gør dine dokumenter tilgængelige. Åbn en ordre for at se dokumenter, status og downloads."
+
+msgid "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
+msgstr "Denne ordre hører ikke til din konto ({mail}). Log ind med den konto, du bestilte med."
+
+msgid "Dieser Auftrag gehört nicht zu deinem Konto. Melde dich mit dem Konto an, mit dem du bestellt hast."
+msgstr "Denne ordre hører ikke til din konto. Log ind med den konto, du bestilte med."
+
+msgid "Eine neue Datei lädst du zuerst in ein Projekt hoch. Danach kannst du sie hier auswählen oder im Projekt mit „In den Express-Warenkorb“ hinzufügen."
+msgstr "Upload først en ny fil til et projekt. Derefter kan du vælge den her eller tilføje den i projektet med „Læg i Express-kurven“."
+
+msgid "Lege Dokumente im Projekt mit dem Knopf „In den Express-Warenkorb“ in deinen Warenkorb oder wähle sie im Express-Warenkorb aus deinen Projekten aus. Eine neue Datei lädst du zuerst in ein Projekt hoch."
+msgstr "Læg dokumenter i kurven med knappen „Læg i Express-kurven“ i projektet, eller vælg dem fra dine projekter i Express-kurven. Upload først en ny fil til et projekt."
+
+msgid "Nach der Anmeldung geht es weiter zur aufgerufenen Seite."
+msgstr "Efter login fortsætter du til den side, du åbnede."
+
+msgid "Neuer Express-Auftrag"
+msgstr "Ny Express-ordre"
+
+msgid "Preis: {preis}."
+msgstr "Pris: {preis}."
+
+msgid "Preise: {liste}."
+msgstr "Priser: {liste}."
+
+msgid "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
+msgstr "Sider: {cs} credits. Grundpris pr. dokument: {cg} credits."
+
+msgid "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
+msgstr "Sider: {seiten} × {p} credits = {cs} credits. Grundpris: {dokumente} × {g} credits = {cg} credits."
+
+msgid "Summe: {c} Credits."
+msgstr "I alt: {c} credits."
+
+msgid "Zum Express-Warenkorb"
+msgstr "Til Express-kurven"
+
+msgid "{c} Credits je Seite"
+msgstr "{c} credits pr. side"
+
+msgid "{c} Credits je Seite plus {g} Credits je Dokument"
+msgstr "{c} credits pr. side plus {g} credits pr. dokument"
+
+msgid "{dokumente}, {seiten}."
+msgstr "{dokumente}, {seiten}."
+
+msgid "{leistung}: Grundpreis je Dokument (Credits)"
+msgstr "{leistung}: grundpris pr. dokument (credits)"
+
+msgid "{seiten} × {p} Credits je Seite plus {g} Credits je Dokument"
+msgstr "{seiten} × {p} credits pr. side plus {g} credits pr. dokument"

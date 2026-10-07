@@ -80,14 +80,20 @@ c = get_db(); c.execute("INSERT INTO quota_pakete (user_id, groesse, verbleibend
 k = httpx.Client(base_url='http://127.0.0.1:8001', timeout=120)
 r = k.post('/api/login', json={{'email': {KUNDE!r}, 'password': {KPW!r}}})
 k.headers['Cookie'] = 'token=' + r.cookies.get('token')
+import time
+pid = None
+# Runde 7: kein Hochladen ohne Projekt mehr — die Dokumente kommen wie beim Kunden in ein Projekt.
 for name, seiten in (('Jahresbericht fiktiv.pdf', 2), ('Flyer fiktiv.pdf', 1)):
     d = fitz.open()
     for i in range(seiten):
         d.new_page().insert_text((72, 72), 'Fiktives Dokument, Seite %d' % (i + 1))
-    k.post('/api/express/warenkorb/hochladen', files={{'file': (name, d.tobytes(), 'application/pdf')}}).raise_for_status()
-for p in k.get('/api/express/stand').json()['warenkorb']['positionen']:
-    k.delete('/api/express/warenkorb/positionen/%d' % p['id']).raise_for_status()
-c = get_db(); pid = c.execute('SELECT id FROM projects WHERE user_id = ?', (uid,)).fetchone()[0]; c.close()
+    r = k.post('/api/upload', files={{'file': (name, d.tobytes(), 'application/pdf')}}, data={{'project_id': str(pid)}} if pid else None)
+    r.raise_for_status()
+    pid = r.json()['project_id']
+    for _ in range(120):
+        if k.get('/api/projects/%d/status' % pid).json().get('status') != 'extracting':
+            break
+        time.sleep(0.5)
 print(pid)
 """
 
@@ -133,66 +139,55 @@ try:
         pg = seite(kc)
         anmelden(pg, KUNDE, KPW)
         pg.wait_for_timeout(800)
-        check("Seitenleiste: „Express-Service“", pg.locator(".app-nav a[href='/express']").count() == 1)
+        check("Seitenleiste: „Meine Aufträge“ (Runde 7)", pg.locator(".app-nav a[href='/express']").count() == 1
+              and pg.locator(".app-nav a[href='/express']").inner_text().strip() == "Meine Aufträge")
         pg.goto(f"{BASE}/app?projekt={pid}&ansicht=dokument", wait_until="networkidle")
         pg.wait_for_timeout(1500)
         link = pg.locator("a", has_text="Vom Express-Service bearbeiten lassen")
         check("Projekt: Link „Vom Express-Service bearbeiten lassen“", link.count() == 1)
         link.click()
-        pg.wait_for_url("**/express?projekt=*")
+        pg.wait_for_url("**/express/warenkorb?projekt=*")
         pg.wait_for_timeout(1500)
-        check("Genau eine H1 „Express-Service“", pg.locator("h1").count() == 1 and pg.locator("h1").inner_text() == "Express-Service")
-        check("Projekt vorgewählt, alle Dokumente angehakt", pg.locator("#exProjekt").input_value() == str(pid)
-              and pg.locator("#exAlle").is_checked() and pg.locator("input[name=exDok]:checked").count() == 2)
+        check("Link aus dem Projekt führt in den Express-Warenkorb, genau eine H1", pg.locator("h1").count() == 1
+              and pg.locator("h1").inner_text() == "Express-Warenkorb", pg.locator("h1").inner_text())
+        check("Projekt vorgewählt, alle Dokumente angehakt, Fokus auf Schritt 1", pg.locator("#exProjekt").input_value() == str(pid)
+              and pg.locator("#exAlle").is_checked() and pg.locator("input[name=exDok]:checked").count() == 2 and fokus(pg) == "h-schritt1", fokus(pg))
         check("Keine Zahlen-Stepper, keine Tabellen", pg.locator("input[type=number]").count() == 0 and pg.locator("main table").count() == 0)
         check("Lieferung ohne Uhrzeit genannt", "innerhalb von 48 Stunden" in pg.locator("#exIntro").inner_text())
+        check("Preis: 50 je Seite plus 100 je Dokument (Runde 7)", pg.locator("#exPreise").inner_text() == "Preis: 50 Credits je Seite plus 100 Credits je Dokument.",
+              pg.locator("#exPreise").inner_text())
         check("Keine Ansage beim Laden (Vorwahl ist sichtbar)", live(pg) == "", live(pg))
         check("Legende mit Projektname ohne Anzahl", pg.locator("#exDokLegende").inner_text().startswith("Dokumente im Projekt „")
               and "Dokumente)" not in pg.locator("#exDokLegende").inner_text(), pg.locator("#exDokLegende").inner_text())
         check("Rahmen der Eingabefelder dunkel (#767f8f)", pg.evaluate("() => getComputedStyle(document.getElementById('exName')).borderColor") == "rgb(118, 127, 143)")
-        # Hochladefeld = Komponente der Projekte
-        zone = pg.locator("#exDateiZone")
-        check("Hochladefeld: Komponente der Projekte (proj-dropzone, Etikett-Knopf, „oder Datei hierher ziehen“)",
-              zone.count() == 1 and zone.locator(".dropzone-inner label.upload-btn[for=exDatei]").is_visible()
-              and "oder Datei hierher ziehen" in zone.inner_text() and zone.locator("h4").inner_text() == "PDF hochladen, ohne Projekt",
-              zone.inner_text() if zone.count() else "fehlt")
-        check("Hochladefeld: Knopf „PDF-Datei auswählen“", zone.locator("label.upload-btn").inner_text().strip() == "PDF-Datei auswählen")
-        pg.evaluate("() => document.getElementById('exDatei').focus()")
-        check("Hochladefeld: Fokusring am Knopf sichtbar", ring(pg, "label[for=exDatei]").startswith("solid 3px rgb(199, 80, 0)"), ring(pg, "label[for=exDatei]"))
-        check("Hochladefeld: Hinweis und Statuszeile am Feld", pg.locator("#exDatei").get_attribute("aria-describedby") == "exDateiHinweis exDateiStatus")
-        axe(pg, "Express-Seite")
+        # Runde 7 (Punkt 2): kein Hochladen bei der Auswahl — Hinweis aufs Projekt
+        check("Kein Hochladefeld, Hinweis „zuerst in ein Projekt“ mit Link", pg.locator("#exDateiZone").count() == 0
+              and pg.locator("input[type=file]").count() == 0 and "zuerst in ein Projekt" in pg.locator("#exProjektHinweis").inner_text()
+              and pg.locator("#exProjektHinweis a[href='/projekt-neu']").count() == 1)
+        axe(pg, "Express-Warenkorb")
         pg.click("#exHinzu")
         pg.wait_for_timeout(1200)
-        check("Auswahl: 2 Dokumente, 3 Seiten, 150 Credits", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 2 Dokumente, 3 Seiten, 150 Credits.",
+        check("Auswahl: 2 Dokumente, 3 Seiten, 350 Credits", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 2 Dokumente, 3 Seiten, 350 Credits.",
               pg.locator("#exSumme").inner_text())
         check("Hinzufügen: EINE Ansage (Bestätigung), keine Neuladung-Ansage darüber", live(pg).startswith("Hinzugefügt: 2 Dokumente."), live(pg))
-        # Fehler beim Hochladen: am Feld, mit Grund in der Statuszeile
-        pg.locator("#exDatei").set_input_files(files=[{"name": "kein.pdf", "mimeType": "application/pdf", "buffer": b"kein pdf"}])
-        pg.wait_for_timeout(1500)
-        check("Hochladen falsche Datei: Fehler in der Statuszeile, aria-invalid", pg.locator("#exDatei").get_attribute("aria-invalid") == "true"
-              and pg.locator("#exDateiStatus").inner_text().startswith("Fehler:"), pg.locator("#exDateiStatus").inner_text())
-        pg.locator("#exDatei").set_input_files(files=[{"name": "Beilage fiktiv.pdf", "mimeType": "application/pdf", "buffer": open(ergebnis_pdf, "rb").read()}])
-        pg.wait_for_timeout(3000)
-        check("Hochladen: Dateiname und neue Summe in der Statuszeile, Fehler weg", "„Beilage fiktiv.pdf“ hochgeladen" in pg.locator("#exDateiStatus").inner_text()
-              and pg.locator("#exDatei").get_attribute("aria-invalid") is None, pg.locator("#exDateiStatus").inner_text())
-        pg.locator("#exAuswahl button", has_text="Entfernen").nth(2).click()
-        pg.wait_for_timeout(1000)
-        check("Entfernen der Beilage: Meldung mit Fokus", fokus(pg) == "exMeldung" and "„Beilage fiktiv.pdf“ entfernt." in pg.locator("#exMeldung").inner_text(),
-              (fokus(pg), pg.locator("#exMeldung").inner_text()))
         check("Dokumente als „schon in deiner Auswahl“ gesperrt", pg.locator("input[name=exDok]:disabled").count() == 2)
+        check("Auswahl je Dokument mit Credits", "Jahresbericht fiktiv.pdf, 2 Seiten, 200 Credits" in pg.locator("#exAuswahl").inner_text(),
+              pg.locator("#exAuswahl").inner_text())
         # Michael Karbe 05.10.2026: nur Aufbereitung — reine Dokumentliste ohne Leistungswahl (Punkt 3), unter „Prüfen und
-        # bestellen“ nur Summen (Punkt 4), nirgends „nur PDF“ (Punkt 6)
+        # bestellen“ nur Summen (Punkt 4) — seit Runde 7 mit Zusammensetzung —, nirgends „nur PDF“ (Punkt 6)
         check("Auswahl: reine Dokumentliste, keine Leistungswahl", pg.locator("#exAuswahl select").count() == 0)
-        check("Prüfen und bestellen: keine zweite Dokumentliste, nur Summen", pg.locator("#exAufstellung").count() == 0
-              and pg.locator("#exGesamt").inner_text() == "2 Dokumente, 3 Seiten, Summe: 150 Credits", pg.locator("#exGesamt").inner_text())
+        check("Prüfen und bestellen: Summen mit Zusammensetzung", pg.locator("#exAufstellung").count() == 0
+              and pg.locator("#exGesamt").inner_text() == "2 Dokumente, 3 Seiten. Seiten: 3 × 50 Credits = 150 Credits. "
+              "Grundpreis: 2 × 100 Credits = 200 Credits. Summe: 350 Credits.", pg.locator("#exGesamt").inner_text())
         check("Kein „derzeit nur PDF“ auf der Seite", "nur PDF" not in pg.locator("main").inner_text()
               and "Zurzeit" not in pg.locator("main").inner_text())
         pg.locator("#exAuswahl button", has_text="Entfernen").nth(1).click()
         pg.wait_for_timeout(800)
-        check("Entfernen: Fokus auf die sichtbare Meldung", fokus(pg) == "exMeldung" and "entfernt" in pg.locator("#exMeldung").inner_text(), fokus(pg))
-        check("Nach Entfernen: „1 Dokument“ (Einzahl)", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 1 Dokument, 2 Seiten, 100 Credits.",
+        check("Entfernen: Fokus auf die sichtbare Meldung", fokus(pg) == "exMeldung" and "„Flyer fiktiv.pdf“ entfernt." in pg.locator("#exMeldung").inner_text(),
+              (fokus(pg), pg.locator("#exMeldung").inner_text()))
+        check("Nach Entfernen: „1 Dokument“ (Einzahl)", pg.locator("#exSumme").inner_text() == "Deine Auswahl: 1 Dokument, 2 Seiten, 200 Credits.",
               pg.locator("#exSumme").inner_text())
-        axe(pg, "Express-Seite mit Auswahl")
+        axe(pg, "Express-Warenkorb mit Auswahl")
         pg.fill("#exName", "")
         pg.click("#exBestellen")
         pg.wait_for_timeout(400)
@@ -222,13 +217,46 @@ try:
         check("Knopf „Zahlungspflichtig bestellen“", pg.locator("#exBestellen").inner_text() == "Zahlungspflichtig bestellen")
         pg.fill("#exHinweise", "Bitte Seite 2 genau prüfen (Test)")
         pg.click("#exBestellen")
-        pg.wait_for_url("**/express/auftrag/*", timeout=20000)
+        pg.wait_for_url(f"{BASE}/express*", timeout=20000)
+        pg.wait_for_timeout(1500)
+        # Runde 7: nach dem Bestellen in „Meine Aufträge“, neuer Auftrag aufgeklappt, Danke oben mit Fokus
+        karten = pg.locator("section.ex-auftrag-karte")
+        aid = int((karten.first.get_attribute("id") or "exa_karte_0").split("_")[-1])
+        check("Nach dem Bestellen: „Meine Aufträge“, Danke-Meldung mit Fokus, Adresse ohne ?neu", pg.locator("h1").inner_text() == "Meine Aufträge"
+              and fokus(pg) == "exAuftragMeldung" and f"Dein Auftrag {aid} ist eingegangen" in pg.locator("#exAuftragMeldung").inner_text()
+              and "neu=" not in pg.url, (fokus(pg), pg.url))
+        check("Neuer Auftrag aufgeklappt", karten.count() == 1 and karten.first.locator("details.dok-klappe").first.evaluate("d => d.open"))
+        check("Keine Ansage zusätzlich zur Danke-Meldung", live(pg) in ("", "Bestellung wird gesendet …"), live(pg))
+        pg.goto(f"{BASE}/express", wait_until="networkidle")
         pg.wait_for_timeout(1200)
-        aid = int(pg.url.rstrip("/").split("/")[-1].split("?")[0])
-        check("Danke-Meldung mit Fokus", fokus(pg) == "exaNeuText" and "ist eingegangen" in pg.locator("#exaNeuText").inner_text())
-        check("Übersicht: vorgemerkt, Einverständnis, Verlauf", all(w in pg.locator("main").inner_text() for w in
-              ("vorgemerkt, abgebucht wird erst bei der Lieferung", "Ich akzeptiere die Bedingungen", "Bestellt", "keine Rechnung"))
-              and "Ich bin einverstanden" not in pg.locator("main").inner_text())        # seit Fassung -3 nur ein Häkchen
+        check("Michaels Fall: auch EIN Auftrag ist als Karte zu (aufklappbar erkennbar)", pg.locator("section.ex-auftrag-karte").count() == 1
+              and not pg.locator("section.ex-auftrag-karte details.dok-klappe").first.evaluate("d => d.open")
+              and pg.locator("section.ex-auftrag-karte details.dok-klappe > summary h3").count() == 1)
+        check("Unter der Liste: Weg zum Express-Warenkorb, kein Bestellformular", pg.locator("#exBestellForm").count() == 0
+              and pg.locator("main a[href='/express/warenkorb']", has_text="Zum Express-Warenkorb").count() == 1)
+        axe(pg, "Meine Aufträge")
+        pg.goto(f"{BASE}/express?auftrag={aid}#exa_karte_{aid}", wait_until="networkidle")
+        pg.wait_for_timeout(1200)
+        check("Sprung auf einen Auftrag: Karte offen, Fokus auf ihrer Überschrift", pg.locator(f"#exa_karte_{aid} details.dok-klappe").first.evaluate("d => d.open")
+              and pg.evaluate("() => document.activeElement && document.activeElement.tagName") == "SUMMARY", fokus(pg))
+        pg.goto(f"{BASE}/express#h-auftraege", wait_until="networkidle")
+        check("Alter Link /express#h-auftraege trifft die Überschrift", pg.locator("#h-auftraege").inner_text() == "Meine Aufträge")
+        pg.goto(f"{BASE}/express/auftrag/{aid}?neu=1", wait_until="networkidle")
+        pg.wait_for_timeout(1200)
+        check("Alter Link mit ?neu=1: Danke-Meldung in der Übersicht", fokus(pg) == "exaNeuText" and "ist eingegangen" in pg.locator("#exaNeuText").inner_text())
+        check("Übersicht: vorgemerkt, keine Rechnung", all(w in pg.locator("main").inner_text() for w in
+              ("vorgemerkt, abgebucht wird erst bei der Lieferung", "keine Rechnung")))
+        check("Übersicht: Preis je Dokument zusammengesetzt", "200 (2 × 50 Credits je Seite plus 100 Credits je Dokument)" in pg.locator("main").inner_text())
+        # Runde 7 (Punkt 1+3): Angaben, Einverständnis, Verlauf aufklappbar — zu, Überschrift im summary; Druck klappt alles auf
+        klappen = pg.locator("details.ex-abschnitt-klappe")
+        check("Angaben, Einverständnis, Verlauf aufklappbar und zu", klappen.count() == 3
+              and [k.locator("summary h2").inner_text() for k in klappen.all()] == ["Angaben", "Einverständnis", "Verlauf"]
+              and not any(k.evaluate("d => d.open") for k in klappen.all()))
+        pg.evaluate("() => window.dispatchEvent(new Event('beforeprint'))")
+        check("Druck: alles aufgeklappt (Einverständnis-Text lesbar)", all(k.evaluate("d => d.open") for k in klappen.all())
+              and "Ich akzeptiere die Bedingungen" in pg.locator("main").inner_text() and "Ich bin einverstanden" not in pg.locator("main").inner_text())
+        pg.evaluate("() => window.dispatchEvent(new Event('afterprint'))")
+        check("Nach dem Druck wieder zu", not any(k.evaluate("d => d.open") for k in klappen.all()))
         check("Drucken und PDF angeboten", pg.locator("#exaDrucken").count() == 1 and pg.locator("#exaPdf").count() == 1)
         pg.emulate_media(media="print")
         check("Druck: Danke-Kasten nicht dabei", not pg.locator("#exaNeu").is_visible())
@@ -239,8 +267,11 @@ try:
         check("Auftragsübersicht ohne Ansage beim Laden", live(pg) == "", live(pg))
         pg.goto(f"{BASE}/dashboard", wait_until="networkidle")
         pg.wait_for_timeout(1200)
-        check("Startseite: „Meine Express-Aufträge“", pg.locator("#expressSection").is_visible() and f"Auftrag {aid}" in pg.locator("#expressSection").inner_text())
-        check("Startseite: vorgemerkte Credits genannt", "Express-Aufträge vorgemerkt: 100" in pg.locator("main").inner_text(), pg.locator("#dailyLimitInfo").inner_text())
+        check("Startseite: „Meine Aufträge“ mit Sprung auf die Karte und „Alle Aufträge“", pg.locator("#express-h").inner_text() == "Meine Aufträge"
+              and f"Auftrag {aid}" in pg.locator("#expressSection").inner_text()
+              and pg.locator(f"#expressSection a[href='/express?auftrag={aid}#exa_karte_{aid}']").count() == 1
+              and pg.locator("#expressSection a[href='/express']", has_text="Alle Aufträge").count() == 1)
+        check("Startseite: vorgemerkte Credits genannt", "Express-Aufträge vorgemerkt: 200" in pg.locator("main").inner_text(), pg.locator("#dailyLimitInfo").inner_text())
         axe(pg, "Startseite mit Express")
 
         # ── Verwaltung ──
@@ -251,7 +282,9 @@ try:
         ap.wait_for_timeout(1500)
         check("Verwaltung: „Express-Aufträge“ aktuelle Seite", ap.locator(".verwaltung-nav a[aria-current=page]").inner_text().strip() == "Express-Aufträge")
         check("Auftrag in „Neu“", ap.locator(f"a[href='/verwaltung/express/{aid}']").count() == 1)
-        check("Platzhalter-Hinweis bei Preisen", ap.locator("#exvPlatzhalter").is_visible())
+        check("Preise ohne Platzhalter-Hinweis, Grundpreis je Dokument als eigenes Feld (Runde 7)", ap.locator("#exvPlatzhalter").count() == 0
+              and ap.locator("#exvFest").count() == 0 and ap.locator("#exvGrund_aufbereiten").input_value() == "100"
+              and ap.locator("label[for=exvGrund_aufbereiten]").inner_text() == "Barrierefrei aufbereiten (mit Prüfung): Grundpreis je Dokument (Credits)")
         check("Verwaltung: keine Ansage beim Laden", live(ap) == "", live(ap))
         check("Geliefert/Storniert: Überschrift im summary", ap.locator("details summary h2").count() == 2)
         check("Preisfelder aus der Liste der Leistungen (nur eingeschaltete)", ap.locator("#exvPreis_aufbereiten").count() == 1 and ap.locator("#exvPreis_pruefen").count() == 0)
@@ -392,6 +425,45 @@ print(r['auftrag_id'])
         ap.wait_for_timeout(1200)
         check("Verwaltung sieht „vom Kunden gelöscht“", "Vom Kunden gelöscht am" in ap.locator("main").inner_text())
         axe(ap, "Verwaltung: vom Kunden gelöschter Auftrag")
+
+        # ── Runde 7 (Punkt 4): Anmeldung über Links mit Rücksprung, Auftrag eines anderen Kontos ──
+        # (mit dem stornierten Auftrag — den gelieferten hat die Kundin oben gelöscht)
+        za = aid_storno
+        fc = b.new_context(locale="de-DE")
+        fp = seite(fc)
+        fp.goto(f"{BASE}/express/auftrag/{za}", wait_until="networkidle")
+        check("Ohne Sitzung: zur Anmeldung mit Rücksprung und Hinweis", f"/login?weiter=%2Fexpress%2Fauftrag%2F{za}" in fp.url
+              and fp.locator("#weiterHinweis").is_visible(), fp.url)
+        axe(fp, "Anmeldung mit Rücksprung")
+        fp.fill("#email", ADMIN_MAIL)
+        fp.fill("#password", ADMIN_PW)
+        fp.click("button[type=submit]")
+        fp.wait_for_url(f"**/express/auftrag/{za}", timeout=20000)
+        fp.wait_for_timeout(1500)
+        meld = fp.locator("#exaFremd")
+        check("Anderes Konto: Meldung mit der eigenen Adresse, nichts vom Auftrag", meld.count() == 1 and f"({ADMIN_MAIL})" in meld.inner_text()
+              and "Melde dich mit dem Konto an, mit dem du bestellt hast." in meld.inner_text()
+              and "Kim Muster" not in fp.locator("main").inner_text() and not fp.locator("#exaAktionen").is_visible(),
+              meld.inner_text() if meld.count() else fp.locator("main").inner_text())
+        axe(fp, "Auftrag eines anderen Kontos")
+        fp.click("#exaAndersAnmelden")
+        fp.wait_for_url("**/login?weiter=*", timeout=20000)
+        check("„Abmelden und anders anmelden“: Anmeldung mit Rücksprung", f"weiter=%2Fexpress%2Fauftrag%2F{za}" in fp.url, fp.url)
+        fp.fill("#email", KUNDE)
+        fp.fill("#password", KPW)
+        fp.click("button[type=submit]")
+        fp.wait_for_url(f"**/express/auftrag/{za}", timeout=20000)
+        fp.wait_for_timeout(1500)
+        check("Mit dem Konto der Bestellung: der Auftrag", fp.locator("#exaFremd").count() == 0 and "Überblick" in fp.locator("main").inner_text())
+        fp.evaluate("() => fetch('/api/logout', { method: 'POST' })")
+        fp.goto(f"{BASE}/login?weiter=//example.com/boese", wait_until="networkidle")
+        check("Fremdes Ziel: kein Hinweis auf Rücksprung", fp.locator("#weiterHinweis").count() == 0)
+        fp.fill("#email", KUNDE)
+        fp.fill("#password", KPW)
+        fp.click("button[type=submit]")
+        fp.wait_for_timeout(3000)
+        check("Kein offener Redirect: nach der Anmeldung bei InkluDocs", fp.url.startswith(BASE) and "example.com" not in fp.url, fp.url)
+        fc.close()
 
         # ── Feld-Fokus auf Anmelden, Registrieren, Passwort vergessen (Nachprüfung Barrierefreiheit, N1) ──
         oc = b.new_context(locale="de-DE")

@@ -251,7 +251,9 @@
     a.positionen.forEach((p) => {
       const li = V.el('li', 'verwaltung-zeile');
       li.appendChild(V.el('h3', 'verwaltung-unterkopf', p.dokument_name));
-      li.appendChild(V.el('p', null, t('{seiten}, {leistung}, {c} Credits', { seiten: SEITEN(p.seiten), leistung: leistungText(p), c: V.zahl(p.credits) })));
+      li.appendChild(V.el('p', null, t('{seiten}, {leistung}, {c} Credits', { seiten: SEITEN(p.seiten), leistung: leistungText(p), c: V.zahl(p.credits) })
+        + (p.preis_seite !== null && p.preis_seite !== undefined && p.grundpreis
+          ? ' (' + t('{seiten} × {p} Credits je Seite plus {g} Credits je Dokument', { seiten: V.zahl(p.seiten), p: V.zahl(p.preis_seite), g: V.zahl(p.grundpreis) }) + ')' : '')));
       const links = V.el('p', 'dash-actions');
       if (p.original_da) links.appendChild(link(t('Original herunterladen'), API + '/positionen/' + p.id + '/original', p.dokument_name));
       if (p.ergebnis_da) links.appendChild(link(t('Ergebnis herunterladen'), API + '/positionen/' + p.id + '/ergebnis', p.dokument_name));

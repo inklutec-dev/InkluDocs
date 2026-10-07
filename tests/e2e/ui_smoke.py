@@ -57,7 +57,8 @@ SEITEN = [
     ("/prompts", "Meine Prompts"),
     ("/stammdaten", "Meine Stammdaten"),
     ("/geteilte-projekte", "Geteilte Projekte"),
-    ("/express", "Express-Service"),             # 05.10.2026, nur wenn EXPRESS_SERVICE an ist (Staging)
+    ("/express", "Meine Aufträge"),              # Express 05.10.2026 (Name seit Runde 7), nur wenn EXPRESS_SERVICE an ist
+    ("/express/warenkorb", "Express-Warenkorb"),
     ("/express/bedingungen", "Express-Bedingungen"),
     ("/verwaltung/kunden", "Kunden"),
     ("/verwaltung/umsatz", "Umsatz"),

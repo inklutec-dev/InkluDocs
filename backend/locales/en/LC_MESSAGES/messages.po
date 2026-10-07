@@ -10594,9 +10594,6 @@ msgstr "4. Review and order"
 msgid "Alle Dokumente dieses Projekts"
 msgstr "All documents in this project"
 
-msgid "Alle Express-Aufträge"
-msgstr "All express orders"
-
 msgid "Alle Originale als ZIP herunterladen"
 msgstr "Download all originals as ZIP"
 
@@ -10766,18 +10763,12 @@ msgstr "The settings could not be saved."
 msgid "Die Leistung konnte nicht geändert werden."
 msgstr "The service could not be changed."
 
-msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
-msgstr "The prices are still placeholders. Only set them after agreement and tick “Prices are fixed” below."
-
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "The reserved credits are released, nothing is charged. The customer receives an email with the reason."
 
 msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
 msgstr "This overview is a record, not an invoice: payment is made with credits whose purchase was invoiced separately."
-
-msgid "Diesen Auftrag gibt es nicht."
-msgstr "This order does not exist."
 
 msgid "Dokumente anzeigen"
 msgstr "Show documents"
@@ -10905,9 +10896,6 @@ msgstr "Some deviations are intentional (for example checks that veraPDF cannot 
 msgid "Meine Aufträge"
 msgstr "My orders"
 
-msgid "Meine Express-Aufträge"
-msgstr "My express orders"
-
 msgid "Mir zuweisen"
 msgstr "Assign to me"
 
@@ -10937,9 +10925,6 @@ msgstr "Check only (check report)"
 msgid "Original herunterladen"
 msgstr "Download original"
 
-
-msgid "Preise sind festgelegt (kein Platzhalter mehr)"
-msgstr "Prices are fixed (no longer placeholders)"
 
 msgid "Prüfbericht"
 msgstr "Check report"
@@ -11186,9 +11171,6 @@ msgstr "Automatic check ({pruefung}): with notes that our team has reviewed."
 msgid "Bitte warten, bis der vorige Schritt fertig ist."
 msgstr "Please wait until the previous step has finished."
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
-msgstr "We will create a project “Express order” for it."
-
 msgid "Datei auswählen"
 msgstr "Choose file"
 
@@ -11264,9 +11246,6 @@ msgstr "Open orders"
 msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
 msgstr "Originals, results and check reports are deleted this many days after delivery or cancellation; the order itself remains as a record. 0 = never delete."
 
-msgid "Preise je Seite: {liste}."
-msgstr "Prices per page: {liste}."
-
 msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
 msgstr "Revenue (final prices, no VAT under § 19 UStG)"
 
@@ -11281,9 +11260,6 @@ msgstr "for {modell}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Upload {art} for “{name}”"
-
-msgid "{leistung} {c} Credits"
-msgstr "{leistung} {c} credits"
 
 msgid "{leistung}: Credits je Seite"
 msgstr "{leistung}: credits per page"
@@ -11301,9 +11277,6 @@ msgstr "{pruefung}: passed."
 msgid "{pruefung}: läuft noch …"
 msgstr "{pruefung}: still running …"
 
-msgid "{typen} hochladen, ohne Projekt"
-msgstr "Upload {typen} without a project"
-
 msgid "{typ}-Datei auswählen"
 msgstr "Choose {typ} file"
 
@@ -11312,9 +11285,6 @@ msgstr "“{datei}” has been saved as the result for “{name}”."
 
 msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
 msgstr "“{datei}” has been saved as the check report for “{name}”."
-
-msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
-msgstr "“{name}” uploaded and added to the selection."
 
 msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
 msgstr "The document could not be added to the express cart."
@@ -11397,9 +11367,6 @@ msgstr "Name of the order"
 msgid "Name des Kunden für den Auftrag"
 msgstr "Customer’s name for the order"
 
-msgid "Preis: {c} Credits je Seite."
-msgstr "Price: {c} credits per page."
-
 msgid "Umfang"
 msgstr "Scope"
 
@@ -11429,9 +11396,6 @@ msgstr "deleted by the customer"
 
 msgid "{art} für „{name}“"
 msgstr "{art} for “{name}”"
-
-msgid "{dokumente}, {seiten}, Summe: {c} Credits"
-msgstr "{dokumente}, {seiten}, total: {c} credits"
 
 msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
 msgstr "{pruefung}: deviations from the standard, 1 rule not met."
@@ -11486,3 +11450,64 @@ msgstr "The text of this page is available under “Show page text”."
 # KI-Knoepfe: Ergebnis nach Verbindungsabbruch abgeholt (06.10.2026)
 msgid "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da."
 msgstr "The connection was briefly interrupted, but the result arrived anyway."
+
+# Express Runde 7 (06.10.2026): Meine Auftraege, Grundpreis, Anmeldung ueber Links
+msgid "Abmelden und anders anmelden"
+msgstr "Log out and sign in with another account"
+
+msgid "Alle Aufträge"
+msgstr "All orders"
+
+msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
+msgstr "Your Express orders: professionals make your documents accessible. Open an order to see its documents, status and downloads."
+
+msgid "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
+msgstr "This order does not belong to your account ({mail}). Sign in with the account you used to order."
+
+msgid "Dieser Auftrag gehört nicht zu deinem Konto. Melde dich mit dem Konto an, mit dem du bestellt hast."
+msgstr "This order does not belong to your account. Sign in with the account you used to order."
+
+msgid "Eine neue Datei lädst du zuerst in ein Projekt hoch. Danach kannst du sie hier auswählen oder im Projekt mit „In den Express-Warenkorb“ hinzufügen."
+msgstr "First upload a new file to a project. Then you can select it here or add it in the project with “Add to Express cart”."
+
+msgid "Lege Dokumente im Projekt mit dem Knopf „In den Express-Warenkorb“ in deinen Warenkorb oder wähle sie im Express-Warenkorb aus deinen Projekten aus. Eine neue Datei lädst du zuerst in ein Projekt hoch."
+msgstr "Add documents to your cart with the “Add to Express cart” button in the project, or select them from your projects in the Express cart. First upload a new file to a project."
+
+msgid "Nach der Anmeldung geht es weiter zur aufgerufenen Seite."
+msgstr "After signing in, you will continue to the page you opened."
+
+msgid "Neuer Express-Auftrag"
+msgstr "New Express order"
+
+msgid "Preis: {preis}."
+msgstr "Price: {preis}."
+
+msgid "Preise: {liste}."
+msgstr "Prices: {liste}."
+
+msgid "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
+msgstr "Pages: {cs} credits. Base price per document: {cg} credits."
+
+msgid "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
+msgstr "Pages: {seiten} × {p} credits = {cs} credits. Base price: {dokumente} × {g} credits = {cg} credits."
+
+msgid "Summe: {c} Credits."
+msgstr "Total: {c} credits."
+
+msgid "Zum Express-Warenkorb"
+msgstr "Go to the Express cart"
+
+msgid "{c} Credits je Seite"
+msgstr "{c} credits per page"
+
+msgid "{c} Credits je Seite plus {g} Credits je Dokument"
+msgstr "{c} credits per page plus {g} credits per document"
+
+msgid "{dokumente}, {seiten}."
+msgstr "{dokumente}, {seiten}."
+
+msgid "{leistung}: Grundpreis je Dokument (Credits)"
+msgstr "{leistung}: base price per document (credits)"
+
+msgid "{seiten} × {p} Credits je Seite plus {g} Credits je Dokument"
+msgstr "{seiten} × {p} credits per page plus {g} credits per document"

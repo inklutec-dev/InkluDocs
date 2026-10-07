@@ -10596,9 +10596,6 @@ msgstr "4. Revisar y pedir"
 msgid "Alle Dokumente dieses Projekts"
 msgstr "Todos los documentos de este proyecto"
 
-msgid "Alle Express-Aufträge"
-msgstr "Todos los pedidos exprés"
-
 msgid "Alle Originale als ZIP herunterladen"
 msgstr "Descargar todos los originales en ZIP"
 
@@ -10768,18 +10765,12 @@ msgstr "No se pudieron guardar los ajustes."
 msgid "Die Leistung konnte nicht geändert werden."
 msgstr "No se pudo cambiar el servicio."
 
-msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
-msgstr "Los precios son todavía provisionales. Fíjalos solo tras acordarlos y marca «Precios fijados» abajo."
-
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "Los créditos reservados quedan libres, no se cobra nada. El cliente recibe un correo con el motivo."
 
 msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
 msgstr "Este resumen es un justificante, no una factura: se paga con créditos cuya compra se facturó por separado."
-
-msgid "Diesen Auftrag gibt es nicht."
-msgstr "Este pedido no existe."
 
 msgid "Dokumente anzeigen"
 msgstr "Mostrar documentos"
@@ -10907,9 +10898,6 @@ msgstr "Algunas desviaciones son intencionadas (por ejemplo, comprobaciones que 
 msgid "Meine Aufträge"
 msgstr "Mis pedidos"
 
-msgid "Meine Express-Aufträge"
-msgstr "Mis pedidos exprés"
-
 msgid "Mir zuweisen"
 msgstr "Asignármelo"
 
@@ -10939,9 +10927,6 @@ msgstr "Solo revisar (informe)"
 msgid "Original herunterladen"
 msgstr "Descargar original"
 
-
-msgid "Preise sind festgelegt (kein Platzhalter mehr)"
-msgstr "Precios fijados (ya no son provisionales)"
 
 msgid "Prüfbericht"
 msgstr "Informe de revisión"
@@ -11188,9 +11173,6 @@ msgstr "Comprobación automática ({pruefung}): con observaciones que nuestro eq
 msgid "Bitte warten, bis der vorige Schritt fertig ist."
 msgstr "Espera a que termine el paso anterior."
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
-msgstr "Para ello creamos un proyecto «Pedido exprés»."
-
 msgid "Datei auswählen"
 msgstr "Seleccionar archivo"
 
@@ -11266,9 +11248,6 @@ msgstr "Pedidos abiertos"
 msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
 msgstr "Los originales, resultados e informes de comprobación se eliminan tantos días después de la entrega o cancelación; el pedido se conserva como justificante. 0 = no eliminar nunca."
 
-msgid "Preise je Seite: {liste}."
-msgstr "Precios por página: {liste}."
-
 msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
 msgstr "Ingresos (precios finales, sin IVA según el § 19 UStG)"
 
@@ -11283,9 +11262,6 @@ msgstr "para {modell}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Subir {art} para «{name}»"
-
-msgid "{leistung} {c} Credits"
-msgstr "{leistung} {c} créditos"
 
 msgid "{leistung}: Credits je Seite"
 msgstr "{leistung}: créditos por página"
@@ -11303,9 +11279,6 @@ msgstr "{pruefung}: superada."
 msgid "{pruefung}: läuft noch …"
 msgstr "{pruefung}: todavía en curso …"
 
-msgid "{typen} hochladen, ohne Projekt"
-msgstr "Subir {typen} sin proyecto"
-
 msgid "{typ}-Datei auswählen"
 msgstr "Seleccionar archivo {typ}"
 
@@ -11314,9 +11287,6 @@ msgstr "«{datei}» se ha guardado como resultado de «{name}»."
 
 msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
 msgstr "«{datei}» se ha guardado como informe de comprobación de «{name}»."
-
-msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
-msgstr "«{name}» subido y añadido a la selección."
 
 msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
 msgstr "No se ha podido añadir el documento al carrito exprés."
@@ -11399,9 +11369,6 @@ msgstr "Nombre del pedido"
 msgid "Name des Kunden für den Auftrag"
 msgstr "Nombre del pedido según el cliente"
 
-msgid "Preis: {c} Credits je Seite."
-msgstr "Precio: {c} créditos por página."
-
 msgid "Umfang"
 msgstr "Volumen"
 
@@ -11431,9 +11398,6 @@ msgstr "eliminado por el cliente"
 
 msgid "{art} für „{name}“"
 msgstr "{art} para «{name}»"
-
-msgid "{dokumente}, {seiten}, Summe: {c} Credits"
-msgstr "{dokumente}, {seiten}, total: {c} créditos"
 
 msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
 msgstr "{pruefung}: desviaciones de la norma, 1 regla no cumplida."
@@ -11488,3 +11452,64 @@ msgstr "El texto de esta página está en «Mostrar texto de la página»."
 # KI-Knoepfe: Ergebnis nach Verbindungsabbruch abgeholt (06.10.2026)
 msgid "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da."
 msgstr "La conexión se interrumpió brevemente, pero el resultado llegó de todos modos."
+
+# Express Runde 7 (06.10.2026): Meine Auftraege, Grundpreis, Anmeldung ueber Links
+msgid "Abmelden und anders anmelden"
+msgstr "Cerrar sesión e iniciar con otra cuenta"
+
+msgid "Alle Aufträge"
+msgstr "Todos los pedidos"
+
+msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
+msgstr "Tus pedidos Express: profesionales hacen accesibles tus documentos. Abre un pedido para ver los documentos, el estado y las descargas."
+
+msgid "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
+msgstr "Este pedido no pertenece a tu cuenta ({mail}). Inicia sesión con la cuenta con la que hiciste el pedido."
+
+msgid "Dieser Auftrag gehört nicht zu deinem Konto. Melde dich mit dem Konto an, mit dem du bestellt hast."
+msgstr "Este pedido no pertenece a tu cuenta. Inicia sesión con la cuenta con la que hiciste el pedido."
+
+msgid "Eine neue Datei lädst du zuerst in ein Projekt hoch. Danach kannst du sie hier auswählen oder im Projekt mit „In den Express-Warenkorb“ hinzufügen."
+msgstr "Primero sube un archivo nuevo a un proyecto. Después puedes seleccionarlo aquí o añadirlo en el proyecto con «Añadir a la cesta Express»."
+
+msgid "Lege Dokumente im Projekt mit dem Knopf „In den Express-Warenkorb“ in deinen Warenkorb oder wähle sie im Express-Warenkorb aus deinen Projekten aus. Eine neue Datei lädst du zuerst in ein Projekt hoch."
+msgstr "Añade documentos a tu cesta con el botón «Añadir a la cesta Express» en el proyecto o selecciónalos de tus proyectos en la cesta Express. Primero sube un archivo nuevo a un proyecto."
+
+msgid "Nach der Anmeldung geht es weiter zur aufgerufenen Seite."
+msgstr "Tras iniciar sesión, continuarás en la página que abriste."
+
+msgid "Neuer Express-Auftrag"
+msgstr "Nuevo pedido Express"
+
+msgid "Preis: {preis}."
+msgstr "Precio: {preis}."
+
+msgid "Preise: {liste}."
+msgstr "Precios: {liste}."
+
+msgid "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
+msgstr "Páginas: {cs} créditos. Precio base por documento: {cg} créditos."
+
+msgid "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
+msgstr "Páginas: {seiten} × {p} créditos = {cs} créditos. Precio base: {dokumente} × {g} créditos = {cg} créditos."
+
+msgid "Summe: {c} Credits."
+msgstr "Total: {c} créditos."
+
+msgid "Zum Express-Warenkorb"
+msgstr "Ir a la cesta Express"
+
+msgid "{c} Credits je Seite"
+msgstr "{c} créditos por página"
+
+msgid "{c} Credits je Seite plus {g} Credits je Dokument"
+msgstr "{c} créditos por página más {g} créditos por documento"
+
+msgid "{dokumente}, {seiten}."
+msgstr "{dokumente}, {seiten}."
+
+msgid "{leistung}: Grundpreis je Dokument (Credits)"
+msgstr "{leistung}: precio base por documento (créditos)"
+
+msgid "{seiten} × {p} Credits je Seite plus {g} Credits je Dokument"
+msgstr "{seiten} × {p} créditos por página más {g} créditos por documento"

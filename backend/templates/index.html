@@ -17,6 +17,10 @@
             {{ _('Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast.') }}
         </p>
         {% endif %}
+        {# Ruecksprung (Express Runde 7): Link aus einer Mail ohne Sitzung — nach der Anmeldung geht es dorthin weiter. #}
+        {% if weiter %}
+        <p class="subtitle" id="weiterHinweis">{{ _('Nach der Anmeldung geht es weiter zur aufgerufenen Seite.') }}</p>
+        {% endif %}
         <form id="loginForm" novalidate>
             <div class="form-group">
                 <label for="email">{{ _('E-Mail-Adresse') }}</label>
@@ -56,6 +60,11 @@
         connError: {{ _('Verbindungsfehler. Bitte erneut versuchen.')|tojson }},
     };
 
+    // Ruecksprung nach der Anmeldung: vom Server geprueft (weiterleitung.sicheres_ziel) und hier noch einmal — nur
+    // interne Pfade, nie //host oder eine andere Adresse.
+    const WEITER = {{ (weiter or '')|tojson }};
+    function ziel() { return /^\/(?![\/\\])[^\s\\]*$/.test(WEITER) ? WEITER : '/app'; }
+
     const form = document.getElementById('loginForm');
     const errorMsg = document.getElementById('errorMsg');
 
@@ -76,7 +85,7 @@
                 body: JSON.stringify({ email, password }),
             });
             if (res.ok) {
-                window.location.href = '/app';
+                window.location.href = ziel();
             } else {
                 const data = await res.json();
                 const msg = data.detail || T.loginFailed;

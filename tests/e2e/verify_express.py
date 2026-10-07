@@ -11,6 +11,7 @@ Testkonten auf .invalid (Mails werden unterdrueckt); Team-Mails gehen waehrend d
 Alles wird am Ende entfernt, die Einstellungen werden zurueckgesetzt."""
 import io
 import json
+import time
 import os
 import shutil
 import sys
@@ -68,6 +69,16 @@ def client(mail):
     return c
 
 
+def projekt_bereit(c, pid, sekunden=60):
+    """Bis die Bild-Extraktion des Projekts fertig ist (Anhaengen waehrend „extracting“ lehnt /api/upload mit 409 ab)."""
+    ende = time.time() + sekunden
+    while time.time() < ende:
+        if c.get(f"/api/projects/{pid}/status").json().get("status") != "extracting":
+            return True
+        time.sleep(0.5)
+    return False
+
+
 def pdf_bytes(seiten=2, text="Fiktives Testdokument"):
     d = fitz.open()
     for i in range(seiten):
@@ -88,7 +99,13 @@ sql("UPDATE users SET is_admin = 1, admin_level = 'view' WHERE email = ?", SICHT
 try:
     kunde, fremd, voll, sicht, bearb = (client(m) for m in (KUNDE, FREMD, VOLL, SICHT, BEARB))
     EINST = {"preise": {"aufbereiten": "50", "pruefen": "25"}, "frist_stunden": "48", "max_seiten_auftrag": "500",
-             "max_dokumente_auftrag": "50", "team_mail": f"team@{DOM}", "preise_festgelegt": False}
+             "max_dokumente_auftrag": "50", "team_mail": f"team@{DOM}",
+             # Grundpreis je Dokument hier 0: die Zahlen dieser Reihe rechnen mit 50 je Seite. Den Standard (50 je Seite
+             # + 100 je Dokument, Runde 7) prueft Abschnitt B2.
+             "grundpreise": {"aufbereiten": "0"},
+             # Anzeige-Modi fest fuer diese Reihe (auf Staging kann die Verwaltung sie umgestellt haben; am Ende wird der
+             # vorige Stand wiederhergestellt)
+             "korb_knopf": True, "korb_navigation": "immer"}
     r = voll.post("/api/admin/express/einstellungen", json=EINST)
     check("Voll-Admin setzt Einstellungen (Team-Mail auf Testadresse)", r.status_code == 200, r.text)
     r = voll.post("/api/admin/express/einstellungen", json=dict(EINST, frist_stunden="bald"))
@@ -102,7 +119,7 @@ try:
     print("== A. Seiten und Stand ==")
     for pfad in ("/express", "/express/bedingungen"):
         r = kunde.get(pfad)
-        check(f"Seite {pfad} 200", r.status_code == 200 and "Express" in r.text, r.status_code)
+        check(f"Seite {pfad} 200", r.status_code == 200 and ("Express" in r.text or "Aufträge" in r.text), r.status_code)
     check("Seite /express: Cache-Control no-store (Zurueck-Speicher)", kunde.get("/express").headers.get("cache-control") == "no-store")
     check("Bedingungen: Datenschutz und Mail verlinkt", 'href="/datensicherheit"' in kunde.get("/express/bedingungen").text
           and 'href="mailto:support@inkludocs.de"' in kunde.get("/express/bedingungen").text)
@@ -126,28 +143,42 @@ try:
     check("Einstellungen: unbekannter Navigations-Modus 400 mit Feld", r.status_code == 400 and r.json()["detail"].get("feld") == "korb_navigation")
     voll.post("/api/admin/express/einstellungen", json=dict(EINST, korb_knopf=True, korb_navigation="immer"))
 
-    print("== B. Upload ohne Projekt + Pruefungen ==")
-    r = kunde.post("/api/express/warenkorb/hochladen", files={"file": ("bild.png", b"\x89PNG\r\n", "image/png")})
-    check("Nicht-PDF abgewiesen (400)", r.status_code == 400, r.text)
-    r = kunde.post("/api/express/warenkorb/hochladen", files={"file": ("tarnung.pdf", b"MZ\x90\x00 kein pdf", "application/pdf")})
-    check("Getarnte Datei abgewiesen (400)", r.status_code == 400, r.text)
+    print("== B. Hochladen nur im Projekt (Runde 7) + Pruefungen ==")
     r = kunde.post("/api/express/warenkorb/hochladen", files={"file": ("Jahresbericht fiktiv.pdf", pdf_bytes(3), "application/pdf")})
-    check("PDF hochgeladen und in der Auswahl", r.status_code == 200 and r.json()["warenkorb"]["seiten"] == 3, r.text)
-    proj = sql("SELECT id, name FROM projects WHERE user_id = ?", k_id)
-    check("Projekt „Express-Auftrag <Nr>“ angelegt", len(proj) == 1 and proj[0]["name"].startswith("Express-Auftrag "), proj)
-    pid = proj[0]["id"]
-    r = kunde.post("/api/express/warenkorb/hochladen", files={"file": ("Flyer fiktiv.pdf", pdf_bytes(1), "application/pdf")})
-    check("Zweite PDF landet im selben Projekt", r.status_code == 200 and len(sql("SELECT id FROM projects WHERE user_id = ?", k_id)) == 1, r.text)
+    check("Hochladen ohne Projekt entfallen: 410 mit Hinweis aufs Projekt", r.status_code == 410 and "Projekt" in r.text
+          and not sql("SELECT id FROM projects WHERE user_id = ?", k_id), r.text[:200])
+    r = kunde.post("/api/upload", files={"file": ("Jahresbericht fiktiv.pdf", pdf_bytes(3), "application/pdf")})
+    check("PDF im Projekt hochgeladen", r.status_code == 200 and r.json().get("project_id"), r.text[:200])
+    pid, d1 = r.json()["project_id"], r.json()["document_id"]
+    check("Projekt fertig eingelesen", projekt_bereit(kunde, pid))
+    r = kunde.post("/api/upload", files={"file": ("Flyer fiktiv.pdf", pdf_bytes(1), "application/pdf")}, data={"project_id": str(pid)})
+    check("Zweite PDF im selben Projekt", r.status_code == 200 and r.json()["project_id"] == pid, r.text[:200])
+    d2 = r.json()["document_id"]
+    projekt_bereit(kunde, pid)
+    r = kunde.post("/api/upload", files={"file": ("notiz.txt", b"kein pdf", "text/plain")}, data={"project_id": str(pid)})
+    check("Falscher Dateityp im PDF-Projekt: positiv formulierte Meldung", r.status_code == 400 and r.json()["detail"] == "Bitte wähle eine PDF-Datei aus.", r.text)
+    r = kunde.post("/api/express/warenkorb/dokumente", json={"document_ids": [d1, d2]})
+    check("Aus dem Projekt in die Auswahl", r.status_code == 200 and r.json()["hinzugefuegt"] == 2, r.text[:200])
     korb = kunde.get("/api/express/stand").json()["warenkorb"]
-    check("Auswahl: 2 Dokumente, 4 Seiten, 200 Credits", (korb["dokumente"], korb["seiten"], korb["credits"]) == (2, 4, 200), korb)
+    check("Auswahl: 2 Dokumente, 4 Seiten, 200 Credits (Grundpreis hier 0)", (korb["dokumente"], korb["seiten"], korb["credits"]) == (2, 4, 200), korb)
     docs = kunde.get(f"/api/express/projekte/{pid}/dokumente").json()["dokumente"]
     check("Dokumente des Projekts: beide schon in der Auswahl", all(d["im_warenkorb"] for d in docs), docs)
+
+    print("== B2. Preis: 50 je Seite plus 100 je Dokument (Runde 7, Michaels Richtpreis) ==")
+    e = voll.post("/api/admin/express/einstellungen", json=dict(EINST, grundpreise={"aufbereiten": "100"})).json()["einstellungen"]
+    check("Einstellungen: Grundpreis je Dokument gespeichert, kein Platzhalter-Kennzeichen mehr",
+          e["grundpreise"]["aufbereiten"] == 100 and e["leistungen"][0]["grundpreis"] == 100 and "preise_festgelegt" not in e, e)
+    st = kunde.get("/api/express/stand").json()
+    w = st["warenkorb"]
+    check("Aufstellung: 4 × 50 + 2 × 100 = 400 Credits, Teilsummen", (w["credits"], w["credits_seiten"], w["credits_grund"]) == (400, 200, 200)
+          and [(p["preis_seite"], p["grundpreis"]) for p in w["positionen"]] == [(50, 100), (50, 100)], w)
+    r = voll.post("/api/admin/express/einstellungen", json=dict(EINST, grundpreise={"aufbereiten": "-3"}))
+    check("Grundpreis -3: 400 mit Feld grundpreis_aufbereiten", r.status_code == 400 and r.json()["detail"].get("feld") == "grundpreis_aufbereiten", r.text)
+    voll.post("/api/admin/express/einstellungen", json=EINST)
     pos2 = korb["positionen"][1]["id"]
     r = kunde.post(f"/api/express/warenkorb/positionen/{pos2}/leistung", json={"leistung": "pruefen"})
     check("„Nur prüfen“ ist abgeschaltet: 400, Auswahl unverändert 200 Credits", r.status_code == 400
           and kunde.get("/api/express/stand").json()["warenkorb"]["credits"] == 200, r.text)
-    r = kunde.post("/api/express/warenkorb/hochladen", files={"file": ("notiz.txt", b"kein pdf", "text/plain")})
-    check("Falscher Dateityp: positiv formulierte Meldung", r.status_code == 400 and r.json()["detail"] == "Bitte wähle eine PDF-Datei aus.", r.text)
     for koerper in ("{kaputt", "[1]"):
         r = kunde.post(f"/api/express/warenkorb/positionen/{pos2}/leistung", content=koerper, headers={"Content-Type": "application/json"})
         check(f"Kaputter JSON-Koerper {koerper!r}: 400 statt 500", r.status_code == 400, r.status_code)
@@ -377,6 +408,36 @@ try:
     check("/api/me: Rest + Zusatz-Credits - vorgemerkt = verfügbar = Sperre", z["verfuegbar_gesamt"]
           == max(0, abo["rest"] + abo["pakete_rest"] - abo["vorgemerkt"]) and z["erlaubt"] == (z["verfuegbar_gesamt"] > 0), (z, abo))
     voll.post(f"/api/admin/express/auftraege/{aid4}/stornieren", json={"grund": "Test"})
+
+    print("== R7. Meine Aufträge, Warenkorb, Anmeldung über Links (Runde 7) ==")
+    seite = kunde.get("/express").text
+    check("/express = „Meine Aufträge“ (H1 mit Sprungziel h-auftraege), kein Bestellformular, Weg zum Warenkorb",
+          '<h1 id="h-auftraege"' in seite and "<title>Meine Aufträge" in seite and 'id="exBestellForm"' not in seite
+          and 'href="/express/warenkorb"' in seite)
+    seite = kunde.get("/express/warenkorb").text
+    check("/express/warenkorb: Bestellformular ohne Hochladen", 'id="exBestellForm"' in seite and "exHochladen" not in seite
+          and "hochladefeld.js" not in seite)
+    r = kunde.get(f"/express?projekt={pid}", follow_redirects=False)
+    check("Alter Link /express?projekt= führt zum Warenkorb", r.status_code == 302 and r.headers.get("location") == f"/express/warenkorb?projekt={pid}",
+          (r.status_code, r.headers.get("location")))
+    anonym = httpx.Client(base_url=BASE, timeout=60)
+    r = anonym.get(f"/express/auftrag/{aid4}", follow_redirects=False)
+    check("Ohne Sitzung: Auftragsübersicht leitet zur Anmeldung mit Rücksprung", r.status_code in (302, 307)
+          and r.headers.get("location") == f"/login?weiter=%2Fexpress%2Fauftrag%2F{aid4}", (r.status_code, r.headers.get("location")))
+    r = anonym.get("/app?projekt=957", follow_redirects=False)
+    check("Ohne Sitzung: Projektseite mit Abfrage behält das Ziel", r.headers.get("location") == "/login?weiter=%2Fapp%3Fprojekt%3D957",
+          r.headers.get("location"))
+    check("Login übernimmt nur interne Ziele", 'const WEITER = "/express/auftrag/5"' in anonym.get("/login?weiter=/express/auftrag/5").text
+          and all('const WEITER = ""' in anonym.get("/login", params={"weiter": z}).text
+                  for z in ("//boese.example", "https://boese.example", "/\\boese", "javascript:alert(1)", "/login")))
+    r = anonym.post("/api/login", json={"email": KUNDE, "password": PW})
+    check("Anmeldung klappt (Rücksprung macht die Seite selbst)", r.status_code == 200)
+    anonym.close()
+    r = fremd.get(f"/api/express/auftraege/{aid4}")
+    check("Fremdes Konto: Auftrags-API 404 (nichts preisgegeben), Seite nur Hülle", r.status_code == 404
+          and "Kim Muster" not in fremd.get(f"/express/auftrag/{aid4}").text, r.status_code)
+    pos = sql("SELECT preis_seite, grundpreis FROM express_positionen WHERE auftrag_id = ?", aid4)
+    check("Bestellte Positionen merken Preis je Seite und Grundpreis", pos and all(p["preis_seite"] == 50 and p["grundpreis"] == 0 for p in pos), pos)
 
     print("== H. Recht wieder entziehen ==")
     r = voll.delete(f"/api/admin/express/bearbeiter/{b_id}")

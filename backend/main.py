@@ -31,6 +31,7 @@ import ki_kosten  # KI-Kosten je Aufruf fuer die Verwaltung (05.10.2026, docs/KI
 import demo as demo_mod  # Demo-Modus (oeffentliche Kostprobe ohne Anmeldung) — nur aktiv bei DEMO_MODE=on
 import stripe_zahlung  # Online-Zahlung (06.08.2026): inert ohne STRIPE_SECRET_KEY
 import umsatz  # Umsatz-Buchungen mit Betrag (25.09.2026): Stripe automatisch, Rechnung ueber die Verwaltung
+import weiterleitung  # Ruecksprung nach der Anmeldung, nur interne Pfade (Express Runde 7, 06.10.2026)
 
 # Abo-System (06.08.2026): Fehler in Mail-/Tageslauf-Pfaden landen im Log,
 # nie beim Nutzer — gleiche Nie-Crashen-Philosophie wie billing.
@@ -2323,7 +2324,7 @@ async def team_einladung_annehmen(token: str, request: Request):
     # nach dem Login fuehrt der Link aus der Mail erneut hierher.
     user = get_optional_user(request)
     if not user:
-        return RedirectResponse("/login")
+        return RedirectResponse(_login_umleitung(request))
 
     conn = get_db()
     try:
@@ -10442,12 +10443,6 @@ app.include_router(express_api.build_router(express_api.Deps(
     base_url=BASE_URL,
     notification_email=NOTIFICATION_EMAIL,
     results_dir=RESULTS_DIR,
-    upload_dir=UPLOAD_DIR,
-    max_upload_size=MAX_UPLOAD_SIZE,
-    # Upload ohne Projekt je Dateityp (express.DATEITYPEN): _handle_pdf_upload kann pdf und docx (art=…). Ein neuer Typ
-    # braucht hier seine Vorpruefung (docs/EXPRESS_SERVICE.md, „Erweitern“).
-    upload_uebernehmen=lambda typ, pfad, name, user, pid: _handle_pdf_upload(pfad, name, user, pid, art=typ),
-    upload_vorpruefung=lambda typ, pfad, _: pdf_vorpruefung(pfad, _) if typ == "pdf" else None,
     get_gettext=get_gettext,
     resolve_ui_language=lambda request: resolve_ui_language(request),
     render_seite=lambda request, vorlage, **extra: _render_protected_template(request, vorlage, **extra),
@@ -11706,6 +11701,8 @@ async def login_page(request: Request):
             # Konto-Selbstloeschung (08.08.2026): Nach dem Loeschen landet man
             # hier — mit einer Bestaetigung statt eines wortlosen Rauswurfs.
             geloescht=request.query_params.get("geloescht") == "1",
+            # Ruecksprung nach der Anmeldung (Express Runde 7): nur geprueftes internes Ziel, sonst "" (= /app).
+            weiter=weiterleitung.sicheres_ziel(request.query_params.get("weiter")),
         ),
     )
 
@@ -11845,6 +11842,12 @@ async def reset_page(request: Request):
         template_context(request, lang, is_staging=("staging" in BASE_URL), noindex=True),
     )
 
+def _login_umleitung(request: Request) -> str:
+    """Ohne Sitzung zur Anmeldung — mit Ruecksprung auf die aufgerufene Seite (Express Runde 7: Links aus Mails fuehren
+    nach der Anmeldung dorthin zurueck; nur interne Pfade, weiterleitung.sicheres_ziel)."""
+    return weiterleitung.login_adresse(request.url.path, request.url.query)
+
+
 def _serve_protected_page(request: Request, filename: str):
     """Liefert eine login-geschuetzte HTML-Seite aus dem frontend-Verzeichnis.
     Leitet zu / um, wenn kein gueltiges Login-Cookie vorliegt."""
@@ -11853,7 +11856,7 @@ def _serve_protected_page(request: Request, filename: str):
     try:
         get_current_user(request)
     except HTTPException:
-        return RedirectResponse("/login")
+        return RedirectResponse(_login_umleitung(request))
     html = open(f"/app/frontend/{filename}").read()
     if "staging" in BASE_URL:
         html = html.replace("<title>InkluDocs</title>", "<title>InkluDocs (Testumgebung)</title>")
@@ -11884,7 +11887,7 @@ def _render_protected_template(request: Request, template_name: str, **extra):
     try:
         get_current_user(request)
     except HTTPException:
-        return RedirectResponse("/login")
+        return RedirectResponse(_login_umleitung(request))
     lang = resolve_ui_language(request)
     return templates.TemplateResponse(
         template_name,
@@ -11932,7 +11935,7 @@ async def struktur_seite(project_id: int, document_id: int, request: Request):
     Daten aus tagging_api.struktur_daten (pdf_struktur.py), Vorlage templates/struktur.html."""
     user = get_optional_user(request)
     if not user:
-        return RedirectResponse("/login")
+        return RedirectResponse(_login_umleitung(request))
     lang = resolve_ui_language(request)
     loop = asyncio.get_running_loop()
     # ?quelle=abschluss (24.09.2026): dieselbe Ansicht fuer die Pruefdatei der Abschlusspruefung — also genau die

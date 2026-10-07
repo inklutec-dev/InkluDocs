@@ -10596,9 +10596,6 @@ msgstr "4. Vérifier et commander"
 msgid "Alle Dokumente dieses Projekts"
 msgstr "Tous les documents de ce projet"
 
-msgid "Alle Express-Aufträge"
-msgstr "Toutes les commandes express"
-
 msgid "Alle Originale als ZIP herunterladen"
 msgstr "Télécharger tous les originaux en ZIP"
 
@@ -10768,18 +10765,12 @@ msgstr "Les paramètres n’ont pas pu être enregistrés."
 msgid "Die Leistung konnte nicht geändert werden."
 msgstr "La prestation n’a pas pu être modifiée."
 
-msgid "Die Preise sind noch Platzhalter. Erst nach Abstimmung festlegen und unten „Preise sind festgelegt“ ankreuzen."
-msgstr "Les prix sont encore provisoires. Ne les fixer qu’après accord et cocher « Prix fixés » ci-dessous."
-
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "Les crédits réservés sont libérés, rien n’est débité. Le client reçoit un e-mail avec le motif."
 
 msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
 msgstr "Ce récapitulatif est un justificatif, pas une facture : le paiement se fait en crédits, dont l’achat a été facturé séparément."
-
-msgid "Diesen Auftrag gibt es nicht."
-msgstr "Cette commande n’existe pas."
 
 msgid "Dokumente anzeigen"
 msgstr "Afficher les documents"
@@ -10907,9 +10898,6 @@ msgstr "Certains écarts sont volontaires (par exemple des contrôles que veraPD
 msgid "Meine Aufträge"
 msgstr "Mes commandes"
 
-msgid "Meine Express-Aufträge"
-msgstr "Mes commandes express"
-
 msgid "Mir zuweisen"
 msgstr "M’attribuer"
 
@@ -10939,9 +10927,6 @@ msgstr "Vérification seule (rapport)"
 msgid "Original herunterladen"
 msgstr "Télécharger l’original"
 
-
-msgid "Preise sind festgelegt (kein Platzhalter mehr)"
-msgstr "Prix fixés (plus de valeurs provisoires)"
 
 msgid "Prüfbericht"
 msgstr "Rapport de vérification"
@@ -11188,9 +11173,6 @@ msgstr "Vérification automatique ({pruefung}) : avec des remarques que notre é
 msgid "Bitte warten, bis der vorige Schritt fertig ist."
 msgstr "Veuillez attendre la fin de l’étape précédente."
 
-msgid "Dafür legen wir ein Projekt „Express-Auftrag“ an."
-msgstr "Nous créons pour cela un projet « Commande express »."
-
 msgid "Datei auswählen"
 msgstr "Choisir un fichier"
 
@@ -11266,9 +11248,6 @@ msgstr "Commandes en cours"
 msgid "Originale, Ergebnisse und Prüfberichte werden so viele Tage nach Lieferung oder Storno gelöscht; der Auftrag selbst bleibt als Nachweis. 0 = nie löschen."
 msgstr "Les originaux, les résultats et les rapports de vérification sont supprimés ce nombre de jours après la livraison ou l’annulation ; la commande elle-même reste comme justificatif. 0 = ne jamais supprimer."
 
-msgid "Preise je Seite: {liste}."
-msgstr "Prix par page : {liste}."
-
 msgid "Umsatz (Endpreise, ohne Umsatzsteuer nach § 19 UStG)"
 msgstr "Chiffre d’affaires (prix finaux, sans TVA selon le § 19 UStG)"
 
@@ -11283,9 +11262,6 @@ msgstr "pour {modell}"
 
 msgid "{art} für „{name}“ hochladen"
 msgstr "Envoyer {art} pour « {name} »"
-
-msgid "{leistung} {c} Credits"
-msgstr "{leistung} {c} crédits"
 
 msgid "{leistung}: Credits je Seite"
 msgstr "{leistung} : crédits par page"
@@ -11303,9 +11279,6 @@ msgstr "{pruefung} : réussi."
 msgid "{pruefung}: läuft noch …"
 msgstr "{pruefung} : en cours …"
 
-msgid "{typen} hochladen, ohne Projekt"
-msgstr "Envoyer un fichier {typen} sans projet"
-
 msgid "{typ}-Datei auswählen"
 msgstr "Choisir un fichier {typ}"
 
@@ -11314,9 +11287,6 @@ msgstr "« {datei} » est enregistré comme résultat pour « {name} »."
 
 msgid "„{datei}“ ist als Prüfbericht für „{name}“ gespeichert."
 msgstr "« {datei} » est enregistré comme rapport de vérification pour « {name} »."
-
-msgid "„{name}“ hochgeladen und zur Auswahl hinzugefügt."
-msgstr "« {name} » envoyé et ajouté à la sélection."
 
 msgid "Das Dokument konnte nicht in den Express-Warenkorb gelegt werden."
 msgstr "Le document n’a pas pu être ajouté au panier express."
@@ -11399,9 +11369,6 @@ msgstr "Nom de la commande"
 msgid "Name des Kunden für den Auftrag"
 msgstr "Nom donné par le client à la commande"
 
-msgid "Preis: {c} Credits je Seite."
-msgstr "Prix : {c} crédits par page."
-
 msgid "Umfang"
 msgstr "Volume"
 
@@ -11431,9 +11398,6 @@ msgstr "supprimée par le client"
 
 msgid "{art} für „{name}“"
 msgstr "{art} pour « {name} »"
-
-msgid "{dokumente}, {seiten}, Summe: {c} Credits"
-msgstr "{dokumente}, {seiten}, total : {c} crédits"
 
 msgid "{pruefung}: Abweichungen vom Standard, 1 Regel nicht erfüllt."
 msgstr "{pruefung} : écarts par rapport à la norme, 1 règle non respectée."
@@ -11488,3 +11452,64 @@ msgstr "Le texte de cette page se trouve sous « Afficher le texte de la page »
 # KI-Knoepfe: Ergebnis nach Verbindungsabbruch abgeholt (06.10.2026)
 msgid "Die Verbindung war kurz unterbrochen, das Ergebnis ist trotzdem da."
 msgstr "La connexion a été brièvement interrompue, mais le résultat est bien arrivé."
+
+# Express Runde 7 (06.10.2026): Meine Auftraege, Grundpreis, Anmeldung ueber Links
+msgid "Abmelden und anders anmelden"
+msgstr "Se déconnecter et se connecter avec un autre compte"
+
+msgid "Alle Aufträge"
+msgstr "Toutes les commandes"
+
+msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
+msgstr "Tes commandes Express : des professionnels rendent tes documents accessibles. Ouvre une commande pour voir les documents, l’état et les téléchargements."
+
+msgid "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
+msgstr "Cette commande n’appartient pas à ton compte ({mail}). Connecte-toi avec le compte utilisé pour la commande."
+
+msgid "Dieser Auftrag gehört nicht zu deinem Konto. Melde dich mit dem Konto an, mit dem du bestellt hast."
+msgstr "Cette commande n’appartient pas à ton compte. Connecte-toi avec le compte utilisé pour la commande."
+
+msgid "Eine neue Datei lädst du zuerst in ein Projekt hoch. Danach kannst du sie hier auswählen oder im Projekt mit „In den Express-Warenkorb“ hinzufügen."
+msgstr "Télécharge d’abord un nouveau fichier dans un projet. Ensuite, tu peux le sélectionner ici ou l’ajouter dans le projet avec « Ajouter au panier Express »."
+
+msgid "Lege Dokumente im Projekt mit dem Knopf „In den Express-Warenkorb“ in deinen Warenkorb oder wähle sie im Express-Warenkorb aus deinen Projekten aus. Eine neue Datei lädst du zuerst in ein Projekt hoch."
+msgstr "Ajoute des documents à ton panier avec le bouton « Ajouter au panier Express » dans le projet, ou sélectionne-les dans tes projets depuis le panier Express. Télécharge d’abord un nouveau fichier dans un projet."
+
+msgid "Nach der Anmeldung geht es weiter zur aufgerufenen Seite."
+msgstr "Après la connexion, tu arrives sur la page demandée."
+
+msgid "Neuer Express-Auftrag"
+msgstr "Nouvelle commande Express"
+
+msgid "Preis: {preis}."
+msgstr "Prix : {preis}."
+
+msgid "Preise: {liste}."
+msgstr "Prix : {liste}."
+
+msgid "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
+msgstr "Pages : {cs} crédits. Prix de base par document : {cg} crédits."
+
+msgid "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
+msgstr "Pages : {seiten} × {p} crédits = {cs} crédits. Prix de base : {dokumente} × {g} crédits = {cg} crédits."
+
+msgid "Summe: {c} Credits."
+msgstr "Total : {c} crédits."
+
+msgid "Zum Express-Warenkorb"
+msgstr "Vers le panier Express"
+
+msgid "{c} Credits je Seite"
+msgstr "{c} crédits par page"
+
+msgid "{c} Credits je Seite plus {g} Credits je Dokument"
+msgstr "{c} crédits par page plus {g} crédits par document"
+
+msgid "{dokumente}, {seiten}."
+msgstr "{dokumente}, {seiten}."
+
+msgid "{leistung}: Grundpreis je Dokument (Credits)"
+msgstr "{leistung} : prix de base par document (crédits)"
+
+msgid "{seiten} × {p} Credits je Seite plus {g} Credits je Dokument"
+msgstr "{seiten} × {p} crédits par page plus {g} crédits par document"

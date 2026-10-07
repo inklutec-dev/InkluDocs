@@ -7,7 +7,7 @@
    Herunterladen), Angaben, Einverständnis mit Zeitpunkt, Verlauf. Druckbar (Druck-CSS in dashboard.css blendet
    Seitenleiste und Knöpfe aus) und als barrierefreie PDF (/api/express/auftraege/<id>/nachweis.pdf). Ausdrücklich KEINE
    Rechnung — bezahlt wird mit Credits, deren Kauf gesondert abgerechnet ist. #}
-<p class="verwaltung-zurueck no-print"><a href="/express#h-auftraege">{{ _('Zurück zu meinen Aufträgen') }}</a></p>
+<p class="verwaltung-zurueck no-print"><a href="/express?auftrag={{ auftrag_id|int }}#exa_karte_{{ auftrag_id|int }}">{{ _('Zurück zu meinen Aufträgen') }}</a></p>
 <h1 id="exaTitel" tabindex="-1">{{ _('Express-Auftrag') }} {{ auftrag_id }}</h1>
 {# Meldungen oben (Danke nach der Bestellung, „Antwort gesendet“): sichtbar, mit Fokus, ohne zusätzliche Live-Ansage —
    und nicht im Ausdruck (Prüfung Barrierefreiheit 05.10.2026, Befunde 3 und 20). #}
@@ -73,6 +73,21 @@
     s.appendChild(h);
     ziel.appendChild(s);
     return s;
+  }
+  // Runde 7 (Michael Karbe 06.10.2026): Angaben, Einverständnis und Verlauf aufklappbar wie die Dokumente — Überschrift
+  // im summary, standardmäßig zu; beim Drucken offen (beforeprint). Rückgabe: das details-Element (Inhalt hinein).
+  function abschnittKlappe(ziel, titel, id) {
+    const s = el('section', 'dash-card verwaltung-karte');
+    s.setAttribute('aria-labelledby', id);
+    const det = el('details', 'dok-klappe ex-abschnitt-klappe');
+    const sum = el('summary');
+    const h = el('h2', 'ex-abschnitt-titel', titel);
+    h.id = id;
+    sum.appendChild(h);
+    det.appendChild(sum);
+    s.appendChild(det);
+    ziel.appendChild(s);
+    return det;
   }
   function mehrzahl(n, eins, viele) {
     // „1 Dokument“ statt „1 Dokumente“ (Hörtest-Tauglichkeit, 05.10.2026)
@@ -171,7 +186,9 @@
       const meta = el('ul', 'dok-meta');
       meta.appendChild(el('li', null, t('Seiten') + ': ' + zahl(p.seiten)));
       meta.appendChild(el('li', null, t('Leistung') + ': ' + leistungText(p)));
-      meta.appendChild(el('li', null, t('Credits') + ': ' + zahl(p.credits)));
+      // Zusammensetzung (seit Runde 7 beim Bestellen gespeichert): Seiten × Preis je Seite + Grundpreis je Dokument
+      meta.appendChild(el('li', null, t('Credits') + ': ' + zahl(p.credits) + (p.preis_seite !== null && p.preis_seite !== undefined && p.grundpreis
+        ? ' (' + t('{seiten} × {p} Credits je Seite plus {g} Credits je Dokument', { seiten: zahl(p.seiten), p: zahl(p.preis_seite), g: zahl(p.grundpreis) }) + ')' : '')));
       meta.appendChild(el('li', null, t('Stand') + ': ' + (a.status === 'geliefert' ? (p.ergebnis_da || p.bericht_da ? t('fertig, zum Herunterladen') : t('geliefert'))
         : (STATUS[a.status] || a.status))));
       det.appendChild(meta);
@@ -198,19 +215,19 @@
     });
     s.appendChild(ul);
 
-    s = abschnitt(ziel, t('Angaben'), 'exa-h-angaben');
+    s = abschnittKlappe(ziel, t('Angaben'), 'exa-h-angaben');
     zeile(s, t('Ansprechpartner'), a.ansprechpartner);
     zeile(s, t('Telefon'), a.telefon);
     zeile(s, t('Hinweise'), a.hinweise);
 
-    s = abschnitt(ziel, t('Einverständnis'), 'exa-h-zustimmung');
+    s = abschnittKlappe(ziel, t('Einverständnis'), 'exa-h-zustimmung');
     s.appendChild(el('p', null, t('Bestätigt am {datum} (Fassung {fassung}):', { datum: datumZeit(a.zustimmung.am), fassung: a.zustimmung.fassung })));
     const zu = el('ul');
     // seit Fassung -3 nur noch ein Häkchen; ältere Aufträge zeigen beide
     [a.zustimmung.bedingungen, a.zustimmung.bearbeitung].filter(Boolean).forEach((satz) => zu.appendChild(el('li', null, satz)));
     s.appendChild(zu);
 
-    s = abschnitt(ziel, t('Verlauf'), 'exa-h-verlauf');
+    s = abschnittKlappe(ziel, t('Verlauf'), 'exa-h-verlauf');
     const ol = el('ol', 'verwaltung-liste');
     a.verlauf.forEach((v) => ol.appendChild(el('li', 'verwaltung-zeile', datumZeit(v.created_at) + ': ' + (VERLAUF[v.art] || v.art)
       + (v.text && ['rueckfrage', 'antwort', 'storniert'].includes(v.art) ? ' — ' + v.text : ''))));
@@ -219,11 +236,38 @@
     byId('exaAktionen').hidden = false;
   }
 
+  // Runde 7 (Michaels „verlorenes Projekt“): Wer mit einem anderen Konto angemeldet ist als dem, mit dem bestellt wurde,
+  // bekommt eine klare Meldung mit der EIGENEN Adresse und einen Weg zum richtigen Konto. Über den Auftrag selbst wird
+  // nichts verraten (die API antwortet 404 — gleich für fremde, gelöschte und nicht vorhandene Aufträge).
+  function fremd(ziel) {
+    const mail = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || '';
+    const kasten = el('div', 'verwaltung-warnung');
+    kasten.id = 'exaFremd';
+    kasten.appendChild(el('p', null, mail
+      ? t('Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast.', { mail: mail })
+      : t('Dieser Auftrag gehört nicht zu deinem Konto. Melde dich mit dem Konto an, mit dem du bestellt hast.')));
+    const p = el('p', 'ex-aktionen');
+    const knopf = el('button', 'btn btn-primary', t('Abmelden und anders anmelden'));
+    knopf.type = 'button';
+    knopf.id = 'exaAndersAnmelden';
+    knopf.addEventListener('click', async () => {
+      knopf.setAttribute('aria-disabled', 'true');
+      try { await fetch('/api/logout', { method: 'POST' }); } catch (e) { /* trotzdem zur Anmeldung */ }
+      window.zurAnmeldung('/express/auftrag/' + ID);
+    });
+    p.appendChild(knopf);
+    const zurueck = el('a', 'btn btn-secondary', t('Zu meinen Aufträgen'));
+    zurueck.href = '/express';
+    p.appendChild(zurueck);
+    kasten.appendChild(p);
+    ziel.appendChild(kasten);
+  }
+
   byId('exaDrucken').addEventListener('click', () => window.print());
-  // Drucken (auch über das Browser-Menü): alle Dokumente aufgeklappt, danach wie vorher
+  // Drucken (auch über das Browser-Menü): alles aufgeklappt (Dokumente, Angaben, Einverständnis, Verlauf), danach wie vorher
   let zuVorDemDruck = [];
   window.addEventListener('beforeprint', () => {
-    zuVorDemDruck = Array.from(document.querySelectorAll('details.ex-dok-klappe:not([open])'));
+    zuVorDemDruck = Array.from(document.querySelectorAll('#exaInhalt details:not([open])'));
     zuVorDemDruck.forEach((d) => { d.open = true; });
   });
   window.addEventListener('afterprint', () => { zuVorDemDruck.forEach((d) => { d.open = false; }); zuVorDemDruck = []; });
@@ -275,7 +319,8 @@
     if (!r || !r.ok) {
       ziel.setAttribute('aria-busy', 'false');
       ziel.innerHTML = '';
-      ziel.appendChild(el('p', 'dash-empty', r && r.status === 404 ? t('Diesen Auftrag gibt es nicht.') : t('Der Auftrag konnte nicht geladen werden.')));
+      if (r && r.status === 404) { fremd(ziel); return; }
+      ziel.appendChild(el('p', 'dash-empty', t('Der Auftrag konnte nicht geladen werden.')));
       return;
     }
     const a = await r.json();

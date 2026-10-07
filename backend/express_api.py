@@ -1,15 +1,15 @@
 """EXPRESS-SERVICE Stufe 1 — Endpunkte und Seiten (05.10.2026). Kern: express.py, Doku: docs/EXPRESS_SERVICE.md.
 
 Kunde (angemeldet):
-  GET  /express                                   Seite: neuer Auftrag (Warenkorb) + Meine Auftraege
+  GET  /express                                   Seite: „Meine Auftraege“ (Karten; Runde 7: kein Bestellformular mehr)
   GET  /express/auftrag/{id}                      Seite: Auftragsuebersicht (Nachweis, druckbar)
-  GET  /express/warenkorb                         Seite: dieselbe, geoeffnet bei „Deine Auswahl“ (Navigation, Zusatz 05.10.)
+  GET  /express/warenkorb                         Seite: Express-Warenkorb = neuer Auftrag in vier Schritten
   GET  /express/bedingungen                       Seite: Bedingungen (ENTWURF)
   GET  /api/express/stand                         Warenkorb, Leistungen und Preise, Dateitypen, Frist, Guthaben
   GET  /api/express/projekte                      eigene Projekte mit Dokumenten eines angebotenen Dateityps
   GET  /api/express/projekte/{pid}/dokumente      Dokumente eines eigenen Projekts mit Seitenzahl
   POST /api/express/warenkorb/dokumente           {document_ids}
-  POST /api/express/warenkorb/hochladen           Datei ohne Projekt (legt „Express-Auftrag <Nr>“ an)
+  POST /api/express/warenkorb/hochladen           410 — seit Runde 7 entfallen (Kunden laden im Projekt hoch)
   POST /api/express/warenkorb/positionen/{id}/leistung   {leistung}
   DELETE /api/express/warenkorb/positionen/{id}
   POST /api/express/bestellen                     {ansprechpartner, telefon, hinweise, bedingungen, idempotenz,
@@ -54,7 +54,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from starlette.background import BackgroundTask
 
 import billing
@@ -74,10 +74,6 @@ class Deps:
     base_url: str
     notification_email: str
     results_dir: str
-    upload_dir: str
-    max_upload_size: int
-    upload_uebernehmen: Callable        # async (dateityp, file_path, filename, user, project_id) -> {"project_id", "document_id", …}
-    upload_vorpruefung: Callable        # (dateityp, file_path, gettext) -> Grund | None
     get_gettext: Callable               # (lang) -> _
     resolve_ui_language: Callable       # (request) -> lang
     render_seite: Callable              # (request, template, **extra) -> Response
@@ -87,8 +83,7 @@ class Deps:
 
 _d: Optional[Deps] = None
 _bremse: dict = defaultdict(list)       # (art, user_id) -> [Zeitpunkte]
-_BREMSEN = {"bestellen": (10, 3600), "hochladen": (30, 3600), "antwort": (20, 3600), "nachweis": (30, 3600),
-            "zip": (20, 3600)}
+_BREMSEN = {"bestellen": (10, 3600), "antwort": (20, 3600), "nachweis": (30, 3600), "zip": (20, 3600)}
 # Befund 16: Der Nachweis wartet auf den Umwandler-Dienst — in einem EIGENEN, kleinen Pool und mit kurzem Zeitlimit,
 # damit ein haengender Umwandler nicht die Threads belegt, die alle anderen Anfragen brauchen.
 _nachweis_pool = concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix="express_nachweis")
@@ -342,13 +337,17 @@ def build_router(deps: Deps) -> APIRouter:
     # ─── Seiten ───
     @router.get("/express", response_class=HTMLResponse)
     async def seite_express(request: Request):
+        """„Meine Auftraege“ (Runde 7). Alte Links mit ?projekt=<id> (Vorwahl aus dem Projekt) fuehren zum Warenkorb."""
         _an()
+        projekt = request.query_params.get("projekt") or ""
+        if projekt.isdigit() and funktionen.EXPRESS:
+            return RedirectResponse(f"/express/warenkorb?projekt={int(projekt)}", status_code=302)
         return _ohne_cache(_d.render_seite(request, "express.html", express_bestellen=bool(funktionen.EXPRESS)))
 
     @router.get("/express/warenkorb", response_class=HTMLResponse)
     async def seite_warenkorb(request: Request):
-        """Ziel des Navigations-Eintrags „Express-Warenkorb“ und des Links „Zum Warenkorb“: dieselbe Seite wie /express,
-        geoeffnet bei „2. Deine Auswahl“ (eigene Adresse, damit die Navigation sie als aktuelle Seite markieren kann)."""
+        """Express-Warenkorb: neuer Auftrag in vier Schritten (Navigation „Express-Warenkorb“, Link „Zum Warenkorb“,
+        Knopf am Dokument; Runde 7: das Bestellen laeuft nur noch hier)."""
         _neu_an()
         return _ohne_cache(_d.render_seite(request, "express.html", express_bestellen=True, warenkorb_ansicht=True))
 
@@ -386,7 +385,7 @@ def build_router(deps: Deps) -> APIRouter:
         return {"warenkorb": korb, "preise": dict(e["preise"]), "leistungen": express.leistungen_liste(e),
                 "dateitypen": [{"schluessel": t.schluessel, "name": t.name, "accept": t.accept} for t in typen],
                 "frist_stunden": e["frist_stunden"], "max_seiten": e["max_seiten_auftrag"],
-                "max_dokumente": e["max_dokumente_auftrag"], "guthaben": verf, "max_upload_mb": _d.max_upload_size // (1024 * 1024),
+                "max_dokumente": e["max_dokumente_auftrag"], "guthaben": verf,
                 "ansprechpartner": (db.get("display_name") or "").strip(),
                 "texte": {"bedingungen": _(express.TEXT_BEDINGUNGEN)}}
 
@@ -457,41 +456,11 @@ def build_router(deps: Deps) -> APIRouter:
             raise _fehler(e)
 
     @router.post("/api/express/warenkorb/hochladen")
-    async def korb_hochladen(request: Request, file: UploadFile = File(...), user: dict = Depends(_kunde_neu)):
-        _bremsen("hochladen", user["id"])
-        name = os.path.basename(file.filename or "dokument")
-        inhalt = await file.read(_d.max_upload_size + 1)
-        if len(inhalt) > _d.max_upload_size:
-            raise HTTPException(status_code=413, detail=f"Datei zu groß. Maximum: {_d.max_upload_size // (1024 * 1024)} MB")
-        try:
-            typ = express.dateityp_fuer_upload(name, inhalt[:64])
-        except express.ExpressFehler as e:
-            raise _fehler(e)
-        ordner = os.path.join(_d.upload_dir, str(int(user["id"])))
-        os.makedirs(ordner, exist_ok=True)
-        stamm = "".join(c for c in os.path.splitext(name)[0] if c.isalnum() or c in " ._-")[:80].strip() or "dokument"
-        pfad = os.path.join(ordner, f"{time.strftime('%Y%m%d_%H%M%S')}_express_{stamm}{typ.endung}")
-        with open(pfad, "wb") as f:
-            f.write(inhalt)
-        grund = await _im_thread(_d.upload_vorpruefung, typ.schluessel, pfad, _d.get_gettext(_d.resolve_ui_language(request)))
-        if grund:
-            os.unlink(pfad)
-            raise HTTPException(status_code=400, detail=grund)
-        projekt = await _im_thread(express.auto_projekt, user["id"], typ)
-        try:
-            erg = await _d.upload_uebernehmen(typ.schluessel, pfad, name, user, projekt)
-        except HTTPException:
-            if projekt is None:
-                raise
-            # Das gemerkte Projekt taugt nicht mehr (z. B. gerade in Arbeit): ein neues anlegen.
-            erg = await _d.upload_uebernehmen(typ.schluessel, pfad, name, user, None)
-            projekt = None
-        if projekt is None:
-            await _im_thread(express.auto_projekt_merken, user["id"], int(erg["project_id"]))
-        try:
-            return await _im_thread(express.dokumente_hinzufuegen, user["id"], [int(erg["document_id"])])
-        except express.ExpressFehler as e:
-            raise _fehler(e)
+    async def korb_hochladen_entfallen():
+        """Runde 7 (Michael Karbe 06.10.2026): kein Hochladen bei der Auswahl mehr — Kunden legen ein Projekt an, laden
+        dort hoch und legen das Dokument von dort in den Express-Warenkorb. 410 = dauerhaft entfallen."""
+        raise HTTPException(status_code=410, detail="Das Hochladen ohne Projekt gibt es nicht mehr. Bitte lege ein "
+                            "Projekt an, lade die Datei dort hoch und lege sie von dort in den Express-Warenkorb.")
 
     @router.post("/api/express/warenkorb/positionen/{pos_id}/leistung")
     async def korb_leistung(pos_id: int, request: Request, user: dict = Depends(_kunde_neu)):

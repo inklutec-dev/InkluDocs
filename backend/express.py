@@ -70,12 +70,13 @@ STATUS_VERWALTUNG = {NEU: "Neu", IN_ARBEIT: "In Arbeit", RUECKFRAGE: "Rückfrage
                      STORNIERT: "Storniert"}
 
 EINSTELLUNGEN_STANDARD = {
-    # Preise je Seite stehen unter "preise" (je Leistung, Standard = Leistung.preis_standard) — siehe einstellungen().
+    # Preise stehen unter "preise" (Credits je Seite) und "grundpreise" (Credits je Dokument), je Leistung; Standard =
+    # Leistung.preis_standard / grundpreis_standard — siehe einstellungen().
     "frist_stunden": 48,           # Lieferzusage; intern Grundlage fuer Erinnerung und „ueberfaellig“
     "max_seiten_auftrag": 500,     # groessere Auftraege nur auf Anfrage
     "max_dokumente_auftrag": 50,
     "team_mail": "",               # Benachrichtigungen an das Team; leer = NOTIFICATION_EMAIL des Servers
-    "preise_festgelegt": False,    # False = Platzhalter; die Verwaltung zeigt dann einen Hinweis
+    # (bis Runde 7 „preise_festgelegt“ = Platzhalter-Hinweis; seit Michaels Richtpreis 06.10.2026 entfallen)
     # Datenschutz (Befund 14): Tage nach Lieferung/Storno, nach denen Originale, Ergebnisse und Pruefberichte geloescht
     # werden. 0 = nichts loeschen — Standard, bis Steve die Frist festlegt.
     "aufbewahrung_tage": 0,
@@ -151,10 +152,11 @@ class Dateityp:
 
 @dataclass(frozen=True)
 class Leistung:
-    """Ein Produkt des Express-Service. Preis je Seite = Einstellung (Standard preis_standard)."""
+    """Ein Produkt des Express-Service. Preis je Dokument = Seiten x Preis je Seite + Grundpreis je Dokument (beides
+    Einstellungen, Standard preis_standard / grundpreis_standard)."""
     schluessel: str                         # gespeichert in express_positionen.leistung
     name: str                               # Anzeige; Uebersetzung in den Katalogen
-    preis_standard: int                     # Credits je Seite — PLATZHALTER bis Michael/Steve den Preis festlegen
+    preis_standard: int                     # Credits je Seite (Standard, bis die Verwaltung ihn aendert)
     dateitypen: tuple                       # erlaubte Dateitypen des Originals
     aktion: str                             # usage_events.aktion beim Abbuchen
     ergebnis_pflicht: bool                  # Liefern nur mit Ergebnis-Datei
@@ -164,6 +166,7 @@ class Leistung:
     ergebnis_zusatz: str = " (barrierefrei)"   # Zusatz im Download-Namen des Ergebnisses
     aktiv: bool = True                      # False = abgeschaltet: nicht waehlbar, nicht in den Einstellungen; Eintrag
     #                                         und Preis bleiben, bestehende Auftraege laufen weiter
+    grundpreis_standard: int = 0            # Credits je Dokument zusaetzlich zum Seitenpreis (Runde 7)
 
 
 def ist_pdf_datei(pfad: str) -> bool:
@@ -210,8 +213,10 @@ DATEITYPEN = {t.schluessel: t for t in (
 )}
 
 LEISTUNGEN = {l.schluessel: l for l in (
+    # Richtpreis Michael Karbe (06.10.2026): 50 Credits je Seite plus 100 Credits je Dokument.
     Leistung(schluessel="aufbereiten", name=N_("Barrierefrei aufbereiten (mit Prüfung)"), preis_standard=50,
-             dateitypen=("pdf",), aktion="express_aufbereiten", ergebnis_pflicht=True, bericht_pflicht=False),
+             grundpreis_standard=100, dateitypen=("pdf",), aktion="express_aufbereiten", ergebnis_pflicht=True,
+             bericht_pflicht=False),
     # ABGESCHALTET (Michael Karbe, Mail „Erstes Express Service Feedback“ 05.10.2026, Punkt 3: „Wir bieten nur die
     # Aufbereitung an. Prüfung hatte ich noch nicht geplant.“) — zum Wiedereinschalten aktiv=True setzen.
     Leistung(schluessel="pruefen", name=N_("Nur prüfen (Prüfbericht)"), preis_standard=25,
@@ -261,19 +266,6 @@ def dateityp_der_datei(pfad: str, erlaubt=None) -> Optional[Dateityp]:
             return _typ_der_bytes(f.read(_LESEN_BYTES), erlaubt)
     except OSError:
         return None
-
-
-def dateityp_fuer_upload(dateiname: str, kopf: bytes) -> Dateityp:
-    """Kunden-Upload ohne Projekt: angebotener Typ nach Endung UND Inhalt, sonst ExpressFehler."""
-    endung = os.path.splitext(str(dateiname or "").lower())[1]
-    passend = [t for t in angebotene_dateitypen() if endung in t.endungen]
-    # Positiv formuliert, was geht (Michael Karbe 05.10.2026, Punkt 6: „Wir müssen nicht sagen, was wir nicht können.“)
-    if not passend:
-        raise ExpressFehler(f"Bitte wähle eine {typen_text()}-Datei aus.")
-    typ = _typ_der_bytes(kopf, [t.schluessel for t in passend])
-    if not typ:
-        raise ExpressFehler(f"Bitte wähle eine {typen_text([t.schluessel for t in passend])}-Datei aus.")
-    return typ
 
 
 def _typ_aus_pfad(pfad: str) -> Optional[Dateityp]:
@@ -353,12 +345,17 @@ def _preise_standard() -> dict:
     return {k: int(l.preis_standard) for k, l in LEISTUNGEN.items()}
 
 
+def _grundpreise_standard() -> dict:
+    return {k: int(l.grundpreis_standard) for k, l in LEISTUNGEN.items()}
+
+
 def einstellungen() -> dict:
-    """Gespeicherte Einstellungen ueber dem Standard. Preise je Leistung unter "preise"; fehlt eine Leistung (neu in
-    der Liste), gilt ihr preis_standard. Bis 05.10.2026 hiessen die Preise preis_aufbereiten/preis_pruefen — die werden
-    beim Lesen uebernommen, damit gespeicherte Werte nicht verloren gehen."""
+    """Gespeicherte Einstellungen ueber dem Standard. Preise je Leistung unter "preise" (je Seite) und "grundpreise"
+    (je Dokument, Runde 7); fehlt eine Leistung (neu in der Liste), gilt ihr Standard. Bis 05.10.2026 hiessen die Preise
+    preis_aufbereiten/preis_pruefen — die werden beim Lesen uebernommen, damit gespeicherte Werte nicht verloren gehen."""
     e = dict(EINSTELLUNGEN_STANDARD)
     e["preise"] = _preise_standard()
+    e["grundpreise"] = _grundpreise_standard()
     conn = get_db()
     try:
         r = conn.execute("SELECT value FROM system_kv WHERE key = ?", (_KV,)).fetchone()
@@ -373,17 +370,22 @@ def einstellungen() -> dict:
         if isinstance(gespeichert, dict):
             e.update({k: v for k, v in gespeichert.items() if k in EINSTELLUNGEN_STANDARD})
             preise = gespeichert.get("preise") if isinstance(gespeichert.get("preise"), dict) else {}
+            grund = gespeichert.get("grundpreise") if isinstance(gespeichert.get("grundpreise"), dict) else {}
             for k in LEISTUNGEN:
                 wert = preise.get(k, gespeichert.get(f"preis_{k}"))
                 if isinstance(wert, int) and not isinstance(wert, bool) and wert > 0:
                     e["preise"][k] = wert
+                wert = grund.get(k)
+                if isinstance(wert, int) and not isinstance(wert, bool) and wert >= 0:
+                    e["grundpreise"][k] = wert
     return e
 
 
 def leistungen_liste(e: dict = None) -> list:
-    """Fuer Oberflaeche und Endpunkte: [{schluessel, name, preis, dateitypen}] in der Reihenfolge von LEISTUNGEN."""
+    """Fuer Oberflaeche und Endpunkte: [{schluessel, name, preis (je Seite), grundpreis (je Dokument), dateitypen}] in
+    der Reihenfolge von LEISTUNGEN."""
     e = e or einstellungen()
-    return [{"schluessel": k, "name": l.name, "preis": int(e["preise"].get(k, l.preis_standard)),
+    return [{"schluessel": k, "name": l.name, "preis": preis_teile(k, e)[0], "grundpreis": preis_teile(k, e)[1],
              "dateitypen": list(l.dateitypen)} for k, l in LEISTUNGEN.items() if l.aktiv]
 
 
@@ -401,19 +403,24 @@ def _ganzzahl(wert, name: str, minimum: int, maximum: int, feld: str = "") -> in
 
 def speichere_einstellungen(daten: dict) -> dict:
     """Pruefen und speichern (nur Voll-Admins — die Rechte prueft der Router). Preise kommen als
-    {"preise": {leistung: wert}} (oder je Leistung als preis_<schluessel>); Feldnamen der Fehler: preis_<schluessel>,
-    frist_stunden, max_seiten_auftrag, max_dokumente_auftrag, aufbewahrung_tage, team_mail."""
+    {"preise": {leistung: wert}} (oder je Leistung als preis_<schluessel>), Grundpreise je Dokument als
+    {"grundpreise": {leistung: wert}} (fehlt der Wert, bleibt der bisherige); Feldnamen der Fehler: preis_<schluessel>,
+    grundpreis_<schluessel>, frist_stunden, max_seiten_auftrag, max_dokumente_auftrag, aufbewahrung_tage, team_mail."""
     e = einstellungen()
     preise_ein = daten.get("preise") if isinstance(daten.get("preise"), dict) else {}
-    preise = {}
+    grund_ein = daten.get("grundpreise") if isinstance(daten.get("grundpreise"), dict) else {}
+    preise, grundpreise = {}, {}
     for k, l in LEISTUNGEN.items():
         wert = preise_ein.get(k, daten.get(f"preis_{k}"))
+        grund = grund_ein.get(k, daten.get(f"grundpreis_{k}"))
         if not l.aktiv and wert is None:
-            # Abgeschaltete Leistung: kein Feld in der Verwaltung — ihr Preis bleibt fuer spaeter stehen.
-            preise[k] = int(e["preise"].get(k, l.preis_standard))
+            # Abgeschaltete Leistung: kein Feld in der Verwaltung — ihre Preise bleiben fuer spaeter stehen.
+            preise[k], grundpreise[k] = preis_teile(k, e)
             continue
         preise[k] = _ganzzahl(wert, f"{l.name}: Credits je Seite", 1, 100000, feld=f"preis_{k}")
-    e["preise"] = preise
+        grundpreise[k] = (preis_teile(k, e)[1] if grund is None
+                          else _ganzzahl(grund, f"{l.name}: Grundpreis je Dokument", 0, 100000, feld=f"grundpreis_{k}"))
+    e["preise"], e["grundpreise"] = preise, grundpreise
     e["frist_stunden"] = _ganzzahl(daten.get("frist_stunden"), "Lieferfrist in Stunden", 1, 24 * 60, feld="frist_stunden")
     e["max_seiten_auftrag"] = _ganzzahl(daten.get("max_seiten_auftrag"), "Höchstens Seiten je Auftrag", 1, 100000,
                                         feld="max_seiten_auftrag")
@@ -434,7 +441,6 @@ def speichere_einstellungen(daten: dict) -> dict:
     if mail and (len(mail) > 254 or not _MAIL_RE.match(mail)):
         raise ExpressFehler("Benachrichtigung an: bitte eine gültige E-Mail-Adresse oder leer lassen.", feld="team_mail")
     e["team_mail"] = mail
-    e["preise_festgelegt"] = daten.get("preise_festgelegt") is True
     conn = get_db()
     try:
         conn.execute("INSERT INTO system_kv (key, value, updated_at) VALUES (?, ?, datetime('now')) "
@@ -446,13 +452,24 @@ def speichere_einstellungen(daten: dict) -> dict:
     return e
 
 
-def preis(leistung: str, seiten: int, e: dict = None) -> int:
-    """Credits fuer eine Position. Eine Leistung, die es nicht (mehr) gibt, kostet 0 — bestellt werden kann sie nicht
-    (_bestellbar_pruefen)."""
+def preis_teile(leistung: str, e: dict = None) -> tuple:
+    """(Credits je Seite, Grundpreis je Dokument) einer Leistung nach den Einstellungen; unbekannte Leistung (0, 0)."""
     e = e or einstellungen()
+    l = LEISTUNGEN.get(leistung)
+    if not l:
+        return 0, 0
+    return (int(e["preise"].get(leistung, l.preis_standard)),
+            int((e.get("grundpreise") or {}).get(leistung, l.grundpreis_standard)))
+
+
+def preis(leistung: str, seiten: int, e: dict = None) -> int:
+    """Credits fuer eine Position (ein Dokument): Seiten x Preis je Seite + Grundpreis je Dokument (Michaels Richtpreis
+    06.10.2026: 50 je Seite + 100 je Dokument). Eine Leistung, die es nicht (mehr) gibt, kostet 0 — bestellt werden kann
+    sie nicht (_bestellbar_pruefen)."""
     if leistung not in LEISTUNGEN:
         return 0
-    return int(e["preise"].get(leistung, LEISTUNGEN[leistung].preis_standard)) * max(0, int(seiten or 0))
+    je_seite, grund = preis_teile(leistung, e)
+    return je_seite * max(0, int(seiten or 0)) + grund
 
 
 # ─── Warenkorb ───────────────────────────────────────────────────────────
@@ -483,7 +500,8 @@ def _fassung(positionen: list, e: dict) -> str:
     """Kurzer Fingerabdruck dessen, was der Kunde sieht: Positionen (Dokument, Leistung, Seiten) und Preise. Der Client
     schickt ihn mit der Bestellung zurueck; weicht er ab, wird nicht bestellt (Befund 3, § 312j BGB)."""
     roh = json.dumps([[int(p["id"]), p["document_id"], p["leistung"], int(p["seiten"])] for p in positionen]
-                     + [[k, int(v)] for k, v in sorted(e["preise"].items())])
+                     + [[k, int(v)] for k, v in sorted(e["preise"].items())]
+                     + [["grund", k, int(v)] for k, v in sorted((e.get("grundpreise") or {}).items())])
     return hashlib.sha256(roh.encode()).hexdigest()[:16]
 
 
@@ -525,11 +543,15 @@ def warenkorb(user_id: int) -> dict:
         conn.close()
     for p in positionen:
         p["credits"] = preis(p["leistung"], p["seiten"], e)
+        p["preis_seite"], p["grundpreis"] = preis_teile(p["leistung"], e)
         p["vorhanden"] = bool(p["vorhanden"])
         # Leistungen, die fuer den Dateityp dieser Position in Frage kommen (Auswahl in der Oberflaeche).
         p["leistungen"] = [l.schluessel for l in leistungen_fuer(p["dateityp"])]
+    # Zusammensetzung fuer die Aufstellung (Runde 7): Seitenpreise und Grundpreise getrennt.
     return {"id": wid, "positionen": positionen, "dokumente": len(positionen),
             "seiten": sum(p["seiten"] for p in positionen), "credits": sum(p["credits"] for p in positionen),
+            "credits_seiten": sum(p["seiten"] * p["preis_seite"] for p in positionen),
+            "credits_grund": sum(p["grundpreis"] for p in positionen),
             "fassung": _fassung(positionen, e)}
 
 
@@ -655,36 +677,6 @@ def position_entfernen(user_id: int, pos_id: int) -> dict:
     if cur.rowcount != 1:
         raise NichtGefunden("Dieses Dokument ist nicht in deiner Auswahl.")
     return warenkorb(user_id)
-
-
-def auto_projekt(user_id: int, typ: Dateityp = None):
-    """Projekt, in das der Express-Upload ohne Projekt legt (None = noch keins, nicht mehr vorhanden oder fuer einen
-    anderen Dateityp angelegt — dann legt der Upload ein neues an)."""
-    conn = get_db()
-    try:
-        r = conn.execute("SELECT a.auto_projekt_id, COALESCE(p.project_type, 'pdf') AS project_type FROM express_auftraege a "
-                         "JOIN projects p ON p.id = a.auto_projekt_id AND p.user_id = a.user_id "
-                         "WHERE a.user_id = ? AND a.status = 'entwurf'", (user_id,)).fetchone()
-    finally:
-        conn.close()
-    if not r or not r["auto_projekt_id"]:
-        return None
-    if typ is not None and r["project_type"] not in typ.projekt_typen:
-        return None
-    return int(r["auto_projekt_id"])
-
-
-def auto_projekt_merken(user_id: int, project_id: int) -> int:
-    """Das neu angelegte Projekt am Warenkorb merken und benennen („Express-Auftrag <Nr>“). Rueckgabe: Warenkorb-id."""
-    conn = get_db()
-    try:
-        wid = _warenkorb_id(conn, user_id, anlegen=True)
-        conn.execute("UPDATE express_auftraege SET auto_projekt_id = ? WHERE id = ? AND user_id = ?", (project_id, wid, user_id))
-        conn.execute("UPDATE projects SET name = ? WHERE id = ? AND user_id = ?", (f"Express-Auftrag {wid}", project_id, user_id))
-        conn.commit()
-        return wid
-    finally:
-        conn.close()
 
 
 # ─── Bestellen ───────────────────────────────────────────────────────────
@@ -822,6 +814,7 @@ def _bestellen_eingefroren(user_id, wid, name, tel, notiz, idem, erwartet, fassu
         if seiten != p["seiten"]:
             p["seiten"], geaendert = seiten, True
         p["credits"] = preis(p["leistung"], p["seiten"], e)
+        p["preis_seite"], p["grundpreis"] = preis_teile(p["leistung"], e)
     if geaendert:
         conn = get_db()
         try:
@@ -868,8 +861,11 @@ def _bestellen_eingefroren(user_id, wid, name, tel, notiz, idem, erwartet, fassu
             conn.execute("ROLLBACK")
             raise ExpressFehler("Deine Auswahl hat sich gerade geändert. Bitte prüfe die Aufstellung.", 409, veraltet=True)
         for p in positionen:
-            conn.execute("UPDATE express_positionen SET seiten = ?, credits = ?, original_pfad = ? WHERE id = ?",
-                         (p["seiten"], p["credits"], p["original_pfad"], p["id"]))
+            # Preis-Zusammensetzung mit festschreiben (Runde 7): Auftragsuebersicht und Nachweis zeigen sie, auch wenn
+            # sich die Preise spaeter aendern.
+            conn.execute("UPDATE express_positionen SET seiten = ?, credits = ?, original_pfad = ?, preis_seite = ?, "
+                         "grundpreis = ? WHERE id = ?",
+                         (p["seiten"], p["credits"], p["original_pfad"], p["preis_seite"], p["grundpreis"], p["id"]))
         summe_tx = int(conn.execute("SELECT COALESCE(SUM(credits), 0) FROM express_positionen WHERE auftrag_id = ?",
                                     (wid,)).fetchone()[0])
         cur = conn.execute(
@@ -979,6 +975,8 @@ def _position_dict(p: dict, fuer_kunde: bool, status: str) -> dict:
     d = {"id": p["id"], "project_id": p["project_id"], "document_id": p["document_id"],
          "dokument_name": p["dokument_name"], "seiten": p["seiten"], "leistung": p["leistung"],
          "leistung_text": l.name if l else p["leistung"], "credits": p["credits"],
+         # Zusammensetzung (seit Runde 7 beim Bestellen gespeichert; aeltere Auftraege: None)
+         "preis_seite": p.get("preis_seite"), "grundpreis": p.get("grundpreis"),
          "dateityp": typ.schluessel if typ else p.get("dateityp"), "dateityp_name": typ.name if typ else "",
          "ergebnis_typ": ergebnis_typ.schluessel if ergebnis_typ else "",
          "pruef_name": ergebnis_typ.pruef_name if ergebnis_typ else ""}
@@ -1884,30 +1882,34 @@ def datum_deutsch(text) -> str:
 
 
 def mail_kunde(art: str, a: dict, basis_url: str, text: str = "") -> tuple:
-    """(Betreff, HTML) fuer den Kunden — ohne Anhang, mit Link zur Auftragsuebersicht."""
+    """(Betreff, HTML) fuer den Kunden — ohne Anhang, mit Link zur Auftragsuebersicht. Jede Mail nennt das Konto, mit
+    dem bestellt wurde (Runde 7: wer mehrere Konten hat, meldet sich sonst mit dem falschen an und sieht den Auftrag
+    nicht). Der Link fuehrt ohne Sitzung ueber die Anmeldung zurueck auf die Auftragsuebersicht (?weiter=)."""
     link = f"{basis_url.rstrip('/')}/express/auftrag/{a['id']}"
     hallo = f"Hallo {a.get('ansprechpartner') or a.get('kunde_name') or ''},".replace(" ,", ",")
     n = len(a.get("positionen") or [])
     seiten = int(a.get("seiten_gesamt") or a.get("seiten") or 0)
     credits = _tausender(a.get("credits_gesamt") or a.get("credits"))
+    konto = (f"Bestellt mit dem Konto {a['kunde_email']}. Melde dich mit diesem Konto an, um den Auftrag zu sehen."
+             if a.get("kunde_email") else "")
     if art == "bestellt":
         return (f"Dein Express-Auftrag {a['id']} ist eingegangen", _mail_html([
             hallo, f"wir haben deinen Auftrag erhalten: {_dokumente(n)}, {_seiten(seiten)}.",
             f"Dafür sind {credits} Credits vorgemerkt. Abgebucht wird erst bei der Lieferung.",
-            f"Wir liefern innerhalb von {a.get('frist_stunden')} Stunden. Den Stand siehst du jederzeit in deiner Auftragsübersicht."],
-            link, "Auftragsübersicht öffnen"))
+            f"Wir liefern innerhalb von {a.get('frist_stunden')} Stunden. Den Stand siehst du jederzeit in deiner Auftragsübersicht.",
+            konto], link, "Auftragsübersicht öffnen"))
     if art == "rueckfrage":
         return (f"Rückfrage zu deinem Express-Auftrag {a['id']}", _mail_html([
             hallo, "zu deinem Express-Auftrag haben wir eine Frage:", text,
-            "Bitte antworte in deiner Auftragsübersicht. Dort steht die Frage auch."], link, "Zur Rückfrage"))
+            "Bitte antworte in deiner Auftragsübersicht. Dort steht die Frage auch.", konto], link, "Zur Rückfrage"))
     if art == "geliefert":
         return (f"Dein Express-Auftrag {a['id']} ist fertig", _mail_html([
             hallo, "deine Dokumente sind fertig. Du kannst sie in deiner Auftragsübersicht herunterladen.",
-            f"Abgebucht wurden {credits} Credits."], link, "Dokumente herunterladen"))
+            f"Abgebucht wurden {credits} Credits.", konto], link, "Dokumente herunterladen"))
     if art == "storniert":
         return (f"Dein Express-Auftrag {a['id']} wurde storniert", _mail_html([
             hallo, "dein Express-Auftrag wurde storniert.", f"Grund: {text}" if text else "",
-            "Die vorgemerkten Credits sind wieder frei. Abgebucht wurde nichts."], link, "Auftragsübersicht öffnen"))
+            "Die vorgemerkten Credits sind wieder frei. Abgebucht wurde nichts.", konto], link, "Auftragsübersicht öffnen"))
     raise ValueError(art)
 
 
@@ -2023,8 +2025,11 @@ def nachweis_docx(a: dict, ziel: str, zeit_text=None) -> str:
         teile.append(_absatz(f"Hinweise: {a['hinweise']}"))
     teile.append(_absatz("Dokumente", "Heading2"))
     for p in a["positionen"]:
+        # Zusammensetzung, soweit beim Bestellen gespeichert (Runde 7): Seiten x Preis je Seite + Grundpreis je Dokument
+        teil = (f" ({_tausender(p['seiten'])} × {_tausender(p['preis_seite'])} Credits je Seite plus "
+                f"{_tausender(p['grundpreis'])} Credits je Dokument)" if p.get("preis_seite") is not None and p.get("grundpreis") else "")
         teile.append(_absatz(f"{p['dokument_name']}: {_seiten(p['seiten'])}, {p['leistung_text']}, "
-                             f"{_tausender(p['credits'])} Credits", "ListParagraph", liste=True))
+                             f"{_tausender(p['credits'])} Credits{teil}", "ListParagraph", liste=True))
     teile.append(_absatz("Einverständnis", "Heading2"))
     z = a["zustimmung"]
     teile.append(_absatz(f"Bestätigt am {zeit_text(z['am'])} (Fassung {z['fassung']}):"))

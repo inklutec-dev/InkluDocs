@@ -23,9 +23,10 @@
         <div id="ausgabenContainer"></div>
       </section>
 
-      {# EXPRESS-SERVICE (05.10.2026): die letzten Aufträge mit Stand; verborgen, solange es keine gibt. #}
+      {# EXPRESS-SERVICE (05.10.2026): die letzten Aufträge mit Stand; verborgen, solange es keine gibt.
+         Runde 7 (Michael Karbe 06.10.2026): „Meine Aufträge“ wie der Navigationseintrag. #}
       <section class="dash-section" aria-labelledby="express-h" id="expressSection" hidden>
-        <h2 id="express-h">{{ _('Meine Express-Aufträge') }}</h2>
+        <h2 id="express-h">{{ _('Meine Aufträge') }}</h2>
         <div id="expressContainer"></div>
       </section>
 
@@ -343,7 +344,7 @@
     cont.appendChild(all);
     byId('ausgabenSection').hidden = false;
   }
-  // ─── Meine Express-Aufträge (05.10.2026): die letzten fünf mit Stand ───
+  // ─── Meine Aufträge (Express, 05.10.2026; Name seit Runde 7): die letzten fünf mit Stand ───
   async function loadExpress() {
     if (!(currentUser && currentUser.express)) return;
     let data;
@@ -364,7 +365,8 @@
       li.className = 'dash-item';
       const h3 = document.createElement('h3');
       const link = document.createElement('a');
-      link.href = '/express/auftrag/' + encodeURIComponent(a.id);
+      // Sprung auf die (aufgeklappte) Karte in „Meine Aufträge“ (Runde 7); dort führt „Auftragsübersicht öffnen“ weiter.
+      link.href = '/express?auftrag=' + encodeURIComponent(a.id) + '#exa_karte_' + encodeURIComponent(a.id);
       // eigener Name des Kunden (Umbenennen in „Meine Aufträge“), die Nummer bleibt dabei
       link.textContent = a.auftrag_name ? a.auftrag_name + ' (' + t('Auftrag {nr}', { nr: a.id }) + ')' : t('Auftrag {nr}', { nr: a.id });
       h3.appendChild(link);
@@ -381,8 +383,8 @@
     const all = document.createElement('p');
     all.style.marginTop = '1rem';
     const allLink = document.createElement('a');
-    allLink.href = '/express#h-auftraege';
-    allLink.textContent = t('Alle Express-Aufträge');
+    allLink.href = '/express';
+    allLink.textContent = t('Alle Aufträge');
     allLink.className = 'btn btn-secondary';
     all.appendChild(allLink);
     cont.appendChild(all);

@@ -1,4 +1,4 @@
-# Express-Service Stufe 1 (Stand 05.10.2026, mit Korrekturrunde)
+# Express-Service Stufe 1 (Stand 06.10.2026, Runde 7)
 
 Wunsch von Michael Karbe, Skizze mit Steve am 05.10.2026: Kunden, die ihre Dokumente lieber von Profis barrierefrei
 aufbereiten oder prüfen lassen, bestellen das in InkluDocs. Lieferung innerhalb von 48 Stunden — dem Kunden wird bewusst
@@ -9,46 +9,59 @@ Credits. Stufe 1 = der Kernablauf: bestellen, Posteingang in der Verwaltung, lie
 (`docker-compose.staging.yml`). Prod und Demo haben die Variable nicht → aus. In der Demo ist er auch mit Variable aus.
 
 **Was der Schalter abschaltet** (Prüfung Entwicklung 05.10.2026, Befund 9 — die sichere Variante): nur das
-**Neu-Bestellen** (Warenkorb, Projektauswahl, Hochladen, Bestellen; Link im Projekt). Sobald es **einen bestellten Auftrag**
+**Neu-Bestellen** (Express-Warenkorb, Projektauswahl, Bestellen; Link und Knopf im Projekt). Sobald es **einen bestellten Auftrag**
 gibt (`express.gibt_bestellte()`), bleiben Auftragsübersichten, Downloads, Antwort auf Rückfragen und die ganze Verwaltung
 (Liefern, Stornieren, Hochladen) erreichbar, und die Erinnerungsschleife läuft weiter. So bleiben vorgemerkte Credits nach
 dem Abschalten nie hängen, Kunden kommen an ihre Ergebnisse, und offene Aufträge lassen sich zu Ende führen. Die Seite
 `/express` zeigt dann nur „Meine Aufträge“ mit dem Hinweis „Neue Express-Aufträge sind zurzeit nicht möglich“, die
 Verwaltung einen entsprechenden Hinweis. Gab es nie einen Auftrag (Prod, Demo), antwortet alles mit 404 wie bisher.
-Menüpunkt „Express-Service“ (`/api/me` `user.express`): Schalter an oder eigene Aufträge vorhanden.
+Menüpunkt „Meine Aufträge“ (bis Runde 7 „Express-Service“; `/api/me` `user.express`): Schalter an oder eigene
+Aufträge vorhanden.
 
 ## Ablauf für den Kunden
 
-1. **Wege hinein:** Seitenleiste „Express-Service“ (`/express`), Link „Vom Express-Service bearbeiten lassen“ in der
-   Projektansicht „Dokument“ (öffnet `/express?projekt=<id>` mit allen Dokumenten des Projekts angehakt), Abschnitt
-   „Meine Express-Aufträge“ auf der Startseite.
+**Zwei Seiten** (Runde 7, Michael Karbe 06.10.2026): `/express` = **„Meine Aufträge“** (Navigation, wie „Meine
+Projekte“ und „Meine Ablage“) — ganz oben die Aufträge als Karten (Punkt 6), darunter nur der Weg zum Express-Warenkorb.
+`/express/warenkorb` = **Express-Warenkorb**, der neue Auftrag in vier Schritten (Punkte 2 bis 5). Auf `/express` steht
+kein Bestellformular mehr.
+
+1. **Wege hinein:** Seitenleiste „Meine Aufträge“ (`/express`) und „Express-Warenkorb“ (`/express/warenkorb`, Modus
+   siehe unten), Knopf „In den Express-Warenkorb“ am Dokument, Link „Vom Express-Service bearbeiten lassen“ in der
+   Projektansicht „Dokument“ (`/express?projekt=<id>` leitet auf `/express/warenkorb?projekt=<id>` um: alle Dokumente
+   des Projekts angehakt, Fokus auf Schritt 1), Abschnitt „Meine Aufträge“ auf der Startseite (je Auftrag ein Sprung auf
+   die aufgeklappte Karte, `/express?auftrag=<id>#exa_karte_<id>`, dazu „Alle Aufträge“).
 2. **Dokumente wählen:** Projekt in einer Auswahlliste (nur Projekte eines angebotenen Dateityps — heute PDF — mit
    mindestens einem Dokument; gleichnamige mit Anlagedatum unterschieden), dann Kontrollkästchen je Dokument (Name,
    Seitenzahl) und „Alle Dokumente dieses Projekts“. Andere Dateitypen und passwortgeschützte PDFs sind gesperrt, mit
-   Grund. Oder eine Datei **ohne Projekt** hochladen — mit **genau der Hochlade-Komponente der Projekte**
-   (`frontend/hochladefeld.js`, Steve 05.10.2026: Etikett-Knopf „PDF-Datei auswählen“, „oder Datei hierher ziehen“,
-   Hinweis, Statuszeile; das Hochladen startet mit der Auswahl). InkluDocs legt dafür ein Projekt „Express-Auftrag <Nr>“
-   an (weitere Uploads in denselben Auftrag landen im selben Projekt). Bewusst **kein** „alle Dokumente aus allen
+   Grund. **Kein Hochladen bei der Auswahl** (Runde 7, Michael Karbe 06.10.2026, Punkt 2): eine neue Datei kommt
+   zuerst in ein Projekt (Hinweis mit Link „Neues Projekt anlegen“); `POST /api/express/warenkorb/hochladen` antwortet
+   410 mit diesem Hinweis. Die erweiterbare Liste der Dateitypen bleibt. Bewusst **kein** „alle Dokumente aus allen
    Projekten“.
 3. **Deine Auswahl** (= Warenkorb, serverseitig gespeichert, bleibt beim Verlassen der Seite): eine **reine
-   Dokumentliste** — Name, Seiten, Entfernen-Knopf (Michael Karbe 05.10.2026, Punkt 3: „Wir bieten nur die Aufbereitung
-   an.“). Eine Leistungswahl je Dokument erscheint nur, wenn es für den Dateityp mehr als eine eingeschaltete Leistung
+   Dokumentliste** — Name, Seiten, Credits, Entfernen-Knopf (Michael Karbe 05.10.2026, Punkt 3: „Wir bieten nur die
+   Aufbereitung an.“). Eine Leistungswahl je Dokument erscheint nur, wenn es für den Dateityp mehr als eine eingeschaltete Leistung
    gibt (dann speichert sie erst, wenn die Auswahl einen Moment steht). Hinzufügen sagt Anzahl, Seiten, Credits und — wenn
    es nicht reicht — das fehlende Guthaben an; Entfernen zeigt eine sichtbare Meldung und setzt den Fokus darauf.
 4. **Angaben:** Ansprechpartner (vorbelegt mit dem Kontonamen), Telefon (freiwillig), Hinweise (freiwillig).
-5. **Prüfen und bestellen:** nur Summen — Dokumente, Seiten, Credits, verfügbares Guthaben, „Lieferung innerhalb von 48
-   Stunden“ (die Dokumente stehen schon unter „Deine Auswahl“, Punkt 4); bei zu wenig Guthaben Hinweis mit Link „Credits
-   kaufen“. **Ein** Pflicht-Kontrollkästchen „Ich akzeptiere die Bedingungen für den Express-Service.“ (`required`,
+5. **Prüfen und bestellen:** nur Summen — Dokumente, Seiten, die Zusammensetzung des Preises (Runde 7: „Seiten: 3 × 50
+   Credits = 150 Credits. Grundpreis: 2 × 100 Credits = 200 Credits. Summe: 350 Credits.“), verfügbares Guthaben,
+   „Lieferung innerhalb von 48 Stunden“ (die Dokumente stehen schon unter „Deine Auswahl“, Punkt 4); bei zu wenig
+   Guthaben Hinweis mit Link „Credits kaufen“. **Ein** Pflicht-Kontrollkästchen „Ich akzeptiere die Bedingungen für den Express-Service.“ (`required`,
    Legende „Zustimmung (Pflicht)“, Fehler am Kästchen, der Fehler verschwindet beim Ankreuzen), nicht vorab angehakt. Die
    Bearbeitung durch Mitarbeiter von InkluTec und Actino steht ausdrücklich in den Bedingungen (Seite
    `/express/bedingungen`, als ENTWURF gekennzeichnet, Fassung `2026-10-05-entwurf-3`; Punkt 5) — beim Auftrag
    gespeichert werden wie bisher Wortlaut, Fassung, Sprache, Zeitpunkt und gekürztes Netz. Aufträge bis Fassung -2
    behalten ihr zweites Häkchen im Nachweis. Knopf „Zahlungspflichtig bestellen“ (§ 312j BGB). Die Seite schickt
    Korb-Nummer, angezeigte Summe und Korb-Fassung mit; hat sich etwas geändert (Preis, zweiter Tab, Seite aus dem Zurück-Speicher), bestellt der Server
-   nicht, sondern antwortet 409, und die Seite zeigt die neue Aufstellung.
-6. **Meine Aufträge** (Michael Karbe 05.10.2026, Punkte 1 und 2): Karten wie die Dokumente der Projektansicht „Dokument“
-   (`section.card.dok-karte` > `details.dok-klappe`, H3 mit Stand-Abzeichen im `summary`, Infos als Liste, Linie,
-   Knöpfe darunter). Darin aufklappbar „Dokumente dieses Auftrags (N)“ mit Name, Seiten, Stand und Downloads. Knöpfe:
+   nicht, sondern antwortet 409, und die Seite zeigt die neue Aufstellung. Nach dem Bestellen landet der Kunde in
+   „Meine Aufträge“ (`/express?neu=<id>`): Danke-Meldung oben (sichtbar, Fokus, keine zweite Ansage), der neue Auftrag
+   aufgeklappt; die Adresse verliert danach `?neu`.
+6. **Meine Aufträge** (Michael Karbe 05.10.2026, Punkte 1 und 2; seit Runde 7 eigene Seite mit H1 „Meine Aufträge“,
+   `id="h-auftraege"`, damit alte Links `/express#h-auftraege` weiter treffen): Karten wie die Dokumente der
+   Projektansicht „Dokument“ (`section.card.dok-karte` > `details.dok-klappe`, H3 mit Stand-Abzeichen im `summary`, Infos
+   als Liste, Linie, Knöpfe darunter). **Standardmäßig zu — auch bei nur einem Auftrag** (Michael sah im Konto mit einem
+   Auftrag keine aufklappbare Liste); offen sind der Auftrag nach dem Bestellen (`?neu=<id>`) und der, auf den gesprungen
+   wird (`?auftrag=<id>` oder `#exa_karte_<id>`, Fokus auf seine Überschrift). Darin aufklappbar „Dokumente dieses Auftrags (N)“ mit Name, Seiten, Stand und Downloads. Knöpfe:
    „Auftragsübersicht öffnen“, **„Umbenennen“** und — nur bei gelieferten oder stornierten Aufträgen — **„Löschen“**.
    - **Umbenennen:** eigener Name des Kunden (Spalte `auftrag_name`, höchstens 120 Zeichen, leer = „Auftrag <Nr>“). Er
      steht in der Liste, auf der Startseite, als H1 der Auftragsübersicht („Express-Auftrag 11: Jahresberichte“) und im
@@ -64,8 +77,27 @@ Menüpunkt „Express-Service“ (`/api/me` `user.express`): Schalter an oder ei
      Downloads und Nachweis für den Kunden mit 404.
    Rückmeldungen nach Umbenennen und Löschen: sichtbare Meldung über der Liste, Fokus darauf, keine Live-Ansage.
 7. **Auftragsübersicht** `/express/auftrag/<id>` (Nachweis, **keine Rechnung**): Stand, Credits (vorgemerkt / abgebucht /
-   wieder frei), Dokumente — je Dokument aufklappbar mit Seiten, Leistung, Credits, Stand, Prüfung und Downloads (beim
-   Drucken alle aufgeklappt) —, Angaben, Einverständnis mit Fassung und Zeitpunkt, Verlauf.
+   wieder frei), Dokumente — je Dokument aufklappbar mit Seiten, Leistung, Credits samt Zusammensetzung („200 (2 × 50
+   Credits je Seite plus 100 Credits je Dokument)“), Stand, Prüfung und Downloads —, dazu **aufklappbar** (Runde 7,
+   standardmäßig zu, H2 im `summary`): Angaben, Einverständnis mit Fassung und Zeitpunkt, Verlauf. Beim Drucken
+   (`beforeprint`, auch über das Browser-Menü) ist alles aufgeklappt, danach wie vorher. Alte Links mit `?neu=1` zeigen
+   weiter die Danke-Meldung.
+8. **Anmeldung über Links** (Runde 7, Michaels „verlorenes Projekt“: Er öffnete den Link aus der Bestätigungsmail ohne
+   Sitzung, meldete sich mit seinem zweiten Konto an und sah den Auftrag nicht):
+   - Wer ohne Sitzung eine geschützte Seite aufruft — auch Projekt-Links, Lieferung, Rückfrage, Team-Einladung —, landet
+     auf `/login?weiter=<Pfad>` (Hinweis „Nach der Anmeldung geht es weiter zur aufgerufenen Seite.“) und nach der
+     Anmeldung wieder dort. Erlaubt sind nur interne, relative Pfade (`backend/weiterleitung.py`, `sicheres_ziel`:
+     kein `//host`, kein Schema, keine Backslashes oder Steuerzeichen, nie `/login` selbst); das Anmeldeformular prüft
+     noch einmal. Kein offener Redirect. Läuft die Sitzung auf einer App-Seite ab, führt `zurAnmeldung()`
+     (`frontend/dashboard.js`) ebenso mit Rücksprung zur Anmeldung.
+   - Ist man mit einem anderen Konto angemeldet als dem, mit dem bestellt wurde, zeigt die Auftragsübersicht „Dieser
+     Auftrag gehört nicht zu deinem Konto (<eigene Adresse>). Melde dich mit dem Konto an, mit dem du bestellt hast.“
+     und den Knopf „Abmelden und anders anmelden“ (meldet ab und führt mit Rücksprung zur Anmeldung). Über den Auftrag
+     wird nichts verraten: die API bleibt 404 — gleich für fremde, gelöschte und nicht vorhandene Aufträge. Aufträge
+     gehören dem **bestellenden Konto**, auch wenn aus einem Team-Topf bezahlt wurde; der Topf-Inhaber sieht fremde
+     Aufträge seiner Mitglieder nicht (nur die Vormerkung in `/api/team`).
+   - Jede Kunden-Mail (Bestätigung, Rückfrage, Lieferung, Storno) nennt „Bestellt mit dem Konto <Adresse>. Melde dich
+     mit diesem Konto an, um den Auftrag zu sehen.“
 
 App-weit (Nachprüfung Barrierefreiheit N1): Eingabefelder, Auswahllisten und Textfelder zeigen bei Tastaturfokus einen
 3-px-Fokusring (`input:focus-visible, select:focus-visible, textarea:focus-visible` in `frontend/style.css`), auch auf
@@ -151,7 +183,14 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   Zwischenstand, wird er wieder zum Korb — gibt es inzwischen einen neuen, wandern seine Dokumente dorthin (N3). Der
   Idempotenz-Schlüssel gilt nur für den Korb, zu dem er gehört. Ist der Korb einer Seite inzwischen bestellt (zweiter
   Tab), antwortet der Server 409 „veraltet“ mit dem aktuellen (leeren) Korb, und die Seite lädt ihren Stand neu (N4).
-- Preis und Seiten werden beim Bestellen festgeschrieben; spätere Preisänderungen betreffen nur neue Aufträge.
+- **Preis** (Runde 7, Michaels Richtpreis 06.10.2026): je Dokument Seiten × Preis je Seite + **Grundpreis je Dokument**
+  — Standard 50 Credits je Seite plus 100 Credits je Dokument (`Leistung.preis_standard`, `grundpreis_standard`;
+  `express.preis`, `preis_teile`). Beide Werte pflegt die Verwaltung je Leistung. Der Warenkorb liefert je Position
+  `preis_seite`, `grundpreis`, `credits` und als Summen `credits_seiten`, `credits_grund`; die Korb-Fassung enthält
+  die Grundpreise (Änderung → 409).
+- Preis und Seiten werden beim Bestellen festgeschrieben (`credits`; seit Runde 7 auch `preis_seite`, `grundpreis` je
+  Position für Auftragsübersicht und Nachweis); spätere Preisänderungen betreffen nur neue Aufträge, offene Aufträge
+  behalten ihren Preis. Vormerkung, Abbuchung, Storno und die Free-Domain-Regel rechnen mit diesem gespeicherten Betrag.
   Team-Konten: es zahlt der Topf, aus dem das Konto beim Bestellen arbeitet (`billing._konto_fuer`); die Topf-Übersicht
   des Inhabers (`/api/team`) nennt `vorgemerkt` (bindend) und `verfuegbar_nach_vormerkung` — aus `billing.guthaben`. Free-Konten einer Firmen-Domain teilen
   sich das Volumen — und damit auch die Vormerkung (`billing.vorgemerkt_domain`, Befund 7).
@@ -185,11 +224,13 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   …“ und den Verlaufseintrag — keine Dateien, keine Knöpfe.
 - **Frist:** Standard 48 Stunden ab Bestellung (Einstellung). Während einer Rückfrage ruht sie und verlängert sich bei
   der Antwort um die Wartezeit (so steht es in den Bedingungen). Intern gibt es Datum und Uhrzeit, dem Kunden nicht.
-- **Einstellungen** (nur Voll-Admins): Credits je Seite **je Leistung** (ein Feld je Eintrag der Liste; **Platzhalter 50
-  und 25**, Hinweis bis „Preise sind festgelegt“ angekreuzt ist), Frist in Stunden, höchstens Seiten und Dokumente je
+- **Einstellungen** (nur Voll-Admins): je Leistung **Credits je Seite** und **Grundpreis je Dokument** (je ein Feld je
+  Eintrag der Liste, Grundpreis 0 bis 100.000; das Platzhalter-Kennzeichen „Preise sind festgelegt“ ist seit Michaels
+  Richtpreis entfallen), Frist in Stunden, höchstens Seiten und Dokumente je
   Auftrag (500 / 50), **Dateien löschen nach Tagen** (0 = nie, Standard bis Steve entscheidet), Adresse für
   Team-Benachrichtigungen (leer = Support-Postfach). Gespeichert in `system_kv` `express_einstellungen`; Preise unter
-  `preise` (die alten Schlüssel `preis_aufbereiten`/`preis_pruefen` werden beim Lesen übernommen). Fehler nennen das Feld.
+  `preise`, Grundpreise unter `grundpreise` (fehlt er, gilt der Standard; die alten Schlüssel
+  `preis_aufbereiten`/`preis_pruefen` werden beim Lesen übernommen). Fehler nennen das Feld (`grundpreis_<leistung>`).
 - **Recht „Express-Bearbeiter“** (Spalte `users.express_bearbeiter`, vergibt nur ein Voll-Admin unter „Einstellungen des
   Express-Service“): für z. B. einen Partner, der die Dokumente aufbereitet. Sieht in der Verwaltung **nur** die
   Express-Aufträge (Navigation und Seitenleiste nur dieser Punkt), kann sie bearbeiten, sieht aber keine Kunden-,
@@ -303,7 +344,8 @@ Uploads, Lieferung, Abbuchung, Downloads, Mails und Oberfläche lesen daraus. Ni
   `pruefen(pfad)` (automatische Prüfung eines Ergebnisses, Rückgabe `{"bestanden", "zusammenfassung",
   "regeln_fehlgeschlagen"}` oder `None`) und `pruef_name` (z. B. „veraPDF“).
 - **`Leistung`** (`LEISTUNGEN`): `schluessel`, `name`, `aktiv` (`False` = abgeschaltet, bleibt in der Liste, siehe
-  „Bewusste Entscheidungen“), `preis_standard` (Credits je Seite, bis zur Einstellung),
+  „Bewusste Entscheidungen“), `preis_standard` (Credits je Seite, bis zur Einstellung), `grundpreis_standard` (Credits
+  je Dokument, Standard 0),
   `dateitypen` (erlaubte Originale), `aktion` (Name in `usage_events` beim Abbuchen), `ergebnis_pflicht`,
   `bericht_pflicht`, `ergebnis_typen` (leer = wie das Original), `bericht_typen` (Standard PDF), `ergebnis_zusatz`
   (Zusatz im Download-Namen, Standard „ (barrierefrei)“).
@@ -315,8 +357,8 @@ Uploads, Lieferung, Abbuchung, Downloads, Mails und Oberfläche lesen daraus. Ni
    Umwandlung mit dem Konverter (`pdfua_export`) — Steve/Michael entscheiden, was als Preisgrundlage gilt.
 2. Eine Leistung erlaubt `"docx"` — eine bestehende (`dateitypen=("pdf", "docx")`) oder eine neue, z. B.
    „Word barrierefrei aufbereiten“ mit `ergebnis_typen=("docx",)` oder `("pdf",)`, wenn als PDF/UA geliefert wird.
-3. Hochladen ohne Projekt: `main.py` → `express_api.Deps.upload_vorpruefung` um die Vorprüfung für Word ergänzen
-   (`upload_uebernehmen` kann über `_handle_pdf_upload(…, art="docx")` schon Word).
+3. Hochladen: geschieht im Projekt (`/api/upload` kann Word schon); der Express-Service liest die Projekte über
+   `Dateityp.projekt_typen`. Ein Hochladen ohne Projekt gibt es seit Runde 7 nicht mehr.
 4. Übersetzungen der neuen Namen in alle sechs Kataloge (`backend/locales/*`), `scripts/check_i18n.py`.
 5. Preise in der Verwaltung festlegen (das Feld je Leistung erscheint von selbst), Bedingungen anpassen
    (`ZUSTIMMUNG_FASSUNG` hochzählen).
@@ -347,13 +389,14 @@ zusätzlich eine eigene Preisfunktion in `express.preis`.
 ## Offen vor Prod (nur auf Steves Wort)
 
 1. **Wer bearbeitet?** — siehe „Offene Rechtspunkte“ 2.
-2. **Echte Preise** (Platzhalter 50/25 Credits je Seite; zum Vergleich: automatisches Tagging 20 je Seite) und
-   **Frist** (48 Stunden oder 2 Werktage — Wochenenden).
+2. **Preise:** Michaels Richtpreis 50 Credits je Seite plus 100 je Dokument ist eingestellt (06.10.2026); **Frist**
+   (48 Stunden oder 2 Werktage — Wochenenden) offen.
 3. **Aufbewahrung:** Frist für Originale und Ergebnisse festlegen (Einstellung vorhanden, heute 0 = nie löschen).
 4. **Verrechnung InkluTec ↔ Actino** für Express-Aufträge.
 5. Prod: `EXPRESS_SERVICE=an` in `docker-compose.yml` setzen, Rollout wie üblich. Vorher die Migrationen
-   `express_positionen.dateityp`, `express_auftraege.auftrag_name`, `kunde_geloescht_am`, `meldung_fehlversuche`
-   (laufen beim Start von selbst, idempotent).
+   `express_positionen.dateityp`, `preis_seite`, `grundpreis`, `express_auftraege.auftrag_name`, `kunde_geloescht_am`,
+   `meldung_fehlversuche` (laufen beim Start von selbst, idempotent). Der Rücksprung nach der Anmeldung
+   (`weiterleitung.py`) gilt app-weit und kommt mit dem Rollout auch auf Prod.
 6. **Einrahmen-Schutz** (`X-Frame-Options: DENY`, `frame-ancestors 'none'`) gilt app-weit: vor Prod und Demo prüfen,
    ob irgendeine Seite (z. B. inklutec.de) die Demo oder die App in einem iframe zeigt.
 
@@ -365,7 +408,10 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
 - Kern mit `DATEITYPEN`/`LEISTUNGEN`: `backend/express.py`; Endpunkte, Mails, Erinnerungsschleife, Kontolöschung:
   `backend/express_api.py`; Guthaben: `backend/billing.py` (`guthaben`, `_express_bindung`, `vorgemerkt`, `vorgemerkt_domain`,
   `pakete_abbuchen_fuer_monat`, `EXPRESS_OFFEN`); Schalter: `backend/funktionen.py` (`EXPRESS`)
-- Seiten: `templates/express.html`, `express_auftrag.html`, `express_bedingungen.html`, `verwaltung_express.html`,
+- Rücksprung nach der Anmeldung: `backend/weiterleitung.py` (`sicheres_ziel`, `login_adresse`), genutzt in
+  `main._login_umleitung` und im Anmeldeformular `templates/index.html`; `zurAnmeldung()` in `frontend/dashboard.js`
+- Seiten: `templates/express.html` (zwei Ansichten: „Meine Aufträge“ und Express-Warenkorb), `express_auftrag.html`,
+  `express_bedingungen.html`, `verwaltung_express.html`,
   `verwaltung_express_auftrag.html`; Hochlade-Komponente `frontend/hochladefeld.js` (Vorbild `app.html`
   `uploadBlockHtml`/`setupProjectDropzone`); Fehler am Feld in der Verwaltung `frontend/verwaltung.js` (`feldFehler`,
   `serverFeldFehler`); Link im Projekt `frontend/dokument.js`; Startseite `templates/dashboard.html`; Seitenleiste
@@ -373,7 +419,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
 
 ## Tests
 
-- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 105): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
+- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 112): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
   Vormerkung und Idempotenz (auch 4 gleichzeitige Klicks), Vormerkung sperrt andere Ausgaben, Liefern bucht genau einmal
   (auch 4 gleichzeitig), Storno, Dateinamen nie Pfad, Upload-Prüfung, Downloads erst nach Lieferung, Frist ruht bei
   Rückfrage, Erinnerung/Überfällig je einmal, Nachweis-OOXML, Kontolöschung, Einstellungen, Bearbeiter, Schalter.
@@ -391,15 +437,21 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   kleinen Schritten, Free-Einzelkonto, Free-Domain, Team-Topf), Storno nach dem Monatswechsel kostet nichts, Lieferung
   ändert das Guthaben nicht, Auftrag über zwei Monatswechsel, Sperre und Meldung nennen dieselbe Zahl (R2), ohne
   Vormerkung alles wie bisher. Klasse `Runde5` (Free-Domain mit Paketen und ein Stand) und `Runde6` (Storno-Ausgleich): siehe
-  `backend/ABRECHNUNG.md`.
-- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 129): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
+  `backend/ABRECHNUNG.md`. Klasse `Runde7`: Standardpreis 50 + 100, Zusammensetzung gespeichert und gebucht, geänderter
+  Grundpreis 409, offene Aufträge behalten ihren Preis, Grundpreis-Prüfung und 0, Free-Domain mit Grundpreis, Mails
+  nennen das Konto, Nachweis mit Zusammensetzung. Die älteren Klassen rechnen mit Grundpreis 0 (in `Basis` gesetzt).
+- `tests/test_weiterleitung.py` (3): Rücksprung nur auf interne Pfade (kein `//host`, Schema, Backslash, `/login`).
+- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 141): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
   IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno,
   dazu Preisänderung und alter Schlüssel (409), kaputter JSON-Körper (400), Feldfehler der Einstellungen, no-store,
   Projektliste, ZIP_STORED, Prüfergebnis für Kunden; Abschnitt G2 Umbenennen/Löschen (fremd 404, laufend 409, danach
   404, Verwaltung sieht Nachweis), G3 zweiter Tab 409 „veraltet“ und Einrahmen-Kopfzeilen auf `/express`,
   `/express/warenkorb`, `/app`, `/api/express/stand`; G4 Vormonats-Bestellung: `/api/me` nennt die bindende
-  Vormerkung, Rest + Zusatz-Credits − vorgemerkt = verfügbar = Sperre
-- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 89): Link im Projekt, Auswahl, Hochlade-Komponente
+  Vormerkung, Rest + Zusatz-Credits − vorgemerkt = verfügbar = Sperre; Runde 7: Hochladen ohne Projekt 410, Dokumente
+  über `/api/upload` ins Projekt, B2 Preis 50 + 100 mit Teilsummen und Feldfehler des Grundpreises, R7 „Meine Aufträge“
+  ohne Bestellformular, Warenkorb ohne Hochladen, `/express?projekt=` → Warenkorb, Anmeldung mit Rücksprung (auch mit
+  Abfrage), nur interne Ziele, fremdes Konto 404, gespeicherte Preis-Zusammensetzung
+- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 105): Link im Projekt, Auswahl, Hochlade-Komponente
   (Etikett-Knopf, Fokusring, Dateiname in der Statuszeile, Fehler am Feld) beim Kunden und in der Verwaltung,
   Leistung entprellt, Entfernen mit Meldung und Fokus, Pflichtfelder und Häkchen mit Fehler am Feld, Fokusring an
   „Zahlungspflichtig bestellen“, Rahmen der Eingabefelder, keine Ansage beim Laden, Bestellen, Danke-Meldung (nicht im
@@ -408,7 +460,11 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   nur Summen, kein „nur PDF“, ein Häkchen (Fehler verschwindet beim Ankreuzen), Fokusring per Tab, eindeutige
   Hochlade-Namen ohne Landmarke, Auftragskarten mit Umbenennen-/Lösch-Dialog, Verwaltung sieht „vom Kunden gelöscht“,
   Fokusring an Feldern und Kästchen auf Anmelden, Registrieren und Passwort vergessen; Runde 4: stornierter Auftrag
-  daneben, Abzeichen „Storniert“ mit #475569 (6,9:1) — axe 0 Verstöße
+  daneben, Abzeichen „Storniert“ mit #475569 (6,9:1); Runde 7: Navigation „Meine Aufträge“, Link aus dem Projekt in den
+  Warenkorb (Fokus Schritt 1), kein Hochladefeld, Preis und Zusammensetzung, nach dem Bestellen Liste mit offenem Auftrag
+  und Danke-Meldung, ein Auftrag allein ist zu, Sprung auf eine Karte, alter Link `#h-auftraege` und `?neu=1`, Angaben/
+  Einverständnis/Verlauf aufklappbar und beim Drucken offen, Startseite „Meine Aufträge“, Verwaltung mit Grundpreis-Feld,
+  Anmeldung mit Rücksprung, fremdes Konto mit „Abmelden und anders anmelden“, kein offener Redirect — axe 0 Verstöße
 - `tests/e2e/ui_express_korb.py` (25): Knopf am Dokument, Navigationseintrag in drei Modi, H1 „Express-Warenkorb“ auf
   `/express/warenkorb` passend zum Seitentitel (N5)
 - `tests/e2e/ui_bildschirmfotos.py`: Fotos vorher/nachher der globalen CSS-Änderungen (Projekt-Hochladefläche, Knöpfe,
