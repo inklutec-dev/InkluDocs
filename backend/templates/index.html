@@ -18,13 +18,15 @@
         </p>
         {% endif %}
         {# Ruecksprung (Express Runde 7): Link aus einer Mail ohne Sitzung — nach der Anmeldung geht es dorthin weiter. #}
+        {# Runde 8 (Nachkontrolle A11y 3): am E-Mail-Feld verknüpft (aria-describedby) — der Fokus springt sofort ins Feld,
+           so wird der Hinweis mit vorgelesen; er nennt das Ziel. #}
         {% if weiter %}
-        <p class="subtitle" id="weiterHinweis">{{ _('Nach der Anmeldung geht es weiter zur aufgerufenen Seite.') }}</p>
+        <p class="subtitle" id="weiterHinweis">{% if weiter.startswith('/express/auftrag/') %}{{ _('Nach der Anmeldung geht es weiter zu deinem Express-Auftrag.') }}{% else %}{{ _('Nach der Anmeldung geht es weiter zur aufgerufenen Seite.') }}{% endif %}</p>
         {% endif %}
         <form id="loginForm" novalidate>
             <div class="form-group">
                 <label for="email">{{ _('E-Mail-Adresse') }}</label>
-                <input type="email" id="email" name="email" required autocomplete="email" autofocus>
+                <input type="email" id="email" name="email" required autocomplete="email" autofocus{% if weiter %} aria-describedby="weiterHinweis"{% endif %}>
             </div>
             <div class="form-group">
                 <label for="password">{{ _('Passwort') }}</label>

@@ -4,6 +4,7 @@ Wer ohne Sitzung eine geschuetzte Seite aufruft (typisch: Link aus einer Mail), 
 der Anmeldung wieder dort. Erlaubt sind NUR interne, relative Pfade — sonst waere /login ein offener Redirect
 (/login?weiter=https://boese.example). Geprueft wird hier (Server) und noch einmal im Anmeldeformular (index.html).
 """
+import posixpath
 from urllib.parse import quote, urlsplit
 
 STANDARD = "/app"
@@ -21,9 +22,16 @@ def sicheres_ziel(weiter) -> str:
     teile = urlsplit(z)
     if teile.scheme or teile.netloc or not teile.path.startswith("/"):
         return ""
-    if teile.path.rstrip("/") in ("/login", "/logout", "/api/logout"):
+    # Pfad normalisieren (Nachkontrolle Runde 7, Hinweis): „/..//host“ wird zu „/host“, nie zu „//host“; „.“ und „..“
+    # verschwinden. Ein abschliessender Schraegstrich bleibt erhalten.
+    pfad = posixpath.normpath(teile.path)
+    if pfad.startswith("//"):
         return ""
-    return z
+    if teile.path.endswith("/") and pfad != "/":
+        pfad += "/"
+    if pfad.rstrip("/") in ("/login", "/logout", "/api/logout"):
+        return ""
+    return pfad + (f"?{teile.query}" if teile.query else "") + (f"#{teile.fragment}" if teile.fragment else "")
 
 
 def login_adresse(pfad: str, abfrage: str = "") -> str:

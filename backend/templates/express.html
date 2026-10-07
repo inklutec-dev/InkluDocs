@@ -528,7 +528,8 @@
     // Inhalte des Auftrags aufklappbar: je Dokument Name, Seiten, Stand und Downloads (Punkt 2)
     const det = el('details', 'dok-klappe ex-dok-klappe');
     const sum = el('summary');
-    sum.appendChild(el('h4', 'doc-heading ex-dok-titel', t('Dokumente dieses Auftrags ({n})', { n: zahl((a.positionen || []).length) })));
+    // Überschriftenebenen (Nachkontrolle Runde 7, A11y 1): H1 „Meine Aufträge“ → Karte H2 → „Dokumente dieses Auftrags“ H3
+    sum.appendChild(el('h3', 'doc-heading ex-dok-titel', t('Dokumente dieses Auftrags ({n})', { n: zahl((a.positionen || []).length) })));
     det.appendChild(sum);
     const ul = el('ul', 'verwaltung-liste');
     (a.positionen || []).forEach((p) => {
@@ -566,7 +567,7 @@
     const det = el('details', 'dok-klappe');
     det.open = !!offen;
     const sum = el('summary');
-    const h = el('h3', 'doc-heading dok-kopfzeile');
+    const h = el('h2', 'doc-heading dok-kopfzeile ex-karten-titel');
     h.id = 'exa_heading_' + a.id;
     const titel = el('span', null, (a.auftrag_name ? name + ' (' + t('Auftrag {nr}', { nr: a.id }) + ')' : name));
     titel.appendChild(el('span', 'visually-hidden', ', ' + t('Stand') + ':'));

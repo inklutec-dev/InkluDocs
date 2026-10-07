@@ -57,6 +57,14 @@ def axe(pg, name):
     check(f"axe {name}: 0 Verstöße", not v, [(x["id"], [t for n in x["nodes"] for t in n["target"]][:3]) for x in v])
 
 
+def axe_regel(pg, name, regel):
+    """Einzelne axe-Regel, auch aus „best-practice“ (z. B. heading-order, Runde 8)."""
+    pg.add_script_tag(content=AXE)
+    e = pg.evaluate("async (r) => await axe.run(document, {runOnly:{type:'rule',values:[r]}})", regel)
+    v = e["violations"]
+    check(f"axe {regel} {name}: 0 Verstöße", not v, [(x["id"], [t for n in x["nodes"] for t in n["target"]][:3]) for x in v])
+
+
 def im_container(code):
     return subprocess.run(["sudo", "docker", "exec", "-w", "/app", "inkludocs-staging", "python3", "-c", code],
                           capture_output=True, text=True, check=True).stdout.strip()
@@ -231,10 +239,13 @@ try:
         pg.wait_for_timeout(1200)
         check("Michaels Fall: auch EIN Auftrag ist als Karte zu (aufklappbar erkennbar)", pg.locator("section.ex-auftrag-karte").count() == 1
               and not pg.locator("section.ex-auftrag-karte details.dok-klappe").first.evaluate("d => d.open")
-              and pg.locator("section.ex-auftrag-karte details.dok-klappe > summary h3").count() == 1)
+              and pg.locator("section.ex-auftrag-karte details.dok-klappe > summary h2").count() == 1)
         check("Unter der Liste: Weg zum Express-Warenkorb, kein Bestellformular", pg.locator("#exBestellForm").count() == 0
               and pg.locator("main a[href='/express/warenkorb']", has_text="Zum Express-Warenkorb").count() == 1)
         axe(pg, "Meine Aufträge")
+        check("Überschriften ohne Sprung: H1 „Meine Aufträge“, Karte H2, „Neuer Express-Auftrag“ H2 (Runde 8)",
+              pg.locator("section.ex-auftrag-karte summary h2").count() == 1 and pg.locator("h2#h-neuer-auftrag").count() == 1)
+        axe_regel(pg, "Meine Aufträge", "heading-order")
         pg.goto(f"{BASE}/express?auftrag={aid}#exa_karte_{aid}", wait_until="networkidle")
         pg.wait_for_timeout(1200)
         check("Sprung auf einen Auftrag: Karte offen, Fokus auf ihrer Überschrift", pg.locator(f"#exa_karte_{aid} details.dok-klappe").first.evaluate("d => d.open")
@@ -387,9 +398,11 @@ print(r['auftrag_id'])
         pg.wait_for_timeout(1500)
         karte = pg.locator(f"#exa_karte_{aid}")
         check("Meine Aufträge: Karte mit <details>, H3 im summary, Stand-Abzeichen", karte.count() == 1
-              and karte.locator("details.dok-klappe > summary h3").count() == 1 and "Geliefert" in karte.locator(".badge").inner_text())
+              and karte.locator("details.dok-klappe > summary h2").count() == 1 and "Geliefert" in karte.locator(".badge").inner_text())
         karte.locator("details.dok-klappe > summary").first.evaluate("e => { e.parentElement.open = true; }")
         inhalte = karte.locator("details.ex-dok-klappe")
+        check("Inhalte des Auftrags: Überschrift H3 unter der Karten-H2", inhalte.locator("summary h3").count() == 1)
+        axe_regel(pg, "Meine Aufträge, Karte offen", "heading-order")
         check("Inhalte des Auftrags aufklappbar (Dokumente mit Seiten, Stand, Download)", inhalte.count() == 1
               and "Dokumente dieses Auftrags (1)" in inhalte.locator("summary").inner_text())
         inhalte.evaluate("e => { e.open = true; }")
@@ -434,6 +447,10 @@ print(r['auftrag_id'])
         fp.goto(f"{BASE}/express/auftrag/{za}", wait_until="networkidle")
         check("Ohne Sitzung: zur Anmeldung mit Rücksprung und Hinweis", f"/login?weiter=%2Fexpress%2Fauftrag%2F{za}" in fp.url
               and fp.locator("#weiterHinweis").is_visible(), fp.url)
+        check("Hinweis nennt das Ziel und hängt am E-Mail-Feld (aria-describedby, Runde 8)",
+              fp.locator("#weiterHinweis").inner_text() == "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
+              and fp.locator("#email").get_attribute("aria-describedby") == "weiterHinweis"
+              and fokus(fp) == "email", fp.locator("#weiterHinweis").inner_text())
         axe(fp, "Anmeldung mit Rücksprung")
         fp.fill("#email", ADMIN_MAIL)
         fp.fill("#password", ADMIN_PW)
@@ -445,6 +462,8 @@ print(r['auftrag_id'])
               and "Melde dich mit dem Konto an, mit dem du bestellt hast." in meld.inner_text()
               and "Kim Muster" not in fp.locator("main").inner_text() and not fp.locator("#exaAktionen").is_visible(),
               meld.inner_text() if meld.count() else fp.locator("main").inner_text())
+        check("Fremdes Konto: Fokus auf dem Meldungssatz (tabindex -1), keine Live-Ansage (Runde 8)", fokus(fp) == "exaFremdText"
+              and fp.locator("#exaFremdText").get_attribute("tabindex") == "-1" and live(fp) == "", (fokus(fp), live(fp)))
         axe(fp, "Auftrag eines anderen Kontos")
         fp.click("#exaAndersAnmelden")
         fp.wait_for_url("**/login?weiter=*", timeout=20000)

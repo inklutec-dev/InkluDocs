@@ -11511,3 +11511,7 @@ msgstr "{leistung}: base price per document (credits)"
 
 msgid "{seiten} × {p} Credits je Seite plus {g} Credits je Dokument"
 msgstr "{seiten} × {p} credits per page plus {g} credits per document"
+
+# Express Runde 8 (07.10.2026): Ziel des Ruecksprungs
+msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
+msgstr "After signing in, you will continue to your Express order."

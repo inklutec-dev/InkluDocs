@@ -22,6 +22,14 @@ class SicheresZiel(unittest.TestCase):
                      "/login?weiter=/app", "/logout", "/" + "x" * 1000, "/%0d%0aSet-Cookie:x", "http:/boese"):
             self.assertEqual(w.sicheres_ziel(ziel), "" if ziel != "/%0d%0aSet-Cookie:x" else ziel, repr(ziel))
 
+    def test_pfad_normalisiert(self):
+        """Nachkontrolle Runde 7 (Hinweis): „..“ und „.“ fallen weg, nie entsteht //host."""
+        self.assertEqual(w.sicheres_ziel("/..//boese.example"), "/boese.example")
+        self.assertEqual(w.sicheres_ziel("/express/../app?projekt=1"), "/app?projekt=1")
+        self.assertEqual(w.sicheres_ziel("/a/./b/"), "/a/b/")
+        self.assertEqual(w.sicheres_ziel("/x/../login"), "")
+        self.assertEqual(w.sicheres_ziel("/express/auftrag/5#oben"), "/express/auftrag/5#oben")
+
     def test_login_adresse(self):
         self.assertEqual(w.login_adresse("/express/auftrag/12"), "/login?weiter=%2Fexpress%2Fauftrag%2F12")
         self.assertEqual(w.login_adresse("/app", "projekt=957"), "/login?weiter=%2Fapp%3Fprojekt%3D957")

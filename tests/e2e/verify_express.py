@@ -174,6 +174,12 @@ try:
           and [(p["preis_seite"], p["grundpreis"]) for p in w["positionen"]] == [(50, 100), (50, 100)], w)
     r = voll.post("/api/admin/express/einstellungen", json=dict(EINST, grundpreise={"aufbereiten": "-3"}))
     check("Grundpreis -3: 400 mit Feld grundpreis_aufbereiten", r.status_code == 400 and r.json()["detail"].get("feld") == "grundpreis_aufbereiten", r.text)
+    for wert in ("1.5", "100.00"):
+        r = voll.post("/api/admin/express/einstellungen", json=dict(EINST, grundpreise={"aufbereiten": wert}))
+        check(f"Grundpreis „{wert}“: 400 mit Feld statt still umgedeutet (Runde 8)", r.status_code == 400
+              and r.json()["detail"].get("feld") == "grundpreis_aufbereiten", r.text)
+    r = voll.post("/api/admin/express/einstellungen", json=dict(EINST, max_seiten_auftrag="1.000"))
+    check("Tausenderpunkt „1.000“ bleibt erlaubt", r.status_code == 200 and r.json()["einstellungen"]["max_seiten_auftrag"] == 1000, r.text[:200])
     voll.post("/api/admin/express/einstellungen", json=EINST)
     pos2 = korb["positionen"][1]["id"]
     r = kunde.post(f"/api/express/warenkorb/positionen/{pos2}/leistung", json={"leistung": "pruefen"})

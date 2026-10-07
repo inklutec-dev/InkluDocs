@@ -243,9 +243,13 @@
     const mail = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || '';
     const kasten = el('div', 'verwaltung-warnung');
     kasten.id = 'exaFremd';
-    kasten.appendChild(el('p', null, mail
+    // Wie die übrigen Meldungen: Satz mit tabindex=-1, Fokus dorthin, keine zusätzliche Live-Ansage (Runde 8, A11y 2)
+    const satz = el('p', null, mail
       ? t('Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast.', { mail: mail })
-      : t('Dieser Auftrag gehört nicht zu deinem Konto. Melde dich mit dem Konto an, mit dem du bestellt hast.')));
+      : t('Dieser Auftrag gehört nicht zu deinem Konto. Melde dich mit dem Konto an, mit dem du bestellt hast.'));
+    satz.id = 'exaFremdText';
+    satz.tabIndex = -1;
+    kasten.appendChild(satz);
     const p = el('p', 'ex-aktionen');
     const knopf = el('button', 'btn btn-primary', t('Abmelden und anders anmelden'));
     knopf.type = 'button';
@@ -261,6 +265,7 @@
     p.appendChild(zurueck);
     kasten.appendChild(p);
     ziel.appendChild(kasten);
+    satz.focus();
   }
 
   byId('exaDrucken').addEventListener('click', () => window.print());

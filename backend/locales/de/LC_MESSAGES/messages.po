@@ -11514,3 +11514,7 @@ msgstr "{leistung}: Grundpreis je Dokument (Credits)"
 
 msgid "{seiten} × {p} Credits je Seite plus {g} Credits je Dokument"
 msgstr "{seiten} × {p} Credits je Seite plus {g} Credits je Dokument"
+
+# Express Runde 8 (07.10.2026): Ziel des Ruecksprungs
+msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
+msgstr "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."

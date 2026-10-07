@@ -43,6 +43,9 @@ services:
       - NOTIFICATION_EMAIL=support@inklutec.de
       # EXPRESS-SERVICE Stufe 1 (05.10.2026): nur Staging an; Prod ohne Variable = aus (backend/funktionen.py)
       - EXPRESS_SERVICE=${EXPRESS_SERVICE:-an}
+      # Runde 8 (07.10.2026): Testkonten, deren Express-Auftraege NIE Bearbeiter benachrichtigen (nur Support) — neben
+      # allen Adressen auf .invalid. Wert in .env.staging (die E2E-Konten aus ~/.e2e.env), kommagetrennt.
+      - EXPRESS_TESTKONTEN=${EXPRESS_TESTKONTEN:-}
       - BASE_URL=https://staging.inkludocs.inklutec.de
       # PDFIX-INTEGRATION (24.04.2026): Kill-Switch, default OFF. Fuer Staging auf true.
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}

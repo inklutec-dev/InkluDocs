@@ -59,7 +59,8 @@ kein Bestellformular mehr.
 6. **Meine Aufträge** (Michael Karbe 05.10.2026, Punkte 1 und 2; seit Runde 7 eigene Seite mit H1 „Meine Aufträge“,
    `id="h-auftraege"`, damit alte Links `/express#h-auftraege` weiter treffen): Karten wie die Dokumente der
    Projektansicht „Dokument“ (`section.card.dok-karte` > `details.dok-klappe`, H3 mit Stand-Abzeichen im `summary`, Infos
-   als Liste, Linie, Knöpfe darunter). **Standardmäßig zu — auch bei nur einem Auftrag** (Michael sah im Konto mit einem
+   als Liste, Linie, Knöpfe darunter; Überschriften ohne Sprung: H1 „Meine Aufträge“, Karte H2, „Dokumente dieses
+   Auftrags“ H3, „Neuer Express-Auftrag“ H2 — Runde 8). **Standardmäßig zu — auch bei nur einem Auftrag** (Michael sah im Konto mit einem
    Auftrag keine aufklappbare Liste); offen sind der Auftrag nach dem Bestellen (`?neu=<id>`) und der, auf den gesprungen
    wird (`?auftrag=<id>` oder `#exa_karte_<id>`, Fokus auf seine Überschrift). Darin aufklappbar „Dokumente dieses Auftrags (N)“ mit Name, Seiten, Stand und Downloads. Knöpfe:
    „Auftragsübersicht öffnen“, **„Umbenennen“** und — nur bei gelieferten oder stornierten Aufträgen — **„Löschen“**.
@@ -87,12 +88,15 @@ kein Bestellformular mehr.
    - Wer ohne Sitzung eine geschützte Seite aufruft — auch Projekt-Links, Lieferung, Rückfrage, Team-Einladung —, landet
      auf `/login?weiter=<Pfad>` (Hinweis „Nach der Anmeldung geht es weiter zur aufgerufenen Seite.“) und nach der
      Anmeldung wieder dort. Erlaubt sind nur interne, relative Pfade (`backend/weiterleitung.py`, `sicheres_ziel`:
-     kein `//host`, kein Schema, keine Backslashes oder Steuerzeichen, nie `/login` selbst); das Anmeldeformular prüft
-     noch einmal. Kein offener Redirect. Läuft die Sitzung auf einer App-Seite ab, führt `zurAnmeldung()`
+     kein `//host`, kein Schema, keine Backslashes oder Steuerzeichen, nie `/login` selbst; der Pfad wird vorher
+     normalisiert, „/..//host“ wird zu „/host“); das Anmeldeformular prüft noch einmal. Der Hinweis nennt das Ziel („…
+     zu deinem Express-Auftrag“ bzw. „… zur aufgerufenen Seite“) und hängt per `aria-describedby` am E-Mail-Feld, das
+     den Fokus bekommt (Runde 8). Kein offener Redirect. Läuft die Sitzung auf einer App-Seite ab, führt `zurAnmeldung()`
      (`frontend/dashboard.js`) ebenso mit Rücksprung zur Anmeldung.
    - Ist man mit einem anderen Konto angemeldet als dem, mit dem bestellt wurde, zeigt die Auftragsübersicht „Dieser
      Auftrag gehört nicht zu deinem Konto (<eigene Adresse>). Melde dich mit dem Konto an, mit dem du bestellt hast.“
-     und den Knopf „Abmelden und anders anmelden“ (meldet ab und führt mit Rücksprung zur Anmeldung). Über den Auftrag
+     und den Knopf „Abmelden und anders anmelden“ (meldet ab und führt mit Rücksprung zur Anmeldung). Der Fokus geht
+     auf den Meldungssatz (`tabindex="-1"`, wie die übrigen Meldungen), ohne zusätzliche Live-Ansage (Runde 8). Über den Auftrag
      wird nichts verraten: die API bleibt 404 — gleich für fremde, gelöschte und nicht vorhandene Aufträge. Aufträge
      gehören dem **bestellenden Konto**, auch wenn aus einem Team-Topf bezahlt wurde; der Topf-Inhaber sieht fremde
      Aufträge seiner Mitglieder nicht (nur die Vormerkung in `/api/team`).
@@ -226,7 +230,9 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   der Antwort um die Wartezeit (so steht es in den Bedingungen). Intern gibt es Datum und Uhrzeit, dem Kunden nicht.
 - **Einstellungen** (nur Voll-Admins): je Leistung **Credits je Seite** und **Grundpreis je Dokument** (je ein Feld je
   Eintrag der Liste, Grundpreis 0 bis 100.000; das Platzhalter-Kennzeichen „Preise sind festgelegt“ ist seit Michaels
-  Richtpreis entfallen), Frist in Stunden, höchstens Seiten und Dokumente je
+  Richtpreis entfallen; Zahlen nur ganz, Punkt oder Leerzeichen nur als Tausendertrennung wie „1.000“ — „1.5“ oder
+  „100.00“ ergeben einen Fehler am Feld statt still 15 bzw. 10.000, Runde 8), Frist in Stunden, höchstens Seiten und
+  Dokumente je
   Auftrag (500 / 50), **Dateien löschen nach Tagen** (0 = nie, Standard bis Steve entscheidet), Adresse für
   Team-Benachrichtigungen (leer = Support-Postfach). Gespeichert in `system_kv` `express_einstellungen`; Preise unter
   `preise`, Grundpreise unter `grundpreise` (fehlt er, gilt der Standard; die alten Schlüssel
@@ -250,6 +256,16 @@ bleibt es dabei (keine Doppelmails, Befund 10). Die Schleife läuft alle
 Aufbewahrungsfrist und ZIP-Reste weg. Wird das Konto eines Team-Inhabers gelöscht, werden offene Aufträge seiner
 Mitglieder aus seinem Topf storniert (Kunde und Team bekommen die Storno-Mail); wird ein Kundenkonto mit offenem Auftrag
 gelöscht, bekommt das Team die Mail „Entfallen“.
+
+**Testaufträge benachrichtigen nie Bearbeiter** (Runde 8, Vorfall 07.10.2026: 15 „[STAGING]“-Team-Mails aus
+Testläufen an Michael, der auf Staging Express-Bearbeiter ist): Gehört ein Auftrag einem **Testkonto** — Mail-Domain auf
+`.invalid` oder Adresse in der Umgebungsvariablen `EXPRESS_TESTKONTEN` (kommagetrennt; auf Staging die E2E-Konten aus
+`~/.e2e.env`, eingetragen in `.env.staging`) —, gehen alle Team-Mails dazu (neuer Auftrag, Antwort, Erinnerung,
+überfällig, Storno, entfallen) **nur an `support@inklutec.de`** (`EXPRESS_TEST_MAIL`), nie an die Bearbeiter
+(`express.ist_testkonto`, `team_empfaenger(standard, auftrag)`). Steht in den Einstellungen eine Team-Adresse auf
+`.invalid` (Testreihen), geht die Mail dorthin, also an niemanden. Fehlt die Adresse des Kunden, gilt der Auftrag
+vorsichtshalber als Testauftrag. Echte Kunden (auch Michaels eigene Aufträge) benachrichtigen weiter alle wie oben. Die
+Testreihen prüfen am Ende im Log, dass keine Mail an einen Bearbeiter ging.
 
 ## Datenmodell (`database.init_db`)
 
@@ -419,7 +435,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
 
 ## Tests
 
-- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 112): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
+- `tests/test_express.py` (Unit, eigene Wegwerf-Datenbank, 117): Warenkorb, Fremd-Zugriffe, Grenzen, Bestellen mit
   Vormerkung und Idempotenz (auch 4 gleichzeitige Klicks), Vormerkung sperrt andere Ausgaben, Liefern bucht genau einmal
   (auch 4 gleichzeitig), Storno, Dateinamen nie Pfad, Upload-Prüfung, Downloads erst nach Lieferung, Frist ruht bei
   Rückfrage, Erinnerung/Überfällig je einmal, Nachweis-OOXML, Kontolöschung, Einstellungen, Bearbeiter, Schalter.
@@ -440,8 +456,10 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   `backend/ABRECHNUNG.md`. Klasse `Runde7`: Standardpreis 50 + 100, Zusammensetzung gespeichert und gebucht, geänderter
   Grundpreis 409, offene Aufträge behalten ihren Preis, Grundpreis-Prüfung und 0, Free-Domain mit Grundpreis, Mails
   nennen das Konto, Nachweis mit Zusammensetzung. Die älteren Klassen rechnen mit Grundpreis 0 (in `Basis` gesetzt).
-- `tests/test_weiterleitung.py` (3): Rücksprung nur auf interne Pfade (kein `//host`, Schema, Backslash, `/login`).
-- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 141): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
+  Klasse `Runde8`: Testkonto erkennen (.invalid, Umgebung), Testauftrag nie an Bearbeiter, echter Kunde weiter an alle,
+  Zahlenfelder nur mit Tausenderpunkt.
+- `tests/test_weiterleitung.py` (4, mit Normalisierung): Rücksprung nur auf interne Pfade (kein `//host`, Schema, Backslash, `/login`).
+- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 144): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
   IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno,
   dazu Preisänderung und alter Schlüssel (409), kaputter JSON-Körper (400), Feldfehler der Einstellungen, no-store,
   Projektliste, ZIP_STORED, Prüfergebnis für Kunden; Abschnitt G2 Umbenennen/Löschen (fremd 404, laufend 409, danach
@@ -451,7 +469,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   über `/api/upload` ins Projekt, B2 Preis 50 + 100 mit Teilsummen und Feldfehler des Grundpreises, R7 „Meine Aufträge“
   ohne Bestellformular, Warenkorb ohne Hochladen, `/express?projekt=` → Warenkorb, Anmeldung mit Rücksprung (auch mit
   Abfrage), nur interne Ziele, fremdes Konto 404, gespeicherte Preis-Zusammensetzung
-- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 105): Link im Projekt, Auswahl, Hochlade-Komponente
+- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 111; Runde 8: axe heading-order, Fokus „fremdes Konto“, Hinweis am E-Mail-Feld): Link im Projekt, Auswahl, Hochlade-Komponente
   (Etikett-Knopf, Fokusring, Dateiname in der Statuszeile, Fehler am Feld) beim Kunden und in der Verwaltung,
   Leistung entprellt, Entfernen mit Meldung und Fokus, Pflichtfelder und Häkchen mit Fehler am Feld, Fokusring an
   „Zahlungspflichtig bestellen“, Rahmen der Eingabefelder, keine Ansage beim Laden, Bestellen, Danke-Meldung (nicht im

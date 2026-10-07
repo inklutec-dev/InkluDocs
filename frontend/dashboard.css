@@ -260,6 +260,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .dok-werkbank { border-top: 1px solid #9ca3af; margin-top: 0.9rem; padding-top: 0.2rem; }
 .ex-dok-klappe { margin: 0.4rem 0 0; }
 .ex-dok-klappe > summary .ex-dok-titel { display: inline; font-size: 1.05rem; margin: 0; overflow-wrap: anywhere; }
+/* „Meine Aufträge“: Karten-Überschrift ist H2 (Runde 8, Ebenen ohne Sprung), sieht aber aus wie die Dokument-Karten. */
+.ex-karten-titel { font-size: 1.15rem; margin: 0; }
 /* Auftragsuebersicht: Angaben, Einverstaendnis, Verlauf aufklappbar (Runde 7) — H2 im summary bleibt in der Zeile. */
 .ex-abschnitt-klappe > summary .ex-abschnitt-titel { display: inline; font-size: 1.25rem; margin: 0; }
 /* Ueberschrift IM summary (Express „Geliefert“/„Storniert“, 05.10.2026): bleibt neben dem Aufklapp-Pfeil in der Zeile. */

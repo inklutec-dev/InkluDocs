@@ -1720,6 +1720,82 @@ class Runde7(_Guthabenhilfe, Basis):
             xml = z.read("word/document.xml").decode()
         self.assertIn("2 × 50 Credits je Seite plus 100 Credits je Dokument", xml)
 
+class Runde8(Basis):
+    """Runde 8 (07.10.2026): Team-Mails zu Auftraegen von Testkonten nur an den Support, nie an Bearbeiter (Vorfall: 15
+    „[STAGING]“-Mails aus Testlaeufen an Michael); Zahlenfelder der Einstellungen nehmen Punkte nur als Tausendergruppen."""
+
+    def setUp(self):
+        super().setUp()
+        _sql("INSERT INTO users (id, email, password_hash, display_name, plan) VALUES (5, 'bearbeiter@actino-beispiel.de', 'x', 'Bearbeiter', 'free')")
+        express.bearbeiter_setzen(user_id=5, an=True)
+
+    def _versand(self, aid):
+        """_mails_nach wie im Router (Bestellung), Empfaenger mitschreiben statt senden."""
+        import types
+        import express_api
+        an = []
+        alt = express_api._d
+        express_api._d = types.SimpleNamespace(send_email=lambda adresse, betreff, inhalt, bcc_admin=False: an.append((adresse, betreff)) or True,
+                                               base_url="https://beispiel.invalid", notification_email="support@inklutec.de")
+        try:
+            express_api._mails_nach("bestellt", "bestellt", aid)
+        finally:
+            express_api._d = alt
+        return an
+
+    def test_testkonto_erkennen(self):
+        self.assertTrue(express.ist_testkonto("kim@express-test.invalid"))
+        self.assertTrue(express.ist_testkonto("KIM@X.INVALID"))
+        self.assertTrue(express.ist_testkonto(""))                         # im Zweifel: nur Support
+        self.assertFalse(express.ist_testkonto("karbe@actino-beispiel.de"))
+        with mock.patch.dict(os.environ, {"EXPRESS_TESTKONTEN": "e2e@beispiel-firma.de, zweit@beispiel.de"}):
+            self.assertTrue(express.ist_testkonto("E2E@beispiel-firma.de"))
+            self.assertTrue(express.ist_testkonto("zweit@beispiel.de"))
+            self.assertFalse(express.ist_testkonto("echt@beispiel-firma.de"))
+
+    def test_testauftrag_nie_an_bearbeiter(self):
+        aid = self._auftrag([self.d1])                                   # Kundin auf beispiel.invalid
+        an = self._versand(aid)
+        team = [x for x, betreff in an if "Neuer Express-Auftrag" in betreff]
+        self.assertEqual(team, ["support@inklutec.de"])
+        self.assertNotIn("bearbeiter@actino-beispiel.de", [x for x, _ in an])
+        # Team-Adresse der Testreihe auf .invalid: dorthin (geht ins Leere), sonst niemand
+        express.speichere_einstellungen({"preise": {"aufbereiten": "50"}, "frist_stunden": "48", "max_seiten_auftrag": "500",
+                                         "max_dokumente_auftrag": "50", "team_mail": "team@express-test.invalid"})
+        self.assertEqual(express.team_empfaenger("support@inklutec.de", express.auftrag_fuer_verwaltung(aid)), ["team@express-test.invalid"])
+
+    def test_testkonto_aus_der_umgebung(self):
+        _sql("UPDATE users SET email = 'e2e-konto@beispiel-firma.de' WHERE id = 1")
+        aid = self._auftrag([self.d1])
+        with mock.patch.dict(os.environ, {"EXPRESS_TESTKONTEN": "e2e-konto@beispiel-firma.de"}):
+            team = [x for x, b in self._versand(aid) if "Neuer Express-Auftrag" in b]
+        self.assertEqual(team, ["support@inklutec.de"])
+
+    def test_echter_kunde_benachrichtigt_weiter_die_bearbeiter(self):
+        _sql("UPDATE users SET email = 'kundin@firma-beispiel.de' WHERE id = 1")
+        aid = self._auftrag([self.d1])
+        team = [x for x, b in self._versand(aid) if "Neuer Express-Auftrag" in b]
+        self.assertEqual(team, ["support@inklutec.de", "bearbeiter@actino-beispiel.de"])
+        a = express.auftrag_fuer_verwaltung(aid)
+        self.assertEqual(express.team_empfaenger("support@inklutec.de", a), ["support@inklutec.de", "bearbeiter@actino-beispiel.de"])
+
+    def test_zahlenfelder_punkte_nur_als_tausender(self):
+        basis = {"preise": {"aufbereiten": "50"}, "frist_stunden": "48", "max_seiten_auftrag": "500", "max_dokumente_auftrag": "50"}
+        for feld, wert in (("grundpreise", "1.5"), ("grundpreise", "100.00"), ("grundpreise", "1.00.0"), ("grundpreise", "1,5"),
+                           ("preise", "50.0"), ("frist_stunden", "4.8")):
+            daten = dict(basis)
+            if feld in ("grundpreise", "preise"):
+                daten[feld] = {"aufbereiten": wert}
+            else:
+                daten[feld] = wert
+            with self.assertRaises(express.ExpressFehler, msg=wert) as e:
+                express.speichere_einstellungen(daten)
+            self.assertIn(e.exception.extra.get("feld"), ("grundpreis_aufbereiten", "preis_aufbereiten", "frist_stunden"))
+        e = express.speichere_einstellungen({**basis, "max_seiten_auftrag": "1.000", "grundpreise": {"aufbereiten": "1.000"}})
+        self.assertEqual((e["max_seiten_auftrag"], e["grundpreise"]["aufbereiten"]), (1000, 1000))
+        e = express.speichere_einstellungen({**basis, "max_seiten_auftrag": "12 000"})
+        self.assertEqual(e["max_seiten_auftrag"], 12000)
+
 class NurPdf(unittest.TestCase):
     def test_heute_nur_pdf(self):
         self.assertEqual([t.schluessel for t in express.angebotene_dateitypen()], ["pdf"])

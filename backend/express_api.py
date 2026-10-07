@@ -249,7 +249,8 @@ def _mails_nach(art_kunde: str = "", art_team: str = "", auftrag_id: int = 0, te
     erfolge = 0
     if art_team:
         inhalt = express.mail_team(art_team, a, _d.base_url, text)
-        for adresse in express.team_empfaenger(_d.notification_email):
+        # Testauftraege nur an den Support, nie an Bearbeiter (Runde 8)
+        for adresse in express.team_empfaenger(_d.notification_email, a):
             erfolge += 1 if _mail_senden(adresse, inhalt) else 0
     return erfolge
 
@@ -323,7 +324,7 @@ def nach_kontoloeschung(info: dict) -> None:
             _mails_nach("storniert", "storniert", auftrag_id, express.STORNO_TOPF_GRUND)
         for a in info.get("eigene") or []:
             inhalt = express.mail_team("entfallen", a, _d.base_url)
-            for adresse in express.team_empfaenger(_d.notification_email):
+            for adresse in express.team_empfaenger(_d.notification_email, a):
                 _mail_senden(adresse, inhalt)
     _hintergrund(senden)
 

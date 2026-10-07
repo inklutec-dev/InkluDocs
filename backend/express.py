@@ -392,9 +392,14 @@ def leistungen_liste(e: dict = None) -> list:
 def _ganzzahl(wert, name: str, minimum: int, maximum: int, feld: str = "") -> int:
     """Ganze Zahl aus einem Formularfeld. Der Fehlertext beginnt mit der SICHTBAREN Beschriftung des Felds und nennt
     das Feld (feld), damit die Oberflaeche ihn dort anzeigt (Pruefung Barrierefreiheit 05.10.2026, Befund 4)."""
-    text = str(wert if wert is not None else "").strip().replace(".", "").replace(" ", "")
-    if not re.fullmatch(r"\d{1,7}", text):
-        raise ExpressFehler(f"{name}: bitte eine ganze Zahl.", feld=feld)
+    # Punkte und Leerzeichen nur als echte Tausendergruppen („1.000“, „12 000“) — „1.5“ oder „100.00“ wurden frueher
+    # stillschweigend zu 15 bzw. 10000 (Nachkontrolle Runde 7, Befund 1). Alles andere: Fehler am Feld.
+    text = str(wert if wert is not None else "").strip()
+    if not re.fullmatch(r"\d+|\d{1,3}(?:[. ]\d{3})+", text):
+        raise ExpressFehler(f"{name}: bitte eine ganze Zahl (ohne Komma, Tausenderpunkt nur wie in 1.000).", feld=feld)
+    text = text.replace(".", "").replace(" ", "")
+    if len(text) > 7:
+        raise ExpressFehler(f"{name}: erlaubt sind {minimum} bis {maximum}.", feld=feld)
     zahl = int(text)
     if not minimum <= zahl <= maximum:
         raise ExpressFehler(f"{name}: erlaubt sind {minimum} bis {maximum}.", feld=feld)
@@ -1948,9 +1953,34 @@ def mail_team(art: str, a: dict, basis_url: str, text: str = "") -> tuple:
     raise ValueError(art)
 
 
-def team_empfaenger(standard: str) -> list:
-    """Benachrichtigungsadresse aus den Einstellungen (sonst die des Servers) plus alle Express-Bearbeiter; ohne Dubletten."""
+# Runde 8 (07.10.2026): Testauftraege duerfen nie Bearbeiter (z. B. Michael bei Actino) benachrichtigen — am Morgen des
+# 07.10. gingen 15 „[STAGING]“-Team-Mails aus Testlaeufen an ihn. Testkonto = Mail-Domain auf .invalid ODER Adresse in
+# EXPRESS_TESTKONTEN (Komma/Leerzeichen getrennt, z. B. die E2E-Konten in .env.staging). Team-Mails zu deren Auftraegen
+# gehen nur an TEST_TEAM_MAIL (bzw. an eine Team-Adresse, die selbst auf .invalid endet — dann an niemanden).
+TEST_TEAM_MAIL = os.environ.get("EXPRESS_TEST_MAIL", "support@inklutec.de").strip() or "support@inklutec.de"
+
+
+def _testkonten() -> set:
+    return {x.strip().lower() for x in re.split(r"[,;\s]+", os.environ.get("EXPRESS_TESTKONTEN", "")) if x.strip()}
+
+
+def ist_testkonto(email) -> bool:
+    """Testkonto: Domain endet auf .invalid oder Adresse steht in EXPRESS_TESTKONTEN. Ohne Adresse: ja (im Zweifel
+    niemanden ausser dem Support benachrichtigen)."""
+    m = str(email or "").strip().lower()
+    if not m:
+        return True
+    return m.rsplit("@", 1)[-1].endswith(".invalid") or m in _testkonten()
+
+
+def team_empfaenger(standard: str, auftrag: dict = None) -> list:
+    """Benachrichtigungsadresse aus den Einstellungen (sonst die des Servers) plus alle Express-Bearbeiter; ohne Dubletten.
+    Gehoert der Auftrag einem Testkonto (ist_testkonto, Runde 8): NUR TEST_TEAM_MAIL — nie die Bearbeiter; eine Team-
+    Adresse auf .invalid (Testreihen) bleibt stattdessen stehen (sie geht ins Leere)."""
     e = einstellungen()
+    if auftrag is not None and ist_testkonto(auftrag.get("kunde_email")):
+        team = (e.get("team_mail") or "").strip()
+        return [team] if team and ist_testkonto(team) else [TEST_TEAM_MAIL]
     adressen = [e.get("team_mail") or standard] + [b["email"] for b in bearbeiter_liste()]
     out = []
     for x in adressen:
