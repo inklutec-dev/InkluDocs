@@ -11055,15 +11055,6 @@ msgstr "Pris: {preis}."
 msgid "Preise: {liste}."
 msgstr "Priser: {liste}."
 
-msgid "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
-msgstr "Sidor: {cs} krediter. Grundpris per dokument: {cg} krediter."
-
-msgid "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
-msgstr "Sidor: {seiten} × {p} krediter = {cs} krediter. Grundpris: {dokumente} × {g} krediter = {cg} krediter."
-
-msgid "Summe: {c} Credits."
-msgstr "Summa: {c} krediter."
-
 msgid "Zum Express-Warenkorb"
 msgstr "Till Express-varukorgen"
 
@@ -11072,9 +11063,6 @@ msgstr "{c} krediter per sida"
 
 msgid "{c} Credits je Seite plus {g} Credits je Dokument"
 msgstr "{c} krediter per sida plus {g} krediter per dokument"
-
-msgid "{dokumente}, {seiten}."
-msgstr "{dokumente}, {seiten}."
 
 msgid "{leistung}: Grundpreis je Dokument (Credits)"
 msgstr "{leistung}: grundpris per dokument (krediter)"
@@ -11085,3 +11073,31 @@ msgstr "{seiten} × {p} krediter per sida plus {g} krediter per dokument"
 # Express Runde 8 (07.10.2026): Ziel des Ruecksprungs
 msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 msgstr "Efter inloggningen fortsätter du till din Express-beställning."
+
+# Express Sichtpruefung Runde 8 (07.10.2026): Rechenweg in Zeilen, Druckkopf
+msgid "InkluDocs · Auftragsübersicht"
+msgstr "InkluDocs · Beställningsöversikt"
+
+msgid "Konto: {mail}"
+msgstr "Konto: {mail}"
+
+msgid "Gedruckt am {datum}"
+msgstr "Utskriven {datum}"
+
+msgid "{dokumente}, {seiten}"
+msgstr "{dokumente}, {seiten}"
+
+msgid "Seiten: {seiten} × {p} Credits = {cs} Credits"
+msgstr "Sidor: {seiten} × {p} krediter = {cs} krediter"
+
+msgid "Grundpreis: {dokumente} × {g} Credits = {cg} Credits"
+msgstr "Grundpris: {dokumente} × {g} krediter = {cg} krediter"
+
+msgid "Seiten: {cs} Credits"
+msgstr "Sidor: {cs} krediter"
+
+msgid "Grundpreis je Dokument: {cg} Credits"
+msgstr "Grundpris per dokument: {cg} krediter"
+
+msgid "Summe: {c} Credits"
+msgstr "Summa: {c} krediter"

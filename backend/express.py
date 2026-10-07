@@ -2025,11 +2025,12 @@ _DOCX_NUMBERING = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </w:numbering>"""
 
 
-def nachweis_docx(a: dict, ziel: str, zeit_text=None) -> str:
+def nachweis_docx(a: dict, ziel: str, zeit_text=None, konto: str = "", erstellt: str = "") -> str:
     """Auftragsuebersicht als Word-Datei mit echten Ueberschriften (Heading 1/2) und Aufzaehlungen (numbering.xml);
     LibreOffice macht daraus die PDF/UA (pdfua_export.konvertiere, mit veraPDF-Pruefung). Ohne python-docx (nicht im
     Image): minimales OOXML von Hand. zeit_text: Zeitstempel -> Anzeigetext (Standard: datum_deutsch, „5. Oktober 2026,
-    12:04“ wie auf der Webseite). Ausdruecklich KEINE Rechnung."""
+    12:04“ wie auf der Webseite). konto/erstellt (Runde 8, Sichtpruefung): wem der Nachweis gehoert und wann er erstellt
+    wurde (deutsche Zeit, 'JJJJ-MM-TT HH:MM'). Ausdruecklich KEINE Rechnung."""
     import zipfile
     zeit_text = zeit_text or datum_deutsch
     titel = f"Express-Auftrag {a['id']} – Auftragsübersicht"
@@ -2037,6 +2038,10 @@ def nachweis_docx(a: dict, ziel: str, zeit_text=None) -> str:
              _absatz("Nachweis über einen Auftrag an den Express-Service von InkluDocs. Dies ist keine Rechnung: "
                      "Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."),
              _absatz("Auftrag", "Heading2")]
+    if konto:
+        teile.append(_absatz(f"Konto: {konto}"))
+    if erstellt:
+        teile.append(_absatz(f"Nachweis erstellt am: {zeit_text(erstellt)}"))
     if a.get("auftrag_name"):
         teile.append(_absatz(f"Name des Auftrags: {a['auftrag_name']}"))
     stand = {"vorgemerkt": "vorgemerkt", "abgebucht": "abgebucht", "frei": "wieder frei (storniert)"}[a["credits_stand"]]

@@ -11487,15 +11487,6 @@ msgstr "Precio: {preis}."
 msgid "Preise: {liste}."
 msgstr "Precios: {liste}."
 
-msgid "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
-msgstr "Páginas: {cs} créditos. Precio base por documento: {cg} créditos."
-
-msgid "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
-msgstr "Páginas: {seiten} × {p} créditos = {cs} créditos. Precio base: {dokumente} × {g} créditos = {cg} créditos."
-
-msgid "Summe: {c} Credits."
-msgstr "Total: {c} créditos."
-
 msgid "Zum Express-Warenkorb"
 msgstr "Ir a la cesta Express"
 
@@ -11504,9 +11495,6 @@ msgstr "{c} créditos por página"
 
 msgid "{c} Credits je Seite plus {g} Credits je Dokument"
 msgstr "{c} créditos por página más {g} créditos por documento"
-
-msgid "{dokumente}, {seiten}."
-msgstr "{dokumente}, {seiten}."
 
 msgid "{leistung}: Grundpreis je Dokument (Credits)"
 msgstr "{leistung}: precio base por documento (créditos)"
@@ -11517,3 +11505,31 @@ msgstr "{seiten} × {p} créditos por página más {g} créditos por documento"
 # Express Runde 8 (07.10.2026): Ziel des Ruecksprungs
 msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 msgstr "Tras iniciar sesión, continuarás en tu pedido Express."
+
+# Express Sichtpruefung Runde 8 (07.10.2026): Rechenweg in Zeilen, Druckkopf
+msgid "InkluDocs · Auftragsübersicht"
+msgstr "InkluDocs · Resumen del pedido"
+
+msgid "Konto: {mail}"
+msgstr "Cuenta: {mail}"
+
+msgid "Gedruckt am {datum}"
+msgstr "Impreso el {datum}"
+
+msgid "{dokumente}, {seiten}"
+msgstr "{dokumente}, {seiten}"
+
+msgid "Seiten: {seiten} × {p} Credits = {cs} Credits"
+msgstr "Páginas: {seiten} × {p} créditos = {cs} créditos"
+
+msgid "Grundpreis: {dokumente} × {g} Credits = {cg} Credits"
+msgstr "Precio base: {dokumente} × {g} créditos = {cg} créditos"
+
+msgid "Seiten: {cs} Credits"
+msgstr "Páginas: {cs} créditos"
+
+msgid "Grundpreis je Dokument: {cg} Credits"
+msgstr "Precio base por documento: {cg} créditos"
+
+msgid "Summe: {c} Credits"
+msgstr "Total: {c} créditos"

@@ -341,6 +341,8 @@ try:
         check("Nachweis als PDF (PDF/UA geprueft)", r.content.startswith(b"%PDF") and r.headers["content-type"] == "application/pdf")
         with fitz.open(stream=r.content, filetype="pdf") as d:
             check("Nachweis: Titel und Text", "Express-Auftrag" in (d.metadata.get("title") or "") and "keine Rechnung" in d[0].get_text(), d.metadata)
+            check("Nachweis nennt Konto und Erstellzeitpunkt (Runde 8)", f"Konto: {KUNDE}" in d[0].get_text()
+                  and "Nachweis erstellt am:" in d[0].get_text(), d[0].get_text()[:300])
     else:
         check("Nachweis als PDF", False, f"{r.status_code} {r.text[:200]}")
     a = kunde.get("/api/express/auftraege").json()["auftraege"]

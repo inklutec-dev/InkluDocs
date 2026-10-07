@@ -184,9 +184,11 @@ try:
         # Michael Karbe 05.10.2026: nur Aufbereitung — reine Dokumentliste ohne Leistungswahl (Punkt 3), unter „Prüfen und
         # bestellen“ nur Summen (Punkt 4) — seit Runde 7 mit Zusammensetzung —, nirgends „nur PDF“ (Punkt 6)
         check("Auswahl: reine Dokumentliste, keine Leistungswahl", pg.locator("#exAuswahl select").count() == 0)
-        check("Prüfen und bestellen: Summen mit Zusammensetzung", pg.locator("#exAufstellung").count() == 0
-              and pg.locator("#exGesamt").inner_text() == "2 Dokumente, 3 Seiten. Seiten: 3 × 50 Credits = 150 Credits. "
-              "Grundpreis: 2 × 100 Credits = 200 Credits. Summe: 350 Credits.", pg.locator("#exGesamt").inner_text())
+        zeilen = [z.strip() for z in pg.locator("#exGesamt p").all_inner_texts()]
+        check("Prüfen und bestellen: Rechenweg in kurzen Zeilen, nur die Summe fett (Runde 8)", pg.locator("#exAufstellung").count() == 0
+              and zeilen == ["2 Dokumente, 3 Seiten", "Seiten: 3 × 50 Credits = 150 Credits", "Grundpreis: 2 × 100 Credits = 200 Credits",
+                             "Summe: 350 Credits"]
+              and pg.locator("#exGesamt strong").all_inner_texts() == ["Summe: 350 Credits"] and pg.locator("#exGesamt table").count() == 0, zeilen)
         check("Kein „derzeit nur PDF“ auf der Seite", "nur PDF" not in pg.locator("main").inner_text()
               and "Zurzeit" not in pg.locator("main").inner_text())
         pg.locator("#exAuswahl button", has_text="Entfernen").nth(1).click()
@@ -263,7 +265,13 @@ try:
         check("Angaben, Einverständnis, Verlauf aufklappbar und zu", klappen.count() == 3
               and [k.locator("summary h2").inner_text() for k in klappen.all()] == ["Angaben", "Einverständnis", "Verlauf"]
               and not any(k.evaluate("d => d.open") for k in klappen.all()))
+        check("Druckkopf auf dem Bildschirm unsichtbar", not pg.locator("#exaDruckKopf").is_visible())
+        pg.emulate_media(media="print")
         pg.evaluate("() => window.dispatchEvent(new Event('beforeprint'))")
+        kopf = pg.locator("#exaDruckKopf").inner_text() if pg.locator("#exaDruckKopf").is_visible() else ""
+        check("Druck: Kopfzeile „InkluDocs · Auftragsübersicht“, Konto und Druckdatum (Runde 8)", "InkluDocs · Auftragsübersicht" in kopf
+              and f"Konto: {KUNDE}" in kopf and "Gedruckt am " in kopf, kopf)
+        pg.emulate_media(media="screen")
         check("Druck: alles aufgeklappt (Einverständnis-Text lesbar)", all(k.evaluate("d => d.open") for k in klappen.all())
               and "Ich akzeptiere die Bedingungen" in pg.locator("main").inner_text() and "Ich bin einverstanden" not in pg.locator("main").inner_text())
         pg.evaluate("() => window.dispatchEvent(new Event('afterprint'))")

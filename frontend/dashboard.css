@@ -338,6 +338,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Aufzählungen in Karten (Einverständnis, „Vor dem Liefern fehlt noch“): Punkte innerhalb der Karte */
 .verwaltung-karte ul:not([class]), .verwaltung-karte ol:not([class]) { padding-left: 1.4rem; margin: .4rem 0; }
 .ex-auftrag-karte a.doc-action-btn { text-decoration: none; }
+/* Offene Auftragskarte: die Dokumentliste endet ohne eigene Linie — die Trennlinie über den Knöpfen genügt (Runde 8) */
+.ex-auftrag-karte .ex-dok-klappe > .verwaltung-liste > li:last-child { border-bottom: 0; }
+/* Rechenweg „4. Prüfen und bestellen“: kurze Zeilen, nur die Summe fett (Runde 8) */
+.ex-rechnung { margin: .25rem 0 .75rem; line-height: 1.5; }
+.ex-rechnung p { margin: .1rem 0; }
+.ex-rechnung strong { font-size: 1.05rem; }
+/* Nur im Druck: Kopfzeile der Auftragsübersicht (wem, wann) */
+.nur-druck { display: none; }
+.ex-druckkopf { border-bottom: 1px solid #999; margin: 0 0 .75rem; padding: 0 0 .5rem; font-size: .95rem; }
+.ex-druckkopf p { margin: 0; }
 /* Verwaltung Express: Abstand unter den Kartenüberschriften (Sichtprüfung Runde 8) */
 #exvEinstellungen > h2, #exvBearbeiter > h2 { margin-bottom: .6rem; }
 #exvBearbeiter > p.dash-sub { margin: 0 0 1rem; line-height: 1.5; }
@@ -351,6 +361,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .app-sidebar, .dash-skip, .dash-footer, .no-print, dialog { display: none !important; }
   .app-shell, .app-content, .dash-main { display: block !important; margin: 0 !important; padding: 0 !important; max-width: none !important; }
   .dash-card { box-shadow: none !important; border: 1px solid #999 !important; break-inside: avoid; }
+  .nur-druck { display: block !important; }
   /* Aufklapp-Dreiecke gehören nicht auf Papier (Express-Auftragsübersicht, Runde 8) */
   summary { list-style: none; }
   summary::-webkit-details-marker { display: none; }

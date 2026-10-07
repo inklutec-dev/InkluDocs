@@ -8,6 +8,12 @@
    Seitenleiste und Knöpfe aus) und als barrierefreie PDF (/api/express/auftraege/<id>/nachweis.pdf). Ausdrücklich KEINE
    Rechnung — bezahlt wird mit Credits, deren Kauf gesondert abgerechnet ist. #}
 <p class="verwaltung-zurueck no-print"><a href="/express?auftrag={{ auftrag_id|int }}#exa_karte_{{ auftrag_id|int }}">{{ _('Zurück zu meinen Aufträgen') }}</a></p>
+{# Nur im Druck (Sichtprüfung Runde 8): wem und wann — der Ausdruck ist ein Nachweis #}
+<div class="nur-druck ex-druckkopf" id="exaDruckKopf">
+  <p><strong>{{ _('InkluDocs · Auftragsübersicht') }}</strong></p>
+  <p id="exaDruckKonto"></p>
+  <p id="exaDruckZeit"></p>
+</div>
 <h1 id="exaTitel" tabindex="-1">{{ _('Express-Auftrag') }} {{ auftrag_id }}</h1>
 {# Meldungen oben (Danke nach der Bestellung, „Antwort gesendet“): sichtbar, mit Fokus, ohne zusätzliche Live-Ansage —
    und nicht im Ausdruck (Prüfung Barrierefreiheit 05.10.2026, Befunde 3 und 20). #}
@@ -271,7 +277,17 @@
   byId('exaDrucken').addEventListener('click', () => window.print());
   // Drucken (auch über das Browser-Menü): alles aufgeklappt (Dokumente, Angaben, Einverständnis, Verlauf), danach wie vorher
   let zuVorDemDruck = [];
+  function druckKopf() {
+    const mail = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || '';
+    byId('exaDruckKonto').textContent = mail ? t('Konto: {mail}', { mail: mail }) : '';
+    let jetzt = new Date().toLocaleString();
+    try {
+      jetzt = new Intl.DateTimeFormat(window.LANG || 'de', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date());
+    } catch (e) { /* Rohtext */ }
+    byId('exaDruckZeit').textContent = t('Gedruckt am {datum}', { datum: jetzt });
+  }
   window.addEventListener('beforeprint', () => {
+    druckKopf();
     zuVorDemDruck = Array.from(document.querySelectorAll('#exaInhalt details:not([open])'));
     zuVorDemDruck.forEach((d) => { d.open = true; });
   });
@@ -330,6 +346,7 @@
     }
     const a = await r.json();
     zeigen(a);
+    druckKopf();
     if (new URLSearchParams(window.location.search).get('neu') === '1') {
       history.replaceState(null, '', window.location.pathname);
       meldung(t('Danke! Dein Auftrag {nr} ist eingegangen. Wir liefern innerhalb von {stunden} Stunden und schicken dir eine Bestätigung per E-Mail.', { nr: a.id, stunden: a.frist_stunden }));

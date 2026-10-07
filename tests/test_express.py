@@ -1714,11 +1714,14 @@ class Runde7(_Guthabenhilfe, Basis):
     def test_nachweis_nennt_zusammensetzung(self):
         aid = self._auftrag([self.d1])
         ziel = os.path.join(_TMP, "nachweis_r7.docx")
-        express.nachweis_docx(express.auftrag_fuer_kunde(1, aid), ziel)
+        express.nachweis_docx(express.auftrag_fuer_kunde(1, aid), ziel, konto="kundin@beispiel.invalid", erstellt="2026-10-07 10:05")
         import zipfile
         with zipfile.ZipFile(ziel) as z:
             xml = z.read("word/document.xml").decode()
         self.assertIn("2 × 50 Credits je Seite plus 100 Credits je Dokument", xml)
+        # wem und wann (Sichtpruefung Runde 8)
+        self.assertIn("Konto: kundin@beispiel.invalid", xml)
+        self.assertIn("Nachweis erstellt am: 7. Oktober 2026, 10:05", xml)
 
 class Runde8(Basis):
     """Runde 8 (07.10.2026): Team-Mails zu Auftraegen von Testkonten nur an den Support, nie an Bearbeiter (Vorfall: 15

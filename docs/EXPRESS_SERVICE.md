@@ -43,8 +43,9 @@ kein Bestellformular mehr.
    gibt (dann speichert sie erst, wenn die Auswahl einen Moment steht). Hinzufügen sagt Anzahl, Seiten, Credits und — wenn
    es nicht reicht — das fehlende Guthaben an; Entfernen zeigt eine sichtbare Meldung und setzt den Fokus darauf.
 4. **Angaben:** Ansprechpartner (vorbelegt mit dem Kontonamen), Telefon (freiwillig), Hinweise (freiwillig).
-5. **Prüfen und bestellen:** nur Summen — Dokumente, Seiten, die Zusammensetzung des Preises (Runde 7: „Seiten: 3 × 50
-   Credits = 150 Credits. Grundpreis: 2 × 100 Credits = 200 Credits. Summe: 350 Credits.“), verfügbares Guthaben,
+5. **Prüfen und bestellen:** nur Summen — Dokumente, Seiten, die Zusammensetzung des Preises als kurze Zeilen (Runde 8:
+   „2 Dokumente, 3 Seiten“ / „Seiten: 3 × 50 Credits = 150 Credits“ / „Grundpreis: 2 × 100 Credits = 200 Credits“ /
+   **„Summe: 350 Credits“**, nur die Summe fett, keine Tabelle), verfügbares Guthaben,
    „Lieferung innerhalb von 48 Stunden“ (die Dokumente stehen schon unter „Deine Auswahl“, Punkt 4); bei zu wenig
    Guthaben Hinweis mit Link „Credits kaufen“. **Ein** Pflicht-Kontrollkästchen „Ich akzeptiere die Bedingungen für den Express-Service.“ (`required`,
    Legende „Zustimmung (Pflicht)“, Fehler am Kästchen, der Fehler verschwindet beim Ankreuzen), nicht vorab angehakt. Die
@@ -81,7 +82,9 @@ kein Bestellformular mehr.
    wieder frei), Dokumente — je Dokument aufklappbar mit Seiten, Leistung, Credits samt Zusammensetzung („200 (2 × 50
    Credits je Seite plus 100 Credits je Dokument)“), Stand, Prüfung und Downloads —, dazu **aufklappbar** (Runde 7,
    standardmäßig zu, H2 im `summary`): Angaben, Einverständnis mit Fassung und Zeitpunkt, Verlauf. Beim Drucken
-   (`beforeprint`, auch über das Browser-Menü) ist alles aufgeklappt, danach wie vorher. Alte Links mit `?neu=1` zeigen
+   (`beforeprint`, auch über das Browser-Menü) ist alles aufgeklappt, danach wie vorher; nur im Druck steht oben eine
+   Kopfzeile „InkluDocs · Auftragsübersicht“, „Konto: <Adresse>“, „Gedruckt am <Datum>“ (Runde 8). Das Nachweis-PDF
+   nennt ebenso „Konto: <Adresse>“ und „Nachweis erstellt am …“ (PDF/UA weiter geprüft). Alte Links mit `?neu=1` zeigen
    weiter die Danke-Meldung.
 8. **Anmeldung über Links** (Runde 7, Michaels „verlorenes Projekt“: Er öffnete den Link aus der Bestätigungsmail ohne
    Sitzung, meldete sich mit seinem zweiten Konto an und sah den Auftrag nicht):

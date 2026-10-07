@@ -71,7 +71,8 @@
     <h3 id="h-pruefen">{{ _('4. Prüfen und bestellen') }}</h3>
     {# Nur Summen — die Dokumente stehen schon unter „2. Deine Auswahl“ (Michael Karbe 05.10.2026, Punkt 4); seit Runde 7
        mit der Zusammensetzung aus Seitenpreis und Grundpreis je Dokument. #}
-    <p id="exGesamt" class="verwaltung-bestaetigung"></p>
+    {# Rechenweg als kurze Absätze, nur die Summe fett (Sichtprüfung Runde 8) — gut vorlesbar, keine Tabelle #}
+    <div id="exGesamt" class="ex-rechnung"></div>
     <p id="exGuthaben"></p>
     <p id="exLieferung"></p>
     <p id="exZuWenig" class="verwaltung-warnung" hidden></p>
@@ -424,25 +425,35 @@
     aufstellung();
   }
 
-  // ── Schritt 4: nur Summen, mit Zusammensetzung (Runde 7: Seitenpreis + Grundpreis je Dokument) ──
-  function zusammensetzung(w) {
+  // ── Schritt 4: nur Summen, mit Zusammensetzung (Runde 7) — als kurze Zeilen, nur die Summe fett (Runde 8) ──
+  function rechenweg(w) {
     const pos = w.positionen || [];
-    if (!w.credits_grund) return '';
-    // Gleiche Preise für alle Dokumente (heute immer: eine Leistung): mit Rechenweg; sonst nur die beiden Teilsummen.
-    const gleich = pos.length && pos.every((p) => p.preis_seite === pos[0].preis_seite && p.grundpreis === pos[0].grundpreis);
-    if (gleich) {
-      return t('Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits.', {
-        seiten: zahl(w.seiten), p: zahl(pos[0].preis_seite), cs: zahl(w.credits_seiten),
-        dokumente: zahl(w.dokumente), g: zahl(pos[0].grundpreis), cg: zahl(w.credits_grund) }) + ' ';
+    const zeilen = [t('{dokumente}, {seiten}', { dokumente: DOK(w.dokumente), seiten: SEITEN(w.seiten) })];
+    if (w.credits_grund) {
+      // Gleiche Preise für alle Dokumente (heute immer: eine Leistung): mit Rechenweg; sonst nur die beiden Teilsummen.
+      const gleich = pos.length && pos.every((p) => p.preis_seite === pos[0].preis_seite && p.grundpreis === pos[0].grundpreis);
+      if (gleich) {
+        zeilen.push(t('Seiten: {seiten} × {p} Credits = {cs} Credits', { seiten: zahl(w.seiten), p: zahl(pos[0].preis_seite), cs: zahl(w.credits_seiten) }));
+        zeilen.push(t('Grundpreis: {dokumente} × {g} Credits = {cg} Credits', { dokumente: zahl(w.dokumente), g: zahl(pos[0].grundpreis), cg: zahl(w.credits_grund) }));
+      } else {
+        zeilen.push(t('Seiten: {cs} Credits', { cs: zahl(w.credits_seiten) }));
+        zeilen.push(t('Grundpreis je Dokument: {cg} Credits', { cg: zahl(w.credits_grund) }));
+      }
     }
-    return t('Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits.', { cs: zahl(w.credits_seiten), cg: zahl(w.credits_grund) }) + ' ';
+    return zeilen;
   }
   function aufstellung() {
     const w = stand.warenkorb;
-    byId('exGesamt').textContent = w.dokumente
-      ? t('{dokumente}, {seiten}.', { dokumente: DOK(w.dokumente), seiten: SEITEN(w.seiten) }) + ' ' + zusammensetzung(w)
-        + t('Summe: {c} Credits.', { c: zahl(w.credits) })
-      : t('Deine Auswahl ist leer.');
+    const ziel = byId('exGesamt');
+    ziel.innerHTML = '';
+    if (!w.dokumente) {
+      ziel.appendChild(el('p', null, t('Deine Auswahl ist leer.')));
+    } else {
+      rechenweg(w).forEach((z) => ziel.appendChild(el('p', null, z)));
+      const summe = el('p');
+      summe.appendChild(el('strong', null, t('Summe: {c} Credits', { c: zahl(w.credits) })));
+      ziel.appendChild(summe);
+    }
     byId('exGuthaben').textContent = stand.guthaben === null || stand.guthaben === undefined
       ? t('Dein Guthaben: unbegrenzt.') : t('Dein verfügbares Guthaben: {c} Credits.', { c: zahl(stand.guthaben) });
     byId('exLieferung').textContent = t('Lieferung innerhalb von {stunden} Stunden.', { stunden: stand.frist_stunden });

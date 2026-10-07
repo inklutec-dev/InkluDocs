@@ -11487,15 +11487,6 @@ msgstr "Prix : {preis}."
 msgid "Preise: {liste}."
 msgstr "Prix : {liste}."
 
-msgid "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
-msgstr "Pages : {cs} crédits. Prix de base par document : {cg} crédits."
-
-msgid "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
-msgstr "Pages : {seiten} × {p} crédits = {cs} crédits. Prix de base : {dokumente} × {g} crédits = {cg} crédits."
-
-msgid "Summe: {c} Credits."
-msgstr "Total : {c} crédits."
-
 msgid "Zum Express-Warenkorb"
 msgstr "Vers le panier Express"
 
@@ -11504,9 +11495,6 @@ msgstr "{c} crédits par page"
 
 msgid "{c} Credits je Seite plus {g} Credits je Dokument"
 msgstr "{c} crédits par page plus {g} crédits par document"
-
-msgid "{dokumente}, {seiten}."
-msgstr "{dokumente}, {seiten}."
 
 msgid "{leistung}: Grundpreis je Dokument (Credits)"
 msgstr "{leistung} : prix de base par document (crédits)"
@@ -11517,3 +11505,31 @@ msgstr "{seiten} × {p} crédits par page plus {g} crédits par document"
 # Express Runde 8 (07.10.2026): Ziel des Ruecksprungs
 msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 msgstr "Après la connexion, tu arrives sur ta commande Express."
+
+# Express Sichtpruefung Runde 8 (07.10.2026): Rechenweg in Zeilen, Druckkopf
+msgid "InkluDocs · Auftragsübersicht"
+msgstr "InkluDocs · Récapitulatif de commande"
+
+msgid "Konto: {mail}"
+msgstr "Compte : {mail}"
+
+msgid "Gedruckt am {datum}"
+msgstr "Imprimé le {datum}"
+
+msgid "{dokumente}, {seiten}"
+msgstr "{dokumente}, {seiten}"
+
+msgid "Seiten: {seiten} × {p} Credits = {cs} Credits"
+msgstr "Pages : {seiten} × {p} crédits = {cs} crédits"
+
+msgid "Grundpreis: {dokumente} × {g} Credits = {cg} Credits"
+msgstr "Prix de base : {dokumente} × {g} crédits = {cg} crédits"
+
+msgid "Seiten: {cs} Credits"
+msgstr "Pages : {cs} crédits"
+
+msgid "Grundpreis je Dokument: {cg} Credits"
+msgstr "Prix de base par document : {cg} crédits"
+
+msgid "Summe: {c} Credits"
+msgstr "Total : {c} crédits"

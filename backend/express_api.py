@@ -567,7 +567,10 @@ def build_router(deps: Deps) -> APIRouter:
                 docx = os.path.join(tmp, f"Express-Auftrag-{a['id']}.docx")
                 # Zeiten stehen in der Kundenansicht in deutscher Zeit (express._lokal); im PDF ausgeschrieben wie auf
                 # der Webseite („5. Oktober 2026, 12:04“, Pruefung Barrierefreiheit 05.10.2026, Befund 11).
-                express.nachweis_docx(a, docx, express.datum_deutsch)
+                # Wem und wann (Runde 8): Konto des Auftrags und Erstellzeitpunkt in deutscher Zeit
+                konto = (_d.get_user_by_id(user["id"]) or {}).get("email") or ""
+                express.nachweis_docx(a, docx, express.datum_deutsch, konto=konto,
+                                      erstellt=umsatz.lokal(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())))
                 pdf, bericht = pdfua_export.konvertiere(docx, os.path.basename(docx), timeout=NACHWEIS_TIMEOUT)
                 klar = pdfua_export.klartext(bericht or {})
                 if not klar.get("bestanden"):

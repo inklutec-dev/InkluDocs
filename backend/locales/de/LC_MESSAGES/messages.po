@@ -11488,15 +11488,6 @@ msgstr "Preis: {preis}."
 msgid "Preise: {liste}."
 msgstr "Preise: {liste}."
 
-msgid "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
-msgstr "Seiten: {cs} Credits. Grundpreis je Dokument: {cg} Credits."
-
-msgid "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
-msgstr "Seiten: {seiten} × {p} Credits = {cs} Credits. Grundpreis: {dokumente} × {g} Credits = {cg} Credits."
-
-msgid "Summe: {c} Credits."
-msgstr "Summe: {c} Credits."
-
 msgid "Zum Express-Warenkorb"
 msgstr "Zum Express-Warenkorb"
 
@@ -11505,9 +11496,6 @@ msgstr "{c} Credits je Seite"
 
 msgid "{c} Credits je Seite plus {g} Credits je Dokument"
 msgstr "{c} Credits je Seite plus {g} Credits je Dokument"
-
-msgid "{dokumente}, {seiten}."
-msgstr "{dokumente}, {seiten}."
 
 msgid "{leistung}: Grundpreis je Dokument (Credits)"
 msgstr "{leistung}: Grundpreis je Dokument (Credits)"
@@ -11518,3 +11506,31 @@ msgstr "{seiten} × {p} Credits je Seite plus {g} Credits je Dokument"
 # Express Runde 8 (07.10.2026): Ziel des Ruecksprungs
 msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 msgstr "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
+
+# Express Sichtpruefung Runde 8 (07.10.2026): Rechenweg in Zeilen, Druckkopf
+msgid "InkluDocs · Auftragsübersicht"
+msgstr "InkluDocs · Auftragsübersicht"
+
+msgid "Konto: {mail}"
+msgstr "Konto: {mail}"
+
+msgid "Gedruckt am {datum}"
+msgstr "Gedruckt am {datum}"
+
+msgid "{dokumente}, {seiten}"
+msgstr "{dokumente}, {seiten}"
+
+msgid "Seiten: {seiten} × {p} Credits = {cs} Credits"
+msgstr "Seiten: {seiten} × {p} Credits = {cs} Credits"
+
+msgid "Grundpreis: {dokumente} × {g} Credits = {cg} Credits"
+msgstr "Grundpreis: {dokumente} × {g} Credits = {cg} Credits"
+
+msgid "Seiten: {cs} Credits"
+msgstr "Seiten: {cs} Credits"
+
+msgid "Grundpreis je Dokument: {cg} Credits"
+msgstr "Grundpreis je Dokument: {cg} Credits"
+
+msgid "Summe: {c} Credits"
+msgstr "Summe: {c} Credits"
