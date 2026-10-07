@@ -85,13 +85,15 @@ function buildCreditLines(abo, kurz) {
     }
     lines.push(zeile);
   }
+  // Tausenderpunkt wie überall sonst („2.000“, Sichtprüfung Runde 8)
+  const tausender = (n) => { try { return new Intl.NumberFormat(window.LANG || 'de').format(Number(n) || 0); } catch (e) { return String(n); } };
   if (abo.pakete_rest > 0) {
-    lines.push(t('Zusatz-Credits: {anzahl} verfügbar.', { anzahl: abo.pakete_rest }));
+    lines.push(t('Zusatz-Credits: {anzahl} verfügbar.', { anzahl: tausender(abo.pakete_rest) }));
   }
   if (abo.vorgemerkt > 0) {
     // Express-Service (05.10.2026): vorgemerkt fuer offene Auftraege (abgebucht erst bei der Lieferung) — diese Credits
     // stehen fuer anderes nicht mehr zur Verfuegung.
-    lines.push(t('Davon für Express-Aufträge vorgemerkt: {anzahl} Credits.', { anzahl: abo.vorgemerkt }));
+    lines.push(t('Davon für Express-Aufträge vorgemerkt: {anzahl} Credits.', { anzahl: tausender(abo.vorgemerkt) }));
   }
   return lines;
 }

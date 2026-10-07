@@ -313,6 +313,34 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .ex-liste { list-style: none; padding: 0; margin: .25rem 0 0; }
 .ex-liste li { padding: .25rem 0; }
 .ex-aktionen { display: flex; gap: .5rem; flex-wrap: wrap; margin: .6rem 0 0; }
+/* Sichtprüfung Runde 8: Abstände auf den Express-Seiten (global gilt margin/padding 0, style.css) */
+#exNeu > h2 { margin-bottom: .25rem; }
+#exNeu h3 { margin: 1.75rem 0 .6rem; }
+#exNeu h3#h-schritt1 { margin-top: 1rem; }
+#exProjektHinweis { margin: .25rem 0 1rem; }
+#exGuthaben, #exLieferung { margin: .15rem 0; }
+#exBestellForm > p:not(.verwaltung-fehler) { margin: .6rem 0; }
+#exBestellen { margin-top: .4rem; }
+.ex-fieldset p { display: flex; align-items: center; gap: .55rem; margin: .35rem 0; }
+.ex-fieldset p > label { display: inline; margin: 0; }
+.ex-neu-karte > h2 { margin-bottom: .4rem; }
+.ex-neu-karte > p { margin: 0 0 1rem; line-height: 1.5; }
+.ex-neu-karte > p:last-child { margin-bottom: 0; }
+/* Bestätigungen auf den Express-Seiten wie die Meldungen der Verwaltung (grüner Rand, Fokus in der Akzentfarbe) */
+#exAuftragMeldung, #exMeldung { max-width: 64rem; padding: .7rem 1rem; border-left: 4px solid #15803d; background: #f0fdf4;
+  color: #14532d; border-radius: 0 6px 6px 0; margin: 0 0 1rem; }
+#exAuftragMeldung.ex-meldung-fehler { border-left-color: #b91c1c; background: #fef2f2; color: #7f1d1d; }
+#exAuftragMeldung:focus, #exMeldung:focus, #exaFremdText:focus { outline: 2px solid #a94200; outline-offset: 2px; }
+/* Hinweis „fremdes Konto“ (Auftragsübersicht) */
+#exaFremd { max-width: 64rem; padding: 1rem 1.2rem; border-radius: 0 6px 6px 0; }
+#exaFremd > p:first-child { margin: 0 0 .9rem; line-height: 1.5; }
+#exaFremd .ex-aktionen { margin: 0; }
+/* Aufzählungen in Karten (Einverständnis, „Vor dem Liefern fehlt noch“): Punkte innerhalb der Karte */
+.verwaltung-karte ul:not([class]), .verwaltung-karte ol:not([class]) { padding-left: 1.4rem; margin: .4rem 0; }
+.ex-auftrag-karte a.doc-action-btn { text-decoration: none; }
+/* Verwaltung Express: Abstand unter den Kartenüberschriften (Sichtprüfung Runde 8) */
+#exvEinstellungen > h2, #exvBearbeiter > h2 { margin-bottom: .6rem; }
+#exvBearbeiter > p.dash-sub { margin: 0 0 1rem; line-height: 1.5; }
 .ex-aktionen[hidden] { display: none; }
 .ex-rechtstext h2 { font-size: 1.1rem; margin: 1.25rem 0 .4rem; }
 .ex-rechtstext p { max-width: 48rem; line-height: 1.55; }
@@ -323,5 +351,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .app-sidebar, .dash-skip, .dash-footer, .no-print, dialog { display: none !important; }
   .app-shell, .app-content, .dash-main { display: block !important; margin: 0 !important; padding: 0 !important; max-width: none !important; }
   .dash-card { box-shadow: none !important; border: 1px solid #999 !important; break-inside: avoid; }
+  /* Aufklapp-Dreiecke gehören nicht auf Papier (Express-Auftragsübersicht, Runde 8) */
+  summary { list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::marker { content: ""; }
   a { color: #000 !important; }
 }

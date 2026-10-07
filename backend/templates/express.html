@@ -95,7 +95,7 @@
 <p id="exAuftragMeldung" class="verwaltung-bestaetigung" tabindex="-1" hidden></p>
 <div id="exAuftraege" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
 
-<section class="dash-card verwaltung-karte" aria-labelledby="h-neuer-auftrag">
+<section class="dash-card verwaltung-karte ex-neu-karte" aria-labelledby="h-neuer-auftrag">
   <h2 id="h-neuer-auftrag">{{ _('Neuer Express-Auftrag') }}</h2>
   {% if express_bestellen %}
   <p>{{ _('Lege Dokumente im Projekt mit dem Knopf „In den Express-Warenkorb“ in deinen Warenkorb oder wähle sie im Express-Warenkorb aus deinen Projekten aus. Eine neue Datei lädst du zuerst in ein Projekt hoch.') }}</p>
@@ -586,7 +586,8 @@
     det.appendChild(dokumenteKlappe(a));
     const werk = el('div', 'dok-werkbank');
     const akt = el('div', 'ausgabe-aktionen');
-    const link = el('a', 'btn btn-secondary', t('Auftragsübersicht öffnen'));
+    // gleiche Pillen-Knöpfe wie Umbenennen/Löschen (Sichtprüfung Runde 8)
+    const link = el('a', 'doc-action-btn', t('Auftragsübersicht öffnen'));
     link.href = '/express/auftrag/' + a.id;
     link.appendChild(el('span', 'visually-hidden', ' ' + vh));
     akt.appendChild(link);
@@ -631,9 +632,10 @@
     return /^\d+$/.test(z || '') ? z : '';
   }
 
-  function auftragMeldung(text) {
-    // Sichtbare Meldung mit Fokus statt Live-Ansage (Muster der Korrekturrunde)
+  function auftragMeldung(text, fehler) {
+    // Sichtbare Meldung mit Fokus statt Live-Ansage (Muster der Korrekturrunde); Fehler rot statt grün (Runde 8)
     const m = byId('exAuftragMeldung');
+    m.classList.toggle('ex-meldung-fehler', !!fehler);
     m.textContent = text;
     m.hidden = false;
     m.focus();
@@ -675,7 +677,7 @@
       const r = await senden('/api/express/auftraege/' + aktion.a.id, 'DELETE');
       aktion.fertig = true;
       byId('exaLoeschDialog').close();
-      if (!r.ok) { auftragMeldung(fehlertext(r.daten, t('Löschen fehlgeschlagen.'))); return; }
+      if (!r.ok) { auftragMeldung(fehlertext(r.daten, t('Löschen fehlgeschlagen.')), true); return; }
       await auftraegeLaden();
       auftragMeldung(t('„{name}“ ist gelöscht.', { name: name }));
     });
