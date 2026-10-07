@@ -1,4 +1,4 @@
-# Express-Service Stufe 1 (Stand 06.10.2026, Runde 7)
+# Express-Service Stufe 1 (Stand 07.10.2026, Runde 9)
 
 Wunsch von Michael Karbe, Skizze mit Steve am 05.10.2026: Kunden, die ihre Dokumente lieber von Profis barrierefrei
 aufbereiten oder prüfen lassen, bestellen das in InkluDocs. Lieferung innerhalb von 48 Stunden — dem Kunden wird bewusst
@@ -10,7 +10,7 @@ Credits. Stufe 1 = der Kernablauf: bestellen, Posteingang in der Verwaltung, lie
 
 **Was der Schalter abschaltet** (Prüfung Entwicklung 05.10.2026, Befund 9 — die sichere Variante): nur das
 **Neu-Bestellen** (Express-Warenkorb, Projektauswahl, Bestellen; Link und Knopf im Projekt). Sobald es **einen bestellten Auftrag**
-gibt (`express.gibt_bestellte()`), bleiben Auftragsübersichten, Downloads, Antwort auf Rückfragen und die ganze Verwaltung
+gibt (`express.gibt_bestellte()`), bleiben die Details der Aufträge, Downloads, Antwort auf Rückfragen und die ganze Verwaltung
 (Liefern, Stornieren, Hochladen) erreichbar, und die Erinnerungsschleife läuft weiter. So bleiben vorgemerkte Credits nach
 dem Abschalten nie hängen, Kunden kommen an ihre Ergebnisse, und offene Aufträge lassen sich zu Ende führen. Die Seite
 `/express` zeigt dann nur „Meine Aufträge“ mit dem Hinweis „Neue Express-Aufträge sind zurzeit nicht möglich“, die
@@ -21,9 +21,11 @@ Aufträge vorhanden.
 ## Ablauf für den Kunden
 
 **Zwei Seiten** (Runde 7, Michael Karbe 06.10.2026): `/express` = **„Meine Aufträge“** (Navigation, wie „Meine
-Projekte“ und „Meine Ablage“) — ganz oben die Aufträge als Karten (Punkt 6), darunter nur der Weg zum Express-Warenkorb.
-`/express/warenkorb` = **Express-Warenkorb**, der neue Auftrag in vier Schritten (Punkte 2 bis 5). Auf `/express` steht
-kein Bestellformular mehr.
+Projekte“ und „Meine Ablage“) — oben „Neuer Express-Auftrag“ mit dem Weg zum Express-Warenkorb (Runde 9, Michael
+Karbe 07.10.2026, Punkt 6: sonst verschwindet er bei vielen Aufträgen nach unten), darunter die Aufträge als Karten.
+`/express/warenkorb` = **Express-Warenkorb**, der neue Auftrag in vier Schritten (Punkte 2 bis 5); oben Einleitung und
+Preis in **einem** Absatz (Runde 9, Warenkorb Punkt 1: kein Umbruch vor „Preis“). Auf `/express` steht kein
+Bestellformular mehr.
 
 1. **Wege hinein:** Seitenleiste „Meine Aufträge“ (`/express`) und „Express-Warenkorb“ (`/express/warenkorb`, Modus
    siehe unten), Knopf „In den Express-Warenkorb“ am Dokument, Link „Vom Express-Service bearbeiten lassen“ in der
@@ -39,7 +41,8 @@ kein Bestellformular mehr.
    Projekten“.
 3. **Deine Auswahl** (= Warenkorb, serverseitig gespeichert, bleibt beim Verlassen der Seite): eine **reine
    Dokumentliste** — Name, Seiten, Credits, Entfernen-Knopf (Michael Karbe 05.10.2026, Punkt 3: „Wir bieten nur die
-   Aufbereitung an.“). Eine Leistungswahl je Dokument erscheint nur, wenn es für den Dateityp mehr als eine eingeschaltete Leistung
+   Aufbereitung an.“). „Entfernen“ steht auf derselben Höhe wie die Angaben am rechten Rand (Runde 9, Flex; auf dem
+   Handy rutscht er sauber darunter; Zielgröße mindestens 24 px, im Knopf versteckt der Dokumentname). Eine Leistungswahl je Dokument erscheint nur, wenn es für den Dateityp mehr als eine eingeschaltete Leistung
    gibt (dann speichert sie erst, wenn die Auswahl einen Moment steht). Hinzufügen sagt Anzahl, Seiten, Credits und — wenn
    es nicht reicht — das fehlende Guthaben an; Entfernen zeigt eine sichtbare Meldung und setzt den Fokus darauf.
 4. **Angaben:** Ansprechpartner (vorbelegt mit dem Kontonamen), Telefon (freiwillig), Hinweise (freiwillig).
@@ -60,13 +63,15 @@ kein Bestellformular mehr.
 6. **Meine Aufträge** (Michael Karbe 05.10.2026, Punkte 1 und 2; seit Runde 7 eigene Seite mit H1 „Meine Aufträge“,
    `id="h-auftraege"`, damit alte Links `/express#h-auftraege` weiter treffen): Karten wie die Dokumente der
    Projektansicht „Dokument“ (`section.card.dok-karte` > `details.dok-klappe`, H3 mit Stand-Abzeichen im `summary`, Infos
-   als Liste, Linie, Knöpfe darunter; Überschriften ohne Sprung: H1 „Meine Aufträge“, Karte H2, „Dokumente dieses
-   Auftrags“ H3, „Neuer Express-Auftrag“ H2 — Runde 8). **Standardmäßig zu — auch bei nur einem Auftrag** (Michael sah im Konto mit einem
+   als Liste, Linie, Knöpfe darunter; Überschriften ohne Sprung: H1 „Meine Aufträge“, „Neuer Express-Auftrag“ H2 (seit
+   Runde 9 über der Liste), Karte H2). **Standardmäßig zu — auch bei nur einem Auftrag** (Michael sah im Konto mit einem
    Auftrag keine aufklappbare Liste); offen sind der Auftrag nach dem Bestellen (`?neu=<id>`) und der, auf den gesprungen
-   wird (`?auftrag=<id>` oder `#exa_karte_<id>`, Fokus auf seine Überschrift). Darin aufklappbar „Dokumente dieses Auftrags (N)“ mit Name, Seiten, Stand und Downloads. Knöpfe:
-   „Auftragsübersicht öffnen“, **„Umbenennen“** und — nur bei gelieferten oder stornierten Aufträgen — **„Löschen“**.
+   wird (`?auftrag=<id>` oder `#exa_karte_<id>`, Fokus auf seine Überschrift). Die Karte nennt Bestellt am, Umfang und
+   Lieferung (bzw. Geliefert/Storniert am) — **keine Dokumente** mehr (Runde 9, Punkt 2: die stehen unter „Details“).
+   Knöpfe: **„Details öffnen“** (bis Runde 8 „Auftragsübersicht öffnen“, Punkt 3), **„Umbenennen“** und — nur bei
+   gelieferten oder stornierten Aufträgen — **„Löschen“**.
    - **Umbenennen:** eigener Name des Kunden (Spalte `auftrag_name`, höchstens 120 Zeichen, leer = „Auftrag <Nr>“). Er
-     steht in der Liste, auf der Startseite, als H1 der Auftragsübersicht („Express-Auftrag 11: Jahresberichte“) und im
+     steht in der Liste, auf der Startseite, als H1 der Details („Details zu Express-Auftrag 11: Jahresberichte“) und im
      Nachweis-PDF („Name des Auftrags“); die Nummer bleibt immer daneben. Die Verwaltung sieht ihn als „Name des Kunden
      für den Auftrag“.
    - **Löschen** (Bestätigungsdialog wie beim Dokument-Löschen, Fokus auf „Abbrechen“): laufende Aufträge nie (kein Knopf,
@@ -78,14 +83,21 @@ kein Bestellformular mehr.
      diesem Nachweis und einem Verlaufseintrag; die Credits-Buchung bleibt unberührt. Danach antworten Auftrag,
      Downloads und Nachweis für den Kunden mit 404.
    Rückmeldungen nach Umbenennen und Löschen: sichtbare Meldung über der Liste, Fokus darauf, keine Live-Ansage.
-7. **Auftragsübersicht** `/express/auftrag/<id>` (Nachweis, **keine Rechnung**): Stand, Credits (vorgemerkt / abgebucht /
-   wieder frei), Dokumente — je Dokument aufklappbar mit Seiten, Leistung, Credits samt Zusammensetzung („200 (2 × 50
-   Credits je Seite plus 100 Credits je Dokument)“), Stand, Prüfung und Downloads —, dazu **aufklappbar** (Runde 7,
-   standardmäßig zu, H2 im `summary`): Angaben, Einverständnis mit Fassung und Zeitpunkt, Verlauf. Beim Drucken
-   (`beforeprint`, auch über das Browser-Menü) ist alles aufgeklappt, danach wie vorher; nur im Druck steht oben eine
-   Kopfzeile „InkluDocs · Auftragsübersicht“, „Konto: <Adresse>“, „Gedruckt am <Datum>“ (Runde 8). Das Nachweis-PDF
-   nennt ebenso „Konto: <Adresse>“ und „Nachweis erstellt am …“ (PDF/UA weiter geprüft). Alte Links mit `?neu=1` zeigen
-   weiter die Danke-Meldung.
+7. **Details** `/express/auftrag/<id>` (bis Runde 8 „Auftragsübersicht“; Runde 9, Michael Karbe 07.10.2026, Punkt 3:
+   es ist keine Übersicht der Aufträge, sondern die Einzelheiten eines Auftrags — überall „Details“: Knopf, Titel und
+   H1 „Details zu Express-Auftrag <Nr>“, Mails, Nachweis-PDF, Druckkopf; Nachweis, **keine Rechnung**): Überblick mit
+   Stand und Credits (vorgemerkt / abgebucht / wieder frei), dazu **aufklappbar** (standardmäßig zu, H2 im `summary`):
+   **Dokumente (N)** (Runde 9, Punkt 4) — darin je Dokument „Dateiname: …“ als H3 (Punkt 1) mit Seiten, Leistung,
+   Credits samt Zusammensetzung („200 (2 × 50 Credits je Seite plus 100 Credits je Dokument)“), Stand, Prüfung und
+   Downloads, ohne weitere Klappe je Dokument; offen, sobald nach der Lieferung etwas zum Herunterladen da ist (dorthin
+   führt „Dokumente herunterladen“ in der Liefer-Mail) —, Angaben und Verlauf. **Kein Abschnitt „Einverständnis“** mehr
+   (Runde 9, Punkt 5: ohne Einverständnis gibt es keinen Auftrag) — weder auf der Seite noch im Druck noch im
+   Nachweis-PDF; gespeichert bleibt es (Wortlaut, Fassung, Sprache, Zeitpunkt), die Verwaltung zeigt es weiter. Beim
+   Drucken (`beforeprint`, auch über das Browser-Menü) ist alles aufgeklappt, danach wie vorher; nur im Druck steht oben
+   eine Kopfzeile „InkluDocs · Details zum Express-Auftrag“, „Konto: <Adresse>“, „Gedruckt am <Datum>“ (Runde 8/9).
+   Das Nachweis-PDF („Details zu Express-Auftrag <Nr>“, Datei „Details zu Express-Auftrag <Nr>.pdf“) nennt ebenso
+   „Konto: <Adresse>“ und „Nachweis erstellt am …“ und je Dokument „Dateiname: …“ (PDF/UA weiter geprüft). Alte Links
+   mit `?neu=1` zeigen weiter die Danke-Meldung.
 8. **Anmeldung über Links** (Runde 7, Michaels „verlorenes Projekt“: Er öffnete den Link aus der Bestätigungsmail ohne
    Sitzung, meldete sich mit seinem zweiten Konto an und sah den Auftrag nicht):
    - Wer ohne Sitzung eine geschützte Seite aufruft — auch Projekt-Links, Lieferung, Rückfrage, Team-Einladung —, landet
@@ -96,7 +108,7 @@ kein Bestellformular mehr.
      zu deinem Express-Auftrag“ bzw. „… zur aufgerufenen Seite“) und hängt per `aria-describedby` am E-Mail-Feld, das
      den Fokus bekommt (Runde 8). Kein offener Redirect. Läuft die Sitzung auf einer App-Seite ab, führt `zurAnmeldung()`
      (`frontend/dashboard.js`) ebenso mit Rücksprung zur Anmeldung.
-   - Ist man mit einem anderen Konto angemeldet als dem, mit dem bestellt wurde, zeigt die Auftragsübersicht „Dieser
+   - Ist man mit einem anderen Konto angemeldet als dem, mit dem bestellt wurde, zeigen die Details „Dieser
      Auftrag gehört nicht zu deinem Konto (<eigene Adresse>). Melde dich mit dem Konto an, mit dem du bestellt hast.“
      und den Knopf „Abmelden und anders anmelden“ (meldet ab und führt mit Rücksprung zur Anmeldung). Der Fokus geht
      auf den Meldungssatz (`tabindex="-1"`, wie die übrigen Meldungen), ohne zusätzliche Live-Ansage (Runde 8). Über den Auftrag
@@ -196,7 +208,7 @@ Express-Service“ (`express_einstellungen`, nur Voll-Admins) — und nur wirksa
   `preis_seite`, `grundpreis`, `credits` und als Summen `credits_seiten`, `credits_grund`; die Korb-Fassung enthält
   die Grundpreise (Änderung → 409).
 - Preis und Seiten werden beim Bestellen festgeschrieben (`credits`; seit Runde 7 auch `preis_seite`, `grundpreis` je
-  Position für Auftragsübersicht und Nachweis); spätere Preisänderungen betreffen nur neue Aufträge, offene Aufträge
+  Position für Details und Nachweis); spätere Preisänderungen betreffen nur neue Aufträge, offene Aufträge
   behalten ihren Preis. Vormerkung, Abbuchung, Storno und die Free-Domain-Regel rechnen mit diesem gespeicherten Betrag.
   Team-Konten: es zahlt der Topf, aus dem das Konto beim Bestellen arbeitet (`billing._konto_fuer`); die Topf-Übersicht
   des Inhabers (`/api/team`) nennt `vorgemerkt` (bindend) und `verfuegbar_nach_vormerkung` — aus `billing.guthaben`. Free-Konten einer Firmen-Domain teilen
@@ -334,10 +346,10 @@ Testreihen prüfen am Ende im Log, dass keine Mail an einen Bearbeiter ging.
 - **Kein Bestellen über den Chatbot** (Abweichung vom Grundsatz „Chatbot = Oberfläche“): Eine zahlungspflichtige
   Bestellung braucht den gesetzlich beschrifteten Knopf und das bewusst gesetzte Häkchen. Der InkluAgent kennt den
   Express-Service in Stufe 1 noch nicht; ein Lese-Werkzeug („Stand meiner Aufträge“) wäre unkritisch und kann folgen.
-- **Lieferung in die Auftragsübersicht, nicht als neue Fassung im Projekt** (Abweichung von der Skizze): InkluDocs
+- **Lieferung in die Details des Auftrags, nicht als neue Fassung im Projekt** (Abweichung von der Skizze): InkluDocs
   kennt je Dokument genau eine Arbeitsdatei, an der Tags, Alt-Texte und Quickinfos des Kunden hängen. Eine „neue
   Fassung“ gibt es nicht; das Ergebnis darüber zu legen, würde den Arbeitsstand des Kunden still ersetzen. Darum bleibt
-  das Projekt unberührt, und die fertigen Dateien stehen in der Auftragsübersicht (Link in der Liefer-Mail, auf der
+  das Projekt unberührt, und die fertigen Dateien stehen in den Details des Auftrags (Link in der Liefer-Mail, auf der
   Startseite und unter „Meine Aufträge“). Eine echte Versionierung am Dokument ist ein eigener Schritt.
 - **Nur PDF** in Stufe 1 (Steve 05.10.2026: vorerst nur PDF, aber jederzeit erweiterbar) — siehe „Erweitern um neue
   Dateitypen und Leistungen“. Die Oberfläche sagt nirgends „derzeit nur PDF“, sondern positiv, was geht („PDF-Datei
@@ -462,7 +474,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   Klasse `Runde8`: Testkonto erkennen (.invalid, Umgebung), Testauftrag nie an Bearbeiter, echter Kunde weiter an alle,
   Zahlenfelder nur mit Tausenderpunkt.
 - `tests/test_weiterleitung.py` (4, mit Normalisierung): Rücksprung nur auf interne Pfade (kein `//host`, Schema, Backslash, `/login`).
-- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 144): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
+- `tests/e2e/verify_express.py` (im Staging-Container über HTTP, 146; Runde 9: Nachweis-Titel „Details zu Express-Auftrag <Nr>“, „Dateiname:“ je Dokument, kein „Einverständnis“): ganzer Ablauf inkl. Nachweis-PDF und ZIP,
   IDOR-Fälle, Rechte (Kunde, Nur-Einsicht, Bearbeiter, Voll-Admin), Uploads, Doppel-Bestellung/-Lieferung, Storno,
   dazu Preisänderung und alter Schlüssel (409), kaputter JSON-Körper (400), Feldfehler der Einstellungen, no-store,
   Projektliste, ZIP_STORED, Prüfergebnis für Kunden; Abschnitt G2 Umbenennen/Löschen (fremd 404, laufend 409, danach
@@ -472,7 +484,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   über `/api/upload` ins Projekt, B2 Preis 50 + 100 mit Teilsummen und Feldfehler des Grundpreises, R7 „Meine Aufträge“
   ohne Bestellformular, Warenkorb ohne Hochladen, `/express?projekt=` → Warenkorb, Anmeldung mit Rücksprung (auch mit
   Abfrage), nur interne Ziele, fremdes Konto 404, gespeicherte Preis-Zusammensetzung
-- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 111; Runde 8: axe heading-order, Fokus „fremdes Konto“, Hinweis am E-Mail-Feld): Link im Projekt, Auswahl, Hochlade-Komponente
+- `tests/e2e/ui_express.py` (Playwright + axe, nur Staging, 118; Runde 8: axe heading-order, Fokus „fremdes Konto“, Hinweis am E-Mail-Feld; Runde 9: Einleitung und Preis in einem Absatz, „Neuer Express-Auftrag“ vor der Liste, Karte ohne Dokumente mit „Details öffnen“, Details mit Titel/H1, Abschnitt „Dokumente (N)“ mit „Dateiname:“-H3, ohne Einverständnis, Druckkopf, nach der Lieferung offen): Link im Projekt, Auswahl, Hochlade-Komponente
   (Etikett-Knopf, Fokusring, Dateiname in der Statuszeile, Fehler am Feld) beim Kunden und in der Verwaltung,
   Leistung entprellt, Entfernen mit Meldung und Fokus, Pflichtfelder und Häkchen mit Fehler am Feld, Fokusring an
   „Zahlungspflichtig bestellen“, Rahmen der Eingabefelder, keine Ansage beim Laden, Bestellen, Danke-Meldung (nicht im
@@ -486,7 +498,7 @@ Spätere Stufen: Erinnerung/Rückfragen ausbauen, Warenkorb über mehrere Projek
   und Danke-Meldung, ein Auftrag allein ist zu, Sprung auf eine Karte, alter Link `#h-auftraege` und `?neu=1`, Angaben/
   Einverständnis/Verlauf aufklappbar und beim Drucken offen, Startseite „Meine Aufträge“, Verwaltung mit Grundpreis-Feld,
   Anmeldung mit Rücksprung, fremdes Konto mit „Abmelden und anders anmelden“, kein offener Redirect — axe 0 Verstöße
-- `tests/e2e/ui_express_korb.py` (25): Knopf am Dokument, Navigationseintrag in drei Modi, H1 „Express-Warenkorb“ auf
+- `tests/e2e/ui_express_korb.py` (29; Runde 9: „Entfernen“ auf Höhe der Angaben rechts, Handy 375 px ohne Querscrollen, Zielgröße ≥ 24 px, eindeutiger Name): Knopf am Dokument, Navigationseintrag in drei Modi, H1 „Express-Warenkorb“ auf
   `/express/warenkorb` passend zum Seitentitel (N5)
 - `tests/e2e/ui_bildschirmfotos.py`: Fotos vorher/nachher der globalen CSS-Änderungen (Projekt-Hochladefläche, Knöpfe,
   Formulare) mit berechneten Stilen

@@ -2,7 +2,7 @@
 
 Kunde (angemeldet):
   GET  /express                                   Seite: „Meine Auftraege“ (Karten; Runde 7: kein Bestellformular mehr)
-  GET  /express/auftrag/{id}                      Seite: Auftragsuebersicht (Nachweis, druckbar)
+  GET  /express/auftrag/{id}                      Seite: Details des Auftrags (Nachweis, druckbar)
   GET  /express/warenkorb                         Seite: Express-Warenkorb = neuer Auftrag in vier Schritten
   GET  /express/bedingungen                       Seite: Bedingungen (ENTWURF)
   GET  /api/express/stand                         Warenkorb, Leistungen und Preise, Dateitypen, Frist, Guthaben
@@ -19,7 +19,7 @@ Kunde (angemeldet):
   POST /api/express/auftraege/{id}/name           {name} eigener Name (leer = „Auftrag <Nr>“)
   DELETE /api/express/auftraege/{id}              nur geliefert/storniert; intern bleibt ein Buchungsnachweis
   GET  /api/express/auftraege/{id}/positionen/{pos}/(ergebnis|bericht)
-  GET  /api/express/auftraege/{id}/nachweis.pdf   Auftragsuebersicht als PDF/UA (LibreOffice-Umwandler)
+  GET  /api/express/auftraege/{id}/nachweis.pdf   Details als PDF/UA (LibreOffice-Umwandler)
 Verwaltung (Admins lesen; Voll-Admins und Express-Bearbeiter arbeiten; Einstellungen und Bearbeiter nur Voll-Admins):
   GET  /verwaltung/express, /verwaltung/express/{id}
   GET  /api/admin/express/auftraege, /api/admin/express/auftraege/{id}
@@ -584,7 +584,7 @@ def build_router(deps: Deps) -> APIRouter:
             log.exception("Express-Nachweis %s: Umwandlung fehlgeschlagen", auftrag_id)
             raise HTTPException(status_code=503, detail="Die PDF kann gerade nicht erstellt werden. Bitte die Druckansicht nutzen.")
         return Response(content=pdf, media_type="application/pdf",
-                        headers={"Content-Disposition": _disposition(f"Express-Auftrag {a['id']} – Auftragsübersicht.pdf"),
+                        headers={"Content-Disposition": _disposition(f"Details zu Express-Auftrag {a['id']}.pdf"),
                                  "Cache-Control": "no-store"})
 
     # ─── Verwaltung ───

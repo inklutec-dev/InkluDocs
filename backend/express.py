@@ -866,7 +866,7 @@ def _bestellen_eingefroren(user_id, wid, name, tel, notiz, idem, erwartet, fassu
             conn.execute("ROLLBACK")
             raise ExpressFehler("Deine Auswahl hat sich gerade geändert. Bitte prüfe die Aufstellung.", 409, veraltet=True)
         for p in positionen:
-            # Preis-Zusammensetzung mit festschreiben (Runde 7): Auftragsuebersicht und Nachweis zeigen sie, auch wenn
+            # Preis-Zusammensetzung mit festschreiben (Runde 7): Details und Nachweis zeigen sie, auch wenn
             # sich die Preise spaeter aendern.
             conn.execute("UPDATE express_positionen SET seiten = ?, credits = ?, original_pfad = ?, preis_seite = ?, "
                          "grundpreis = ? WHERE id = ?",
@@ -1097,7 +1097,7 @@ LOESCHBAR = (GELIEFERT, STORNIERT)       # laufende Auftraege kann der Kunde nic
 
 def umbenennen(user_id: int, auftrag_id: int, name) -> dict:
     """Eigener Name des Kunden fuer seinen Auftrag (leer = Standard „Auftrag <Nr>“). Erscheint in „Meine Auftraege“,
-    in der Auftragsuebersicht und im Nachweis; die Auftragsnummer bleibt daneben stehen."""
+    in den Details und im Nachweis; die Auftragsnummer bleibt daneben stehen."""
     neu = re.sub(r"[\x00-\x1f\x7f]", "", str(name or "")).strip()
     if len(neu) > MAX_AUFTRAG_NAME:
         raise ExpressFehler(f"Name des Auftrags: höchstens {MAX_AUFTRAG_NAME} Zeichen.", feld="name")
@@ -1887,9 +1887,10 @@ def datum_deutsch(text) -> str:
 
 
 def mail_kunde(art: str, a: dict, basis_url: str, text: str = "") -> tuple:
-    """(Betreff, HTML) fuer den Kunden — ohne Anhang, mit Link zur Auftragsuebersicht. Jede Mail nennt das Konto, mit
-    dem bestellt wurde (Runde 7: wer mehrere Konten hat, meldet sich sonst mit dem falschen an und sieht den Auftrag
-    nicht). Der Link fuehrt ohne Sitzung ueber die Anmeldung zurueck auf die Auftragsuebersicht (?weiter=)."""
+    """(Betreff, HTML) fuer den Kunden — ohne Anhang, mit Link zu den Details des Auftrags (bis Runde 8
+    „Auftragsuebersicht“, Runde 9: „Details“). Jede Mail nennt das Konto, mit dem bestellt wurde (Runde 7: wer mehrere
+    Konten hat, meldet sich sonst mit dem falschen an und sieht den Auftrag nicht). Der Link fuehrt ohne Sitzung ueber
+    die Anmeldung zurueck auf die Details (?weiter=)."""
     link = f"{basis_url.rstrip('/')}/express/auftrag/{a['id']}"
     hallo = f"Hallo {a.get('ansprechpartner') or a.get('kunde_name') or ''},".replace(" ,", ",")
     n = len(a.get("positionen") or [])
@@ -1901,20 +1902,20 @@ def mail_kunde(art: str, a: dict, basis_url: str, text: str = "") -> tuple:
         return (f"Dein Express-Auftrag {a['id']} ist eingegangen", _mail_html([
             hallo, f"wir haben deinen Auftrag erhalten: {_dokumente(n)}, {_seiten(seiten)}.",
             f"Dafür sind {credits} Credits vorgemerkt. Abgebucht wird erst bei der Lieferung.",
-            f"Wir liefern innerhalb von {a.get('frist_stunden')} Stunden. Den Stand siehst du jederzeit in deiner Auftragsübersicht.",
-            konto], link, "Auftragsübersicht öffnen"))
+            f"Wir liefern innerhalb von {a.get('frist_stunden')} Stunden. Den Stand siehst du jederzeit in den Details zu deinem Auftrag.",
+            konto], link, "Details öffnen"))
     if art == "rueckfrage":
         return (f"Rückfrage zu deinem Express-Auftrag {a['id']}", _mail_html([
             hallo, "zu deinem Express-Auftrag haben wir eine Frage:", text,
-            "Bitte antworte in deiner Auftragsübersicht. Dort steht die Frage auch.", konto], link, "Zur Rückfrage"))
+            "Bitte antworte in den Details zu deinem Auftrag. Dort steht die Frage auch.", konto], link, "Zur Rückfrage"))
     if art == "geliefert":
         return (f"Dein Express-Auftrag {a['id']} ist fertig", _mail_html([
-            hallo, "deine Dokumente sind fertig. Du kannst sie in deiner Auftragsübersicht herunterladen.",
+            hallo, "deine Dokumente sind fertig. Du kannst sie in den Details zu deinem Auftrag herunterladen.",
             f"Abgebucht wurden {credits} Credits.", konto], link, "Dokumente herunterladen"))
     if art == "storniert":
         return (f"Dein Express-Auftrag {a['id']} wurde storniert", _mail_html([
             hallo, "dein Express-Auftrag wurde storniert.", f"Grund: {text}" if text else "",
-            "Die vorgemerkten Credits sind wieder frei. Abgebucht wurde nichts.", konto], link, "Auftragsübersicht öffnen"))
+            "Die vorgemerkten Credits sind wieder frei. Abgebucht wurde nichts.", konto], link, "Details öffnen"))
     raise ValueError(art)
 
 
@@ -1990,7 +1991,7 @@ def team_empfaenger(standard: str, auftrag: dict = None) -> list:
     return out
 
 
-# ─── Nachweis (Auftragsuebersicht als barrierefreie PDF) ──────────────────
+# ─── Nachweis (Details des Auftrags als barrierefreie PDF) ────────────────
 
 def _x(text) -> str:
     """Text fuer WordprocessingML (escapen, Steuerzeichen raus)."""
@@ -2026,14 +2027,16 @@ _DOCX_NUMBERING = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 
 def nachweis_docx(a: dict, ziel: str, zeit_text=None, konto: str = "", erstellt: str = "") -> str:
-    """Auftragsuebersicht als Word-Datei mit echten Ueberschriften (Heading 1/2) und Aufzaehlungen (numbering.xml);
+    """Details des Auftrags als Word-Datei mit echten Ueberschriften (Heading 1/2) und Aufzaehlungen (numbering.xml);
     LibreOffice macht daraus die PDF/UA (pdfua_export.konvertiere, mit veraPDF-Pruefung). Ohne python-docx (nicht im
     Image): minimales OOXML von Hand. zeit_text: Zeitstempel -> Anzeigetext (Standard: datum_deutsch, „5. Oktober 2026,
     12:04“ wie auf der Webseite). konto/erstellt (Runde 8, Sichtpruefung): wem der Nachweis gehoert und wann er erstellt
-    wurde (deutsche Zeit, 'JJJJ-MM-TT HH:MM'). Ausdruecklich KEINE Rechnung."""
+    wurde (deutsche Zeit, 'JJJJ-MM-TT HH:MM'). Runde 9 (Michael Karbe 07.10.2026): Titel „Details zu Express-Auftrag
+    <Nr>“, „Dateiname:“ vor jedem Dokument, kein Abschnitt „Einverstaendnis“ (gespeichert bleibt es, die Verwaltung
+    zeigt es). Ausdruecklich KEINE Rechnung."""
     import zipfile
     zeit_text = zeit_text or datum_deutsch
-    titel = f"Express-Auftrag {a['id']} – Auftragsübersicht"
+    titel = f"Details zu Express-Auftrag {a['id']}"
     teile = [_absatz(titel, "Heading1"),
              _absatz("Nachweis über einen Auftrag an den Express-Service von InkluDocs. Dies ist keine Rechnung: "
                      "Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."),
@@ -2063,14 +2066,8 @@ def nachweis_docx(a: dict, ziel: str, zeit_text=None, konto: str = "", erstellt:
         # Zusammensetzung, soweit beim Bestellen gespeichert (Runde 7): Seiten x Preis je Seite + Grundpreis je Dokument
         teil = (f" ({_tausender(p['seiten'])} × {_tausender(p['preis_seite'])} Credits je Seite plus "
                 f"{_tausender(p['grundpreis'])} Credits je Dokument)" if p.get("preis_seite") is not None and p.get("grundpreis") else "")
-        teile.append(_absatz(f"{p['dokument_name']}: {_seiten(p['seiten'])}, {p['leistung_text']}, "
+        teile.append(_absatz(f"Dateiname: {p['dokument_name']} – {_seiten(p['seiten'])}, {p['leistung_text']}, "
                              f"{_tausender(p['credits'])} Credits{teil}", "ListParagraph", liste=True))
-    teile.append(_absatz("Einverständnis", "Heading2"))
-    z = a["zustimmung"]
-    teile.append(_absatz(f"Bestätigt am {zeit_text(z['am'])} (Fassung {z['fassung']}):"))
-    for satz in (z["bedingungen"], z["bearbeitung"]):
-        if satz:                                     # seit Fassung -3 nur noch ein Haekchen
-            teile.append(_absatz(satz, "ListParagraph", liste=True))
     teile.append(_absatz("Verlauf", "Heading2"))
     for v in a["verlauf"]:
         teile.append(_absatz(f"{zeit_text(v['created_at'])}: {VERLAUF_TEXT.get(v['art'], v['art'])}"

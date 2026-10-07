@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Klicktest EXPRESS-SERVICE (05.10.2026) im echten Browser mit axe: Kunde (Link im Projekt, Auswahl über Projekt und
-„Alle Dokumente“, Leistung, Entfernen, Pflichtfelder mit Fokus, zahlungspflichtig bestellen, Auftragsübersicht,
+„Alle Dokumente“, Leistung, Entfernen, Pflichtfelder mit Fokus, zahlungspflichtig bestellen, Details (bis Runde 8
+„Auftragsübersicht“),
 Startseite) und Verwaltung (Liste, Auftrag, Rückfrage-Dialog, Ergebnis hochladen, Liefern mit Nachfrage), danach der
 Download beim Kunden.
 Korrekturrunde 05.10.2026: Hochladefeld = Komponente der Projekte (Etikett-Knopf, Fokusring sichtbar, Dateiname in der
@@ -162,8 +163,10 @@ try:
               and pg.locator("#exAlle").is_checked() and pg.locator("input[name=exDok]:checked").count() == 2 and fokus(pg) == "h-schritt1", fokus(pg))
         check("Keine Zahlen-Stepper, keine Tabellen", pg.locator("input[type=number]").count() == 0 and pg.locator("main table").count() == 0)
         check("Lieferung ohne Uhrzeit genannt", "innerhalb von 48 Stunden" in pg.locator("#exIntro").inner_text())
-        check("Preis: 50 je Seite plus 100 je Dokument (Runde 7)", pg.locator("#exPreise").inner_text() == "Preis: 50 Credits je Seite plus 100 Credits je Dokument.",
-              pg.locator("#exPreise").inner_text())
+        # Runde 9 (Michael Karbe 07.10.2026, Warenkorb Punkt 1): Einleitung und Preis in EINEM Absatz, kein Umbruch vor „Preis“
+        intro = pg.locator("#exIntro").inner_text()
+        check("Einleitung und Preis (50 je Seite plus 100 je Dokument) in einem Absatz (Runde 9)", pg.locator("#exPreise").count() == 0
+              and intro.endswith("abgebucht. Preis: 50 Credits je Seite plus 100 Credits je Dokument.") and "\n" not in intro, intro)
         check("Keine Ansage beim Laden (Vorwahl ist sichtbar)", live(pg) == "", live(pg))
         check("Legende mit Projektname ohne Anzahl", pg.locator("#exDokLegende").inner_text().startswith("Dokumente im Projekt „")
               and "Dokumente)" not in pg.locator("#exDokLegende").inner_text(), pg.locator("#exDokLegende").inner_text())
@@ -242,8 +245,21 @@ try:
         check("Michaels Fall: auch EIN Auftrag ist als Karte zu (aufklappbar erkennbar)", pg.locator("section.ex-auftrag-karte").count() == 1
               and not pg.locator("section.ex-auftrag-karte details.dok-klappe").first.evaluate("d => d.open")
               and pg.locator("section.ex-auftrag-karte details.dok-klappe > summary h2").count() == 1)
-        check("Unter der Liste: Weg zum Express-Warenkorb, kein Bestellformular", pg.locator("#exBestellForm").count() == 0
+        check("Weg zum Express-Warenkorb, kein Bestellformular", pg.locator("#exBestellForm").count() == 0
               and pg.locator("main a[href='/express/warenkorb']", has_text="Zum Express-Warenkorb").count() == 1)
+        # Runde 9 (Punkt 6): „Neuer Express-Auftrag“ steht ÜBER der Liste
+        check("„Neuer Express-Auftrag“ vor der Liste der Aufträge (Runde 9)", pg.evaluate(
+              "() => !!(document.getElementById('h-neuer-auftrag').compareDocumentPosition(document.querySelector('section.ex-auftrag-karte'))"
+              " & Node.DOCUMENT_POSITION_FOLLOWING)"))
+        # Runde 9 (Punkte 2 und 3): Karte ohne Dokumente — Bestellt am, Umfang, Lieferung, Knöpfe; „Details öffnen“
+        k1 = pg.locator("section.ex-auftrag-karte").first
+        k1.locator("details.dok-klappe").first.evaluate("d => { d.open = true; }")
+        check("Karte: Bestellt am, Umfang, Lieferung — keine Dokumente (Runde 9)", all(w in k1.inner_text() for w in ("Bestellt am:", "Umfang:", "Lieferung:"))
+              and "Jahresbericht fiktiv.pdf" not in k1.inner_text() and k1.locator("details details").count() == 0, k1.inner_text())
+        check("Karte: Knopf „Details öffnen“ zum Auftrag (Runde 9)", k1.locator(f"a[href='/express/auftrag/{aid}']").count() == 1
+              and k1.locator(f"a[href='/express/auftrag/{aid}']").evaluate("e => e.firstChild.textContent") == "Details öffnen"
+              and "Auftragsübersicht" not in pg.locator("main").inner_text())
+        k1.locator("details.dok-klappe").first.evaluate("d => { d.open = false; }")
         axe(pg, "Meine Aufträge")
         check("Überschriften ohne Sprung: H1 „Meine Aufträge“, Karte H2, „Neuer Express-Auftrag“ H2 (Runde 8)",
               pg.locator("section.ex-auftrag-karte summary h2").count() == 1 and pg.locator("h2#h-neuer-auftrag").count() == 1)
@@ -256,34 +272,47 @@ try:
         check("Alter Link /express#h-auftraege trifft die Überschrift", pg.locator("#h-auftraege").inner_text() == "Meine Aufträge")
         pg.goto(f"{BASE}/express/auftrag/{aid}?neu=1", wait_until="networkidle")
         pg.wait_for_timeout(1200)
-        check("Alter Link mit ?neu=1: Danke-Meldung in der Übersicht", fokus(pg) == "exaNeuText" and "ist eingegangen" in pg.locator("#exaNeuText").inner_text())
-        check("Übersicht: vorgemerkt, keine Rechnung", all(w in pg.locator("main").inner_text() for w in
+        check("Alter Link mit ?neu=1: Danke-Meldung in den Details", fokus(pg) == "exaNeuText" and "ist eingegangen" in pg.locator("#exaNeuText").inner_text())
+        # Runde 9 (Punkt 3): „Details“ statt „Auftragsübersicht“ — Titel und H1
+        check("Details: Titel und H1 „Details zu Express-Auftrag …“ (Runde 9)", pg.locator("h1").inner_text() == f"Details zu Express-Auftrag {aid}"
+              and pg.title().startswith(f"Details zu Express-Auftrag {aid}") and "Auftragsübersicht" not in pg.locator("main").inner_text(),
+              (pg.locator("h1").inner_text(), pg.title()))
+        check("Details: vorgemerkt, keine Rechnung", all(w in pg.locator("main").inner_text() for w in
               ("vorgemerkt, abgebucht wird erst bei der Lieferung", "keine Rechnung")))
-        check("Übersicht: Preis je Dokument zusammengesetzt", "200 (2 × 50 Credits je Seite plus 100 Credits je Dokument)" in pg.locator("main").inner_text())
-        # Runde 7 (Punkt 1+3): Angaben, Einverständnis, Verlauf aufklappbar — zu, Überschrift im summary; Druck klappt alles auf
+        # Runde 9 (Punkte 4 und 5): Dokumente, Angaben, Verlauf aufklappbar — zu, Überschrift im summary; kein Einverständnis
         klappen = pg.locator("details.ex-abschnitt-klappe")
-        check("Angaben, Einverständnis, Verlauf aufklappbar und zu", klappen.count() == 3
-              and [k.locator("summary h2").inner_text() for k in klappen.all()] == ["Angaben", "Einverständnis", "Verlauf"]
-              and not any(k.evaluate("d => d.open") for k in klappen.all()))
+        check("Dokumente, Angaben, Verlauf aufklappbar und zu; kein Abschnitt „Einverständnis“ (Runde 9)", klappen.count() == 3
+              and [k.locator("summary h2").inner_text() for k in klappen.all()] == ["Dokumente (1)", "Angaben", "Verlauf"]
+              and not any(k.evaluate("d => d.open") for k in klappen.all()) and pg.locator("#exa-h-zustimmung").count() == 0,
+              [k.locator("summary h2").inner_text() for k in klappen.all()])
+        dok = klappen.first
+        dok.evaluate("d => { d.open = true; }")
+        check("Dokumente: je Dokument „Dateiname: …“ als H3, keine Klappe je Dokument (Runde 9)",
+              dok.locator("h3").all_inner_texts() == ["Dateiname: Jahresbericht fiktiv.pdf"] and dok.locator("details").count() == 0,
+              dok.locator("h3").all_inner_texts())
+        check("Details: Preis je Dokument zusammengesetzt", "200 (2 × 50 Credits je Seite plus 100 Credits je Dokument)" in dok.inner_text())
+        axe_regel(pg, "Details, Dokumente offen", "heading-order")
+        dok.evaluate("d => { d.open = false; }")
         check("Druckkopf auf dem Bildschirm unsichtbar", not pg.locator("#exaDruckKopf").is_visible())
         pg.emulate_media(media="print")
         pg.evaluate("() => window.dispatchEvent(new Event('beforeprint'))")
         kopf = pg.locator("#exaDruckKopf").inner_text() if pg.locator("#exaDruckKopf").is_visible() else ""
-        check("Druck: Kopfzeile „InkluDocs · Auftragsübersicht“, Konto und Druckdatum (Runde 8)", "InkluDocs · Auftragsübersicht" in kopf
+        check("Druck: Kopfzeile „InkluDocs · Details zum Express-Auftrag“, Konto und Druckdatum (Runde 9)", "InkluDocs · Details zum Express-Auftrag" in kopf
               and f"Konto: {KUNDE}" in kopf and "Gedruckt am " in kopf, kopf)
         pg.emulate_media(media="screen")
-        check("Druck: alles aufgeklappt (Einverständnis-Text lesbar)", all(k.evaluate("d => d.open") for k in klappen.all())
-              and "Ich akzeptiere die Bedingungen" in pg.locator("main").inner_text() and "Ich bin einverstanden" not in pg.locator("main").inner_text())
+        check("Druck: alles aufgeklappt, ohne Einverständnis (Runde 9)", all(k.evaluate("d => d.open") for k in klappen.all())
+              and "Dateiname: Jahresbericht fiktiv.pdf" in pg.locator("main").inner_text()
+              and "Einverständnis" not in pg.locator("main").inner_text() and "Ich akzeptiere die Bedingungen" not in pg.locator("main").inner_text())
         pg.evaluate("() => window.dispatchEvent(new Event('afterprint'))")
         check("Nach dem Druck wieder zu", not any(k.evaluate("d => d.open") for k in klappen.all()))
         check("Drucken und PDF angeboten", pg.locator("#exaDrucken").count() == 1 and pg.locator("#exaPdf").count() == 1)
         pg.emulate_media(media="print")
         check("Druck: Danke-Kasten nicht dabei", not pg.locator("#exaNeu").is_visible())
         pg.emulate_media(media="screen")
-        axe(pg, "Auftragsübersicht")
+        axe(pg, "Details")
         pg.goto(f"{BASE}/express/auftrag/{aid}", wait_until="networkidle")
         pg.wait_for_timeout(1200)
-        check("Auftragsübersicht ohne Ansage beim Laden", live(pg) == "", live(pg))
+        check("Details ohne Ansage beim Laden", live(pg) == "", live(pg))
         pg.goto(f"{BASE}/dashboard", wait_until="networkidle")
         pg.wait_for_timeout(1200)
         check("Startseite: „Meine Aufträge“ mit Sprung auf die Karte und „Alle Aufträge“", pg.locator("#express-h").inner_text() == "Meine Aufträge"
@@ -368,6 +397,8 @@ try:
         pg.goto(f"{BASE}/express/auftrag/{aid}", wait_until="networkidle")
         pg.wait_for_timeout(1200)
         dl = pg.locator("a", has_text="Barrierefreie PDF herunterladen")
+        check("Geliefert: Abschnitt „Dokumente“ offen, Download sichtbar (Runde 9)", pg.locator("details.ex-abschnitt-klappe").first.evaluate("d => d.open")
+              and dl.count() == 1 and dl.is_visible())
         check("Kunde: Download-Link mit Dokumentnamen", dl.count() == 1 and "Jahresbericht" in dl.inner_text())
         with pg.expect_download() as info:
             dl.click()
@@ -384,7 +415,7 @@ try:
               and pg.url.endswith(f"/express/auftrag/{aid}"), (fokus(pg), pg.url))
         pg.unroute("**/nachweis.pdf")
         js_fehler[:] = [x for x in js_fehler if "status of 503" not in x]     # die 503 oben war gewollt (nachgestellt)
-        axe(pg, "Auftragsübersicht geliefert")
+        axe(pg, "Details geliefert")
 
         # Ein stornierter Auftrag daneben (Nachkontrolle Runde 3: Abzeichen „Storniert“ hatte 4,34:1) — direkt im Container
         # bestellt und storniert, ohne Mails.
@@ -408,14 +439,12 @@ print(r['auftrag_id'])
         check("Meine Aufträge: Karte mit <details>, H3 im summary, Stand-Abzeichen", karte.count() == 1
               and karte.locator("details.dok-klappe > summary h2").count() == 1 and "Geliefert" in karte.locator(".badge").inner_text())
         karte.locator("details.dok-klappe > summary").first.evaluate("e => { e.parentElement.open = true; }")
-        inhalte = karte.locator("details.ex-dok-klappe")
-        check("Inhalte des Auftrags: Überschrift H3 unter der Karten-H2", inhalte.locator("summary h3").count() == 1)
+        # Runde 9 (Punkt 2): die Dokumente stehen nur unter „Details“, die Karte nennt Bestellt am, Umfang, Geliefert am
+        check("Geliefert, Karte offen: Bestellt am, Umfang, Geliefert am — keine Dokumente, keine Downloads (Runde 9)",
+              all(w in karte.inner_text() for w in ("Bestellt am:", "Umfang: 1 Dokument, 200 Credits", "Geliefert am:"))
+              and "Jahresbericht fiktiv.pdf" not in karte.inner_text() and karte.locator("details.ex-dok-klappe, h3").count() == 0
+              and karte.locator("a", has_text="herunterladen").count() == 0, karte.inner_text())
         axe_regel(pg, "Meine Aufträge, Karte offen", "heading-order")
-        check("Inhalte des Auftrags aufklappbar (Dokumente mit Seiten, Stand, Download)", inhalte.count() == 1
-              and "Dokumente dieses Auftrags (1)" in inhalte.locator("summary").inner_text())
-        inhalte.evaluate("e => { e.open = true; }")
-        check("Dokument in der Karte: Seiten, Stand, Download", all(w in inhalte.inner_text() for w in ("Jahresbericht fiktiv.pdf", "Seiten: 2", "fertig, zum Herunterladen"))
-              and inhalte.locator("a", has_text="Barrierefreie PDF herunterladen").count() == 1, inhalte.inner_text())
         knopf = karte.locator("button", has_text="Umbenennen")
         check("Knöpfe Umbenennen und Löschen (geliefert)", knopf.count() == 1 and karte.locator("button", has_text="Löschen").count() == 1)
         abz = pg.locator(f"#exa_karte_{aid_storno} .badge")

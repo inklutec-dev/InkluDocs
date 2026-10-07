@@ -10362,9 +10362,6 @@ msgstr "Ordren sendes …"
 msgid "Bestätigt am"
 msgstr "Bekræftet den"
 
-msgid "Bestätigt am {datum} (Fassung {fassung}):"
-msgstr "Bekræftet den {datum} (version {fassung}):"
-
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Betalt af teamkreditten hos"
 
@@ -10437,9 +10434,6 @@ msgstr "Ordren kunne ikke indlæses."
 msgid "Der Express-Service ist gerade nicht erreichbar."
 msgstr "Ekspresservicen er ikke tilgængelig lige nu."
 
-msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
-msgstr "Kunden får spørgsmålet pr. e-mail og ser det i sin ordreoversigt. Fristen er sat på pause, indtil kunden svarer."
-
 msgid "Die Antwort konnte nicht gesendet werden."
 msgstr "Svaret kunne ikke sendes."
 
@@ -10465,9 +10459,6 @@ msgstr "Ydelsen kunne ikke ændres."
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "De reserverede kreditter frigives, intet trækkes. Kunden får en e-mail med begrundelsen."
-
-msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
-msgstr "Denne oversigt er en dokumentation, ikke en faktura: Der betales med kreditter, hvis køb er faktureret separat."
 
 msgid "Dokumente anzeigen"
 msgstr "Vis dokumenter"
@@ -10903,9 +10894,6 @@ msgstr "Trinnet for lange input overtages: over {grenze} input-tokens koster inp
 msgid "Die automatische Prüfung meldet Abweichungen:"
 msgstr "Den automatiske kontrol melder afvigelser:"
 
-msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
-msgstr "Ekspresordre {nr} – ordreoversigt.pdf"
-
 msgid "Frage (Pflicht)"
 msgstr "Spørgsmål (påkrævet)"
 
@@ -11030,9 +11018,6 @@ msgstr "Slet ordre?"
 msgid "Auftrag umbenennen"
 msgstr "Omdøb ordre"
 
-msgid "Auftragsübersicht öffnen"
-msgstr "Åbn ordreoversigt"
-
 msgid "Bitte die Bedingungen akzeptieren."
 msgstr "Accepter venligst betingelserne."
 
@@ -11041,12 +11026,6 @@ msgstr "Ordren hedder nu „{name}“."
 
 msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
 msgstr "Kunden har slettet denne ordre: filer, dokumentliste, oplysninger og historik er fjernet. Bogføringsbeviset med nummer, dato, konto, sider, kreditter og status bliver tilbage."
-
-msgid "Dokumente dieses Auftrags ({n})"
-msgstr "Dokumenter i denne ordre ({n})"
-
-msgid "Express-Auftrag {nr}: {name}"
-msgstr "Ekspresordre {nr}: {name}"
 
 msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
 msgstr "Få professionelle til at gøre dine dokumenter tilgængelige. Vi leverer inden for {stunden} timer. Der betales med kreditter: De reserveres ved bestillingen og trækkes først ved leveringen."
@@ -11157,9 +11136,6 @@ msgstr "Log ud og log ind med en anden konto"
 msgid "Alle Aufträge"
 msgstr "Alle ordrer"
 
-msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
-msgstr "Dine Express-ordrer: Fagfolk gør dine dokumenter tilgængelige. Åbn en ordre for at se dokumenter, status og downloads."
-
 msgid "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
 msgstr "Denne ordre hører ikke til din konto ({mail}). Log ind med den konto, du bestilte med."
 
@@ -11204,9 +11180,6 @@ msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 msgstr "Efter login fortsætter du til din Express-ordre."
 
 # Express Sichtpruefung Runde 8 (07.10.2026): Rechenweg in Zeilen, Druckkopf
-msgid "InkluDocs · Auftragsübersicht"
-msgstr "InkluDocs · Ordreoversigt"
-
 msgid "Konto: {mail}"
 msgstr "Konto: {mail}"
 
@@ -11230,3 +11203,31 @@ msgstr "Grundpris pr. dokument: {cg} credits"
 
 msgid "Summe: {c} Credits"
 msgstr "I alt: {c} credits"
+
+# Express Runde 9 (07.10.2026): Details statt Auftragsuebersicht, Dateiname, Warenkorb
+msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Unter „Details“ findest du zu jedem Auftrag die Dokumente, den Verlauf und die Downloads."
+msgstr "Dine Express-ordrer: Fagfolk gør dine dokumenter tilgængelige. Under „Detaljer“ finder du for hver ordre dokumenterne, forløbet og downloads."
+
+msgid "Details öffnen"
+msgstr "Åbn detaljer"
+
+msgid "Details zu Express-Auftrag {nr}"
+msgstr "Detaljer om ekspresordre {nr}"
+
+msgid "Details zu Express-Auftrag {nr}: {name}"
+msgstr "Detaljer om ekspresordre {nr}: {name}"
+
+msgid "InkluDocs · Details zum Express-Auftrag"
+msgstr "InkluDocs · Detaljer om ekspresordren"
+
+msgid "Dateiname: {name}"
+msgstr "Filnavn: {name}"
+
+msgid "Diese Seite ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "Denne side er en dokumentation, ikke en faktura: Der betales med kreditter, hvis køb er faktureret separat."
+
+msgid "Details zu Express-Auftrag {nr}.pdf"
+msgstr "Detaljer om ekspresordre {nr}.pdf"
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."
+msgstr "Kunden får spørgsmålet pr. e-mail og ser det i detaljerne om sin ordre. Fristen er sat på pause, indtil kunden svarer."

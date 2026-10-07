@@ -170,6 +170,27 @@ try:
         check("aria-current nur am Eintrag „Express-Warenkorb“", pg.locator(".app-nav a[aria-current=page]").count() == 1
               and pg.locator(".app-nav a[aria-current=page]").get_attribute("data-express-korb") is not None)
         axe(pg, "Warenkorb-Seite")
+        # Runde 9 (Michael Karbe 07.10.2026, Warenkorb Punkt 2): „Entfernen“ auf derselben Höhe wie die Angaben, am rechten
+        # Rand; auf dem Handy (375 px) sauber darunter, ohne Querscrollen; Zielgröße mindestens 24 px; Name eindeutig.
+        lage = '''() => { const li = document.querySelector('#exAuswahl li'); const p = li.querySelector('.ex-auswahl-zeile > p');
+          const k = li.querySelector('.ex-auswahl-zeile > button'); const a = p.getBoundingClientRect(), b = k.getBoundingClientRect(),
+          l = li.getBoundingClientRect(); return { pOben: a.top, pUnten: a.bottom, kOben: b.top, kUnten: b.bottom, kMitte: (b.top + b.bottom) / 2,
+          pMitte: (a.top + a.bottom) / 2, kRechts: b.right, kLinks: b.left, lRechts: l.right, lLinks: l.left, pRechts: a.right,
+          kHoehe: b.height, kBreite: b.width, quer: document.documentElement.scrollWidth > window.innerWidth }; }'''
+        d = pg.evaluate(lage)
+        check("Auswahl (Desktop): „Entfernen“ auf Höhe der Angaben, rechts", abs(d["kMitte"] - d["pMitte"]) < 8
+              and d["lRechts"] - d["kRechts"] < 12 and d["kLinks"] > d["pRechts"] - 1, d)
+        check("Auswahl: Zielgröße „Entfernen“ mindestens 24 px", d["kHoehe"] >= 24 and d["kBreite"] >= 24, d)
+        check("Auswahl: Name im Knopf eindeutig (mit Dokumentname)", pg.locator("#exAuswahl button").first.evaluate(
+              "e => e.textContent.trim()").startswith("Entfernen: "), pg.locator("#exAuswahl button").first.evaluate("e => e.textContent"))
+        groesse = pg.viewport_size
+        pg.set_viewport_size({"width": 375, "height": 812})
+        pg.wait_for_timeout(400)
+        d = pg.evaluate(lage)
+        check("Auswahl (Handy 375 px): Knopf im Rahmen der Zeile, kein Querscrollen", d["kLinks"] >= d["lLinks"] - 1
+              and d["kRechts"] <= d["lRechts"] + 1 and not d["quer"] and (d["kOben"] >= d["pUnten"] - 1 or abs(d["kMitte"] - d["pMitte"]) < 8), d)
+        pg.set_viewport_size(groesse)
+        pg.wait_for_timeout(300)
         pg.locator("#exAuswahl button", has_text="Entfernen").first.click()
         pg.wait_for_timeout(1200)
         check("Entfernen: Navigation still auf „Express-Warenkorb“", nav_korb() == "Express-Warenkorb" and fokus() == "exMeldung", (nav_korb(), fokus()))

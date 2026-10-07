@@ -1710,6 +1710,9 @@ class Runde7(_Guthabenhilfe, Basis):
             betreff, inhalt = express.mail_kunde(art, a, "https://beispiel.invalid", "Testtext")
             self.assertIn("Bestellt mit dem Konto kundin@beispiel.invalid.", inhalt, art)
             self.assertIn("https://beispiel.invalid/express/auftrag/%d" % aid, inhalt)
+            # Runde 9: „Details“ statt „Auftragsuebersicht“
+            self.assertNotIn("Auftragsübersicht", inhalt, art)
+            self.assertIn("in den Details zu deinem Auftrag" if art != "storniert" else "Details öffnen", inhalt, art)
 
     def test_nachweis_nennt_zusammensetzung(self):
         aid = self._auftrag([self.d1])
@@ -1722,6 +1725,14 @@ class Runde7(_Guthabenhilfe, Basis):
         # wem und wann (Sichtpruefung Runde 8)
         self.assertIn("Konto: kundin@beispiel.invalid", xml)
         self.assertIn("Nachweis erstellt am: 7. Oktober 2026, 10:05", xml)
+        # Runde 9 (Michael Karbe 07.10.2026): „Details“ statt „Auftragsuebersicht“, „Dateiname:“ vor dem Dokument, kein
+        # Abschnitt „Einverstaendnis“ (gespeichert bleibt es, die Verwaltung zeigt es)
+        self.assertIn("Details zu Express-Auftrag %d" % aid, xml)
+        self.assertIn("Dateiname: ", xml)
+        self.assertNotIn("Auftragsübersicht", xml)
+        self.assertNotIn("Einverständnis", xml)
+        self.assertNotIn("Ich akzeptiere", xml)
+        self.assertTrue(express.auftrag_fuer_verwaltung(aid)["zustimmung_bedingungen"])
 
 class Runde8(Basis):
     """Runde 8 (07.10.2026): Team-Mails zu Auftraegen von Testkonten nur an den Support, nie an Bearbeiter (Vorfall: 15

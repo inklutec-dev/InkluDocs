@@ -365,7 +365,7 @@
       li.className = 'dash-item';
       const h3 = document.createElement('h3');
       const link = document.createElement('a');
-      // Sprung auf die (aufgeklappte) Karte in „Meine Aufträge“ (Runde 7); dort führt „Auftragsübersicht öffnen“ weiter.
+      // Sprung auf die (aufgeklappte) Karte in „Meine Aufträge“ (Runde 7); dort führt „Details öffnen“ weiter.
       link.href = '/express?auftrag=' + encodeURIComponent(a.id) + '#exa_karte_' + encodeURIComponent(a.id);
       // eigener Name des Kunden (Umbenennen in „Meine Aufträge“), die Nummer bleibt dabei
       link.textContent = a.auftrag_name ? a.auftrag_name + ' (' + t('Auftrag {nr}', { nr: a.id }) + ')' : t('Auftrag {nr}', { nr: a.id });

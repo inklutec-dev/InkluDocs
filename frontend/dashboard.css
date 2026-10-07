@@ -262,13 +262,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .ex-dok-klappe > summary .ex-dok-titel { display: inline; font-size: 1.05rem; margin: 0; overflow-wrap: anywhere; }
 /* „Meine Aufträge“: Karten-Überschrift ist H2 (Runde 8, Ebenen ohne Sprung), sieht aber aus wie die Dokument-Karten. */
 .ex-karten-titel { font-size: 1.15rem; margin: 0; }
-/* Auftragsuebersicht: Angaben, Einverstaendnis, Verlauf aufklappbar (Runde 7) — H2 im summary bleibt in der Zeile. */
+/* Express-Details: Dokumente, Angaben, Verlauf aufklappbar (Runde 7/9) — H2 im summary bleibt in der Zeile. */
 .ex-abschnitt-klappe > summary .ex-abschnitt-titel { display: inline; font-size: 1.25rem; margin: 0; }
+/* Je Dokument „Dateiname: …“ als H3 (Runde 9); die Liste endet ohne eigene Linie, die Karte hat schon einen Rand */
+.ex-dok-liste .ex-dok-name { font-size: 1.05rem; margin: 0 0 .3rem; overflow-wrap: anywhere; }
+.ex-dok-liste > li:last-child { border-bottom: 0; padding-bottom: 0; }
+.ex-dok-liste .dash-sub { margin: 0 0 .4rem; }
 /* Ueberschrift IM summary (Express „Geliefert“/„Storniert“, 05.10.2026): bleibt neben dem Aufklapp-Pfeil in der Zeile. */
 .verwaltung-klappe > summary > .verwaltung-klappe-titel { display: inline; font-size: 1.15rem; margin: 0; }
 .verwaltung-karte .dash-actions { margin-top: .9rem; }
 /* #b91c1c statt --error (#dc2626): auch auf dem grauen Seitenhintergrund ueber 4,5:1 (05.10.2026, Fehler neben dem
-   PDF-Link der Express-Auftragsuebersicht stehen ausserhalb einer Karte). */
+   PDF-Link der Express-Details stehen ausserhalb einer Karte). */
 .verwaltung-fehler { color: #b91c1c; font-weight: 600; margin: .25rem 0 .5rem; }
 .verwaltung-fehler:empty { display: none; }
 /* Kästchen und Optionsfelder untereinander (Express-Einstellungen): 24 px Zielgröße (WCAG 2.5.8), sonst liegen die
@@ -307,7 +311,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .verwaltung-suche-stapel { max-width: 30rem; margin-bottom: 1rem; }
 .verwaltung-suche-stapel .dash-field { margin-bottom: .9rem; }
 
-/* EXPRESS-SERVICE (05.10.2026): Auswahl-Felder, Aktionszeilen und Druckansicht der Auftragsübersicht. */
+/* EXPRESS-SERVICE (05.10.2026): Auswahl-Felder, Aktionszeilen und Druckansicht der Express-Details. */
 .ex-fieldset { border: 1px solid var(--border); border-radius: 6px; padding: .6rem 1rem .4rem; margin: 0 0 1rem; }
 .ex-fieldset legend { font-weight: 700; padding: 0 .3rem; }
 .ex-liste { list-style: none; padding: 0; margin: .25rem 0 0; }
@@ -331,20 +335,23 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   color: #14532d; border-radius: 0 6px 6px 0; margin: 0 0 1rem; }
 #exAuftragMeldung.ex-meldung-fehler { border-left-color: #b91c1c; background: #fef2f2; color: #7f1d1d; }
 #exAuftragMeldung:focus, #exMeldung:focus, #exaFremdText:focus { outline: 2px solid #a94200; outline-offset: 2px; }
-/* Hinweis „fremdes Konto“ (Auftragsübersicht) */
+/* Hinweis „fremdes Konto“ (Express-Details) */
 #exaFremd { max-width: 64rem; padding: 1rem 1.2rem; border-radius: 0 6px 6px 0; }
 #exaFremd > p:first-child { margin: 0 0 .9rem; line-height: 1.5; }
 #exaFremd .ex-aktionen { margin: 0; }
-/* Aufzählungen in Karten (Einverständnis, „Vor dem Liefern fehlt noch“): Punkte innerhalb der Karte */
+/* Aufzählungen in Karten (Einverständnis in der Verwaltung, „Vor dem Liefern fehlt noch“): Punkte innerhalb der Karte */
 .verwaltung-karte ul:not([class]), .verwaltung-karte ol:not([class]) { padding-left: 1.4rem; margin: .4rem 0; }
 .ex-auftrag-karte a.doc-action-btn { text-decoration: none; }
-/* Offene Auftragskarte: die Dokumentliste endet ohne eigene Linie — die Trennlinie über den Knöpfen genügt (Runde 8) */
-.ex-auftrag-karte .ex-dok-klappe > .verwaltung-liste > li:last-child { border-bottom: 0; }
+/* Express-Warenkorb „Deine Auswahl“: Angaben links, „Entfernen“ auf derselben Höhe rechts (Runde 9, Michael Karbe);
+   schmal (Handy) rutscht der Knopf unter die Angaben. Zielgröße mindestens 24 px (WCAG 2.5.8). */
+.ex-auswahl-zeile { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem 1rem; }
+.ex-auswahl-zeile > p { flex: 1 1 16rem; min-width: 0; margin: 0; }
+.ex-auswahl-zeile > .btn-small { flex: 0 0 auto; margin-left: auto; min-height: 2rem; }
 /* Rechenweg „4. Prüfen und bestellen“: kurze Zeilen, nur die Summe fett (Runde 8) */
 .ex-rechnung { margin: .25rem 0 .75rem; line-height: 1.5; }
 .ex-rechnung p { margin: .1rem 0; }
 .ex-rechnung strong { font-size: 1.05rem; }
-/* Nur im Druck: Kopfzeile der Auftragsübersicht (wem, wann) */
+/* Nur im Druck: Kopfzeile der Express-Details (wem, wann) */
 .nur-druck { display: none; }
 .ex-druckkopf { border-bottom: 1px solid #999; margin: 0 0 .75rem; padding: 0 0 .5rem; font-size: .95rem; }
 .ex-druckkopf p { margin: 0; }
@@ -362,7 +369,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .app-shell, .app-content, .dash-main { display: block !important; margin: 0 !important; padding: 0 !important; max-width: none !important; }
   .dash-card { box-shadow: none !important; border: 1px solid #999 !important; break-inside: avoid; }
   .nur-druck { display: block !important; }
-  /* Aufklapp-Dreiecke gehören nicht auf Papier (Express-Auftragsübersicht, Runde 8) */
+  /* Aufklapp-Dreiecke gehören nicht auf Papier (Express-Details, Runde 8) */
   summary { list-style: none; }
   summary::-webkit-details-marker { display: none; }
   summary::marker { content: ""; }

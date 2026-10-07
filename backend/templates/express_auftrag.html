@@ -1,20 +1,23 @@
 {% extends "base_app.html" %}
 
-{% block title %}{{ _('Express-Auftrag') }} {{ auftrag_id }} · InkluDocs{% endblock %}
+{% block title %}{{ _('Details zu Express-Auftrag {nr}').replace('{nr}', auftrag_id|string) }} · InkluDocs{% endblock %}
 
 {% block main %}
-{# AUFTRAGSÜBERSICHT des Express-Service (05.10.2026): Stand, Rückfrage beantworten, Dokumente (nach der Lieferung zum
-   Herunterladen), Angaben, Einverständnis mit Zeitpunkt, Verlauf. Druckbar (Druck-CSS in dashboard.css blendet
-   Seitenleiste und Knöpfe aus) und als barrierefreie PDF (/api/express/auftraege/<id>/nachweis.pdf). Ausdrücklich KEINE
-   Rechnung — bezahlt wird mit Credits, deren Kauf gesondert abgerechnet ist. #}
+{# DETAILS eines Express-Auftrags (05.10.2026; bis Runde 8 „Auftragsübersicht“ — Michael Karbe 07.10.2026, Punkt 3: es
+   ist keine Übersicht der Aufträge, sondern die Einzelheiten eines Auftrags): Stand, Rückfrage beantworten, Dokumente
+   (nach der Lieferung zum Herunterladen), Angaben, Verlauf. Das Einverständnis zeigt die Seite nicht mehr (Runde 9,
+   Punkt 5: ohne Einverständnis gibt es keinen Auftrag) — gespeichert bleibt es, die Verwaltung zeigt es weiter. Druckbar
+   (Druck-CSS in dashboard.css blendet Seitenleiste und Knöpfe aus) und als barrierefreie PDF
+   (/api/express/auftraege/<id>/nachweis.pdf). Ausdrücklich KEINE Rechnung — bezahlt wird mit Credits, deren Kauf
+   gesondert abgerechnet ist. #}
 <p class="verwaltung-zurueck no-print"><a href="/express?auftrag={{ auftrag_id|int }}#exa_karte_{{ auftrag_id|int }}">{{ _('Zurück zu meinen Aufträgen') }}</a></p>
 {# Nur im Druck (Sichtprüfung Runde 8): wem und wann — der Ausdruck ist ein Nachweis #}
 <div class="nur-druck ex-druckkopf" id="exaDruckKopf">
-  <p><strong>{{ _('InkluDocs · Auftragsübersicht') }}</strong></p>
+  <p><strong>{{ _('InkluDocs · Details zum Express-Auftrag') }}</strong></p>
   <p id="exaDruckKonto"></p>
   <p id="exaDruckZeit"></p>
 </div>
-<h1 id="exaTitel" tabindex="-1">{{ _('Express-Auftrag') }} {{ auftrag_id }}</h1>
+<h1 id="exaTitel" tabindex="-1">{{ _('Details zu Express-Auftrag {nr}').replace('{nr}', auftrag_id|string) }}</h1>
 {# Meldungen oben (Danke nach der Bestellung, „Antwort gesendet“): sichtbar, mit Fokus, ohne zusätzliche Live-Ansage —
    und nicht im Ausdruck (Prüfung Barrierefreiheit 05.10.2026, Befunde 3 und 20). #}
 <div id="exaNeu" class="verwaltung-meldung no-print" hidden>
@@ -80,12 +83,14 @@
     ziel.appendChild(s);
     return s;
   }
-  // Runde 7 (Michael Karbe 06.10.2026): Angaben, Einverständnis und Verlauf aufklappbar wie die Dokumente — Überschrift
-  // im summary, standardmäßig zu; beim Drucken offen (beforeprint). Rückgabe: das details-Element (Inhalt hinein).
-  function abschnittKlappe(ziel, titel, id) {
+  // Runde 7 (Michael Karbe 06.10.2026): Angaben und Verlauf aufklappbar wie die Dokumente, seit Runde 9 auch die
+  // Dokumente selbst — Überschrift im summary, standardmäßig zu (offen: Argument offen); beim Drucken offen
+  // (beforeprint). Rückgabe: das details-Element (Inhalt hinein).
+  function abschnittKlappe(ziel, titel, id, offen) {
     const s = el('section', 'dash-card verwaltung-karte');
     s.setAttribute('aria-labelledby', id);
     const det = el('details', 'dok-klappe ex-abschnitt-klappe');
+    det.open = !!offen;
     const sum = el('summary');
     const h = el('h2', 'ex-abschnitt-titel', titel);
     h.id = id;
@@ -115,7 +120,7 @@
     ziel.setAttribute('aria-busy', 'false');
 
     // Eigener Name des Kunden (Umbenennen in „Meine Aufträge“): in der Hauptüberschrift, die Nummer bleibt
-    if (a.auftrag_name) byId('exaTitel').textContent = t('Express-Auftrag {nr}: {name}', { nr: a.id, name: a.auftrag_name });
+    if (a.auftrag_name) byId('exaTitel').textContent = t('Details zu Express-Auftrag {nr}: {name}', { nr: a.id, name: a.auftrag_name });
     let s = abschnitt(ziel, t('Überblick'), 'exa-h-ueberblick');
     zeile(s, t('Stand'), STATUS[a.status] || a.status);
     zeile(s, t('Bestellt am'), datumZeit(a.bestellt_am));
@@ -178,17 +183,16 @@
       s.appendChild(form);
     }
 
-    // Je Dokument aufklappbar (Michael Karbe 05.10.2026, Punkt 2): Name im summary, darin Seiten, Leistung, Stand,
-    // Prüfung und Downloads. Beim Drucken sind alle aufgeklappt (beforeprint).
-    s = abschnitt(ziel, t('Dokumente'), 'exa-h-dokumente');
-    const ul = el('ul', 'verwaltung-liste');
+    // Dokumente als EIN aufklappbarer Abschnitt wie Angaben und Verlauf (Michael Karbe 07.10.2026, Punkt 4), darin je
+    // Dokument „Dateiname: …“ (Punkt 1) als H3 mit Seiten, Leistung, Credits, Stand, Prüfung und Downloads — ohne
+    // weitere Klappe je Dokument (ein Klick genügt). Zu wie die übrigen Abschnitte; offen, sobald es etwas zum
+    // Herunterladen gibt (der Link „Dokumente herunterladen“ der Liefer-Mail führt hierher). Druck: offen (beforeprint).
+    const herunterladen = a.status === 'geliefert' && a.positionen.some((p) => p.ergebnis_da || p.bericht_da);
+    const dok = abschnittKlappe(ziel, t('Dokumente ({n})', { n: zahl(a.positionen.length) }), 'exa-h-dokumente', herunterladen);
+    const ul = el('ul', 'verwaltung-liste ex-dok-liste');
     a.positionen.forEach((p) => {
       const li = el('li', 'verwaltung-zeile');
-      const det = el('details', 'dok-klappe ex-dok-klappe');
-      det.open = a.positionen.length === 1;
-      const sum = el('summary');
-      sum.appendChild(el('h3', 'doc-heading ex-dok-titel', p.dokument_name));
-      det.appendChild(sum);
+      li.appendChild(el('h3', 'ex-dok-name', t('Dateiname: {name}', { name: p.dokument_name })));
       const meta = el('ul', 'dok-meta');
       meta.appendChild(el('li', null, t('Seiten') + ': ' + zahl(p.seiten)));
       meta.appendChild(el('li', null, t('Leistung') + ': ' + leistungText(p)));
@@ -197,10 +201,9 @@
         ? ' (' + t('{seiten} × {p} Credits je Seite plus {g} Credits je Dokument', { seiten: zahl(p.seiten), p: zahl(p.preis_seite), g: zahl(p.grundpreis) }) + ')' : '')));
       meta.appendChild(el('li', null, t('Stand') + ': ' + (a.status === 'geliefert' ? (p.ergebnis_da || p.bericht_da ? t('fertig, zum Herunterladen') : t('geliefert'))
         : (STATUS[a.status] || a.status))));
-      det.appendChild(meta);
-      li.appendChild(det);
+      li.appendChild(meta);
       // Kurz und ohne Technik-Zusammenfassung (Befund 12): bestanden — oder Hinweise, die das Team geprüft hat.
-      if (p.verapdf) det.appendChild(el('p', 'dash-sub', p.verapdf.bestanden
+      if (p.verapdf) li.appendChild(el('p', 'dash-sub', p.verapdf.bestanden
         ? t('Automatische Prüfung ({pruefung}): bestanden.', { pruefung: p.pruef_name || 'veraPDF' })
         : t('Automatische Prüfung ({pruefung}): mit Hinweisen, die unser Team geprüft hat.', { pruefung: p.pruef_name || 'veraPDF' })));
       const links = el('p', 'no-print ex-aktionen');
@@ -216,29 +219,23 @@
         l.appendChild(el('span', 'visually-hidden', ': ' + p.dokument_name));
         links.appendChild(l);
       }
-      if (links.children.length) det.appendChild(links);
+      if (links.children.length) li.appendChild(links);
       ul.appendChild(li);
     });
-    s.appendChild(ul);
+    dok.appendChild(ul);
 
     s = abschnittKlappe(ziel, t('Angaben'), 'exa-h-angaben');
     zeile(s, t('Ansprechpartner'), a.ansprechpartner);
     zeile(s, t('Telefon'), a.telefon);
     zeile(s, t('Hinweise'), a.hinweise);
 
-    s = abschnittKlappe(ziel, t('Einverständnis'), 'exa-h-zustimmung');
-    s.appendChild(el('p', null, t('Bestätigt am {datum} (Fassung {fassung}):', { datum: datumZeit(a.zustimmung.am), fassung: a.zustimmung.fassung })));
-    const zu = el('ul');
-    // seit Fassung -3 nur noch ein Häkchen; ältere Aufträge zeigen beide
-    [a.zustimmung.bedingungen, a.zustimmung.bearbeitung].filter(Boolean).forEach((satz) => zu.appendChild(el('li', null, satz)));
-    s.appendChild(zu);
-
+    // Kein Abschnitt „Einverständnis“ mehr (Runde 9, Punkt 5) — gespeichert bleibt es, die Verwaltung zeigt es.
     s = abschnittKlappe(ziel, t('Verlauf'), 'exa-h-verlauf');
     const ol = el('ol', 'verwaltung-liste');
     a.verlauf.forEach((v) => ol.appendChild(el('li', 'verwaltung-zeile', datumZeit(v.created_at) + ': ' + (VERLAUF[v.art] || v.art)
       + (v.text && ['rueckfrage', 'antwort', 'storniert'].includes(v.art) ? ' — ' + v.text : ''))));
     s.appendChild(ol);
-    ziel.appendChild(el('p', 'dash-sub', t('Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde.')));
+    ziel.appendChild(el('p', 'dash-sub', t('Diese Seite ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde.')));
     byId('exaAktionen').hidden = false;
   }
 
@@ -275,7 +272,7 @@
   }
 
   byId('exaDrucken').addEventListener('click', () => window.print());
-  // Drucken (auch über das Browser-Menü): alles aufgeklappt (Dokumente, Angaben, Einverständnis, Verlauf), danach wie vorher
+  // Drucken (auch über das Browser-Menü): alles aufgeklappt (Dokumente, Angaben, Verlauf), danach wie vorher
   let zuVorDemDruck = [];
   function druckKopf() {
     const mail = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || '';
@@ -312,7 +309,7 @@
       const blob = await r.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = t('Express-Auftrag {nr} – Auftragsübersicht.pdf', { nr: ID });
+      a.download = t('Details zu Express-Auftrag {nr}.pdf', { nr: ID });
       document.body.appendChild(a);
       a.click();
       a.remove();

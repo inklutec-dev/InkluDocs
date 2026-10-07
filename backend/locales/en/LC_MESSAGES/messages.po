@@ -10663,9 +10663,6 @@ msgstr "Sending order …"
 msgid "Bestätigt am"
 msgstr "Confirmed on"
 
-msgid "Bestätigt am {datum} (Fassung {fassung}):"
-msgstr "Confirmed on {datum} (version {fassung}):"
-
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Paid from the team credit of"
 
@@ -10738,9 +10735,6 @@ msgstr "The order could not be loaded."
 msgid "Der Express-Service ist gerade nicht erreichbar."
 msgstr "The express service is currently unavailable."
 
-msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
-msgstr "The customer receives the question by email and sees it in their order overview. The deadline is paused until they answer."
-
 msgid "Die Antwort konnte nicht gesendet werden."
 msgstr "The answer could not be sent."
 
@@ -10766,9 +10760,6 @@ msgstr "The service could not be changed."
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "The reserved credits are released, nothing is charged. The customer receives an email with the reason."
-
-msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
-msgstr "This overview is a record, not an invoice: payment is made with credits whose purchase was invoiced separately."
 
 msgid "Dokumente anzeigen"
 msgstr "Show documents"
@@ -11204,9 +11195,6 @@ msgstr "The tier for long inputs is carried over: above {grenze} input tokens, i
 msgid "Die automatische Prüfung meldet Abweichungen:"
 msgstr "The automatic check reports deviations:"
 
-msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
-msgstr "Express order {nr} – order summary.pdf"
-
 msgid "Frage (Pflicht)"
 msgstr "Question (required)"
 
@@ -11331,9 +11319,6 @@ msgstr "Delete order?"
 msgid "Auftrag umbenennen"
 msgstr "Rename order"
 
-msgid "Auftragsübersicht öffnen"
-msgstr "Open order summary"
-
 msgid "Bitte die Bedingungen akzeptieren."
 msgstr "Please accept the terms."
 
@@ -11342,12 +11327,6 @@ msgstr "The order is now called “{name}”."
 
 msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
 msgstr "The customer deleted this order: files, document list, details and history have been removed. The booking record with number, date, account, pages, credits and status remains."
-
-msgid "Dokumente dieses Auftrags ({n})"
-msgstr "Documents in this order ({n})"
-
-msgid "Express-Auftrag {nr}: {name}"
-msgstr "Express order {nr}: {name}"
 
 msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
 msgstr "Have professionals make your documents accessible. We deliver within {stunden} hours. Payment is made in credits: they are reserved when you order and only deducted on delivery."
@@ -11458,9 +11437,6 @@ msgstr "Log out and sign in with another account"
 msgid "Alle Aufträge"
 msgstr "All orders"
 
-msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
-msgstr "Your Express orders: professionals make your documents accessible. Open an order to see its documents, status and downloads."
-
 msgid "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
 msgstr "This order does not belong to your account ({mail}). Sign in with the account you used to order."
 
@@ -11505,9 +11481,6 @@ msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 msgstr "After signing in, you will continue to your Express order."
 
 # Express Sichtpruefung Runde 8 (07.10.2026): Rechenweg in Zeilen, Druckkopf
-msgid "InkluDocs · Auftragsübersicht"
-msgstr "InkluDocs · Order overview"
-
 msgid "Konto: {mail}"
 msgstr "Account: {mail}"
 
@@ -11531,3 +11504,31 @@ msgstr "Base price per document: {cg} credits"
 
 msgid "Summe: {c} Credits"
 msgstr "Total: {c} credits"
+
+# Express Runde 9 (07.10.2026): Details statt Auftragsuebersicht, Dateiname, Warenkorb
+msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Unter „Details“ findest du zu jedem Auftrag die Dokumente, den Verlauf und die Downloads."
+msgstr "Your Express orders: professionals make your documents accessible. Under “Details” you will find the documents, history and downloads for each order."
+
+msgid "Details öffnen"
+msgstr "Open details"
+
+msgid "Details zu Express-Auftrag {nr}"
+msgstr "Details of Express order {nr}"
+
+msgid "Details zu Express-Auftrag {nr}: {name}"
+msgstr "Details of Express order {nr}: {name}"
+
+msgid "InkluDocs · Details zum Express-Auftrag"
+msgstr "InkluDocs · Express order details"
+
+msgid "Dateiname: {name}"
+msgstr "File name: {name}"
+
+msgid "Diese Seite ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "This page is a record, not an invoice: payment is made with credits whose purchase was invoiced separately."
+
+msgid "Details zu Express-Auftrag {nr}.pdf"
+msgstr "Details of Express order {nr}.pdf"
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."
+msgstr "The customer receives the question by email and sees it in the details of their order. The deadline is paused until they answer."

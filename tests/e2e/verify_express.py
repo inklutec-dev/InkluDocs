@@ -239,9 +239,10 @@ try:
           and zu["bedingungen"].startswith("Ich akzeptiere"), zu)
     check("Noch nichts abgebucht", sql("SELECT COUNT(*) AS n FROM usage_events WHERE quelle = 'express'")[0]["n"] == 0)
     a = kunde.get(f"/api/express/auftraege/{aid}").json()
-    check("Auftragsuebersicht: eingegangen, vorgemerkt, Einverstaendnis mit Zeitpunkt",
+    # Einverstaendnis bleibt gespeichert (Daten), die Details-Seite zeigt es seit Runde 9 nicht mehr an
+    check("Details: eingegangen, vorgemerkt, Einverstaendnis mit Zeitpunkt gespeichert",
           a["status"] == "neu" and a["credits_stand"] == "vorgemerkt" and a["zustimmung"]["am"], a)
-    check("Seite Auftragsuebersicht 200", kunde.get(f"/express/auftrag/{aid}").status_code == 200)
+    check("Seite Details 200", kunde.get(f"/express/auftrag/{aid}").status_code == 200)
     check("Fremder: Auftrag 404", fremd.get(f"/api/express/auftraege/{aid}").status_code == 404)
     check("Fremder: Nachweis 404", fremd.get(f"/api/express/auftraege/{aid}/nachweis.pdf").status_code == 404)
     check("Fremder: Antwort 404", fremd.post(f"/api/express/auftraege/{aid}/antwort", json={"text": "x"}).status_code == 404)
@@ -340,9 +341,14 @@ try:
     if r.status_code == 200:
         check("Nachweis als PDF (PDF/UA geprueft)", r.content.startswith(b"%PDF") and r.headers["content-type"] == "application/pdf")
         with fitz.open(stream=r.content, filetype="pdf") as d:
-            check("Nachweis: Titel und Text", "Express-Auftrag" in (d.metadata.get("title") or "") and "keine Rechnung" in d[0].get_text(), d.metadata)
+            text = "".join(seite.get_text() for seite in d)
+            check("Nachweis: Titel „Details zu Express-Auftrag …“ und Text (Runde 9)", (d.metadata.get("title") or "") == f"Details zu Express-Auftrag {aid}"
+                  and "keine Rechnung" in d[0].get_text() and "Auftragsübersicht" not in text, d.metadata)
             check("Nachweis nennt Konto und Erstellzeitpunkt (Runde 8)", f"Konto: {KUNDE}" in d[0].get_text()
                   and "Nachweis erstellt am:" in d[0].get_text(), d[0].get_text()[:300])
+            check("Nachweis: „Dateiname:“ vor jedem Dokument, kein Abschnitt „Einverständnis“ (Runde 9)",
+                  text.count("Dateiname: ") == len(kunde.get(f"/api/express/auftraege/{aid}").json()["positionen"])
+                  and "Einverständnis" not in text and "Ich akzeptiere" not in text, text[:600])
     else:
         check("Nachweis als PDF", False, f"{r.status_code} {r.text[:200]}")
     a = kunde.get("/api/express/auftraege").json()["auftraege"]

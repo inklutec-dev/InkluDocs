@@ -10666,9 +10666,6 @@ msgstr "Bestellung wird gesendet …"
 msgid "Bestätigt am"
 msgstr "Bestätigt am"
 
-msgid "Bestätigt am {datum} (Fassung {fassung}):"
-msgstr "Bestätigt am {datum} (Fassung {fassung}):"
-
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Bezahlt aus dem Team-Guthaben von"
 
@@ -10741,9 +10738,6 @@ msgstr "Der Auftrag konnte nicht geladen werden."
 msgid "Der Express-Service ist gerade nicht erreichbar."
 msgstr "Der Express-Service ist gerade nicht erreichbar."
 
-msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
-msgstr "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
-
 msgid "Die Antwort konnte nicht gesendet werden."
 msgstr "Die Antwort konnte nicht gesendet werden."
 
@@ -10769,9 +10763,6 @@ msgstr "Die Leistung konnte nicht geändert werden."
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
-
-msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
-msgstr "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
 
 msgid "Dokumente anzeigen"
 msgstr "Dokumente anzeigen"
@@ -11207,9 +11198,6 @@ msgstr "Die Staffel für lange Eingaben wird übernommen: über {grenze} Tokens 
 msgid "Die automatische Prüfung meldet Abweichungen:"
 msgstr "Die automatische Prüfung meldet Abweichungen:"
 
-msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
-msgstr "Express-Auftrag {nr} – Auftragsübersicht.pdf"
-
 msgid "Frage (Pflicht)"
 msgstr "Frage (Pflicht)"
 
@@ -11334,9 +11322,6 @@ msgstr "Auftrag löschen?"
 msgid "Auftrag umbenennen"
 msgstr "Auftrag umbenennen"
 
-msgid "Auftragsübersicht öffnen"
-msgstr "Auftragsübersicht öffnen"
-
 msgid "Bitte die Bedingungen akzeptieren."
 msgstr "Bitte die Bedingungen akzeptieren."
 
@@ -11345,12 +11330,6 @@ msgstr "Der Auftrag heißt jetzt „{name}“."
 
 msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
 msgstr "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
-
-msgid "Dokumente dieses Auftrags ({n})"
-msgstr "Dokumente dieses Auftrags ({n})"
-
-msgid "Express-Auftrag {nr}: {name}"
-msgstr "Express-Auftrag {nr}: {name}"
 
 msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
 msgstr "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
@@ -11461,9 +11440,6 @@ msgstr "Abmelden und anders anmelden"
 msgid "Alle Aufträge"
 msgstr "Alle Aufträge"
 
-msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
-msgstr "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
-
 msgid "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
 msgstr "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
 
@@ -11508,9 +11484,6 @@ msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 msgstr "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 
 # Express Sichtpruefung Runde 8 (07.10.2026): Rechenweg in Zeilen, Druckkopf
-msgid "InkluDocs · Auftragsübersicht"
-msgstr "InkluDocs · Auftragsübersicht"
-
 msgid "Konto: {mail}"
 msgstr "Konto: {mail}"
 
@@ -11534,3 +11507,31 @@ msgstr "Grundpreis je Dokument: {cg} Credits"
 
 msgid "Summe: {c} Credits"
 msgstr "Summe: {c} Credits"
+
+# Express Runde 9 (07.10.2026): Details statt Auftragsuebersicht, Dateiname, Warenkorb
+msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Unter „Details“ findest du zu jedem Auftrag die Dokumente, den Verlauf und die Downloads."
+msgstr "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Unter „Details“ findest du zu jedem Auftrag die Dokumente, den Verlauf und die Downloads."
+
+msgid "Details öffnen"
+msgstr "Details öffnen"
+
+msgid "Details zu Express-Auftrag {nr}"
+msgstr "Details zu Express-Auftrag {nr}"
+
+msgid "Details zu Express-Auftrag {nr}: {name}"
+msgstr "Details zu Express-Auftrag {nr}: {name}"
+
+msgid "InkluDocs · Details zum Express-Auftrag"
+msgstr "InkluDocs · Details zum Express-Auftrag"
+
+msgid "Dateiname: {name}"
+msgstr "Dateiname: {name}"
+
+msgid "Diese Seite ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "Diese Seite ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+
+msgid "Details zu Express-Auftrag {nr}.pdf"
+msgstr "Details zu Express-Auftrag {nr}.pdf"
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."
+msgstr "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."

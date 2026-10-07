@@ -10665,9 +10665,6 @@ msgstr "Enviando el pedido …"
 msgid "Bestätigt am"
 msgstr "Confirmado el"
 
-msgid "Bestätigt am {datum} (Fassung {fassung}):"
-msgstr "Confirmado el {datum} (versión {fassung}):"
-
 msgid "Bezahlt aus dem Team-Guthaben von"
 msgstr "Pagado con el saldo de equipo de"
 
@@ -10740,9 +10737,6 @@ msgstr "No se pudo cargar el pedido."
 msgid "Der Express-Service ist gerade nicht erreichbar."
 msgstr "El servicio exprés no está disponible en este momento."
 
-msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in seiner Auftragsübersicht. Die Frist ruht, bis er antwortet."
-msgstr "El cliente recibe la pregunta por correo y la ve en el resumen de su pedido. El plazo se detiene hasta que responda."
-
 msgid "Die Antwort konnte nicht gesendet werden."
 msgstr "No se pudo enviar la respuesta."
 
@@ -10768,9 +10762,6 @@ msgstr "No se pudo cambiar el servicio."
 
 msgid "Die vorgemerkten Credits werden wieder frei, abgebucht wird nichts. Der Kunde bekommt eine E-Mail mit dem Grund."
 msgstr "Los créditos reservados quedan libres, no se cobra nada. El cliente recibe un correo con el motivo."
-
-msgid "Diese Übersicht ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
-msgstr "Este resumen es un justificante, no una factura: se paga con créditos cuya compra se facturó por separado."
 
 msgid "Dokumente anzeigen"
 msgstr "Mostrar documentos"
@@ -11206,9 +11197,6 @@ msgstr "Se mantiene el tramo para entradas largas: por encima de {grenze} tokens
 msgid "Die automatische Prüfung meldet Abweichungen:"
 msgstr "La comprobación automática informa de desviaciones:"
 
-msgid "Express-Auftrag {nr} – Auftragsübersicht.pdf"
-msgstr "Pedido exprés {nr} – resumen del pedido.pdf"
-
 msgid "Frage (Pflicht)"
 msgstr "Pregunta (obligatoria)"
 
@@ -11333,9 +11321,6 @@ msgstr "¿Eliminar el pedido?"
 msgid "Auftrag umbenennen"
 msgstr "Cambiar el nombre del pedido"
 
-msgid "Auftragsübersicht öffnen"
-msgstr "Abrir el resumen del pedido"
-
 msgid "Bitte die Bedingungen akzeptieren."
 msgstr "Acepta las condiciones."
 
@@ -11344,12 +11329,6 @@ msgstr "El pedido ahora se llama «{name}»."
 
 msgid "Der Kunde hat diesen Auftrag gelöscht: Dateien, Dokumentliste, Angaben und Verlauf sind entfernt. Es bleibt der Buchungsnachweis mit Nummer, Datum, Konto, Seiten, Credits und Stand."
 msgstr "El cliente eliminó este pedido: se han borrado los archivos, la lista de documentos, los datos y el historial. Queda el justificante contable con número, fecha, cuenta, páginas, créditos y estado."
-
-msgid "Dokumente dieses Auftrags ({n})"
-msgstr "Documentos de este pedido ({n})"
-
-msgid "Express-Auftrag {nr}: {name}"
-msgstr "Pedido exprés {nr}: {name}"
 
 msgid "Lass deine Dokumente von Profis barrierefrei aufbereiten. Wir liefern innerhalb von {stunden} Stunden. Bezahlt wird mit Credits: Sie werden bei der Bestellung vorgemerkt und erst bei der Lieferung abgebucht."
 msgstr "Deja que profesionales hagan accesibles tus documentos. Entregamos en un plazo de {stunden} horas. Se paga con créditos: se reservan al hacer el pedido y solo se descuentan en la entrega."
@@ -11460,9 +11439,6 @@ msgstr "Cerrar sesión e iniciar con otra cuenta"
 msgid "Alle Aufträge"
 msgstr "Todos los pedidos"
 
-msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Öffne einen Auftrag, um Dokumente, Stand und Downloads zu sehen."
-msgstr "Tus pedidos Express: profesionales hacen accesibles tus documentos. Abre un pedido para ver los documentos, el estado y las descargas."
-
 msgid "Dieser Auftrag gehört nicht zu deinem Konto ({mail}). Melde dich mit dem Konto an, mit dem du bestellt hast."
 msgstr "Este pedido no pertenece a tu cuenta ({mail}). Inicia sesión con la cuenta con la que hiciste el pedido."
 
@@ -11507,9 +11483,6 @@ msgid "Nach der Anmeldung geht es weiter zu deinem Express-Auftrag."
 msgstr "Tras iniciar sesión, continuarás en tu pedido Express."
 
 # Express Sichtpruefung Runde 8 (07.10.2026): Rechenweg in Zeilen, Druckkopf
-msgid "InkluDocs · Auftragsübersicht"
-msgstr "InkluDocs · Resumen del pedido"
-
 msgid "Konto: {mail}"
 msgstr "Cuenta: {mail}"
 
@@ -11533,3 +11506,31 @@ msgstr "Precio base por documento: {cg} créditos"
 
 msgid "Summe: {c} Credits"
 msgstr "Total: {c} créditos"
+
+# Express Runde 9 (07.10.2026): Details statt Auftragsuebersicht, Dateiname, Warenkorb
+msgid "Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Unter „Details“ findest du zu jedem Auftrag die Dokumente, den Verlauf und die Downloads."
+msgstr "Tus pedidos Express: profesionales hacen accesibles tus documentos. En «Detalles» encontrarás, para cada pedido, los documentos, el historial y las descargas."
+
+msgid "Details öffnen"
+msgstr "Abrir los detalles"
+
+msgid "Details zu Express-Auftrag {nr}"
+msgstr "Detalles del pedido exprés {nr}"
+
+msgid "Details zu Express-Auftrag {nr}: {name}"
+msgstr "Detalles del pedido exprés {nr}: {name}"
+
+msgid "InkluDocs · Details zum Express-Auftrag"
+msgstr "InkluDocs · Detalles del pedido exprés"
+
+msgid "Dateiname: {name}"
+msgstr "Nombre del archivo: {name}"
+
+msgid "Diese Seite ist ein Nachweis, keine Rechnung: Bezahlt wird mit Credits, deren Kauf gesondert abgerechnet wurde."
+msgstr "Esta página es un justificante, no una factura: se paga con créditos cuya compra se facturó por separado."
+
+msgid "Details zu Express-Auftrag {nr}.pdf"
+msgstr "Detalles del pedido exprés {nr}.pdf"
+
+msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."
+msgstr "El cliente recibe la pregunta por correo y la ve en los detalles de su pedido. El plazo se detiene hasta que responda."
