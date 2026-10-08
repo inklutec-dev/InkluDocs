@@ -104,7 +104,10 @@ LINKS = """() => {
     if (/btn/.test(a.className || '') || a.closest('nav, .app-sidebar, .start-header, .sr-only, .visually-hidden')) continue;
     const r = a.getBoundingClientRect(); if (r.width < 1 || r.height < 1) continue;
     const s = getComputedStyle(a);
-    if (s.color !== 'rgb(169, 66, 0)' || !s.textDecorationLine.includes('underline'))
+    // Ausnahme (Michael 17.07.2026): eigenständige Titel-Links in Überschriften (Projekt-, Kartentitel) ohne
+    // Dauer-Unterstrich — nur die Farbe zählt; alle Links im Fließtext müssen unterstrichen sein.
+    const titel = !!a.closest('h1, h2, h3, h4');
+    if (s.color !== 'rgb(169, 66, 0)' || (!titel && !s.textDecorationLine.includes('underline')))
       aus.push((a.textContent || '').trim().slice(0, 30) + ' ' + s.color + ' ' + s.textDecorationLine);
   }
   return aus;
@@ -259,6 +262,18 @@ try:
         pg.locator("#navKonto > summary").click()
         pg.wait_for_timeout(400)                          # Drehung ist animiert (0,15 s)
         pfeil2 = pg.evaluate("() => getComputedStyle(document.querySelector('#navKonto > summary'), '::before').transform")
+        pg.goto(f"{BASE}/projekte", wait_until="networkidle")
+        pg.wait_for_timeout(1000)
+        titel = pg.locator(".dash-item h2 a, .dash-item h3 a").first
+        ruhe = titel.evaluate("a => [getComputedStyle(a).color, getComputedStyle(a).textDecorationLine]")
+        titel.hover()
+        pg.wait_for_timeout(200)
+        maus = titel.evaluate("a => getComputedStyle(a).textDecorationLine")
+        check("Projekttitel: Linkfarbe, ohne Dauer-Unterstrich, unterstrichen bei Hover (Michael 17.07.)",
+              ruhe == ["rgb(169, 66, 0)", "none"] and maus == "underline", (ruhe, maus))
+        pg.goto(f"{BASE}/einstellungen", wait_until="networkidle")
+        karte = pg.locator(".dash-card h2 a").first.evaluate("a => [getComputedStyle(a).color, getComputedStyle(a).textDecorationLine]")
+        check("Kartentitel (Einstellungen): Linkfarbe, ohne Dauer-Unterstrich", karte == ["rgb(169, 66, 0)", "none"], karte)
         check("„Konto“: deutlicher Pfeil (3 px, ≈ 10 px), dreht sich beim Aufklappen", pfeil[0] == "3px" and float(pfeil[1].rstrip("px")) >= 9 and pfeil[2] != pfeil2, (pfeil, pfeil2))
         ctx.close()
 

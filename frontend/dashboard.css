@@ -85,9 +85,11 @@
 .dash-card h2 { margin-top:0; }
 /* Einstellungen (Michael Karbe, Mail 14.09.2026): Kartentitel ist der Link zur Unterseite — orange wie die
    Projekttitel auf „Meine Projekte“ (.dash-item h2 a), die frühere Link-Zeile darunter entfällt. */
-/* Runde 11: ein Linkstil — Linkfarbe und unterstrichen wie alle Inhaltslinks (vorher #c75000 ohne Unterstrich) */
-.dash-card h2 a { color:var(--link); text-decoration:underline; text-underline-offset:.15em; }
-.dash-card h2 a:hover, .dash-card h2 a:focus { text-decoration-thickness:2px; }
+/* Runde 11: Linkfarbe wie alle Inhaltslinks. Kartentitel sind eigenständige Titel-Links (nicht im Fließtext) — darum
+   wie Michael am 17.07. entschieden OHNE Dauer-Unterstrich, unterstrichen bei Hover und Fokus (WCAG 1.4.1 gilt für
+   Links in Textblöcken). */
+.dash-card h2 a { color:var(--link); text-decoration:none; text-underline-offset:.15em; }
+.dash-card h2 a:hover, .dash-card h2 a:focus { text-decoration:underline; }
 /* Fliesstext-Karten (Ueber uns): Schrift wie die Prompt-Beschreibungen
    (Michael, 25.08.2026) — .9rem, gedaempft, Zeilenabstand 1.6.
    Kontrast text-muted auf card-bg = 8,9:1 (wie .dash-intro-box). */
@@ -122,10 +124,11 @@
 .dash-report-zeile { margin:.25rem 0; }
 /* Michael 17.07.2026 (Optik A1): Projekttitel fett, OHNE Dauer-Unterstrich.
    Erkennbarkeit als Link bleibt ueber Farbe + Unterstrich bei Hover/Fokus. */
-/* Runde 11: Projekttitel bleiben fett, sind aber wie jeder Inhaltslink unterstrichen (ein Linkstil) */
-.dash-item h2 a, .dash-item h3 a { font-weight:700; text-decoration:underline; text-underline-offset:.15em; }
+/* Projekttitel: fett, eigenständige Titel-Links ohne Dauer-Unterstrich (Michael 17.07.2026, Optik A1 — gilt auch nach
+   Runde 11), unterstrichen bei Hover und Fokus; Farbe = Linkfarbe. */
+.dash-item h2 a, .dash-item h3 a { font-weight:700; text-decoration:none; text-underline-offset:.15em; }
 .dash-item h2 a:hover, .dash-item h3 a:hover,
-.dash-item h2 a:focus, .dash-item h3 a:focus { text-decoration-thickness:2px; }
+.dash-item h2 a:focus, .dash-item h3 a:focus { text-decoration:underline; }
 .dash-meta { color:var(--text-muted); font-size:.9rem; margin:.2rem 0 0; }
 /* Kontaktformular: Luft zwischen Einleitung und erstem Feld sowie zwischen
    Datenschutz-Hinweis und Senden-Knopf (Steve, 26.08.2026). Nach .dash-meta,
