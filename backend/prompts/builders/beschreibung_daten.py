@@ -50,13 +50,30 @@ def _render_kontext_block(enriched_context: str, user_hint_text: str) -> str:
 {kontext_werte(enriched_context, user_hint_text)}"""
 
 
-_LESBARER_TEXT = """LESBARER TEXT
+# Gemeinsamer Block der Datengrafiken (diagramm, tabelle, karte, infografik,
+# screenshot). Der Legenden-Absatz kam im Oktober 2026 nach einem Kundenbefund
+# dazu: Eine Karte mit Legende wies eine hellblaue Fläche einem Eigentümer zu,
+# das Modell gab die Legende richtig wieder und nannte die Fläche trotzdem
+# Gewässer, auch beim Neu-Generieren. Alltagswissen ("blau ist Wasser") schlug
+# die Legende. Der Absatz ist bewusst allgemein gehalten; die Anwendung auf
+# Karten (Flächen und Bänder als Orientierungsmarken) steht im AUFTRAG des
+# Karten-Builders.
+_LESBARER_TEXT_UND_LEGENDE = """LESBARER TEXT UND LEGENDE
 
 Lesbare Beschriftungen, Zahlen, Namen und Kontaktdaten übernimmst du wortgetreu
 mit ihren Trennzeichen und in ihrer Originalsprache. Prüfe die Zuordnung zur
 richtigen Zeile, Spalte, Fläche oder Legende. Erläuternde Absätze fasst du
 sinngemäß zusammen. Fehlende oder unleserliche Teile ergänzt du nicht; ein leeres
-Feld oder ein Strich ist keine Null."""
+Feld oder ein Strich ist keine Null.
+
+Eine Legende legt fest, was Farben, Muster, Linien und Symbole in dieser Grafik
+bedeuten, und sie geht dem Alltagswissen vor. Ordne jedes Element, dessen Farbe,
+Muster oder Symbol in der Legende steht, diesem Eintrag zu und benenne es mit
+dessen Bedeutung, auch wenn Farbe und Form etwas anderes nahelegen: Eine blaue
+Fläche ist dann kein Wasser, eine grüne kein Wald, eine rote keine Gefahr. Die
+Bedeutung aus der Legende ist die ganze Aussage über dieses Element; eine zweite
+Deutung nach dem Aussehen kommt nicht hinzu: Eine als Bauland ausgewiesene blaue
+Fläche ist nicht zugleich ein See."""
 
 
 def build_beschreibung_prompt_illustration(
@@ -214,7 +231,7 @@ Beziehungen zwischen Werten erklären, keine unverbundene Zahlenliste. Alle Zahl
 im Alt-Text und in der Langbeschreibung stimmen überein.
 
 
-{_LESBARER_TEXT}
+{_LESBARER_TEXT_UND_LEGENDE}
 
 
 {STILREGELN_SACHLICH}
@@ -300,7 +317,7 @@ Werte, die der Dokumentzweck braucht. Einheiten (Prozent, Euro, Mio., Tsd.)
 Zahlen in Alt-Text und Langbeschreibung stimmen überein.
 
 
-{_LESBARER_TEXT}
+{_LESBARER_TEXT_UND_LEGENDE}
 
 
 {STILREGELN_SACHLICH}
@@ -327,7 +344,10 @@ def build_beschreibung_prompt_karte(
     vollständig auflisten") und trug eine Liste von Ortsnamen-Verwechslungen
     aus der Zeit eines anderen Bildmodells. Jetzt sind Standort-, politische,
     historische und thematische Karten unterschieden; die Ortsnamen-Regel
-    steht in EIGENNAMEN_REGELN.
+    steht in EIGENNAMEN_REGELN. Seit Oktober 2026 wendet der AUFTRAG die
+    allgemeine Regel "Legende vor Alltagswissen" (Block LESBARER TEXT UND
+    LEGENDE) auf Flächen, Bänder und Linien an, an denen der Text die Lage
+    erklärt; das innere Inventar ordnet jede Fläche ihrem Legendeneintrag zu.
     """
     examples = load_examples('karte')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -344,9 +364,11 @@ Eine Karte steht im Dokument, weil sie etwas räumlich verortet: Standorte,
 Gebiete, Grenzen, Wege oder Werte je Region. Dein Text gibt räumliche
 Orientierung: zuerst Kartenthema, gezeigtes Gebiet und die Bedeutung der
 Hervorhebungen, dann die Verteilung so, dass ein Mensch ohne Bild sie
-nachvollziehen kann. Farben, Symbole und Größen bedeuten, was die Legende sagt,
-nicht, was sie im Alltag bedeuten: Rot ist keine Gefahr, ein großer Kreis steht
-für den Wert, den die Legende ihm zuweist.
+nachvollziehen kann. Hat die Karte eine Legende, gilt sie auch für die Flächen,
+Bänder und Linien, an denen du die Lage erklärst: Ein geschwungenes blaues Band in
+einer Farbe der Legende ist das, was ihr Eintrag sagt, und nichts darüber hinaus,
+ein Gewässer also nur, wenn der Eintrag es so nennt; ein großer Kreis steht für den
+Wert, den die Legende ihm zuweist.
 
 
 {_render_inventar_block(inventar_json)}
@@ -380,7 +402,7 @@ du unlesbar.
 {EIGENNAMEN_REGELN}
 
 
-{_LESBARER_TEXT}
+{_LESBARER_TEXT_UND_LEGENDE}
 
 
 {STILREGELN_SACHLICH}
@@ -472,7 +494,7 @@ Prüfung stattgefunden hat: "Siegel mit der Aufschrift Klimaneutral".
 {ATMOSPHAERE_REGEL}
 
 
-{_LESBARER_TEXT}
+{_LESBARER_TEXT_UND_LEGENDE}
 
 
 {STILREGELN_SACHLICH}
@@ -557,7 +579,7 @@ aktiven Zustand; er wird nicht auf die Funktion eines einzelnen Pfeils oder
 Knopfs verkürzt.
 
 
-{_LESBARER_TEXT}
+{_LESBARER_TEXT_UND_LEGENDE}
 
 
 {STILREGELN_SACHLICH}

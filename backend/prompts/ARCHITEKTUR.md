@@ -1,8 +1,31 @@
 # InkluDocs Prompt-Architektur (v4)
 
-Stand: 09.09.2026 (Gemini-Umstellung und Prompt-Pruefung; davor 07.09.2026 Mistral-Abbau, 16.07.2026 Paket 1 der Prompt-Generalinspektion).
+Stand: 08.10.2026 (Legende vor Alltagswissen; davor 09.09.2026 Gemini-Umstellung und Prompt-Pruefung, 07.09.2026 Mistral-Abbau, 16.07.2026 Paket 1 der Prompt-Generalinspektion).
 Zielgruppe: kuenftige Leser und Bearbeiter des Prompt-Systems.
 Alle Pfade relativ zur Backend-Wurzel.
+
+## Stand 08.10.2026: Legende vor Alltagswissen
+
+Anlass: Kundenbefund auf Prod. Eine Karte mit zwei Parzellierungsplaenen (heute/geplant) und einer Legende mit Eigentuemerfarben; ein hellblaues Band war laut Legende Gemeindeeigentum. Das Modell (Gemini 3.1 Pro, Bildtyp karte) gab die Legende in der Langbeschreibung richtig wieder und nannte das Band trotzdem Gewaesser ("Ufer", "westlich des Wassers"), auch nach zweimaligem Neu-Generieren. Der Karten-Auftrag hatte schon den Satz "Farben bedeuten, was die Legende sagt (Rot ist keine Gefahr)". Er deckte die Bedeutung von Signaturen ab, nicht den eigentlichen Mechanismus, der in der Messung sichtbar wurde: Das Modell haelt Legende und Alltagsdeutung nicht fuer einen Widerspruch ("Ein hellblaues Band, laut Legende das Verwaltungsvermoegen der Gemeinde, fliesst als Fluss") und setzt die Alltagsdeutung zusaetzlich obendrauf. Beim Neu-Generieren hielt der Variationszusatz ("Faktenlage bleibt identisch") den alten Fehler zusaetzlich fest.
+
+Wo was steht (eine Stelle je Regel):
+
+1. Regel: gemeinsamer Block der Datengrafiken `_LESBARER_TEXT_UND_LEGENDE` in `builders/beschreibung_daten.py` (diagramm, tabelle, karte, infografik, screenshot; vorher "LESBARER TEXT"). Die Legende legt die Bedeutung fest und geht dem Alltagswissen vor; ein Element in einer Farbe, einem Muster oder Symbol der Legende traegt deren Bedeutung; diese Bedeutung ist die ganze Aussage, eine zweite Deutung nach dem Aussehen kommt nicht hinzu. Warum dort: Der Block regelte schon die Zuordnung von Text zu Zeile, Spalte, Flaeche oder Legende, er gilt fuer alle Grafiken mit Legende und fuer keine Fotos. Nicht in den Belegregeln (Kopf jedes Prompts, auch Fotos), nicht als dritte Sonderregel der Karte (Standard: hoechstens zwei).
+2. Karte, Anwendung statt Wiederholung: Der AUFTRAG wendet die Regel auf Flaechen, Baender und Linien an, an denen der Text die Lage erklaert (ersetzt den Satz "Rot ist keine Gefahr"); das innere Inventar (`builders/inventar.py`, Schwerpunkt Karte) ordnet jede Flaeche, Linie und Signatur, die zu einem Legendeneintrag passt, diesem Eintrag zu.
+3. Pruefpass (`_build_verify_prompt`): Kriterium "Legende". Er laeuft in der Pipeline nur, wenn V4_VERIFY_MODE ihn einschaltet, immer aber im Chatbot-Speicherweg (INKLUAGENT_VERIFY=on).
+4. Neu generieren (`_variation_suffix`): Der bisherige Text ist Formulierungsvorlage, kein Beleg; seine Aussagen werden am Bild geprueft. Belegte Kernfakten (Namen, Fotomontage) bleiben geschuetzt.
+5. Schalter: V4_VERIFY_MODE und V4_FAKTENBLATT nehmen zusaetzlich eine Typ-Liste an (z. B. "karte"); Vorgaben unveraendert. Staging seit 08.10.2026: V4_FAKTENBLATT=karte (Sicherung `.env.staging.bak-pre-legende-20261008`). Prod unveraendert.
+6. Test: `tests/test_prompt_legende.py` (Regel genau einmal je Datengrafik, nicht bei Fotos, Karten-Auftrag und -Inventar, Pruefpass-Kriterium, Variationszusatz, Typ-Schalter).
+
+Messung (Staging, Gemini 3.1 Pro mit Klassifikator 3.8 Flash, eigene fiktive Testkarten, keine Kundendaten; Bericht mit allen Texten: Server `/home/claude/karten-legende-1008/BERICHT.md`). Falle = blaues Band laut Legende Gemeindeeigentum. Temperatur 0 liefert bei Gemini je Bild nur ein bis zwei verschiedene Fassungen; belastbar sind deshalb erst die frischen Stichproben mit Temperatur 0,5.
+
+- Vorher: Sammellauf 3 von 5 falsch, Neu generieren 5 von 5 falsch, frische Stichproben 5 von 6 falsch. Pruefer im Chatbot-Speicherweg liess einen falschen "Fluss"-Text 3 von 3 Mal als belegt durch.
+- Prompt allein (Endfassung): Sammellauf 0 von 4 falsch, Neu generieren mit dem alten Fehltext als Vorlage 0 von 5 falsch, frische Stichproben 2 von 6 falsch. Pruefer beanstandet den "Fluss"-Text 3 von 3 Mal und korrigiert ihn; richtige Texte bleiben belegt (6 von 6). Also deutlich besser, aber nicht verlaesslich.
+- Prompt plus Faktenblatt fuer Karten (Legende zuerst strukturiert ablesen, V4_FAKTENBLATT=karte, etwa 2 Cent mehr je Karte): frische Stichproben 8 von 8 richtig, Endabnahme mit der Staging-Umgebung 2 von 2. Nebenwirkung: Texte werden woertlicher (schraffierte Grundrisse selten "Gebaeude", ein beschrifteter Bach teils nur als "blaues Band, der Musterbach").
+- Prompt plus Pruefpass mit Korrektur fuer Karten (V4_VERIFY_MODE=karte, V4_VERIFY_KORREKTUR=on, etwa 4 bis 7 Cent mehr je Karte): frische Stichproben 6 von 6 richtig; Korrekturen kuerzen den Alt-Text auf etwa 250 Zeichen und setzen needs_review.
+- Kontrollen in allen Fassungen richtig: Legende sagt Gewaesser (Gewaesser genannt), Karte ohne Legende mit beschriftetem Bach, gruene Flaeche laut Legende Gewerbezone (schon vorher richtig), Themenkarte in Blautoenen. Regression (Korpus 16_img_10, 09_img_11, 2x_linien, 2x_kuchen, Montagefoto 02_img_2 auch beim Neu-Generieren): gleichwertig; die Karte ohne Legende nennt die Meere jetzt sogar richtig als hellblaue Gewaesser.
+
+Offen: Entscheidung fuer Prod (Faktenblatt oder Pruefpass fuer Karten, oder beides) und Rollout auf Steves Wort; Ergebnis-Cache (`PIPELINE_VERSION = "v4"`) liefert fuer ein bereits verarbeitetes identisches Bild weiter den alten Text, bis neu generiert wird.
 
 ## Stand 09.09.2026: Alt-Text traegt allein, Anbieter-Profil, Widersprueche behoben
 
@@ -79,9 +102,9 @@ Die ENV-Schalter des Gesamtsystems:
 - LLM_PROVIDER (bedrock/gemini/openai, Vorgabe bedrock) und LLM_PROVIDER_CLASSIFY/_INVENTAR/_GENERATE/_VALIDATE — Anbieter je Rolle (seit 07.09.2026 abends wieder, siehe Stand 09.09.).
 - GEMINI_MODEL_* / OPENAI_MODEL_* — Modellkennungen je Rolle fuer Gemini und OpenAI; GEMINI_AUTH (vertex/api), VERTEX_PROJECT, VERTEX_REGION (global oder EU-Region), VERTEX_REGION_MAP (Region je Modell).
 - V4_PROFIL_TEMPERATUR / V4_PROFIL_BILD_ZUERST / V4_PROFIL_BILDAUFLOESUNG / V4_PROFIL_ZUSATZ — Uebersteuerung des Anbieter-Profils fuer Messungen (anbieter_profil.py).
-- V4_DIAGRAMM_WERTE, V4_ZAEHL_PASS, V4_FAKTENBLATT — Zusatzschritte (Werte-Ablesung, Aufzaehlung, Faktenblatt) an/aus; auf Staging seit 08.09. aus (Zwei-Aufruf-Variante).
+- V4_DIAGRAMM_WERTE, V4_ZAEHL_PASS, V4_FAKTENBLATT — Zusatzschritte (Werte-Ablesung, Aufzaehlung, Faktenblatt) an/aus; auf Staging seit 08.09. aus (Zwei-Aufruf-Variante). V4_FAKTENBLATT nimmt seit 08.10.2026 auch eine Typ-Liste (z. B. karte); Staging steht auf karte.
 - V4_PROMPT_CACHE — Bilddaten ans Ende fuer das Bedrock-Prompt-Caching; bei Gemini wirkungslos.
-- V4_VERIFY_MODE — Verify-Pass an/aus (off/kritisch/alle).
+- V4_VERIFY_MODE — Verify-Pass an/aus (off/kritisch/alle oder seit 08.10.2026 eine Typ-Liste wie karte).
 - V4_VERIFY_KORREKTUR — off (Default) = eine mitgelieferte Redakteurs-Korrektur wird ignoriert (Flag-Verhalten wie bisher); on = Korrektur wird uebernommen (siehe Paket 3 unten). Nur im Lean-Pfad wirksam.
 - BEDROCK_MODEL_CLASSIFY / _GENERATE / _VALIDATE — Claude-Modell je Pass (Klassifikation, Combo, Pruefpass), wirksam wenn die Rolle auf bedrock steht.
 

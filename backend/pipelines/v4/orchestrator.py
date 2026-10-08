@@ -128,6 +128,9 @@ def _user_prompt_suffix(user_prompt: str) -> str:
 #   'off' (Default) — kein Verify (Kosten-Entscheidung: +1 Bild-Aufruf/Pruefung)
 #   'kritisch'      — nur risikoreiche Typen (Personen, Events, Objekte, Screenshots)
 #   'alle'          — jeder Nicht-Mini-Typ
+#   Typ-Liste       — nur diese Bildtypen, z. B. 'karte' oder 'karte,diagramm' (08.10.2026: Pruefpass
+#                     gezielt fuer Typen, deren Fehler der Erzeuger auch mit gutem Prompt nicht
+#                     verlaesslich vermeidet; Messung Legende vor Alltagswissen, ARCHITEKTUR.md)
 # Schaltung per ENV V4_VERIFY_KORREKTUR (was mit der Korrektur passiert):
 #   'off' (Default) — verhaltensneutral: nur needs_review-Flag wie bisher
 #   'on'            — korrigierter_alt_text wird uebernommen + needs_review gesetzt;
@@ -445,7 +448,9 @@ def _zaehl_block(z: ZaehlOutput) -> str:
 # FAKTENBLATT für Tabelle, Karte und Infografik (Prompt-Runde September 2026):
 # ein enger Ablese-Aufruf je Typ, der nur Struktur und lesbare Werte erfasst;
 # der Text entsteht danach aus dieser Liste. Gleiches Prinzip wie Werte-Ablesung
-# und Aufzähl-Schritt. Schalter V4_FAKTENBLATT (Default on).
+# und Aufzähl-Schritt. Schalter V4_FAKTENBLATT (Default on): on, off oder eine Typ-Liste wie
+# 'karte' (08.10.2026: bei Karten liest das Faktenblatt die Legende vor dem Text strukturiert ab;
+# Messung Legende vor Alltagswissen in prompts/ARCHITEKTUR.md).
 # ─────────────────────────────────────────────────────────────────────────
 class TabelleZeile(BaseModel):
     bezeichnung: str = Field(description='Text der ersten Spalte dieser Zeile, wortgetreu')
@@ -521,14 +526,19 @@ _FAKTENBLATT_PROMPTS = {
 }
 
 
-def _faktenblatt_an() -> bool:
-    return os.environ.get('V4_FAKTENBLATT', 'on').strip().lower() == 'on'
+def _faktenblatt_an(typ: str = '') -> bool:
+    wert = os.environ.get('V4_FAKTENBLATT', 'on').strip().lower()
+    if wert == 'on':
+        return True
+    if wert in ('', 'off'):
+        return False
+    return typ in {t.strip() for t in wert.split(',') if t.strip()}
 
 
 def _lies_faktenblatt(image_path: str, typ: str):
     """Enger Ablese-Aufruf für tabelle, karte, infografik; None bei Fehler, Schalter aus oder fremdem Typ."""
     schema = _FAKTENBLATT_TYPEN.get(typ)
-    if schema is None or not _faktenblatt_an():
+    if schema is None or not _faktenblatt_an(typ):
         return None
     try:
         return call_with_schema(
@@ -591,7 +601,9 @@ def _verify_scope_matches(bildtyp: str) -> bool:
         return True
     if mode == 'kritisch':
         return bildtyp in _VERIFY_KRITISCHE_TYPEN
-    return False
+    if mode in ('', 'off'):
+        return False
+    return bildtyp in {t.strip() for t in mode.split(',') if t.strip()}
 
 
 def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = '',
@@ -601,7 +613,9 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
     Fassung September 2026. Der feste Teil ist je Sprache identisch (Prompt-Caching);
     Namensregister, Faktenblock (abgelesene Werte oder Aufzählung), Bildtyp und die
     Texte sind je Bild variabel. Historie: Redakteur-Muster seit 16.07.2026,
-    Namensregister seit 18.08.2026, Langbeschreibung und Deutungssperre seit 07.09.2026.
+    Namensregister seit 18.08.2026, Langbeschreibung und Deutungssperre seit 07.09.2026,
+    Legenden-Kriterium seit 08.10.2026 (Messung: der Pruefer liess "ein Fluss" fuer eine
+    laut Legende als Gemeindeeigentum ausgewiesene blaue Flaeche 3 von 3 Mal als belegt durch).
     """
     sprach_name = _OUTPUT_LANGUAGE_NAMES.get((language or 'de').lower()) or 'Deutsch'
     _reg = ''
@@ -635,6 +649,9 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'zweifelsfrei falsch ist; sind beide Zählweisen vertretbar, behalte die Zahl und präzisiere '
         'höchstens das Gesamtbild ("acht in einer Reihe, dahinter weitere").\n'
         '- Farben und eindeutige sichtbare Merkmale.\n'
+        '- Legende: Farben, Muster, Linien und Symbole bedeuten, was die Legende ihnen zuweist. Eine '
+        'Deutung nach Alltagswissen, die ihr widerspricht (eine blaue Fläche, die die Legende einer '
+        'Nutzung zuordnet, als Gewässer), ist eine Beanstandung.\n'
         '- Deutungen ohne Beleg: Rollen ("moderierende Person"), Anlässe ("Feier"), Art- und '
         'Gattungszusätze, Orte, Jahreszeiten, Tageszeiten und Materialien sind nur belegt, wenn ein '
         'sichtbares Merkmal sie zwingend trägt, sie im Bild lesbar sind oder das Namensregister sie '
@@ -811,6 +828,12 @@ def _variation_suffix(previous_alt: str) -> str:
     (previous_alt kommt nur vom Neu-Generieren-Endpunkt). Haengt wie
     _language_suffix zentral am fertigen Prompt und gilt damit automatisch
     fuer alle heutigen und kuenftigen Builder.
+
+    08.10.2026: Der bisherige Text ist Formulierungsvorlage, kein Beleg. Messung mit
+    einer Karte, deren blaue Flaeche laut Legende Gemeindeeigentum ist: Mit dem alten
+    Text "Ein Fluss teilt das Gebiet" als Vorlage blieb "Fluss" bei 3 von 3
+    Neu-Generierungen stehen, obwohl der Erstlauf mit derselben Prompt-Fassung 5 von 5
+    richtig war ("Faktenlage bleibt identisch" verankerte den Fehler).
     """
     prev = (previous_alt or '').strip()
     if not prev:
@@ -824,7 +847,11 @@ def _variation_suffix(previous_alt: str) -> str:
         'Schreibe eine DEUTLICH anders formulierte und anders gewichtete Fassung: '
         'anderer Satzeinstieg, anderer Satzbau, gern eine andere Reihenfolge oder '
         'ein anderer Schwerpunkt bei gleichwertigen Aspekten. Das gilt für Alt-Text '
-        'UND Langbeschreibung. Die Faktenlage bleibt identisch — keine neuen '
+        'UND Langbeschreibung. Der bisherige Text ist eine Formulierungsvorlage, '
+        'kein Beleg; oft wird neu generiert, weil er einen Fehler enthält. Jede seiner '
+        'Aussagen prüfst du am Bild und am Kontext, und was ihnen widerspricht oder '
+        'sich nicht belegen lässt, ersetzt du durch die belegte Angabe. Die belegte '
+        'Faktenlage bleibt identisch — keine neuen '
         'unbelegten Aussagen, und belegte Kernfakten (Namen, Marken, Typen, lesbare '
         'Texte wie Schild- oder Gate-Aufschriften, und eine vorhandene '
         'Fotomontage-/Collage-Kennzeichnung) bleiben in BEIDEN Feldern der '

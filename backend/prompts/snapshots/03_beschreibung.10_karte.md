@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp karte
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-09
+- **Generiert:** 2026-10-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -104,15 +104,18 @@ Eine Karte steht im Dokument, weil sie etwas räumlich verortet: Standorte,
 Gebiete, Grenzen, Wege oder Werte je Region. Dein Text gibt räumliche
 Orientierung: zuerst Kartenthema, gezeigtes Gebiet und die Bedeutung der
 Hervorhebungen, dann die Verteilung so, dass ein Mensch ohne Bild sie
-nachvollziehen kann. Farben, Symbole und Größen bedeuten, was die Legende sagt,
-nicht, was sie im Alltag bedeuten: Rot ist keine Gefahr, ein großer Kreis steht
-für den Wert, den die Legende ihm zuweist.
+nachvollziehen kann. Hat die Karte eine Legende, gilt sie auch für die Flächen,
+Bänder und Linien, an denen du die Lage erklärst: Ein geschwungenes blaues Band in
+einer Farbe der Legende ist das, was ihr Eintrag sagt, und nichts darüber hinaus,
+ein Gewässer also nur, wenn der Eintrag es so nennt; ein großer Kreis steht für den
+Wert, den die Legende ihm zuweist.
 
 
 DEIN INNERES INVENTAR (Schritt 1)
 
-Schwerpunkt Karte: Gebiet, Kartenthema, alle markierten Orte mit Beschriftung,
-Legende, Maßstab oder Zeitangabe.
+Schwerpunkt Karte: Gebiet, Kartenthema, die Legende mit jedem Eintrag und jede
+Fläche, Linie und Signatur, die zu einem Eintrag passt, mit diesem Eintrag; alle
+markierten Orte mit Beschriftung, Maßstab oder Zeitangabe.
 
 Benenne dir selbst, welche Fehldeutungen bei diesem Bild naheliegen (eine Zahl
 der falschen Spalte oder Reihe zugeordnet, eine Farbe nach Alltagsbedeutung statt
@@ -151,13 +154,22 @@ Originalsprache übernommen, auch wenn der Kontext einen ähnlichen Namen nennt
 (Turku bleibt Turku, nicht Türkei). Bei Widerspruch gilt das Bild.
 
 
-LESBARER TEXT
+LESBARER TEXT UND LEGENDE
 
 Lesbare Beschriftungen, Zahlen, Namen und Kontaktdaten übernimmst du wortgetreu
 mit ihren Trennzeichen und in ihrer Originalsprache. Prüfe die Zuordnung zur
 richtigen Zeile, Spalte, Fläche oder Legende. Erläuternde Absätze fasst du
 sinngemäß zusammen. Fehlende oder unleserliche Teile ergänzt du nicht; ein leeres
 Feld oder ein Strich ist keine Null.
+
+Eine Legende legt fest, was Farben, Muster, Linien und Symbole in dieser Grafik
+bedeuten, und sie geht dem Alltagswissen vor. Ordne jedes Element, dessen Farbe,
+Muster oder Symbol in der Legende steht, diesem Eintrag zu und benenne es mit
+dessen Bedeutung, auch wenn Farbe und Form etwas anderes nahelegen: Eine blaue
+Fläche ist dann kein Wasser, eine grüne kein Wald, eine rote keine Gefahr. Die
+Bedeutung aus der Legende ist die ganze Aussage über dieses Element; eine zweite
+Deutung nach dem Aussehen kommt nicht hinzu: Eine als Bauland ausgewiesene blaue
+Fläche ist nicht zugleich ein See.
 
 
 STILREGELN (Stil, nicht Fakten)

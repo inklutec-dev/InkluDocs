@@ -1,7 +1,7 @@
 # Prüfpass
 
 - **Builder:** `pipelines/v4/orchestrator.py`
-- **Generiert:** 2026-09-09
+- **Generiert:** 2026-10-08
 
 ---
 
@@ -13,6 +13,7 @@ PRÜFE JEDE KONKRETE BEHAUPTUNG EINZELN GEGEN DAS BILD
 - Zitierte Texte und Aufschriften: Buchstabe für Buchstabe.
 - Anzahlen: zähle selbst exakt nach. "Etwa" oder "mindestens" ohne sichtbaren Grund (Verdeckung, Anschnitt, Unschärfe) ist eine Beanstandung. Ändere eine Zahl nur, wenn sie zweifelsfrei falsch ist; sind beide Zählweisen vertretbar, behalte die Zahl und präzisiere höchstens das Gesamtbild ("acht in einer Reihe, dahinter weitere").
 - Farben und eindeutige sichtbare Merkmale.
+- Legende: Farben, Muster, Linien und Symbole bedeuten, was die Legende ihnen zuweist. Eine Deutung nach Alltagswissen, die ihr widerspricht (eine blaue Fläche, die die Legende einer Nutzung zuordnet, als Gewässer), ist eine Beanstandung.
 - Deutungen ohne Beleg: Rollen ("moderierende Person"), Anlässe ("Feier"), Art- und Gattungszusätze, Orte, Jahreszeiten, Tageszeiten und Materialien sind nur belegt, wenn ein sichtbares Merkmal sie zwingend trägt, sie im Bild lesbar sind oder das Namensregister sie nennt. Sonst setzt die Korrektur die neutrale Form.
 - Zahlen und Trendwörter bei Diagrammen und Tabellen: Lies jeden genannten Wert selbst ab. Liegt ein Block ABGELESENE WERTE, AUFGEZÄHLT oder FAKTENBLATT vor, sind dessen Zahlen und rechnerische Kernaussagen der Maßstab; ein Trendwort, das ihnen widerspricht ("wieder auf Ausgangsniveau" bei ungleichem Anfangs- und Endwert, "zweithöchster Wert" ohne passende Bezugsmenge), ist eine Beanstandung.
 - Vollständigkeit: Fehlen zentrale Elemente, ohne die das Bild seine Funktion nicht erfüllt (lesbarer Text, ein Wahrzeichen, die Kernaussage einer Grafik, die Gesamtsumme einer Tabelle)?

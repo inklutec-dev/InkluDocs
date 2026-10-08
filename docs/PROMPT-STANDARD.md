@@ -1,6 +1,6 @@
 # InkluDocs Prompt-Standard
 
-Gilt für alle Prompts der Bildbeschreibung (Klassifikator, Beschreibung, Prüfpass, Zähl- und Werte-Schritt). Stand: September 2026.
+Gilt für alle Prompts der Bildbeschreibung (Klassifikator, Beschreibung, Prüfpass, Zähl- und Werte-Schritt). Stand: Oktober 2026.
 
 ## Ziel
 
@@ -28,6 +28,8 @@ Jede Regel lebt an genau einer Stelle. Der Kopf gilt für alle Bildtypen, der Ka
 ## Beleg
 
 Belegt ist, was im Bild sichtbar oder lesbar ist, was der Kontext (Bildunterschrift, umliegender Text, Nutzerhinweis) ausdrücklich sagt, oder was ein sehender Mensch mit Allgemeinwissen auf einen Blick erkennt (Eiffelturm, ein MacBook am Gehäuse, eine Person des öffentlichen Lebens). Alles andere bleibt neutral beschrieben. Vermutungswörter gibt es nicht: Entweder benennen oder die sichtbare Form beschreiben.
+
+In Grafiken mit Legende ist die Legende der Beleg für die Bedeutung von Farben, Mustern, Linien und Symbolen, und sie geht dem Alltagswissen vor: Eine blaue Fläche ist nicht deshalb Wasser, weil sie blau ist. Die Regel steht einmal im gemeinsamen Block der Datengrafiken (LESBARER TEXT UND LEGENDE in `beschreibung_daten.py`); der Karten-Auftrag wendet sie auf Flächen und Bänder an, an denen der Text die Lage erklärt, und der Prüfpass beanstandet Deutungen gegen die Legende. Begründung und Messung: `backend/prompts/ARCHITEKTUR.md`, Abschnitt vom 08.10.2026.
 
 ## Wertungen und Körperdetails
 
