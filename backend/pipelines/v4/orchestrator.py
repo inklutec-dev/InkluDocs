@@ -19,9 +19,10 @@ dem Git-Tag sicherung-vor-mistral-abdockung-20260907.
 """
 from __future__ import annotations
 
+import difflib
 import logging
 import os
-from typing import Optional
+from typing import Optional, get_args
 
 from prompts.builders import (
     build_beschreibung_prompt_mini,
@@ -35,7 +36,9 @@ from prompts.components.roles import SYSTEM_BESCHREIBUNG
 from prompts.components.schemas import (
     BeschreibungOutput,
     BildtypEffective,
+    BildtypTopLevel,
     ClassificationOutput,
+    FotoSubtyp,
     IconBeschreibungOutput,
 )
 
@@ -131,7 +134,8 @@ def _user_prompt_suffix(user_prompt: str) -> str:
 #   'alle'          — jeder Nicht-Mini-Typ
 #   Typ-Liste       — nur diese Bildtypen, z. B. 'karte' oder 'karte,diagramm' (08.10.2026: Pruefpass
 #                     gezielt fuer Typen, deren Fehler der Erzeuger auch mit gutem Prompt nicht
-#                     verlaesslich vermeidet; Messung Legende vor Alltagswissen, ARCHITEKTUR.md)
+#                     verlaesslich vermeidet; Messung Legende vor Alltagswissen, ARCHITEKTUR.md).
+#                     Unbekannte Eintraege wirken nicht und stehen einmal als Warnung im Log (_typ_liste).
 # Schaltung per ENV V4_VERIFY_KORREKTUR (was mit der Korrektur passiert):
 #   'off' (Default) — verhaltensneutral: nur needs_review-Flag wie bisher
 #   'on'            — korrigierter_alt_text wird uebernommen + needs_review gesetzt;
@@ -451,7 +455,8 @@ def _zaehl_block(z: ZaehlOutput) -> str:
 # der Text entsteht danach aus dieser Liste. Gleiches Prinzip wie Werte-Ablesung
 # und Aufzähl-Schritt. Schalter V4_FAKTENBLATT (Default on): on, off oder eine Typ-Liste wie
 # 'karte' (08.10.2026: bei Karten liest das Faktenblatt die Legende vor dem Text strukturiert ab;
-# Messung Legende vor Alltagswissen in prompts/ARCHITEKTUR.md).
+# Messung Legende vor Alltagswissen in prompts/ARCHITEKTUR.md). Unbekannte Eintraege wirken nicht
+# und stehen einmal als Warnung im Log (_typ_liste).
 # ─────────────────────────────────────────────────────────────────────────
 class TabelleZeile(BaseModel):
     bezeichnung: str = Field(description='Text der ersten Spalte dieser Zeile, wortgetreu')
@@ -468,9 +473,12 @@ class TabelleFakten(BaseModel):
 
 
 class KarteOrt(BaseModel):
+    # 08.10.2026 (Nacharbeit Legende): kategorie nur aus der Legende. Vorher hiess es "Legendenkategorie
+    # oder Symbol"; ohne Legende schrieb der Ableser das Aussehen hinein ("Musterbach (blaues Band)"), und
+    # der Text nannte den Bach dann "ein blaues Band, der Musterbach". Das Lage-Beispiel war "am Fluss".
     name: str = Field(description='Beschriftung des Ortes oder Gebiets, wortgetreu')
-    kategorie: str = Field(default='', description='Legendenkategorie oder Symbol, dem der Ort zugeordnet ist')
-    lage: str = Field(default='', description='Lage auf der Karte, z. B. "Nordwesten", "Mitte", "am Fluss"')
+    kategorie: str = Field(default='', description='Legendeneintrag, dem der Ort zugeordnet ist, wortgetreu; leer, wenn kein Legendeneintrag passt oder die Karte keine Legende hat')
+    lage: str = Field(default='', description='Lage auf der Karte, z. B. "Nordwesten", "Mitte", "am Südrand"')
 
 
 class KarteFakten(BaseModel):
@@ -512,7 +520,7 @@ _FAKTENBLATT_PROMPTS = {
     'karte': (
         'Du liest eine Karte ab. Keine Deutung, kein Fließtext, nur Daten.\n'
         'Erfasse Titel, das gezeigte Gebiet, jeden Legendeneintrag mit seiner Bedeutung und jeden markierten '
-        'Ort oder jedes markierte Gebiet mit Beschriftung, Legendenkategorie und Lage. Farben und Symbole '
+        'Ort oder jedes markierte Gebiet mit Beschriftung, Legendeneintrag und Lage. Farben und Symbole '
         'bedeuten, was die Legende sagt. Eine Jahreszahl oder einen Stand nur, wenn er auf der Karte lesbar '
         'ist. Erfinde keinen Ort; Unleserliches schreibst du als "unlesbar".'
     ),
@@ -527,13 +535,36 @@ _FAKTENBLATT_PROMPTS = {
 }
 
 
+# ── Typ-Listen der Schalter V4_FAKTENBLATT und V4_VERIFY_MODE (08.10.2026) ──
+# Beide Schalter nehmen neben ihren festen Werten eine Liste von Bildtypen an,
+# z. B. 'karte' oder 'karte,diagramm'. Ein Eintrag, der für diesen Schritt kein
+# Bildtyp ist (Tippfehler 'karten', Oberbegriff 'foto' statt 'foto_event',
+# Mischung 'kritisch,karte'), schaltet nichts ein. Das wirkte bis zur Nacharbeit
+# still; jetzt steht es einmal je Schalterwert als Warnung im Log.
+_SCHALTER_GEWARNT: set[tuple[str, str]] = set()
+
+
+def _typ_liste(schalter: str, wert: str, gueltig, feste: str) -> frozenset:
+    """Bildtypen aus einem Schalterwert; unbekannte Einträge einmal je Wert als Warnung ins Log.
+
+    Die Liste wirkt genau wie vor der Warnung: Ein unbekannter Eintrag trifft keinen Bildtyp.
+    """
+    typen = frozenset(t.strip() for t in wert.split(',') if t.strip())
+    unbekannt = sorted(typen - frozenset(gueltig))
+    if unbekannt and (schalter, wert) not in _SCHALTER_GEWARNT:
+        _SCHALTER_GEWARNT.add((schalter, wert))
+        log.warning('%s=%r: %s schaltet nichts ein. Gültig ist %s allein oder eine Liste aus %s.',
+                    schalter, wert, ', '.join(unbekannt), feste, ', '.join(sorted(gueltig)))
+    return typen
+
+
 def _faktenblatt_an(typ: str = '') -> bool:
     wert = os.environ.get('V4_FAKTENBLATT', 'on').strip().lower()
     if wert == 'on':
         return True
     if wert in ('', 'off'):
         return False
-    return typ in {t.strip() for t in wert.split(',') if t.strip()}
+    return typ in _typ_liste('V4_FAKTENBLATT', wert, _FAKTENBLATT_TYPEN, 'on oder off')
 
 
 def _lies_faktenblatt(image_path: str, typ: str):
@@ -552,9 +583,19 @@ def _lies_faktenblatt(image_path: str, typ: str):
 
 
 def _faktenblatt_block(f, typ: str) -> str:
+    """Block FAKTENBLATT am Ende des Beschreibungs-Prompts.
+
+    08.10.2026 (Nacharbeit Legende): Der hölzerne Text bei Karten ohne Legende ("ein blaues Band,
+    der Musterbach") kam aus der Liste selbst: kategorie hieß "Legendenkategorie oder Symbol", ohne
+    Legende stand dort das Aussehen, und der Text übernahm es als Bezeichnung. Jetzt kommt kategorie
+    nur aus der Legende und steht als "Legende: …" da. "jede Reihenfolge" ist gestrichen (Listenfolge
+    statt Lage). Ein Satz, der Wortwahl und Reihenfolge ausdrücklich den Vorgaben oben überließ, wurde
+    gemessen und wieder verworfen: Er lockerte die Bindung an die Legende (Karten-Falle 4 von 10
+    falsch gegenüber 0 von 14 mit "jede Bezeichnung", prompts/ARCHITEKTUR.md).
+    """
     zeilen = ['', '', 'FAKTENBLATT', '',
               'Ein eigener Ablese-Schritt hat Struktur und lesbare Werte dieses Bildes erfasst. Diese Liste ist die '
-              'Grundlage für jede Zahl, jede Bezeichnung und jede Reihenfolge in Alt-Text und Langbeschreibung. '
+              'Grundlage für jede Zahl, jede Bezeichnung und jede Zuordnung in Alt-Text und Langbeschreibung. '
               'Vergleiche sie mit dem Bild: Widerspricht das Bild einem Eintrag eindeutig, nenne den Widerspruch '
               'statt zu raten. Was hier "unlesbar" oder "leer" ist, bleibt es auch im Text.', '']
     if getattr(f, 'titel', ''):
@@ -576,7 +617,7 @@ def _faktenblatt_block(f, typ: str) -> str:
             zeilen.append('Legende: ' + ' | '.join(f.legende))
         zeilen.append(f'Markierte Orte: {len(f.orte)}')
         for o in f.orte:
-            zeilen.append(f'  - {o.name}' + (f' ({o.kategorie})' if o.kategorie else '') + (f', {o.lage}' if o.lage else ''))
+            zeilen.append(f'  - {o.name}' + (f' (Legende: {o.kategorie})' if o.kategorie else '') + (f', {o.lage}' if o.lage else ''))
     elif typ == 'infografik':
         zeilen.append(f'Aufbau: {f.aufbau}')
         zeilen.append(f'Stationen: {len(f.stationen)}')
@@ -604,7 +645,7 @@ def _verify_scope_matches(bildtyp: str) -> bool:
         return bildtyp in _VERIFY_KRITISCHE_TYPEN
     if mode in ('', 'off'):
         return False
-    return bildtyp in {t.strip() for t in mode.split(',') if t.strip()}
+    return bildtyp in _typ_liste('V4_VERIFY_MODE', mode, _VERIFY_TYPEN, 'off, kritisch oder alle')
 
 
 def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = '',
@@ -650,9 +691,10 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'zweifelsfrei falsch ist; sind beide Zählweisen vertretbar, behalte die Zahl und präzisiere '
         'höchstens das Gesamtbild ("acht in einer Reihe, dahinter weitere").\n'
         '- Farben und eindeutige sichtbare Merkmale.\n'
-        '- Legende: Farben, Muster, Linien und Symbole bedeuten, was die Legende ihnen zuweist. Eine '
-        'Deutung nach Alltagswissen, die ihr widerspricht (eine blaue Fläche, die die Legende einer '
-        'Nutzung zuordnet, als Gewässer), ist eine Beanstandung.\n'
+        '- Legende: Farben, Muster, Linien und Symbole bedeuten, was die Legende ihnen zuweist. Nennt der '
+        'Text ein solches Element nach seinem Aussehen (Fluss, See, Wald, Straße), ohne dass Legende oder '
+        'Beschriftung das sagen, ist das eine Beanstandung, auch wenn der Legendeneintrag nur einen '
+        'Eigentümer oder einen Planungsstand nennt.\n'
         '- Deutungen ohne Beleg: Rollen ("moderierende Person"), Anlässe ("Feier"), Art- und '
         'Gattungszusätze, Orte, Jahreszeiten, Tageszeiten und Materialien sind nur belegt, wenn ein '
         'sichtbares Merkmal sie zwingend trägt, sie im Bild lesbar sind oder das Namensregister sie '
@@ -820,27 +862,101 @@ def verify_alt_text_extern(image_path: str, bildtyp: str, alt_text: str,
                             language=language, enriched_context=enriched_context, erzwingen=erzwingen)
 
 
-def _variation_suffix(previous_alt: str) -> str:
+_VORLAGE_MAX = 600  # Zeichen: bisheriger Text und Nutzerstellen im Variationszusatz
+_SATZZEICHEN = '.,;:!?"\'„“”‚‘’()[]–-…'
+
+
+def herkunft_vorlage(angezeigt: str, ki_text: Optional[str]) -> tuple[str, list[str]]:
+    """Wer hat den Text geschrieben, der beim Neu-Generieren als Vorlage mitgeht? (08.10.2026)
+
+    angezeigt: der Text, den der Nutzer sieht (images.alt_text_edited, sonst alt_text).
+    ki_text:   der zuletzt von der KI erzeugte Text (images.alt_text); None, wenn der Aufrufer
+               ihn nicht kennt. Dann gilt die Vorlage wie bisher als KI-Text.
+
+    Erkennung: alt_text_edited setzt nur eine Änderung am Feld (Oberfläche beim Tippen,
+    Gastzugang, Chatbot im Auftrag des Nutzers, "Vorherigen Text zurückholen"); jedes
+    Neu-Generieren setzt es wieder auf NULL. Der Wortvergleich mit alt_text zeigt, welche
+    Stellen vom Nutzer stammen.
+
+    Rückgabe:
+      ('ki', [])             Vorlage ist der KI-Text (unverändert, oder nur Leerzeichen, Satzzeichen
+                             oder Streichungen geändert)
+      ('bearbeitet', [...])  KI-Text mit den Stellen, die der Nutzer ergänzt oder geändert hat
+      ('nutzer', [])         der Nutzer hat den Text selbst geschrieben: kein KI-Text vorhanden,
+                             oder mindestens 80 Prozent der Wörter stammen von ihm
+    """
+    worte = (angezeigt or '').split()
+    if not worte or ki_text is None:
+        return 'ki', []
+    ki_worte = ki_text.split()
+    if not ki_worte:
+        return 'nutzer', []
+    # Verglichen wird ohne Satzzeichen am Wortrand: ein gesetztes Komma ist keine Angabe des Nutzers.
+    kern = [w.strip(_SATZZEICHEN) for w in worte]
+    abgleich = difflib.SequenceMatcher(a=[w.strip(_SATZZEICHEN) for w in ki_worte], b=kern, autojunk=False)
+    stellen = [' '.join(worte[j1:j2]).rstrip(',;:') for art, _i1, _i2, j1, j2 in abgleich.get_opcodes()
+               if art in ('insert', 'replace') and any(kern[j1:j2])]
+    if not stellen:
+        return 'ki', []
+    if sum(len(s.split()) for s in stellen) >= 0.8 * len(worte):
+        return 'nutzer', []
+    return 'bearbeitet', stellen
+
+
+def _stellen_liste(stellen: list[str]) -> str:
+    teile, laenge = [], 0
+    for s in stellen:
+        if laenge + len(s) > _VORLAGE_MAX:
+            teile.append('…')
+            break
+        teile.append(f'„{s}“')
+        laenge += len(s)
+    return '; '.join(teile)
+
+
+def _variation_suffix(previous_alt: str, previous_alt_ki: Optional[str] = None) -> str:
     """Gezielte Variation beim Einzel-Neu-Generieren (05.07.2026).
 
     Statt reiner Zufalls-Temperatur bekommt das Modell den bisherigen Alt-Text
-    als Abgrenzungs-Vorlage und den Auftrag, sich deutlich davon abzuheben —
-    bei identischer Faktenlage. Leer bei Erst-Generierung und im Sammellauf
-    (previous_alt kommt nur vom Neu-Generieren-Endpunkt). Haengt wie
-    _language_suffix zentral am fertigen Prompt und gilt damit automatisch
-    fuer alle heutigen und kuenftigen Builder.
+    als Abgrenzungs-Vorlage und den Auftrag, sich deutlich davon abzuheben.
+    Leer bei Erst-Generierung und im Sammellauf (previous_alt kommt nur vom
+    Neu-Generieren-Endpunkt und vom Chatbot). Haengt wie _language_suffix zentral
+    am fertigen Prompt und gilt damit automatisch fuer alle heutigen und
+    kuenftigen Builder.
 
-    08.10.2026: Der bisherige Text ist Formulierungsvorlage, kein Beleg. Messung mit
-    einer Karte, deren blaue Flaeche laut Legende Gemeindeeigentum ist: Mit dem alten
-    Text "Ein Fluss teilt das Gebiet" als Vorlage blieb "Fluss" bei 3 von 3
-    Neu-Generierungen stehen, obwohl der Erstlauf mit derselben Prompt-Fassung 5 von 5
-    richtig war ("Faktenlage bleibt identisch" verankerte den Fehler).
+    08.10.2026, Legende vor Alltagswissen: Ein Text der KI ist Abgrenzungs-Vorlage,
+    kein Beleg. Vorher hielt "Die Faktenlage bleibt identisch" einen Fehler fest: Mit
+    dem alten Text "Ein Fluss teilt das Gebiet" blieb "Fluss" 3 von 3 Mal stehen,
+    obwohl die Legende die blaue Flaeche der Gemeinde zuwies.
+
+    08.10.2026, Nacharbeit nach Pruefung: Was der Nutzer selbst geschrieben, ergaenzt
+    oder geaendert hat (previous_alt_ki, herkunft_vorlage), bleibt inhaltlich erhalten,
+    auch wenn das Bild es nicht zeigt (Name, Anlass; Steve), und entfaellt nur bei einem
+    Widerspruch zu Bild oder Legende. Mit "kein Beleg" fuer den ganzen Text fiel so eine
+    Angabe sonst eher weg.
     """
     prev = (previous_alt or '').strip()
     if not prev:
         return ''
-    if len(prev) > 600:
-        prev = prev[:600] + ' …'
+    herkunft, stellen = herkunft_vorlage(prev, previous_alt_ki)
+    if len(prev) > _VORLAGE_MAX:
+        prev = prev[:_VORLAGE_MAX] + ' …'
+    nur_abgrenzung = ('zeigt dir nur, wovon sich die neue Fassung abheben soll, und ist kein Beleg; '
+                      'oft wird neu generiert, weil er einen Fehler enthält. Prüfe jede seiner Aussagen '
+                      'am Bild und am Kontext: Was Bild, Legende oder Kontext widerspricht, ersetzt du durch '
+                      'die belegte Angabe, und was sich dort nicht belegen lässt, fällt weg. ')
+    nutzer_bleibt = ('übernimmst du inhaltlich in BEIDE Felder der neuen Fassung, auch wenn das Bild sie '
+                     'nicht zeigt (etwa einen Namen oder einen Anlass); nur die Formulierung darf sich ändern. '
+                     'Sie entfallen nur, wo Bild oder Legende ihnen widersprechen; dort setzt du die belegte '
+                     'Angabe. ')
+    if herkunft == 'ki':
+        herkunft_text = 'Den bisherigen Text hat die KI geschrieben. Er ' + nur_abgrenzung
+    elif herkunft == 'nutzer':
+        herkunft_text = 'Den bisherigen Text hat der Nutzer selbst geschrieben. Seine Angaben ' + nutzer_bleibt
+    else:
+        herkunft_text = ('Den bisherigen Text hat die KI geschrieben und der Nutzer danach bearbeitet. '
+                         f'Ergänzt oder geändert hat er: {_stellen_liste(stellen)}. Diese Angaben '
+                         + nutzer_bleibt + 'Der übrige Text ' + nur_abgrenzung)
     return (
         '\n\nVARIATION (NEU GENERIEREN): Der Nutzer wünscht eine Alternative zu '
         'diesem bisherigen Alt-Text:\n'
@@ -848,20 +964,22 @@ def _variation_suffix(previous_alt: str) -> str:
         'Schreibe eine DEUTLICH anders formulierte und anders gewichtete Fassung: '
         'anderer Satzeinstieg, anderer Satzbau, gern eine andere Reihenfolge oder '
         'ein anderer Schwerpunkt bei gleichwertigen Aspekten. Das gilt für Alt-Text '
-        'UND Langbeschreibung. Der bisherige Text ist eine Formulierungsvorlage, '
-        'kein Beleg; oft wird neu generiert, weil er einen Fehler enthält. Jede seiner '
-        'Aussagen prüfst du am Bild und am Kontext, und was ihnen widerspricht oder '
-        'sich nicht belegen lässt, ersetzt du durch die belegte Angabe. Die belegte '
-        'Faktenlage bleibt identisch — keine neuen '
-        'unbelegten Aussagen, und belegte Kernfakten (Namen, Marken, Typen, lesbare '
-        'Texte wie Schild- oder Gate-Aufschriften, und eine vorhandene '
-        'Fotomontage-/Collage-Kennzeichnung) bleiben in BEIDEN Feldern der '
-        'neuen Fassung erhalten. Alle übrigen Regeln gelten unverändert.'
+        'UND Langbeschreibung. '
+        + herkunft_text +
+        'Belegte Kernfakten (Namen, Marken, Typen, lesbare Texte wie Schild- oder '
+        'Gate-Aufschriften und eine vorhandene Fotomontage-/Collage-Kennzeichnung) '
+        'bleiben in BEIDEN Feldern erhalten, und neue unbelegte Aussagen kommen '
+        'nicht hinzu. Alle übrigen Regeln gelten unverändert.'
     )
 
 
 # Mini-Pipeline-Typen (kein Inventar-Pass).
 _MINI_TYPES: frozenset[str] = frozenset({'logo', 'icon', 'funktional'})
+
+# Typen, die einen Prüfpass bekommen können: jeder effektive Bildtyp außer den Mini-Typen
+# und dekorativ ('foto' allein kommt nie an, es wird immer zu foto_event, foto_personen …).
+# Gültige Einträge einer Typ-Liste in V4_VERIFY_MODE (_verify_scope_matches, _typ_liste).
+_VERIFY_TYPEN: frozenset[str] = frozenset((*get_args(BildtypTopLevel), *get_args(FotoSubtyp))) - _MINI_TYPES - {'foto', 'dekorativ'}
 
 # Generic alt_texts die den 'funktional + brauchbarer alt' Frühen-Exit
 # nicht triggern dürfen.
@@ -942,6 +1060,7 @@ def generate_alt_text_v4(
     language: str = 'de',
     previous_alt: str = '',  # bisheriger Alt-Text — nur beim Neu-Generieren gesetzt (gezielte Variation)
     user_prompt: str = '',  # Eigener gespeicherter Nutzer-Prompt (Prompt-Verwaltung 06.07.2026)
+    previous_alt_ki: Optional[str] = None,  # zuletzt von der KI erzeugter Text (herkunft_vorlage, 08.10.2026)
 ) -> dict:
     """v4-Eintrittspunkt: Klassifikation + Combo (+ Pruefpass). Args/Returns siehe _run_lean_pipeline."""
     return _run_lean_pipeline(
@@ -956,6 +1075,7 @@ def generate_alt_text_v4(
         language=language,
         previous_alt=previous_alt,
         user_prompt=user_prompt,
+        previous_alt_ki=previous_alt_ki,
     )
 
 
@@ -1030,6 +1150,7 @@ def _run_lean_pipeline(
     language: str = 'de',
     previous_alt: str = '',
     user_prompt: str = '',  # Eigener gespeicherter Nutzer-Prompt (Prompt-Verwaltung 06.07.2026)
+    previous_alt_ki: Optional[str] = None,
 ) -> dict:
     """Lean-Pipeline: 1 Klassifikations-Aufruf + 1 Combo-Hauptaufruf (+ Pruefpass).
 
@@ -1144,7 +1265,7 @@ def _run_lean_pipeline(
         )
         mini_prompt += _user_prompt_suffix(user_prompt)
         mini_prompt += _language_suffix(language)
-        mini_prompt += _variation_suffix(previous_alt)
+        mini_prompt += _variation_suffix(previous_alt, previous_alt_ki)
         beschreibung = call_with_schema(
             model=MODEL_GENERATE,
             prompt=mini_prompt,
@@ -1190,7 +1311,7 @@ def _run_lean_pipeline(
         combo_prompt += prompt_zusatz_block(get_provider_name())  # Feinschliff je Anbieter (anbieter_profil.py)
         combo_prompt += _user_prompt_suffix(user_prompt)
         combo_prompt += _language_suffix(language)
-        combo_prompt += _variation_suffix(previous_alt)
+        combo_prompt += _variation_suffix(previous_alt, previous_alt_ki)
         beschreibung = call_with_schema(
             model=MODEL_GENERATE,
             prompt=combo_prompt,
@@ -1283,6 +1404,7 @@ def _run_lean_pipeline(
             + (',werte:gelesen' if diagramm_werte_gelesen else '')
             + (',zaehl:gelaufen' if zaehl_pass_gelaufen else '')
             + (',faktenblatt:gelesen' if faktenblatt_gelesen else '')
+            + (f',vorlage:{herkunft_vorlage(previous_alt, previous_alt_ki)[0]}' if (previous_alt or '').strip() else '')
             + (f',verify:ok={verify_result.alt_text_belegt}' if verify_result is not None else '')
             + (',verify_korrektur:applied' if verify_korrektur_applied else '')
             + (',verify_lang:korrigiert' if verify_lang_korrigiert else '')

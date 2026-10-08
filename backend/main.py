@@ -8070,6 +8070,10 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         # Gezielte Variation (05.07.2026): der Text, den der Nutzer gerade sieht
         # (manuell editierte Fassung hat Vorrang), geht als Abgrenzungs-Vorlage mit.
         regen_previous = img["alt_text_edited"] or img["alt_text"] or ""
+        # Dazu der zuletzt von der KI erzeugte Text (08.10.2026): Was der Nutzer davon abweichend
+        # selbst geschrieben oder ergaenzt hat, bleibt beim Neu-Generieren Beleg
+        # (orchestrator.herkunft_vorlage); der KI-Text selbst ist nur Abgrenzungs-Vorlage.
+        regen_previous_ki = img["alt_text"] or ""
         # Eigener Prompt: aktive Projekt-Einstellung gilt auch beim Einzel-Neu-Generieren.
         regen_user_prompt = ""
         if img["prompt_id"]:
@@ -8097,7 +8101,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text, img["image_path"], regen_context, effective_type,
             regen_width, regen_height, regen_original_alt, True, REGENERATE_TEMPERATURE,  # force_regenerate=True; Variation beim Einzel-Neu-Generieren
-            regen_lang, regen_previous, regen_user_prompt
+            regen_lang, regen_previous, regen_user_prompt, regen_previous_ki
         )
 
         langbeschreibung = result.get("langbeschreibung", "")

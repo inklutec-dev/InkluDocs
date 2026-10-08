@@ -1,7 +1,7 @@
 # Klassifikator
 
 - **Builder:** `prompts/builders/classification.py:112`
-- **Generiert:** 2026-09-09
+- **Generiert:** 2026-10-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**

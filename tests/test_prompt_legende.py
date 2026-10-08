@@ -7,7 +7,14 @@ LEGENDE der Datengrafiken. Der Karten-Prompt wendet sie im AUFTRAG auf Flächen 
 Bänder an, und das innere Inventar der Karte ordnet jede Fläche ihrem
 Legendeneintrag zu. Fotos bekommen den Block nicht. Der Prüfpass (Chatbot-Speicherweg)
 beanstandet Deutungen gegen die Legende, und beim Neu-Generieren ist der bisherige Text
-Formulierungsvorlage, kein Beleg.
+der KI Abgrenzungs-Vorlage, kein Beleg.
+
+Nacharbeit nach der Prüfung (08.10.2026): Die Regel steht inhaltlich nur noch im Block;
+der Karten-AUFTRAG wendet sie in einem allgemeinen Halbsatz an, das Inventar enthält nur
+den Arbeitsschritt. Was der Nutzer selbst geschrieben oder ergänzt hat, bleibt beim
+Neu-Generieren Beleg (herkunft_vorlage). Unbekannte Einträge der Typ-Listen in
+V4_FAKTENBLATT und V4_VERIFY_MODE stehen einmal als Warnung im Log. Im Faktenblatt
+kommt die Kategorie eines Ortes nur noch aus der Legende, nicht aus seinem Aussehen.
 
 Lauf im Container: docker exec -w /app inkludocs-staging python3 -m unittest tests/test_prompt_legende.py
 """
@@ -45,10 +52,31 @@ class LegendeRegelTest(unittest.TestCase):
         self.assertIn(REGEL, p)
         self.assertIn(VORRANG, p)
         auftrag = _abschnitt(p, 'AUFTRAG', 'DEIN INNERES INVENTAR')
-        self.assertIn('Hat die Karte eine Legende, gilt sie auch für die Flächen', auftrag)
-        self.assertIn('ein Gewässer also nur, wenn', auftrag)
+        self.assertIn('Flächen, Linien, Symbole und Größenstufen benennst du nach\nihrem Legendeneintrag, '
+                      'auch dort, wo sie nur der Orientierung dienen.', auftrag)
         inventar = _abschnitt(p, 'DEIN INNERES INVENTAR (Schritt 1)', 'ALT-TEXT')
-        self.assertIn('die zu einem Eintrag passt, mit diesem Eintrag', inventar)
+        self.assertIn('jeder Legendeneintrag mit den Flächen,\nLinien und Signaturen, die er bezeichnet', inventar)
+        # Nacharbeit: Der AUFTRAG erzählt keinen Einzelfall nach, Wasser-Bilder stehen nur im Block,
+        # und weder AUFTRAG noch Inventar wiederholen die Regel.
+        for teil, name in ((auftrag, 'AUFTRAG'), (inventar, 'Inventar')):
+            for wort in ('blau', 'Gewässer', 'Wasser', 'Alltag', 'Band', 'nach Legende'):
+                self.assertNotIn(wort, teil, f'{name} enthält "{wort}"')
+        block = ' '.join(_abschnitt(p, 'LESBARER TEXT UND LEGENDE', 'STILREGELN').split())
+        flach = ' '.join(p.split())
+        self.assertEqual(flach.count('Wasser, Wald oder eine Gefahr ist es nur'), 1)
+        self.assertEqual(flach.count('nicht zugleich ein See'), 1)
+        self.assertIn('Wasser, Wald oder eine Gefahr ist es nur', block)
+
+    def test_legende_bestimmt_was_beschriftung_gilt_daneben(self):
+        p = _combo('karte', 'karte')
+        block = ' '.join(_abschnitt(p, 'LESBARER TEXT UND LEGENDE', 'STILREGELN').split())
+        self.assertNotIn('ganze Aussage', block)
+        self.assertIn('Was das Element ist, sagen die Legende oder eine Beschriftung, nicht Farbe oder Form: '
+                      'Wasser, Wald oder eine Gefahr ist es nur, wenn eine von beiden das sagt.', block)
+        # Fehltexte der Messung: "ein Gewässer, das laut Legende zum Verwaltungsvermögen gehört"
+        self.assertIn('Das gilt auch, wenn der Eintrag nur einen Eigentümer oder einen Planungsstand nennt; eine '
+                      'Deutung nach dem Aussehen kommt nicht hinzu', block)
+        self.assertIn('Eine Beschriftung am Element selbst, etwa ein Name, gilt daneben und bleibt im Text.', block)
 
     def test_alle_datengrafiken_mit_block(self):
         for typ in ('diagramm', 'tabelle', 'karte', 'infografik', 'screenshot'):
@@ -66,13 +94,87 @@ class LegendeRegelTest(unittest.TestCase):
         from pipelines.v4 import orchestrator as orch
         p = orch._build_verify_prompt('Ein Alt-Text', enriched_context='Kontext', bildtyp='karte')
         self.assertIn('- Legende: Farben, Muster, Linien und Symbole bedeuten, was die Legende ihnen zuweist.', p)
+        self.assertIn('auch wenn der Legendeneintrag nur einen Eigentümer oder einen Planungsstand nennt', p)
 
     def test_neu_generieren_vorlage_ist_kein_beleg(self):
         from pipelines.v4 import orchestrator as orch
-        s = orch._variation_suffix('Karte zum Landabtausch: Ein Fluss teilt das Gebiet.')
-        self.assertIn('Formulierungsvorlage, kein Beleg', s)
-        self.assertIn('Fotomontage-/Collage-Kennzeichnung', s)  # belegte Kernfakten bleiben geschuetzt
+        ki = 'Karte zum Landabtausch: Ein Fluss teilt das Gebiet.'
+        for s in (orch._variation_suffix(ki), orch._variation_suffix(ki, ki)):
+            flach = ' '.join(s.split())
+            self.assertIn('Den bisherigen Text hat die KI geschrieben. Er zeigt dir nur, wovon sich die neue '
+                          'Fassung abheben soll, und ist kein Beleg', flach)
+            # eindeutig, wem widersprochen wird, und Unbelegtes faellt ausdruecklich weg
+            self.assertIn('Was Bild, Legende oder Kontext widerspricht, ersetzt du durch die belegte Angabe, '
+                          'und was sich dort nicht belegen lässt, fällt weg.', flach)
+            self.assertNotIn('Formulierungsvorlage', flach)   # widersprach der Bitte um andere Formulierung
+            self.assertNotIn('Faktenlage bleibt identisch', flach)
+            self.assertIn('Fotomontage-/Collage-Kennzeichnung', flach)  # belegte Kernfakten bleiben geschuetzt
+            self.assertNotIn('Nutzer selbst geschrieben', flach)
         self.assertEqual(orch._variation_suffix(''), '')
+
+    def test_herkunft_vorlage(self):
+        from pipelines.v4.orchestrator import herkunft_vorlage
+        ki = 'Karte zum Landabtausch im Areal Beispielfeld: Ein Fluss teilt das Gebiet von Nord nach Süd.'
+        self.assertEqual(herkunft_vorlage(ki, ki), ('ki', []))
+        self.assertEqual(herkunft_vorlage(ki, None), ('ki', []))             # Aufrufer kennt den KI-Text nicht
+        self.assertEqual(herkunft_vorlage('  ' + ki.replace(' ', '  ') + '\n', ki), ('ki', []))   # nur Leerzeichen
+        self.assertEqual(herkunft_vorlage(ki.replace(' von Nord nach Süd', ''), ki), ('ki', []))  # nur gestrichen
+        self.assertEqual(herkunft_vorlage(ki.replace('Beispielfeld:', 'Beispielfeld,').replace('Süd.', 'Süd'), ki),
+                         ('ki', []))                                                            # nur Satzzeichen
+        self.assertEqual(herkunft_vorlage('Mein eigener Text zur Karte.', ''), ('nutzer', []))   # nie generiert
+        self.assertEqual(herkunft_vorlage('Plan des Planungsbüros Muster für die Gemeindeversammlung am 14. '
+                                          'November mit neuer Parzellierung.', ki)[0], 'nutzer')  # fast alles neu
+        bearbeitet = ki.replace('Beispielfeld:', 'Beispielfeld, Vorlage für die Gemeindeversammlung am 14. November:')
+        self.assertEqual(herkunft_vorlage(bearbeitet, ki),
+                         ('bearbeitet', ['Vorlage für die Gemeindeversammlung am 14. November']))
+        self.assertEqual(herkunft_vorlage(ki.replace('Fluss', 'Gemeindeweg'), ki), ('bearbeitet', ['Gemeindeweg']))
+        self.assertEqual(herkunft_vorlage('', ki), ('ki', []))
+
+    def test_neu_generieren_nutzerangaben_bleiben_beleg(self):
+        from pipelines.v4 import orchestrator as orch
+        ki = 'Karte zum Landabtausch im Areal Beispielfeld: Ein Fluss teilt das Gebiet von Nord nach Süd.'
+        bearbeitet = ki.replace('Beispielfeld:', 'Beispielfeld, Vorlage für die Gemeindeversammlung am 14. November:')
+        flach = ' '.join(orch._variation_suffix(bearbeitet, ki).split())
+        self.assertIn('Den bisherigen Text hat die KI geschrieben und der Nutzer danach bearbeitet. Ergänzt oder '
+                      'geändert hat er: „Vorlage für die Gemeindeversammlung am 14. November“.', flach)
+        # Steve 08.10.: von Hand Ergaenztes bleibt inhaltlich, auch wenn das Bild es nicht zeigt
+        self.assertIn('Diese Angaben übernimmst du inhaltlich in BEIDE Felder der neuen Fassung, auch wenn das '
+                      'Bild sie nicht zeigt (etwa einen Namen oder einen Anlass); nur die Formulierung darf sich '
+                      'ändern. Sie entfallen nur, wo Bild oder Legende ihnen widersprechen', flach)
+        self.assertIn('Der übrige Text zeigt dir nur, wovon sich die neue Fassung abheben soll, und ist kein Beleg',
+                      flach)
+        self.assertNotIn('wie Angaben im Kontext', flach)   # sonst griffe die Namensregel fuer Kontext
+        eigen = ' '.join(orch._variation_suffix('Unser Lageplan für die Versammlung.', '').split())
+        self.assertIn('Den bisherigen Text hat der Nutzer selbst geschrieben. Seine Angaben übernimmst du '
+                      'inhaltlich in BEIDE Felder', eigen)
+        self.assertNotIn('kein Beleg', eigen)
+
+    def test_nutzerstellen_begrenzt(self):
+        from pipelines.v4 import orchestrator as orch
+        ki = ' '.join(f'Wort{i}' for i in range(400))
+        bearbeitet = ki.replace('Wort10 ', 'Ergänzung ' * 150 + 'Wort10 ').replace('Wort300 ', 'Zusatz ' * 200)
+        s = orch._variation_suffix(bearbeitet, ki)
+        self.assertIn('…', s)
+        self.assertLess(len(s), 3200)
+
+    def test_pipeline_steps_nennen_herkunft(self):
+        from unittest import mock
+        from pipelines.v4 import orchestrator as orch
+        from prompts.components.schemas import BeschreibungOutput
+        aus = BeschreibungOutput(alt_text='Karte des Areals Beispielfeld mit zwei Plänen und Legende (fiktiv).',
+                                 langbeschreibung='Langbeschreibung (fiktiv).', verwendete_inventar_items=[],
+                                 nicht_verwendete_inventar_items=[], nicht_im_inventar=[])
+        ki = 'Karte zum Landabtausch im Areal Beispielfeld: Ein Fluss teilt das Gebiet von Nord nach Süd.'
+        with mock.patch.dict(os.environ, {'V4_FAKTENBLATT': 'off', 'V4_VERIFY_MODE': 'off'}), \
+                mock.patch.object(orch, 'call_with_schema', return_value=aus) as aufruf:
+            r = orch.generate_alt_text_v4('/tmp/fehlt.png', image_type_override='karte', previous_alt=ki + ' Ergänzt.',
+                                          previous_alt_ki=ki, temperature=0.5)
+        self.assertIn(',vorlage:bearbeitet', r['pipeline_steps'])
+        self.assertIn('„Ergänzt.“', aufruf.call_args.kwargs['prompt'])
+        with mock.patch.dict(os.environ, {'V4_FAKTENBLATT': 'off', 'V4_VERIFY_MODE': 'off'}), \
+                mock.patch.object(orch, 'call_with_schema', return_value=aus):
+            r = orch.generate_alt_text_v4('/tmp/fehlt.png', image_type_override='karte')
+        self.assertNotIn('vorlage:', r['pipeline_steps'])
 
     def test_pruefpass_gezielt_fuer_karten(self):
         from unittest import mock
@@ -118,6 +220,58 @@ class LegendeRegelTest(unittest.TestCase):
         with mock.patch.dict(os.environ, ohne, clear=True):
             self.assertTrue(orch._faktenblatt_an('karte'))          # Vorgabe on
             self.assertFalse(orch._verify_scope_matches('karte'))   # Vorgabe off
+
+    def test_unbekannte_typen_einmal_gewarnt(self):
+        """Tippfehler, Oberbegriffe und Mischwerte wirken wie bisher nicht, stehen aber einmal im Log."""
+        from unittest import mock
+        from pipelines.v4 import orchestrator as orch
+        orch._SCHALTER_GEWARNT.clear()
+        logname = 'pipelines.v4.orchestrator'
+        for schalter, wert, pruefe, typ, wirkt, unbekannt in (
+                ('V4_FAKTENBLATT', 'karten', orch._faktenblatt_an, 'karte', False, 'karten'),
+                ('V4_FAKTENBLATT', 'karte,diagramm', orch._faktenblatt_an, 'karte', True, 'diagramm'),
+                ('V4_VERIFY_MODE', 'foto', orch._verify_scope_matches, 'foto_event', False, 'foto'),
+                ('V4_VERIFY_MODE', 'kritisch,karte', orch._verify_scope_matches, 'karte', True, 'kritisch'),
+                ('V4_VERIFY_MODE', 'kritisch,karte', orch._verify_scope_matches, 'foto_event', False, 'kritisch'),
+                ('V4_VERIFY_MODE', 'on,karte', orch._verify_scope_matches, 'karte', True, 'on'),
+                ('V4_VERIFY_MODE', 'logo', orch._verify_scope_matches, 'logo', True, 'logo')):
+            with mock.patch.dict(os.environ, {schalter: wert}):
+                with self.assertLogs(logname, 'WARNING') as protokoll:
+                    orch._SCHALTER_GEWARNT.discard((schalter, wert))
+                    self.assertEqual(pruefe(typ), wirkt, f'{schalter}={wert}, {typ}')
+                self.assertEqual(len(protokoll.records), 1)
+                self.assertIn(unbekannt, protokoll.output[0])
+                with mock.patch.object(orch.log, 'warning') as warnung:   # zweiter Aufruf: keine zweite Warnung
+                    pruefe(typ)
+                warnung.assert_not_called()
+        # gueltige Listen bleiben still
+        for schalter, wert, pruefe, typ in (('V4_FAKTENBLATT', 'karte', orch._faktenblatt_an, 'karte'),
+                                            ('V4_FAKTENBLATT', 'karte, tabelle', orch._faktenblatt_an, 'tabelle'),
+                                            ('V4_VERIFY_MODE', 'karte,foto_event', orch._verify_scope_matches, 'foto_event')):
+            with mock.patch.dict(os.environ, {schalter: wert}), mock.patch.object(orch.log, 'warning') as warnung:
+                self.assertTrue(pruefe(typ))
+            warnung.assert_not_called()
+        self.assertEqual(orch._VERIFY_TYPEN & orch._MINI_TYPES, frozenset())
+        self.assertNotIn('foto', orch._VERIFY_TYPEN)
+        self.assertLessEqual(orch._VERIFY_KRITISCHE_TYPEN, orch._VERIFY_TYPEN)
+
+    def test_faktenblatt_karte_kategorie_nur_aus_legende(self):
+        from pipelines.v4 import orchestrator as orch
+        f = orch.KarteFakten(gebiet='Musterhausen', legende=['Hellblau: Gemeinde (Verwaltungsvermögen)'],
+                             orte=[orch.KarteOrt(name='2101', kategorie='Gemeinde (Verwaltungsvermögen)', lage='Mitte'),
+                                   orch.KarteOrt(name='Beispielweg', lage='am Südrand')],
+                             lesbarkeit='gut')
+        block = orch._faktenblatt_block(f, 'karte')
+        flach = ' '.join(block.split())
+        self.assertIn('Grundlage für jede Zahl, jede Bezeichnung und jede Zuordnung in Alt-Text und Langbeschreibung.',
+                      flach)
+        self.assertNotIn('jede Reihenfolge', flach)
+        self.assertIn('  - 2101 (Legende: Gemeinde (Verwaltungsvermögen)), Mitte', block)
+        self.assertIn('  - Beispielweg, am Südrand', block)
+        felder = orch.KarteOrt.model_fields
+        self.assertNotIn('Fluss', felder['lage'].description)
+        self.assertNotIn('Symbol', felder['kategorie'].description)
+        self.assertIn('leer, wenn kein Legendeneintrag passt', felder['kategorie'].description)
 
 
 if __name__ == '__main__':

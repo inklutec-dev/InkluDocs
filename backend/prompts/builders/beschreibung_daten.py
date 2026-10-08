@@ -55,9 +55,15 @@ def _render_kontext_block(enriched_context: str, user_hint_text: str) -> str:
 # dazu: Eine Karte mit Legende wies eine hellblaue Fläche einem Eigentümer zu,
 # das Modell gab die Legende richtig wieder und nannte die Fläche trotzdem
 # Gewässer, auch beim Neu-Generieren. Alltagswissen ("blau ist Wasser") schlug
-# die Legende. Der Absatz ist bewusst allgemein gehalten; die Anwendung auf
-# Karten (Flächen und Bänder als Orientierungsmarken) steht im AUFTRAG des
-# Karten-Builders.
+# die Legende. Die Regel steht nur hier; der Karten-Builder wendet sie im
+# AUFTRAG in einem Halbsatz an, sein inneres Inventar enthält nur den
+# Arbeitsschritt (Fläche zu Legendeneintrag). Nacharbeit 08.10.2026: Was ein
+# Element ist, sagen nur Legende oder Beschriftung, auch wenn der Eintrag bloß
+# einen Eigentümer nennt (in den Fehltexten: "ein Gewässer, das laut Legende zum
+# Verwaltungsvermögen gehört"); eine Beschriftung am Element gilt daneben (vorher
+# "Die Bedeutung aus der Legende ist die ganze Aussage", zu absolut). Gemessen:
+# Mit dem Prompt allein bleibt die Karten-Falle unzuverlässig, gleich in welchem
+# Wortlaut (prompts/ARCHITEKTUR.md); der Block ist die Grundlage, nicht die Garantie.
 _LESBARER_TEXT_UND_LEGENDE = """LESBARER TEXT UND LEGENDE
 
 Lesbare Beschriftungen, Zahlen, Namen und Kontaktdaten übernimmst du wortgetreu
@@ -67,13 +73,14 @@ sinngemäß zusammen. Fehlende oder unleserliche Teile ergänzt du nicht; ein le
 Feld oder ein Strich ist keine Null.
 
 Eine Legende legt fest, was Farben, Muster, Linien und Symbole in dieser Grafik
-bedeuten, und sie geht dem Alltagswissen vor. Ordne jedes Element, dessen Farbe,
-Muster oder Symbol in der Legende steht, diesem Eintrag zu und benenne es mit
-dessen Bedeutung, auch wenn Farbe und Form etwas anderes nahelegen: Eine blaue
-Fläche ist dann kein Wasser, eine grüne kein Wald, eine rote keine Gefahr. Die
-Bedeutung aus der Legende ist die ganze Aussage über dieses Element; eine zweite
-Deutung nach dem Aussehen kommt nicht hinzu: Eine als Bauland ausgewiesene blaue
-Fläche ist nicht zugleich ein See."""
+bedeuten, und sie geht dem Alltagswissen vor. Ordne jedes Element in einer Farbe,
+einem Muster oder Symbol der Legende diesem Eintrag zu und benenne es mit dessen
+Bedeutung. Was das Element ist, sagen die Legende oder eine Beschriftung, nicht
+Farbe oder Form: Wasser, Wald oder eine Gefahr ist es nur, wenn eine von beiden
+das sagt. Das gilt auch, wenn der Eintrag nur einen Eigentümer oder einen
+Planungsstand nennt; eine Deutung nach dem Aussehen kommt nicht hinzu: Eine blau
+markierte Fläche eines Eigentümers ist nicht zugleich ein See. Eine Beschriftung am
+Element selbst, etwa ein Name, gilt daneben und bleibt im Text."""
 
 
 def build_beschreibung_prompt_illustration(
@@ -346,8 +353,11 @@ def build_beschreibung_prompt_karte(
     historische und thematische Karten unterschieden; die Ortsnamen-Regel
     steht in EIGENNAMEN_REGELN. Seit Oktober 2026 wendet der AUFTRAG die
     allgemeine Regel "Legende vor Alltagswissen" (Block LESBARER TEXT UND
-    LEGENDE) auf Flächen, Bänder und Linien an, an denen der Text die Lage
-    erklärt; das innere Inventar ordnet jede Fläche ihrem Legendeneintrag zu.
+    LEGENDE) in einem Halbsatz an: auch Flächen, Linien und Symbole, die nur der
+    Orientierung dienen, heißen nach ihrem Legendeneintrag. Er ersetzt den
+    älteren Satz "Rot ist keine Gefahr, ein großer Kreis steht für den Wert, den
+    die Legende ihm zuweist"; das innere Inventar ordnet jedem Legendeneintrag
+    seine Flächen, Linien und Signaturen zu.
     """
     examples = load_examples('karte')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -364,11 +374,8 @@ Eine Karte steht im Dokument, weil sie etwas räumlich verortet: Standorte,
 Gebiete, Grenzen, Wege oder Werte je Region. Dein Text gibt räumliche
 Orientierung: zuerst Kartenthema, gezeigtes Gebiet und die Bedeutung der
 Hervorhebungen, dann die Verteilung so, dass ein Mensch ohne Bild sie
-nachvollziehen kann. Hat die Karte eine Legende, gilt sie auch für die Flächen,
-Bänder und Linien, an denen du die Lage erklärst: Ein geschwungenes blaues Band in
-einer Farbe der Legende ist das, was ihr Eintrag sagt, und nichts darüber hinaus,
-ein Gewässer also nur, wenn der Eintrag es so nennt; ein großer Kreis steht für den
-Wert, den die Legende ihm zuweist.
+nachvollziehen kann. Flächen, Linien, Symbole und Größenstufen benennst du nach
+ihrem Legendeneintrag, auch dort, wo sie nur der Orientierung dienen.
 
 
 {_render_inventar_block(inventar_json)}

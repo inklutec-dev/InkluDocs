@@ -411,6 +411,9 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
     except Exception:
         _regen_temp = 0.5
     _bisher = (img["alt_text_edited"] if "alt_text_edited" in img.keys() else None) or img["alt_text"] or ""
+    # 08.10.2026: dazu der zuletzt von der KI erzeugte Text — was der Nutzer selbst geschrieben oder
+    # ergaenzt hat, bleibt beim Neu-Generieren Beleg (orchestrator.herkunft_vorlage).
+    _bisher_ki = img["alt_text"] or ""
 
     result = generate_alt_text(
         img["image_path"],
@@ -424,6 +427,7 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
         language=(img["alt_language"] or "de"),  # Projekt-Ausgabesprache (03.07.2026)
         previous_alt=_bisher,
         user_prompt=user_prompt,
+        previous_alt_ki=_bisher_ki,
     )
 
     conn = get_db()

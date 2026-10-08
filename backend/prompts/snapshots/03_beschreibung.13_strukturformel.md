@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp strukturformel
 
-- **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-09
+- **Builder:** `prompts/builders/combo.py:71`
+- **Generiert:** 2026-10-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -119,8 +119,8 @@ Schwerpunkt Strukturformel: Beschriftung und Stoffname, Atome und funktionelle
 Gruppen, Bindungstypen, bei Reaktionen Edukte, Bedingungen und Produkte.
 
 Benenne dir selbst, welche Fehldeutungen bei diesem Bild naheliegen (eine Zahl
-der falschen Spalte oder Reihe zugeordnet, eine Farbe nach Alltagsbedeutung statt
-nach Legende gelesen, ein Beispieltext als Datenangabe), und meide sie.
+der falschen Spalte oder Reihe zugeordnet, eine Farbe dem falschen Legendeneintrag
+zugeordnet, ein Beispieltext als Datenangabe), und meide sie.
 
 
 ALT-TEXT

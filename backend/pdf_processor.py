@@ -45,7 +45,7 @@ _pipeline_log = _logging.getLogger("inkludocs.pipeline")
 # damit alte v3.7-Eintraege nie als Treffer zurueckkommen. Der Import auf
 # Modulebene ist bewusst Fail-Fast: fehlt der Orchestrator, startet der Container nicht.
 PIPELINE_VERSION = "v4"
-from pipelines.v4.orchestrator import generate_alt_text_v4 as _v4_entry
+from pipelines.v4.orchestrator import generate_alt_text_v4 as _v4_entry, herkunft_vorlage
 
 
 LAYOUT_SEITENANTEIL = float(os.environ.get("V4_LAYOUT_SEITENANTEIL", "0.5"))
@@ -692,13 +692,16 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
                       width: int = 0, height: int = 0, original_alt: str = "",
                       force_regenerate: bool = False, temperature: float = 0.0,
                       language: str = "de", previous_alt: str = "",
-                      user_prompt: str = "") -> dict:
+                      user_prompt: str = "", previous_alt_ki: str = None) -> dict:
     """Front-Door — Cache-Check, dann die v4-Pipeline.
 
     T6 (03.05.2026): persistenter Content-Hash-Cache vor dem Pipeline-Aufruf.
       - force_regenerate=True: Cache uebersprungen, Pipeline laeuft, Result wird gecacht.
       - force_regenerate=False: Cache-Treffer liefert direkt zurueck (kein Modellaufruf).
     Der Slot user_hint im Cache-Key traegt den eigenen Nutzer-Prompt (06.07.2026).
+    previous_alt_ki (08.10.2026): der zuletzt von der KI erzeugte Text; zusammen mit
+    previous_alt erkennt der Orchestrator, was der Nutzer selbst geschrieben hat
+    (orchestrator.herkunft_vorlage). None = unbekannt, die Vorlage gilt als KI-Text.
     """
     from cache import build_cache_key, get_cached, set_cached
 
@@ -728,10 +731,15 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
         language=language,
         previous_alt=previous_alt,
         user_prompt=user_prompt,
+        previous_alt_ki=previous_alt_ki,
     )
 
-    # Auch bei force_regenerate: Cache neu befuellen, damit nachfolgende Anfragen Hits werden
-    set_cached(cache_key, content_hash, PIPELINE_VERSION, image_type, None, result)
+    # Auch bei force_regenerate: Cache neu befuellen, damit nachfolgende Anfragen Hits werden.
+    # Ausnahme (08.10.2026): Neu generiert mit einem Text, den der Nutzer selbst geschrieben oder
+    # bearbeitet hat. Seine Angaben (etwa ein Name) gelten dann als Beleg und stehen im Ergebnis;
+    # der Cache ist kontouebergreifend, so ein Ergebnis darf keinem anderen Konto zurueckkommen.
+    if herkunft_vorlage(previous_alt, previous_alt_ki)[0] == 'ki':
+        set_cached(cache_key, content_hash, PIPELINE_VERSION, image_type, None, result)
     return result
 
 

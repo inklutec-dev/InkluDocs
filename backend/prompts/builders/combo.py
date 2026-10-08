@@ -60,9 +60,11 @@ Innenfläche als Inhalt, stilisiertes Tier als bestimmte Art, kleine runde
 Gegenstände als bestimmte Funktion), und meide sie. Prüfe das Bild Viertel für
 Viertel auf Montage-Hinweise (Belegregel 5)."""]
     else:
+        # 08.10.2026: Beispiel "eine Farbe nach Alltagsbedeutung statt nach Legende gelesen" ersetzt;
+        # die Regel "Legende vor Alltagswissen" steht nur im Block LESBARER TEXT UND LEGENDE.
         teile += ["""Benenne dir selbst, welche Fehldeutungen bei diesem Bild naheliegen (eine Zahl
-der falschen Spalte oder Reihe zugeordnet, eine Farbe nach Alltagsbedeutung statt
-nach Legende gelesen, ein Beispieltext als Datenangabe), und meide sie."""]
+der falschen Spalte oder Reihe zugeordnet, eine Farbe dem falschen Legendeneintrag
+zugeordnet, ein Beispieltext als Datenangabe), und meide sie."""]
     return '\n'.join(teile)
 
 

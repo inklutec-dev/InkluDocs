@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp foto_essen
 
-- **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-09
+- **Builder:** `prompts/builders/combo.py:71`
+- **Generiert:** 2026-10-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**

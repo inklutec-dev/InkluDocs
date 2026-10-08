@@ -303,6 +303,14 @@ def render_all(out_dir: Path) -> list[Path]:
                                            orch.TabelleZeile(bezeichnung='Kohlenhydrate', werte=['12 g']),
                                            orch.TabelleZeile(bezeichnung='Fett', werte=['0 g'])],
                                    fussnoten=['Quelle: Beispiel AG'], lesbarkeit='gut'), 'tabelle').strip()),
+            ('05_faktenblatt_block_karte.md', 'Block FAKTENBLATT für eine Karte (wird an den Beschreibungs-Prompt gehängt)', '',
+             orch._faktenblatt_block(
+                orch.KarteFakten(titel='Areal Beispielfeld: Landabtausch', gebiet='Areal Beispielfeld, Musterhausen',
+                                 legende=['Hellblau: Gemeinde Musterhausen (Verwaltungsvermögen)', 'Gelb: Beispiel Wohnbau AG',
+                                          'Rote Linie: Planungsperimeter'],
+                                 orte=[orch.KarteOrt(name='2165', kategorie='Beispiel Wohnbau AG', lage='Nordwesten'),
+                                       orch.KarteOrt(name='Beispielweg', lage='am Südrand')],
+                                 lesbarkeit='gut'), 'karte').strip()),
             ('06_pruefpass.md', 'Prüfpass', '', orch._build_verify_prompt(
                 'Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile liegt am Ende über dem Ausgangswert und erreicht 5,0.',
                 enriched_context=DEMO_KONTEXT_JE_TYP['diagramm'], langbeschreibung='(Langbeschreibung des Erzeugers)',
@@ -314,7 +322,29 @@ def render_all(out_dir: Path) -> list[Path]:
         written.append(_write_snapshot(out_dir, filename=filename, title=title, builder_ref='pipelines/v4/orchestrator.py',
                                        mode_info={}, demo_values={}, prompt_text=text))
 
-    # 6) Anbieter-Profile: der Zusatzblock je Anbieter (leer = kein Zusatz), siehe pipelines/v4/anbieter_profil.py
+    # 6) Zusätze, die der Orchestrator an jeden Beschreibungs-Prompt hängt (alle Bildtypen, Combo und Mini):
+    #    Neu generieren in drei Fällen (08.10.2026), Ausgabesprache, eigene Vorgaben des Nutzers.
+    ki_text = 'Karte zum Landabtausch im Areal Beispielfeld: Ein Fluss teilt das Gebiet von Nord nach Süd.'
+    zusaetze = [
+        ('08_zusatz_neu_generieren.1_ki_text.md', 'Zusatz Neu generieren: bisheriger Text von der KI',
+         {'Bisheriger Text': ki_text, 'Vom Nutzer bearbeitet': 'nein'},
+         orch._variation_suffix(ki_text, ki_text)),
+        ('08_zusatz_neu_generieren.2_bearbeitet.md', 'Zusatz Neu generieren: KI-Text, vom Nutzer ergänzt',
+         {'KI-Text': ki_text, 'Angezeigter Text': 'mit Ergänzung "Vorlage für die Gemeindeversammlung am 14. November"'},
+         orch._variation_suffix(ki_text.replace('Beispielfeld:', 'Beispielfeld, Vorlage für die Gemeindeversammlung am 14. November:'),
+                                ki_text)),
+        ('08_zusatz_neu_generieren.3_nutzertext.md', 'Zusatz Neu generieren: Text vom Nutzer selbst geschrieben',
+         {'KI-Text': '(keiner)', 'Angezeigter Text': 'Text des Nutzers'},
+         orch._variation_suffix('Lageplan des Areals Beispielfeld für die Gemeindeversammlung am 14. November.', '')),
+        ('08_zusatz_sprache.en.md', 'Zusatz Ausgabesprache (Beispiel Englisch)', {'Sprache': 'en'}, orch._language_suffix('en')),
+        ('08_zusatz_eigene_vorgaben.md', 'Zusatz eigene Vorgaben des Nutzers (Prompt-Verwaltung)',
+         {'Vorgabe': 'Bitte kurze Sätze, Zielgruppe Kinder.'}, orch._user_prompt_suffix('Bitte kurze Sätze, Zielgruppe Kinder.')),
+    ]
+    for filename, title, demo, text in zusaetze:
+        written.append(_write_snapshot(out_dir, filename=filename, title=title, builder_ref='pipelines/v4/orchestrator.py',
+                                       mode_info={}, demo_values=demo, prompt_text=text.strip()))
+
+    # 7) Anbieter-Profile: der Zusatzblock je Anbieter (leer = kein Zusatz), siehe pipelines/v4/anbieter_profil.py
     from pipelines.v4.anbieter_profil import PROFILE
     for name, p in PROFILE.items():
         if p.prompt_zusatz:

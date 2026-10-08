@@ -1,7 +1,7 @@
 # Werte-Ablesung (Diagramm, eigener Aufruf)
 
 - **Builder:** `pipelines/v4/orchestrator.py`
-- **Generiert:** 2026-09-09
+- **Generiert:** 2026-10-08
 
 ---
 

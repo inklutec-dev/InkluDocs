@@ -42,9 +42,9 @@ einen Trend formulierst. Ohne lesbare Skala nur Rangfolge und Form.""",
     'tabelle': """Schwerpunkt Tabelle: alle Spaltenköpfe wortgetreu, je Zeile die Bezeichnung und alle
 Werte, Summenzeilen mit ihrer Beschriftung.""",
 
-    'karte': """Schwerpunkt Karte: Gebiet, Kartenthema, die Legende mit jedem Eintrag und jede
-Fläche, Linie und Signatur, die zu einem Eintrag passt, mit diesem Eintrag; alle
-markierten Orte mit Beschriftung, Maßstab oder Zeitangabe.""",
+    'karte': """Schwerpunkt Karte: Gebiet, Kartenthema, jeder Legendeneintrag mit den Flächen,
+Linien und Signaturen, die er bezeichnet; alle markierten Orte mit Beschriftung,
+Maßstab oder Zeitangabe.""",
 
     'infografik': """Schwerpunkt Infografik: Stationen oder Abschnitte in ihrer Reihenfolge,
 Verbindungen (Pfeile, Linien) mit ihrer Bedeutung, alle Zahlen und Beschriftungen
