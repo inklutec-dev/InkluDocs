@@ -1,10 +1,14 @@
 {% extends "base_app.html" %}
+{% import "_vorlagen_wahl.html" as vorlagen with context %}
 {% block title %}{{ _('Meine Stammdaten') }} · InkluDocs{% endblock %}
 {% block main %}
       {# QUICKINFO-WERKZEUG (27.08.2026, Steve + Fable 5): Stammdaten-Bibliothek des
          Kontos, aufgebaut wie „Meine Prompts“ (gleiche Klassen, gleiche Klappen,
          gleiche Fokusfuehrung). Datenquelle: /api/stammdaten (formular_api.py). #}
+      {# Runde 10: Teil von „Meine Vorlagen“ — Weg zurück und Ansichtswahl „Prompts | Stammdaten“ #}
+      {{ vorlagen.zurueck() }}
       <h1>{{ _('Meine Stammdaten') }}</h1>
+      {{ vorlagen.wahl('stammdaten') }}
       <p class="dash-intro-box">{{ _('Hier sammelst du Quickinfos für Formularfelder, also die Hilfetexte, die ein Screenreader beim Erreichen eines Feldes vorliest. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt: zuerst über den technischen Feldnamen, sonst über die gleiche Beschriftung im Formular, jeweils mit passender Feldart. Im Werkzeug „Quickinfos für PDF-Formulare“ übernimmst du bestätigte Quickinfos mit einem Knopf hierher.') }}</p>
 
       <section class="dash-card" aria-labelledby="sdlist-h">

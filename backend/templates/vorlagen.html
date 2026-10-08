@@ -1,0 +1,51 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Meine Vorlagen') }} · InkluDocs{% endblock %}
+{% block main %}
+      {# MEINE VORLAGEN (Runde 10, 08.10.2026 — Michael Karbe 06./07.10., Steves Go): EIN Navigationseintrag für
+         „Meine Prompts“ und „Meine Stammdaten“. Zwei Bereiche als Karten, je ein Satz, die Zahl der gespeicherten
+         Einträge und der Weg zur Seite — so ist jedes Ziel zwei Schritte entfernt (Navigation → Vorlagen → Seite).
+         Die beiden Seiten selbst tragen die Ansichtswahl „Prompts | Stammdaten“ und den Weg zurück hierher. #}
+      <h1>{{ _('Meine Vorlagen') }}</h1>
+      <p class="dash-intro-box">{{ _('Vorlagen nimmst du in jedes Projekt mit: eigene Prompts für die KI und Stammdaten mit Quickinfos für Formularfelder.') }}</p>
+
+      <section class="dash-card vorlagen-bereich" aria-labelledby="vorlagen-prompts-h">
+        <h2 id="vorlagen-prompts-h">{{ _('Prompts') }}</h2>
+        <p>{{ _('Eigene Anweisungen für die KI. Im Projekt wählst du aus, welcher Prompt bei der Generierung zusätzlich gelten soll.') }}</p>
+        <p class="dash-meta" id="vorlagenPromptsZahl"></p>
+        <p><a class="btn btn-primary" href="/prompts">{{ _('Prompts öffnen') }}</a></p>
+      </section>
+
+      <section class="dash-card vorlagen-bereich" aria-labelledby="vorlagen-stammdaten-h">
+        <h2 id="vorlagen-stammdaten-h">{{ _('Stammdaten') }}</h2>
+        <p>{{ _('Quickinfos für Formularfelder. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt.') }}</p>
+        <p class="dash-meta" id="vorlagenStammdatenZahl"></p>
+        <p><a class="btn btn-primary" href="/stammdaten">{{ _('Stammdaten öffnen') }}</a></p>
+      </section>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+(function () {
+  'use strict';
+  // Zahl der gespeicherten Einträge je Bereich — ruhig im Text, keine Ansage. Fehlt sie (Netzfehler), bleibt die Zeile
+  // leer; der Weg zur Seite funktioniert trotzdem.
+  function zahl(n) { try { return new Intl.NumberFormat(window.LANG || 'de').format(n); } catch (e) { return String(n); } }
+  async function anzahl(url, feld) {
+    try {
+      const r = await fetch(url, { credentials: 'same-origin' });
+      if (!r.ok) return null;
+      const d = await r.json();
+      return (d[feld] || []).length;
+    } catch (e) { return null; }
+  }
+  (async function () {
+    const [p, s] = await Promise.all([anzahl('/api/prompts', 'prompts'), anzahl('/api/stammdaten', 'stammdaten')]);
+    if (p !== null) document.getElementById('vorlagenPromptsZahl').textContent = p === 0 ? t('Noch keine Prompts gespeichert.')
+      : (p === 1 ? t('1 Prompt gespeichert.') : t('{n} Prompts gespeichert.', { n: zahl(p) }));
+    if (s !== null) document.getElementById('vorlagenStammdatenZahl').textContent = s === 0 ? t('Noch keine Stammdaten gespeichert.')
+      : (s === 1 ? t('1 Eintrag gespeichert.') : t('{n} Einträge gespeichert.', { n: zahl(s) }));
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}

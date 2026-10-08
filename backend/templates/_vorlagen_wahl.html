@@ -1,0 +1,20 @@
+{# ──────────────────────────────────────────────────────────────────────────
+   _vorlagen_wahl.html — Weg zurück zu „Meine Vorlagen“ und Ansichtswahl „Prompts | Stammdaten“ (Runde 10,
+   08.10.2026). Muster der Ansichts-Knöpfe im Projekt (app.html ansichtWahlHtml): Links, die aktuelle Ansicht dunkel
+   mit aria-current="page", die andere hell; „Ansicht:“ nur für Screenreader als Name der Liste.
+   Aufruf:  {% import "_vorlagen_wahl.html" as vorlagen with context %}
+            {{ vorlagen.zurueck() }}  vor der H1,  {{ vorlagen.wahl('prompts') }}  darunter
+   ────────────────────────────────────────────────────────────────────────── #}
+{% macro zurueck() -%}
+<p class="verwaltung-zurueck"><a href="/vorlagen">{{ _('Zu meinen Vorlagen') }}</a></p>
+{%- endmacro %}
+{% macro wahl(aktuell) -%}
+<div class="vorlagen-wahl">
+  <span class="visually-hidden" id="vorlagenWahlTitel">{{ _('Ansicht') }}:</span>
+  <ul aria-labelledby="vorlagenWahlTitel">
+    {% for schluessel, href, name in [('prompts', '/prompts', _('Prompts')), ('stammdaten', '/stammdaten', _('Stammdaten'))] %}
+    <li><a class="btn {{ 'btn-primary' if schluessel == aktuell else 'btn-secondary' }}" href="{{ href }}"{% if schluessel == aktuell %} aria-current="page"{% endif %}>{{ name }}</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{%- endmacro %}

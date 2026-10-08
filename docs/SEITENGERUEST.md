@@ -1,6 +1,6 @@
 # Seitengerüste in InkluDocs
 
-Stand 25.08.2026. Diese Datei beschreibt, aus welchen Gerüsten (Jinja2-Basis-
+Stand 25.08.2026, Navigation Stand 08.10.2026 (Runde 10). Diese Datei beschreibt, aus welchen Gerüsten (Jinja2-Basis-
 Templates) die Seiten der App gebaut werden, welches Gerüst für welche Seite
 gilt und wie man eine neue Seite anlegt, ohne das Gefüge zu verletzen.
 
@@ -9,7 +9,7 @@ gilt und wie man eine neue Seite anlegt, ohne das Gefüge zu verletzen.
 | Gerüst | Für wen | Hülle rendert | Login |
 |---|---|---|---|
 | `base_app.html` | eingeloggte App-Seiten (Dashboard, Projekte, Abo, Einstellungen …) | `dashboard.js` | Pflicht — `/api/me` 401 leitet zur Anmeldung |
-| `base_oeffentlich.html` | öffentliche Inhaltsseiten (Preise, Kontakt, Über uns, AVV, Impressum, Datenschutz, Nutzungsbedingungen, Widerrufsbelehrung, Kündigen, Widerrufen) | `dashboard.js` im Modus `window.OEFFENTLICH` | optional — eingeloggt: App-Navigation, sonst öffentliche Navigation, **nie** eine Weiterleitung |
+| `base_oeffentlich.html` | öffentliche Inhaltsseiten (Preise, Über uns und Kontakt, AVV, Impressum, Datenschutz, Nutzungsbedingungen, Widerrufsbelehrung, Kündigen, Widerrufen) | `dashboard.js` im Modus `window.OEFFENTLICH` | optional — eingeloggt: App-Navigation, sonst öffentliche Navigation, **nie** eine Weiterleitung |
 | `base_demo.html` | Demo-Instanz (demo.inkludocs.de) | `demo-shell.js` | keiner |
 | `base_start.html` | Startseite (`/`) und die vier Login-Karten (`/login`, `/register`, `/forgot`, `/reset`) | nichts — Kopfzeile serverseitig | Startseite: Eingeloggte werden ins Dashboard geleitet |
 
@@ -23,7 +23,7 @@ Die ersten drei Hüllen sehen gleich aus: Skip-Link, Seitenleiste links
 
 `base_start.html` (seit 02.09.2026) ist die Ausnahme: **keine Seitenleiste**,
 sondern eine schlanke, serverseitig gerenderte Kopfzeile (Marke, Preise,
-Kontakt, Über uns, Anmelden, Knopf „Kostenlos starten“), Hauptfläche in voller
+Über uns und Kontakt, Anmelden, Knopf „Kostenlos starten“), Hauptfläche in voller
 Breite, dieselbe Fußzeile. Die vier Login-Karten (`index.html` = Anmeldung,
 `register.html`, `forgot.html`, `reset.html`) erweitern dieses Gerüst und
 behalten ihr zentriertes Karten-Layout (`.auth-container`); ihre H1 nennt das
@@ -32,7 +32,7 @@ Stylesheet: `style.css` + `start.css`. Details: `docs/STARTSEITE.md`.
 
 ## Regeln für die H1
 
-Die H1 nennt das **Thema der Seite** („Kontakt“, „Impressum“, „Preise“),
+Die H1 nennt das **Thema der Seite** („Über uns und Kontakt“, „Impressum“, „Preise“),
 nie den Markennamen (WCAG 2.4.6 — wer per Überschriften-Navigation ankommt,
 muss hören, wo er ist). Der Markenname steht in der Seitenleiste. Der
 Staging-Hinweis „(Testumgebung)“ steht ausschließlich im Fenstertitel
@@ -40,8 +40,9 @@ Staging-Hinweis „(Testumgebung)“ steht ausschließlich im Fenstertitel
 
 Unter der H1 folgt direkt der Inhalt. Ein Zurück-Link gehört nur auf
 Unterseiten, die eine Ebene tiefer liegen und keinen Seitenleisten-Eintrag
-haben (z. B. „E-Mail & Passwort“ unter Einstellungen) — Muster siehe
-`konto.html`. Öffentliche Seiten sind keine Unterseiten; die Seitenleiste
+haben (z. B. „E-Mail & Passwort“ unter Einstellungen, seit Runde 10 auch
+„Neues Projekt anlegen“ unter „Meine Projekte“ und „Meine Prompts“ /
+„Meine Stammdaten“ unter „Meine Vorlagen“) — Muster siehe `konto.html`. Öffentliche Seiten sind keine Unterseiten; die Seitenleiste
 führt immer zur Startseite bzw. ins Dashboard.
 
 ## Die Fußzeile — zwei Listen, eine Regel
@@ -52,8 +53,10 @@ Impressum · Datenschutz · Nutzungsbedingungen · Widerrufsbelehrung ·
 Vertrag kündigen · Vertrag widerrufen
 
 **Kontakt** und **Über uns** sind seit 25.08.2026 (Michael) Einträge der
-Seitenleiste — für Eingeloggte in `NAV_ITEMS`, für Besucher ohne Login in
-`OEFFENTLICH_NAV` (beide in `dashboard.js`). Im Startgerüst stehen sie in der
+Seitenleiste, seit Runde 10 (08.10.2026) **ein** Eintrag „Über uns und
+Kontakt“ (`/ueber-uns`, Abschnitt `#kontakt`; `/kontakt` leitet mit 301
+dorthin) — für Eingeloggte in `NAV_ITEMS`, für Besucher ohne Login in
+`OEFFENTLICH_NAV` (beide in `dashboard.js`). Im Startgerüst steht er in der
 Kopfzeile; die Fußzeile ist dort dieselbe wie auf den Gerüst-Seiten
 (`rechtslinks(' · ')`). Der Makro-Parameter `mit_kontakt=True` wird seit
 02.09.2026 von keiner Seite mehr benutzt.
@@ -83,17 +86,54 @@ Pflichtlinks und ihre Grundlage: Impressum (§ 5 DDG), Datenschutz
 (Art. 13 DSGVO), Nutzungsbedingungen (§ 312d BGB), Widerrufsbelehrung
 (Art. 246a EGBGB), Vertrag kündigen (§ 312k BGB — Kündigungsknopf, ohne
 Anmeldung erreichbar), Vertrag widerrufen (§ 356a BGB — Widerrufsfunktion,
-ohne Anmeldung), Kontakt (§ 5 DDG, zweiter Kommunikationsweg).
+ohne Anmeldung), Kontakt (§ 5 DDG, zweiter Kommunikationsweg — Abschnitt „Kontakt“
+auf „Über uns und Kontakt“, ohne Anmeldung).
 
 ## Die Seitenleiste im öffentlichen Modus
 
 Ohne Login rendert `dashboard.js` (`OEFFENTLICH_NAV`) die Einträge Preise,
-Kontakt, Über uns und unten — an der Stelle von „Abmelden“ — „Anmelden oder
+Über uns und Kontakt und unten — an der Stelle von „Konto“ — „Anmelden oder
 registrieren“ (→ `/login`). Der Marken-Link zeigt auf `/` (Startseite). Mit Login erscheint
-die normale `NAV_ITEMS`-Navigation (Startseite, Neues Projekt anlegen, Meine
-Projekte, Meine Prompts, Einstellungen, Datensicherheit, Kontakt, Über uns,
-für Admins Benutzerverwaltung, Abmelden), der Marken-Link zeigt auf
+die normale `NAV_ITEMS`-Navigation (siehe nächster Abschnitt), der Marken-Link zeigt auf
 `/dashboard`.
+
+## Die Navigation der App (Runde 10, 08.10.2026)
+
+Aufgeräumt nach Michael Karbes Wunsch vom 06.10. und seiner Rückmeldung vom 07.10.
+(„Über uns sollte in dem Dashboard bleiben, da dies ein Wettbewerbsvorteil ist“),
+Steves Go am 08.10.: **7 statt 13 Einträge** (`NAV_ITEMS` + `KONTO_ITEMS` in `dashboard.js`).
+
+1. **Startseite** (`/dashboard`)
+2. **Meine Projekte** (`/projekte`; gilt auch auf `/projekt-neu` als aktuell)
+3. **Meine Ablage** (`/ablage`)
+4. **Meine Aufträge** (`/express`, nur mit Express-Service), danach **Express-Warenkorb** nach Einstellung
+   (immer / nur mit Inhalt / aus; auf Staging „aus“)
+5. **Meine Vorlagen** (`/vorlagen`; aktuell auch auf `/prompts` und `/stammdaten`)
+6. **Über uns und Kontakt** (`/ueber-uns`)
+7. **Konto** — natives `<details>`/`<summary>` (semantisch vor ARIA), standardmäßig zu, offen, wenn man
+   auf einer seiner Seiten steht (dort `aria-current="page"`): **Einstellungen** (auch `/konto`, `/abo`, `/team`,
+   `/api-schluessel`), **Datensicherheit**, **Abmelden** (`#logoutBtn`, speichert offene Eingaben vorher).
+   Keine eigene Ansage; Tastatur und Zustand „aufgeklappt/zugeklappt“ liefert der Browser. Auf dem Handy steht
+   „Konto“ auf eigener Zeile, aufgeklappt seine Einträge darunter nebeneinander.
+
+Admins sehen zusätzlich **Verwaltung**, Express-Bearbeiter ohne Admin-Recht **Express-Aufträge** (vor „Konto“).
+
+- **„Neues Projekt anlegen“** ist keine Navigation mehr, sondern ein Primärknopf ganz oben auf der Startseite und
+  auf „Meine Projekte“; `/projekt-neu` hat den Weg zurück „Zu meinen Projekten“.
+- **„Meine Vorlagen“** (`vorlagen.html`): zwei Bereiche (Prompts, Stammdaten) mit je einem Satz, der Zahl der
+  gespeicherten Einträge und dem Weg zur Seite. `/prompts` und `/stammdaten` bleiben unter ihrer Adresse und tragen
+  „Zu meinen Vorlagen“ sowie die Ansichtswahl „Prompts | Stammdaten“ (`_vorlagen_wahl.html`, Muster der
+  Ansichts-Knöpfe im Projekt: Links, aktuelle Ansicht dunkel mit `aria-current`). Jedes Ziel ist höchstens zwei
+  Schritte entfernt. Zusätzlich steht „Prompts verwalten“ neben der Prompt-Auswahl im Projekt (Alt-Texte und
+  Quickinfos); das Quickinfo-Werkzeug hat „Meine Stammdaten öffnen“.
+- **„Über uns und Kontakt“** (`ueber_uns.html`): oben InkluTec und Actino, darunter Abschnitt H2 „Kontakt“
+  (`id="kontakt"`) mit Wegen, Kontaktformular und Bestätigung (Kartentitel H3). `/kontakt` → 301
+  `/ueber-uns#kontakt` (eine Sprachwahl `?lang=` geht mit), nicht mehr in der Sitemap. Das Formular: „(Pflicht)“
+  bzw. „(freiwillig)“ im sichtbaren Label, `required`, Fehler am Feld (`aria-invalid` + `aria-describedby`, Fokus
+  auf das erste fehlerhafte Feld), Fehler ohne Feld unter dem Knopf (`role="alert"`), Bestätigung sichtbar mit
+  Fokus, `autocomplete` name/email, Spam-Schutz ohne CAPTCHA (Honigtopf + Bremsen je Verbindung und Adresse).
+  Die Nachricht geht an `SUPPORT_EMAIL` (Prod: support@inkludocs.de; Staging: support@inklutec.de,
+  `docker-compose.staging.yml`); an die eingetragene Adresse geht bewusst **keine** Kopie (keine Mail-Kanone).
 
 ## Rechtstexte: eine Quelle, drei Sichten
 

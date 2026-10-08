@@ -54,6 +54,7 @@ SEITEN = [
     ("/abo", "Abo & Verbrauch"),
     ("/team", "Team"),
     ("/api-schluessel", "API-Schlüssel"),
+    ("/vorlagen", "Meine Vorlagen"),              # Runde 10 (08.10.2026): Prompts + Stammdaten unter einem Eintrag
     ("/prompts", "Meine Prompts"),
     ("/stammdaten", "Meine Stammdaten"),
     ("/geteilte-projekte", "Geteilte Projekte"),

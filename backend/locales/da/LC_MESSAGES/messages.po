@@ -178,9 +178,6 @@ msgstr "Støt InkluDocs via PayPal, åbner i en ny fane"
 msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
 msgstr "Dit bidrag hjælper med at fremme tilgængelighed på nettet."
 
-msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
-msgstr "Godt at se dig. Vælg en handling til venstre, eller åbn et projekt."
-
 msgid "Neuigkeiten"
 msgstr "Nyheder"
 
@@ -213,12 +210,6 @@ msgstr "Opret projekt"
 
 msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
 msgstr "Projekterne kunne ikke indlæses. Prøv igen senere."
-
-msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
-msgstr "Ingen projekter endnu. Opret dit første via ”Opret nyt projekt” til venstre."
-
-msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
-msgstr "Ingen projekter endnu. Opret dit første via ”Opret nyt projekt”."
 
 msgid "Unbenanntes Projekt"
 msgstr "Unavngivet projekt"
@@ -3708,20 +3699,11 @@ msgstr "Kontakt"
 msgid "Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter"
 msgstr "Skriv til os — vi vender tilbage pr. e-mail. Du kan også kontakte os direkte på"
 
-msgid "Deine E-Mail-Adresse (für die Antwort)"
-msgstr "Din e-mailadresse (til svaret)"
-
-msgid "Deine Nachricht"
-msgstr "Din besked"
-
 msgid "Nachricht ist unterwegs"
 msgstr "Beskeden er på vej"
 
 msgid "Danke! Deine Nachricht ist bei uns eingegangen — wir antworten per E-Mail an die angegebene Adresse."
 msgstr "Tak! Din besked er nået frem til os — vi svarer pr. e-mail til den angivne adresse."
-
-msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
-msgstr "Angiv venligst din e-mailadresse og en besked."
 
 msgid "Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung."
 msgstr "Vigtigt: Med automatisk fornyelse kun for erhvervskunder (B2B). Booker en forbruger undtagelsesvis på faktura, fjern fluebenet ved “Fornys automatisk” — fornyelse sker da kun aktivt via en ny faktura; kunden får automatisk en påmindelse forinden."
@@ -3784,9 +3766,6 @@ msgstr "Du kan også skrive til os direkte her. Vi svarer til den e-mailadresse,
 
 msgid "Oder schreib uns direkt hier"
 msgstr "Eller skriv til os direkte her"
-
-msgid "Über uns"
-msgstr "Om os"
 
 msgid "InkluDocs entsteht in enger Zusammenarbeit von InkluTec aus Hamburg und der Actino Software GmbH aus Euskirchen — Entwicklung, PDF-Kompetenz und Vertrieb aus einer Hand."
 msgstr "InkluDocs skabes i tæt samarbejde mellem InkluTec fra Hamborg og Actino Software GmbH fra Euskirchen — udvikling, PDF-ekspertise og salg fra én hånd."
@@ -6420,8 +6399,8 @@ msgstr "Omkostninger (credits)"
 msgid "Beispiele"
 msgstr "Eksempler"
 
-msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
-msgstr "Hver forespørgsel bærer din nøgle i headeren X-API-Key. Nøgler opretter du i appen under „Indstillinger“ → „API-nøgler“; der ser du også forbruget pr. nøgle. En nøgle gælder for din konto; du kan oprette flere (fx én pr. program) og slette hver enkelt for sig."
+msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Konto“ → „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
+msgstr "Hver forespørgsel bærer din nøgle i headeren X-API-Key. Nøgler opretter du i appen under „Konto“ → „Indstillinger“ → „API-nøgler“; der ser du også forbruget pr. nøgle. En nøgle gælder for din konto; du kan oprette flere (fx én pr. program) og slette hver enkelt for sig."
 
 msgid "Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server."
 msgstr "Behandl nøglen som en adgangskode: aldrig i browserkode eller offentlige repositories, kun på din server."
@@ -11231,3 +11210,82 @@ msgstr "Detaljer om ekspresordre {nr}.pdf"
 
 msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."
 msgstr "Kunden får spørgsmålet pr. e-mail og ser det i detaljerne om sin ordre. Fristen er sat på pause, indtil kunden svarer."
+
+# Runde 10 (08.10.2026): Navigation aufgeraeumt, Meine Vorlagen, Ueber uns und Kontakt, Kontaktformular
+msgid "Meine Vorlagen"
+msgstr "Mine skabeloner"
+
+msgid "Über uns und Kontakt"
+msgstr "Om os og kontakt"
+
+msgid "Vorlagen nimmst du in jedes Projekt mit: eigene Prompts für die KI und Stammdaten mit Quickinfos für Formularfelder."
+msgstr "Skabeloner tager du med i hvert projekt: dine egne prompts til AI'en og stamdata med kvikinfo til formularfelter."
+
+msgid "Prompts"
+msgstr "Prompts"
+
+msgid "Stammdaten"
+msgstr "Stamdata"
+
+msgid "Eigene Anweisungen für die KI. Im Projekt wählst du aus, welcher Prompt bei der Generierung zusätzlich gelten soll."
+msgstr "Dine egne instruktioner til AI'en. I projektet vælger du, hvilken prompt der også skal gælde ved genereringen."
+
+msgid "Prompts öffnen"
+msgstr "Åbn prompts"
+
+msgid "Stammdaten öffnen"
+msgstr "Åbn stamdata"
+
+msgid "Quickinfos für Formularfelder. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt."
+msgstr "Kvikinfo til formularfelter. Passende poster indsættes automatisk i hver ny PDF-formular."
+
+msgid "Noch keine Prompts gespeichert."
+msgstr "Ingen prompts gemt endnu."
+
+msgid "1 Prompt gespeichert."
+msgstr "1 prompt gemt."
+
+msgid "{n} Prompts gespeichert."
+msgstr "{n} prompts gemt."
+
+msgid "Noch keine Stammdaten gespeichert."
+msgstr "Ingen stamdata gemt endnu."
+
+msgid "1 Eintrag gespeichert."
+msgstr "1 post gemt."
+
+msgid "{n} Einträge gespeichert."
+msgstr "{n} poster gemt."
+
+msgid "Zu meinen Vorlagen"
+msgstr "Til mine skabeloner"
+
+msgid "Zu meinen Projekten"
+msgstr "Til mine projekter"
+
+msgid "Schön, dass du da bist. Lege ein neues Projekt an oder öffne eines deiner Projekte."
+msgstr "Godt, at du er her. Opret et nyt projekt, eller åbn et af dine projekter."
+
+msgid "Noch keine Projekte. Lege über den Knopf „Neues Projekt anlegen“ oben dein erstes an."
+msgstr "Ingen projekter endnu. Opret dit første med knappen „Opret nyt projekt“ ovenfor."
+
+msgid "Direkt zu Kontakt und Kontaktformular"
+msgstr "Direkte til kontakt og kontaktformular"
+
+msgid "Dein Name (freiwillig)"
+msgstr "Dit navn (valgfrit)"
+
+msgid "Deine E-Mail-Adresse (Pflicht, für die Antwort)"
+msgstr "Din e-mailadresse (påkrævet, til svaret)"
+
+msgid "Deine Nachricht (Pflicht)"
+msgstr "Din besked (påkrævet)"
+
+msgid "Bitte gib deine E-Mail-Adresse an, damit wir antworten können."
+msgstr "Angiv din e-mailadresse, så vi kan svare."
+
+msgid "Bitte gib eine gültige E-Mail-Adresse an, zum Beispiel name@beispiel.de."
+msgstr "Angiv en gyldig e-mailadresse, for eksempel navn@eksempel.dk."
+
+msgid "Bitte schreib uns eine Nachricht."
+msgstr "Skriv venligst en besked til os."

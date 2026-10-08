@@ -348,6 +348,9 @@ with sync_playwright() as p:
             elif art == "Tab schliessen":
                 seite_g.close()
             else:
+                # Runde 10: Abmelden steht unter „Konto“ — ohne Fokuswechsel aufklappen, damit der Klick auf
+                # „Abmelden“ wie bisher der erste Schritt weg vom Feld ist
+                seite_g.evaluate("() => { document.getElementById('navKonto').open = true; }")
                 seite_g.click("#logoutBtn")
                 seite_g.wait_for_url(B + "/", timeout=20000)
                 anmelden(ctx)

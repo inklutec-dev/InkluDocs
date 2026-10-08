@@ -11624,7 +11624,8 @@ _OG_LOCALES = {"de": "de_DE", "en": "en_GB", "fr": "fr_FR", "es": "es_ES", "da":
 
 # Oeffentliche Seiten fuer sitemap.xml (Reihenfolge = Gewicht). Login-Karten
 # und App-Seiten bewusst nicht: die tragen noindex bzw. brauchen ein Login.
-_SITEMAP_SEITEN = ("/", "/preise", "/ueber-uns", "/kontakt", "/impressum",
+# Runde 10 (08.10.2026): /kontakt ist ein Abschnitt von /ueber-uns („Über uns und Kontakt“) und leitet dorthin.
+_SITEMAP_SEITEN = ("/", "/preise", "/ueber-uns", "/impressum",
                    "/datenschutz", "/nutzungsbedingungen", "/widerruf", "/avv",
                    "/kuendigen", "/widerrufen")
 
@@ -12016,6 +12017,13 @@ async def prompts_page(request: Request):
 async def stammdaten_page(request: Request):
     """QUICKINFO-WERKZEUG (27.08.2026): Stammdaten-Bibliothek des Kontos, wie „Meine Prompts“."""
     return _render_protected_template(request, "stammdaten.html")
+
+
+@app.get("/vorlagen", response_class=HTMLResponse)
+async def vorlagen_page(request: Request):
+    """MEINE VORLAGEN (Runde 10, 08.10.2026): EIN Navigationseintrag fuer Prompts und Stammdaten — zwei Bereiche mit
+    dem Weg zu /prompts und /stammdaten (beide bleiben unter ihrer Adresse erreichbar, mit Ansichtswahl)."""
+    return _render_protected_template(request, "vorlagen.html")
 
 
 # VERWALTUNG (25.09.2026, Steve): vier Unterseiten statt einer langen Seite. Die alten
@@ -12958,7 +12966,9 @@ async def avv_page(request: Request):
 
 @app.get("/ueber-uns", response_class=HTMLResponse)
 async def ueber_uns_page(request: Request):
-    """Ueber-uns-Seite (Steve + Michael, 24.08.2026): InkluTec + Actino."""
+    """„Über uns und Kontakt“ (Steve + Michael, 24.08.2026; Runde 10, 08.10.2026: eine gemeinsame Seite): oben InkluTec
+    und Actino, darunter der Abschnitt „Kontakt“ (id=kontakt) mit dem Kontaktformular — zweiter Kommunikationsweg nach
+    § 5 DDG, ohne Anmeldung."""
     lang = detect_language(request)
     return templates.TemplateResponse(
         "ueber_uns.html",
@@ -12966,15 +12976,14 @@ async def ueber_uns_page(request: Request):
     )
 
 
-@app.get("/kontakt", response_class=HTMLResponse)
+@app.get("/kontakt")
 async def kontakt_page(request: Request):
-    """Kontaktseite (24.08.2026): zweiter Kommunikationsweg nach § 5 DDG
-    (E-Mail + Kontaktformular statt Telefonnummer), ohne Anmeldung."""
-    lang = detect_language(request)
-    return templates.TemplateResponse(
-        "kontakt.html",
-        template_context(request, lang, is_staging="staging" in BASE_URL),
-    )
+    """Runde 10 (08.10.2026): Kontakt ist ein Abschnitt von „Über uns und Kontakt“. Alte Links (Impressum, Mails,
+    Lesezeichen) landen dauerhaft (301) direkt beim Abschnitt; eine Sprachwahl (?lang=) geht mit."""
+    ziel = "/ueber-uns"
+    if request.url.query:
+        ziel += "?" + request.url.query
+    return RedirectResponse(ziel + "#kontakt", status_code=301)
 
 
 @app.get("/widerrufen", response_class=HTMLResponse)

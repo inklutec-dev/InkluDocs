@@ -19,6 +19,15 @@
 .app-nav button { display:block; width:100%; text-align:left; background:transparent; color:#fff; border:none; border-left:4px solid transparent; padding:.7rem 1.25rem; font-size:1rem; font-family:inherit; cursor:pointer; }
 .app-nav button:hover { background:rgba(255,255,255,.10); }
 .app-nav-logout { margin-top:auto; border-top:1px solid rgba(255,255,255,.15); padding-top:.4rem; }
+/* „Konto“ (Runde 10, 08.10.2026): natives <details> am Fuß der Leiste — Einstellungen, Datensicherheit, Abmelden.
+   Die Überschrift sieht aus wie ein Eintrag (gleiche Höhe, gleicher linker Rand), das Dreieck zeigt auf/zu. */
+.app-nav-konto { margin-top:auto; border-top:1px solid rgba(255,255,255,.15); padding-top:.4rem; }
+.app-nav-konto > details > summary { display:list-item; padding:.7rem 1.25rem; color:#fff; border-left:4px solid transparent; cursor:pointer; }
+.app-nav-konto > details > summary::marker { color:#fff; }
+.app-nav-konto > details > summary:hover { background:rgba(255,255,255,.10); }
+.app-nav-konto > details > summary:focus-visible { outline:3px solid #fff; outline-offset:-3px; }
+.app-nav-unter { list-style:none; margin:0; padding:0 0 .25rem; }
+.app-nav-unter a, .app-nav-unter button { padding-left:2.4rem; }
 .app-content { flex:1; min-width:0; }
 
 /* Auf schmalen Bildschirmen: Leiste nach oben, Navigation umbrechend (immer sichtbar) */
@@ -30,6 +39,11 @@
   .app-nav a, .app-nav button { border-left:none; border-bottom:4px solid transparent; }
   .app-nav a[aria-current="page"] { border-left:none; border-bottom-color:var(--accent); }
   .app-nav-logout { margin-top:0; border-top:none; }
+  /* „Konto“ auf eigener Zeile; aufgeklappt stehen seine Einträge darunter nebeneinander (umbrechend) */
+  .app-nav-konto { flex-basis:100%; margin-top:0; border-top:1px solid rgba(255,255,255,.15); padding-top:0; }
+  .app-nav-konto > details > summary { border-left:none; }
+  .app-nav-unter { display:flex; flex-wrap:wrap; padding:0 0 .25rem 1rem; }
+  .app-nav-unter a, .app-nav-unter button { padding-left:1.25rem; width:auto; }
 }
 
 .dash-main { max-width:880px; margin:0; padding:1.5rem 1.5rem 3rem; }
@@ -375,3 +389,35 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   summary::marker { content: ""; }
   a { color: #000 !important; }
 }
+
+/* ── Runde 10 (08.10.2026): Navigation aufgeräumt ── */
+/* „Neues Projekt anlegen“ als Primärknopf oben auf der Startseite und auf „Meine Projekte“ */
+.dash-neu-projekt { margin:0 0 1.5rem; }
+.dash-main a.btn-primary { color:#fff; }
+/* „Meine Vorlagen“: zwei Bereiche als Karten; Zahl der gespeicherten Einträge ruhig darunter */
+.vorlagen-bereich > h2 { margin-bottom:.4rem; }
+.vorlagen-bereich > p { margin:0 0 .75rem; line-height:1.5; }
+.vorlagen-bereich > p:last-child { margin-bottom:0; }
+/* Ansichtswahl „Prompts | Stammdaten“ — gleiches Muster wie die Ansichts-Knöpfe im Projekt (app.html): Links, die
+   aktuelle dunkel mit aria-current, die andere hell */
+.vorlagen-wahl { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin:0 0 1.25rem; }
+.vorlagen-wahl ul { list-style:none; margin:0; padding:0; display:flex; gap:.5rem; flex-wrap:wrap; }
+.vorlagen-wahl a.btn { display:inline-block; text-decoration:none; }
+/* gleiche Höhe: die helle Ansicht hat 2 px Rahmen, die dunkle bekommt ihn in ihrer Farbe */
+.vorlagen-wahl a.btn-primary { border:2px solid var(--primary); }
+.vorlagen-wahl a.btn:hover, .vorlagen-wahl a.btn:focus-visible { text-decoration:underline; }
+.vorlagen-wahl a.btn:focus-visible { outline:3px solid var(--focus, #c75000); outline-offset:2px; }
+/* „Prompts verwalten“ neben der Prompt-Auswahl im Projekt */
+.prompt-verwalten { color:#a94200; font-weight:600; text-decoration:underline; }
+/* „Über uns und Kontakt“: Abschnitt „Kontakt“ unter den Über-uns-Karten; Kartentitel dort H3 in Kartengröße */
+.kontakt-abschnitt { margin-top:2.25rem; }
+.kontakt-abschnitt > h2 { margin:0 0 .9rem; font-size:1.4rem; }
+.kontakt-abschnitt > h2:focus { outline:none; }
+.kontakt-abschnitt > h2:focus-visible { outline:3px solid var(--focus, #c75000); outline-offset:2px; }
+.kontakt-abschnitt .dash-card > h3 { font-size:1.15rem; margin:0 0 .6rem; }
+.kontakt-sprung { margin:0 0 1.5rem; }
+.kontakt-sprung a { color:#a94200; font-weight:600; text-decoration:underline; }
+/* Kontaktformular: Fehler je Feld (Runde 10, Barrierefreiheitsprüfung) */
+#kontaktForm .verwaltung-fehler:empty { display:none; }
+#kontaktForm .dash-field .verwaltung-fehler { margin:.35rem 0 0; }
+#kontaktErfolg:focus { outline:2px solid #a94200; outline-offset:2px; }

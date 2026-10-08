@@ -41,6 +41,9 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
       - NOTIFICATION_EMAIL=support@inklutec.de
+      # Runde 10 (08.10.2026): Kontaktformular auf Staging an das Ablage-Postfach — ohne die Variable ginge es an
+      # support@inkludocs.de (Standard in main.py, Prod), das auch Michael Karbe liest. Prod setzt sie nicht.
+      - SUPPORT_EMAIL=support@inklutec.de
       # EXPRESS-SERVICE Stufe 1 (05.10.2026): nur Staging an; Prod ohne Variable = aus (backend/funktionen.py)
       - EXPRESS_SERVICE=${EXPRESS_SERVICE:-an}
       # Runde 8 (07.10.2026): Testkonten, deren Express-Auftraege NIE Bearbeiter benachrichtigen (nur Support) — neben

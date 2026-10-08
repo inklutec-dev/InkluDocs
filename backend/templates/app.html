@@ -1291,6 +1291,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             <select id="ownPromptSelect" onchange="setPromptSetting(${project.id}, this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
                                 <option value="">${t('Kein eigener Prompt')}</option>
                             </select>
+                            <!-- Runde 10 (08.10.2026): „Meine Prompts“ steht nicht mehr in der Navigation — der Weg zur
+                                 Verwaltung dort, wo der Prompt gewählt wird -->
+                            <a class="prompt-verwalten" href="/prompts">${t('Prompts verwalten')}</a>
                         </div>
                     ` : ''}
         `;

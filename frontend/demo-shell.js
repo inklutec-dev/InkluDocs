@@ -40,8 +40,8 @@ function t(s, params) {
     { href: "/", label: t("Demo testen") },
     { href: "/demo-datenschutz", label: t("Datensicherheit") },
     { href: "https://inkludocs.de/preise", label: t("Preise") },
-    { href: "https://inkludocs.de/kontakt", label: t("Kontakt") },
-    { href: "https://inkludocs.de/ueber-uns", label: t("Über uns") },
+    // Runde 10 (08.10.2026): ein Eintrag wie in der App — wirkt erst mit dem nächsten Demo-Bau (zusammen mit Prod)
+    { href: "https://inkludocs.de/ueber-uns", label: t("Über uns und Kontakt") },
   ];
 
   function renderSidebar() {

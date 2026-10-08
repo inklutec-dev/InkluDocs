@@ -11,7 +11,7 @@
    Optik: BEWUSST OHNE die App-Seitenleiste von base_oeffentlich.html. Eine
    Startseite muss erklären und überzeugen, dafür braucht sie die ganze
    Breite und einen ruhigen Kopf. Stattdessen eine schlanke Kopfzeile in
-   Navy: Marke links, rechts Preise / Kontakt / Über uns / Anmelden und der
+   Navy: Marke links, rechts Preise / Über uns und Kontakt / Anmelden und der
    orangefarbene Knopf „Kostenlos starten“. Die Kopfzeile ist SERVERSEITIG
    gerendert (kein dashboard.js): Sie steht ohne JavaScript im HTML, für
    Suchmaschinen wie für Prüfskripte. Darunter main#main, unten dieselbe
@@ -20,8 +20,10 @@
    Die vier Login-Karten (/login, /register, /forgot, /reset) erweitern
    ebenfalls dieses Gerüst: Sie behalten ihr zentriertes Karten-Layout
    (.auth-container), bekommen aber Kopf- und Fußzeile geschenkt und
-   verlieren ihre bisher von Hand getippte .legal-footer. Kontakt und Über
-   uns stehen in der Kopfzeile — deshalb rechtslinks() ohne mit_kontakt.
+   verlieren ihre bisher von Hand getippte .legal-footer. „Über uns und
+   Kontakt“ steht in der Kopfzeile — deshalb rechtslinks() ohne mit_kontakt.
+   Runde 10 (08.10.2026): ein Eintrag „Über uns und Kontakt“ statt „Kontakt“
+   und „Über uns“ (eine gemeinsame Seite, /kontakt leitet dorthin).
 
    Barrierefreiheit (BITV 2.0 / WCAG 2.2): Skip-Link als erstes Element,
    Landmarken header / nav / main / footer (die einzige nav der Seite
@@ -66,8 +68,7 @@
     <nav>
       <ul class="start-nav">
         <li><a href="/preise"{% if nav_aktiv == '/preise' %} aria-current="page"{% endif %}>{{ _('Preise') }}</a></li>
-        <li><a href="/kontakt"{% if nav_aktiv == '/kontakt' %} aria-current="page"{% endif %}>{{ _('Kontakt') }}</a></li>
-        <li><a href="/ueber-uns"{% if nav_aktiv == '/ueber-uns' %} aria-current="page"{% endif %}>{{ _('Über uns') }}</a></li>
+        <li><a href="/ueber-uns"{% if nav_aktiv == '/ueber-uns' %} aria-current="page"{% endif %}>{{ _('Über uns und Kontakt') }}</a></li>
         <li><a href="/login"{% if nav_aktiv == '/login' %} aria-current="page"{% endif %}>{{ _('Anmelden') }}</a></li>
         {% if registration_enabled is not defined or registration_enabled %}
         <li><a class="btn-start btn-start-primary" href="/register"{% if nav_aktiv == '/register' %} aria-current="page"{% endif %}>{{ _('Kostenlos starten') }}</a></li>

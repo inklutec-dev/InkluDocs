@@ -53,7 +53,8 @@ LOGIN_PW = os.environ.get("INKLUDOCS_E2E_PW") or E.get("INKLUDOCS_E2E_PW")
 
 H1_DE = "Barrierefreie Dokumente. Automatisiert."
 H1_EN_TEILE = ("One document. Many people. Equal opportunities.", "documents. Automated.")
-KOPF_NAV = [("/preise", "Preise"), ("/kontakt", "Kontakt"), ("/ueber-uns", "Über uns"),
+# Runde 10 (08.10.2026): „Über uns und Kontakt“ ist EIN Eintrag (gemeinsame Seite, /kontakt leitet dorthin)
+KOPF_NAV = [("/preise", "Preise"), ("/ueber-uns", "Über uns und Kontakt"),
             ("/login", "Anmelden"), ("/register", "Kostenlos starten")]
 FUSSZEILE = [("/impressum", "Impressum"), ("/datenschutz", "Datenschutz"),
              ("/nutzungsbedingungen", "Nutzungsbedingungen"), ("/preise", "Preise"),
@@ -139,7 +140,7 @@ with sync_playwright() as p:
           and page.locator("header.start-header nav").count() == 1
           and page.locator("footer.start-footer").count() == 1)
     check("Marken-Link zeigt auf /", page.locator("header a.start-brand[href='/']").count() == 1)
-    check("Kopfzeile: Preise, Kontakt, Ueber uns, Anmelden, Kostenlos starten", kopf_nav(page) == KOPF_NAV, str(kopf_nav(page)))
+    check("Kopfzeile: Preise, Ueber uns und Kontakt, Anmelden, Kostenlos starten (Runde 10)", kopf_nav(page) == KOPF_NAV, str(kopf_nav(page)))
     check("kein aria-current auf der Startseite", page.locator("header nav a[aria-current]").count() == 0)
     h1s = page.locator("h1")
     check("genau eine H1 mit dem Versprechen",
@@ -156,7 +157,7 @@ with sync_playwright() as p:
     check("Kette Word -> PDF/UA als nummerierte Liste mit 6 Stationen", page.locator("ol.start-kette > li").count() == 6)
     check("Vertrauenszeile: vier Punkte, EU-Satz als Hosting (Steve 10.09.)", page.locator("section.start-hero ul.start-vertrauen > li").count() == 4 and "Hosting in der EU" in page.locator("ul.start-vertrauen").inner_text() and "Verarbeitung in der EU" not in page.locator("main").inner_text())
     check("Werkzeuge: drei Kicker ueber den H3 (KI-gestuetzte Beschreibungen / Word zu PDF/UA / Barrierefreie Formulare)", page.locator("section#werkzeuge p.start-kicker").count() == 3)
-    check("Schluss: Vorfuehrung vereinbaren -> /kontakt (Michael 11.09.)", page.locator("section#schluss a.btn-start[href='/kontakt']").inner_text().strip() == "Vorführung vereinbaren")
+    check("Schluss: Vorfuehrung vereinbaren -> /ueber-uns#kontakt (Michael 11.09., Runde 10)", page.locator("section#schluss a.btn-start[href='/ueber-uns#kontakt']").inner_text().strip() == "Vorführung vereinbaren")
     check("Markensatz unter der H1: Ein Dokument. Viele Menschen. Gleiche Chancen.", page.locator("section.start-hero p.start-claim").inner_text().strip() == "Ein Dokument. Viele Menschen. Gleiche Chancen.")
     check("Standards nennen BITV 2.0 (Steve 10.09.)", "BITV 2.0" in page.locator("section#standards").inner_text())
     check("Abschnitt 'letztes Wort': von Hand aendern + InkluAgent + Prompts (Steve 02.09.)",
@@ -255,7 +256,10 @@ with sync_playwright() as p:
     print("== C. Weiterleitungen ohne Login ==")
     for pfad in ("/app", "/dashboard", "/projekte", "/einstellungen"):
         st, ziel = status_und_ziel(pfad)
-        check(f"{pfad} -> /login", st in (302, 303, 307) and ziel == "/login", f"{st} {ziel}")
+        # Seit Express Runde 7 (06.10.2026) mit Ruecksprung: /login?weiter=<Pfad> (nachgezogen in Runde 10)
+        import urllib.parse
+        check(f"{pfad} -> /login (mit Ruecksprung)", st in (302, 303, 307)
+              and ziel in ("/login", "/login?weiter=" + urllib.parse.quote(pfad, safe="")), f"{st} {ziel}")
     st, ziel = status_und_ziel("/")
     check("/ liefert 200 ohne Weiterleitung", st == 200, f"{st} {ziel}")
     page.goto(f"{BASE}/login?geloescht=1", wait_until="networkidle")
@@ -274,8 +278,10 @@ with sync_playwright() as p:
         page.goto(f"{BASE}/", wait_until="domcontentloaded")
         check("eingeloggt: / leitet ins Dashboard", page.url.endswith("/dashboard"), page.url)
         page.goto(f"{BASE}/kontakt", wait_until="networkidle")
-        check("eingeloggt auf /kontakt: kein 'Anmelden oder registrieren' in der Seitenleiste",
-              page.locator("#appSidebar nav a[href='/login']").count() == 0)
+        check("eingeloggt: /kontakt landet auf /ueber-uns#kontakt, kein 'Anmelden oder registrieren' in der Seitenleiste",
+              page.url.endswith("/ueber-uns#kontakt") and page.locator("#appSidebar nav a[href='/login']").count() == 0, page.url)
+        # Runde 10: Abmelden steht unter „Konto“ (zu) — erst aufklappen
+        page.click("#navKonto > summary")
         page.click("#logoutBtn")
         page.wait_for_url(f"{BASE}/", timeout=15000)
         check("Abmelden landet auf der Startseite", page.url.rstrip("/") == BASE.rstrip("/")
@@ -295,7 +301,8 @@ with sync_playwright() as p:
         check("robots.txt: Sitemap-Verweis, App gesperrt", "Sitemap:" in robots and "Disallow: /app" in robots)
     sitemap = roh("/sitemap.xml")
     check("sitemap.xml: urlset mit Startseite und Preisen",
-          "<urlset" in sitemap and "/preise</loc>" in sitemap and "/ueber-uns</loc>" in sitemap)
+          "<urlset" in sitemap and "/preise</loc>" in sitemap and "/ueber-uns</loc>" in sitemap
+          and "/kontakt</loc>" not in sitemap)
     check("sitemap.xml: keine Login- oder App-Seiten",
           all(s not in sitemap for s in ("/login", "/app", "/dashboard")))
 

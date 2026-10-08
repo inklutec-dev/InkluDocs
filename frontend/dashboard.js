@@ -181,10 +181,15 @@ async function loadCurrentUser() {
 // Seite wird im Frontend per fetch aus /datenschutz geladen (Single Source).
 // Die rechtlichen Footer-Links Impressum | Datenschutz | Nutzungsbedingungen
 // (juristische Bezeichnung) bleiben unverändert.
+//
+// AUFGERÄUMT (Runde 10, 08.10.2026 — Michael Karbe 06./07.10., Steves Go): 7 statt 13 Einträge.
+//   1 Startseite · 2 Meine Projekte · 3 Meine Ablage · 4 Meine Aufträge (+ Express-Warenkorb nach Einstellung)
+//   · 5 Meine Vorlagen (Prompts + Stammdaten) · 6 Über uns und Kontakt · 7 Konto (aufklappbar: KONTO_ITEMS + Abmelden)
+// „Neues Projekt anlegen“ ist ein Knopf oben auf „Meine Projekte“ und der Startseite. `aktiv`: weitere Pfade, auf
+// denen der Eintrag als aktuelle Seite gilt (Unterseiten); `bereich`: alles unterhalb eines Pfades.
 const NAV_ITEMS = [
   { href: '/dashboard', label: t('Startseite') },
-  { href: '/projekt-neu', label: t('Neues Projekt anlegen') },
-  { href: '/projekte', label: t('Meine Projekte') },
+  { href: '/projekte', label: t('Meine Projekte'), aktiv: ['/projekt-neu'] },
   { href: '/ablage', label: t('Meine Ablage') },   // Sicherung der barrierefreien Office-Dokumente inkl. Pruefbericht (11.09.2026)
   // EXPRESS-SERVICE (05.10.2026): Profis bereiten Dokumente auf — nur, wenn die Funktion an ist (/api/me user.express).
   // Runde 7 (Michael Karbe 06.10.2026): heißt „Meine Aufträge“ wie „Meine Projekte“ / „Meine Ablage“.
@@ -192,18 +197,13 @@ const NAV_ITEMS = [
   // Express-Warenkorb (Zusatz 05.10.2026, Steve): fester Eintrag mit Anzahl als Text; Anzeige-Modus in der Verwaltung
   // (immer / nur mit Inhalt / aus, /api/me user.express_warenkorb). Text siehe expressKorbText().
   { href: '/express/warenkorb', label: '', korb: true },
-  // 25.08.2026 (Michael): „Meine Prompts“ wie „Meine Projekte“.
-  { href: '/prompts', label: t('Meine Prompts') },
-  // QUICKINFO-WERKZEUG (27.08.2026): Stammdaten-Bibliothek fuer Formularfelder, gleiche Stelle wie die Prompts.
-  { href: '/stammdaten', label: t('Meine Stammdaten') },
-  { href: '/einstellungen', label: t('Einstellungen') },
-  { href: '/datensicherheit', label: t('Datensicherheit') },
-  // 25.08.2026 (Michael): Kontakt und Über uns gehören in die Navigation,
-  // nicht nur in die Fußzeile — für Eingeloggte hier, für Besucher ohne
-  // Login in OEFFENTLICH_NAV. Beide Seiten liegen im öffentlichen Gerüst
-  // (base_oeffentlich.html) und zeigen Eingeloggten diese Seitenleiste.
-  { href: '/kontakt', label: t('Kontakt') },
-  { href: '/ueber-uns', label: t('Über uns') },
+  // Runde 10: EIN Eintrag für „Meine Prompts“ (25.08.2026) und „Meine Stammdaten“ (Quickinfo-Werkzeug 27.08.2026);
+  // beide Seiten tragen die Ansichtswahl „Prompts | Stammdaten“ und gelten als „Meine Vorlagen“.
+  { href: '/vorlagen', label: t('Meine Vorlagen'), aktiv: ['/prompts', '/stammdaten'] },
+  // Runde 10 (Michael: „Über uns sollte in dem Dashboard bleiben, da dies ein Wettbewerbsvorteil ist“): eine
+  // gemeinsame Seite, Kontakt als Abschnitt darauf (/kontakt leitet auf /ueber-uns#kontakt). Seit 25.08.2026 in der
+  // Navigation, für Besucher ohne Login in OEFFENTLICH_NAV.
+  { href: '/ueber-uns', label: t('Über uns und Kontakt'), aktiv: ['/kontakt'] },
   // 25.09.2026 (Steve): „Verwaltung“ mit den Unterseiten Kunden, Umsatz, API, Einstellungen —
   // der Eintrag bleibt auf allen /verwaltung/…-Seiten als aktuelle Seite markiert.
   { href: '/verwaltung/kunden', label: t('Verwaltung'), admin: true, bereich: '/verwaltung' },
@@ -211,15 +211,28 @@ const NAV_ITEMS = [
   { href: '/verwaltung/express', label: t('Express-Aufträge'), bearbeiter: true, bereich: '/verwaltung/express' },
 ];
 
+// Runde 10: Seltenes unter „Konto“ (natives <details>, standardmäßig zu, offen auf diesen Seiten). Die Unterseiten der
+// Einstellungen (E-Mail & Passwort, Abo & Verbrauch, Team, API-Schlüssel) gelten als „Einstellungen“. Abmelden folgt.
+const KONTO_ITEMS = [
+  { href: '/einstellungen', label: t('Einstellungen'), aktiv: ['/konto', '/abo', '/team', '/api-schluessel'] },
+  { href: '/datensicherheit', label: t('Datensicherheit') },
+];
+
 // Navigation der oeffentlichen Seiten fuer Besucher OHNE Anmeldung
-// (25.08.2026). Dieselben Ziele wie die Fusszeile _fusszeile.html nennt —
-// hier nur die drei, die als Menuepunkte taugen. Ein Eintrag mehr hier
-// erscheint auf allen oeffentlichen Seiten.
+// (25.08.2026). Dieselben Ziele wie die Kopfzeile der Startseite
+// (base_start.html) — Runde 10: „Preise“, „Über uns und Kontakt“. Ein Eintrag
+// mehr hier erscheint auf allen oeffentlichen Seiten.
 const OEFFENTLICH_NAV = [
   { href: '/preise', label: t('Preise') },
-  { href: '/kontakt', label: t('Kontakt') },
-  { href: '/ueber-uns', label: t('Über uns') },
+  { href: '/ueber-uns', label: t('Über uns und Kontakt') },
 ];
+
+// Ist der Eintrag die aktuelle Seite? Pfad selbst, weitere Pfade (aktiv) oder ein ganzer Bereich (bereich).
+function navAktuell(it, path) {
+  if (it.ausser && it.ausser.includes(path)) return false;
+  return path === it.href || (it.aktiv && it.aktiv.includes(path))
+    || !!(it.bereich && (path === it.bereich || path.startsWith(it.bereich + '/')));
+}
 
 // Besucher ohne Konto-Kontext: Gast-Review oder oeffentliche Seite ohne Login.
 function istAnonym() {
@@ -284,7 +297,7 @@ function renderSidebar() {
   ul.className = 'app-nav';
 
   if (window.OEFFENTLICH && !currentUser) {
-    // Oeffentliche Seite ohne Login: Preise / Kontakt / Ueber uns, und an der
+    // Oeffentliche Seite ohne Login: Preise / Ueber uns und Kontakt, und an der
     // Stelle, an der sonst „Abmelden“ steht, der Weg zur Anmeldung (gleiches
     // Muster wie die Demo-Huelle demo-shell.js).
     OEFFENTLICH_NAV.forEach((it) => {
@@ -318,17 +331,34 @@ function renderSidebar() {
     a.href = it.href;
     a.textContent = it.korb ? expressKorbText() : it.label;
     if (it.korb) a.setAttribute('data-express-korb', '');
-    if ((path === it.href || (it.bereich && (path === it.bereich || path.startsWith(it.bereich + '/'))))
-        && !(it.ausser && it.ausser.includes(path))) {
-      a.setAttribute('aria-current', 'page');
-    }
+    if (navAktuell(it, path)) a.setAttribute('aria-current', 'page');
     li.appendChild(a);
     ul.appendChild(li);
   });
 
-  // Abmelden als letzter Eintrag der Navigationsliste (kein separater Abschnitt).
+  // „Konto“ als letzter Eintrag (Runde 10): natives <details>/<summary> — Tastatur, Zustand „aufgeklappt/zugeklappt“
+  // und Fokus liefert der Browser, keine eigene Ansage. Zu, außer man steht gerade auf einer seiner Seiten.
+  const liKonto = document.createElement('li');
+  liKonto.className = 'app-nav-konto';
+  const konto = document.createElement('details');
+  konto.id = 'navKonto';
+  const sum = document.createElement('summary');
+  sum.textContent = t('Konto');
+  konto.appendChild(sum);
+  const unter = document.createElement('ul');
+  unter.className = 'app-nav-unter';
+  KONTO_ITEMS.forEach((it) => {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = it.href;
+    a.textContent = it.label;
+    if (navAktuell(it, path)) { a.setAttribute('aria-current', 'page'); konto.open = true; }
+    li.appendChild(a);
+    unter.appendChild(li);
+  });
+
+  // Abmelden als letzter Eintrag unter „Konto“.
   const liOut = document.createElement('li');
-  liOut.className = 'app-nav-logout';
   const btn = document.createElement('button');
   btn.id = 'logoutBtn';
   btn.type = 'button';
@@ -347,7 +377,10 @@ function renderSidebar() {
     window.location.href = '/';
   });
   liOut.appendChild(btn);
-  ul.appendChild(liOut);
+  unter.appendChild(liOut);
+  konto.appendChild(unter);
+  liKonto.appendChild(konto);
+  ul.appendChild(liKonto);
 
   nav.appendChild(ul);
   host.appendChild(nav);
@@ -383,7 +416,7 @@ const LEGAL_LINKS = [
   // gut sichtbar und leicht zugaenglich — deshalb ebenfalls in jeder Fusszeile.
   { href: '/widerrufen', label: t('Vertrag widerrufen') },
   // Kontakt und Über uns: seit 25.08.2026 in der Seitenleiste (NAV_ITEMS /
-  // OEFFENTLICH_NAV), deshalb hier nicht mehr doppelt.
+  // OEFFENTLICH_NAV, seit Runde 10 ein Eintrag „Über uns und Kontakt“), deshalb hier nicht mehr doppelt.
 ];
 function renderLegalLinks() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {

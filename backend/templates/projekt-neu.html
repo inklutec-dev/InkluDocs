@@ -1,6 +1,9 @@
 {% extends "base_app.html" %}
 {% block title %}{{ _('Neues Projekt anlegen') }} · InkluDocs{% endblock %}
 {% block main %}
+      {# Runde 10 (08.10.2026): erreichbar über den Knopf auf „Meine Projekte“ und der Startseite — in der Navigation
+         gilt die Seite als „Meine Projekte“, darum der Weg zurück dorthin #}
+      <p class="verwaltung-zurueck"><a href="/projekte">{{ _('Zu meinen Projekten') }}</a></p>
       <h1>{{ _('Neues Projekt anlegen') }}</h1>
       {# Formular als Karte wie alle anderen Inhalte (Michael, 26.08.2026) #}
       <form id="newProjectForm" class="dash-card">

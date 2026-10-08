@@ -181,9 +181,6 @@ msgstr "Su contribución ayuda a impulsar la accesibilidad en la web."
 
 # Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026) —
 # Erst-Uebersetzung, QA durch Muttersprachler offen
-msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
-msgstr "Nos alegra verte de nuevo. Elige una acción a la izquierda o abre un proyecto."
-
 msgid "Neuigkeiten"
 msgstr "Novedades"
 
@@ -217,12 +214,6 @@ msgstr "Crear proyecto"
 # Seiten-JS Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
 msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
 msgstr "No se pudieron cargar los proyectos. Inténtalo de nuevo más tarde."
-
-msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
-msgstr "Aún no hay proyectos. Crea el primero con «Crear proyecto» a la izquierda."
-
-msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
-msgstr "Aún no hay proyectos. Crea el primero con «Crear proyecto»."
 
 msgid "Unbenanntes Projekt"
 msgstr "Proyecto sin título"
@@ -4011,20 +4002,11 @@ msgstr "Contacto"
 msgid "Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter"
 msgstr "Escríbenos — te responderemos por correo electrónico. También puedes contactarnos directamente en"
 
-msgid "Deine E-Mail-Adresse (für die Antwort)"
-msgstr "Tu dirección de correo electrónico (para la respuesta)"
-
-msgid "Deine Nachricht"
-msgstr "Tu mensaje"
-
 msgid "Nachricht ist unterwegs"
 msgstr "Mensaje en camino"
 
 msgid "Danke! Deine Nachricht ist bei uns eingegangen — wir antworten per E-Mail an die angegebene Adresse."
 msgstr "¡Gracias! Tu mensaje nos ha llegado — responderemos por correo electrónico a la dirección indicada."
-
-msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
-msgstr "Indica tu dirección de correo electrónico y un mensaje."
 
 msgid "Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung."
 msgstr "Importante: con renovación automática solo para empresas (B2B). Si excepcionalmente un consumidor contrata por factura, desmarca «Se renueva automáticamente» — la renovación solo se hará activamente con una nueva factura; el cliente recibe antes un recordatorio automático."
@@ -4087,9 +4069,6 @@ msgstr "También puedes escribirnos directamente desde aquí. Responderemos a la
 
 msgid "Oder schreib uns direkt hier"
 msgstr "O escríbenos directamente aquí"
-
-msgid "Über uns"
-msgstr "Sobre nosotros"
 
 msgid "InkluDocs entsteht in enger Zusammenarbeit von InkluTec aus Hamburg und der Actino Software GmbH aus Euskirchen — Entwicklung, PDF-Kompetenz und Vertrieb aus einer Hand."
 msgstr "InkluDocs nace de la estrecha colaboración entre InkluTec (Hamburgo) y Actino Software GmbH (Euskirchen) — desarrollo, experiencia en PDF y ventas de una sola mano."
@@ -6723,8 +6702,8 @@ msgstr "Costes (créditos)"
 msgid "Beispiele"
 msgstr "Ejemplos"
 
-msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
-msgstr "Cada petición lleva tu clave en la cabecera X-API-Key. Las claves se crean en la aplicación en «Ajustes» → «Claves de API»; allí ves también el consumo por clave. Una clave vale para tu cuenta; puedes crear varias (por ejemplo una por aplicación) y borrar cada una por separado."
+msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Konto“ → „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
+msgstr "Cada petición lleva tu clave en la cabecera X-API-Key. Las claves se crean en la aplicación en «Cuenta» → «Ajustes» → «Claves de API»; allí ves también el consumo por clave. Una clave vale para tu cuenta; puedes crear varias (por ejemplo una por aplicación) y borrar cada una por separado."
 
 msgid "Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server."
 msgstr "Trata la clave como una contraseña: nunca en código del navegador ni en repositorios públicos, solo en tu servidor."
@@ -11534,3 +11513,82 @@ msgstr "Detalles del pedido exprés {nr}.pdf"
 
 msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."
 msgstr "El cliente recibe la pregunta por correo y la ve en los detalles de su pedido. El plazo se detiene hasta que responda."
+
+# Runde 10 (08.10.2026): Navigation aufgeraeumt, Meine Vorlagen, Ueber uns und Kontakt, Kontaktformular
+msgid "Meine Vorlagen"
+msgstr "Mis plantillas"
+
+msgid "Über uns und Kontakt"
+msgstr "Sobre nosotros y contacto"
+
+msgid "Vorlagen nimmst du in jedes Projekt mit: eigene Prompts für die KI und Stammdaten mit Quickinfos für Formularfelder."
+msgstr "Las plantillas te acompañan en cada proyecto: prompts propios para la IA y datos maestros con información emergente para campos de formulario."
+
+msgid "Prompts"
+msgstr "Prompts"
+
+msgid "Stammdaten"
+msgstr "Datos maestros"
+
+msgid "Eigene Anweisungen für die KI. Im Projekt wählst du aus, welcher Prompt bei der Generierung zusätzlich gelten soll."
+msgstr "Instrucciones propias para la IA. En el proyecto eliges qué prompt se aplica además al generar."
+
+msgid "Prompts öffnen"
+msgstr "Abrir prompts"
+
+msgid "Stammdaten öffnen"
+msgstr "Abrir datos maestros"
+
+msgid "Quickinfos für Formularfelder. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt."
+msgstr "Información emergente para campos de formulario. Las entradas adecuadas se insertan automáticamente en cada nuevo formulario PDF."
+
+msgid "Noch keine Prompts gespeichert."
+msgstr "Todavía no hay prompts guardados."
+
+msgid "1 Prompt gespeichert."
+msgstr "1 prompt guardado."
+
+msgid "{n} Prompts gespeichert."
+msgstr "{n} prompts guardados."
+
+msgid "Noch keine Stammdaten gespeichert."
+msgstr "Todavía no hay datos maestros guardados."
+
+msgid "1 Eintrag gespeichert."
+msgstr "1 entrada guardada."
+
+msgid "{n} Einträge gespeichert."
+msgstr "{n} entradas guardadas."
+
+msgid "Zu meinen Vorlagen"
+msgstr "A mis plantillas"
+
+msgid "Zu meinen Projekten"
+msgstr "A mis proyectos"
+
+msgid "Schön, dass du da bist. Lege ein neues Projekt an oder öffne eines deiner Projekte."
+msgstr "Qué bien que estés aquí. Crea un proyecto nuevo o abre uno de tus proyectos."
+
+msgid "Noch keine Projekte. Lege über den Knopf „Neues Projekt anlegen“ oben dein erstes an."
+msgstr "Todavía no hay proyectos. Crea el primero con el botón «Crear proyecto» de arriba."
+
+msgid "Direkt zu Kontakt und Kontaktformular"
+msgstr "Ir directamente al contacto y al formulario"
+
+msgid "Dein Name (freiwillig)"
+msgstr "Tu nombre (opcional)"
+
+msgid "Deine E-Mail-Adresse (Pflicht, für die Antwort)"
+msgstr "Tu correo electrónico (obligatorio, para la respuesta)"
+
+msgid "Deine Nachricht (Pflicht)"
+msgstr "Tu mensaje (obligatorio)"
+
+msgid "Bitte gib deine E-Mail-Adresse an, damit wir antworten können."
+msgstr "Indica tu correo electrónico para que podamos responderte."
+
+msgid "Bitte gib eine gültige E-Mail-Adresse an, zum Beispiel name@beispiel.de."
+msgstr "Indica un correo electrónico válido, por ejemplo nombre@ejemplo.es."
+
+msgid "Bitte schreib uns eine Nachricht."
+msgstr "Escríbenos un mensaje."

@@ -523,7 +523,8 @@
                 +     '</select><span id="altLangStatus" style="font-size:0.9rem;"></span></div>'
                 +   '<div class="einstellung-zeile" style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +     '<label for="ownPromptSelect" style="font-weight:600;">' + t('Gespeicherte Prompts') + '</label>'
-                +     '<select id="ownPromptSelect" onchange="setPromptSetting(' + project.id + ', this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;"><option value="">' + t('Kein eigener Prompt') + '</option></select></div>'
+                +     '<select id="ownPromptSelect" onchange="setPromptSetting(' + project.id + ', this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;"><option value="">' + t('Kein eigener Prompt') + '</option></select>'
+                +     ' <a class="prompt-verwalten" href="/prompts">' + t('Prompts verwalten') + '</a></div>'   // Runde 10: Weg zur Verwaltung
                 : '');
         if (!gast() && typeof mitProjektKopf === 'function' && mitProjektKopf(project)) {
             return projektKopfHtml(project, 'quickinfos', title, infoHtml) + funktionenKarteHtml(besitzerAktionen);

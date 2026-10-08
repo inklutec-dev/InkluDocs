@@ -2,6 +2,8 @@
 {% block title %}{{ _('Meine Projekte') }} · InkluDocs{% endblock %}
 {% block main %}
       <h1>{{ _('Meine Projekte') }}</h1>
+      {# Runde 10 (08.10.2026): „Neues Projekt anlegen“ als Primärknopf ganz oben (aus der Navigation hierher) #}
+      <p class="dash-neu-projekt"><a class="btn btn-primary" href="/projekt-neu">{{ _('Neues Projekt anlegen') }}</a></p>
       <div id="projectsContainer" aria-busy="true">
         <p class="dash-sub">{{ _('Projekte werden geladen …') }}</p>
       </div>
@@ -41,7 +43,7 @@
     if (projects.length === 0) {
       const p = document.createElement('p');
       p.className = 'dash-empty';
-      p.textContent = t('Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an.');
+      p.textContent = t('Noch keine Projekte. Lege über den Knopf „Neues Projekt anlegen“ oben dein erstes an.');
       cont.appendChild(p);
       return;
     }

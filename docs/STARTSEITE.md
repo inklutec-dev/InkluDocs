@@ -32,7 +32,7 @@ Bewusst **ohne** die App-Seitenleiste. Stattdessen:
 
 - Skip-Link `.dash-skip` auf `#main` als erstes Element im Body.
 - `header.start-header` (Navy): Marken-Link auf `/`, `nav` mit
-  `aria-label="Hauptnavigation"` und den Einträgen Preise, Kontakt, Über uns,
+  `aria-label="Hauptnavigation"` und den Einträgen Preise, Über uns und Kontakt (Runde 10, 08.10.2026),
   Anmelden, Knopf „Kostenlos starten“ (→ `/register`, nur wenn die
   Registrierung offen ist). Der aktive Eintrag trägt `aria-current="page"`
   (Template-Variable `nav_aktiv`).
@@ -191,7 +191,7 @@ und Michaels Antwort vom 11.09. ergaben diese Abmachungen, alle umgesetzt:
   eine wählbare Region in Arbeit ist. Erst mit dem Modellschalter darf mit
   EU-Verarbeitung geworben werden.
 - **Knöpfe oben** bleiben (Demo „Ohne Anmeldung selbst erleben“, „Kostenlos
-  starten“, „Anmelden“). **Unten** „Vorführung vereinbaren“ → `/kontakt`
+  starten“, „Anmelden“). **Unten** „Vorführung vereinbaren“ → `/ueber-uns#kontakt` (bis Runde 10 `/kontakt`)
   (Michael: kostenlose Vorführung; „Demo“ heißt auf der Seite nur die Demo
   zum Selbermachen).
 - **Abschnitte** (16 statt 10): Werkzeuge mit Kickern (KI-gestützte

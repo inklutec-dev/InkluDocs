@@ -4,14 +4,15 @@
      - alle Inhaltsseiten über base_oeffentlich.html (Fußzeile .dash-footer,
        Trenner „·“ wie in der App) — sechs Links
      - Login, Registrierung, Passwort vergessen/zurücksetzen (base.html,
-       Fußzeile .legal-footer, Trenner „|“) — dieselben sechs PLUS Kontakt
-       und Über uns (mit_kontakt=True), weil diese Seiten keine Seitenleiste
-       haben, in der die beiden sonst stehen
+       Fußzeile .legal-footer, Trenner „|“) — dieselben sechs PLUS „Über uns
+       und Kontakt“ (mit_kontakt=True), weil diese Seiten keine Seitenleiste
+       haben, in der der Eintrag sonst steht
 
    Kontakt und Über uns sind seit 25.08.2026 (Michael) Einträge der
    SEITENLEISTE — für Eingeloggte (NAV_ITEMS in dashboard.js) wie für
-   Besucher ohne Login (OEFFENTLICH_NAV). In den Fußzeilen der Gerüst-Seiten
-   stehen sie deshalb nicht mehr doppelt.
+   Besucher ohne Login (OEFFENTLICH_NAV); seit Runde 10 (08.10.2026) EIN
+   Eintrag „Über uns und Kontakt“ (/ueber-uns, Abschnitt #kontakt). In den
+   Fußzeilen der Gerüst-Seiten stehen sie deshalb nicht mehr doppelt.
 
    Gegenstück für die EINGELOGGTEN Seiten: LEGAL_LINKS in frontend/dashboard.js
    — gleiche sechs Beschriftungen und Reihenfolge, aber Ziele in der App-Sicht
@@ -25,9 +26,9 @@
      Widerrufsbelehrung   Art. 246a EGBGB
      Vertrag kündigen     § 312k BGB — Kündigungsknopf, ohne Anmeldung
      Vertrag widerrufen   § 356a BGB — Widerrufsfunktion, ohne Anmeldung
-     Kontakt              § 5 DDG zweiter Kommunikationsweg (Seitenleiste
-                          bzw. Login-Fußzeile — auf jeder Seite erreichbar)
-     Über uns             freiwillig
+     Über uns und Kontakt § 5 DDG zweiter Kommunikationsweg (Seitenleiste
+                          bzw. Kopfzeile — auf jeder Seite erreichbar);
+                          Über uns freiwillig
 
    Aufruf:  {% import "_fusszeile.html" as fusszeile with context %}
             {{ fusszeile.rechtslinks(' · ') }}
@@ -44,7 +45,6 @@
   <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a>{{ trenner }}
   <a href="/kuendigen">{{ _('Vertrag kündigen') }}</a>{{ trenner }}
   <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a>{% if mit_kontakt %}{{ trenner }}
-  <a href="/kontakt">{{ _('Kontakt') }}</a>{{ trenner }}
-  <a href="/ueber-uns">{{ _('Über uns') }}</a>{% endif %}
+  <a href="/ueber-uns">{{ _('Über uns und Kontakt') }}</a>{% endif %}
 </div>
 {%- endmacro %}

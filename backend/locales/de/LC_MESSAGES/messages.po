@@ -183,9 +183,6 @@ msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
 msgstr "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
 
 # Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
-msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
-msgstr "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
-
 msgid "Neuigkeiten"
 msgstr "Neuigkeiten"
 
@@ -219,12 +216,6 @@ msgstr "Projekt anlegen"
 # Seiten-JS Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
 msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
 msgstr "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
-
-msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
-msgstr "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
-
-msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
-msgstr "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
 
 msgid "Unbenanntes Projekt"
 msgstr "Unbenanntes Projekt"
@@ -4012,19 +4003,10 @@ msgstr ""
 msgid "Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter"
 msgstr ""
 
-msgid "Deine E-Mail-Adresse (für die Antwort)"
-msgstr ""
-
-msgid "Deine Nachricht"
-msgstr ""
-
 msgid "Nachricht ist unterwegs"
 msgstr ""
 
 msgid "Danke! Deine Nachricht ist bei uns eingegangen — wir antworten per E-Mail an die angegebene Adresse."
-msgstr ""
-
-msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
 msgstr ""
 
 msgid "Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung."
@@ -4087,9 +4069,6 @@ msgid "Du kannst uns auch gleich von hier aus schreiben. Wir antworten an die E-
 msgstr ""
 
 msgid "Oder schreib uns direkt hier"
-msgstr ""
-
-msgid "Über uns"
 msgstr ""
 
 msgid "InkluDocs entsteht in enger Zusammenarbeit von InkluTec aus Hamburg und der Actino Software GmbH aus Euskirchen — Entwicklung, PDF-Kompetenz und Vertrieb aus einer Hand."
@@ -6724,8 +6703,8 @@ msgstr "Kosten (Credits)"
 msgid "Beispiele"
 msgstr "Beispiele"
 
-msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
-msgstr "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
+msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Konto“ → „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
+msgstr "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Konto“ → „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
 
 msgid "Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server."
 msgstr "Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server."
@@ -11535,3 +11514,82 @@ msgstr "Details zu Express-Auftrag {nr}.pdf"
 
 msgid "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."
 msgstr "Der Kunde bekommt die Frage per E-Mail und sieht sie in den Details zu seinem Auftrag. Die Frist ruht, bis er antwortet."
+
+# Runde 10 (08.10.2026): Navigation aufgeraeumt, Meine Vorlagen, Ueber uns und Kontakt, Kontaktformular
+msgid "Meine Vorlagen"
+msgstr "Meine Vorlagen"
+
+msgid "Über uns und Kontakt"
+msgstr "Über uns und Kontakt"
+
+msgid "Vorlagen nimmst du in jedes Projekt mit: eigene Prompts für die KI und Stammdaten mit Quickinfos für Formularfelder."
+msgstr "Vorlagen nimmst du in jedes Projekt mit: eigene Prompts für die KI und Stammdaten mit Quickinfos für Formularfelder."
+
+msgid "Prompts"
+msgstr "Prompts"
+
+msgid "Stammdaten"
+msgstr "Stammdaten"
+
+msgid "Eigene Anweisungen für die KI. Im Projekt wählst du aus, welcher Prompt bei der Generierung zusätzlich gelten soll."
+msgstr "Eigene Anweisungen für die KI. Im Projekt wählst du aus, welcher Prompt bei der Generierung zusätzlich gelten soll."
+
+msgid "Prompts öffnen"
+msgstr "Prompts öffnen"
+
+msgid "Stammdaten öffnen"
+msgstr "Stammdaten öffnen"
+
+msgid "Quickinfos für Formularfelder. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt."
+msgstr "Quickinfos für Formularfelder. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt."
+
+msgid "Noch keine Prompts gespeichert."
+msgstr "Noch keine Prompts gespeichert."
+
+msgid "1 Prompt gespeichert."
+msgstr "1 Prompt gespeichert."
+
+msgid "{n} Prompts gespeichert."
+msgstr "{n} Prompts gespeichert."
+
+msgid "Noch keine Stammdaten gespeichert."
+msgstr "Noch keine Stammdaten gespeichert."
+
+msgid "1 Eintrag gespeichert."
+msgstr "1 Eintrag gespeichert."
+
+msgid "{n} Einträge gespeichert."
+msgstr "{n} Einträge gespeichert."
+
+msgid "Zu meinen Vorlagen"
+msgstr "Zu meinen Vorlagen"
+
+msgid "Zu meinen Projekten"
+msgstr "Zu meinen Projekten"
+
+msgid "Schön, dass du da bist. Lege ein neues Projekt an oder öffne eines deiner Projekte."
+msgstr "Schön, dass du da bist. Lege ein neues Projekt an oder öffne eines deiner Projekte."
+
+msgid "Noch keine Projekte. Lege über den Knopf „Neues Projekt anlegen“ oben dein erstes an."
+msgstr "Noch keine Projekte. Lege über den Knopf „Neues Projekt anlegen“ oben dein erstes an."
+
+msgid "Direkt zu Kontakt und Kontaktformular"
+msgstr "Direkt zu Kontakt und Kontaktformular"
+
+msgid "Dein Name (freiwillig)"
+msgstr "Dein Name (freiwillig)"
+
+msgid "Deine E-Mail-Adresse (Pflicht, für die Antwort)"
+msgstr "Deine E-Mail-Adresse (Pflicht, für die Antwort)"
+
+msgid "Deine Nachricht (Pflicht)"
+msgstr "Deine Nachricht (Pflicht)"
+
+msgid "Bitte gib deine E-Mail-Adresse an, damit wir antworten können."
+msgstr "Bitte gib deine E-Mail-Adresse an, damit wir antworten können."
+
+msgid "Bitte gib eine gültige E-Mail-Adresse an, zum Beispiel name@beispiel.de."
+msgstr "Bitte gib eine gültige E-Mail-Adresse an, zum Beispiel name@beispiel.de."
+
+msgid "Bitte schreib uns eine Nachricht."
+msgstr "Bitte schreib uns eine Nachricht."
