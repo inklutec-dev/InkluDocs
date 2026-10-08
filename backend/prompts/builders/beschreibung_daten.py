@@ -63,8 +63,9 @@ def _render_kontext_block(enriched_context: str, user_hint_text: str) -> str:
 # praktisch dreimal, AUFTRAG auf den Kundenfall zugeschnitten, "ganze Aussage"
 # zu absolut): Eine entwürfelte Fassung (Regel nur hier, AUFTRAG als allgemeiner
 # Halbsatz, Inventar nur Arbeitsschritt, Eigentümer-Zusatz) wurde gemessen und
-# verworfen. Mit Faktenblatt war die Karten-Falle damit 6 von 10 Mal falsch,
-# mit diesem Wortlaut 1 von 9 (Staging, Temperatur 0,3, prompts/ARCHITEKTUR.md).
+# verworfen. Mit Faktenblatt war die Karten-Falle damit 10 von 22 Mal falsch,
+# mit diesem Wortlaut 1 von 12 (Staging, Temperatur 0,3; mit den Läufen vom
+# Nachmittag 1 von 22; prompts/ARCHITEKTUR.md).
 # Der Wortlaut hier und im Karten-AUFTRAG bleibt deshalb wie gemessen; eine
 # Änderung nur mit neuer Messung an mehreren Karten.
 _LESBARER_TEXT_UND_LEGENDE = """LESBARER TEXT UND LEGENDE

@@ -58,7 +58,7 @@ class LegendeRegelTest(unittest.TestCase):
 
     def test_karten_wortlaut_bleibt_wie_gemessen(self):
         """Nacharbeit 08.10.2026: Eine entwürfelte Fassung (Regel nur im Block, AUFTRAG als allgemeiner
-        Halbsatz) hielt die Legende mit Faktenblatt schlechter (Karten-Falle 6 von 10 falsch gegenüber 1 von 9).
+        Halbsatz) hielt die Legende mit Faktenblatt schlechter (Karten-Falle 10 von 22 falsch gegenüber 1 von 12).
         Der gemessene Wortlaut bleibt; ändern nur mit neuer Messung (prompts/ARCHITEKTUR.md)."""
         p = ' '.join(_combo('karte', 'karte').split())
         self.assertIn('Die Bedeutung aus der Legende ist die ganze Aussage über dieses Element; eine zweite '
