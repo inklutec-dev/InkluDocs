@@ -98,6 +98,27 @@ class LegendeRegelTest(unittest.TestCase):
         with mock.patch.dict(os.environ, {'V4_FAKTENBLATT': 'off'}):
             self.assertFalse(orch._faktenblatt_an('karte'))
 
+    def test_bisherige_schalterwerte_unveraendert(self):
+        """Die Typ-Liste ist ein Zusatz: jeder bisherige Wert wirkt wie vor dem Oktober 2026."""
+        from unittest import mock
+        from pipelines.v4 import orchestrator as orch
+        typen = ('karte', 'tabelle', 'infografik', 'diagramm', 'screenshot', 'foto_event', 'foto_objekte')
+        for wert in ('on', 'ON', ' on ', 'off', 'OFF', '', 'aus', 'an', 'true', '1', 'alle'):
+            with mock.patch.dict(os.environ, {'V4_FAKTENBLATT': wert}):
+                for typ in typen:
+                    self.assertEqual(orch._faktenblatt_an(typ), wert.strip().lower() == 'on',
+                                     f'V4_FAKTENBLATT={wert!r}, {typ}')
+        for wert in ('off', 'OFF', '', 'aus', 'on', 'true', '1', 'alle', ' Alle ', 'kritisch', 'KRITISCH'):
+            w = wert.strip().lower()
+            with mock.patch.dict(os.environ, {'V4_VERIFY_MODE': wert}):
+                for typ in typen:
+                    erwartet = w == 'alle' or (w == 'kritisch' and typ in orch._VERIFY_KRITISCHE_TYPEN)
+                    self.assertEqual(orch._verify_scope_matches(typ), erwartet, f'V4_VERIFY_MODE={wert!r}, {typ}')
+        ohne = {k: v for k, v in os.environ.items() if k not in ('V4_FAKTENBLATT', 'V4_VERIFY_MODE')}
+        with mock.patch.dict(os.environ, ohne, clear=True):
+            self.assertTrue(orch._faktenblatt_an('karte'))          # Vorgabe on
+            self.assertFalse(orch._verify_scope_matches('karte'))   # Vorgabe off
+
 
 if __name__ == '__main__':
     unittest.main()

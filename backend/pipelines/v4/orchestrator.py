@@ -6,7 +6,8 @@ Wrapper gerufen.
 Aufruf-Fluss (Lean, seit 07.09.2026 der einzige Weg; Claude ueber Amazon Bedrock):
   Pass 1 (Klassifikation): Bildtyp + foto_subtyp in einem kurzen Aufruf
   Pass 2 (Combo):          Inventar "im Kopf" + Beschreibung, Ausgabe = BeschreibungOutput
-  Pruefpass (optional):    V4_VERIFY_MODE off/kritisch/alle, Korrektur per V4_VERIFY_KORREKTUR
+  Pruefpass (optional):    V4_VERIFY_MODE off/kritisch/alle oder Typ-Liste (z. B. karte),
+                           Korrektur per V4_VERIFY_KORREKTUR
 
 Fruehe Exits:
   - dekorativ via handle_dekorativ_classification (Heuristik-Safety-Net)
