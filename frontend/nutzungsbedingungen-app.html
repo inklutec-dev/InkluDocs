@@ -40,6 +40,9 @@
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const container = doc.querySelector('.legal-container');
       if (!container) throw new Error('Nutzungsbedingungen-Inhalt nicht gefunden (.legal-container fehlt)');
+      // Runde 11 (axe landmark-unique): der äußere Bereich trägt schon den Namen — der eingebettete bleibt unbenannt
+      container.removeAttribute('role');
+      container.removeAttribute('aria-label');
       container.querySelectorAll('h1').forEach((h) => h.remove());
       container.querySelectorAll('nav.auth-links').forEach((n) => n.remove());
       target.innerHTML = '';

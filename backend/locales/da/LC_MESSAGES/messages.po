@@ -11289,3 +11289,7 @@ msgstr "Angiv en gyldig e-mailadresse, for eksempel navn@eksempel.dk."
 
 msgid "Bitte schreib uns eine Nachricht."
 msgstr "Skriv venligst en besked til os."
+
+# Runde 11 (08.10.2026): Barrierefreiheit ohne Screenreader
+msgid "Das hat leider nicht geklappt. Bitte erneut versuchen."
+msgstr "Det lykkedes desværre ikke. Prøv igen."

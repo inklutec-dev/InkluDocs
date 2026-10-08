@@ -136,15 +136,15 @@
         const badges = [];
         const unsicher = f.quelle === 'ki' && f.sicherheit === 'niedrig';
         badges.push('<span class="badge ' + (offen || unsicher ? 'badge-pending' : 'badge-done') + '" id="feld_status_' + f.id + '">' + escHtml(statusText(f)) + '</span>');
-        if (f.pflicht) badges.push('<span class="badge" style="background:#a15c00;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Pflichtfeld') + '</span>');
-        if (f.ausgefuellt) badges.push('<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('bereits ausgefüllt') + '</span>');
+        if (f.pflicht) badges.push('<span class="badge" style="background:#a15c00;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">' + t('Pflichtfeld') + '</span>');
+        if (f.ausgefuellt) badges.push('<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">' + t('bereits ausgefüllt') + '</span>');
         // Pruef-Badge (Gast immer, Besitzer nur bei freigegebenem Projekt) — nur fuer
         // Felder, die einen Text haben; Felder ohne Quickinfo tragen kein Urteil.
         if ((gast() || inReview) && !offen && typeof unifiedKeyFor === 'function') {
             const lr = latestReview(f);
             const key = lr ? unifiedKeyFor(lr.role, lr.status) : 'neu';
             badges.push('<span class="badge" id="feld_unibadge_' + f.id + '" style="background:' + unifiedStatusColor(key)
-                + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + unifiedStatusLabel(key)
+                + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">' + unifiedStatusLabel(key)
                 + (!gast() && f.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>');
         }
         const bild = f.hat_ausschnitt
@@ -179,7 +179,7 @@
                 // KI-Fach (28.08.2026): liegt ein anderer Text ueber dem KI-Vorschlag, holt der Knopf ihn zurueck.
                 +   '<button type="button" class="btn btn-secondary btn-small" id="feld_ki_' + f.id + '" onclick="Formular.kiVorschlag(' + f.id + ')"' + (f.quickinfo_ki && f.quickinfo_ki !== f.quickinfo ? '' : ' hidden') + '>' + t('KI-Vorschlag übernehmen') + '</button>'
                 +   '<button type="button" class="btn btn-secondary btn-small" id="feld_sd_' + f.id + '" onclick="Formular.inStammdaten(' + f.id + ')"' + (offen ? ' disabled' : '') + '>' + t('In Stammdaten übernehmen') + '</button>'
-                +   '<span id="feld_msg_' + f.id + '" role="status" aria-live="polite" style="font-size:0.85rem;"></span>'
+                +   '<span id="feld_msg_' + f.id + '" role="status" aria-live="polite" style="font-size:0.875rem;"></span>'
                 + '</div>')
             + '</section>';
     }
@@ -209,7 +209,7 @@
             +     '<div style="margin-top:0.4rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">'
             +       '<button type="button" class="btn btn-primary btn-small" onclick="Formular.anmerkungSpeichern(' + f.id + ')">' + t('Anmerkung speichern') + '</button>'
             +       '<button type="button" class="btn btn-delete btn-small" onclick="Formular.anmerkungLoeschen(' + f.id + ')">' + t('Anmerkung löschen') + '</button>'
-            +       '<output id="feld_note_msg_' + f.id + '" style="font-size:0.85rem;"></output>'
+            +       '<output id="feld_note_msg_' + f.id + '" style="font-size:0.875rem;"></output>'
             +     '</div>'
             +   '</div>'
             + '</details>'
@@ -501,7 +501,7 @@
                 +     '<div class="form-group" style="margin-bottom:0.8rem;"><label for="fExportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">' + t('Dateiname (optional)') + '</label>'
                 +       '<input type="text" id="fExportFilename" autocomplete="off" aria-describedby="fExportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
                 // Michael Karbe (Mail 14.09.2026, Punkt 2): derselbe Hinweis wie im Bilder-Dialog, was bei leerem Feld passiert.
-                +       '<p id="fExportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">' + t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.') + '</p></div>'
+                +       '<p id="fExportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.875rem;">' + t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.') + '</p></div>'
                 +     '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +       (imPdfProjekt ? '' : '<button class="btn btn-primary" onclick="Formular.exportieren(' + project.id + ', \'formular\')">' + t('Als PDF mit Quickinfos') + '</button>')
                 +       '<button class="btn btn-secondary" onclick="Formular.exportieren(' + project.id + ', \'formular_csv\')">' + t('Als CSV (Feldliste)') + '</button>'

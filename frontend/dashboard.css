@@ -22,8 +22,14 @@
 /* „Konto“ (Runde 10, 08.10.2026): natives <details> am Fuß der Leiste — Einstellungen, Datensicherheit, Abmelden.
    Die Überschrift sieht aus wie ein Eintrag (gleiche Höhe, gleicher linker Rand), das Dreieck zeigt auf/zu. */
 .app-nav-konto { margin-top:auto; border-top:1px solid rgba(255,255,255,.15); padding-top:.4rem; }
-.app-nav-konto > details > summary { display:list-item; padding:.7rem 1.25rem; color:#fff; border-left:4px solid transparent; cursor:pointer; }
-.app-nav-konto > details > summary::marker { color:#fff; }
+.app-nav-konto > details > summary { display:flex; align-items:center; gap:.7rem; list-style:none; padding:.7rem 1.25rem; color:#fff; border-left:4px solid transparent; cursor:pointer; }
+/* Runde 11: Zustand deutlich — kräftiger Pfeil (3 px Strich): zu → zeigt nach rechts, offen → nach unten. Gezeichnet mit
+   Rändern ohne Text (Screenreader hören nichts davon; den Zustand meldet details selbst), im Hochkontrast in Textfarbe. */
+.app-nav-konto > details > summary::-webkit-details-marker { display:none; }
+.app-nav-konto > details > summary::before { content:""; flex:none; width:.6rem; height:.6rem; margin-left:.1rem;
+  border-right:3px solid currentColor; border-bottom:3px solid currentColor; transform:rotate(-45deg); transition:transform .15s; }
+.app-nav-konto > details[open] > summary::before { transform:rotate(45deg); margin-top:-.25rem; }
+@media (prefers-reduced-motion: reduce) { .app-nav-konto > details > summary::before { transition:none; } }
 .app-nav-konto > details > summary:hover { background:rgba(255,255,255,.10); }
 .app-nav-konto > details > summary:focus-visible { outline:3px solid #fff; outline-offset:-3px; }
 .app-nav-unter { list-style:none; margin:0; padding:0 0 .25rem; }
@@ -79,8 +85,9 @@
 .dash-card h2 { margin-top:0; }
 /* Einstellungen (Michael Karbe, Mail 14.09.2026): Kartentitel ist der Link zur Unterseite — orange wie die
    Projekttitel auf „Meine Projekte“ (.dash-item h2 a), die frühere Link-Zeile darunter entfällt. */
-.dash-card h2 a { color:#c75000; text-decoration:none; }
-.dash-card h2 a:hover, .dash-card h2 a:focus { text-decoration:underline; }
+/* Runde 11: ein Linkstil — Linkfarbe und unterstrichen wie alle Inhaltslinks (vorher #c75000 ohne Unterstrich) */
+.dash-card h2 a { color:var(--link); text-decoration:underline; text-underline-offset:.15em; }
+.dash-card h2 a:hover, .dash-card h2 a:focus { text-decoration-thickness:2px; }
 /* Fliesstext-Karten (Ueber uns): Schrift wie die Prompt-Beschreibungen
    (Michael, 25.08.2026) — .9rem, gedaempft, Zeilenabstand 1.6.
    Kontrast text-muted auf card-bg = 8,9:1 (wie .dash-intro-box). */
@@ -104,7 +111,7 @@
 .dash-list { list-style:none; padding:0; margin:0; display:grid; gap:.75rem; }
 .dash-item { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; }
 .dash-item h2, .dash-item h3 { margin:0 0 .2rem; font-size:1.1rem; }
-.dash-item a { color:#c75000; text-decoration:underline; }
+.dash-item a { color:var(--link); text-decoration:underline; }
 /* Links im Knopf-Look (z. B. Report in der Benutzerliste, 11.08.2026):
    die Listen-Linkfarbe #c75000 schafft auf dem Knopf-Hintergrund kein AA —
    Links mit .btn uebernehmen deshalb die normale Knopf-Textfarbe. */
@@ -115,9 +122,10 @@
 .dash-report-zeile { margin:.25rem 0; }
 /* Michael 17.07.2026 (Optik A1): Projekttitel fett, OHNE Dauer-Unterstrich.
    Erkennbarkeit als Link bleibt ueber Farbe + Unterstrich bei Hover/Fokus. */
-.dash-item h2 a, .dash-item h3 a { font-weight:700; text-decoration:none; }
+/* Runde 11: Projekttitel bleiben fett, sind aber wie jeder Inhaltslink unterstrichen (ein Linkstil) */
+.dash-item h2 a, .dash-item h3 a { font-weight:700; text-decoration:underline; text-underline-offset:.15em; }
 .dash-item h2 a:hover, .dash-item h3 a:hover,
-.dash-item h2 a:focus, .dash-item h3 a:focus { text-decoration:underline; }
+.dash-item h2 a:focus, .dash-item h3 a:focus { text-decoration-thickness:2px; }
 .dash-meta { color:var(--text-muted); font-size:.9rem; margin:.2rem 0 0; }
 /* Kontaktformular: Luft zwischen Einleitung und erstem Feld sowie zwischen
    Datenschutz-Hinweis und Senden-Knopf (Steve, 26.08.2026). Nach .dash-meta,
@@ -134,20 +142,20 @@
    unter WCAG 2.2 AA). #b84a00 ist minimal dunkler (4,87:1 auf #f5f7fa, 5,23:1 auf
    Weiss), bleibt dieselbe Markenfarbe und erfuellt AA. Gilt fuer Footer-Links und
    den Spenden-Link. */
-.dash-footer a { color:#b84a00; }
+.dash-footer a { color:var(--link); }
 .dash-support { margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); max-width:640px; }
 .dash-support-text { margin:0 0 .5rem; font-size:.9rem; }
-.dash-support-link { color:#b84a00; font-weight:600; text-decoration:underline; }
-.dash-support-note { margin:.4rem 0 0; font-size:.8rem; color:var(--text-muted); }
+.dash-support-link { color:var(--link); font-weight:600; text-decoration:underline; }
+.dash-support-note { margin:.4rem 0 0; font-size:.875rem; color:var(--text-muted); }
 
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #c75000; outline-offset:2px; }
 .app-sidebar a:focus-visible, .app-nav button:focus-visible { outline:3px solid #fff; outline-offset:-3px; }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
 
 /* Neuigkeiten: Knopf + barrierefreier Dialog auf dem Dashboard (04.06.2026) */
-.dash-news-btn { display:inline-block; background:var(--card-bg); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:.5rem 1rem; font-size:.95rem; font-weight:600; cursor:pointer; margin:0 0 2rem; }
+.dash-news-btn { display:inline-block; background:var(--card-bg); border:2px solid var(--feldrand); color:var(--text); border-radius:8px; padding:.5rem 1rem; font-size:.95rem; font-weight:600; cursor:pointer; margin:0 0 2rem; }
 .dash-news-btn.has-unread { background:#c75000; color:#fff; border-color:#c75000; }
-.dash-news-btn:focus-visible { outline:2px solid #c75000; outline-offset:2px; }
+.dash-news-btn:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 .dash-news-panel { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:200; padding:1rem; }
 .dash-news-panel[hidden] { display:none; }
 .dash-news-panel-content { background:var(--card-bg); border-radius:12px; padding:1.5rem; width:100%; max-width:560px; max-height:80vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); }
@@ -163,8 +171,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    „Frühere Neuigkeiten“ liegt auf dem weissen Karten-Grund und bleibt. */
 .dash-news-date { font-weight:700; color:#b84a00; margin-right:.4rem; white-space:nowrap; }
 .dash-news-more { margin-top:.75rem; }
-.dash-news-more summary { cursor:pointer; color:#c75000; font-weight:600; padding:.3rem 0; }
-.dash-news-more summary:focus-visible { outline:2px solid #c75000; outline-offset:2px; }
+.dash-news-more summary { cursor:pointer; color:var(--link); font-weight:600; padding:.3rem 0; }
+.dash-news-more summary:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 .dash-news-more .dash-news-list { margin-top:.6rem; }
 
 
@@ -172,7 +180,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    Aktiver Zustand + Fokus in AA-tauglichem Orange #c75000 (4.59:1 auf Weiss). */
 .lang-choice ul { list-style: none; margin: .75rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
 .lang-choice li { margin: 0; }
-.lang-option { display: inline-block; padding: .5rem .9rem; border: 2px solid var(--border, #ccc); border-radius: 8px; text-decoration: none; color: var(--text, #1a1a1a); background: #fff; line-height: 1.2; }
+.lang-option { display: inline-block; padding: .5rem .9rem; border: 2px solid var(--feldrand, #767f8f); border-radius: 8px; text-decoration: none; color: var(--text, #1a1a1a); background: #fff; line-height: 1.2; }
 .lang-option:hover { border-color: #c75000; }
 .lang-option:focus-visible { outline: 3px solid #c75000; outline-offset: 2px; }
 .lang-option.is-current { border-color: #c75000; background: #c75000; color: #fff; font-weight: 700; }
@@ -206,7 +214,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 /* Meine Ausgaben (11.09.2026): Reiter im Projektkopf + Karten auf der Ausgaben-Seite */
 .proj-tabs ul { list-style:none; display:flex; gap:.5rem; padding:0; margin:.6rem 0 .2rem; flex-wrap:wrap; }
-.proj-tabs a { display:inline-block; padding:.35rem .9rem; border:1px solid var(--border); border-radius:6px; text-decoration:none; color:var(--text); font-weight:600; background:var(--card-bg); }
+.proj-tabs a { display:inline-block; padding:.35rem .9rem; border:1px solid var(--feldrand); border-radius:6px; text-decoration:none; color:var(--text); font-weight:600; background:var(--card-bg); }
 .proj-tabs a[aria-current="page"] { background:#c75000; color:#fff; border-color:#c75000; }
 .proj-tabs a:hover, .proj-tabs a:focus { text-decoration:underline; }
 .proj-tabs a:focus-visible { outline:2px solid #c75000; outline-offset:2px; }
@@ -251,7 +259,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .verwaltung-liste { list-style: none; padding: 0; margin: .5rem 0 0; border-top: 1px solid var(--border); }
 .verwaltung-zeile { padding: .55rem .25rem; border-bottom: 1px solid var(--border); line-height: 1.5; overflow-wrap: anywhere; }
 /* #a94200 statt #c75000: auf dem grauen Seitenhintergrund reichte das hellere Orange nicht für 4,5:1 (axe 25.09.). */
-.verwaltung-zeile a { color: #a94200; font-weight: 700; text-decoration: underline; }
+.verwaltung-zeile a { color: var(--link); font-weight: 700; text-decoration: underline; }
 .verwaltung-zeile a:hover, .verwaltung-zeile a:focus { text-decoration-thickness: 2px; }
 .verwaltung-zeile .btn-small { margin-left: .25rem; vertical-align: baseline; }
 .verwaltung-meta { color: var(--text); }
@@ -263,7 +271,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Karten zum Aufklappen wie die Dokumente der Projektansicht „Dokument“ (gleiche Regeln wie in app.html, dort inline) —
    hier fuer „Meine Auftraege“ und die Dokumente eines Express-Auftrags (Michael Karbe 05.10.2026, Punkte 1 und 2). */
 .dok-klappe > summary { cursor: pointer; padding: 0.2rem 0; }
-.dok-klappe > summary:focus-visible { outline: 2px solid var(--focus, #c75000); outline-offset: 2px; }
+.dok-klappe > summary:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
 .dok-klappe[open] > summary { margin-bottom: 0.75rem; }
 .dok-meta { list-style: none; margin: 0 0 0.6rem; padding: 0; font-size: 0.92rem; line-height: 1.5; overflow-wrap: anywhere; }
 .dok-meta li { margin: 0; }
@@ -294,7 +302,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .verwaltung-wahl input[type="checkbox"], .verwaltung-wahl input[type="radio"] { width: 1.5rem; height: 1.5rem; vertical-align: middle; margin: 0 .4rem 0 0; }
 .verwaltung-bestaetigung { font-size: 1.05rem; font-weight: 600; line-height: 1.5; margin: .25rem 0 1rem; }
 .verwaltung-download { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
-.verwaltung-textknopf { background: none; border: none; padding: 0; font: inherit; font-weight: 700; color: #a94200; text-decoration: underline; cursor: pointer; }
+.verwaltung-textknopf { background: none; border: none; padding: 0; font: inherit; font-weight: 700; color: var(--link); text-decoration: underline; cursor: pointer; }
 .verwaltung-textknopf:hover, .verwaltung-textknopf:focus { text-decoration-thickness: 2px; }
 .verwaltung-textknopf:focus-visible { outline: 2px solid #c75000; outline-offset: 2px; }
 .umsatz-zahlen { list-style: none; padding: 0; margin: 0 0 .75rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; max-width: 64rem; }
@@ -311,7 +319,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .verwaltung-hinweis { max-width: 64rem; margin: .25rem 0 1.25rem; }
 .verwaltung-hinweis p { margin: .4rem 0; line-height: 1.55; }
 .verwaltung-zurueck { margin: 0 0 1rem; }
-.verwaltung-zurueck a { color: #a94200; font-weight: 600; text-decoration: underline; }
+.verwaltung-zurueck a { color: var(--link); font-weight: 600; text-decoration: underline; }
 .verwaltung-karte h2 + .verwaltung-suche { margin-top: .75rem; }
 .verwaltung-unterkopf { font-size: 1.1rem; margin: 1.25rem 0 .5rem; }
 /* Meldungszeile der Verwaltung: sichtbar, bekommt nach Aktionen den Fokus. */
@@ -376,7 +384,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .ex-rechtstext h2 { font-size: 1.1rem; margin: 1.25rem 0 .4rem; }
 .ex-rechtstext p { max-width: 48rem; line-height: 1.55; }
 .dok-express { margin: .25rem 0 .75rem; }
-.dok-express a { color: #a94200; font-weight: 700; text-decoration: underline; }
+.dok-express a { color: var(--link); font-weight: 700; text-decoration: underline; }
 /* Druck: nur der Inhalt — ohne Seitenleiste, Sprunglink, Fußzeile und Knöpfe (gilt für alle App-Seiten). */
 @media print {
   .app-sidebar, .dash-skip, .dash-footer, .no-print, dialog { display: none !important; }
@@ -405,10 +413,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .vorlagen-wahl a.btn { display:inline-block; text-decoration:none; }
 /* gleiche Höhe: die helle Ansicht hat 2 px Rahmen, die dunkle bekommt ihn in ihrer Farbe */
 .vorlagen-wahl a.btn-primary { border:2px solid var(--primary); }
+/* Runde 11, Punkt 2: die aktuelle Ansicht hat ein Merkmal ohne Farbe — dicke Unterstreichung (im Hochkontrast zusätzlich
+   ein dicker Rahmen in Markierungsfarbe, style.css). Gilt auch für die Ansichts-Knöpfe im Projekt (app.html). */
+.vorlagen-wahl a.btn[aria-current="page"], .ansicht-knoepfe a.btn[aria-current="page"], .proj-tabs a[aria-current="page"] {
+  text-decoration:underline; text-decoration-thickness:3px; text-underline-offset:.3em; }
 .vorlagen-wahl a.btn:hover, .vorlagen-wahl a.btn:focus-visible { text-decoration:underline; }
 .vorlagen-wahl a.btn:focus-visible { outline:3px solid var(--focus, #c75000); outline-offset:2px; }
 /* „Prompts verwalten“ neben der Prompt-Auswahl im Projekt */
-.prompt-verwalten { color:#a94200; font-weight:600; text-decoration:underline; }
+.prompt-verwalten { color:var(--link); font-weight:600; text-decoration:underline; }
 /* „Über uns und Kontakt“: Abschnitt „Kontakt“ unter den Über-uns-Karten; Kartentitel dort H3 in Kartengröße */
 .kontakt-abschnitt { margin-top:2.25rem; }
 .kontakt-abschnitt > h2 { margin:0 0 .9rem; font-size:1.4rem; }
@@ -416,8 +428,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .kontakt-abschnitt > h2:focus-visible { outline:3px solid var(--focus, #c75000); outline-offset:2px; }
 .kontakt-abschnitt .dash-card > h3 { font-size:1.15rem; margin:0 0 .6rem; }
 .kontakt-sprung { margin:0 0 1.5rem; }
-.kontakt-sprung a { color:#a94200; font-weight:600; text-decoration:underline; }
+.kontakt-sprung a { color:var(--link); font-weight:600; text-decoration:underline; }
 /* Kontaktformular: Fehler je Feld (Runde 10, Barrierefreiheitsprüfung) */
 #kontaktForm .verwaltung-fehler:empty { display:none; }
 #kontaktForm .dash-field .verwaltung-fehler { margin:.35rem 0 0; }
 #kontaktErfolg:focus { outline:2px solid #a94200; outline-offset:2px; }
+
+/* ── Runde 11 (08.10.2026): Navigation im Hochkontrast ── Der transparente Balken links (unten auf dem Handy) wird dort
+   sichtbar — an JEDEM Eintrag. Darum: Balken in Hintergrundfarbe, nur die aktuelle Seite in Markierungsfarbe. */
+@media (forced-colors: active) {
+  .app-nav a, .app-nav button, .app-nav-konto > details > summary { border-left-color: Canvas; border-bottom-color: Canvas; }
+  .app-nav a[aria-current="page"] { border-left-color: Highlight; text-decoration: underline; text-decoration-thickness: 2px; }
+}
+@media (forced-colors: active) and (max-width:768px) {
+  .app-nav a[aria-current="page"] { border-left-color: Canvas; border-bottom-color: Highlight; }
+}

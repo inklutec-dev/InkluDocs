@@ -11160,3 +11160,7 @@ msgstr "Ange en giltig e-postadress, till exempel namn@exempel.se."
 
 msgid "Bitte schreib uns eine Nachricht."
 msgstr "Skriv ett meddelande till oss."
+
+# Runde 11 (08.10.2026): Barrierefreiheit ohne Screenreader
+msgid "Das hat leider nicht geklappt. Bitte erneut versuchen."
+msgstr "Det fungerade tyvärr inte. Försök igen."

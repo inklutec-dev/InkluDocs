@@ -11593,3 +11593,7 @@ msgstr "Bitte gib eine gültige E-Mail-Adresse an, zum Beispiel name@beispiel.de
 
 msgid "Bitte schreib uns eine Nachricht."
 msgstr "Bitte schreib uns eine Nachricht."
+
+# Runde 11 (08.10.2026): Barrierefreiheit ohne Screenreader
+msgid "Das hat leider nicht geklappt. Bitte erneut versuchen."
+msgstr "Das hat leider nicht geklappt. Bitte erneut versuchen."

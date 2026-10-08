@@ -21,6 +21,10 @@
     --success: #16a34a;
     --focus: #c75000;
     --warning: #f59e0b;
+    /* Runde 11 (08.10.2026): EIN Linkstil für alle Inhaltslinks, auch besuchte — 5,65:1 auf Weiß, 5,2:1 auf #f5f7fa,
+       ≥ 5:1 auf den hellen Meldungsflächen. Fehlerrand der Felder: 6,5:1 auf Weiß. */
+    --link: #a94200;
+    --fehler-rand: #b91c1c;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -89,7 +93,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px
     padding: 0.85rem;
     background: var(--accent);
     color: white;
-    border: none;
+    border: 2px solid transparent;
     border-radius: 8px;
     font-size: 1.05rem;
     font-weight: 600;
@@ -123,13 +127,13 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px
     border-top: 1px solid var(--border);
 }
 .auth-links a {
-    color: var(--accent);
-    text-decoration: none;
+    color: var(--link);
+    text-decoration: underline;
     font-size: 0.95rem;
     font-weight: 500;
 }
 .auth-links a:hover { text-decoration: underline; }
-.auth-links a:focus { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+.auth-links a:focus { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
 .auth-links.center { justify-content: center; }
 
 /* Legal pages — Standalone (oeffentliche /impressum, /datenschutz, /nutzungsbedingungen).
@@ -203,14 +207,14 @@ body:has(.legal-container):not(:has(.app-shell)) {
     margin-bottom: 0.4rem;
 }
 .legal-container a {
-    color: var(--accent);
+    color: var(--link);
     text-decoration: underline;
 }
 .legal-container a:hover {
-    color: var(--accent-hover);
+    text-decoration-thickness: 2px;
 }
 .legal-container a:focus {
-    outline: 2px solid var(--focus);
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
     border-radius: 2px;
 }
@@ -218,7 +222,7 @@ body:has(.legal-container):not(:has(.app-shell)) {
     background: var(--bg);
     padding: 0.15rem 0.4rem;
     border-radius: 4px;
-    font-size: 0.9em;
+    font-size: max(0.875rem, 0.9em);   /* Runde 11: nie unter 14 px */
 }
 .legal-date {
     margin-top: 2rem;
@@ -233,20 +237,19 @@ body:has(.legal-container):not(:has(.app-shell)) {
     margin-top: 1.5rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border);
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: var(--text-muted);
 }
 .legal-footer a {
-    color: var(--text-muted);
-    text-decoration: none;
+    color: var(--link);
+    text-decoration: underline;
     margin: 0 0.5rem;
 }
 .legal-footer a:hover {
-    color: var(--accent);
-    text-decoration: underline;
+    text-decoration-thickness: 2px;
 }
 .legal-footer a:focus {
-    outline: 2px solid var(--focus);
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
     border-radius: 2px;
 }
@@ -271,14 +274,14 @@ body:has(.legal-container):not(:has(.app-shell)) {
     margin-bottom: 0;
 }
 .checkbox-group a {
-    color: var(--accent);
+    color: var(--link);
     text-decoration: underline;
 }
 .checkbox-group a:hover {
-    color: var(--accent-hover);
+    text-decoration-thickness: 2px;
 }
 .checkbox-group a:focus {
-    outline: 2px solid var(--focus);
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
     border-radius: 2px;
 }
@@ -396,7 +399,7 @@ header h1 { font-size: 1.3rem; color: white; }
 .badge {
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     font-weight: 600;
 }
 .badge-ready { background: #fff7ed; color: #9a3412; }
@@ -413,7 +416,9 @@ header h1 { font-size: 1.3rem; color: white; }
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    border: none;
+    /* Runde 11: transparenter 2-px-Rahmen statt keinem — im Hochkontrast wird er sichtbar (Knopf bleibt als Knopf
+       erkennbar), und Primär- und Sekundärknöpfe sind gleich hoch. */
+    border: 2px solid transparent;
     transition: background 0.2s;
 }
 .btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.3); }
@@ -423,7 +428,7 @@ header h1 { font-size: 1.3rem; color: white; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background: var(--primary); color: white; }
 .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-.btn-secondary { background: var(--bg); border: 2px solid var(--border); color: var(--text); }
+.btn-secondary { background: var(--bg); border: 2px solid var(--feldrand); color: var(--text); }   /* Runde 11: Rand 4,0:1 statt 1,2:1 */
 .btn-secondary:hover:not(:disabled) { border-color: var(--text-muted); }
 .btn-danger { background: var(--error); color: white; }
 .btn-danger:hover:not(:disabled) { background: #b91c1c; }
@@ -436,7 +441,7 @@ header h1 { font-size: 1.3rem; color: white; }
     color: #c75000;
 }
 .btn-delete:hover:not(:disabled) { background: #fdf1e7; }
-.btn-small { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+.btn-small { padding: 0.35rem 0.75rem; font-size: 0.875rem; }
 
 /* Progress */
 .progress-bar {
@@ -537,7 +542,7 @@ header h1 { font-size: 1.3rem; color: white; }
     border-radius: 10px 10px 0 0;
 }
 .doc-section > summary:focus-visible {
-    outline: 2px solid var(--focus, #c75000);
+    outline: 3px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
 .doc-heading {
@@ -732,7 +737,7 @@ header h1 { font-size: 1.3rem; color: white; }
     margin-bottom: 0.75rem;
 }
 .page-section > summary:focus-visible {
-    outline: 2px solid var(--focus, #c75000);
+    outline: 3px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
 .page-heading {
@@ -771,7 +776,7 @@ header h1 { font-size: 1.3rem; color: white; }
     padding: 0.3rem 0;
 }
 .page-view-details > summary:focus-visible {
-    outline: 2px solid var(--focus, #c75000);
+    outline: 3px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
 /* Seitentext: eigenes inneres Klapp-Element innerhalb der Seitengruppe */
@@ -789,7 +794,7 @@ header h1 { font-size: 1.3rem; color: white; }
     padding: 0.3rem 0;
 }
 .page-text-details > summary:focus-visible {
-    outline: 2px solid var(--focus, #c75000);
+    outline: 3px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
 .page-text-content {
@@ -811,7 +816,7 @@ header h1 { font-size: 1.3rem; color: white; }
     flex-wrap: wrap;
     gap: 0.5rem;
 }
-.image-meta { font-size: 0.85rem; color: var(--text-muted); }
+.image-meta { font-size: 0.875rem; color: var(--text-muted); }
 .image-preview {
     max-width: 100%;
     max-height: 300px;
@@ -849,12 +854,12 @@ header h1 { font-size: 1.3rem; color: white; }
        ("sonst zu bunt"). Gruen #1e7e34 = 5,1:1 auf Weiss (AA, wie save-indicator). */
     background: #1e7e34;
     border-radius: 4px;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #fff;
 }
 .save-indicator {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     /* a11y-Fix 10.07.2026: var(--success) hatte nur 2,96:1 auf Weiss ->
        dunkleres Gruen 5,1:1 (AA), gleiche Farbe wie .rev-saved. */
     color: #1e7e34;
@@ -911,7 +916,7 @@ header h1 { font-size: 1.3rem; color: white; }
 }
 .admin-table th {
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: var(--text-muted);
     text-transform: uppercase;
 }
@@ -992,7 +997,7 @@ header h1 { font-size: 1.3rem; color: white; }
     border-radius: 4px;
     font-style: normal;
     font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-    font-size: 0.9em;
+    font-size: max(0.875rem, 0.9em);   /* Runde 11: nie unter 14 px */
     color: var(--primary);
 }
 .inkluagent-toggle {
@@ -1063,7 +1068,7 @@ header h1 { font-size: 1.3rem; color: white; }
     margin-right: 1.5rem;
 }
 .inkluagent-message-role {
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -1091,7 +1096,7 @@ header h1 { font-size: 1.3rem; color: white; }
     border-color: var(--focus);
     box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.25);
 }
-.inkluagent-hint { font-size: 0.85rem; color: var(--text-muted); }
+.inkluagent-hint { font-size: 0.875rem; color: var(--text-muted); }
 .inkluagent-controls {
     display: flex;
     align-items: center;
@@ -1141,7 +1146,7 @@ header h1 { font-size: 1.3rem; color: white; }
 }
 .dropzone-or { color: var(--text-muted); margin: 0; }
 /* Hinweis unter der Hochladeflaeche — wie in app.html (dort zusaetzlich inline); hier fuer alle Seiten mit Hochladefeld. */
-.feld-hinweis { color: var(--text-muted); font-size: 0.85rem; margin: 0.4rem 0 0; }
+.feld-hinweis { color: var(--text-muted); font-size: 0.875rem; margin: 0.4rem 0 0; }
 /* Sichtbarer Fokusring auf dem Label-Knopf, wenn das (versteckte) Feld Tastaturfokus hat. Der Schatten allein hatte
    etwa 2,3:1 — dazu jetzt derselbe Ring wie an allen Knoepfen (05.10.2026, Hochladefeld fuer Express). */
 input[type="file"]:focus + .upload-btn { box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
@@ -1170,7 +1175,7 @@ input[type="file"]:focus-visible + .upload-btn { outline: 3px solid var(--focus)
     list-style: none;
 }
 .guest-note-edit summary::-webkit-details-marker { display: none; }
-.guest-note-edit summary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
+.guest-note-edit summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .guest-note-edit summary:hover { border-color: var(--text-muted); }
 
 /* DSGVO-Hinweis in der Fußzeile (04.06.2026: Schild-Icon + kaputter Aufklapp-Knopf entfernt).
@@ -1190,7 +1195,7 @@ input[type="file"]:focus-visible + .upload-btn { outline: 3px solid var(--focus)
 .dsgvo-note {
     max-width: 640px;
     margin: 1rem 0 0.5rem 0;
-    font-size: 0.82rem;
+    font-size: 0.875rem;
     line-height: 1.5;
     text-align: left;
 }
@@ -1279,4 +1284,60 @@ textarea { font-family: inherit; font-size: 1rem; }
 /* display:flex wuerde das hidden-Attribut uebersteuern — ausdruecklich ausblenden. */
 .lauf-meldung[hidden] {
     display: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   RUNDE 11 (08.10.2026, Steve: „barrierefreiheitstechnisch soll alles stimmen“ — auch für Menschen mit Seheinschränkung
+   ohne Screenreader). App-weit über das gemeinsame Stylesheet, Prüfbericht PRUEFUNG-RUNDE10-BARRIEREFREIHEIT.md.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* 4: Inhaltslinks ohne eigene Regel (vorher Browser-Blau, besucht Violett) in der Linkfarbe, unterstrichen. :where hält
+   die Spezifität bei 0 — Navigation (liegt außerhalb von main/footer), Knopf-Links und eigene Regeln behalten Vorrang. */
+:where(main, footer, dialog, [role="dialog"], .auth-container, .legal-container) a:where(:not([class*="btn"])),
+:where(main, footer, dialog, [role="dialog"], .auth-container, .legal-container) a:where(:not([class*="btn"])):visited {
+    color: var(--link);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+/* 5: Fokusring 3 px für alle Links und Aufklapp-Überschriften (auch auf Seiten nur mit style.css, z. B. Anmeldung).
+   Dunkle Flächen (Navigation, Kopfzeile) setzen weiter ihren weißen Ring. */
+a:focus-visible, summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* 6: Code (z. B. in der Datenschutzerklärung) nie unter 14 px — der Browser setzt Festbreitenschrift sonst auf 13 px. */
+code, kbd, samp { font-family: ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace; font-size: max(0.875rem, 0.9em); }
+
+/* 9: Felder mit Fehler: roter Rand (6,5:1, also ≥ 3:1) — nicht nur Farbe, der Fehlertext steht darunter und beginnt
+   mit „Fehler:“. Spezifischer als .dash-input und die Anmelde-Felder, darum auch beim Fokus sichtbar. */
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] {
+    border-color: var(--fehler-rand);
+    box-shadow: 0 0 0 1px var(--fehler-rand);
+}
+input[type="checkbox"][aria-invalid="true"], input[type="radio"][aria-invalid="true"] {
+    outline: 2px solid var(--fehler-rand);
+    outline-offset: 2px;
+}
+/* „Fehler:“ vor jedem Fehlertext am Feld und unter Formularen — in der Sprache der Oberfläche. Screenreader lesen das
+   Wort mit (es gehört zur verknüpften Beschreibung). */
+.verwaltung-fehler:not(:empty)::before, .error-message:not(:empty)::before { content: "Fehler: "; }
+:lang(en) .verwaltung-fehler:not(:empty)::before, :lang(en) .error-message:not(:empty)::before { content: "Error: "; }
+:lang(fr) .verwaltung-fehler:not(:empty)::before, :lang(fr) .error-message:not(:empty)::before { content: "Erreur : "; }
+:lang(es) .verwaltung-fehler:not(:empty)::before, :lang(es) .error-message:not(:empty)::before { content: "Error: "; }
+:lang(da) .verwaltung-fehler:not(:empty)::before, :lang(da) .error-message:not(:empty)::before { content: "Fejl: "; }
+:lang(sv) .verwaltung-fehler:not(:empty)::before, :lang(sv) .error-message:not(:empty)::before { content: "Fel: "; }
+
+/* 1, 2, 9: Hochkontrast (Windows-Kontrastdesigns, forced-colors). Der Modus entfernt Hintergrundfarben — Knöpfe brauchen
+   einen sichtbaren Rahmen, die aktuelle Wahl ein Merkmal ohne Farbe, Fehlerfelder einen erkennbaren Rand. */
+@media (forced-colors: active) {
+    :where(main, footer, dialog, [role="dialog"], .auth-container, .start-header) :is(button, input[type="submit"], input[type="button"], a[class*="btn"], .btn, .btn-full, .lang-option) {
+        border: 2px solid ButtonText !important;
+    }
+    :is(.btn, a[class*="btn"], .lang-option)[aria-current="page"], :is(.btn, button)[aria-pressed="true"], .lang-option.is-current {
+        border: 4px solid Highlight !important;
+        text-decoration: underline;
+        text-decoration-thickness: 3px;
+        text-underline-offset: 0.3em;
+    }
+    input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border: 3px dashed CanvasText !important; }
 }

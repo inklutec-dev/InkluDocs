@@ -12,7 +12,7 @@
       dialog.invite-dialog hr.export-trenner, dialog#uExportPanel hr.export-trenner { border: 0; border-top: 1px solid var(--border); margin: 0.8rem 0 0.4rem; }
       /* Hinweistexte unter Feldern (Upload, URL) in derselben Groesse und Farbe wie die Hinweise in den
          Herunterladen-Dialogen (Michael Karbe, Mail 14.09.2026, Punkt 1: 16px war zu gross gegen 13,6px). */
-      .feld-hinweis { color: var(--text-muted); font-size: 0.85rem; margin: 0.4rem 0 0; }
+      .feld-hinweis { color: var(--text-muted); font-size: 0.875rem; margin: 0.4rem 0 0; }
       /* Pruefbericht und Hoerprobe im Word-Dialog in Infotext-Groesse (Michael 14.09.2026, Punkt 3: „ruhigeres Bild“);
          Knoepfe behalten ihre eigene Groesse (.btn). */
       #pdfuaResult { font-size: 0.9rem; }
@@ -44,7 +44,7 @@
       /* Ansicht „Dokument“: jede Datei zum Aufklappen (Michael Karbe, PS 24.09.2026); Dokumentinfo je Zeile
          „Stand: Getaggt“ in Schrift und Groesse des Berichts darunter (Mail 22.09.2026, Punkte 2 und 4). */
       .dok-klappe > summary { cursor: pointer; padding: 0.2rem 0; }
-      .dok-klappe > summary:focus-visible { outline: 2px solid var(--focus, #c75000); outline-offset: 2px; }
+      .dok-klappe > summary:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }   /* Runde 11: 3 px wie überall */
       .dok-klappe[open] > summary { margin-bottom: 0.75rem; }
       .dok-meta { list-style: none; margin: 0 0 0.6rem; padding: 0; font-size: 0.92rem; line-height: 1.5; }
       .dok-meta li { margin: 0; }
@@ -1907,7 +1907,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function unifiedReviewBadge(img) {
         const key = unifiedStatusKey(img);
         return '<span class="badge" id="unibadge_' + img.id + '" style="background:' + unifiedStatusColor(key)
-            + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">'
+            + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">'
             + unifiedStatusLabel(key)
             + (!window.GUEST_MODE && img.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>';
     }
@@ -2311,7 +2311,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <input type="text" id="shareName" autocomplete="name" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.8rem;">
                                 <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('E-Mail-Adresse (Pflichtfeld)')}</label>
                                 <input type="email" id="shareEmail" autocomplete="email" aria-required="true" aria-describedby="shareEmailError" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
-                                <p id="shareEmailError" role="alert" style="color:var(--error,#c33);font-weight:600;margin:0.3rem 0 0;"></p>
+                                <p id="shareEmailError" class="verwaltung-fehler" role="alert" style="color:var(--error,#c33);font-weight:600;margin:0.3rem 0 0;"></p>
                                 <label for="shareRole" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Rolle des Empfängers')}</label>
                                 <select id="shareRole" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
                                     <option value="kunde" selected>${t('Herausgeber')}</option>
@@ -2731,7 +2731,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const who = msgRoleLabel(m.sender_role) + (m.sender_name ? ' (' + msgEsc(m.sender_name) + ')' : '');
         return '<li style="margin:0 0 0.5rem;">'
             + '<span style="font-weight:600;">' + who + '</span>'
-            + (m.created_at ? ' <span style="color:var(--text-muted);font-size:0.85rem;">' + msgDate(m.created_at) + '</span>' : '')
+            + (m.created_at ? ' <span style="color:var(--text-muted);font-size:0.875rem;">' + msgDate(m.created_at) + '</span>' : '')
             + '<span style="display:block;white-space:pre-wrap;">' + msgEsc(m.body) + '</span></li>';
     }
     function messageThreadHtml(img) {
@@ -2745,7 +2745,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <textarea id="msg_input_${img.id}" maxlength="2000" oninput="msgDrafts[${img.id}] = this.value" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:0.95rem;">${msgEsc(msgDrafts[img.id] || '')}</textarea>
                         <div style="margin-top:0.4rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                             <button type="button" class="btn btn-primary btn-small" onclick="sendImageMessage(${img.id})">${t('Nachricht senden')}</button>
-                            <output id="msg_status_${img.id}" style="font-size:0.85rem;"></output>
+                            <output id="msg_status_${img.id}" style="font-size:0.875rem;"></output>
                         </div>
                     </div>
                 </details>`;
@@ -3005,15 +3005,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 <div class="image-review-header">
                     <span class="image-meta">${img.width}x${img.height}px</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + t('Kategorie: {typ}', { typ: img.image_type.charAt(0).toUpperCase() + img.image_type.slice(1) }) + '</span>' : ''}
-                    ${autorDekorativ(img) ? '<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Vom Autor in der Datei als dekorativ gekennzeichnet.') + '</span>' : ''}
+                    ${autorDekorativ(img) ? '<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">' + t('Vom Autor in der Datei als dekorativ gekennzeichnet.') + '</span>' : ''}
                     <!-- Bestands-a11y-Fix 15.07.2026: Konfidenz-Farben auf AA gehoben (weisse
                          Schrift auf var(--success)/#e90 hatte < 3,5:1) — hoch #1e7e34 (5,1:1),
                          mittel #a15c00 (5,2:1), niedrig #b91c1c (5,9:1). -->
-                    ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? '#1e7e34' : img.konfidenz === 'niedrig' ? '#b91c1c' : '#a15c00') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Konfidenz: {k}', { k: img.konfidenz }) + '</span>' : ''}
-                    ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#1e7e34;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? t('Kontext: Ja') : t('Kontext: Nein')) + '</span>' : ''}
+                    ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? '#1e7e34' : img.konfidenz === 'niedrig' ? '#b91c1c' : '#a15c00') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">' + t('Konfidenz: {k}', { k: img.konfidenz }) + '</span>' : ''}
+                    ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#1e7e34;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">' + (img.context_mode === 'mit' ? t('Kontext: Ja') : t('Kontext: Nein')) + '</span>' : ''}
                     ${(window.GUEST_MODE || window._inReview) && img.status !== 'processing' && anzeigeAltText(img) ? unifiedReviewBadge(img) : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">' + t('Wird analysiert...') + '</span>' : ''}
-                    ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Fehler') + '</span>' : ''}
+                    ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">' + t('Fehler') + '</span>' : ''}
                 </div>
                 ${!window.GUEST_MODE ? reviewNoteDetails(img.review_note, t('Anmerkung des Gastes anzeigen')) : ''}
                 ${img.status === 'error' ? `
@@ -3037,11 +3037,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 >${escHtml(anzeigeAltText(img))}</textarea>
                 ${img.status !== 'processing' ? `
                     <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
-                        ${!window.GUEST_MODE ? `<span style="font-size:0.85rem;color:var(--text-muted);">${t('Alt-Text bewerten:')}</span>
+                        ${!window.GUEST_MODE ? `<span style="font-size:0.875rem;color:var(--text-muted);">${t('Alt-Text bewerten:')}</span>
                         <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="${t('Alt-Text gut')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'good' ? 'background:var(--success);color:white;border-color:var(--success);' : ''}">&#128077;</button>
                         <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="${t('Alt-Text schlecht')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'bad' ? 'background:var(--error);color:white;border-color:var(--error);' : ''}">&#128078;</button>` : ''}
                         ${anzeigeAltText(img) ? '<button class="btn btn-secondary btn-small tts-btn" data-lang="' + (img.gen_language || 'de') + '" onclick="speakAltText(' + img.id + ', this)" aria-pressed="false" style="padding:0.3rem 0.7rem;">' + t('Anhören') + '</button>' : ''}
-                        <span id="feedback_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                        <span id="feedback_status_${img.id}" role="status" aria-live="polite" style="font-size:0.875rem;"></span>
                     </div>
                 ` : ''}
                 <div id="langcontainer_${img.id}">
@@ -3049,10 +3049,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">${t('Langbeschreibung')}</label>
                     <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;">${escHtml(img.langbeschreibung)}</textarea>
                     ${!window.GUEST_MODE ? `<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
-                        <span style="font-size:0.85rem;color:var(--text-muted);">${t('Langbeschreibung bewerten:')}</span>
+                        <span style="font-size:0.875rem;color:var(--text-muted);">${t('Langbeschreibung bewerten:')}</span>
                         <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'good', this, 'lang')" aria-label="${t('Langbeschreibung gut')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128077;</button>
                         <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'bad', this, 'lang')" aria-label="${t('Langbeschreibung schlecht')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128078;</button>
-                        <span id="feedback_lang_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                        <span id="feedback_lang_status_${img.id}" role="status" aria-live="polite" style="font-size:0.875rem;"></span>
                     </div>` : ''}
                 ` : ''}
                 </div>
@@ -3079,7 +3079,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <div style="margin-top:0.4rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
                                     <button type="button" class="btn btn-primary btn-small" onclick="guestSaveNote(${img.id})">${t('Anmerkung speichern')}</button>
                                     <button type="button" class="btn btn-delete btn-small" onclick="guestDeleteNote(${img.id})">${t('Anmerkung löschen')}</button>
-                                    <output id="rev_note_msg_${img.id}" style="font-size:0.85rem;"></output>
+                                    <output id="rev_note_msg_${img.id}" style="font-size:0.875rem;"></output>
                                 </div>
                             </div>
                         </details>
@@ -3096,7 +3096,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
                         ${showLang && complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">' + t('Langbeschreibung (optional)') + '</button>' : ''}
                         ${''/* „Vorherigen Text zurückholen" (Sicherheitsnetz) ist AUSGEBLENDET (Steve 01.09.2026: erst mal nicht, weniger Knoepfe). Backend + alt_text_vorher bleiben; zum Einschalten: funktionen.TEXT_ZURUECK = True (backend/funktionen.py, gilt auch fuer Chatbot und Endpunkt). */}${!window.GUEST_MODE && (window.FUNKTIONEN || {}).text_zurueck && img.alt_text_vorher != null ? '<button class="btn btn-secondary btn-small" id="vorher_btn_' + img.id + '" onclick="vorherigenTextZurueck(' + img.id + ')">' + t('Vorherigen Text zurückholen') + '</button>' : ''}
-                        <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                        <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.875rem;"></span>
                     </div>
                 ` : ''}
                 <!-- Etappe 4 (15.07.2026): Nachrichten-Verlauf — nur bei geteilten
@@ -3995,7 +3995,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <!-- Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld. -->
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">${t('Dateiname (optional)')}</label>
                                 <input type="text" id="exportFilename" autocomplete="off" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
-                                <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">${t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.')}</p>
+                                <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.875rem;">${t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.')}</p>
                             </div>
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                                 <button class="btn btn-primary" data-art="tabelle" onclick="doExport(${project.id}, 'xlsx')">${t('Als Excel')}</button>
@@ -4949,7 +4949,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (wtext) {
             const wEl = document.createElement('div');
             wEl.className = 'inkluagent-message-tools';
-            wEl.style.cssText = 'font-size:0.8rem;color:var(--text-muted);margin-top:0.35rem;';
+            wEl.style.cssText = 'font-size:0.875rem;color:var(--text-muted);margin-top:0.35rem;';
             wEl.textContent = wtext;
             wrapper.appendChild(wEl);
         }

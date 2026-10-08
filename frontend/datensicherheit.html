@@ -51,6 +51,10 @@
       // Den "rechtliche Seiten"-Subfooter aus der eingebetteten Variante entfernen — die
       // Dashboard-Footer-Leiste hat schon ihre eigenen Links.
       container.querySelectorAll('nav.auth-links').forEach((n) => n.remove());
+      // Runde 11 (axe landmark-unique): Die öffentliche Seite benennt ihren Inhalt selbst als Bereich
+      // „Datenschutzerklärung“ — hier trägt schon der äußere Bereich diesen Namen. Nur EINER bleibt.
+      container.removeAttribute('role');
+      container.removeAttribute('aria-label');
       target.innerHTML = '';
       target.appendChild(container);
       target.setAttribute('aria-busy', 'false');

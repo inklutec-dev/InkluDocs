@@ -73,7 +73,7 @@ body:has(.start-shell) { display:block; }
 .start-abschnitt h3 { font-size:1.15rem; margin:0 0 .5rem; color:var(--primary); }
 .start-lead { color:var(--text-muted); font-size:1.05rem; line-height:1.6; max-width:52rem; margin:0 0 1.5rem; }
 .start-abschnitt p { line-height:1.6; }
-.start-abschnitt a:not(.btn-start) { color:#b84a00; }
+.start-abschnitt a:not(.btn-start) { color:var(--link); }   /* Runde 11: ein Linkstil */
 .start-abschnitt a:not(.btn-start):focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 
 /* ── Kopfbereich (Hero) ──────────────────────────────────────────────── */
@@ -111,7 +111,7 @@ body:has(.start-shell) { display:block; }
 .start-vertrauen li { display:inline-flex; align-items:center; }
 .start-vertrauen li + li::before { content:"·"; margin:0 .6rem; color:#c9d3e3; }
 /* Kicker über der Karten-H3 (Michaels drei Kategorien, 11.09.2026): klein, orange, Großbuchstaben nur optisch */
-.start-kicker { margin:0 0 .3rem !important; color:#b84a00 !important; font-size:.85rem !important; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+.start-kicker { margin:0 0 .3rem !important; color:#b84a00 !important; font-size:.875rem !important; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
 /* Merksatz nach einer Kartenreihe („Die KI macht den Vorschlag. Du triffst die Entscheidung.“) */
 .start-merksatz { margin:1.5rem 0 0; color:var(--primary); font-weight:600; }
 /* Kette Word → PDF/UA (Michaels Pfeilgrafik als nummerierte Liste, Nummer im Kreis) */
@@ -162,7 +162,7 @@ body:has(.start-shell) { display:block; }
 
 /* ── Fußzeile ────────────────────────────────────────────────────────── */
 .start-footer { border-top:1px solid var(--border); padding:1.5rem; color:var(--text-muted); text-align:center; line-height:2; }
-.start-footer a { color:#b84a00; }
+.start-footer a { color:var(--link); }
 .start-footer a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 
 /* ── Login-Karten im Startgerüst ─────────────────────────────────────── */

@@ -41,6 +41,9 @@
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const container = doc.querySelector('.legal-container');
       if (!container) throw new Error('Impressum-Inhalt nicht gefunden (.legal-container fehlt)');
+      // Runde 11 (axe landmark-unique): der äußere Bereich trägt schon den Namen — der eingebettete bleibt unbenannt
+      container.removeAttribute('role');
+      container.removeAttribute('aria-label');
       // Die public Seite hat eine eigene H1 "InkluDocs" und Subtitle "Impressum"
       // — die brauchen wir hier nicht doppelt (H1 ist oben im Dashboard-Rahmen).
       container.querySelectorAll('h1').forEach((h) => h.remove());

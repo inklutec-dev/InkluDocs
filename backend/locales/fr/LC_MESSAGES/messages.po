@@ -11592,3 +11592,7 @@ msgstr "Indique une adresse e-mail valide, par exemple nom@exemple.fr."
 
 msgid "Bitte schreib uns eine Nachricht."
 msgstr "Écris-nous un message."
+
+# Runde 11 (08.10.2026): Barrierefreiheit ohne Screenreader
+msgid "Das hat leider nicht geklappt. Bitte erneut versuchen."
+msgstr "Malheureusement, cela n’a pas fonctionné. Réessaie."

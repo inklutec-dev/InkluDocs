@@ -240,3 +240,35 @@ ist die Leistung); der Tabellen-Export beschreibt den Inhalt („Tabelle mit Alt
 Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern)“; nur der
 Excel-Export bettet Bilder ein). Der Chat-Punkt („kostenlos“) bleibt, bis Steve und Michael
 über einen Preis je Nachricht entschieden haben.
+
+## Darstellung für Menschen mit Seheinschränkung ohne Screenreader (Runde 11, 08.10.2026)
+
+Steves Vorgabe: „barrierefreiheitstechnisch soll alles stimmen“ — auch ohne Screenreader. Umgesetzt **App-weit in den
+gemeinsamen Stylesheets** (`style.css`, ergänzend `dashboard.css`, `start.css`), nicht seitenweise. Geprüft von
+`tests/e2e/ui_darstellung.py` (alle angemeldeten, öffentlichen und Verwaltungsseiten).
+
+- **Knöpfe im Hochkontrast** (Windows-Kontrastdesigns, `forced-colors: active`): `.btn` hat einen transparenten 2-px-Rahmen
+  (wird dort sichtbar; Primär- und Sekundärknöpfe sind dadurch gleich hoch), dazu für alle Knöpfe und Knopf-Links in
+  Inhalt, Dialogen, Fußzeile und Kopfzeile ein Rahmen in `ButtonText`.
+- **Aktuelle Wahl ohne Farbe erkennbar**: Ansichts-Knöpfe im Projekt, „Prompts | Stammdaten“ und Reiter tragen bei
+  `aria-current="page"` eine 3-px-Unterstreichung; im Hochkontrast zusätzlich einen 4-px-Rahmen in `Highlight` (ebenso
+  gedrückte Knöpfe und die gewählte Sprache).
+- **Navigation im Hochkontrast**: Der Balken (links, auf dem Handy unten) ist dort `Canvas`, nur an der aktuellen Seite
+  `Highlight` (+ Unterstreichung).
+- **Ein Linkstil**: alle Inhaltslinks in `--link` (#a94200; 5,65:1 auf Weiß, 5,2:1 auf #f5f7fa) und unterstrichen, auch
+  besuchte — vorher Browser-Blau/Violett und drei Orangetöne. Projekt- und Kartentitel bleiben fett, sind jetzt aber
+  ebenfalls unterstrichen. Ausgenommen: Navigation, Kopfzeile, Knopf-Links. Die allgemeine Regel hat die Spezifität 0
+  (`:where`), eigene Regeln benutzen `var(--link)`.
+- **Fokus**: 3-px-Ring (`--focus`) für alle Links und `summary`-Elemente, auch auf Seiten nur mit `style.css`; dunkle
+  Flächen behalten ihren weißen Ring.
+- **Mindestschrift 14 px** (Basis 16 px): alles unter 0,875 rem angehoben (Fußzeile, Datenschutz-Hinweis, `.btn-small`,
+  Abzeichen, Hinweise, eingebettete Stile); `code` nie unter 14 px.
+- **„Konto“**: kräftiger Pfeil (3-px-Strich) statt des kleinen Dreiecks, dreht sich beim Aufklappen; ohne Text (den
+  Zustand meldet `details`).
+- **Formularfehler App-weit**: Feld mit `aria-invalid="true"` hat einen roten Rand (#b91c1c, 6,5:1; im Hochkontrast
+  3 px gestrichelt), Fehlertexte (`.verwaltung-fehler`, `.error-message`) beginnen mit „Fehler:“ in der Sprache der
+  Oberfläche (CSS `::before`, Screenreader lesen es mit). Fallbacks, die nur „Fehler“ lauteten, sind ganze Sätze.
+- **Sekundärknöpfe** und knopfartige Elemente (Neuigkeiten, Sprachwahl, Reiter) mit Rand `--feldrand` (#767f8f, 4,0:1).
+- **Eindeutige Bereiche**: Datensicherheit, Impressum/Widerruf/Nutzungsbedingungen in der App und API-Schlüssel hatten
+  zwei gleichnamige Bereiche — der eingebettete bzw. innere ist jetzt unbenannt.
+- Offen (separat mit Steve): einklappbare Navigation bei sehr schmalen Fenstern (Prüfbericht Punkt 7).

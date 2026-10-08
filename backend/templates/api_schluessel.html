@@ -34,7 +34,8 @@
 
       <section class="dash-card" aria-labelledby="myKeysHeading">
         <h2 id="myKeysHeading" tabindex="-1">{{ _('Meine API-Schluessel') }} <span id="apiKeyCount" style="color:var(--text-muted);font-weight:normal;"></span></h2>
-        <div id="apiKeyList" aria-live="polite" aria-labelledby="myKeysHeading" role="region" style="margin-top:.5rem;"></div>
+        {# Runde 11 (axe landmark-unique): kein zweiter Bereich mit dem Namen der umgebenden Karte #}
+        <div id="apiKeyList" aria-live="polite" style="margin-top:.5rem;"></div>
         {# Der Bearbeiten-Bereich ist seit 31.07.2026 ein echtes <dialog> (siehe
            Block "dialogs" unten). Hier bleibt nur die Fehlerstelle der Liste:
            Scheitert das Loeschen, sind beide Dialoge schon zu und der Fokus

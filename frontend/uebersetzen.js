@@ -81,7 +81,7 @@
     function segCardHtml(s) {
         const offen = !istFertig(s);
         const badges = ['<span class="badge ' + (offen ? 'badge-pending' : 'badge-done') + '" id="seg_status_' + s.id + '">' + escHtml((STATUS[s.status] || STATUS.offen)()) + '</span>'];
-        if (s.ort && s.ort !== 'Text') badges.push('<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + escHtml(ortText(s.ort)) + '</span>');
+        if (s.ort && s.ort !== 'Text') badges.push('<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.875rem;">' + escHtml(ortText(s.ort)) + '</span>');
         const hinweis = s.hinweis
             ? '<p class="seg-hinweis" id="seg_hinweis_' + s.id + '" style="font-size:0.9rem;color:var(--text-muted);margin:0.3rem 0 0;">' + escHtml(s.hinweis) + '</p>'
             : '<p class="seg-hinweis" id="seg_hinweis_' + s.id + '" style="font-size:0.9rem;color:var(--text-muted);margin:0.3rem 0 0;" hidden></p>';
@@ -418,7 +418,7 @@
             + '<div id="uExportSummary" role="status" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>'
             + '<div class="form-group" style="margin-bottom:0.8rem;"><label for="uExportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">' + t('Dateiname (optional)') + '</label>'
             +   '<input type="text" id="uExportFilename" autocomplete="off" aria-describedby="uExportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
-            +   '<p id="uExportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">' + t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.') + '</p></div>'
+            +   '<p id="uExportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.875rem;">' + t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.') + '</p></div>'
             + '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
             +   '<button type="button" class="btn btn-primary" id="uExportBtn" onclick="Uebersetzen.exportieren(' + project.id + ')">' + t('Als Word herunterladen') + '</button>'
             + '</div><output id="uExportStatus" style="display:block;margin-top:0.5rem;" tabindex="-1"></output>'
