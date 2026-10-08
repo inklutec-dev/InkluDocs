@@ -1,6 +1,6 @@
 # Beschreibung, Bildtyp foto_event
 
-- **Builder:** `prompts/builders/combo.py:71`
+- **Builder:** `prompts/builders/combo.py:69`
 - **Generiert:** 2026-10-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`

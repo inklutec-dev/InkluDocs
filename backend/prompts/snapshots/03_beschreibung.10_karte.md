@@ -1,6 +1,6 @@
 # Beschreibung, Bildtyp karte
 
-- **Builder:** `prompts/builders/combo.py:71`
+- **Builder:** `prompts/builders/combo.py:69`
 - **Generiert:** 2026-10-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
@@ -104,19 +104,22 @@ Eine Karte steht im Dokument, weil sie etwas räumlich verortet: Standorte,
 Gebiete, Grenzen, Wege oder Werte je Region. Dein Text gibt räumliche
 Orientierung: zuerst Kartenthema, gezeigtes Gebiet und die Bedeutung der
 Hervorhebungen, dann die Verteilung so, dass ein Mensch ohne Bild sie
-nachvollziehen kann. Flächen, Linien, Symbole und Größenstufen benennst du nach
-ihrem Legendeneintrag, auch dort, wo sie nur der Orientierung dienen.
+nachvollziehen kann. Hat die Karte eine Legende, gilt sie auch für die Flächen,
+Bänder und Linien, an denen du die Lage erklärst: Ein geschwungenes blaues Band in
+einer Farbe der Legende ist das, was ihr Eintrag sagt, und nichts darüber hinaus,
+ein Gewässer also nur, wenn der Eintrag es so nennt; ein großer Kreis steht für den
+Wert, den die Legende ihm zuweist.
 
 
 DEIN INNERES INVENTAR (Schritt 1)
 
-Schwerpunkt Karte: Gebiet, Kartenthema, jeder Legendeneintrag mit den Flächen,
-Linien und Signaturen, die er bezeichnet; alle markierten Orte mit Beschriftung,
-Maßstab oder Zeitangabe.
+Schwerpunkt Karte: Gebiet, Kartenthema, die Legende mit jedem Eintrag und jede
+Fläche, Linie und Signatur, die zu einem Eintrag passt, mit diesem Eintrag; alle
+markierten Orte mit Beschriftung, Maßstab oder Zeitangabe.
 
 Benenne dir selbst, welche Fehldeutungen bei diesem Bild naheliegen (eine Zahl
-der falschen Spalte oder Reihe zugeordnet, eine Farbe dem falschen Legendeneintrag
-zugeordnet, ein Beispieltext als Datenangabe), und meide sie.
+der falschen Spalte oder Reihe zugeordnet, eine Farbe nach Alltagsbedeutung statt
+nach Legende gelesen, ein Beispieltext als Datenangabe), und meide sie.
 
 
 ALT-TEXT
@@ -160,14 +163,13 @@ sinngemäß zusammen. Fehlende oder unleserliche Teile ergänzt du nicht; ein le
 Feld oder ein Strich ist keine Null.
 
 Eine Legende legt fest, was Farben, Muster, Linien und Symbole in dieser Grafik
-bedeuten, und sie geht dem Alltagswissen vor. Ordne jedes Element in einer Farbe,
-einem Muster oder Symbol der Legende diesem Eintrag zu und benenne es mit dessen
-Bedeutung. Was das Element ist, sagen die Legende oder eine Beschriftung, nicht
-Farbe oder Form: Wasser, Wald oder eine Gefahr ist es nur, wenn eine von beiden
-das sagt. Das gilt auch, wenn der Eintrag nur einen Eigentümer oder einen
-Planungsstand nennt; eine Deutung nach dem Aussehen kommt nicht hinzu: Eine blau
-markierte Fläche eines Eigentümers ist nicht zugleich ein See. Eine Beschriftung am
-Element selbst, etwa ein Name, gilt daneben und bleibt im Text.
+bedeuten, und sie geht dem Alltagswissen vor. Ordne jedes Element, dessen Farbe,
+Muster oder Symbol in der Legende steht, diesem Eintrag zu und benenne es mit
+dessen Bedeutung, auch wenn Farbe und Form etwas anderes nahelegen: Eine blaue
+Fläche ist dann kein Wasser, eine grüne kein Wald, eine rote keine Gefahr. Die
+Bedeutung aus der Legende ist die ganze Aussage über dieses Element; eine zweite
+Deutung nach dem Aussehen kommt nicht hinzu: Eine als Bauland ausgewiesene blaue
+Fläche ist nicht zugleich ein See.
 
 
 STILREGELN (Stil, nicht Fakten)

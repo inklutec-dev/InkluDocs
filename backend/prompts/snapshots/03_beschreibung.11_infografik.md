@@ -1,6 +1,6 @@
 # Beschreibung, Bildtyp infografik
 
-- **Builder:** `prompts/builders/combo.py:71`
+- **Builder:** `prompts/builders/combo.py:69`
 - **Generiert:** 2026-10-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
@@ -118,8 +118,8 @@ Verbindungen (Pfeile, Linien) mit ihrer Bedeutung, alle Zahlen und Beschriftunge
 wortgetreu.
 
 Benenne dir selbst, welche Fehldeutungen bei diesem Bild naheliegen (eine Zahl
-der falschen Spalte oder Reihe zugeordnet, eine Farbe dem falschen Legendeneintrag
-zugeordnet, ein Beispieltext als Datenangabe), und meide sie.
+der falschen Spalte oder Reihe zugeordnet, eine Farbe nach Alltagsbedeutung statt
+nach Legende gelesen, ein Beispieltext als Datenangabe), und meide sie.
 
 
 ALT-TEXT
@@ -172,14 +172,13 @@ sinngemäß zusammen. Fehlende oder unleserliche Teile ergänzt du nicht; ein le
 Feld oder ein Strich ist keine Null.
 
 Eine Legende legt fest, was Farben, Muster, Linien und Symbole in dieser Grafik
-bedeuten, und sie geht dem Alltagswissen vor. Ordne jedes Element in einer Farbe,
-einem Muster oder Symbol der Legende diesem Eintrag zu und benenne es mit dessen
-Bedeutung. Was das Element ist, sagen die Legende oder eine Beschriftung, nicht
-Farbe oder Form: Wasser, Wald oder eine Gefahr ist es nur, wenn eine von beiden
-das sagt. Das gilt auch, wenn der Eintrag nur einen Eigentümer oder einen
-Planungsstand nennt; eine Deutung nach dem Aussehen kommt nicht hinzu: Eine blau
-markierte Fläche eines Eigentümers ist nicht zugleich ein See. Eine Beschriftung am
-Element selbst, etwa ein Name, gilt daneben und bleibt im Text.
+bedeuten, und sie geht dem Alltagswissen vor. Ordne jedes Element, dessen Farbe,
+Muster oder Symbol in der Legende steht, diesem Eintrag zu und benenne es mit
+dessen Bedeutung, auch wenn Farbe und Form etwas anderes nahelegen: Eine blaue
+Fläche ist dann kein Wasser, eine grüne kein Wald, eine rote keine Gefahr. Die
+Bedeutung aus der Legende ist die ganze Aussage über dieses Element; eine zweite
+Deutung nach dem Aussehen kommt nicht hinzu: Eine als Bauland ausgewiesene blaue
+Fläche ist nicht zugleich ein See.
 
 
 STILREGELN (Stil, nicht Fakten)

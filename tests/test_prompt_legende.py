@@ -9,9 +9,8 @@ Legendeneintrag zu. Fotos bekommen den Block nicht. Der Prüfpass (Chatbot-Speic
 beanstandet Deutungen gegen die Legende, und beim Neu-Generieren ist der bisherige Text
 der KI Abgrenzungs-Vorlage, kein Beleg.
 
-Nacharbeit nach der Prüfung (08.10.2026): Die Regel steht inhaltlich nur noch im Block;
-der Karten-AUFTRAG wendet sie in einem allgemeinen Halbsatz an, das Inventar enthält nur
-den Arbeitsschritt. Was der Nutzer selbst geschrieben oder ergänzt hat, bleibt beim
+Nacharbeit nach der Prüfung (08.10.2026): Der Karten-Wortlaut bleibt wie gemessen (eine
+entwürfelte Fassung hielt die Legende schlechter). Was der Nutzer selbst geschrieben oder ergänzt hat, bleibt beim
 Neu-Generieren Beleg (herkunft_vorlage). Unbekannte Einträge der Typ-Listen in
 V4_FAKTENBLATT und V4_VERIFY_MODE stehen einmal als Warnung im Log. Im Faktenblatt
 kommt die Kategorie eines Ortes nur noch aus der Legende, nicht aus seinem Aussehen.
@@ -52,31 +51,19 @@ class LegendeRegelTest(unittest.TestCase):
         self.assertIn(REGEL, p)
         self.assertIn(VORRANG, p)
         auftrag = _abschnitt(p, 'AUFTRAG', 'DEIN INNERES INVENTAR')
-        self.assertIn('Flächen, Linien, Symbole und Größenstufen benennst du nach\nihrem Legendeneintrag, '
-                      'auch dort, wo sie nur der Orientierung dienen.', auftrag)
+        self.assertIn('Hat die Karte eine Legende, gilt sie auch für die Flächen', auftrag)
+        self.assertIn('ein Gewässer also nur, wenn', auftrag)
         inventar = _abschnitt(p, 'DEIN INNERES INVENTAR (Schritt 1)', 'ALT-TEXT')
-        self.assertIn('jeder Legendeneintrag mit den Flächen,\nLinien und Signaturen, die er bezeichnet', inventar)
-        # Nacharbeit: Der AUFTRAG erzählt keinen Einzelfall nach, Wasser-Bilder stehen nur im Block,
-        # und weder AUFTRAG noch Inventar wiederholen die Regel.
-        for teil, name in ((auftrag, 'AUFTRAG'), (inventar, 'Inventar')):
-            for wort in ('blau', 'Gewässer', 'Wasser', 'Alltag', 'Band', 'nach Legende'):
-                self.assertNotIn(wort, teil, f'{name} enthält "{wort}"')
-        block = ' '.join(_abschnitt(p, 'LESBARER TEXT UND LEGENDE', 'STILREGELN').split())
-        flach = ' '.join(p.split())
-        self.assertEqual(flach.count('Wasser, Wald oder eine Gefahr ist es nur'), 1)
-        self.assertEqual(flach.count('nicht zugleich ein See'), 1)
-        self.assertIn('Wasser, Wald oder eine Gefahr ist es nur', block)
+        self.assertIn('die zu einem Eintrag passt, mit diesem Eintrag', inventar)
 
-    def test_legende_bestimmt_was_beschriftung_gilt_daneben(self):
-        p = _combo('karte', 'karte')
-        block = ' '.join(_abschnitt(p, 'LESBARER TEXT UND LEGENDE', 'STILREGELN').split())
-        self.assertNotIn('ganze Aussage', block)
-        self.assertIn('Was das Element ist, sagen die Legende oder eine Beschriftung, nicht Farbe oder Form: '
-                      'Wasser, Wald oder eine Gefahr ist es nur, wenn eine von beiden das sagt.', block)
-        # Fehltexte der Messung: "ein Gewässer, das laut Legende zum Verwaltungsvermögen gehört"
-        self.assertIn('Das gilt auch, wenn der Eintrag nur einen Eigentümer oder einen Planungsstand nennt; eine '
-                      'Deutung nach dem Aussehen kommt nicht hinzu', block)
-        self.assertIn('Eine Beschriftung am Element selbst, etwa ein Name, gilt daneben und bleibt im Text.', block)
+    def test_karten_wortlaut_bleibt_wie_gemessen(self):
+        """Nacharbeit 08.10.2026: Eine entwürfelte Fassung (Regel nur im Block, AUFTRAG als allgemeiner
+        Halbsatz) hielt die Legende mit Faktenblatt schlechter (Karten-Falle 6 von 10 falsch gegenüber 1 von 9).
+        Der gemessene Wortlaut bleibt; ändern nur mit neuer Messung (prompts/ARCHITEKTUR.md)."""
+        p = ' '.join(_combo('karte', 'karte').split())
+        self.assertIn('Die Bedeutung aus der Legende ist die ganze Aussage über dieses Element; eine zweite '
+                      'Deutung nach dem Aussehen kommt nicht hinzu', p)
+        self.assertIn('eine Farbe nach Alltagsbedeutung statt nach Legende gelesen', p)
 
     def test_alle_datengrafiken_mit_block(self):
         for typ in ('diagramm', 'tabelle', 'karte', 'infografik', 'screenshot'):
