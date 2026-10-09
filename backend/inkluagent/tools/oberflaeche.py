@@ -391,6 +391,63 @@ def eigener_prompt(project_id: int, user_id: int, prompt_id: Optional[int] = Non
     return {"ok": True, "result": {"prompt_id": wert, "hinweis": "Gilt für alles, was ab jetzt generiert wird."}}
 
 
+# ---------------------------------------------------------------------------
+# Grafik- und Webseiten-Projekte: Bild umbenennen und loeschen (InkluAgent-Ausbau Runde 1, Schritt 4) — derselbe Kern wie die
+# Knoepfe (main._bild_umbenennen_sync, main._bild_loeschen_sync), Loeschen mit derselben Rueckfrage wie dokument_loeschen.
+# ---------------------------------------------------------------------------
+
+def _bild_ziel(project_id: int, user_id: int, image_id: int) -> tuple:
+    """(Zeile, Anzeige) des Bildes, wie die Oberflaeche es nennt: Anzeigename, sonst Dateiname, mit „Bild N“."""
+    from .. import sicherheit
+    conn = _pdf._get_db()
+    try:
+        _pdf._projekt(conn, project_id, user_id, jede_art=True)
+        row = conn.execute("SELECT id, display_name, original_filename FROM images WHERE id = ? AND project_id = ?",
+                           (int(image_id), project_id)).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail=f"image_id={image_id} gibt es in diesem Projekt nicht (Liste über list_project_images)")
+    nr = sicherheit.bild_label(project_id, int(image_id))
+    name = (row["display_name"] or row["original_filename"] or "").strip()
+    return dict(row), (f"{nr} ({name})" if name else nr)
+
+
+def bild_umbenennen(project_id: int, user_id: int, image_id: int, name: str) -> dict[str, Any]:
+    """Wie „Umbenennen“ an einem Bild (Grafik- und Webseiten-Projekte), kostenlos."""
+    try:
+        _row, ziel = _bild_ziel(project_id, user_id, image_id)
+        r = _main()._bild_umbenennen_sync(user_id, project_id, int(image_id), name or "")
+    except HTTPException as e:
+        return _fehler(e)
+    return {"ok": True, "result": {"image_id": int(image_id), "bild": ziel, "neuer_name": r.get("display_name"),
+                                   "hinweis": "Leerer Name heißt: zurück auf den Dateinamen bzw. „Bild N“."}}
+
+
+def bild_loeschen(project_id: int, user_id: int, image_id: int, bestaetigt: bool = False, turn=None) -> dict[str, Any]:
+    """Wie „Löschen“ an einem Bild (Grafik- und Webseiten-Projekte): unumkehrbar, deshalb erst Rueckfrage, Ja in eigener
+    Nachricht (oder Knopf der Karte), dann bestaetigt=true."""
+    try:
+        _row, ziel = _bild_ziel(project_id, user_id, image_id)
+    except HTTPException as e:
+        return _fehler(e)
+    vorschau = {"image_id": int(image_id), "dokument": ziel, "bild": ziel}
+    grund = _pdf._freigabe(user_id, project_id, "bild_loeschen", int(image_id), 0, True, bestaetigt, turn)
+    if grund == "rueckfrage":
+        return {"ok": True, "result": dict(vorschau, rueckfrage_noetig=True, hinweis=(
+            "Löschen ist unumkehrbar: das Bild und sein Alt-Text sind danach weg. Sag dem Nutzer, welches Bild gelöscht würde, und "
+            "frage. Unter deiner Antwort steht eine Karte mit genau diesem Angebot; ein getipptes Ja gilt nur für dieses letzte "
+            "Angebot (dann erneut mit bestaetigt=true)."))}
+    if grund:
+        return {"ok": True, "result": dict(vorschau, rueckfrage_noetig=True, hinweis=grund)}
+    try:
+        r = _main()._bild_loeschen_sync(user_id, project_id, int(image_id))
+    except HTTPException as e:
+        return _fehler(e)
+    return {"ok": True, "result": {"geloescht": True, "bild": ziel, "verbleibende_bilder": r.get("remaining_images"),
+                                   "hinweis": "Sag dem Nutzer, dass das Bild gelöscht ist und wie viele Bilder das Projekt noch hat."}}
+
+
 def ausgabe_loeschen(project_id: int, user_id: int, ausgabe_id: int, bestaetigt: bool = False, turn=None) -> dict[str, Any]:
     """Wie „Löschen“ in der Ablage: Eintrag samt Datei loeschen — unumkehrbar, deshalb erst Rueckfrage, Ja in eigener
     Nachricht, dann bestaetigt=true. Nur Eintraege dieses Projekts."""

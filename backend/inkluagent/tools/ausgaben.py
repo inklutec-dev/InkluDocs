@@ -182,7 +182,7 @@ def karte_ausfuehren(angebot_id: str, werkzeug: str, args: dict, executor) -> di
 
 
 # Karte unter der Antwort (Pruefung 3): Text und Knopf vom SERVER, nicht vom Modell
-_UNUMKEHRBAR = ("ausgabe_loeschen", "dokument_loeschen")
+_UNUMKEHRBAR = ("ausgabe_loeschen", "dokument_loeschen", "bild_loeschen")
 
 
 def karte_anhaengen(result: dict, werkzeug: str, args: dict, user_id: int, project_id: int, vorher_id: Optional[str]) -> dict:
@@ -269,6 +269,7 @@ AENDERT_ANSICHT = frozenset({
     "exportiere_word", "uebersetze_dokument", "exportiere_uebersetzung", "testweise_taggen", "pruefdatei_erstellen",
     "exportiere_alt_texte", "exportiere_quickinfos", "alt_texte_generieren", "quickinfos_generieren", "stammdaten_anwenden",
     "ki_kontext_setzen", "eigener_prompt", "ausgabe_loeschen", "save_to_master_data",
+    "bild_umbenennen", "bild_loeschen",   # Grafik- und Webseiten-Projekte (Ausbau Runde 1, Schritt 4)
 })
 
 

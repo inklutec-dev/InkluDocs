@@ -211,9 +211,11 @@ class ToolExecutor:
     Claude-Args, damit kein Cross-Projekt-Zugriff möglich ist.
     """
 
-    def __init__(self, project_id: int, user_id: int, word: bool = False, pdf: bool = False) -> None:
+    def __init__(self, project_id: int, user_id: int, word: bool = False, pdf: bool = False, bild: str = "") -> None:
         self.project_id = project_id
         self.user_id = user_id
+        # Grafik- bzw. Webseiten-Projekt mit Schalter AGENT_BILD_WERKZEUGE (Ausbau Runde 1, Schritt 4): "grafik" | "web" | ""
+        self.bild = bild
         self.word = word   # Word-Projekt: Werkzeuge „Meine Ausgaben“ freigeschaltet (11.09.2026)
         self.pdf = pdf     # PDF-Projekt: Feld-Werkzeuge + PDF-Werkzeuge (Werkzeugsatz nach Dateiart, 22.09.2026)
         # Ein Executor je Nutzer-Nachricht (agent_loop): turn_id trennt Preisauskunft und Zustimmung,
@@ -326,6 +328,24 @@ class ToolExecutor:
             })
             handlers["exportiere_fertige_pdf"] = lambda a: pdf_tools.exportiere_fertige_pdf(
                 p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self, alle=bool(a.get("alle", False)))
+        if self.bild:
+            # Grafik- und Webseiten-Projekte (Ausbau Runde 1, Schritt 4): dieselben Werkzeuge wie in Word/PDF, wo die
+            # Oberflaeche sie auch anbietet; dazu Bild umbenennen/loeschen, bei Webseiten Webseite umbenennen/loeschen.
+            def _doc(a):
+                return int(a["document_id"]) if a.get("document_id") not in (None, "", 0) else None
+            gemeinsam = self._oberflaeche_gemeinsam(_doc)
+            gemeinsam.pop("ausgabe_loeschen", None)   # keine Ablage in Grafik- und Webseiten-Projekten
+            handlers.update(gemeinsam)
+            handlers.update({
+                "alt_sprache_setzen": lambda a: pdf_tools.alt_sprache_setzen(p, u, str(a.get("sprache") or "")),
+                "bild_umbenennen": lambda a: oberflaeche_tools.bild_umbenennen(p, u, int(a["image_id"]), str(a.get("name") or "")),
+                "bild_loeschen": lambda a: oberflaeche_tools.bild_loeschen(p, u, int(a["image_id"]), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+            })
+            if self.bild == "web":
+                handlers.update({
+                    "dokument_umbenennen": lambda a: pdf_tools.dokument_umbenennen(p, u, _doc(a), str(a.get("name") or "")),
+                    "dokument_loeschen": lambda a: pdf_tools.dokument_loeschen(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                })
         return handlers
 
     def _oberflaeche_gemeinsam(self, _doc) -> dict[str, Callable[[dict], dict]]:

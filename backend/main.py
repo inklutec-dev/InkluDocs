@@ -6893,18 +6893,13 @@ def _require_non_pdf_project(conn, project_id: int, user_id: int) -> dict:
     return project
 
 
-@app.patch("/api/projects/{project_id}/images/{image_id}")
-async def rename_image(project_id: int, image_id: int, request: Request, user: dict = Depends(get_current_user)):
-    """Multi-Datei Phase 2 (14.08.2026): Anzeigename EINES Bildes setzen —
-    nur fuer Grafik- und Web-Projekte. Leeres Feld setzt auf NULL zurueck,
-    die Anzeige faellt dann auf den Original-Dateinamen bzw. "Bild N"
-    zurueck (gleiche Logik wie rename_document)."""
-    data = await request.json()
-    name = (data.get("display_name") or "").strip()
+def _bild_umbenennen_sync(user_id: int, project_id: int, image_id: int, name: str) -> dict:
+    """Kern von „Bild umbenennen“ (Knopf rename_image und InkluAgent-Werkzeug bild_umbenennen, Ausbau Runde 1 Schritt 4)."""
+    name = (name or "").strip()
     if len(name) > 200:
         raise HTTPException(status_code=400, detail="Anzeigename darf maximal 200 Zeichen lang sein")
     conn = get_db()
-    _require_non_pdf_project(conn, project_id, user["id"])
+    _require_non_pdf_project(conn, project_id, user_id)
     cur = conn.execute(
         "UPDATE images SET display_name = ? WHERE id = ? AND project_id = ?",
         (name or None, image_id, project_id)
@@ -6917,9 +6912,20 @@ async def rename_image(project_id: int, image_id: int, request: Request, user: d
     return {"ok": True, "display_name": name or None}
 
 
-@app.delete("/api/projects/{project_id}/images/{image_id}")
-async def delete_image(project_id: int, image_id: int, user: dict = Depends(get_current_user)):
-    """Multi-Datei Phase 2 (14.08.2026): EIN Bild aus einem Grafik- oder
+@app.patch("/api/projects/{project_id}/images/{image_id}")
+async def rename_image(project_id: int, image_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Multi-Datei Phase 2 (14.08.2026): Anzeigename EINES Bildes setzen —
+    nur fuer Grafik- und Web-Projekte. Leeres Feld setzt auf NULL zurueck,
+    die Anzeige faellt dann auf den Original-Dateinamen bzw. "Bild N"
+    zurueck (gleiche Logik wie rename_document). Kern: _bild_umbenennen_sync (09.10.2026, derselbe wie im InkluAgent)."""
+    data = await request.json()
+    return _bild_umbenennen_sync(user["id"], project_id, image_id, data.get("display_name") or "")
+
+
+def _bild_loeschen_sync(user_id: int, project_id: int, image_id: int) -> dict:
+    """Kern von „Bild löschen“ (Knopf delete_image und InkluAgent-Werkzeug bild_loeschen, Ausbau Runde 1 Schritt 4).
+
+    Multi-Datei Phase 2 (14.08.2026): EIN Bild aus einem Grafik- oder
     Web-Projekt entfernen. Bei Grafik ist das Einzelbild die atomare Einheit
     (vereinbart 10.06.2026), bei Web dient es dem Feinschnitt innerhalb einer
     Webseite (z.B. mitgeladene Deko-Grafiken aussortieren). PDF bleibt
@@ -6931,7 +6937,7 @@ async def delete_image(project_id: int, image_id: int, user: dict = Depends(get_
     leerer "Webseite N"-Block stehen (und der Phantom-Cleanup beim naechsten
     Start wuerde ihn ohnehin wegputzen)."""
     conn = get_db()
-    _require_non_pdf_project(conn, project_id, user["id"])
+    _require_non_pdf_project(conn, project_id, user_id)
     img = conn.execute(
         "SELECT * FROM images WHERE id = ? AND project_id = ?", (image_id, project_id)
     ).fetchone()
@@ -6985,6 +6991,13 @@ async def delete_image(project_id: int, image_id: int, user: dict = Depends(get_
         "remaining_images": remaining_images,
         "removed_document": removed_document,
     }
+
+
+@app.delete("/api/projects/{project_id}/images/{image_id}")
+async def delete_image(project_id: int, image_id: int, user: dict = Depends(get_current_user)):
+    """Ein Bild aus einem Grafik- oder Web-Projekt entfernen. Kern: _bild_loeschen_sync (09.10.2026, derselbe wie im
+    InkluAgent-Werkzeug bild_loeschen)."""
+    return _bild_loeschen_sync(user["id"], project_id, image_id)
 
 
 @app.delete("/api/projects/{project_id}")

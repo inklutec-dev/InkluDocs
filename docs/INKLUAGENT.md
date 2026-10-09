@@ -374,3 +374,26 @@ Tests: `tests/test_agent_hilfe.py` (7: Schalter, Seite aus dem Werkzeugsatz und 
 Sprachen, alle Texte in allen Katalogen, Stichpunkte und alte Einleitung, Link-Position). Klickprobe lokal: 16 von 16
 (Stichpunkte, Link, „Hilfe“ an gleicher Stelle auf Startseite und Projekt, Hilfe-Seite mit aktueller Seite markiert, axe ohne
 ernste Verstöße, Englisch, Schalter aus: alte Einleitung, kein Link, 404).
+
+### Schritt 4: Werkzeuglücke in Grafik- und Webseiten-Projekten (Schalter `AGENT_BILD_WERKZEUGE`, Umgebung `INKLUAGENT_BILD_WERKZEUGE=an`)
+
+Vorher hatte der Agent dort nur sechs Werkzeuge. Mit Schalter (`agent_loop._werkzeugsatz_roh`, `_bild_art`) alles, was die
+Oberfläche dieser Projekte anbietet, mit demselben Kern wie der Knopf und derselben Rückfrage:
+- Alt-Texte generieren für alle (`alt_texte_generieren`), Alt-Texte herunterladen (`exportiere_alt_texte`), KI-Kontext
+  (`ki_kontext_setzen`), gespeicherter Prompt (`eigener_prompt`), Sprache der Alt-Texte (`alt_sprache_setzen`) — die
+  vorhandenen Werkzeuge aus PDF/Word, die für jede Projektart gelten.
+- Neu: `bild_umbenennen` und `bild_loeschen` (`tools/oberflaeche.py`). Der Kern der Knöpfe ist dafür aus den Endpunkten
+  `rename_image` und `delete_image` herausgezogen (`main._bild_umbenennen_sync`, `main._bild_loeschen_sync`); die Endpunkte
+  rufen ihn unverändert auf (Statuscodes und Antworten gleich, lokal geprüft). Löschen ist unumkehrbar: Angebot, Karte („Bild
+  löschen: „Bild 2 (foto.png)“. Das lässt sich nicht rückgängig machen.“), Knopf oder Ja in einer späteren Nachricht.
+- Webseiten-Projekte zusätzlich `dokument_umbenennen` und `dokument_loeschen` (eine Webseite samt Bildern).
+- Bewusst nicht: Teilen/Gäste einladen (verschickt Mails), Bewertung mit dem Daumen (verschickt eine Mail an das Team), keine
+  Ablage. Weitere Bilder oder Webseiten hinzufügen kommt mit dem Hochladefeld (Runde 2); der Prompt sagt das.
+- Prompt-Zusatz `prompts/system_bild.py`; Namen in `tools/namen.py` (vorhandene Übersetzungen „Bild umbenennen“, „Bild
+  löschen“); `daten.WERKZEUG_FREMDTEXT` und `ausgaben.AENDERT_ANSICHT` ergänzt; die Hilfe-Seite zeigt die neuen Werkzeuge von
+  selbst. PDF-, Word- und Formular-Projekte bleiben unverändert (Test).
+
+Tests: `tests/test_agent_bild_werkzeuge.py` (7: Schalter aus = sechs Werkzeuge, Werkzeugsatz Grafik und Webseite, jedes mit
+Ausführung und Namen, PDF/Word unverändert, derselbe Kern wie der Knopf, Umbenennen, Löschen in zwei Schritten auf einer
+Wegwerf-Datenbank, fremdes Bild abgelehnt). Klickprobe lokal 8 von 8 (Bild per Karte gelöscht, Angebot „Alt-Texte generieren“
+mit Preis, Hilfe-Seite nennt die neuen Werkzeuge); Knöpfe am Bild unverändert (200/400/404 wie vorher).

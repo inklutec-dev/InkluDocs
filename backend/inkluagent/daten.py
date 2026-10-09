@@ -92,6 +92,9 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     "ki_kontext_setzen": (),
     "eigener_prompt": (),
     "ausgabe_loeschen": (),
+    # Grafik- und Webseiten-Projekte (Ausbau Runde 1, Schritt 4)
+    "bild_umbenennen": (),
+    "bild_loeschen": (),
 }
 
 

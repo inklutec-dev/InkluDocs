@@ -70,6 +70,11 @@ AGENT_SICHERHEIT = _umgebung_an("INKLUAGENT_SICHERHEIT")
 # KI-Verordnung Art. 50 bleibt der erste Punkt), Hilfe-Seite /hilfe/inkluagent (erzeugt aus Werkzeugsatz, Werkzeugnamen und
 # Schaltern, inkluagent/hilfe.py) und der Link „Hilfe“ in der Seitenleiste. INKLUAGENT_HILFE=an.
 AGENT_HILFE = _umgebung_an("INKLUAGENT_HILFE")
+# Schritt 4 — Werkzeugluecke in Grafik- und Webseiten-Projekten: dort hat der Agent sonst nur sechs Werkzeuge. Mit Schalter
+# alles, was die Oberflaeche dort anbietet (Alt-Texte fuer alle, Alt-Texte herunterladen, KI-Kontext, gespeicherter Prompt,
+# Sprache der Alt-Texte, Bild umbenennen und loeschen, bei Webseiten Webseite umbenennen und loeschen), jedes Werkzeug mit
+# demselben Kern wie der Knopf und derselben Rueckfrage. INKLUAGENT_BILD_WERKZEUGE=an.
+AGENT_BILD_WERKZEUGE = _umgebung_an("INKLUAGENT_BILD_WERKZEUGE")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

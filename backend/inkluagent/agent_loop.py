@@ -30,7 +30,9 @@ from .tools.definitions import TOOL_DEFINITIONS, ToolExecutor
 from .tools.definitions_formular import TOOL_DEFINITIONS_FORMULAR, ToolExecutorFormular
 from .tools.definitions_pdf import TOOL_DEFINITIONS_PDF   # PDF-Projekte (22.09.2026)
 from .tools.definitions_oberflaeche import (TOOL_DEFINITIONS_OBERFLAECHE_PDF, TOOL_DEFINITIONS_OBERFLAECHE_WORD,
-                                            TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR)   # alles, was die Oberflaeche kann (30.09.2026)
+                                            TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR,
+                                            TOOL_DEFINITIONS_OBERFLAECHE_GRAFIK)   # alles, was die Oberflaeche kann (30.09.2026)
+from .prompts.system_bild import system_bild   # Grafik- und Webseiten-Projekte (Ausbau Runde 1, Schritt 4)
 from .prompts.system_pdf import system_pdf
 from .prompts.system_agent import system_agent
 import funktionen   # Funktionsschalter: ausgeblendet in der Oberflaeche = ausgeblendet im Chatbot (30.09.2026)
@@ -107,7 +109,26 @@ def _werkzeugsatz_roh(project: dict, project_id: int, user_id: int):
         return (TOOL_DEFINITIONS + felder + TOOL_DEFINITIONS_PDF + ablage + TOOL_DEFINITIONS_OBERFLAECHE_PDF,
                 ToolExecutor(project_id=project_id, user_id=user_id, pdf=True),
                 system_agent() + "\n\n" + system_pdf())
+    # Grafik- und Webseiten-Projekte (InkluAgent-Ausbau Runde 1, Schritt 4, Schalter AGENT_BILD_WERKZEUGE): alles, was die
+    # Oberflaeche dort anbietet. Schalter aus = die sechs Bild-Werkzeuge wie bisher.
+    art = _bild_art(project)
+    if art and funktionen.an("AGENT_BILD_WERKZEUGE"):
+        doku = [d for d in TOOL_DEFINITIONS_PDF if d["name"] == "alt_sprache_setzen"
+                or (art == "web" and d["name"] in ("dokument_umbenennen", "dokument_loeschen"))]
+        return (TOOL_DEFINITIONS + TOOL_DEFINITIONS_OBERFLAECHE_GRAFIK + doku,
+                ToolExecutor(project_id=project_id, user_id=user_id, bild=art),
+                system_agent() + "\n\n" + system_bild(art))
     return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id), system_agent()
+
+
+def _bild_art(project: dict) -> str:
+    """„grafik“ (Bild-Projekt), „web“ (Webseiten-Projekt) oder leer."""
+    p = project or {}
+    if p.get("project_type") == "images" or p.get("tool") == "grafik":
+        return "grafik"
+    if p.get("project_type") == "url" or p.get("tool") == "web":
+        return "web"
+    return ""
 
 
 def _formular_summary(project_id: int, user_id: int) -> str:

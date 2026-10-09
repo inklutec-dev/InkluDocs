@@ -90,6 +90,31 @@ _ABLAGE_LOESCHEN = {
     }, "required": ["ausgabe_id"]},
 }
 
+_BILD_UMBENENNEN = {
+    "name": "bild_umbenennen",
+    "description": ("Wie „Umbenennen“ an einem Bild in Grafik- und Webseiten-Projekten: Anzeigename des Bildes setzen, leer = zurück "
+                    "auf den Dateinamen bzw. „Bild N“. Kostenlos."),
+    "input_schema": {"type": "object", "properties": {
+        "image_id": {"type": "integer", "description": "Die echte image_id aus list_project_images."},
+        "name": {"type": "string", "description": "Der neue Anzeigename (höchstens 200 Zeichen)."},
+    }, "required": ["image_id", "name"]},
+}
+_BILD_LOESCHEN = {
+    "name": "bild_loeschen",
+    "description": ("Wie „Löschen“ an einem Bild in Grafik- und Webseiten-Projekten: das Bild samt Alt-Text aus dem Projekt entfernen. "
+                    "Unumkehrbar — ZWEI SCHRITTE: erst ohne bestaetigt (sagen, welches Bild weg wäre, fragen), Ja in einer eigenen "
+                    "Nachricht, dann bestaetigt=true. Kostenlos."),
+    "input_schema": {"type": "object", "properties": {
+        "image_id": {"type": "integer", "description": "Die echte image_id aus list_project_images."}, "bestaetigt": _BESTAETIGT,
+    }, "required": ["image_id"]},
+}
+
+# Grafik- und Webseiten-Projekt (InkluAgent-Ausbau Runde 1, Schritt 4, Schalter funktionen.AGENT_BILD_WERKZEUGE): was die
+# Oberflaeche dort anbietet; Sprache der Alt-Texte und bei Webseiten Umbenennen/Loeschen der Webseite aus definitions_pdf.
+TOOL_DEFINITIONS_OBERFLAECHE_GRAFIK: list[dict] = [
+    _ALT_TEXTE_GENERIEREN, _ALT_TEXTE_HERUNTERLADEN, _KI_KONTEXT, _EIGENER_PROMPT, _BILD_UMBENENNEN, _BILD_LOESCHEN,
+]
+
 # PDF-Projekt: alles aus den Ansichten Dokument, Tagging, Alt-Texte, Quickinfos, Barrierefreiheitsprüfung
 TOOL_DEFINITIONS_OBERFLAECHE_PDF: list[dict] = [
     _TESTWEISE, _PRUEFDATEI_ERSTELLEN, _PRUEFDATEI_LESEN, _ALT_TEXTE_HERUNTERLADEN, _QUICKINFOS_HERUNTERLADEN,

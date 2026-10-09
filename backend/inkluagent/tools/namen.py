@@ -33,6 +33,8 @@ WERKZEUG_NAMEN: dict[str, str] = {
     "exportiere_quickinfos": "Quickinfos herunterladen", "alt_texte_generieren": "Alt-Texte generieren",
     "quickinfos_generieren": "Quickinfos generieren", "stammdaten_anwenden": "Stammdaten anwenden",
     "ki_kontext_setzen": "KI-Kontext", "eigener_prompt": "Gespeicherte Prompts", "ausgabe_loeschen": "Ablage-Eintrag löschen",
+    # Grafik- und Webseiten-Projekte (InkluAgent-Ausbau Runde 1, Schritt 4)
+    "bild_umbenennen": "Bild umbenennen", "bild_loeschen": "Bild löschen",
 }
 
 
