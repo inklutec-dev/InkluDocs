@@ -11754,3 +11754,114 @@ msgstr "Uploading and the project’s buttons are in the manual view."
 
 msgid "Dieses Projekt in der manuellen Ansicht zeigen"
 msgstr "Show this project in the manual view"
+
+# InkluAgent-Ausbau Runde 2, Schritt 1: Hochladefeld (12.10.2026)
+msgid "Dateien mitschicken"
+msgstr "Attach files"
+
+msgid "Webadresse (freiwillig)"
+msgstr "Web address (optional)"
+
+#, python-brace-format
+msgid "PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Der InkluAgent legt sie ins passende Projekt und nennt dir die Preise, bevor etwas startet."
+msgstr "PDF, Word (.docx) and images, up to {n} files, each up to {mb} MB. The InkluAgent puts them in the right project and tells you the prices before anything starts."
+
+msgid "Ergebnis des Hochladens"
+msgstr "Upload result"
+
+#, python-brace-format
+msgid "{name}: nicht hochgeladen. {grund}"
+msgstr "{name}: not uploaded. {grund}"
+
+#, python-brace-format
+msgid "{name}: hochgeladen in dieses Projekt."
+msgstr "{name}: uploaded to this project."
+
+#, python-brace-format
+msgid "{name}: passt nicht in dieses Projekt, darum hochgeladen in das neue Projekt „{projekt}“."
+msgstr "{name}: does not fit this project, so it was uploaded to the new project “{projekt}”."
+
+#, python-brace-format
+msgid "{name}: hochgeladen in das neue Projekt „{projekt}“."
+msgstr "{name}: uploaded to the new project “{projekt}”."
+
+#, python-brace-format
+msgid "Projekt „{projekt}“ öffnen"
+msgstr "Open project “{projekt}”"
+
+#, python-brace-format
+msgid "Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf."
+msgstr "At most {n} files at once. Please split your selection."
+
+msgid "Wird hochgeladen …"
+msgstr "Uploading …"
+
+msgid "Webadresse wird geladen …"
+msgstr "Loading web address …"
+
+msgid "Hochladen nicht möglich."
+msgstr "Upload not possible."
+
+#, python-brace-format
+msgid "{gut} von {alle} hochgeladen."
+msgstr "{gut} of {alle} uploaded."
+
+msgid "Die Gründe stehen unter dem Feld."
+msgstr "The reasons are listed below the field."
+
+msgid "Bitte eine Nachricht eingeben oder eine Datei auswählen."
+msgstr "Please enter a message or choose a file."
+
+msgid "Bitte eine vollständige Webadresse eingeben, zum Beispiel https://www.beispiel.de"
+msgstr "Please enter a complete web address, for example https://www.example.com"
+
+msgid "Die Knöpfe des Projekts findest du in der manuellen Ansicht."
+msgstr "You will find the project's buttons in the manual view."
+
+#, python-brace-format
+msgid "Hochgeladen: {namen}"
+msgstr "Uploaded: {namen}"
+
+#, python-brace-format
+msgid "Nicht hochgeladen: {namen}"
+msgstr "Not uploaded: {namen}"
+
+msgid "Bitte wähle eine Datei aus oder gib eine Webadresse ein."
+msgstr "Please choose a file or enter a web address."
+
+#, python-brace-format
+msgid "Die Datei ist zu groß (höchstens {n} MB)."
+msgstr "The file is too large (at most {n} MB)."
+
+msgid "Das alte Word-Format .doc wird nicht unterstützt. Bitte in Word als .docx speichern."
+msgstr "The old Word format .doc is not supported. Please save it as .docx in Word."
+
+msgid "Das ist keine PDF-, Word- oder Bilddatei (geprüft wird der Inhalt, nicht nur die Endung)."
+msgstr "This is not a PDF, Word or image file (the content is checked, not just the extension)."
+
+#, python-brace-format
+msgid "Inhalt und Endung passen nicht zusammen: Die Datei ist {art}. Bitte mit der passenden Endung hochladen."
+msgstr "Content and extension do not match: the file is {art}. Please upload it with the matching extension."
+
+msgid "eine PDF"
+msgstr "a PDF"
+
+msgid "eine Word-Datei"
+msgstr "a Word file"
+
+msgid "ein Bild"
+msgstr "an image"
+
+msgid "eine Datei im alten Word-Format (.doc)"
+msgstr "a file in the old Word format (.doc)"
+
+msgid "Die Datei ließ sich nicht auslesen (beschädigt oder geschützt)."
+msgstr "The file could not be read (damaged or protected)."
+
+#, python-brace-format
+msgid "Heute sind schon {n} neue Projekte über den InkluAgent angelegt worden. Morgen geht es weiter; in ein bestehendes Projekt kannst du weiter hochladen."
+msgstr "{n} new projects have already been created via the InkluAgent today. You can continue tomorrow; you can still upload to an existing project."
+
+#, python-brace-format
+msgid "In dieser Stunde wurden schon {n} Webadressen geladen. Bitte später noch einmal."
+msgstr "{n} web addresses have already been loaded this hour. Please try again later."

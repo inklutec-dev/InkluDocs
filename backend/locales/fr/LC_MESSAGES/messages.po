@@ -11756,3 +11756,114 @@ msgstr "Le téléversement et les boutons du projet se trouvent dans la vue manu
 
 msgid "Dieses Projekt in der manuellen Ansicht zeigen"
 msgstr "Afficher ce projet dans la vue manuelle"
+
+# InkluAgent-Ausbau Runde 2, Schritt 1: Hochladefeld (12.10.2026)
+msgid "Dateien mitschicken"
+msgstr "Joindre des fichiers"
+
+msgid "Webadresse (freiwillig)"
+msgstr "Adresse web (facultatif)"
+
+#, python-brace-format
+msgid "PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Der InkluAgent legt sie ins passende Projekt und nennt dir die Preise, bevor etwas startet."
+msgstr "PDF, Word (.docx) et images, {n} fichiers au maximum, {mb} Mo chacun au maximum. L’InkluAgent les place dans le bon projet et vous indique les prix avant que quoi que ce soit ne démarre."
+
+msgid "Ergebnis des Hochladens"
+msgstr "Résultat du téléversement"
+
+#, python-brace-format
+msgid "{name}: nicht hochgeladen. {grund}"
+msgstr "{name} : non téléversé. {grund}"
+
+#, python-brace-format
+msgid "{name}: hochgeladen in dieses Projekt."
+msgstr "{name} : téléversé dans ce projet."
+
+#, python-brace-format
+msgid "{name}: passt nicht in dieses Projekt, darum hochgeladen in das neue Projekt „{projekt}“."
+msgstr "{name} : ne correspond pas à ce projet, il a donc été téléversé dans le nouveau projet « {projekt} »."
+
+#, python-brace-format
+msgid "{name}: hochgeladen in das neue Projekt „{projekt}“."
+msgstr "{name} : téléversé dans le nouveau projet « {projekt} »."
+
+#, python-brace-format
+msgid "Projekt „{projekt}“ öffnen"
+msgstr "Ouvrir le projet « {projekt} »"
+
+#, python-brace-format
+msgid "Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf."
+msgstr "{n} fichiers au maximum à la fois. Veuillez répartir votre sélection."
+
+msgid "Wird hochgeladen …"
+msgstr "Téléversement en cours …"
+
+msgid "Webadresse wird geladen …"
+msgstr "Chargement de l’adresse web …"
+
+msgid "Hochladen nicht möglich."
+msgstr "Téléversement impossible."
+
+#, python-brace-format
+msgid "{gut} von {alle} hochgeladen."
+msgstr "{gut} sur {alle} téléversé(s)."
+
+msgid "Die Gründe stehen unter dem Feld."
+msgstr "Les raisons sont indiquées sous le champ."
+
+msgid "Bitte eine Nachricht eingeben oder eine Datei auswählen."
+msgstr "Veuillez saisir un message ou choisir un fichier."
+
+msgid "Bitte eine vollständige Webadresse eingeben, zum Beispiel https://www.beispiel.de"
+msgstr "Veuillez saisir une adresse web complète, par exemple https://www.exemple.fr"
+
+msgid "Die Knöpfe des Projekts findest du in der manuellen Ansicht."
+msgstr "Vous trouverez les boutons du projet dans la vue manuelle."
+
+#, python-brace-format
+msgid "Hochgeladen: {namen}"
+msgstr "Téléversé : {namen}"
+
+#, python-brace-format
+msgid "Nicht hochgeladen: {namen}"
+msgstr "Non téléversé : {namen}"
+
+msgid "Bitte wähle eine Datei aus oder gib eine Webadresse ein."
+msgstr "Veuillez choisir un fichier ou saisir une adresse web."
+
+#, python-brace-format
+msgid "Die Datei ist zu groß (höchstens {n} MB)."
+msgstr "Le fichier est trop volumineux ({n} Mo au maximum)."
+
+msgid "Das alte Word-Format .doc wird nicht unterstützt. Bitte in Word als .docx speichern."
+msgstr "L’ancien format Word .doc n’est pas pris en charge. Veuillez l’enregistrer au format .docx dans Word."
+
+msgid "Das ist keine PDF-, Word- oder Bilddatei (geprüft wird der Inhalt, nicht nur die Endung)."
+msgstr "Ce n’est pas un fichier PDF, Word ou image (c’est le contenu qui est vérifié, pas seulement l’extension)."
+
+#, python-brace-format
+msgid "Inhalt und Endung passen nicht zusammen: Die Datei ist {art}. Bitte mit der passenden Endung hochladen."
+msgstr "Le contenu et l’extension ne correspondent pas : le fichier est {art}. Veuillez le téléverser avec la bonne extension."
+
+msgid "eine PDF"
+msgstr "un PDF"
+
+msgid "eine Word-Datei"
+msgstr "un fichier Word"
+
+msgid "ein Bild"
+msgstr "une image"
+
+msgid "eine Datei im alten Word-Format (.doc)"
+msgstr "un fichier à l’ancien format Word (.doc)"
+
+msgid "Die Datei ließ sich nicht auslesen (beschädigt oder geschützt)."
+msgstr "Le fichier n’a pas pu être lu (endommagé ou protégé)."
+
+#, python-brace-format
+msgid "Heute sind schon {n} neue Projekte über den InkluAgent angelegt worden. Morgen geht es weiter; in ein bestehendes Projekt kannst du weiter hochladen."
+msgstr "{n} nouveaux projets ont déjà été créés aujourd’hui via l’InkluAgent. Vous pourrez continuer demain ; vous pouvez toujours téléverser dans un projet existant."
+
+#, python-brace-format
+msgid "In dieser Stunde wurden schon {n} Webadressen geladen. Bitte später noch einmal."
+msgstr "{n} adresses web ont déjà été chargées cette heure-ci. Veuillez réessayer plus tard."

@@ -52,6 +52,8 @@
 <script>
 window.LANG = "{{ current_lang }}";
 window.I18N = {{ i18n_json|safe }};
+{# InkluAgent-Ausbau Runde 2: was der Agent auf dieser Seite kann (Schalter in funktionen.py, main._inkluagent_schalter) #}
+window.INKLUAGENT = {{ inkluagent_schalter|default({})|tojson }};
 </script>
 <script src="/static/dashboard.js?v={{ asset_version }}"></script>
 {% block page_script %}{% endblock %}

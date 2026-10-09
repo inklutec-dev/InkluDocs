@@ -86,6 +86,11 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int):
     if sicherheit.an():   # Schritt 2: Einzelaktionen nehmen bestaetigt an, der Prompt nennt die Server-Regel
         eindeutig = sicherheit.werkzeuge_anpassen(eindeutig)
         system = system + "\n\n" + sicherheit.PROMPT_ZUSATZ
+    if funktionen.an("AGENT_HOCHLADEN"):   # Runde 2, Schritt 1: Hochladefeld — Zuordnung macht der Server
+        from . import hochladen
+        if not sicherheit.an():
+            eindeutig = sicherheit.werkzeuge_anpassen(eindeutig, immer=True)
+        system = system + "\n\n" + hochladen.PROMPT_ZUSATZ
     return eindeutig, executor, system
 
 
@@ -219,6 +224,7 @@ def run_agent(
     provider: BedrockProvider,
     system_suffix: str = None,
     on_tool=None,
+    nur_mit_karte: bool = False,
 ) -> dict[str, Any]:
     """Führt den agentic Loop aus. Returns:
         {"reply": str, "intent": "agentic", "image_refs": [...] or None,
@@ -239,6 +245,8 @@ def run_agent(
     tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
     # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
     sicherheit.nachricht_merken(executor.turn_id, user_message)
+    # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
+    executor.nur_mit_karte = bool(nur_mit_karte)
     messages = _build_initial_messages(project_id, user_message, project, user_id)
     system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
 

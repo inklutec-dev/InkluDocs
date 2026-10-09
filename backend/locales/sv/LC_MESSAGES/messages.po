@@ -11328,3 +11328,114 @@ msgstr "Uppladdning och projektets knappar finns i den manuella vyn."
 
 msgid "Dieses Projekt in der manuellen Ansicht zeigen"
 msgstr "Visa det här projektet i den manuella vyn"
+
+# InkluAgent-Ausbau Runde 2, Schritt 1: Hochladefeld (12.10.2026)
+msgid "Dateien mitschicken"
+msgstr "Bifoga filer"
+
+msgid "Webadresse (freiwillig)"
+msgstr "Webbadress (valfritt)"
+
+#, python-brace-format
+msgid "PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Der InkluAgent legt sie ins passende Projekt und nennt dir die Preise, bevor etwas startet."
+msgstr "PDF, Word (.docx) och bilder, högst {n} filer, var och en upp till {mb} MB. InkluAgent lägger dem i rätt projekt och berättar priserna innan något startar."
+
+msgid "Ergebnis des Hochladens"
+msgstr "Resultat av uppladdningen"
+
+#, python-brace-format
+msgid "{name}: nicht hochgeladen. {grund}"
+msgstr "{name}: inte uppladdad. {grund}"
+
+#, python-brace-format
+msgid "{name}: hochgeladen in dieses Projekt."
+msgstr "{name}: uppladdad till det här projektet."
+
+#, python-brace-format
+msgid "{name}: passt nicht in dieses Projekt, darum hochgeladen in das neue Projekt „{projekt}“."
+msgstr "{name}: passar inte i det här projektet och har därför laddats upp till det nya projektet ”{projekt}”."
+
+#, python-brace-format
+msgid "{name}: hochgeladen in das neue Projekt „{projekt}“."
+msgstr "{name}: uppladdad till det nya projektet ”{projekt}”."
+
+#, python-brace-format
+msgid "Projekt „{projekt}“ öffnen"
+msgstr "Öppna projektet ”{projekt}”"
+
+#, python-brace-format
+msgid "Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf."
+msgstr "Högst {n} filer åt gången. Dela upp ditt urval."
+
+msgid "Wird hochgeladen …"
+msgstr "Laddar upp …"
+
+msgid "Webadresse wird geladen …"
+msgstr "Webbadressen läses in …"
+
+msgid "Hochladen nicht möglich."
+msgstr "Uppladdning är inte möjlig."
+
+#, python-brace-format
+msgid "{gut} von {alle} hochgeladen."
+msgstr "{gut} av {alle} uppladdade."
+
+msgid "Die Gründe stehen unter dem Feld."
+msgstr "Orsakerna står under fältet."
+
+msgid "Bitte eine Nachricht eingeben oder eine Datei auswählen."
+msgstr "Skriv ett meddelande eller välj en fil."
+
+msgid "Bitte eine vollständige Webadresse eingeben, zum Beispiel https://www.beispiel.de"
+msgstr "Skriv en fullständig webbadress, till exempel https://www.exempel.se"
+
+msgid "Die Knöpfe des Projekts findest du in der manuellen Ansicht."
+msgstr "Projektets knappar hittar du i den manuella vyn."
+
+#, python-brace-format
+msgid "Hochgeladen: {namen}"
+msgstr "Uppladdat: {namen}"
+
+#, python-brace-format
+msgid "Nicht hochgeladen: {namen}"
+msgstr "Inte uppladdat: {namen}"
+
+msgid "Bitte wähle eine Datei aus oder gib eine Webadresse ein."
+msgstr "Välj en fil eller skriv en webbadress."
+
+#, python-brace-format
+msgid "Die Datei ist zu groß (höchstens {n} MB)."
+msgstr "Filen är för stor (högst {n} MB)."
+
+msgid "Das alte Word-Format .doc wird nicht unterstützt. Bitte in Word als .docx speichern."
+msgstr "Det gamla Word-formatet .doc stöds inte. Spara filen som .docx i Word."
+
+msgid "Das ist keine PDF-, Word- oder Bilddatei (geprüft wird der Inhalt, nicht nur die Endung)."
+msgstr "Det här är inte en PDF-, Word- eller bildfil (innehållet kontrolleras, inte bara filändelsen)."
+
+#, python-brace-format
+msgid "Inhalt und Endung passen nicht zusammen: Die Datei ist {art}. Bitte mit der passenden Endung hochladen."
+msgstr "Innehåll och filändelse stämmer inte överens: filen är {art}. Ladda upp den med rätt filändelse."
+
+msgid "eine PDF"
+msgstr "en PDF"
+
+msgid "eine Word-Datei"
+msgstr "en Word-fil"
+
+msgid "ein Bild"
+msgstr "en bild"
+
+msgid "eine Datei im alten Word-Format (.doc)"
+msgstr "en fil i det gamla Word-formatet (.doc)"
+
+msgid "Die Datei ließ sich nicht auslesen (beschädigt oder geschützt)."
+msgstr "Filen kunde inte läsas (skadad eller skyddad)."
+
+#, python-brace-format
+msgid "Heute sind schon {n} neue Projekte über den InkluAgent angelegt worden. Morgen geht es weiter; in ein bestehendes Projekt kannst du weiter hochladen."
+msgstr "I dag har redan {n} nya projekt skapats via InkluAgent. I morgon kan du fortsätta; till ett befintligt projekt kan du fortfarande ladda upp."
+
+#, python-brace-format
+msgid "In dieser Stunde wurden schon {n} Webadressen geladen. Bitte später noch einmal."
+msgstr "Under den här timmen har redan {n} webbadresser lästs in. Försök igen senare."

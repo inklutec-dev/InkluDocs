@@ -11756,3 +11756,114 @@ msgstr "La subida de archivos y los botones del proyecto están en la vista manu
 
 msgid "Dieses Projekt in der manuellen Ansicht zeigen"
 msgstr "Mostrar este proyecto en la vista manual"
+
+# InkluAgent-Ausbau Runde 2, Schritt 1: Hochladefeld (12.10.2026)
+msgid "Dateien mitschicken"
+msgstr "Adjuntar archivos"
+
+msgid "Webadresse (freiwillig)"
+msgstr "Dirección web (opcional)"
+
+#, python-brace-format
+msgid "PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Der InkluAgent legt sie ins passende Projekt und nennt dir die Preise, bevor etwas startet."
+msgstr "PDF, Word (.docx) e imágenes, como máximo {n} archivos de hasta {mb} MB cada uno. El InkluAgent los coloca en el proyecto adecuado y te indica los precios antes de que empiece nada."
+
+msgid "Ergebnis des Hochladens"
+msgstr "Resultado de la subida"
+
+#, python-brace-format
+msgid "{name}: nicht hochgeladen. {grund}"
+msgstr "{name}: no se ha subido. {grund}"
+
+#, python-brace-format
+msgid "{name}: hochgeladen in dieses Projekt."
+msgstr "{name}: subido a este proyecto."
+
+#, python-brace-format
+msgid "{name}: passt nicht in dieses Projekt, darum hochgeladen in das neue Projekt „{projekt}“."
+msgstr "{name}: no encaja en este proyecto, por eso se ha subido al nuevo proyecto «{projekt}»."
+
+#, python-brace-format
+msgid "{name}: hochgeladen in das neue Projekt „{projekt}“."
+msgstr "{name}: subido al nuevo proyecto «{projekt}»."
+
+#, python-brace-format
+msgid "Projekt „{projekt}“ öffnen"
+msgstr "Abrir el proyecto «{projekt}»"
+
+#, python-brace-format
+msgid "Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf."
+msgstr "Como máximo {n} archivos a la vez. Divide la selección, por favor."
+
+msgid "Wird hochgeladen …"
+msgstr "Subiendo …"
+
+msgid "Webadresse wird geladen …"
+msgstr "Cargando la dirección web …"
+
+msgid "Hochladen nicht möglich."
+msgstr "No se puede subir."
+
+#, python-brace-format
+msgid "{gut} von {alle} hochgeladen."
+msgstr "{gut} de {alle} subidos."
+
+msgid "Die Gründe stehen unter dem Feld."
+msgstr "Los motivos aparecen debajo del campo."
+
+msgid "Bitte eine Nachricht eingeben oder eine Datei auswählen."
+msgstr "Escribe un mensaje o elige un archivo."
+
+msgid "Bitte eine vollständige Webadresse eingeben, zum Beispiel https://www.beispiel.de"
+msgstr "Escribe una dirección web completa, por ejemplo https://www.ejemplo.es"
+
+msgid "Die Knöpfe des Projekts findest du in der manuellen Ansicht."
+msgstr "Encontrarás los botones del proyecto en la vista manual."
+
+#, python-brace-format
+msgid "Hochgeladen: {namen}"
+msgstr "Subido: {namen}"
+
+#, python-brace-format
+msgid "Nicht hochgeladen: {namen}"
+msgstr "No subido: {namen}"
+
+msgid "Bitte wähle eine Datei aus oder gib eine Webadresse ein."
+msgstr "Elige un archivo o escribe una dirección web."
+
+#, python-brace-format
+msgid "Die Datei ist zu groß (höchstens {n} MB)."
+msgstr "El archivo es demasiado grande (como máximo {n} MB)."
+
+msgid "Das alte Word-Format .doc wird nicht unterstützt. Bitte in Word als .docx speichern."
+msgstr "El antiguo formato de Word .doc no es compatible. Guárdalo como .docx en Word."
+
+msgid "Das ist keine PDF-, Word- oder Bilddatei (geprüft wird der Inhalt, nicht nur die Endung)."
+msgstr "No es un archivo PDF, de Word ni de imagen (se comprueba el contenido, no solo la extensión)."
+
+#, python-brace-format
+msgid "Inhalt und Endung passen nicht zusammen: Die Datei ist {art}. Bitte mit der passenden Endung hochladen."
+msgstr "El contenido y la extensión no coinciden: el archivo es {art}. Súbelo con la extensión correcta."
+
+msgid "eine PDF"
+msgstr "un PDF"
+
+msgid "eine Word-Datei"
+msgstr "un archivo de Word"
+
+msgid "ein Bild"
+msgstr "una imagen"
+
+msgid "eine Datei im alten Word-Format (.doc)"
+msgstr "un archivo en el antiguo formato de Word (.doc)"
+
+msgid "Die Datei ließ sich nicht auslesen (beschädigt oder geschützt)."
+msgstr "No se ha podido leer el archivo (dañado o protegido)."
+
+#, python-brace-format
+msgid "Heute sind schon {n} neue Projekte über den InkluAgent angelegt worden. Morgen geht es weiter; in ein bestehendes Projekt kannst du weiter hochladen."
+msgstr "Hoy ya se han creado {n} proyectos nuevos con el InkluAgent. Mañana podrás seguir; en un proyecto existente puedes seguir subiendo archivos."
+
+#, python-brace-format
+msgid "In dieser Stunde wurden schon {n} Webadressen geladen. Bitte später noch einmal."
+msgstr "En esta hora ya se han cargado {n} direcciones web. Inténtalo de nuevo más tarde."

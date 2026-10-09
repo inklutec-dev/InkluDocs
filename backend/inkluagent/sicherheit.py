@@ -135,6 +135,11 @@ G_EINZEL = ("In dieser Nachricht lief schon eine bezahlte Einzelaktion ohne Rüc
             "bestaetigt=true) oder der Knopf der Karte führt es aus.")
 
 
+G_HOCHGELADEN = ("Nach dem Hochladen startet der Server in derselben Nachricht nichts, was Credits kostet. Für diese Aktion "
+                 "liegt jetzt ein Angebot vor; unter deiner Antwort steht eine Karte mit Ziel und Preis. Nenne beides und "
+                 "warte auf den Knopf oder ein klares Ja in der nächsten Nachricht.")
+
+
 def _ziel(executor, name: str, args: dict) -> tuple[Optional[int], str]:
     """(Kennung, Anzeige wie in der Oberflaeche) des Bildes bzw. Feldes, um das es geht."""
     try:
@@ -176,7 +181,9 @@ def bild_label(project_id: int, image_id: int) -> str:
 def einzel_vorab(executor, name: str, args: dict) -> Optional[dict]:
     """VOR einer bezahlten Einzelaktion (ToolExecutor.execute). None = ausfuehren. Sonst ein Werkzeug-Ergebnis: Rueckfrage
     mit neuem Angebot (die Karte haengt ausgaben.nachbereiten an) oder der Grund, warum die Zustimmung nicht gilt."""
-    if not an() or name not in EINZEL_BEZAHLT:
+    # Hochgeladene Dateien (Runde 2, Schritt 1): in dieser Nachricht nichts Kostenpflichtiges ohne Karte — auch ohne Schalter
+    nur_mit_karte = bool(getattr(executor, "nur_mit_karte", False))
+    if name not in EINZEL_BEZAHLT or not (an() or nur_mit_karte):
         return None
     from .tools import ausgaben
     import billing
@@ -192,7 +199,7 @@ def einzel_vorab(executor, name: str, args: dict) -> Optional[dict]:
                                            "grund": ausgaben._GRUND_KENNWORT.get(grund, "angebot")}}
         executor._einzel_bestaetigt = True      # zaehlt nicht zum Deckel „ohne Karte“
         return None
-    if getattr(executor, "einzel_ohne_karte", 0) < EINZEL_OHNE_KARTE_JE_NACHRICHT:
+    if not nur_mit_karte and getattr(executor, "einzel_ohne_karte", 0) < EINZEL_OHNE_KARTE_JE_NACHRICHT:
         return None
     wache = billing.aktion_pruefung(executor.user_id, aktion)
     vorschau = {"rueckfrage_noetig": True, "dokument": ziel, "preis": preis, "verfuegbar": wache.get("verfuegbar"),
@@ -201,7 +208,7 @@ def einzel_vorab(executor, name: str, args: dict) -> Optional[dict]:
         vorschau["hinweis"] = "Das Guthaben reicht nicht. Sag dem Nutzer Preis und Guthaben und verweise auf Abo & Verbrauch."
         return {"ok": True, "result": vorschau}
     ausgaben._angebot_merken(schluessel, preis, tid)
-    vorschau["hinweis"] = G_EINZEL
+    vorschau["hinweis"] = (G_HOCHGELADEN if nur_mit_karte else G_EINZEL)
     return {"ok": True, "result": vorschau}
 
 
@@ -216,9 +223,9 @@ def einzel_nachher(executor, name: str, ergebnis: Any) -> None:
         executor.einzel_ohne_karte = getattr(executor, "einzel_ohne_karte", 0) + 1
 
 
-def werkzeuge_anpassen(defs: list) -> list:
-    """Schalter an: die vier Einzelaktionen nehmen bestaetigt an (nach einer Karte oder einem klaren Ja)."""
-    if not an():
+def werkzeuge_anpassen(defs: list, immer: bool = False) -> list:
+    """Schalter an (oder Hochladefeld, immer=True): die vier Einzelaktionen nehmen bestaetigt an (nach Karte oder klarem Ja)."""
+    if not (an() or immer):
         return defs
     out = []
     for d in defs:

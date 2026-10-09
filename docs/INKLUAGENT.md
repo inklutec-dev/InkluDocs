@@ -432,3 +432,52 @@ Unbekanntes, Erweiterbarkeit, Endpunkt, Einstellungen in sechs Sprachen mit und 
 Texte in allen Katalogen). Klickprobe lokal 25 von 25: Auswahl und Speichern, Seitenbau mit `data-oberflaeche`, Agent groß und
 offen, Rest ausgeblendet, Antwort mit Fokus, axe ohne ernste Verstöße, „nur diese Seite manuell“, Umschalter mit Fokus auf der
 H1, zurück zur manuellen Ansicht mit eingeklapptem Agenten, 320 Pixel ohne waagerechtes Scrollen, Schalter aus: nichts davon.
+
+## Ausbau Runde 2 (ab 09.10.2026)
+
+Wieder je Schritt ein Schalter, Vorgabe aus (`backend/funktionen.py`).
+
+### Schritt 1: Hochladefeld im InkluAgent (Schalter `AGENT_HOCHLADEN`, Umgebung `INKLUAGENT_HOCHLADEN=an`)
+
+Steves Schwerpunkt: Dateien und eine Webadresse direkt im Agenten abgeben. Die **Zuordnung macht der Server**, nicht das
+Modell. Kern: `backend/inkluagent/hochladen.py`, Endpunkt `POST /api/agent/hochladen`.
+- **Oberfläche** (`frontend/inkluagent.js`, `inkluagentHochladeHtml`): unter dem Eingabefeld die nativen Felder „Dateien
+  mitschicken“ (Datei-Auswahl, mehrere) und „Webadresse (freiwillig)“ (`type=url`), sichtbare Labels, ein Hinweis zu Typen,
+  Anzahl und Größe. „Senden“ lädt zuerst hoch, dann geht die Nachricht an den Agenten; eigener Text darf fehlen. Unter dem
+  Feld eine Ergebnisliste (nur `textContent`): je Datei „in dieses Projekt“, „in das neue Projekt …“ mit Link zum Öffnen, oder
+  „nicht hochgeladen“ mit Grund. Eine gebündelte Ansage in der Statuszeile („2 von 3 hochgeladen. Die Gründe stehen unter dem
+  Feld. InkluAgent denkt nach …“). Kam nichts an und fehlt eigener Text, geht keine Nachricht an den Agenten. Die Liste bleibt
+  nach dem Neuzeichnen der Ansicht stehen. Das Formular hat `novalidate`: eine unvollständige Webadresse meldet die
+  Statuszeile, der Fokus geht ins Feld (statt der Blase des Browsers, die ohne Ansage verschwindet).
+- **Prüfung und Zuordnung** (`hochladen.hochladen`): Inhalt statt Endung (`art_aus_inhalt`: PDF, Word .docx, Bild; altes .doc
+  mit eigenem Hinweis), Inhalt und Endung müssen zusammenpassen. Im Projekt: passende Datei hinein, unpassende in ein eigenes
+  neues Projekt (gleiche Art zusammen). Ohne Projekt je Art ein neues. Neue Projekte heißen wie die Datei. Hochgeladen wird
+  über `main.upload_file` (dieselbe Vorprüfung wie der Knopf: Passwort, beschädigt, Größe), Webadressen über `main.scan_url`
+  (Schutz gegen interne Adressen) und nur aus dem Feld.
+- **Bremsen** (Tabelle `agent_zaehler`, UTC): höchstens `INKLUAGENT_MAX_DATEIEN` Dateien je Nachricht (10),
+  `INKLUAGENT_MAX_NEUE_PROJEKTE_TAG` neue Projekte je Konto und Tag (20), `INKLUAGENT_MAX_WEBADRESSEN_STUNDE` Webadressen je
+  Konto und Stunde (10).
+- **Notiz für das Modell:** Fakten und Preise je Datei (`notiz_text`, Namen als Daten gekennzeichnet), im Prozess abgelegt
+  (30 Minuten), einmal abholbar und nur vom eigenen Nutzer (`notiz_holen`). Der Chat-Endpunkt nimmt `hochgeladen` (Kennung)
+  an, holt die Notiz erst nach der Chat-Bremse (eine abgewiesene Nachricht verbraucht sie nicht) und hängt sie für das Modell
+  an. Im Verlauf steht nur die Kurzzeile für Menschen („Hochgeladen: a.pdf, b.docx. Nicht hochgeladen: c.doc“,
+  `kurzzeile`/`nachricht_fuer_verlauf`). Die Seite bekommt die Notiz nie.
+- **Nichts Kostenpflichtiges ohne Karte:** in der Nachricht mit hochgeladenen Dateien legen auch die vier Einzelaktionen
+  (`EINZEL_BEZAHLT`) erst eine Karte vor (`executor.nur_mit_karte`, `sicherheit.einzel_vorab`, Hinweis `G_HOCHGELADEN`) —
+  auch ohne `AGENT_SICHERHEIT`. Der Prompt bekommt `hochladen.PROMPT_ZUSATZ`.
+- **Agentenansicht:** mit Hochladefeld nennt der Hinweis oben nur noch die Knöpfe des Projekts.
+- `window.INKLUAGENT` (`base_app.html`, `main._inkluagent_schalter`): was der Agent auf dieser Seite kann. 32 neue Texte in
+  sechs Sprachen.
+
+**Migration** (`database.init_db`): `CREATE TABLE IF NOT EXISTS agent_zaehler (user_id, schluessel, anzahl, PRIMARY KEY
+(user_id, schluessel))` — vorwärts idempotent beim Start; rückwärts liest alter Code die Tabelle nicht, entfernen mit
+`DROP TABLE agent_zaehler`.
+
+Tests: `tests/test_agent_hochladen.py` (25: Inhalt statt Endung, Zuordnung im Projekt und ohne, fremdes Projekt zählt nicht,
+abgelehnte Dateien mit Grund, Fehler des Knopfs als Grund, Bremsen, Webadresse, Notiz einmalig und nur eigener Nutzer,
+Kurzzeile, Namen als Daten, nur mit Karte, Endpunkte mit und ohne Schalter, leere Nachricht nach dem Hochladen, abgewiesene
+Nachricht verbraucht die Notiz nicht, Oberfläche am Quelltext). Klickprobe lokal mit Ersatzmodell 20 von 20 (Labels, axe ohne
+Verstöße, leeres Senden, unvollständige Webadresse, drei Dateien mit Liste, Kurzzeile, Notiz beim Modell, eine Ansage, Fokus
+auf der Antwort, Datei im Projekt, neues Projekt, Verlauf ohne Notiz, Schalter aus ohne Feld). Stichprobe mit Gemini wie
+Staging (lokale App, fiktive Daten): Zuordnung und Preise genannt, nichts gestartet, Anweisung im Dateinamen erkannt und nicht
+ausgeführt.

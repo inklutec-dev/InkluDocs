@@ -1157,6 +1157,26 @@ ul.inkluagent-kurzhilfe {
     box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.25);
 }
 .inkluagent-hint { font-size: 0.875rem; color: var(--text-muted); }
+/* Hochladefeld im InkluAgent (Ausbau Runde 2, Schritt 1): Dateien und Webadresse direkt im Agenten */
+.inkluagent-hochladen { display: flex; flex-direction: column; gap: 0.35rem; }
+.inkluagent-hochladen label { font-weight: 600; }
+.inkluagent-hochladen input[type="url"] {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+}
+.inkluagent-hochladen input[type="url"]:focus {
+    outline: none;
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.25);
+}
+.inkluagent-hochladen input[type="file"]:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
+.inkluagent-hochgeladen { margin: 0.2rem 0 0; padding-left: 1.2rem; font-size: 0.95rem; }
+.inkluagent-hochgeladen li { margin: 0.15rem 0; }
+.inkluagent-hochgeladen li[data-ok="0"] { color: var(--error); }
 .inkluagent-controls {
     display: flex;
     align-items: center;

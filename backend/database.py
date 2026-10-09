@@ -716,6 +716,17 @@ def init_db():
             PRIMARY KEY (user_id, tag)
         )
     ''')
+    # INKLUAGENT-AUSBAU Runde 2, Schritt 1 (09.10.2026, inkluagent/hochladen.py): Bremsen des Hochladefelds je Konto —
+    # neue Projekte je Tag („projekte:JJJJ-MM-TT“) und Webadressen je Stunde („web:JJJJ-MM-TTTHH“), UTC. Vorwaerts: diese
+    # Zeile (idempotent). Rueckwaerts: alter Code liest die Tabelle nicht; entfernen mit „DROP TABLE agent_zaehler“.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS agent_zaehler (
+            user_id INTEGER NOT NULL,
+            schluessel TEXT NOT NULL,
+            anzahl INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (user_id, schluessel)
+        )
+    ''')
 
     # EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Kunden lassen Dokumente von Profis aufbereiten oder pruefen,
     # Lieferung innerhalb einer Frist, Bezahlung in Credits (vorgemerkt bei der Bestellung, abgebucht bei der Lieferung,

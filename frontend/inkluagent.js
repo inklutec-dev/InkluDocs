@@ -56,12 +56,15 @@ function inkluagentSectionHtml(projectId, variante) {
         // UND Fokus) und die eigene Nachricht als Echo. Jetzt sagt nichts im Verlauf von selbst etwas an: die neue Antwort
         // bekommt den Fokus (der Screenreader liest sie vollständig), Warten und Fehler meldet die Statuszeile.
         +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="off" aria-label="' + t('Chat-Verlauf') + '" tabindex="0"></div>'
-        +     '<form id="inkluagentForm" class="inkluagent-form">'
+        // novalidate (Runde 2, Schritt 1): eine unvollstaendige Webadresse meldet inkluagentSend in der Statuszeile und setzt den
+        // Fokus ins Feld — statt der Blase des Browsers, die ohne Ansage verschwindet und das Senden still verhindert
+        +     '<form id="inkluagentForm" class="inkluagent-form" novalidate>'
         +       '<label for="inkluagentInput" class="visually-hidden">' + t('Nachricht an den InkluAgent') + '</label>'
         +       '<textarea id="inkluagentInput" rows="2" maxlength="5000" '
         +         'placeholder="' + (formular ? t("z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'") : t("z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'")) + '" '
         +         'aria-describedby="inkluagentHint"></textarea>'
         +       '<div id="inkluagentHint" class="inkluagent-hint">' + t('Enter sendet, Shift+Enter macht einen Zeilenumbruch. Maximal 5000 Zeichen.') + '</div>'
+        +       (inkluagentHochladenAn() ? inkluagentHochladeHtml() : '')
         +       '<div class="inkluagent-controls">'
         +         '<button type="submit" id="inkluagentSendBtn" class="btn btn-primary">' + t('Senden') + '</button>'
         +         '<span id="inkluagentStatus" class="inkluagent-status" role="status" aria-live="polite"></span>'
@@ -69,6 +72,90 @@ function inkluagentSectionHtml(projectId, variante) {
         +     '</form>'
         +   '</div>'
         + '</section>';
+}
+
+// Runde 2, Schritt 1 (Schalter funktionen.AGENT_HOCHLADEN, window.INKLUAGENT aus base_app.html): Dateien und eine Webadresse
+// gehen mit der Nachricht an den Agenten. Native Felder mit sichtbarem Label (Datei-Auswahl, type=url); die Zuordnung zu
+// Projekten macht der Server (/api/agent/hochladen), das Ergebnis steht als Liste unter dem Feld.
+function inkluagentHochladenAn() {
+    return !!(window.INKLUAGENT && window.INKLUAGENT.hochladen);
+}
+function inkluagentHochladeHtml() {
+    const k = window.INKLUAGENT || {};
+    return ''
+        + '<div class="inkluagent-hochladen">'
+        +   '<label for="inkluagentDateien">' + t('Dateien mitschicken') + '</label>'
+        +   '<input type="file" id="inkluagentDateien" multiple aria-describedby="inkluagentHochladenHint" '
+        +     'accept=".pdf,.docx,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif,.bmp,.tif,.tiff,.svg">'
+        +   '<label for="inkluagentWebadresse">' + t('Webadresse (freiwillig)') + '</label>'
+        +   '<input type="url" id="inkluagentWebadresse" autocomplete="url" placeholder="https://" aria-describedby="inkluagentHochladenHint">'
+        +   '<p id="inkluagentHochladenHint" class="inkluagent-hint">'
+        +     t('PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Der InkluAgent legt sie ins passende Projekt und nennt dir die Preise, bevor etwas startet.',
+                { n: k.max_dateien || 10, mb: k.max_mb || 50 })
+        +   '</p>'
+        +   '<ul id="inkluagentHochgeladen" class="inkluagent-hochgeladen" aria-label="' + t('Ergebnis des Hochladens') + '" hidden></ul>'
+        + '</div>';
+}
+// Ergebnisliste unter dem Feld (nur Text, kein innerHTML). Bleibt ueber ein Neuzeichnen der Ansicht hinweg stehen
+// (inkluagentInitLaden zeichnet sie fuer dasselbe Projekt wieder), bis zum naechsten Hochladen.
+function inkluagentHochgeladenZeigen(projectId, ergebnisse) {
+    window._inkluagentHochgeladen = { projectId: String(projectId), ergebnisse: ergebnisse || [] };
+    const ul = document.getElementById('inkluagentHochgeladen');
+    if (!ul) return;
+    ul.textContent = '';
+    (ergebnisse || []).forEach(e => {
+        const li = document.createElement('li');
+        li.dataset.ok = e.ok ? '1' : '0';
+        const name = e.name || '';
+        if (!e.ok) {
+            li.textContent = t('{name}: nicht hochgeladen. {grund}', { name: name, grund: e.fehler || '' });
+        } else if (!e.neues_projekt) {
+            li.textContent = t('{name}: hochgeladen in dieses Projekt.', { name: name });
+        } else {
+            li.textContent = (e.eigenes_projekt_weil ? t('{name}: passt nicht in dieses Projekt, darum hochgeladen in das neue Projekt „{projekt}“.', { name: name, projekt: e.projekt || '' })
+                                                     : t('{name}: hochgeladen in das neue Projekt „{projekt}“.', { name: name, projekt: e.projekt || '' })) + ' ';
+            const a = document.createElement('a');
+            a.href = '/app?projekt=' + encodeURIComponent(e.project_id);
+            a.textContent = t('Projekt „{projekt}“ öffnen', { projekt: e.projekt || '' });
+            li.appendChild(a);
+        }
+        ul.appendChild(li);
+    });
+    ul.hidden = !ul.children.length;
+}
+// Dateien und Webadresse hochladen. Ergebnis: das Server-Ergebnis oder null (Fehler steht dann in der Statuszeile).
+async function inkluagentHochladen(projectId, dateien, webadresse) {
+    const k = window.INKLUAGENT || {};
+    const max = k.max_dateien || 10;
+    if (dateien.length > max) {
+        inkluagentSetStatus(t('Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf.', { n: max }), true);
+        return null;
+    }
+    const fd = new FormData();
+    dateien.forEach(f => fd.append('dateien', f, f.name));
+    fd.append('webadresse', webadresse || '');
+    fd.append('project_id', String(projectId));
+    inkluagentSetStatus(dateien.length ? t('Wird hochgeladen …') : t('Webadresse wird geladen …'), false);
+    let res;
+    try {
+        res = await fetch('/api/agent/hochladen', { method: 'POST', body: fd });
+    } catch (e) {
+        inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
+        return null;
+    }
+    if (res.status === 401) { window.location.href = '/login'; return null; }
+    const erg = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        inkluagentSetStatus((erg && typeof erg.detail === 'string') ? erg.detail : t('Hochladen nicht möglich.'), true);
+        return null;
+    }
+    return erg;
+}
+// Eine gebuendelte Ansage nach dem Hochladen (Zahlen; die Gruende stehen in der Liste)
+function inkluagentHochladenSatz(ergebnisse) {
+    const alle = (ergebnisse || []).length;
+    const gut = (ergebnisse || []).filter(e => e.ok).length;
+    return t('{gut} von {alle} hochgeladen.', { gut: gut, alle: alle }) + (gut < alle ? ' ' + t('Die Gründe stehen unter dem Feld.') : '');
 }
 
 // Schritt 3 (InkluAgent-Ausbau Runde 1): Kurzhilfe vor dem Chat — nur mit Schalter (window.FUNKTIONEN aus funktionen.py)
@@ -107,12 +194,14 @@ function inkluagentAgentenansicht() {
         });
     })(main);
     sec.classList.add('inkluagent-gross');
-    // Hochladen und die Knoepfe des Projekts gibt es in Runde 1 nur in der manuellen Ansicht (das Hochladefeld im Agenten
-    // kommt in Runde 2): ein Knopf zeigt dieses Projekt fuer diese Seite manuell, ohne die gespeicherte Einstellung zu aendern.
+    // Die Knoepfe des Projekts gibt es nur in der manuellen Ansicht (Hochladen ohne Hochladefeld ebenso): ein Knopf zeigt dieses
+    // Projekt fuer diese Seite manuell, ohne die gespeicherte Einstellung zu aendern.
     if (!sec.querySelector('.inkluagent-agentenansicht-hinweis')) {
         const p = document.createElement('p');
         p.className = 'inkluagent-agentenansicht-hinweis';
-        p.appendChild(document.createTextNode(t('Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht.') + ' '));
+        // Mit dem Hochladefeld (Runde 2, Schritt 1) geht Hochladen auch hier — dann nennt der Hinweis nur noch die Knoepfe
+        p.appendChild(document.createTextNode((inkluagentHochladenAn() ? t('Die Knöpfe des Projekts findest du in der manuellen Ansicht.')
+                                                                       : t('Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht.')) + ' '));
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'btn btn-secondary';
@@ -164,6 +253,9 @@ async function inkluagentInitLaden(projectId) {
             }
         });
     }
+    // Ergebnis des letzten Hochladens bleibt nach dem Neuzeichnen der Ansicht stehen (gleiches Projekt)
+    const hg = window._inkluagentHochgeladen;
+    if (hg && hg.projectId === String(projectId)) inkluagentHochgeladenZeigen(projectId, hg.ergebnisse);
     let wasOpen = false;
     try { wasOpen = localStorage.getItem('inkluagent.panel.' + projectId) === 'open'; } catch (e) {}
     // Agentenansicht (Schritt 5): nur der InkluAgent gross und geoeffnet; der Fokus bleibt, wo er ist. Geoeffnet, ohne es sich
@@ -516,9 +608,15 @@ async function inkluagentSend() {
     const sendBtn = document.getElementById('inkluagentSendBtn');
     const log = document.getElementById('inkluagentLog');
     if (!projectId || !input || !sendBtn || !log) return;
+    if (sendBtn.disabled) return;   // Enter waehrend des Hochladens oder Antwortens: nichts doppelt senden
     const message = input.value.trim();
-    if (!message) {
-        inkluagentSetStatus(t('Bitte eine Nachricht eingeben.'), true);
+    // Hochladefeld (Runde 2, Schritt 1): Dateien oder Webadresse duerfen ohne eigenen Text gesendet werden
+    const dateienEl = document.getElementById('inkluagentDateien');
+    const webEl = document.getElementById('inkluagentWebadresse');
+    const dateien = (inkluagentHochladenAn() && dateienEl && dateienEl.files) ? Array.from(dateienEl.files) : [];
+    const webadresse = (inkluagentHochladenAn() && webEl) ? webEl.value.trim() : '';
+    if (!message && !dateien.length && !webadresse) {
+        inkluagentSetStatus(inkluagentHochladenAn() ? t('Bitte eine Nachricht eingeben oder eine Datei auswählen.') : t('Bitte eine Nachricht eingeben.'), true);
         input.focus();
         return;
     }
@@ -526,18 +624,48 @@ async function inkluagentSend() {
         inkluagentSetStatus(t('Nachricht ist zu lang (max. 5000 Zeichen).'), true);
         return;
     }
-    inkluagentAppendMessage('user', message);
+    if (webEl && webadresse && !webEl.checkValidity()) {
+        inkluagentSetStatus(t('Bitte eine vollständige Webadresse eingeben, zum Beispiel https://www.beispiel.de'), true);
+        webEl.focus();
+        return;
+    }
+    sendBtn.disabled = true;
+    let hochgeladen = null;
+    let verlaufText = message;
+    let nachziehenHochladen = false;
+    let nachgezogen = false;
+    let satz = '';
+    if (dateien.length || webadresse) {
+        const erg = await inkluagentHochladen(projectId, dateien, webadresse);
+        if (!erg) { sendBtn.disabled = false; return; }
+        const ergebnisse = erg.ergebnisse || [];
+        inkluagentHochgeladenZeigen(projectId, ergebnisse);
+        if (dateienEl) dateienEl.value = '';
+        if (webEl) webEl.value = '';
+        satz = inkluagentHochladenSatz(ergebnisse);
+        nachziehenHochladen = ergebnisse.some(e => e.ok && String(e.project_id) === String(projectId));
+        // Nichts angekommen und kein eigener Text: keine Nachricht an den Agenten (die Gruende stehen schon am Feld)
+        if (!message && !ergebnisse.some(e => e.ok)) {
+            inkluagentSetStatus(satz, true);
+            sendBtn.disabled = false;
+            return;
+        }
+        hochgeladen = erg.notiz_id || null;
+        // Dieselbe Zeile, die der Server in den Verlauf schreibt (hochladen.nachricht_fuer_verlauf)
+        verlaufText = (message && erg.kurz) ? message + '\n' + erg.kurz : (message || erg.kurz || '');
+    }
+    inkluagentAppendMessage('user', verlaufText);
     log.scrollTop = log.scrollHeight;
     input.value = '';
-    sendBtn.disabled = true;
-    inkluagentSetStatus(t('InkluAgent denkt nach...'), false);
+    // Eine gebuendelte Ansage: Ergebnis des Hochladens und dass der Agent arbeitet
+    inkluagentSetStatus((satz ? satz + ' ' : '') + t('InkluAgent denkt nach...'), false);
     try {
         // Stream (NDJSON, 28.08.2026): je Werkzeugaufruf eine Zeile -> Live-Zeile im Status
         // (aria-live, VoiceOver sagt sie an), am Ende die Antwort mit Werkzeugliste.
         const res = await fetch('/api/projects/' + projectId + '/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
-            body: JSON.stringify({ message })
+            body: JSON.stringify(hochgeladen ? { message, hochgeladen } : { message })
         });
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) {
@@ -609,7 +737,8 @@ async function inkluagentSend() {
         if (window.Formular && typeof Formular.chatAktionen === 'function') Formular.chatAktionen(data.actions || []);
         // Ansicht nachziehen (Pruefung 4, M2) — auch, wenn ein Bild noch nicht im DOM war (frueher: showProject nach 800 ms,
         // Fokus ging dabei verloren). Danach bekommt die neue Antwort den Fokus, wenn er vorher im Chat lag.
-        if ((nachziehen || needsFullReload) && await inkluagentAnsichtNachziehen(projectId)) {
+        nachgezogen = nachziehen || needsFullReload || nachziehenHochladen;
+        if (nachgezogen && await inkluagentAnsichtNachziehen(projectId)) {
             inkluagentAntwortMelden(inkluagentLetzteAntwort(), fokussieren);
         } else {
             inkluagentAntwortMelden(antwortEl, fokussieren);
@@ -618,6 +747,8 @@ async function inkluagentSend() {
         inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
     } finally {
         sendBtn.disabled = false;
+        // In dieses Projekt hochgeladen, aber die Antwort kam nicht: die Ansicht trotzdem nachziehen (neue Dokumente, Bilder)
+        if (nachziehenHochladen && !nachgezogen) inkluagentAnsichtNachziehen(projectId);
         // Zurueck ins Eingabefeld nur, wenn der Fokus im Chat war (Fehlerfall) — nie aus einer anderen Stelle heraus
         if (window._inkluagentFokusAntwort) { window._inkluagentFokusAntwort = false; }
         else if (inkluagentFokusImChat() && document.activeElement !== input) { input.focus(); }

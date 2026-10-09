@@ -11517,7 +11517,11 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
     _require_project_owned(project_id, user["id"])
     data = await request.json()
     message = (data.get("message") or "").strip()
-    if not message:
+    # Runde 2, Schritt 1 (funktionen.AGENT_HOCHLADEN): nach dem Hochladefeld darf der eigene Text fehlen — dann steht nur die
+    # Kurzzeile im Verlauf. Die Notiz wird erst NACH der Chat-Bremse abgeholt (einmalig), damit eine abgewiesene Nachricht sie
+    # nicht verbraucht.
+    hochgeladen = str(data.get("hochgeladen") or "") if funktionen.AGENT_HOCHLADEN else ""
+    if not message and not hochgeladen:
         raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
     if len(message) > 5000:
         raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 5000 Zeichen)")
@@ -11536,6 +11540,21 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
             if _heute >= DAILY_CHAT_LIMIT:
                 _ = get_gettext(resolve_ui_language(request))
                 raise HTTPException(status_code=429, detail=_('Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter.').format(n=DAILY_CHAT_LIMIT))
+
+    # Hochladefeld: die Notiz des Servers kommt fuer das Modell an die Nachricht; im Verlauf steht nur die Kurzzeile fuer
+    # Menschen. In dieser Nachricht startet nichts Kostenpflichtiges ohne Karte (agent_loop: nur_mit_karte).
+    message_modell, nur_mit_karte = message, False
+    if hochgeladen:
+        from inkluagent import hochladen as _hl
+        _notiz = _hl.notiz_holen(user["id"], hochgeladen)
+        if _notiz:
+            # Das Modell bekommt die Dateinamen nur in der Notiz (als Daten gekennzeichnet), nicht noch einmal ungekennzeichnet
+            # in der Kurzzeile — die steht nur im Verlauf.
+            message_modell = (message + "\n\n" + _notiz["notiz"]) if message else _notiz["notiz"]
+            message = _hl.nachricht_fuer_verlauf(message, _notiz.get("kurz") or "")
+            nur_mit_karte = True
+    if not message:
+        raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
 
     from inkluagent import storage
     from inkluagent.chat_engine import process_message
@@ -11570,7 +11589,8 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
     # {"type":"reply", ...} — die Oberflaeche zeigt live „Ruft gerade auf: …“. Ohne den
     # Header bleibt die bisherige JSON-Antwort (API-Kunden, Demo, Tests).
     if "application/x-ndjson" not in (request.headers.get("accept") or ""):
-        result = await loop.run_in_executor(None, process_message, project_id, message, user["id"])
+        result = await loop.run_in_executor(None, lambda: process_message(project_id, message_modell, user["id"],
+                                                                          nur_mit_karte=nur_mit_karte))
         return _antwort(result)
 
     queue: asyncio.Queue = asyncio.Queue()
@@ -11584,7 +11604,7 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
         # persistiert (sonst landen sie im Kontext des naechsten Turns). DB-Zugriff im Executor.
         try:
             r = await loop.run_in_executor(
-                None, lambda: process_message(project_id, message, user["id"], on_tool=on_tool))
+                None, lambda: process_message(project_id, message_modell, user["id"], on_tool=on_tool, nur_mit_karte=nur_mit_karte))
             out = await loop.run_in_executor(None, _antwort, r)
         except Exception:
             logger.exception("Chat-Stream: process_message crashte")
@@ -11609,6 +11629,36 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
 
     return StreamingResponse(strom(), media_type="application/x-ndjson",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.post("/api/agent/hochladen")
+async def agent_hochladen(request: Request, dateien: Optional[list[UploadFile]] = File(None), webadresse: str = Form(""),
+                          project_id: Optional[int] = Form(None), user: dict = Depends(get_current_user)):
+    """Hochladefeld im InkluAgent (Runde 2, Schritt 1, Schalter funktionen.AGENT_HOCHLADEN): Dateien und eine Webadresse, die
+    der Nutzer SELBST angegeben hat. Zuordnung, Projektanlage und Bremsen macht der Server (inkluagent/hochladen.py) ueber
+    dieselben Funktionen wie die Knoepfe (upload_file, scan_url). Antwort: Ergebnis je Datei und eine Notiz-Kennung, die der
+    Chat-Endpunkt mit der naechsten Nachricht an das Modell gibt."""
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_HOCHLADEN")
+    from inkluagent import hochladen as _hl
+    _ = get_gettext(resolve_ui_language(request))
+    dateien = dateien or []
+    if len(dateien) > _hl.max_dateien():
+        raise HTTPException(status_code=400, detail=_("Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf.").format(n=_hl.max_dateien()))
+    # Je Datei hoechstens ein Byte mehr als erlaubt lesen: zu Grosses erkennt hochladen() so, ohne alles in den Speicher zu holen
+    inhalte = [((d.filename or ""), await d.read(MAX_UPLOAD_SIZE + 1)) for d in dateien]
+    erg = await _hl.hochladen(user, inhalte, webadresse or "", project_id, request=request, _=_)
+    if not erg.get("ok"):
+        raise HTTPException(status_code=400, detail=erg.get("fehler_text") or _("Hochladen nicht möglich."))
+    erg.pop("notiz", None)   # die Notiz geht nur an das Modell (ueber notiz_id), nicht an die Seite
+    return erg
+
+
+def _inkluagent_schalter() -> dict:
+    """window.INKLUAGENT (base_app.html): was der InkluAgent auf dieser Seite kann — Runde 2, je Schritt ein Schalter."""
+    from inkluagent import hochladen as _hl
+    return {"hochladen": bool(funktionen.AGENT_HOCHLADEN and INKLUAGENT_ENABLED), "max_dateien": _hl.max_dateien(),
+            "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024)}
 
 
 @app.delete("/api/projects/{project_id}/chat")
@@ -12077,6 +12127,7 @@ def _render_protected_template(request: Request, template_name: str, **extra):
     # funktionen.AGENT_ANSICHT aus ist (dann bleibt der Seitenrahmen, wie er ist).
     from inkluagent import ansicht as _ansicht
     extra.setdefault("oberflaeche", _ansicht.seiten_wert(_nutzer.get("id")))
+    extra.setdefault("inkluagent_schalter", _inkluagent_schalter())   # Runde 2: window.INKLUAGENT
     return templates.TemplateResponse(
         template_name,
         template_context(request, lang, is_staging=("staging" in BASE_URL), **extra),

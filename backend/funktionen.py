@@ -80,6 +80,11 @@ AGENT_BILD_WERKZEUGE = _umgebung_an("INKLUAGENT_BILD_WERKZEUGE")
 # Neue Konten: manuelle Ansicht. INKLUAGENT_ANSICHT=an.
 AGENT_ANSICHT = _umgebung_an("INKLUAGENT_ANSICHT")
 
+# RUNDE 2 (09.10.2026, Steve: „parallel am Chatbot bauen“) — wieder je Schritt EIN Schalter, Vorgabe AUS.
+# Runde 2, Schritt 1 — Hochladefeld im InkluAgent (inkluagent/hochladen.py): Dateien und Webadresse direkt im Agenten, der
+# Server ordnet zu und legt Projekte an, der Agent schlaegt mit Preisen vor. INKLUAGENT_HOCHLADEN=an.
+AGENT_HOCHLADEN = _umgebung_an("INKLUAGENT_HOCHLADEN")
+
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {
     "pruefung_starten": "KI_PRUEFUNG",
