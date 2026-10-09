@@ -11196,3 +11196,7 @@ msgstr "{bild} har ingen alt-text. Det rapporterar även PDF-kontrollen."
 
 msgid "Diese Bilder haben keinen Alt-Text: {liste}. Das meldet auch die PDF-Prüfung."
 msgstr "Dessa bilder har ingen alt-text: {liste}. Det rapporterar även PDF-kontrollen."
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 2: Tages-Kostendeckel
+msgid "Der InkluAgent hat für dein Konto heute das Tageslimit erreicht. Morgen geht es weiter."
+msgstr "InkluAgent har nått dagens gräns för ditt konto. Det fortsätter i morgon."

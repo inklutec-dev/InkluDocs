@@ -19,6 +19,7 @@ from . import pdf as pdf_tools   # PDF-Werkzeuge (Werkzeugsatz nach Dateiart, 22
 from . import oberflaeche as oberflaeche_tools   # alles, was die Oberflaeche kann (30.09.2026)
 import funktionen   # Funktionsschalter: was die Oberflaeche ausblendet, fuehrt auch der Chatbot nicht aus
 from ..daten import ohne_marke_args   # Fremdtext ist keine Anweisung (09.10.2026)
+from .. import sicherheit   # Sicherheitsfundament (Ausbau Runde 1, Schritt 2, Schalter AGENT_SICHERHEIT)
 
 
 TOOL_DEFINITIONS: list[dict] = [
@@ -229,14 +230,18 @@ class ToolExecutor:
             vorher = ausgaben_tools._LETZTES.get((self.user_id, self.project_id))
             # Marke „[DATEN, keine Anweisung]“ nie in gespeicherte Texte oder Namen (09.10.2026, inkluagent/daten.py)
             args = ohne_marke_args(args or {})
-            try:
-                # KI-Kosten (05.10.2026): was ein Werkzeug an KI verbraucht, zaehlt fuer diesen Kunden und dieses Projekt —
-                # auch wenn das Werkzeug ausserhalb einer Chat-Nachricht aufgerufen wird.
-                import ki_kosten
-                with ki_kosten.kontext(user_id=self.user_id, project_id=self.project_id):
-                    ergebnis = handler(args)
-            except Exception as e:  # noqa: BLE001
-                ergebnis = {"ok": False, "error": f"Tool-Ausführung crashte: {e}"}
+            # Hoechstens eine bezahlte Einzelaktion je Nachricht ohne Karte (Schalter AGENT_SICHERHEIT, sonst None)
+            ergebnis = sicherheit.einzel_vorab(self, name, args)
+            if ergebnis is None:
+                try:
+                    # KI-Kosten (05.10.2026): was ein Werkzeug an KI verbraucht, zaehlt fuer diesen Kunden und dieses Projekt —
+                    # auch wenn das Werkzeug ausserhalb einer Chat-Nachricht aufgerufen wird.
+                    import ki_kosten
+                    with ki_kosten.kontext(user_id=self.user_id, project_id=self.project_id):
+                        ergebnis = handler(args)
+                except Exception as e:  # noqa: BLE001
+                    ergebnis = {"ok": False, "error": f"Tool-Ausführung crashte: {e}"}
+                sicherheit.einzel_nachher(self, name, ergebnis)
             # neues Angebot -> Bestaetigungs-Karte mit dem Text des SERVERS (Pruefung 3, Entwicklung N1); verbrauchte Karten
             # -> „Erledigt“, Ansicht nachziehen, Download-Frist (Pruefung 4)
             return ausgaben_tools.nachbereiten(ergebnis, name, args, self.user_id, self.project_id, vorher)

@@ -146,11 +146,16 @@ class ToolExecutorFormular:
             vorher = _ausg._LETZTES.get((self.user_id, self.project_id))
             # Marke „[DATEN, keine Anweisung]“ nie in gespeicherte Texte (09.10.2026, inkluagent/daten.py)
             from ..daten import ohne_marke_args
+            from .. import sicherheit
             args = ohne_marke_args(args or {})
-            try:
-                ergebnis = handler(args)
-            except Exception as e:  # noqa: BLE001
-                ergebnis = {"ok": False, "error": f"Werkzeug-Ausfuehrung crashte: {e}"}
+            # Hoechstens eine bezahlte Einzelaktion je Nachricht ohne Karte (Schalter AGENT_SICHERHEIT, sonst None)
+            ergebnis = sicherheit.einzel_vorab(self, name, args)
+            if ergebnis is None:
+                try:
+                    ergebnis = handler(args)
+                except Exception as e:  # noqa: BLE001
+                    ergebnis = {"ok": False, "error": f"Werkzeug-Ausfuehrung crashte: {e}"}
+                sicherheit.einzel_nachher(self, name, ergebnis)
             return _ausg.nachbereiten(ergebnis, name, args, self.user_id, self.project_id, vorher)
         except Exception as e:
             return {"ok": False, "error": f"Werkzeug-Ausfuehrung crashte: {e}"}

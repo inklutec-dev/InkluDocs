@@ -55,6 +55,18 @@ TAGGING_PROFESSIONELL_GESPERRT = ("Das professionelle Tagging schalten wir in K�
 # „Einstellungen des Express-Service“ (express.EINSTELLUNGEN_STANDARD korb_knopf, korb_navigation) und wirken nur, wenn
 # EXPRESS an ist. window.FUNKTIONEN.express_korb_knopf kommt aus express_api.fuer_oberflaeche().
 
+
+
+def _umgebung_an(name: str) -> bool:
+    return (os.environ.get(name) or "aus").strip().lower() in ("an", "on", "1", "true", "ja")
+
+
+# INKLUAGENT-AUSBAU Runde 1 (09.10.2026, Konzept „InkluAgent ausbauen“): je Schritt EIN Schalter, Vorgabe AUS, gesetzt ueber
+# die UMGEBUNG wie EXPRESS (derselbe Code kann auf Staging an und auf Prod aus sein). Doku: docs/INKLUAGENT.md, „Ausbau Runde 1“.
+# Schritt 2 — Sicherheitsfundament (inkluagent/sicherheit.py): hoechstens eine bezahlte Einzelaktion je Nachricht ohne Karte,
+# Ja-Pruefung auf dem Server, Tagesgrenze ueber eigenen Zaehler, Tages-Kostendeckel je Konto. INKLUAGENT_SICHERHEIT=an.
+AGENT_SICHERHEIT = _umgebung_an("INKLUAGENT_SICHERHEIT")
+
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {
     "pruefung_starten": "KI_PRUEFUNG",

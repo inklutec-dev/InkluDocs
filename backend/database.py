@@ -704,6 +704,19 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ki_aufrufe_konto ON ki_aufrufe(konto_user_id, created_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ki_aufrufe_projekt ON ki_aufrufe(project_id, created_at)")
 
+    # INKLUAGENT-AUSBAU Runde 1, Schritt 2 (09.10.2026, inkluagent/sicherheit.py): Tagesgrenze des InkluAgent ueber einen
+    # EIGENEN Zaehler je Konto und Tag (UTC). Vorher zaehlte sie ueber chat_messages: Projekt loeschen oder Verlauf leeren
+    # senkte den Zaehler. Wird nur benutzt, wenn funktionen.AGENT_SICHERHEIT an ist. Vorwaerts: diese Zeile (idempotent).
+    # Rueckwaerts: alter Code liest die Tabelle nicht; entfernen mit „DROP TABLE agent_tageszaehler“ (docs/INKLUAGENT.md).
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS agent_tageszaehler (
+            user_id INTEGER NOT NULL,
+            tag TEXT NOT NULL,
+            nachrichten INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (user_id, tag)
+        )
+    ''')
+
     # EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Kunden lassen Dokumente von Profis aufbereiten oder pruefen,
     # Lieferung innerhalb einer Frist, Bezahlung in Credits (vorgemerkt bei der Bestellung, abgebucht bei der Lieferung,
     # frei beim Storno). Kern: express.py, Doku docs/EXPRESS_SERVICE.md.

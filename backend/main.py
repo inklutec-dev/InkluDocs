@@ -11505,16 +11505,27 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
         raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 5000 Zeichen)")
     # Chat-Bremse: Tagesgrenze je Konto (Admins ausgenommen), Pruefung VOR dem Speichern
     # der Nachricht, damit abgewiesene Versuche nicht mitzaehlen.
+    # Ausbau Runde 1, Schritt 2 (funktionen.AGENT_SICHERHEIT): eigener Tageszaehler statt chat_messages und Tages-
+    # Kostendeckel je Konto aus ki_aufrufe (inkluagent/sicherheit.py). Schalter aus = wie bisher.
     if not user.get("is_admin"):
-        _heute = get_daily_chat_count(user["id"])
-        if _heute >= DAILY_CHAT_LIMIT:
-            _ = get_gettext(resolve_ui_language(request))
-            raise HTTPException(status_code=429, detail=_('Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter.').format(n=DAILY_CHAT_LIMIT))
+        if funktionen.AGENT_SICHERHEIT:
+            from inkluagent import sicherheit as _sicherheit
+            _sperre = _sicherheit.chat_sperre(user["id"], DAILY_CHAT_LIMIT, get_gettext(resolve_ui_language(request)))
+            if _sperre:
+                raise HTTPException(status_code=429, detail=_sperre)
+        else:
+            _heute = get_daily_chat_count(user["id"])
+            if _heute >= DAILY_CHAT_LIMIT:
+                _ = get_gettext(resolve_ui_language(request))
+                raise HTTPException(status_code=429, detail=_('Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter.').format(n=DAILY_CHAT_LIMIT))
 
     from inkluagent import storage
     from inkluagent.chat_engine import process_message
 
     storage.append_message(project_id, "user", message)
+    if funktionen.AGENT_SICHERHEIT:   # angenommene Nachricht zaehlen (unabhaengig von Projekten und Verlauf)
+        from inkluagent import sicherheit as _sicherheit
+        _sicherheit.tageszaehler_erhoehen(user["id"])
     loop = asyncio.get_running_loop()
 
     def _antwort(result: dict) -> dict:

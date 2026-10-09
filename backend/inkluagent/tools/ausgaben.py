@@ -75,6 +75,10 @@ _G_TURN = ("Die Zustimmung muss vom Nutzer in einer eigenen, spaeteren Nachricht
            "Nachricht wie die Preisauskunft. Nenne den Preis und warte auf sein Ja.")
 _G_PREIS = "Der Preis hat sich seit der Auskunft geaendert. Nenne dem Nutzer den neuen Preis und frage erneut."
 _GRUND_KENNWORT = {_G_KEIN: "angebot", _G_LETZTES: "letztes", _G_TURN: "nachricht", _G_PREIS: "preis"}
+# Ja-Pruefung auf dem Server (Ausbau Runde 1, Schritt 2, Schalter funktionen.AGENT_SICHERHEIT): ein getipptes Ja zaehlt nur,
+# wenn die Nachricht des Nutzers ein kurzes, eindeutiges Ja ist; der Knopf der Karte gilt immer.
+from ..sicherheit import G_JA as _G_JA, ja_grund as _ja_grund  # noqa: E402
+_GRUND_KENNWORT[_G_JA] = "ja"
 
 
 def _angebot_merken(schluessel: tuple, preis: int, turn_id: str) -> str:
@@ -124,6 +128,10 @@ def _angebot_einloesen(schluessel: tuple, preis: int, turn_id: str) -> Optional[
             return _G_LETZTES
         if a["turn"] == turn_id:
             return _G_TURN
+        if getattr(_KARTE, "id", None) != a.get("id"):
+            g = _ja_grund(turn_id)          # None, solange der Schalter aus ist
+            if g:
+                return g
         if a["preis"] != int(preis or 0):
             _ANGEBOTE.pop(schluessel, None)
             _NACH_ID.pop(a.get("id"), None)

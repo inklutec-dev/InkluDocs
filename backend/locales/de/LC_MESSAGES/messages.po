@@ -11625,3 +11625,7 @@ msgstr ""
 
 msgid "Diese Bilder haben keinen Alt-Text: {liste}. Das meldet auch die PDF-Prüfung."
 msgstr ""
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 2: Tages-Kostendeckel
+msgid "Der InkluAgent hat für dein Konto heute das Tageslimit erreicht. Morgen geht es weiter."
+msgstr "Der InkluAgent hat für dein Konto heute das Tageslimit erreicht. Morgen geht es weiter."

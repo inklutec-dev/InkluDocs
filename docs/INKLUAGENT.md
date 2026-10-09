@@ -319,3 +319,36 @@ hängen an je einem Schalter in `backend/funktionen.py`, alle mit Vorgabe AUS (g
   über window.I18N); `tests/test_inkluagent_name.py` liest app.html und inkluagent.js zusammen. check_i18n: 2374 Strings
   vorher und nachher. Klickprobe auf einer lokalen App (uvicorn, frische Datenbank, Ersatzmodell): vorher und nachher je
   14 von 14 Prüfpunkten, gleiche Live-Ansagen, gleicher Verlauf.
+
+### Schritt 2: Sicherheitsfundament (Schalter `AGENT_SICHERHEIT`, Umgebung `INKLUAGENT_SICHERHEIT=an`)
+
+Kern: `backend/inkluagent/sicherheit.py`. Schalter aus = alles wie vorher (geprüft). Schalter an:
+- **Bezahlte Einzelaktionen ohne Karte gedeckelt:** `generate_alt_text`, `update_alt_text`, `generate_quickinfo`,
+  `update_quickinfo` (`EINZEL_BEZAHLT`). Je Nutzer-Nachricht läuft höchstens EINE davon ohne Rückfrage
+  (`EINZEL_OHNE_KARTE_JE_NACHRICHT = 1`, gezählt wird nur eine erfolgreiche). Jede weitere legt der ToolExecutor als
+  Angebot vor (`einzel_vorab`): Rückfrage mit Ziel („Bild 2“, „Feld 3“, dieselbe Zählung wie die Oberfläche) und Preis, Karte
+  vom Server („Alt-Text speichern: „Bild 2“ für 5 Credits.“), Ausführung nur über den Knopf oder ein klares Ja in einer
+  späteren Nachricht — dieselbe Freigabe wie die großen Aktionen (`ausgaben._angebot_merken/_angebot_einloesen`). Die vier
+  Werkzeuge nehmen dann `bestaetigt` an; der Prompt bekommt den Absatz `PROMPT_ZUSATZ`.
+- **Ja-Prüfung auf dem Server:** `bestaetigt=true` vom Modell gilt nur, wenn die Nachricht des Nutzers in dieser Runde ein
+  kurzes, eindeutiges Ja ist (`ist_klares_ja`: höchstens sechs Wörter und 60 Zeichen, nur Wörter aus `JA_ERLAUBT`, mindestens
+  eines aus `JA_KERN`, keine Verneinung, keine Frage; de, en, fr, es, da, sv). Sonst bleibt das Angebot stehen und das Modell
+  bekommt `G_JA`. Der Knopf der Karte gilt immer. Die Nachricht je Runde merkt `agent_loop` (`nachricht_merken`), geprüft wird
+  in `ausgaben._angebot_einloesen` — also für alle kostenpflichtigen und unumkehrbaren Werkzeuge.
+- **Robuste Tagesgrenze:** eigener Zähler je Konto und Tag (UTC), Tabelle `agent_tageszaehler`; Projekt löschen oder Verlauf
+  leeren senkt ihn nicht. Grenze weiter `DAILY_CHAT_LIMIT` (100), Admins ausgenommen.
+- **Tages-Kostendeckel je Konto:** Summe `kosten_eur_cent` aus `ki_aufrufe` mit Zweck `chatbot` für das Konto
+  (`billing._konto_fuer`) seit Mitternacht UTC. Vorgabe **10 Euro je Konto und Tag**, Umgebung
+  `INKLUAGENT_KOSTEN_DECKEL_EUR` (0 = kein Deckel). Antwort 429: „Der InkluAgent hat für dein Konto heute das Tageslimit
+  erreicht. Morgen geht es weiter.“ (6 Sprachen). Alt-Texte und Quickinfos, die der Agent erzeugt, zählen nicht dazu — die
+  bezahlt der Kunde mit Credits.
+
+**Migration** (`database.init_db`): `CREATE TABLE IF NOT EXISTS agent_tageszaehler (user_id, tag, nachrichten, PRIMARY KEY
+(user_id, tag))` — vorwärts idempotent beim Start; rückwärts liest alter Code die Tabelle nicht, entfernen mit
+`DROP TABLE agent_tageszaehler`.
+
+Tests: `tests/test_agent_sicherheit.py` (17: Schalter, Ja-Liste in sechs Sprachen mit Gegenbeispielen, Ja-Prüfung mit und
+ohne Schalter, Knopf gilt immer, Deckel mit Karte, Knopf führt das Angebot aus, fehlgeschlagene zählt nicht, Zähler
+unabhängig vom Verlauf, Kostendeckel nur heute und nur Zweck chatbot). Klickprobe lokal (Schalter an, Grenze 6): zweite
+Einzelaktion als Karte, „Ja, aber anders“ führt nichts aus, „Ja speichern“ genau das Angebot, siebte Nachricht abgewiesen,
+auch nach „Verlauf leeren“ — 9 von 9; mit Schalter aus die Probe aus Schritt 1 unverändert 14 von 14.

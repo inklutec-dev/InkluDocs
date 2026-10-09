@@ -41,6 +41,7 @@ from .prompts.system_formular import SYSTEM_FORMULAR
 from .adapters.inkludocs import build_project_summary
 from .sanitize import sanitize_markdown
 from .daten import KONTEXT_KOPF, ohne_marke   # Fremdtext ist keine Anweisung (09.10.2026)
+from . import sicherheit   # Sicherheitsfundament (Ausbau Runde 1, Schritt 2, Schalter AGENT_SICHERHEIT)
 
 log = logging.getLogger(__name__)
 
@@ -80,6 +81,9 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int):
         if d["name"] not in namen:     # ein Werkzeug nur einmal (Word + Oberflaeche teilen sich Namen)
             namen.add(d["name"])
             eindeutig.append(d)
+    if sicherheit.an():   # Schritt 2: Einzelaktionen nehmen bestaetigt an, der Prompt nennt die Server-Regel
+        eindeutig = sicherheit.werkzeuge_anpassen(eindeutig)
+        system = system + "\n\n" + sicherheit.PROMPT_ZUSATZ
     return eindeutig, executor, system
 
 
@@ -212,6 +216,8 @@ def run_agent(
     in Aufrufreihenfolge (leer = ohne Werkzeug aus dem Verlauf geantwortet).
     """
     tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
+    # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
+    sicherheit.nachricht_merken(executor.turn_id, user_message)
     messages = _build_initial_messages(project_id, user_message, project, user_id)
     system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
 
