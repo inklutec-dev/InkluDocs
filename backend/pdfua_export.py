@@ -487,6 +487,57 @@ def dokumenttitel_setzen(docx_path: str, titel: str, sprache: Optional[str] = No
         return False
 
 
+_BILD_NS = {"wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
+            "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+            "v": "urn:schemas-microsoft-com:vml"}
+
+
+def bildtitel_entfernen(docx_path: str) -> int:
+    """Feld = Datei in „Als PDF“ (09.10.2026): LibreOffice schreibt beim PDF-Export Titel + " - " + Beschreibung eines
+    Bildes als /Alt (Info-Brief: „Ernte im Gemeinschaftsgarten 2026 - Balkendiagramm …“), im Feld steht aber nur die
+    Beschreibung (descr). In der Umwandlungs-Kopie wird deshalb der Titel der Bilder entfernt: wp:docPr@title an Zeichnungen
+    mit eigenem Bild (a:blip) und v:shape@title an VML-Bildern. Die heruntergeladene Word-Datei behaelt ihren Titel (sie
+    wird getrennt gebaut). Nur die geaenderten Teile werden ersetzt. Rueckgabe: Anzahl entfernter Titel (0 bei Fehler)."""
+    import re as _re
+    import shutil
+    import tempfile
+    import zipfile
+    from lxml import etree
+
+    teile = _re.compile(r"^word/(document|header\d*|footer\d*|footnotes|endnotes)\.xml$")
+    try:
+        neu: dict = {}
+        n = 0
+        with zipfile.ZipFile(docx_path) as z:
+            for name in z.namelist():
+                if not teile.match(name):
+                    continue
+                wurzel = etree.fromstring(z.read(name))
+                vorher = n
+                for behaelter in wurzel.iter("{%s}inline" % _BILD_NS["wp"], "{%s}anchor" % _BILD_NS["wp"]):
+                    docpr = behaelter.find("wp:docPr", _BILD_NS)
+                    if docpr is not None and docpr.get("title") is not None and behaelter.find(".//a:blip", _BILD_NS) is not None:
+                        del docpr.attrib["title"]
+                        n += 1
+                for form in wurzel.iter("{%s}shape" % _BILD_NS["v"]):
+                    if form.get("title") is not None and form.find("v:imagedata", _BILD_NS) is not None:
+                        del form.attrib["title"]
+                        n += 1
+                if n != vorher:
+                    neu[name] = etree.tostring(wurzel, xml_declaration=True, encoding="UTF-8", standalone=True)
+        if not neu:
+            return 0
+        fd, tmp = tempfile.mkstemp(suffix=".docx", dir=os.path.dirname(docx_path) or None)
+        os.close(fd)
+        with zipfile.ZipFile(docx_path) as zin, zipfile.ZipFile(tmp, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                zout.writestr(item, neu.get(item.filename) or zin.read(item.filename))
+        shutil.move(tmp, docx_path)
+        return n
+    except Exception:  # noqa: BLE001
+        return 0
+
+
 # ---------------------------------------------------------------------------
 # Vorschaubild (Meine Ausgaben, 11.09.2026)
 # ---------------------------------------------------------------------------

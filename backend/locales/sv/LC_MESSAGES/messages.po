@@ -11183,3 +11183,16 @@ msgstr "Tagga som test visar dig kostnadsfritt hur taggningsresultatet skulle se
 
 msgid "Ansprechpartner (Pflicht)"
 msgstr "Kontaktperson (obligatoriskt)"
+
+# 09.10.2026: Feld = Datei, Hinweis beim Herunterladen (Bilder ohne Alt-Text)
+msgid "Bild {n} auf Seite {p}"
+msgstr "Bild {n} på sidan {p}"
+
+msgid "{bild} (dekorativ)"
+msgstr "{bild} (dekorativ)"
+
+msgid "{bild} hat keinen Alt-Text. Das meldet auch die PDF-Prüfung."
+msgstr "{bild} har ingen alt-text. Det rapporterar även PDF-kontrollen."
+
+msgid "Diese Bilder haben keinen Alt-Text: {liste}. Das meldet auch die PDF-Prüfung."
+msgstr "Dessa bilder har ingen alt-text: {liste}. Det rapporterar även PDF-kontrollen."

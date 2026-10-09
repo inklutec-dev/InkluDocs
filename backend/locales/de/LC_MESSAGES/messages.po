@@ -11612,3 +11612,16 @@ msgstr "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen 
 
 msgid "Ansprechpartner (Pflicht)"
 msgstr "Ansprechpartner (Pflicht)"
+
+# 09.10.2026: Feld = Datei, Hinweis beim Herunterladen (Bilder ohne Alt-Text)
+msgid "Bild {n} auf Seite {p}"
+msgstr ""
+
+msgid "{bild} (dekorativ)"
+msgstr ""
+
+msgid "{bild} hat keinen Alt-Text. Das meldet auch die PDF-Prüfung."
+msgstr ""
+
+msgid "Diese Bilder haben keinen Alt-Text: {liste}. Das meldet auch die PDF-Prüfung."
+msgstr ""

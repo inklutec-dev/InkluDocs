@@ -1127,8 +1127,11 @@ def feld_gleich_datei(pdf_in: str, pdf_out: str, images: list, alte: list[dict],
     methode = "pdfix" if any(i.get("source") == "pdfix" for i in images) else "fitz"
     try:
         with tempfile.TemporaryDirectory(prefix="altfeld-", dir=os.path.dirname(pdf_out) or None) as arbeit:
+            # leer_entfernen: die Felder sind vollstaendig zugeordnet — auch der Ersatzweg (fitz) nimmt das von PDFix gesetzte
+            # /Alt weg, wo das Feld leer ist (09.10.2026)
             einsatz, _texte, _schonen = _d.alt_texte_einsetzen({"extraction_method": methode}, zeilen, pdf_in, pdf_out,
-                                                               arbeit, alt_text_fn=_d.tagging_alt_text)
+                                                               arbeit, alt_text_fn=_d.tagging_alt_text,
+                                                               leer_entfernen=lambda _zeile: True)
     except Exception as e:  # noqa: BLE001
         log.warning("[tagging] Alt-Texte nicht in die Datei geschrieben (%s): %s", methode, e)
         try:

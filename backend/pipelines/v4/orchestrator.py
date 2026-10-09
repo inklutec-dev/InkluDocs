@@ -1011,6 +1011,22 @@ _FOTO_SUBTYP_OVERRIDE_VALUES = {
 }
 
 
+def dekorativ_nach_nutzerwahl() -> dict:
+    """Ergebnis fuer die Nutzer-Wahl Bildtyp „dekorativ“ (09.10.2026): leerer Alt-Text, kein Modellaufruf
+    (ohne_ki=True: der Aufrufer bucht dafuer keinen Credit)."""
+    return {
+        'bildtyp': 'dekorativ',
+        'konfidenz': 'hoch',
+        'alt_text': '',
+        'langbeschreibung': '',
+        'needs_review': False,
+        'pipeline_steps': 'lean:override:dekorativ',
+        'inventar_json': None,
+        'validation_result': None,
+        'ohne_ki': True,
+    }
+
+
 def _classification_from_override(
     image_type_override: str,
     original_alt: str,
@@ -1159,6 +1175,14 @@ def _run_lean_pipeline(
     Pruefpass (_run_verify_pass, V4_VERIFY_MODE) mit eigenem Pruefmodell;
     der fruehere Validator-Pass der Vier-Pass-Pipeline ist abgebaut.
     """
+    # === Nutzer-Wahl „dekorativ“ (09.10.2026): kein Modellaufruf ===
+    # Bis dahin lief ein Override 'dekorativ' als Bildtyp in den Beschreibungsweg und endete im Inventar-Builder mit
+    # ValueError (500 beim „Neu generieren“ mit Bildtyp dekorativ, ebenso Chatbot und Langbeschreibung bei einem schon
+    # dekorativen Bild). Wer „dekorativ“ waehlt, hat entschieden: leerer Alt-Text, Bildtyp dekorativ — wie das Ergebnis
+    # der KI-Einstufung (handle_dekorativ_classification), aber ohne Heuristik, die die Entscheidung umwirft, und ohne
+    # Pruefhinweis (ein Mensch hat entschieden).
+    if image_type_override == 'dekorativ':
+        return dekorativ_nach_nutzerwahl()
     # === Pass 1: Klassifikation (mit foto_subtyp dank Lean-Builder-Anweisung) ===
     if image_type_override:
         classification = _classification_from_override(image_type_override, original_alt)

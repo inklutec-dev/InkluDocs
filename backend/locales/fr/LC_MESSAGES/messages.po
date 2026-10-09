@@ -11611,3 +11611,16 @@ msgstr "Le balisage à titre d’essai te montre gratuitement à quoi ressembler
 
 msgid "Ansprechpartner (Pflicht)"
 msgstr "Personne à contacter (obligatoire)"
+
+# 09.10.2026: Feld = Datei, Hinweis beim Herunterladen (Bilder ohne Alt-Text)
+msgid "Bild {n} auf Seite {p}"
+msgstr "Image {n} à la page {p}"
+
+msgid "{bild} (dekorativ)"
+msgstr "{bild} (décorative)"
+
+msgid "{bild} hat keinen Alt-Text. Das meldet auch die PDF-Prüfung."
+msgstr "{bild} n’a pas de texte alternatif. Le contrôle PDF le signale aussi."
+
+msgid "Diese Bilder haben keinen Alt-Text: {liste}. Das meldet auch die PDF-Prüfung."
+msgstr "Ces images n’ont pas de texte alternatif : {liste}. Le contrôle PDF le signale aussi."

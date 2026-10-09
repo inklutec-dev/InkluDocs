@@ -415,10 +415,13 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
     # ergaenzt hat, bleibt beim Neu-Generieren Beleg (orchestrator.herkunft_vorlage).
     _bisher_ki = img["alt_text"] or ""
 
+    # Bildtyp „dekorativ“ (09.10.2026): nicht als Vorgabe weiterreichen — wer ein dekoratives Bild (KI, Autor oder eigene
+    # Wahl) neu generieren laesst, will eine Beschreibung; die KI stuft dann frisch ein, wie beim Knopf ohne Bildtyp
+    # (vorher endete das hier mit ValueError aus dem Inventar-Builder).
     result = generate_alt_text(
         img["image_path"],
         kontext or "",
-        img["image_type"] if img["image_type"] != "unknown" else None,
+        img["image_type"] if img["image_type"] not in ("unknown", "dekorativ") else None,
         img["width"] or 0,
         img["height"] or 0,
         img["original_alt"] or "",

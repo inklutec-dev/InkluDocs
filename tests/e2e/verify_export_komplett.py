@@ -70,9 +70,13 @@ if eintraege:
     check(isinstance(ber, list) and ber and "pruefung" in ber[0], "Ablage-Bericht mit PDF/UA-Pruefung")
     s, b, _ = req("GET", f"/api/ausgaben/{eintraege[0]['id']}/datei"); check(s == 200 and b[:5] == b"%PDF-", "Ablage-Datei ladbar")
     s, b, _ = req("GET", f"/api/ausgaben/{eintraege[0]['id']}/vorschau"); check(s == 200 and b[:4] == b"\x89PNG", "Ablage-Vorschau ladbar")
-# ZIP-Export (alle Dokumente) -> weiterer Eintrag
+# Export ohne document_id (ein Dokument -> Einzeldatei). Bis 30.09.2026 legte er einen zweiten Eintrag an. Seit der Pruefung
+# vom 30.09.2026 (H1, Commit bdb8c65) kommt derselbe, schon bezahlte Stand aus der Ablage statt neu gebaut: kein zweiter
+# Eintrag, keine zweite Abbuchung (Anpassung 09.10.2026, die Erwartung „2 Eintraege“ war veraltet).
 s, b, h = req("POST", f"/api/projects/{pid}/export", {}); check(s == 200, f"ZIP/Einzel-Export ohne document_id: {s}")
-a = js(req("GET", f"/api/ausgaben?projekt={pid}")[1]); check(len(a.get("ausgaben") or []) == 2, f"Ablage hat 2 Eintraege: {len(a.get('ausgaben') or [])}")
+check((h.get("X-Export-Credits") or h.get("x-export-credits")) == "0", f"Gleicher Stand: keine zweite Abbuchung: {h.get('X-Export-Credits') or h.get('x-export-credits')}")
+check((h.get("X-Export-Aus-Ablage") or h.get("x-export-aus-ablage")) == "1", "Gleicher Stand kommt aus der Ablage")
+a = js(req("GET", f"/api/ausgaben?projekt={pid}")[1]); check(len(a.get("ausgaben") or []) == 1, f"Ablage bleibt bei 1 Eintrag: {len(a.get('ausgaben') or [])}")
 if not BEHALTEN: print("geloescht:", req("DELETE", f"/api/projects/{pid}")[0])
 else: print("Projekt bleibt stehen:", pid)
 print(f"Ergebnis: {ok_n} OK, {len(fehlt)} FEHLT (Projekt {pid})"); sys.exit(1 if fehlt else 0)

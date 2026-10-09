@@ -25,6 +25,11 @@ Regeln (jede Verletzung = Befund, Abnahme nicht bestanden):
      PDF/UA-Werkzeugs und tauchen als Folge auf, sobald ein Metadata-Strom ueberhaupt existiert. Fand am 14.09. „tagged content inside Artifact“ und doppelte Figures, die die
      Regeln 1-6 nicht sehen. Ist der Konverter nicht erreichbar, ist das KEIN Befund (Kennzahl
      verapdf = „nicht moeglich“, Logzeile), damit ein Ausfall des Pruefdienstes den Export nicht sperrt.
+     Ausnahme „Feld = Datei“ (09.10.2026, Steve: „Es wird exportiert, was der Kunde in den Feldern hat; meckert
+     veraPDF, entscheidet der Kunde.“): Die Regel „Figure ohne Alternativtext“ (VERAPDF_ALT_REGELN, 7.3-1) darf um
+     hoechstens so viele Faelle zunehmen, wie der Export Bilder bewusst ohne bzw. mit leerem Alt-Text schreibt
+     (erlaubt_ohne_alt: geleerte Felder, dekorative Bilder). Jede andere Verschlechterung — andere Regeln, mehr
+     fehlende Alt-Texte als gewollt — bleibt ein Befund.
 
 Die Abnahme aendert die Datei nie. Sie darf den Export nicht scheitern lassen (Aufrufer faengt
 Ausnahmen); ihr Ergebnis geht als Warnung in den Export-Dialog und als Logzeile
@@ -51,6 +56,9 @@ VERAPDF_MAX_BYTES = 60 * 1024 * 1024  # Grenze des Konverters (MAX_UPLOAD_BYTES)
 # 5-1/7.1-9 erscheinen — eine Folge, keine Verschlechterung des Inhalts.
 VERAPDF_METADATEN_REGELN = {("5", 1), ("7.1", 8), ("7.1", 9), ("7.1", 10)}
 LESEREIHENFOLGE_TOLERANZ_SEITEN = 8  # Doppelseiten/InDesign-Reihenfolge: Kundendokument 14.09. hatte 84->80
+# Figure ohne Alternativtext (PDF/UA-1 7.3-1, zaehlt je Figure — auch ein leeres /Alt ""). Nimmt sie nur um die Bilder zu,
+# die der Kunde bewusst leer bzw. dekorativ hat, ist das sein Feldstand, kein Fehler unserer Verarbeitung (09.10.2026).
+VERAPDF_ALT_REGELN = {("7.3", 1)}
 
 
 def _norm(text: str) -> str:
@@ -187,10 +195,14 @@ def _verapdf_regeln(pfad: str) -> Optional[dict]:
     return {(r.get("clause"), r.get("test")): int(r.get("failed") or 0) for r in bericht.get("rules") or []}
 
 
-def verapdf_vergleich(original_pfad: Optional[str], export_pfad: str) -> dict:
+def verapdf_vergleich(original_pfad: Optional[str], export_pfad: str, erlaubt_ohne_alt: int = 0) -> dict:
     """Regel 7: Export gegen Original. Rueckgabe {"moeglich": bool, "neu": [...], "schlechter": [...],
-    "regeln_original": n, "regeln_export": n, "grund": str}."""
-    erg = {"moeglich": False, "neu": [], "schlechter": [], "regeln_original": None, "regeln_export": None, "grund": ""}
+    "feldstand": [...], "regeln_original": n, "regeln_export": n, "grund": str}.
+    erlaubt_ohne_alt: so viele Figures schreibt der Export bewusst ohne bzw. mit leerem Alt-Text (Feld = Datei,
+    09.10.2026) — um hoechstens so viel darf VERAPDF_ALT_REGELN zunehmen; das steht dann in "feldstand", nicht in
+    "neu"/"schlechter"."""
+    erg = {"moeglich": False, "neu": [], "schlechter": [], "feldstand": [], "regeln_original": None, "regeln_export": None,
+           "grund": ""}
     if not original_pfad or not os.path.isfile(original_pfad):
         erg["grund"] = "kein Original"
         return erg
@@ -206,8 +218,13 @@ def verapdf_vergleich(original_pfad: Optional[str], export_pfad: str) -> dict:
     erg["moeglich"] = True
     erg["regeln_original"] = len(vor)
     erg["regeln_export"] = len(nach)
+    erlaubt = max(0, int(erlaubt_ohne_alt or 0))
     for schluessel, n in nach.items():
-        if (str(schluessel[0]), int(schluessel[1] or 0)) in VERAPDF_METADATEN_REGELN:
+        regel = (str(schluessel[0]), int(schluessel[1] or 0))
+        if regel in VERAPDF_METADATEN_REGELN:
+            continue
+        if regel in VERAPDF_ALT_REGELN and erlaubt and n > vor.get(schluessel, 0) and n <= vor.get(schluessel, 0) + erlaubt:
+            erg["feldstand"].append(f"{schluessel[0]}-{schluessel[1]} ({vor.get(schluessel, 0)}->{n})")
             continue
         if schluessel not in vor:
             erg["neu"].append(f"{schluessel[0]}-{schluessel[1]} ({n}x)")
@@ -219,12 +236,13 @@ def verapdf_vergleich(original_pfad: Optional[str], export_pfad: str) -> dict:
 def abnahme_pdf(export_pfad: str, original_pfad: Optional[str],
                 geschriebene_texte: Iterable[str],
                 erwartet_getaggt: Optional[int] = None,
-                verapdf: bool = True) -> dict:
+                verapdf: bool = True, erlaubt_ohne_alt: int = 0) -> dict:
     """Misst die exportierte Datei. Rueckgabe:
     {"ok": bool, "befunde": [str], "kennzahlen": {...}}.
     geschriebene_texte: die Alt-Texte, die der Export schreiben sollte (ohne "" und ohne "dekorativ").
     erwartet_getaggt: was der Export als geschrieben meldet; None = alle geschriebenen Texte.
-    verapdf: Regel 7 ueber den Konverter ausfuehren (Tests ohne Konverter setzen False)."""
+    verapdf: Regel 7 ueber den Konverter ausfuehren (Tests ohne Konverter setzen False).
+    erlaubt_ohne_alt: Bilder, die der Export bewusst ohne bzw. mit leerem Alt-Text schreibt (Regel 7, Feld = Datei)."""
     texte = [_norm(t) for t in geschriebene_texte if t and _norm(t) and _norm(t) != "dekorativ"]
     erwartet = len(texte) if erwartet_getaggt is None else max(0, min(int(erwartet_getaggt), len(texte)))
     befunde: list[str] = []
@@ -279,9 +297,11 @@ def abnahme_pdf(export_pfad: str, original_pfad: Optional[str],
 
     # Regel 7 ausserhalb des with-Blocks (Datei ist zu, der Konverter liest sie frisch)
     if verapdf:
-        v = verapdf_vergleich(original_pfad, export_pfad)
+        v = verapdf_vergleich(original_pfad, export_pfad, erlaubt_ohne_alt)
         if v["moeglich"]:
             kz["verapdf"] = f"{v['regeln_export']}/{v['regeln_original']}"
+            if v["feldstand"]:
+                kz["verapdf_feldstand"] = ", ".join(v["feldstand"])   # bewusst leere Felder (Feld = Datei), kein Befund
             if v["neu"]:
                 befunde.append("veraPDF: neue Regelverletzung(en) gegenueber dem Original: " + ", ".join(v["neu"][:8]))
             if v["schlechter"]:
@@ -304,6 +324,8 @@ def abnahme_loggen(ergebnis: dict, projekt=None, dokument=None, verfahren=None, 
              f"waisen={kz.get('waisen')} unbalanciert={kz.get('seiten_unbalanciert')} "
              f"ruecksprung={kz.get('ruecksprünge_gross')} verapdf={kz.get('verapdf')} "
              f"texte={kz.get('texte_gefunden')}/{kz.get('erwartet_getaggt')}")
+    if kz.get("verapdf_feldstand"):
+        zeile += f" feldstand={kz['verapdf_feldstand']}"
     if ergebnis.get("befunde"):
         zeile += " befunde=" + " | ".join(ergebnis["befunde"])
     if datei:

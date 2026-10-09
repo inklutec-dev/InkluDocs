@@ -577,7 +577,7 @@ def _parenttree_setzen(doc: fitz.Document, pt_root_xref: int, struct_parents: in
 
 
 def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, page_images: dict,
-                                    doc_elem_xref: int | None = None) -> tuple:
+                                    doc_elem_xref: int | None = None, entfernt: dict | None = None) -> tuple:
     """Traegt Alt-Texte in VORHANDENE Figure-Elemente des Dokuments ein (wie der PDFix-Weg), statt neue
     Figure-Tags um die Zeichenbefehle zu legen.
 
@@ -589,7 +589,10 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
 
     Rueckgabe: (uebernommen: {(page_num, xref_bild): elem_xref}, warnungen, neu_bloecke: {page_xref: [elem, ...]}) —
     neu_bloecke sind die fuer verwaiste Figure-Bloecke angelegten Elemente, die der Aufrufer noch nach Seite
-    in den Dokument-Knoten einhaengt."""
+    in den Dokument-Knoten einhaengt.
+    Eintraege mit "entfernen" (Feld = Datei, 09.10.2026: leeres Feld) nehmen das /Alt des vorhandenen Figure-Elements weg
+    statt es zu setzen — nur, wenn kein anderes Bild desselben Elements Text bekommt; sie legen nie Elemente an.
+    Gefundene Eintraege landen in `entfernt` {(page_num, xref_bild): elem_xref}, nicht in `uebernommen`."""
     uebernommen, warnungen, neu_bloecke = {}, [], {}
     # Nur Elemente, die vom StructTreeRoot aus erreichbar sind — ein Original-Tag, das selbst schon eine
     # Waise ist (InDesign-Altlast, Prod-Dokument 430: 1 von 300), bekommt wie bisher ein eigenes Tag.
@@ -635,7 +638,7 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
                 if index_baum is None:
                     index_baum = _mcid_index_aus_baum(doc, erreichbar)
                 elem = index_baum.get((page.xref, mcid))
-            if elem is None and doc_elem_xref is not None and fig[2] == "Figure":
+            if elem is None and doc_elem_xref is not None and fig[2] == "Figure" and not img_info.get("entfernen"):
                 # Figure-Block ohne Strukturelement (InDesign-Altlast): Element fuer die VORHANDENE MCID
                 # anlegen, am Dokument-Knoten einhaengen, ParentTree-Eintrag setzen — Inhalt bleibt unangetastet.
                 pt = doc.xref_get_key(struct_root_xref, "ParentTree")
@@ -660,6 +663,13 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
             s_typ = re.search(r"/S\s*/(\w+)", obj)
             if not s_typ or s_typ.group(1) not in figure_tags:
                 continue
+            if img_info.get("entfernen"):
+                if elem not in belegt:
+                    doc.xref_set_key(elem, "Alt", "null")   # "null" loescht den Eintrag
+                    belegt[elem] = ""
+                    if entfernt is not None:
+                        entfernt[(page_num, img_info["xref"])] = elem
+                continue
             if elem in belegt:
                 # Zweites Bild im selben Figure-Tag (Collage): Texte im EINEN Tag zusammenfuehren statt ein
                 # Figure ins Figure zu schachteln.
@@ -677,17 +687,23 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
     return uebernommen, warnungen, neu_bloecke
 
 
-def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, image_metadata: list = None) -> dict:
+def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, image_metadata: list = None,
+                           alt_entfernen: set | None = None) -> dict:
     """
     PDF/UA-compliant alt-text export.
     Raster images: tags the XObject directly via img_name.
     Vector graphics: tags the original drawing commands in the content stream.
     No screenshot overlays - file size stays unchanged.
 
+    alt_entfernen (Feld = Datei, 09.10.2026): xrefs der Bilder mit leerem Feld — liegt ein solches Bild in einem
+    vorhandenen Figure-Element, wird dessen /Alt entfernt (wie der PDFix-Weg mit KEIN_ALT). Neue Elemente entstehen
+    dafuer nie; eine ungetaggte PDF bleibt fuer diese Bilder unberuehrt.
+
     Returns dict with:
         path: output file path
         tagged_count: number of successfully tagged images
         warnings: list of warning strings for images that couldn't be tagged
+        entfernt: number of existing Figure elements whose /Alt was removed (alt_entfernen)
     """
     doc = fitz.open(input_path)
     cat_xref = doc.pdf_catalog()
@@ -698,6 +714,28 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
     if image_metadata:
         for img in image_metadata:
             metadata_by_xref[img.get("xref")] = img
+
+    # Feld = Datei (09.10.2026): erst die leeren Felder — vorhandenes /Alt weg, bevor Texte gesetzt werden (teilen sich
+    # zwei Bilder ein Figure-Element, gewinnt so der Text).
+    entfernt: dict = {}
+    if alt_entfernen:
+        _root = doc.xref_get_key(cat_xref, "StructTreeRoot")
+        if _root[0] == "xref":
+            leer_bilder: dict = {}
+            for page_num in range(len(doc)):
+                for img_info in doc[page_num].get_images(full=True):
+                    if img_info[0] in alt_entfernen and img_info[0] not in alt_texts:
+                        leer_bilder.setdefault(page_num, []).append({
+                            "xref": img_info[0], "img_name": img_info[7], "alt_text": "", "is_vector": False,
+                            "bbox": (metadata_by_xref.get(img_info[0]) or {}).get("bbox"), "entfernen": True})
+            for xref in alt_entfernen:
+                meta = metadata_by_xref.get(xref) or {}
+                if xref and xref >= 900000 and meta.get("bbox") and xref not in alt_texts:
+                    leer_bilder.setdefault((meta.get("page_number") or 1) - 1, []).append({
+                        "xref": xref, "img_name": None, "alt_text": "", "is_vector": True, "bbox": meta.get("bbox"),
+                        "entfernen": True})
+            if leer_bilder:
+                _vorhandene_figures_uebernehmen(doc, int(_root[1].split()[0]), leer_bilder, None, entfernt=entfernt)
 
     # Collect all images (raster + vector) with alt-texts per page
     page_images = {}
@@ -781,7 +819,7 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
     if not page_images:
         doc.save(output_path)
         doc.close()
-        return {"path": output_path, "tagged_count": 0, "warnings": warnings}
+        return {"path": output_path, "tagged_count": 0, "warnings": warnings, "entfernt": len(entfernt)}
 
     # --- Detect existing PDF structure ---
     existing_struct_root = doc.xref_get_key(cat_xref, "StructTreeRoot")
@@ -1116,7 +1154,7 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
     doc.save(output_path)
     doc.close()
     return {"path": output_path, "tagged_count": tagged_count, "warnings": warnings,
-            "figure_xrefs": alle_figuren, "unreachable_figures": unerreichbar}
+            "figure_xrefs": alle_figuren, "unreachable_figures": unerreichbar, "entfernt": len(entfernt)}
 
 
 def _seiten_eines_elements(doc: fitz.Document, xref: int, seiten: set, tiefe: int = 0, gesehen: set | None = None) -> None:

@@ -11611,3 +11611,16 @@ msgstr "El etiquetado de prueba te muestra gratis cómo sería el resultado del 
 
 msgid "Ansprechpartner (Pflicht)"
 msgstr "Persona de contacto (obligatorio)"
+
+# 09.10.2026: Feld = Datei, Hinweis beim Herunterladen (Bilder ohne Alt-Text)
+msgid "Bild {n} auf Seite {p}"
+msgstr "Imagen {n} en la página {p}"
+
+msgid "{bild} (dekorativ)"
+msgstr "{bild} (decorativa)"
+
+msgid "{bild} hat keinen Alt-Text. Das meldet auch die PDF-Prüfung."
+msgstr "{bild} no tiene texto alternativo. La comprobación del PDF también lo indica."
+
+msgid "Diese Bilder haben keinen Alt-Text: {liste}. Das meldet auch die PDF-Prüfung."
+msgstr "Estas imágenes no tienen texto alternativo: {liste}. La comprobación del PDF también lo indica."

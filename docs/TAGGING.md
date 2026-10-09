@@ -807,3 +807,25 @@ Alt-Texte (Steves Regel), trägt aber Wasserzeichen und kann unter dem Logo Text
 
 Tests: `tests/test_alttext_feld_datei.py` (Fall-Matrix, Rest je Seite, Abrechnung vor/nach, echter PDFix-Lauf im Testmodus auf
 `tests/fixtures/gartenfest_feld_datei.pdf`: Datei = Feld je Figure, keine Sternchen, Struktur bis auf /Alt gleich).
+
+### Folgen (09.10.2026 nachmittags, Steves Go)
+
+- **Herunterladen sperrt nicht mehr wegen leerer Felder.** Die Export-Abnahme (`export_abnahme.verapdf_vergleich`,
+  `erlaubt_ohne_alt`) laesst die Regel „Figure ohne Alternativtext“ (7.3-1, `VERAPDF_ALT_REGELN`) um so viele Faelle zunehmen,
+  wie der Export Bilder bewusst ohne bzw. mit leerem Alt-Text schreibt (`main._ohne_alt_erlaubt`: PDFix-Weg leere Felder mit
+  bisher vorhandenem Text plus dekorative, Ersatzweg alle aufgefuehrten). Mehr fehlende Alt-Texte als gewollt und jede andere
+  Regel bleiben ein Befund (422). Logzeile: `feldstand=7.3-1 (a->b)`.
+- **Hinweis beim Herunterladen** (Knopf, ZIP, Ablage-Lieferung, Agent `exportiere_fertige_pdf` ueber `_pdf_export_sync`):
+  `main._ohne_alt_im_export` + `_ohne_alt_hinweis`, z. B. „Bild 4 auf Seite 2 hat keinen Alt-Text. Das meldet auch die
+  PDF-Prüfung.“ bzw. „Diese Bilder haben keinen Alt-Text: …“; dekorative mit „(dekorativ)“. Nummer wie die Bildkarte (je
+  Dokument nach Seite und image_index). In allen sechs Sprachen, als normaler Hinweis (`X-Export-Warnings`), keine Sperre.
+- **„Neu generieren“ mit Bildtyp dekorativ** (vorher 500): `orchestrator.dekorativ_nach_nutzerwahl` ohne Modellaufruf; der
+  Knopf speichert Bildtyp dekorativ und ein leeres Feld (`alt_text_edited = ''`, Entscheidung am Bild, auch bei mitgebrachtem
+  Text), kein Credit. Langbeschreibung und Chatbot geben „dekorativ“ nicht als Vorgabe weiter (frische Einstufung).
+- **Word „Als PDF“:** `pdfua_export.bildtitel_entfernen` nimmt in der Umwandlungs-Kopie den Bildtitel weg; LibreOffice schrieb
+  sonst „Titel - Beschreibung“ als /Alt. Die Word-Datei zum Herunterladen behaelt den Titel.
+- **Ersatzweg (fitz):** `write_alt_texts_to_pdf(alt_entfernen=…)` nimmt das /Alt eines vorhandenen Figure-Elements weg, wenn das
+  Feld leer ist — nach dem Tagging jedes leere Feld, im Export bewusst geleerte. Ein nie angefasstes leeres Feld laesst den Text
+  der Kundendatei stehen (die fitz-Extraktion liest ihn nicht, „leer“ heisst dort „unbekannt“). Neue Elemente entstehen dafuer nie.
+Tests: `tests/test_feld_datei_folgen.py`, `tests/test_dekorativ_neu_generieren.py`.
+

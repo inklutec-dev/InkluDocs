@@ -8063,7 +8063,8 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         # If long description requested and no explicit type, use the detected type
         effective_type = image_type
         if want_long_desc and not effective_type:
-            effective_type = img["image_type"] if img["image_type"] != "unknown" else None
+            # Bildtyp „dekorativ“ nicht als Vorgabe (09.10.2026): eine Langbeschreibung braucht eine frische Einstufung
+            effective_type = img["image_type"] if img["image_type"] not in ("unknown", "dekorativ") else None
 
         # v2.2: Pass dimensions and original alt
         regen_width = img["width"] if img["width"] else 0
@@ -8114,13 +8115,17 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         )
 
         langbeschreibung = result.get("langbeschreibung", "")
+        # Nutzer-Wahl „dekorativ“ (09.10.2026): eine Entscheidung am Bild wie das bewusste Leeren — das Feld bleibt leer
+        # ('' statt NULL), sonst kaeme der mitgebrachte Text der Quelle zurueck ins Feld und in die Datei; der Export
+        # schreibt das Bild als dekorativ. „Neu generieren“ mit einem anderen Bildtyp setzt es wieder auf NULL.
+        handwahl = "" if result.get("ohne_ki") and result.get("bildtyp") == "dekorativ" else None
         conn.execute(
             """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?,
-               langbeschreibung = ?, alt_text_edited = NULL,
+               langbeschreibung = ?, alt_text_edited = ?,
                needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done',
                fehler_grund = '' WHERE id = ?""",
             (_append_link_reference(result["alt_text"], regen_context or "", regen_lang), result["bildtyp"], result.get("konfidenz", "mittel"),
-             langbeschreibung,
+             langbeschreibung, handwahl,
              1 if result.get("needs_review") else 0,
              result.get("pipeline_steps", ""),
              result.get("validation_result", ""),
@@ -8144,8 +8149,10 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         conn.close()
 
         # Abo-Etappe-1: erfolgreiches Einzel-Neu-Generieren = 1 Credit
-        # (laeuft mit force_regenerate, also nie aus dem Cache).
-        billing.verbuche(user["id"], "einzeln", image_id=image_id)
+        # (laeuft mit force_regenerate, also nie aus dem Cache). Die Wahl „dekorativ“ ruft kein Modell (ohne_ki) und kostet
+        # nichts (09.10.2026; vorher endete sie mit 500 und kostete ebenfalls nichts).
+        if not result.get("ohne_ki"):
+            billing.verbuche(user["id"], "einzeln", image_id=image_id)
 
         return {
             "ok": True,
@@ -8440,6 +8447,60 @@ def _bilder_im_export(unit: dict) -> set:
     return {i.get("id") for i in images if i.get("xref") and i.get("xref") not in layout}
 
 
+def _ohne_alt_im_export(unit: dict) -> list:
+    """Bilder, die der PDF-Export dieses Dokuments OHNE Alt-Text (kein /Alt) bzw. mit leerem Alt-Text (dekorativ)
+    schreibt — Feld = Datei (09.10.2026): der Kunde bekommt, was in den Feldern steht, und erfaehrt beim Herunterladen,
+    welche Bilder das betrifft (veraPDF meldet sie, 7.3-1). Nummer wie die Bildkarte in app.html (je Dokument ab 1, nach
+    Seite und image_index). PDFix-Weg: jedes leere Feld (KEIN_ALT) und jedes dekorative; Ersatzweg: dekorative und bewusst
+    geleerte (nur die nimmt er der Datei weg, siehe _alt_texte_einsetzen). Technische Fehlertexte (None) zaehlen nicht —
+    dort bleibt die Figure unangetastet.
+    Rueckgabe [{"id", "nr", "seite", "dekorativ", "mitgebracht"}] — mitgebracht: die Kundendatei hatte dort einen Text."""
+    doc, images = unit["doc"], unit["images"]
+    pdfix_weg = (doc.get("extraction_method") or "fitz") == "pdfix"
+    im_export = _bilder_im_export(unit)
+    geordnet = sorted(images, key=lambda i: (int(i.get("page_number") or 0), int(i.get("image_index") or 0)))
+    out = []
+    for nr, img in enumerate(geordnet, start=1):
+        if img.get("id") not in im_export:
+            continue
+        text = _exportable_alt_text(img)
+        if text is None:
+            continue
+        dekorativ = text == "dekorativ"
+        if not dekorativ and text.strip():
+            continue
+        if not pdfix_weg and not dekorativ and not _bewusst_geleert(img):
+            continue
+        out.append({"id": img.get("id"), "nr": nr, "seite": img.get("page_number"), "dekorativ": dekorativ,
+                    "mitgebracht": bool((img.get("original_alt") or "").strip() and img.get("original_alt") != "dekorativ")})
+    return out
+
+
+def _ohne_alt_erlaubt(unit: dict, ohne_alt: list) -> int:
+    """Um so viele Faelle darf die Regel „Figure ohne Alternativtext“ in der Export-Abnahme zunehmen (export_abnahme,
+    erlaubt_ohne_alt): PDFix-Weg die leeren Felder, bei denen die Datei bisher einen Text hatte, und die dekorativen
+    (leeres /Alt); Ersatzweg alle aufgefuehrten (er liest den mitgebrachten Text nicht)."""
+    pdfix_weg = (unit["doc"].get("extraction_method") or "fitz") == "pdfix"
+    return sum(1 for b in ohne_alt if b["dekorativ"] or b["mitgebracht"] or not pdfix_weg)
+
+
+def _ohne_alt_hinweis(ohne_alt: list, _=None) -> str:
+    """Kurzer, vorlesbarer Hinweis beim Herunterladen: welche Bilder keinen Alt-Text haben (keine Sperre)."""
+    if not ohne_alt:
+        return ""
+    _ = _ or (lambda s: s)
+    teile = []
+    for b in ohne_alt:
+        bild = (_("Bild {n} auf Seite {p}").format(n=b["nr"], p=b["seite"]) if b.get("seite")
+                else _("Bild {n}").format(n=b["nr"]))
+        if b.get("dekorativ"):
+            bild = _("{bild} (dekorativ)").format(bild=bild)
+        teile.append(bild)
+    if len(teile) == 1:
+        return _("{bild} hat keinen Alt-Text. Das meldet auch die PDF-Prüfung.").format(bild=teile[0])
+    return _("Diese Bilder haben keinen Alt-Text: {liste}. Das meldet auch die PDF-Prüfung.").format(liste=", ".join(teile))
+
+
 def _quickinfos_momentaufnahme(conn, doc_id) -> tuple[dict, list]:
     """EINMAL gelesen (Pruefung 30.09.2026, M1): alle Quickinfos mit Text, die der Export schreibt ({anker: text}), und die
     bearbeiteten darunter [(anker, text)] — per KI, aus Stammdaten oder von Hand gesetzt und anders als die Quickinfo in der
@@ -8704,8 +8765,13 @@ class AltTexteNichtGeschrieben(Exception):
         self.methode = methode
 
 
+def _bewusst_geleert(img: dict) -> bool:
+    """Hat der Nutzer das Feld bewusst geleert ('' in alt_text_edited, Regel seit 31.08.2026)?"""
+    return img.get("alt_text_edited") == ""
+
+
 def _alt_texte_einsetzen(doc: dict, images: list, pdf_in: str, pdf_out: str, work_dir: str,
-                         alt_text_fn=None) -> tuple[dict, list, set]:
+                         alt_text_fn=None, leer_entfernen=None) -> tuple[dict, list, set]:
     """Schreibt die Alt-Texte der Bildzeilen `images` eines Dokuments aus pdf_in nach pdf_out — der EINE Schreibweg
     mit der EINEN Zuordnung Bild -> Figure, herausgeloest aus _build_pdf_for_document (09.10.2026, Steve: „Feld = Datei“,
     dieselbe Stelle auch fuer das Tagging, tagging_api.feld_gleich_datei). Unveraendert gegenueber dem Export bis 09.10.:
@@ -8713,7 +8779,11 @@ def _alt_texte_einsetzen(doc: dict, images: list, pdf_in: str, pdf_out: str, wor
         Import-Skript (pdfix_roundtrip.import_alt_texts_pdfix: nur Alt setzen bzw. entfernen, kein Tagging);
         "" = Alt-Eintrag entfernen (KEIN_ALT), "dekorativ" = Alt "" (Figure bleibt Figure), None = Figure unangetastet;
       PyMuPDF-Weg (sonst): Bild-xref -> vorhandenes bzw. neues Figure (pdf_export.write_alt_texts_to_pdf);
-        "" = Bild nicht taggen.
+        "" = kein neues Figure; liegt das Bild in einem vorhandenen Figure, wird dessen /Alt entfernt, wenn
+        leer_entfernen(bild) wahr ist (seit 09.10.2026, Feld = Datei auch auf dem Ersatzweg). Vorgabe: nur bewusst
+        geleerte Felder — die fitz-Extraktion liest den mitgebrachten Alt-Text nicht, ein nie angefasstes leeres Feld
+        heisst dort „unbekannt“, und der Text der Kundendatei bleibt. Das Tagging (Felder vollstaendig zugeordnet) gibt
+        `lambda bild: True`.
     alt_text_fn: Text je Bild, Vorgabe _exportable_alt_text (was der Kunde im Feld sieht).
     Rueckgabe (info, geschriebene Texte, schonen); wirft AltTexteNichtGeschrieben."""
     alt_text_fn = alt_text_fn or _exportable_alt_text
@@ -8774,15 +8844,25 @@ def _alt_texte_einsetzen(doc: dict, images: list, pdf_in: str, pdf_out: str, wor
         except Exception as e:
             raise AltTexteNichtGeschrieben("pdfix", str(e))
         return info, list(alt_texts_by_lfnr.values()), schonen
+    leer_entfernen = leer_entfernen or _bewusst_geleert
+    entfernen = set()
+    for img in images:
+        if not img.get("xref") or img.get("xref") in layout_xrefs:
+            continue
+        text = alt_text_fn(img)
+        if text is not None and text != "dekorativ" and not text.strip() and leer_entfernen(img):
+            entfernen.add(img["xref"])
     try:
         from pdf_export import write_alt_texts_to_pdf
-        result = write_alt_texts_to_pdf(pdf_in, pdf_out, alt_texts, image_metadata)
+        result = write_alt_texts_to_pdf(pdf_in, pdf_out, alt_texts, image_metadata, alt_entfernen=entfernen)
     except Exception as e:
         raise AltTexteNichtGeschrieben("fitz", str(e))
     if isinstance(result, dict):
         info["method"] = "fitz"
         info["tagged"] = result.get("tagged_count", 0)
         info["total"] = len(alt_texts)
+        if result.get("entfernt"):
+            info["entfernt"] = result["entfernt"]
         # Die eigenen Figure-Elemente duerfen im Abschluss nie als „verwaist“ entfernt werden (14.09.2026).
         schonen = set(result.get("figure_xrefs") or [])
         warnings = result.get("warnings") or []
@@ -8862,8 +8942,13 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     try:
         from export_abnahme import abnahme_pdf, abnahme_loggen
         geschrieben = [t for t in quelle_texte if t and t != "dekorativ"]
+        # Feld = Datei (09.10.2026): bewusst leere bzw. dekorative Bilder duerfen „Figure ohne Alternativtext“ erhoehen —
+        # das ist der Feldstand des Kunden, keine Verschlechterung durch uns; alles andere faengt die Abnahme weiter ab.
+        ohne_alt = _ohne_alt_im_export(unit)
+        info["ohne_alt"] = ohne_alt
         info["abnahme"] = abnahme_pdf(output_path, doc.get("original_path"), geschrieben,
-                                      erwartet_getaggt=info.get("tagged"))
+                                      erwartet_getaggt=info.get("tagged"),
+                                      erlaubt_ohne_alt=_ohne_alt_erlaubt(unit, ohne_alt))
         abnahme_loggen(info["abnahme"], projekt=doc.get("project_id"), dokument=doc.get("id"),
                        verfahren=info.get("method"), datei=output_path)
     except Exception as e:
@@ -9237,6 +9322,10 @@ def _pdf_export_sync(user_id: int, project: dict, document_id: Optional[int], cu
                 # Ablage (22.09.2026): die fertige PDF bleibt mit Bericht und Vorschau erhalten
                 ablage_id = _ablegen(unit, output_path, dateiname, preis, stand, not _gebucht(doc_id, preis, qi_geschrieben))
             warnungen = list(info.get("warnings") or []) + hinweise
+            # Feld = Datei (09.10.2026): welche Bilder ohne Alt-Text in der Datei stehen — eine Meldung, keine Sperre
+            ohne_alt_text = _ohne_alt_hinweis(_ohne_alt_im_export(unit), _)
+            if ohne_alt_text:
+                warnungen.append(ohne_alt_text)
             if warnungen:
                 headers["X-Export-Warnings"] = _warnings_header(warnungen)
             if ablage_id:
@@ -9271,6 +9360,10 @@ def _pdf_export_sync(user_id: int, project: dict, document_id: Optional[int], cu
                 total_images += int(info.get("total", 0) or 0)
                 for w in info.get("warnings", []) or []:
                     aggregated_warnings.append(f"[{inner}] {w}")
+                if id(unit) in getaggt_ids:
+                    ohne_alt_text = _ohne_alt_hinweis(_ohne_alt_im_export(unit), _)   # Feld = Datei (09.10.2026)
+                    if ohne_alt_text:
+                        aggregated_warnings.append(f"[{inner}] {ohne_alt_text}")
         # Ein Export-Vorgang = EIN Grundpreis + Staffel ueber die bearbeiteten Bilder/Felder aller Dokumente, je Dokument nur,
         # was wirklich geschrieben wurde
         preis = _export_abrechnen(user_id, plan, qi_geschrieben)
@@ -9822,6 +9915,9 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
         pdf_titel = ((unit["doc"].get("display_name") or "").strip()
                      or pdfua_export.titel_aus_inhalt(docx_path) or _doc_label(unit["doc"]))
         pdfua_export.dokumenttitel_setzen(docx_path, pdf_titel, sprache)
+        # Feld = Datei (09.10.2026): LibreOffice machte aus Titel + Beschreibung eines Bildes den Alt-Text der PDF — in der
+        # Umwandlungs-Kopie bleibt nur der Feldtext (descr), die Word-Datei zum Herunterladen behaelt den Titel.
+        pdfua_export.bildtitel_entfernen(docx_path)
         try:
             pdf_bytes, bericht = pdfua_export.konvertiere(docx_path, os.path.basename(docx_path))
             # Stufe 2: Alt-Texte, die LibreOffice verliert (VML, Textfeld), aus unseren

@@ -11609,3 +11609,16 @@ msgstr "Tag as a test shows you free of charge what the tagging result would loo
 
 msgid "Ansprechpartner (Pflicht)"
 msgstr "Contact person (required)"
+
+# 09.10.2026: Feld = Datei, Hinweis beim Herunterladen (Bilder ohne Alt-Text)
+msgid "Bild {n} auf Seite {p}"
+msgstr "Image {n} on page {p}"
+
+msgid "{bild} (dekorativ)"
+msgstr "{bild} (decorative)"
+
+msgid "{bild} hat keinen Alt-Text. Das meldet auch die PDF-Prüfung."
+msgstr "{bild} has no alt text. The PDF check reports this too."
+
+msgid "Diese Bilder haben keinen Alt-Text: {liste}. Das meldet auch die PDF-Prüfung."
+msgstr "These images have no alt text: {liste}. The PDF check reports this too."
