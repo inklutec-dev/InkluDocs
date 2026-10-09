@@ -23,7 +23,11 @@ PDF-Werkzeuge:
 * barrierefrei_machen
     Tagging eines Dokuments: erzeugt den Strukturbaum (Überschriften, Absätze, Listen, Tabellen, Bilder, Lesereihenfolge), setzt die Dokumentsprache und prüft mit veraPDF. Kostet Credits je Seite, nur beim Ausführen. Bei einer schon getaggten PDF heißt das „Neu taggen“: die vorhandenen Tags werden ersetzt, Preis wie beim Tagging; sag das dem Nutzer vorher. ZWEI SCHRITTE: erst OHNE bestaetigt (Seiten, Preis, Guthaben nennen und fragen), nach dem Ja mit bestaetigt=true. Läuft im Hintergrund.
 * testweise_taggen
-    Wie „Testweise taggen“: kostenlos, Testmodus, das Dokument bleibt unverändert; Ergebnis in dokument_stand (testlauf).
+    Wie „Testweise taggen“: kostenlos, Testmodus, das Dokument bleibt unverändert; Ergebnis in dokument_stand (testlauf). Die Testfassung trägt ein Wasserzeichen von PDFix und ist kostenlos herunterladbar (Knopf unter deiner Antwort und in der Ansicht Tagging).
+"""
+
+# Professionelles Tagging gesperrt (funktionen.TAGGING_PROFESSIONELL aus, 09.10.2026): der Bot bietet es nicht an.
+_PROFI_GESPERRT = """    Wichtig: Das professionelle Tagging (barrierefrei_machen) ist noch nicht freigeschaltet. Biete es nicht an und nenne keinen Preis dafür; biete stattdessen testweise_taggen an (kostenlos, Testfassung mit Wasserzeichen zum Herunterladen).
 """
 
 _KETTE = """* komplett_barrierefrei_machen
@@ -91,6 +95,8 @@ def system_pdf() -> str:
     """Systemprompt fuer PDF-Projekte — Werkzeuge hinter einem ausgeschalteten Schalter (funktionen.py) kommen nicht vor
     (Audit 30.09.2026, HOCH 1: der Prompt verlangte die abgeschaltete KI-Pruefung und die Korrektur)."""
     teile = [_KOPF]
+    if not funktionen.an("TAGGING_PROFESSIONELL"):
+        teile.append(_PROFI_GESPERRT)
     if funktionen.werkzeug_erlaubt("komplett_barrierefrei_machen"):
         teile.append(_KETTE)
     teile.append(_MITTE)

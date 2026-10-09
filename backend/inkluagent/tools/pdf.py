@@ -179,12 +179,15 @@ def dokument_stand(project_id: int, user_id: int, document_id: Optional[int] = N
             # nicht der eingefrorene Satz aus dem Bericht („Deine PDF ist fertig …“): Zwischenstand nach dem Taggen
             "pdfua_pruefung_nach_tagging": (_tagging().pdf_tagging.zwischenstand_satz((tg.get("bericht") or {}).get("verapdf"))
                                             if tg.get("status") == "fertig" else None),
-            # Testlauf („Testweise taggen“, 30.09.2026 auch im Chatbot): Stand des letzten Laufs, die Testfassung ist nicht
-            # herunterladbar, das Dokument bleibt unveraendert
+            # Testlauf („Testweise taggen“, 30.09.2026 auch im Chatbot): Stand des letzten Laufs, das Dokument bleibt
+            # unveraendert; seit 09.10.2026 ist die Testfassung (mit Wasserzeichen) kostenlos herunterladbar
             "testlauf": ({"laeuft": bool((tg.get("test") or {}).get("laeuft")), "zeit": (tg.get("test") or {}).get("zeit"),
                           "struktur": (tg.get("test") or {}).get("struktur"),
                           "pdfua_bestanden": ((tg.get("test") or {}).get("verapdf") or {}).get("bestanden"),
-                          "fehler": (tg.get("test") or {}).get("fehler")} if tg.get("test") else None),
+                          "fehler": (tg.get("test") or {}).get("fehler"),
+                          "testfassung_herunterladbar": bool((tg.get("test") or {}).get("datei_verfuegbar"))} if tg.get("test") else None),
+            # „Barrierefrei machen“ freigeschaltet? (funktionen.TAGGING_PROFESSIONELL) — false: nicht anbieten, testweise_taggen
+            "barrierefrei_machen_frei": bool(tg.get("professionell")),
             # KI-basierte Pruefung nur, wenn sie eingeschaltet ist (funktionen.KI_PRUEFUNG, wie in der Oberflaeche)
             **({"pruefung": {
                 "status": pr.get("status") or "nicht gelaufen", "laeuft": pr.get("laeuft"),
@@ -332,7 +335,14 @@ def _freigabe(user_id: int, project_id: int, art: str, document_id: Optional[int
 def barrierefrei_machen(project_id: int, user_id: int, document_id: Optional[int] = None, bestaetigt: bool = False,
                         turn=None) -> dict[str, Any]:
     """Tagging eines Dokuments (PDFix, Joergs Make Accessible + unsere Spracherkennung). Kostet Credits je Seite.
-    Startet im Hintergrund (tagging_api.lauf_synchron in eigenem Thread); Stand ueber dokument_stand."""
+    Startet im Hintergrund (tagging_api.lauf_synchron in eigenem Thread); Stand ueber dokument_stand.
+    Gesperrt, solange funktionen.TAGGING_PROFESSIONELL aus ist (09.10.2026): dann kein Angebot, kein Lauf, keine Credits."""
+    _gesperrt = funktionen.tagging_professionell_gesperrt()
+    if _gesperrt:
+        return {"ok": True, "result": {"gestartet": False, "gesperrt": True, "hinweis": (
+            "Das professionelle Tagging („Barrierefrei machen“) ist noch nicht freigeschaltet — biete es nicht an und nenne "
+            "keinen Preis. Sag dem Nutzer sinngemäß: „" + _gesperrt + "“ Biete testweise_taggen an (kostenlos, die "
+            "Testfassung mit Wasserzeichen kann er herunterladen).")}}
     t = _tagging()
     conn = _get_db()
     try:

@@ -715,3 +715,40 @@ einmal angesagt (Statuszeile; `announce()` nur ohne Statuszeile).
 - Tagging: Abzeichen nur „Getaggt“/„Nicht getaggt“; kein Satz „beim Hochladen schon getaggt“; „Testweise taggen“ mit Rückfrage
   (Dialog wie „Barrierefrei machen“, Text ein ENTWURF für Michael); „Ergebnis des Testlaufs“ ohne Hörprobe; Ergebnis nach dem
   Taggen: „Die automatische PDF/UA-Prüfung hat Abweichungen vom Standard identifiziert.“ bzw. „… keine Abweichungen … gefunden.“
+
+## Testfassung herunterladen, professionelles Tagging sperrbar (09.10.2026, Steve nach Absprache mit Michael Karbe)
+
+Ablauf: Der Kunde lädt hoch. „Testweise taggen“ taggt eine **Kopie** im PDFix-Testmodus (Wasserzeichen), das Original bleibt
+unberührt. Die Testfassung ist **kostenlos herunterladbar**, damit der Kunde sie bei sich prüft (z. B. Adobe Reader). Gefällt sie
+ihm, wählt er „Barrierefrei machen“ (professionell): taggt das Original, kostet Credits und beim Herunterladen bzw. Export wie
+bisher; mit Tagging-Lizenz ohne Wasserzeichen. Um die Lizenz kümmert sich Michael Karbe.
+
+**Download:** `GET /api/projects/{id}/documents/{doc}/tagging/test/datei` (tagging_api.test_datei) — nur Besitzer (fremd/unbekannt
+404 wie die übrigen Endpunkte), Pfad nur aus Zahlen (`test_pfade`), Dateiname `<Originalname>_Testfassung_mit_Wasserzeichen.pdf`.
+Oberfläche: in der Klappe „Ergebnis des Testlaufs“ der Link „Testfassung herunterladen (mit Wasserzeichen)“ (echter Link mit
+`download`, Hinweis per `aria-describedby`) und daneben „Hörprobe der Testfassung“ (Dialog wie „Hörprobe“, liest
+`…/tagging/test/hoerprobe`; der Knopf „Hörprobe“ in der Karte liest weiter das Dokument selbst). Hinweis am Link: „Die Testfassung
+ist kostenlos und trägt ein Wasserzeichen von PDFix. Unter dem Wasserzeichen kann Text fehlen. Die fertige Fassung beim
+Barrierefrei-Machen hat beides nicht. Die Testfassung bleibt 30 Tage lang abrufbar.“ Chatbot `testweise_taggen`: Download-Knopf
+unter der Antwort (derselbe Endpunkt) und derselbe Hinweis.
+
+**Speicher-Hygiene:** je Dokument genau eine Testfassung (ein neuer Lauf überschreibt sie). Gelöscht beim Löschen des Dokuments
+(main._dokument_loeschen_sync) oder Projekts (ganzer Ergebnisordner), nach erfolgreichem „Barrierefrei machen“ (`_lauf_sync`) und
+nach **`TESTFASSUNG_AUFBEWAHRUNG_TAGE`** (Umgebung, Vorgabe **30**) Tagen ab dem letzten Testlauf: `testfassungen_aufraeumen`
+beim Start und danach täglich (`testfassungen_schleife`, gestartet aus `main.lifespan`). Nach dem Herunterladen wird nicht
+gelöscht (zweites Holen möglich). Ein „Original ersetzen“ gibt es nicht (ein Upload legt immer ein neues Dokument an). Die
+Testfassung erscheint nie in „Meine Ablage“ (die liest nur die Tabelle `ablage`). Größe: wie die Original-PDF (Info-Brief, 4
+Seiten: 103 KB, dazu Bericht 0,5 KB und Struktur-Cache 12 KB).
+
+**Schalter `TAGGING_PROFESSIONELL=an|aus`** (backend/funktionen.py, **Vorgabe aus**): aus = alle bezahlten Tagging-Wege gesperrt,
+serverseitig: `POST …/tagging` (403 mit Hinweis), `lauf_synchron` (Kette und Chatbot), `_lauf_sync` (Sicherheitsnetz, Grund im
+Bericht), Kette `POST /kette` und `starten_von_aussen` (403, wenn etwas zu taggen wäre), Chatbot `barrierefrei_machen` (kein
+Angebot, kein Preis, verweist auf `testweise_taggen`; der Systemprompt sagt es). Nie Credits. Oberfläche: statt „Barrierefrei
+machen“/„Neu taggen“ der Hinweis „Das professionelle Tagging schalten wir in Kürze frei. Bis dahin kannst du dein Dokument
+kostenlos testweise taggen und die Testfassung herunterladen.“ „Testweise taggen“ und der Download bleiben immer frei.
+- Staging: `TAGGING_PROFESSIONELL=an` in `.env.staging`, durchgereicht in `docker-compose.staging.yml` (dort Vorgabe `aus`).
+- Prod: `docker-compose.yml` setzt die Variable (Stand 09.10.2026) **nicht** → aus. Erst mit Tagging-Lizenz
+  `- TAGGING_PROFESSIONELL=an` (und `PDFIX_TAGGING_LIZENZ=on`) in die environment-Liste von `docker-compose.yml` eintragen.
+  Ohne Eintrag in der environment-Liste kommt ein Wert aus einer .env-Datei nicht im Container an.
+
+Tests: `tests/test_testfassung_download.py` (Download, Rechte, Dateiname, Schalter an/aus, keine Credits, Hygiene, 30 Tage).

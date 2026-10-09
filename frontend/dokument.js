@@ -462,12 +462,20 @@
             ? '<button type="button" class="btn btn-secondary" id="dok_hp_' + d.id + '" onclick="Dokument.hoerprobeOeffnen(' + project.id + ', ' + d.id + ')">' + t('Hörprobe') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             : '';
         let knoepfe;
+        let vorKnoepfen = '';
         if (imTagging) {
             const preis = tg.preis || 0;
+            // PROFESSIONELLES TAGGING bis zur Tagging-Lizenz sperrbar (09.10.2026, Steve nach Absprache mit Michael Karbe;
+            // backend/funktionen.py TAGGING_PROFESSIONELL): statt des Knopfs ein ehrlicher Hinweis, kein ausgegrauter Knopf.
+            const profiFrei = (tg.professionell !== undefined) ? !!tg.professionell : !!F.tagging_professionell;
+            if (!profiFrei && tg.verfuegbar && seiten) {
+                vorKnoepfen = '<p class="feld-hinweis dok-profi-hinweis" id="dok_profi_hinweis_' + d.id + '">'
+                    + t('Das professionelle Tagging schalten wir in Kürze frei. Bis dahin kannst du dein Dokument kostenlos testweise taggen und die Testfassung herunterladen.') + '</p>';
+            }
             // Schon getaggte PDF (beim Hochladen): „Neu taggen“ ersetzt die vorhandenen Tags (Michael Karbe, Feedback 20261001 - 1,
             // Punkt 1); vorher gab es hier gar keinen Knopf
             const knopfText = (tg.status === 'fertig' || tg.quelle_getaggt === true) ? t('Neu taggen') : t('Barrierefrei machen');
-            knoepfe = (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
+            knoepfe = (!busy && profiFrei && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
                 // TESTWEISE TAGGEN (Michael Karbe, Feedback 24.09.2026 - 2, Punkt 3): kostenlos, Testmodus, das Original bleibt
                 + (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testOeffnen(' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
                 + hoerprobeKnopf
@@ -497,6 +505,7 @@
             // Satz in normaler Textgröße, ohne Verweis auf einen Knopf, den es hier nicht gibt, und mit dem Weg weiter
             // (Prüfung Barrierefreiheit 30.09.2026, Punkt 5): Links zu „Alt-Texte“ und „Barrierefreiheitsprüfung“
             // Info „beim Hochladen schon getaggt …“ entfällt (Feedback 20261001 - 2, Punkt 3)
+            + vorKnoepfen
             + '<div class="ausgabe-aktionen">' + knoepfe + '</div>'
             // Unter den Knöpfen in „Dokument“ nichts weiter (Feedback 20260928 - 2, Punkt 2); Ergebnis, Laufstatus, Testlauf
             // und Bericht gehören zum Tagging.
@@ -534,22 +543,33 @@
             + '</dialog>';
     }
     let hoerprobeDoc = null;
+    let hoerprobeKnopf = null;   // Knopf, der den Dialog geöffnet hat (Fokus zurück beim Schließen)
     let hoerprobeDaten = { zeilen: [], eigene: new Set(), lang: '' };   // geladene Hörprobe für „Hörprobe vorlesen“
-    async function hoerprobeOeffnen(projectId, docId) {
+    // quelle 'test' (09.10.2026, Steve): Hörprobe der TESTFASSUNG aus „Testweise taggen“ (GET …/tagging/test/hoerprobe) — der
+    // Knopf „Hörprobe“ in der Karte liest weiter das Dokument selbst (Original bzw. getaggte Fassung).
+    async function hoerprobeOeffnen(projectId, docId, quelle) {
         const dlg = document.getElementById('dkHoerprobeDialog');
         const box = document.getElementById('dkHpInhalt');
         const kopf = document.getElementById('dkHpHeading');
+        const hinweis = document.getElementById('dkHpHinweis');
         const d = ((aktuelleDaten && aktuelleDaten.documents) || []).find(x => x.id === docId);
         if (!dlg || !box) return;
+        const testfassung = quelle === 'test' && !istWord;
         hoerprobeDoc = docId;
+        hoerprobeKnopf = document.getElementById((testfassung ? 'dok_testhp_' : 'dok_hp_') + docId);
         const status = document.getElementById('dkHpStatus');
-        if (kopf) kopf.textContent = t('Hörprobe: {name}', { name: d ? docDisplayName(d) : '' });
+        if (kopf) kopf.textContent = testfassung ? t('Hörprobe der Testfassung: {name}', { name: d ? docDisplayName(d) : '' })
+                                                 : t('Hörprobe: {name}', { name: d ? docDisplayName(d) : '' });
+        if (hinweis && !istWord) hinweis.textContent = testfassung
+            ? t('In dieser Reihenfolge liest ein Screenreader die Testfassung vor. Text unter dem Wasserzeichen kann fehlen.')
+            : t('In dieser Reihenfolge liest ein Screenreader den getaggten Inhalt des Dokumentes vor.');
         if (status) status.textContent = '';
         box.innerHTML = '<p>' + t('Hörprobe wird geladen …') + '</p>';
         dlg.showModal();
         // Inhalt in der Dokumentsprache (lang am Inhalt, wie in der Barrierefreiheitsprüfung): VoiceOver liest ihn dann mit der
         // Stimme, die auch ein echter Screenreader nähme — die Ansage („Überschrift Ebene 1“) bleibt in der Oberflächensprache.
-        const roh = String((d && ((d.struktur && d.struktur.lang) || (d.info && d.info.sprache))) || '').trim();
+        const teStruktur = (d && d.tagging && d.tagging.test && d.tagging.test.struktur) || {};
+        const roh = String((testfassung ? teStruktur.lang : '') || (d && ((d.struktur && d.struktur.lang) || (d.info && d.info.sprache))) || '').trim();
         const lang = /^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(roh) ? roh : '';
         let eigene = new Set();
         // eigen = Zeile von InkluDocs (Sprache, Seiten, Zusammenfassung): ohne lang der Dokumentsprache (Prüfung 30.09.2026, Punkt 2)
@@ -573,7 +593,7 @@
                 j = dok ? { verfuegbar: true, hoerprobe: dok.hoerprobe || [], hoerprobe_eigene: dok.hoerprobe_eigene || [] }
                         : { verfuegbar: false, grund: (w && typeof w.detail === 'string' && w.detail) || '' };
             } else {
-                const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/struktur', { credentials: 'same-origin' });
+                const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + (testfassung ? '/tagging/test/hoerprobe' : '/struktur'), { credentials: 'same-origin' });
                 j = r.ok ? await r.json() : null;
             }
             if (hoerprobeDoc !== docId || !dlg.open) return;
@@ -612,12 +632,15 @@
         if (typeof vorlesenStopp === 'function') vorlesenStopp();
         const dlg = document.getElementById('dkHoerprobeDialog');
         if (dlg && dlg.open) dlg.close();
-        const btn = hoerprobeDoc ? document.getElementById('dok_hp_' + hoerprobeDoc) : null;
+        const btn = (hoerprobeKnopf && document.contains(hoerprobeKnopf)) ? hoerprobeKnopf
+                  : (hoerprobeDoc ? document.getElementById('dok_hp_' + hoerprobeDoc) : null);
         if (btn) btn.focus();
     }
 
-    // ─── Testweise taggen (25.09.2026): Ergebnis des letzten Testlaufs als Klappe; die Testfassung ist nicht
-    // herunterladbar (Steve), das Dokument bleibt unverändert (tagging_api._test_sync).
+    // ─── Testweise taggen (25.09.2026): Ergebnis des letzten Testlaufs als Klappe, das Dokument bleibt unverändert
+    // (tagging_api._test_sync). Seit 09.10.2026 (Steve nach Absprache mit Michael Karbe; vorher „nicht herunterladbar“,
+    // Steve 25.09.) ist die Testfassung mit Wasserzeichen kostenlos herunterladbar (GET …/tagging/test/datei), und die Klappe
+    // hat eine eigene „Hörprobe der Testfassung“.
     function testText(te) {
         if (te.fehler) return t('Der Testlauf ist fehlgeschlagen: {grund}', { grund: te.fehler });
         let s = t('Testlauf vom {zeit}: {struktur}.', { zeit: te.zeit || '', struktur: strukturText(te.struktur) });
@@ -625,16 +648,33 @@
         if (te.verapdf) s += ' ' + (te.verapdf.bestanden ? t('PDF/UA-Prüfung der Testfassung: bestanden.') : t('PDF/UA-Prüfung der Testfassung: nicht bestanden.'));
         return s;
     }
+    // Meldung nach dem Testlauf (in der Karte, mit Fokus): Ergebnis und, wenn es die Datei gibt, wo der Download steht
+    function testMeldung(te) {
+        return testText(te) + (te.datei_verfuegbar && !te.fehler ? ' ' + t('Die Testfassung kannst du unter „Ergebnis des Testlaufs“ kostenlos herunterladen.') : '');
+    }
     function testHtml(project, d) {
         const te = (d.tagging && d.tagging.test) || {};
         if (te.laeuft) return '<p class="feld-hinweis" id="dok_test_laeuft_' + d.id + '">' + t('Testlauf läuft … Das Original bleibt unverändert.') + '</p>';
         if (!te.zeit) return '';
+        const vh = t('– Dokument „{name}“', { name: esc(docDisplayName(d)) });
+        const datei = te.datei_verfuegbar && !te.fehler;
         return '<details class="page-text-details dok-test" data-doc="' + d.id + '" data-projekt="' + project.id + '">'
             + '<summary>' + t('Ergebnis des Testlaufs') + '</summary>'
             + '<div class="page-text-content" role="region" aria-label="' + t('Ergebnis des Testlaufs') + '" tabindex="0">'
             + '<p>' + esc(testText(te)) + '</p>'
-            + '<p class="feld-hinweis">' + t('Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen.') + '</p>'
-            // ohne „Hörprobe der Testfassung“ (Feedback 20261001 - 2, Punkt 6: dafür gibt es den Knopf „Hörprobe“)
+            + '<p class="feld-hinweis">' + t('Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht.') + '</p>'
+            // Download der Testfassung (09.10.2026): echter Link mit download, Hinweis per aria-describedby am Link; die eigene
+            // Hörprobe liest die Testfassung (der Knopf „Hörprobe“ in der Karte liest das Dokument selbst)
+            + (datei
+                ? '<p class="feld-hinweis" id="dok_testdl_hinweis_' + d.id + '">' + t('Die Testfassung ist kostenlos und trägt ein Wasserzeichen von PDFix. Unter dem Wasserzeichen kann Text fehlen. Die fertige Fassung beim Barrierefrei-Machen hat beides nicht.')
+                  + ' ' + t('Die Testfassung bleibt {n} Tage lang abrufbar.', { n: te.aufbewahrung_tage || 30 }) + '</p>'
+                  + '<div class="ausgabe-aktionen">'
+                  + '<a class="btn btn-secondary" id="dok_testdl_' + d.id + '" href="/api/projects/' + project.id + '/documents/' + d.id + '/tagging/test/datei" download aria-describedby="dok_testdl_hinweis_' + d.id + '">'
+                  + ico('download') + t('Testfassung herunterladen (mit Wasserzeichen)') + '<span class="visually-hidden"> ' + vh + '</span></a>'
+                  + '<button type="button" class="btn btn-secondary" id="dok_testhp_' + d.id + '" onclick="Dokument.hoerprobeOeffnen(' + project.id + ', ' + d.id + ', \'test\')">'
+                  + t('Hörprobe der Testfassung') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+                  + '</div>'
+                : '')
             + '</div></details>';
     }
     async function testHoerprobeLaden(el) {
@@ -675,7 +715,7 @@
             const dd = ((aktuelleDaten && aktuelleDaten.documents) || []).find(x => x.id === docId);
             const te = (dd && dd.tagging && dd.tagging.test) || {};
             if (!te.laeuft && te.zeit) {
-                ergebnisMeldung[docId] = { text: testText(te), fehler: !!te.fehler };
+                ergebnisMeldung[docId] = { text: testMeldung(te), fehler: !!te.fehler };
                 await showProject(projectId, true);
                 const ziel = document.getElementById('dok_ergebnis_text_' + docId);
                 if (ziel) ziel.focus();
@@ -756,7 +796,7 @@
     function testDialogHtml(project) {
         return '<dialog id="dkTestDialog" class="app-dialog" aria-labelledby="dkTestHeading" aria-describedby="dkTestText">'
             + '<h2 id="dkTestHeading">' + t('Testweise taggen') + '</h2>'
-            + '<p id="dkTestText">' + t('Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen und lässt sich nicht herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen.') + '</p>'
+            + '<p id="dkTestText">' + t('Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen von PDFix und lässt sich kostenlos herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen.') + '</p>'
             + '<div class="dialog-actions">'
             +   '<button type="button" class="btn btn-secondary" id="dkTestCancel" onclick="Dokument.testSchliessen()">' + t('Abbrechen') + '</button>'
             +   '<button type="button" class="btn btn-primary" id="dkTestOk" onclick="Dokument.testBestaetigt(' + project.id + ')">' + t('Testweise taggen') + '</button>'
@@ -1139,7 +1179,7 @@
                     if (korrFertig.length || pruefFertig.length || testFertig.length || fertigGeworden.length || (statusWechsel && !jetzt.length)) {
                         testFertig.forEach(x => {
                             const te = (x.tagging && x.tagging.test) || {};
-                            ergebnisMeldung[x.id] = te.zeit ? { text: testText(te), fehler: !!te.fehler }
+                            ergebnisMeldung[x.id] = te.zeit ? { text: testMeldung(te), fehler: !!te.fehler }
                                                             : { text: t('Der Testlauf wurde abgebrochen. Bitte starte ihn erneut.'), fehler: true };
                             offeneDokumente.add(x.id); geschlosseneDokumente.delete(x.id);
                         });

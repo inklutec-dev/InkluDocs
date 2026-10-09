@@ -53,6 +53,10 @@ services:
       # PDFIX-INTEGRATION (24.04.2026): Kill-Switch, default OFF. Fuer Staging auf true.
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
       - PDF_TAGGING_WEG=${PDF_TAGGING_WEG:-pdfix}   # Tagging-Weg: struktur (KI-Zuordnung, PDFix schreibt) | pdfix (23.09.2026)
+      # Professionelles Tagging („Barrierefrei machen“) bis zur Tagging-Lizenz sperrbar (09.10.2026): Wert aus .env.staging
+      # (Staging: an, damit Michael weiter testen kann); ohne Wert aus wie im Code (backend/funktionen.py). Prod: nicht gesetzt.
+      - TAGGING_PROFESSIONELL=${TAGGING_PROFESSIONELL:-aus}
+      - TESTFASSUNG_AUFBEWAHRUNG_TAGE=${TESTFASSUNG_AUFBEWAHRUNG_TAGE:-30}   # Testfassungen aus „Testweise taggen“ (Tage)
       # PDFix-Lizenz (27.08.2026): aus .env.staging; leer = Testversion wie bisher
       - PDFIX_LICENSE_USER=${PDFIX_LICENSE_USER:-}
       - PDFIX_LICENSE_KEY=${PDFIX_LICENSE_KEY:-}

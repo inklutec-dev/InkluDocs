@@ -115,7 +115,8 @@ class ChatbotGibtProjektspracheWeiter(unittest.TestCase):
                 mock.patch.object(bot, "_name", return_value="Testdokument"), \
                 mock.patch.object(bot, "_freigabe", return_value=None), \
                 mock.patch.object(bot._ausg, "_ui_lang", return_value="en"), \
-                mock.patch.object(bot.threading, "Thread", Faden), mock.patch.object(bot.time, "sleep"):
+                mock.patch.object(bot.threading, "Thread", Faden), mock.patch.object(bot.time, "sleep"), \
+                mock.patch.object(bot.funktionen, "TAGGING_PROFESSIONELL", True):   # Schalter seit 09.10.2026, Vorgabe aus
             r = bot.barrierefrei_machen(7, 1, 9, bestaetigt=True)
         self.assertTrue(r.get("ok"), r)
         return gestartet["args"]

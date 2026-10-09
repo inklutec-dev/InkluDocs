@@ -32,6 +32,8 @@ class Schalter(unittest.TestCase):
         # „express“ (05.10.2026) haengt an der Umgebung (EXPRESS_SERVICE): Staging an, Prod aus — darum nur Typ und Gleichlauf.
         schalter = funktionen.fuer_oberflaeche()
         self.assertIs(schalter.pop("express"), funktionen.EXPRESS)
+        # „tagging_professionell“ (09.10.2026) haengt ebenfalls an der Umgebung (TAGGING_PROFESSIONELL, Vorgabe aus)
+        self.assertIs(schalter.pop("tagging_professionell"), funktionen.TAGGING_PROFESSIONELL)
         self.assertEqual(schalter, {"ki_pruefung": False, "korrektur": False, "eigene_pruefungen": False,
                                     "urteil": False, "kette": False, "text_zurueck": False,
                                     "strukturansicht": False})

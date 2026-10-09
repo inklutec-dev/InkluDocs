@@ -40,6 +40,16 @@ STRUKTURANSICHT = False
 # EXPRESS_SERVICE=an (docker-compose.staging.yml). Prod/ohne Variable: aus. In der Demo nie.
 EXPRESS = ((os.environ.get("EXPRESS_SERVICE") or "aus").strip().lower() in ("an", "on", "1", "true", "ja")
            and (os.environ.get("DEMO_MODE") or "off").strip().lower() not in ("on", "true", "1", "yes"))
+# PROFESSIONELLES TAGGING (09.10.2026, Steve nach Absprache mit Michael Karbe): „Barrierefrei machen“ / „Neu taggen“ =
+# bezahltes Tagging der Originaldatei. Ohne PDFix-Tagging-Lizenz liefe es im Testmodus (Logo, fehlender Text unter dem
+# Logo, Hersteller „Trial version“) — bis die Lizenz da ist, bleibt es gesperrt. Wie EXPRESS an der UMGEBUNG:
+# TAGGING_PROFESSIONELL=an (docker-compose bzw. .env.staging). Vorgabe AUS — auch wenn Prod die Variable nicht setzt.
+# Aus sperrt Knopf, Kette, Chatbot (barrierefrei_machen) und Server (tagging_api.professionell_gesperrt_text); es werden
+# nie Credits abgebucht. „Testweise taggen“ und der Download der Testfassung bleiben immer erlaubt.
+TAGGING_PROFESSIONELL = (os.environ.get("TAGGING_PROFESSIONELL") or "aus").strip().lower() in ("an", "on", "1", "true", "ja")
+# Derselbe Wortlaut in der Karte (dokument.js), am Server (403) und im Chatbot — msgid in den .po-Katalogen.
+TAGGING_PROFESSIONELL_GESPERRT = ("Das professionelle Tagging schalten wir in Kürze frei. Bis dahin kannst du dein Dokument "
+                                  "kostenlos testweise taggen und die Testfassung herunterladen.")
 # Unterschalter des Express-Service ohne Codeaenderung (Zusatz 05.10.2026, Steve): Knopf „In den Express-Warenkorb“ am
 # Dokument und Eintrag „Express-Warenkorb“ in der Navigation (immer / nur mit Inhalt / aus) stehen in der Verwaltung unter
 # „Einstellungen des Express-Service“ (express.EINSTELLUNGEN_STANDARD korb_knopf, korb_navigation) und wirken nur, wenn
@@ -76,7 +86,15 @@ def endpunkt_frei(schalter: str) -> None:
         raise HTTPException(status_code=404, detail="Nicht gefunden")
 
 
+def tagging_professionell_gesperrt(_=None):
+    """None, solange das professionelle (bezahlte) Tagging frei ist; sonst der freundliche Hinweis, uebersetzt mit _."""
+    if an("TAGGING_PROFESSIONELL"):
+        return None
+    return (_ or (lambda s: s))(TAGGING_PROFESSIONELL_GESPERRT)
+
+
 def fuer_oberflaeche() -> dict:
     """window.FUNKTIONEN in app.html."""
     return {"ki_pruefung": KI_PRUEFUNG, "korrektur": KORREKTUR, "eigene_pruefungen": EIGENE_PRUEFUNGEN, "urteil": URTEIL,
-            "kette": KETTE, "text_zurueck": TEXT_ZURUECK, "strukturansicht": STRUKTURANSICHT, "express": EXPRESS}
+            "kette": KETTE, "text_zurueck": TEXT_ZURUECK, "strukturansicht": STRUKTURANSICHT, "express": EXPRESS,
+            "tagging_professionell": TAGGING_PROFESSIONELL}

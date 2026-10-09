@@ -82,13 +82,29 @@ def testweise_taggen(project_id: int, user_id: int, document_id: Optional[int] =
         _time.sleep(2)
     if doc["id"] in t._test_laeuft:
         return {"ok": True, "result": dict(r, dokument=_pdf._name(doc), fertig=False, hinweis=(
-            "Der Testlauf läuft noch (kostenlos). Das Dokument bleibt unverändert; die Testfassung ist nicht zum Herunterladen. "
-            "Sag das; das Ergebnis steht gleich in der Ansicht „Tagging“ und in dokument_stand (Feld testlauf)."))}
+            "Der Testlauf läuft noch (kostenlos). Das Dokument bleibt unverändert. Sag das; das Ergebnis steht gleich in der "
+            "Ansicht „Tagging“ unter „Ergebnis des Testlaufs“ — dort kann der Nutzer die Testfassung dann kostenlos "
+            "herunterladen (mit Wasserzeichen) — und in dokument_stand (Feld testlauf)."))}
     st = _pdf.dokument_stand(project_id, user_id, doc["id"])
     testlauf = (((st.get("result") or {}).get("dokumente") or [{}])[0]).get("testlauf") if st.get("ok") else None
-    return {"ok": True, "result": dict(r, dokument=_pdf._name(doc), fertig=True, testlauf=testlauf, hinweis=(
-        "Der Testlauf ist fertig (kostenlos, das Dokument bleibt unverändert, die Testfassung ist nicht zum Herunterladen). "
-        "Nenne die Struktur und ob die PDF/UA-Prüfung der Testfassung bestanden ist; bei einem Fehler den Grund."))}
+    # Download der Testfassung (09.10.2026, Steve nach Absprache mit Michael Karbe): Knopf unter der Antwort, derselbe
+    # Endpunkt wie der Knopf in der Karte (GET …/tagging/test/datei, nur Besitzer); der Dateiname sagt „mit Wasserzeichen“.
+    herunterladbar = bool((testlauf or {}).get("testfassung_herunterladbar"))
+    tage = getattr(t, "TESTFASSUNG_AUFBEWAHRUNG_TAGE", 30)
+    ergebnis = dict(r, dokument=_pdf._name(doc), fertig=True, testlauf=testlauf, hinweis=(
+        "Der Testlauf ist fertig (kostenlos, das Dokument bleibt unverändert). Nenne die Struktur und ob die PDF/UA-Prüfung "
+        "der Testfassung bestanden ist; bei einem Fehler den Grund."
+        + (f" Sag außerdem: Unter deiner Antwort steht ein Knopf „Testfassung herunterladen (mit Wasserzeichen)“; dieselbe Datei "
+           f"gibt es in der Ansicht „Tagging“ unter „Ergebnis des Testlaufs“. Sie ist kostenlos und trägt ein Wasserzeichen von "
+           f"PDFix; unter dem Wasserzeichen kann Text fehlen. Die fertige Fassung beim Barrierefrei-Machen hat beides nicht. "
+           f"Die Testfassung bleibt {tage} Tage lang abrufbar." if herunterladbar else "")))
+    if not herunterladbar:
+        return {"ok": True, "result": ergebnis}
+    name = _main()._doc_label(doc) + "_Testfassung_mit_Wasserzeichen.pdf"
+    url = f"/api/projects/{int(project_id)}/documents/{int(doc['id'])}/tagging/test/datei"
+    ergebnis["download_url"] = url
+    return {"ok": True, "result": ergebnis,
+            "anhang": {"art": "pdf", "dateiname": name, "download_url": url, "label": "testfassung"}}
 
 
 # ---------------------------------------------------------------------------

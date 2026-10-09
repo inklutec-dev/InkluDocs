@@ -7,8 +7,8 @@ _DOC = {"type": "integer", "description": "Optional: nur dieses Dokument (Liste 
 _TESTWEISE = {
     "name": "testweise_taggen",
     "description": ("Wie „Testweise taggen“ in der Ansicht Tagging: kostenlos, im Testmodus, eigene Testfassung — das Dokument "
-                    "bleibt unverändert, die Testfassung ist nicht zum Herunterladen. Läuft im Hintergrund; Ergebnis über "
-                    "dokument_stand (testlauf). Nicht für schon getaggte PDFs."),
+                    "bleibt unverändert. Die Testfassung trägt ein Wasserzeichen von PDFix und ist kostenlos herunterladbar "
+                    "(Knopf unter der Antwort). Wartet auf das Ende; sonst Ergebnis über dokument_stand (testlauf)."),
     "input_schema": {"type": "object", "properties": {"document_id": _DOC}, "required": []},
 }
 _PRUEFDATEI_ERSTELLEN = {

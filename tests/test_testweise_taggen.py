@@ -3,8 +3,9 @@ Datenbank, PDFix wird nicht aufgerufen (Subprozess und Lauf sind ersetzt):
     docker exec inkludocs-staging python3 -m unittest /app/tests/test_testweise_taggen.py -v
 
 Prüft: Testmodus wird erzwungen (Lizenz aus, auch wenn sie an ist), der Testlauf ändert das Dokument nicht,
-ein zweiter Start für dasselbe Dokument/denselben Nutzer wird abgewiesen, fremde Dokumente 404, es gibt keinen
-Download-Weg für die Testfassung, Löschen des Dokuments räumt Testfassung und Prüfdatei weg.
+ein zweiter Start für dasselbe Dokument/denselben Nutzer wird abgewiesen, fremde Dokumente 404, die Testfassung kommt
+nur über GET …/tagging/test/datei (seit 09.10.2026, mehr in test_testfassung_download.py) und nie über den Download der
+getaggten Fassung, Löschen des Dokuments räumt Testfassung und Prüfdatei weg.
 """
 import json
 import os
@@ -139,12 +140,14 @@ class TestEndpunkte(unittest.TestCase):
         for feld in ("original_path", "roh_path", "getaggt", "tagging_status", "tagging_bericht"):
             self.assertEqual(vorher.get(feld), nachher.get(feld), feld)   # Dokument unverändert
 
-    def test_2_fremd_und_kein_download(self):
+    def test_2_fremd_und_download_nur_eigener_weg(self):
         with mock.patch.object(self.ta.pdf_tagging, "verfuegbar", return_value=True):
             self.assertEqual(self.cf.post(f"/api/projects/{self.pid}/documents/{self.did}/tagging/test").status_code, 404)
         self.assertEqual(self.cf.get(f"/api/projects/{self.pid}/documents/{self.did}/tagging/test/hoerprobe").status_code, 404)
-        # Es gibt keinen Endpunkt, der die Testfassung ausliefert
-        for pfad in ("/tagging/test/datei", "/tagging/test.pdf", "/tagging/test"):
+        # Seit 09.10.2026 (Steve nach Absprache mit Michael Karbe) ist die Testfassung herunterladbar — nur für den Besitzer
+        # und nur über GET …/tagging/test/datei
+        self.assertEqual(self.cf.get(f"/api/projects/{self.pid}/documents/{self.did}/tagging/test/datei").status_code, 404)
+        for pfad in ("/tagging/test.pdf", "/tagging/test"):
             r = self.c.get(f"/api/projects/{self.pid}/documents/{self.did}{pfad}")
             self.assertNotEqual(r.headers.get("content-type", ""), "application/pdf", pfad)
         # Der normale Download liefert nie die Testfassung (Dokument ist nicht getaggt -> 404/400)

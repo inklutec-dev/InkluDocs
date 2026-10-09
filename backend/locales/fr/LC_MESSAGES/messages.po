@@ -11596,3 +11596,34 @@ msgstr "Écris-nous un message."
 # Runde 11 (08.10.2026): Barrierefreiheit ohne Screenreader
 msgid "Das hat leider nicht geklappt. Bitte erneut versuchen."
 msgstr "Malheureusement, cela n’a pas fonctionné. Réessaie."
+
+# 09.10.2026: Testfassung herunterladen, professionelles Tagging sperrbar, Express (Pflicht)
+msgid "Das professionelle Tagging schalten wir in Kürze frei. Bis dahin kannst du dein Dokument kostenlos testweise taggen und die Testfassung herunterladen."
+msgstr "Nous activerons bientôt le balisage professionnel. D’ici là, tu peux baliser ton document à titre d’essai gratuitement et télécharger la version de test."
+
+msgid "Hörprobe der Testfassung: {name}"
+msgstr "Écoute de la version de test : {name}"
+
+msgid "In dieser Reihenfolge liest ein Screenreader die Testfassung vor. Text unter dem Wasserzeichen kann fehlen."
+msgstr "Un lecteur d’écran lit la version de test dans cet ordre. Du texte sous le filigrane peut manquer."
+
+msgid "Die Testfassung kannst du unter „Ergebnis des Testlaufs“ kostenlos herunterladen."
+msgstr "Tu peux télécharger gratuitement la version de test sous « Résultat du test »."
+
+msgid "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht."
+msgstr "Le test montre le résultat du balisage avec PDFix. Il est gratuit et ne modifie pas le document."
+
+msgid "Die Testfassung ist kostenlos und trägt ein Wasserzeichen von PDFix. Unter dem Wasserzeichen kann Text fehlen. Die fertige Fassung beim Barrierefrei-Machen hat beides nicht."
+msgstr "La version de test est gratuite et porte un filigrane de PDFix. Du texte peut manquer sous le filigrane. La version finale obtenue avec « Rendre accessible » n’a ni l’un ni l’autre."
+
+msgid "Die Testfassung bleibt {n} Tage lang abrufbar."
+msgstr "La version de test reste disponible pendant {n} jours."
+
+msgid "Testfassung herunterladen (mit Wasserzeichen)"
+msgstr "Télécharger la version de test (avec filigrane)"
+
+msgid "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen von PDFix und lässt sich kostenlos herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+msgstr "Le balisage à titre d’essai te montre gratuitement à quoi ressemblerait le résultat du balisage. La version de test porte un filigrane de PDFix et peut être téléchargée gratuitement. Ton PDF original reste inchangé, tu peux ensuite le baliser pour de bon."
+
+msgid "Ansprechpartner (Pflicht)"
+msgstr "Personne à contacter (obligatoire)"

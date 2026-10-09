@@ -11164,3 +11164,34 @@ msgstr "Skriv ett meddelande till oss."
 # Runde 11 (08.10.2026): Barrierefreiheit ohne Screenreader
 msgid "Das hat leider nicht geklappt. Bitte erneut versuchen."
 msgstr "Det fungerade tyvärr inte. Försök igen."
+
+# 09.10.2026: Testfassung herunterladen, professionelles Tagging sperrbar, Express (Pflicht)
+msgid "Das professionelle Tagging schalten wir in Kürze frei. Bis dahin kannst du dein Dokument kostenlos testweise taggen und die Testfassung herunterladen."
+msgstr "Vi aktiverar den professionella taggningen inom kort. Till dess kan du tagga ditt dokument som test kostnadsfritt och ladda ned testversionen."
+
+msgid "Hörprobe der Testfassung: {name}"
+msgstr "Lyssningsprov av testversionen: {name}"
+
+msgid "In dieser Reihenfolge liest ein Screenreader die Testfassung vor. Text unter dem Wasserzeichen kann fehlen."
+msgstr "En skärmläsare läser upp testversionen i den här ordningen. Text under vattenstämpeln kan saknas."
+
+msgid "Die Testfassung kannst du unter „Ergebnis des Testlaufs“ kostenlos herunterladen."
+msgstr "Du kan ladda ned testversionen kostnadsfritt under ”Resultat av testkörningen”."
+
+msgid "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht."
+msgstr "Testkörningen visar hur taggningen med PDFix skulle bli. Den kostar ingenting och ändrar inte dokumentet."
+
+msgid "Die Testfassung ist kostenlos und trägt ein Wasserzeichen von PDFix. Unter dem Wasserzeichen kann Text fehlen. Die fertige Fassung beim Barrierefrei-Machen hat beides nicht."
+msgstr "Testversionen är kostnadsfri och har en vattenstämpel från PDFix. Text under vattenstämpeln kan saknas. Den färdiga versionen från ”Gör tillgänglig” har ingetdera."
+
+msgid "Die Testfassung bleibt {n} Tage lang abrufbar."
+msgstr "Testversionen finns kvar att hämta i {n} dagar."
+
+msgid "Testfassung herunterladen (mit Wasserzeichen)"
+msgstr "Ladda ned testversionen (med vattenstämpel)"
+
+msgid "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen von PDFix und lässt sich kostenlos herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+msgstr "Tagga som test visar dig kostnadsfritt hur taggningsresultatet skulle se ut. Testversionen har en vattenstämpel från PDFix och kan laddas ned kostnadsfritt. Din original-PDF förblir oförändrad, och du kan tagga den på riktigt efteråt."
+
+msgid "Ansprechpartner (Pflicht)"
+msgstr "Kontaktperson (obligatoriskt)"

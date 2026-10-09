@@ -20,14 +20,14 @@
 {% if warenkorb_ansicht %}
 <p class="verwaltung-zurueck"><a href="/express">{{ _('Zu meinen Aufträgen') }}</a></p>
 {# Titel und Hauptüberschrift passen zusammen (Nachprüfung Barrierefreiheit 05.10.2026, N5) #}
-<h1 id="exTitel" tabindex="-1">{{ _('Express-Warenkorb') }}</h1>
+<h1 id="exTitel">{{ _('Express-Warenkorb') }}</h1>
 {# Einleitung und Preis in EINEM Absatz (Michael Karbe 07.10.2026, Warenkorb Punkt 1) #}
 <p class="dash-sub" id="exIntro"></p>
 
 <section class="dash-card verwaltung-karte" aria-labelledby="h-neu" id="exNeu">
   <h2 id="h-neu">{{ _('Neuer Auftrag') }}</h2>
 
-  <h3 id="h-schritt1" tabindex="-1">{{ _('1. Dokumente auswählen') }}</h3>
+  <h3 id="h-schritt1">{{ _('1. Dokumente auswählen') }}</h3>
   {# Kein Hochladen hier (Michael Karbe 06.10.2026, Punkt 2): neue Dateien kommen zuerst in ein Projekt. #}
   <p class="dash-sub" id="exProjektHinweis">{{ _('Eine neue Datei lädst du zuerst in ein Projekt hoch. Danach kannst du sie hier auswählen oder im Projekt mit „In den Express-Warenkorb“ hinzufügen.') }} <a href="/projekt-neu">{{ _('Neues Projekt anlegen') }}</a></p>
   <form id="exProjektForm" class="verwaltung-suche" novalidate>
@@ -47,15 +47,16 @@
     <button type="submit" class="btn btn-primary" id="exHinzu">{{ _('Zur Auswahl hinzufügen') }}</button>
   </form>
 
-  <h3 id="h-auswahl" tabindex="-1">{{ _('2. Deine Auswahl') }}</h3>
-  <p id="exMeldung" class="verwaltung-bestaetigung" tabindex="-1" hidden></p>
+  <h3 id="h-auswahl">{{ _('2. Deine Auswahl') }}</h3>
+  <p id="exMeldung" class="verwaltung-bestaetigung" hidden></p>
   <p id="exSumme" class="verwaltung-bestaetigung"></p>
   <ul id="exAuswahl" class="verwaltung-liste"></ul>
 
   <form id="exBestellForm" novalidate>
     <h3 id="h-angaben">{{ _('3. Angaben') }}</h3>
     <div class="dash-field">
-      <label for="exName">{{ _('Ansprechpartner') }}</label>
+      {# „(Pflicht)“ im Label wie im Kontaktformular (ueber_uns.html, Runde 10) und bei „Zustimmung (Pflicht)“ (09.10.2026) #}
+      <label for="exName">{{ _('Ansprechpartner (Pflicht)') }}</label>
       <input type="text" id="exName" class="dash-input" maxlength="120" autocomplete="name" required aria-describedby="exNameFehler">
       <p id="exNameFehler" class="verwaltung-fehler"></p>
     </div>
@@ -92,9 +93,9 @@
 </section>
 {% else %}
 {# id h-auftraege: alte Links (/express#h-auftraege aus Mails und der Startseite) springen weiter hierher #}
-<h1 id="h-auftraege" tabindex="-1">{{ _('Meine Aufträge') }}</h1>
+<h1 id="h-auftraege">{{ _('Meine Aufträge') }}</h1>
 <p class="dash-sub">{{ _('Deine Express-Aufträge: Profis bereiten deine Dokumente barrierefrei auf. Unter „Details“ findest du zu jedem Auftrag die Dokumente, den Verlauf und die Downloads.') }}</p>
-<p id="exAuftragMeldung" class="verwaltung-bestaetigung" tabindex="-1" hidden></p>
+<p id="exAuftragMeldung" class="verwaltung-bestaetigung" hidden></p>
 
 {# Oben, vor der Liste (Michael Karbe 07.10.2026, Punkt 6) — Ebenen: H1 „Meine Aufträge“, H2 hier, H2 je Auftragskarte #}
 <section class="dash-card verwaltung-karte ex-neu-karte" aria-labelledby="h-neuer-auftrag">
@@ -157,6 +158,16 @@
   }
   let idempotenz = neuerSchluessel();
 
+  // Fokus auf Ueberschrift oder Meldung (09.10.2026, Steve: VoiceOver sagte nach dem Bestellen an H1 und Danke-Meldung
+  // „klickbar“). Ursache: ein DAUERHAFTES tabindex="-1" — es machte die Elemente im Barrierefreiheitsbaum fokussierbar,
+  // Klick-Listener gibt es an keinem Vorfahren (CDP-Probe 09.10.2026). Jetzt traegt das Element tabindex nur, solange es den
+  // Fokus hat; danach ist es wieder reiner Text. Fokus und Ansage bleiben wie bisher.
+  function fokusAuf(e) {
+    if (!e) return;
+    e.setAttribute('tabindex', '-1');
+    e.addEventListener('blur', () => e.removeAttribute('tabindex'), { once: true });
+    e.focus();
+  }
   function el(tag, klasse, text) {
     const e = document.createElement(tag);
     if (klasse) e.className = klasse;
@@ -426,7 +437,7 @@
         const m = byId('exMeldung');
         m.textContent = t('„{name}“ entfernt.', { name: p.dokument_name }) + ' ' + summeText() + guthabenSatz();
         m.hidden = false;
-        m.focus();
+        fokusAuf(m);
       });
       zeile.appendChild(weg);
       ul.appendChild(li);
@@ -619,7 +630,7 @@
     m.classList.toggle('ex-meldung-fehler', !!fehler);
     m.textContent = text;
     m.hidden = false;
-    m.focus();
+    fokusAuf(m);
   }
 
   function umbenennenOeffnen(a, knopf) {
@@ -721,10 +732,10 @@
     if (pid && byId('exProjekt').value === pid) {
       await dokumenteLaden(pid, true, true);
       byId('h-schritt1').scrollIntoView();
-      byId('h-schritt1').focus();
+      fokusAuf(byId('h-schritt1'));
     } else {
       byId('h-auswahl').scrollIntoView();
-      byId('h-auswahl').focus();
+      fokusAuf(byId('h-auswahl'));
     }
   })();
 })();

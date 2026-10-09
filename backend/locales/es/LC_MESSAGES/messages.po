@@ -11596,3 +11596,34 @@ msgstr "Escríbenos un mensaje."
 # Runde 11 (08.10.2026): Barrierefreiheit ohne Screenreader
 msgid "Das hat leider nicht geklappt. Bitte erneut versuchen."
 msgstr "Lamentablemente no ha funcionado. Inténtalo de nuevo."
+
+# 09.10.2026: Testfassung herunterladen, professionelles Tagging sperrbar, Express (Pflicht)
+msgid "Das professionelle Tagging schalten wir in Kürze frei. Bis dahin kannst du dein Dokument kostenlos testweise taggen und die Testfassung herunterladen."
+msgstr "Pronto activaremos el etiquetado profesional. Hasta entonces, puedes etiquetar tu documento de prueba gratis y descargar la versión de prueba."
+
+msgid "Hörprobe der Testfassung: {name}"
+msgstr "Prueba de escucha de la versión de prueba: {name}"
+
+msgid "In dieser Reihenfolge liest ein Screenreader die Testfassung vor. Text unter dem Wasserzeichen kann fehlen."
+msgstr "Un lector de pantalla lee la versión de prueba en este orden. Puede faltar texto bajo la marca de agua."
+
+msgid "Die Testfassung kannst du unter „Ergebnis des Testlaufs“ kostenlos herunterladen."
+msgstr "Puedes descargar gratis la versión de prueba en «Resultado de la prueba»."
+
+msgid "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht."
+msgstr "La prueba muestra cómo quedaría el etiquetado con PDFix. No cuesta nada y no cambia el documento."
+
+msgid "Die Testfassung ist kostenlos und trägt ein Wasserzeichen von PDFix. Unter dem Wasserzeichen kann Text fehlen. Die fertige Fassung beim Barrierefrei-Machen hat beides nicht."
+msgstr "La versión de prueba es gratuita y lleva una marca de agua de PDFix. Puede faltar texto bajo la marca de agua. La versión final de «Hacer accesible» no tiene ninguna de las dos cosas."
+
+msgid "Die Testfassung bleibt {n} Tage lang abrufbar."
+msgstr "La versión de prueba sigue disponible durante {n} días."
+
+msgid "Testfassung herunterladen (mit Wasserzeichen)"
+msgstr "Descargar la versión de prueba (con marca de agua)"
+
+msgid "Testweise taggen zeigt dir kostenlos, wie das Tagging-Ergebnis aussehen würde. Die Testfassung trägt ein Wasserzeichen von PDFix und lässt sich kostenlos herunterladen. Deine Original-PDF bleibt unverändert, du kannst sie danach richtig taggen."
+msgstr "El etiquetado de prueba te muestra gratis cómo sería el resultado del etiquetado. La versión de prueba lleva una marca de agua de PDFix y se puede descargar gratis. Tu PDF original no cambia; después puedes etiquetarlo de verdad."
+
+msgid "Ansprechpartner (Pflicht)"
+msgstr "Persona de contacto (obligatorio)"

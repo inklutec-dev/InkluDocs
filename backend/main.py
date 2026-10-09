@@ -428,6 +428,15 @@ async def lifespan(app: FastAPI):
     # Immer — auch bei ausgeschaltetem Schalter laufen offene Auftraege weiter (Befund 9); ohne Auftraege tut sie nichts.
     asyncio.create_task(express_api.erinnerungs_schleife())
 
+    # Testweise taggen (09.10.2026): Testfassungen nach TESTFASSUNG_AUFBEWAHRUNG_TAGE (Vorgabe 30) loeschen — jetzt beim
+    # Start und danach taeglich. Dazu die Start-Reparatur haengender Tagging-Laeufe: sie stand nur im router-„startup“
+    # von tagging_api, und der laeuft neben diesem lifespan nicht (siehe express_api.erinnerungs_schleife).
+    try:
+        tagging_api.haengende_laeufe_zuruecksetzen()
+    except Exception as _e:  # noqa: BLE001
+        print(f"[tagging] Start-Reparatur uebersprungen: {_e}")
+    asyncio.create_task(tagging_api.testfassungen_schleife())
+
     yield
 
 

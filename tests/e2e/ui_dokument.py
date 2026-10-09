@@ -200,13 +200,36 @@ with sync_playwright() as p:
     meld = pg.locator("section.dok-karte .dok-ergebnis p").first.inner_text() if fertig else ""
     check("Ergebnis des Testlaufs in der Karte, Fokus darauf", fertig and meld.startswith("Testlauf vom") and "Elemente" in meld and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_ergebnis_text_"), meld)
     check("Dokument bleibt „Nicht getaggt“ (Original unverändert)", "Nicht getaggt" in pg.locator("section.dok-karte h3").first.inner_text())
-    check("Kein Herunterladen der Testfassung", pg.locator("button[id^=dok_export_]").count() == 0 and pg.locator("section.dok-karte a[href*='test']").count() == 0)
+    # Seit 09.10.2026 (Steve nach Absprache mit Michael Karbe): Testfassung kostenlos herunterladbar — nur in der Klappe
+    # „Ergebnis des Testlaufs“, kein „PDF herunterladen“ in „Tagging“; die Meldung nennt den Weg
+    check("Meldung nennt den Download in „Ergebnis des Testlaufs“", "kostenlos herunterladen" in meld, meld)
+    check("Kein „PDF herunterladen“ in Tagging", pg.locator("button[id^=dok_export_]").count() == 0)
     pg.click("section.dok-karte .dok-ergebnis button"); pg.wait_for_timeout(300)
     pg.click("details.dok-test > summary")
     pg.wait_for_timeout(500)
-    check("Klappe „Ergebnis des Testlaufs“ ohne Hörprobe (Feedback 20261001 - 2, Punkt 6)",
-          pg.locator("details.dok-test .dok-test-hoerprobe").count() == 0 and "Hörprobe" not in pg.locator("details.dok-test").inner_text()
-          and "Testlauf vom" in pg.locator("details.dok-test").inner_text(), pg.locator("details.dok-test").inner_text()[:200])
+    klappe = pg.locator("details.dok-test").inner_text()
+    dl = pg.locator("details.dok-test a[id^=dok_testdl_]")
+    hinweis_id = dl.first.get_attribute("aria-describedby") if dl.count() else ""
+    hinweis = pg.locator("#" + hinweis_id).inner_text() if hinweis_id else ""
+    check("Klappe: Link „Testfassung herunterladen (mit Wasserzeichen)“ mit download, Hinweis am Link",
+          dl.count() == 1 and (dl.first.get_attribute("href") or "").endswith("/tagging/test/datei") and dl.first.get_attribute("download") is not None
+          and "Testfassung herunterladen (mit Wasserzeichen)" in dl.first.inner_text() and "Wasserzeichen von PDFix" in hinweis
+          and "Unter dem Wasserzeichen kann Text fehlen" in hinweis and "30 Tage lang abrufbar" in hinweis, (klappe[:300], hinweis))
+    check("Klappe: Satz „lässt sich nicht herunterladen“ ist weg", "nicht herunterladen" not in klappe, klappe[:300])
+    r_dl = pg.request.get(B + (dl.first.get_attribute("href") or ""))
+    check("Download liefert die Testfassung als PDF mit sprechendem Namen",
+          r_dl.status == 200 and r_dl.headers.get("content-type") == "application/pdf" and r_dl.body()[:5] == b"%PDF-"
+          and "_Testfassung_mit_Wasserzeichen.pdf" in (r_dl.headers.get("content-disposition") or ""), (r_dl.status, r_dl.headers.get("content-disposition")))
+    hp = pg.locator("details.dok-test button[id^=dok_testhp_]")
+    check("Klappe: eigener Knopf „Hörprobe der Testfassung“", hp.count() == 1 and "Hörprobe der Testfassung" in hp.first.inner_text())
+    hp.first.click()
+    pg.wait_for_selector("#dkHoerprobeDialog[open]", timeout=5000)
+    pg.wait_for_timeout(2500)
+    check("Dialog: „Hörprobe der Testfassung: …“ mit Zeilen aus der Testfassung",
+          pg.locator("#dkHpHeading").inner_text().startswith("Hörprobe der Testfassung:") and pg.locator("#dkHpInhalt p").count() > 1
+          and "Testfassung" in pg.locator("#dkHpHinweis").inner_text(), pg.locator("#dkHpInhalt").inner_text()[:200])
+    pg.click("#dkHpZu"); pg.wait_for_timeout(300)
+    check("Schließen: Fokus zurück auf „Hörprobe der Testfassung“", str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_testhp_"))
     check("Testlauf kostet nichts", pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht") == guthaben_vorher.get("verbraucht"))
     axe(pg, "Ansicht Tagging mit Ergebnis des Testlaufs")
 

@@ -15,8 +15,17 @@ Neu-Taggen erlaubt“):
   POST /api/projects/{id}/documents/{doc}/tagging/test   TESTWEISE TAGGEN (25.09.2026, Michael Karbe, Feedback
        24.09.2026 - 2, Punkt 3): kostenlos, IMMER im PDFix-Testmodus, aus der Originaldatei in eine eigene
        Testfassung (results/<user>/<projekt>/_testweise/doc<id>_testweise.pdf). Das Dokument selbst (Arbeitsdatei,
-       Bilder, Alt-Texte, Stand) bleibt unberuehrt; die Testfassung ist NICHT herunterladbar (Steve 25.09.).
+       Bilder, Alt-Texte, Stand) bleibt unberuehrt. Seit 09.10.2026 (Steve nach Absprache mit Michael Karbe; vorher
+       „NICHT herunterladbar“, Steve 25.09.) ist die Testfassung KOSTENLOS HERUNTERLADBAR — mit PDFix-Wasserzeichen,
+       damit der Kunde sie bei sich (z. B. im Adobe Reader) pruefen kann:
+  GET  /api/projects/{id}/documents/{doc}/tagging/test/datei       Testfassung herunterladen
+       (<Originalname>_Testfassung_mit_Wasserzeichen.pdf). Speicher-Hygiene: je Dokument genau eine Testfassung (ein neuer
+       Lauf ueberschreibt sie); weg beim Loeschen von Dokument oder Projekt, nach erfolgreichem „Barrierefrei machen“ und
+       nach TESTFASSUNG_AUFBEWAHRUNG_TAGE (Vorgabe 30) Tagen (testfassungen_aufraeumen: beim Start und taeglich). Nicht in
+       „Meine Ablage“ (die liest nur die Tabelle ablage).
   GET  /api/projects/{id}/documents/{doc}/tagging/test/hoerprobe   Hoerprobe der Testfassung
+  PROFESSIONELLES TAGGING („Barrierefrei machen“/„Neu taggen“, Kette, Chatbot) haengt am Schalter TAGGING_PROFESSIONELL
+  (funktionen.py, Vorgabe aus): aus = Server-Sperre (403 bzw. Grund), nie Credits.
   - nur Besitzer, nur Projekte mit project_type pdf (Werkzeuge pdf + formular), nie im Gastweg
   - waehrend des Laufs steht das Projekt auf status 'extracting' (Generierung und Export warten,
     wie beim Upload); danach 'extracted'
@@ -100,6 +109,8 @@ TEST_GLEICHZEITIG = int(os.environ.get("TESTWEISE_GLEICHZEITIG", "2"))
 TEST_JE_TAG = int(os.environ.get("TESTWEISE_JE_TAG", "20"))
 _test_zaehler: dict[int, tuple] = {}   # user_id -> (Datum, Anzahl)
 _test_executor = _cf.ThreadPoolExecutor(max_workers=max(1, TEST_GLEICHZEITIG), thread_name_prefix="testweise")
+# Aufbewahrung der Testfassung (09.10.2026): danach loescht testfassungen_aufraeumen sie samt Bericht (beim Start, taeglich).
+TESTFASSUNG_AUFBEWAHRUNG_TAGE = max(1, int(os.environ.get("TESTFASSUNG_AUFBEWAHRUNG_TAGE", "30")))
 
 
 def tagging_markieren(conn, project_id: int, document_id: int) -> bool:
@@ -151,6 +162,9 @@ def test_stand(user_id: int, project_id: int, document_id: int) -> dict:
         if isinstance(b, dict):
             stand_.update({k: b.get(k) for k in ("zeit", "dauer_s", "seiten", "struktur", "verapdf", "fehler", "tags_ersetzt", "vorher_elemente")})
             stand_["hoerprobe_moeglich"] = bool(not b.get("fehler") and os.path.isfile(pdf))
+            # Download der Testfassung (09.10.2026): kostenlos, mit Wasserzeichen, TESTFASSUNG_AUFBEWAHRUNG_TAGE lang
+            stand_["datei_verfuegbar"] = stand_["hoerprobe_moeglich"]
+            stand_["aufbewahrung_tage"] = TESTFASSUNG_AUFBEWAHRUNG_TAGE
     except (OSError, ValueError):
         pass
     return stand_
@@ -173,6 +187,46 @@ def _test_dateien_weg(ordner: str, document_id: int) -> None:
                 os.remove(p)
         except OSError:
             pass
+
+
+def testfassungen_aufraeumen(tage: Optional[int] = None, jetzt: Optional[float] = None) -> int:
+    """Testfassungen (samt Bericht doc<id>.json und Struktur-Cache) loeschen, deren letzter Testlauf laenger als
+    TESTFASSUNG_AUFBEWAHRUNG_TAGE her ist (09.10.2026, Steve: die Ablage soll sich nicht zumuellen). Massgeblich ist der
+    Bericht doc<id>.json (schreibt jeder Lauf neu, auch ein fehlgeschlagener). Nur in results/<user>/<projekt>/_testweise,
+    nur Dateien doc<Zahl>…; laufende Testlaeufe bleiben. Rueckgabe: Zahl der aufgeraeumten Dokumente."""
+    import glob
+    import re as _re
+    grenze = (jetzt or time.time()) - 86400 * (tage or TESTFASSUNG_AUFBEWAHRUNG_TAGE)
+    n = 0
+    for ordner in glob.glob(os.path.join(_d.results_dir, "*", "*", "_testweise")):
+        try:
+            namen = os.listdir(ordner)
+        except OSError:
+            continue
+        ids = {int(m.group(1)) for m in (_re.match(r"doc(\d+)[._]", x) for x in namen) if m}
+        for doc_id in ids:
+            if doc_id in _test_laeuft:
+                continue
+            bericht = os.path.join(ordner, f"doc{doc_id}.json")
+            pdf = os.path.join(ordner, f"doc{doc_id}_testweise.pdf")
+            stempel = [os.path.getmtime(p) for p in (bericht, pdf) if os.path.isfile(p)]
+            if stempel and max(stempel) < grenze:
+                _test_dateien_weg(ordner, doc_id)
+                n += 1
+    return n
+
+
+async def testfassungen_schleife() -> None:
+    """Beim Start und danach einmal taeglich aufraeumen (gestartet aus main.lifespan — ein APIRouter-„startup“ laeuft
+    neben einem eigenen lifespan nicht)."""
+    while True:
+        try:
+            n = await asyncio.get_running_loop().run_in_executor(None, testfassungen_aufraeumen)
+            if n:
+                log.info("[testweise] %d Testfassungen nach %d Tagen geloescht", n, TESTFASSUNG_AUFBEWAHRUNG_TAGE)
+        except Exception:  # noqa: BLE001
+            log.exception("[testweise] Aufraeumen fehlgeschlagen")
+        await asyncio.sleep(86400)
 
 
 def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe: str, ui_lang: str) -> None:
@@ -587,6 +641,8 @@ def stand(conn, project: dict, doc: dict, user_id: int, vorab: Optional[dict] = 
         "projekt_status": project.get("status"),
         "pruefung": pruefung_stand(conn, doc, user_id, seiten),
         "test": test_stand(user_id, project["id"], doc["id"]),
+        # Professionelles Tagging freigeschaltet? (funktionen.TAGGING_PROFESSIONELL, 09.10.2026) — aus: Hinweis statt Knopf
+        "professionell": funktionen.an("TAGGING_PROFESSIONELL"),
         # Der Testlauf zeigt das reine PDFix-Tagging. Ist der KI-Weg „Struktur zuerst“ aktiv, taggt der echte Lauf
         # anders — dann gibt es keinen Testlauf, der etwas Falsches versprechen wuerde (Pruefbericht 25.09.2026).
         "test_moeglich": not pdf_struktur_tagging.aktiv(),
@@ -948,6 +1004,11 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
     uebers = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None
     bericht: dict = {}
     try:
+        # Sicherheitsnetz (09.10.2026): bei gesperrtem professionellem Tagging nie ein bezahlter Lauf, auch wenn ein
+        # Aufrufer die Wache am Eingang uebergangen hat — Grund in den Bericht, keine Credits.
+        _gesperrt = funktionen.tagging_professionell_gesperrt(uebers)
+        if _gesperrt:
+            raise pdf_tagging.TaggingFehler(_gesperrt)
         if pdf_struktur_tagging.aktiv():
             # Weg „Struktur zuerst“ (23.09.2026, Steves Go): KI-Zuordnung je Seite, Stilprofil, PDFix schreibt den Baum.
             def fortschritt(seite, seiten):
@@ -1014,6 +1075,11 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
             preis = 0
         if preis:
             _d.billing.verbuche(user_id, QUELLE, AKTION, credits=preis)
+        # Speicher-Hygiene (09.10.2026): nach erfolgreichem „Barrierefrei machen“ hat die Testfassung ausgedient
+        try:
+            _test_dateien_weg(test_pfade(user_id, project_id, document_id)[0], document_id)
+        except Exception:  # noqa: BLE001
+            log.warning("[tagging] Testfassung von Dokument %s nicht entfernt", document_id)
         log.info("[tagging] Dokument %s fertig: %s Seiten, %s Elemente, %s Bilder (%s uebernommen), %s Credits",
                  document_id, bericht.get("seiten"), (bericht.get("nachher") or {}).get("elemente"),
                  len(images), uebernommen, preis)
@@ -1047,6 +1113,9 @@ def lauf_synchron(project_id: int, document_id: int, user_id: int, sprache_vorga
     """Tagging EINES Dokuments synchron (Kette „Komplett barrierefrei machen“, 22.09.2026): dieselbe
     Buchfuehrung wie POST .../tagging (Status, Projekt 'extracting', Guthaben-Wache), dann _lauf_sync.
     Laeuft im Executor. Rueckgabe: {"status": "fertig"|"fehler", "grund": ..., "bericht": ...}."""
+    _gesperrt = funktionen.tagging_professionell_gesperrt(_d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None)
+    if _gesperrt:   # Kette und Chatbot (09.10.2026): bis zur Tagging-Lizenz gesperrt, nichts markiert, keine Credits
+        return {"status": "fehler", "grund": _gesperrt}
     conn = _d.get_db()
     try:
         project = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
@@ -1212,6 +1281,16 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.post("/api/projects/{project_id}/documents/{document_id}/tagging")
     async def starten(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):
+        # Professionelles Tagging bis zur Tagging-Lizenz sperrbar (09.10.2026): serverseitig, vor jeder Buchfuehrung
+        _gesperrt = funktionen.tagging_professionell_gesperrt(
+            _d.get_gettext(_d.resolve_ui_language(request)) if (_d.get_gettext and _d.resolve_ui_language) else None)
+        if _gesperrt:
+            conn = _d.get_db()
+            try:
+                _projekt_und_dokument(conn, project_id, document_id, user["id"])   # fremd/unbekannt bleibt 404
+            finally:
+                conn.close()
+            raise HTTPException(status_code=403, detail=_gesperrt)
         if not pdf_tagging.verfuegbar():
             raise HTTPException(status_code=503, detail="PDF-Tagging ist auf diesem Server nicht eingerichtet")
         conn = _d.get_db()
@@ -1275,6 +1354,25 @@ def build_router(deps: Deps) -> APIRouter:
             return {"verfuegbar": True, "hoerprobe": zeilen, "hoerprobe_eigene": list(range(min(pdf_struktur.EIGENE_KOPFZEILEN, len(zeilen))))}
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, lesen)
+
+    @router.get("/api/projects/{project_id}/documents/{document_id}/tagging/test/datei")
+    async def test_datei(project_id: int, document_id: int, user: dict = Depends(_user())):
+        """Testfassung herunterladen (09.10.2026, Steve nach Absprache mit Michael Karbe): kostenlos, mit dem Wasserzeichen
+        des PDFix-Testmodus, zum Pruefen beim Kunden (z. B. Adobe Reader). Nur Besitzer (404 fremd/unbekannt, wie die
+        anderen Endpunkte); der Pfad entsteht nur aus Zahlen (test_pfade), nie aus Anfragedaten. Kein Loeschen nach dem
+        Herunterladen — der Kunde soll sie ein zweites Mal holen koennen (Aufbewahrung TESTFASSUNG_AUFBEWAHRUNG_TAGE)."""
+        conn = _d.get_db()
+        try:
+            _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+        finally:
+            conn.close()
+        ordner, pdf, meta = test_pfade(user["id"], project_id, document_id)
+        st = test_stand(user["id"], project_id, document_id)
+        erlaubt = os.path.realpath(_d.results_dir) + os.sep
+        if not st.get("datei_verfuegbar") or not os.path.realpath(pdf).startswith(erlaubt) or not os.path.isfile(pdf):
+            raise HTTPException(status_code=404, detail="Für dieses Dokument gibt es keine Testfassung")
+        return FileResponse(pdf, filename=f"{_d.doc_label(doc)}_Testfassung_mit_Wasserzeichen.pdf", media_type="application/pdf",
+                            headers={"Cache-Control": "private, no-store"})
 
     def _ansicht_sync(project_id: int, user_id: int) -> dict:
         """Synchroner Teil der Route (Executor, eigene Verbindung im Worker-Thread; 05.10.2026: vorher lief die ganze

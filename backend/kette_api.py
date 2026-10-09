@@ -285,6 +285,9 @@ def starten_von_aussen(project_id: int, user_id: int, ui_lang: str) -> dict:
         conn.close()
     if plan["nichts_zu_tun"]:
         return {"gestartet": False, "grund": "nichts_zu_tun", "plan": plan}
+    # Professionelles Tagging gesperrt (funktionen.TAGGING_PROFESSIONELL, 09.10.2026): keine Kette, die taggen muesste
+    if plan["tagging"]["dokumente"] and funktionen.tagging_professionell_gesperrt():
+        raise HTTPException(status_code=403, detail=funktionen.tagging_professionell_gesperrt())
     if not plan["erlaubt"]:
         fehlend = max(0, plan["gesamt"] - int(plan["verfuegbar"] or 0))
         raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(
@@ -367,6 +370,11 @@ def build_router(deps: Deps) -> APIRouter:
             conn.close()
         if plan["nichts_zu_tun"]:
             return {"gestartet": False, "grund": "nichts_zu_tun", "plan": plan}
+        # Professionelles Tagging gesperrt (funktionen.TAGGING_PROFESSIONELL, 09.10.2026): keine Kette, die taggen muesste
+        _gesperrt = funktionen.tagging_professionell_gesperrt(
+            _d.get_gettext(_d.resolve_ui_language(request)) if (getattr(_d, "get_gettext", None) and _d.resolve_ui_language) else None)
+        if plan["tagging"]["dokumente"] and _gesperrt:
+            raise HTTPException(status_code=403, detail=_gesperrt)
         if not plan["erlaubt"]:
             fehlend = max(0, plan["gesamt"] - int(plan["verfuegbar"] or 0))
             raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(

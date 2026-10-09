@@ -4900,7 +4900,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // ist, und jeder Knopf traegt den Dateinamen (Pruefung 3, N6 — im Verlauf standen sonst gleichnamige Knoepfe)
             const formate = { csv: 'CSV', xlsx: 'Excel', json: 'JSON' };
             const beschriftung = { zip: (a.format && formate[a.format]) ? t('ZIP mit {f}-Dateien herunterladen', { f: formate[a.format] }) : t('ZIP herunterladen'),
-                                   csv: t('CSV herunterladen'), xlsx: t('Excel herunterladen'), json: t('JSON herunterladen') };
+                                   csv: t('CSV herunterladen'), xlsx: t('Excel herunterladen'), json: t('JSON herunterladen'),
+                                   // Testfassung aus „Testweise taggen“ (09.10.2026): derselbe Name wie der Knopf in der Karte
+                                   testfassung: t('Testfassung herunterladen (mit Wasserzeichen)') };
             dl.textContent = beschriftung[a.label] || (a.art === 'docx' ? t('Word herunterladen') : t('PDF herunterladen'));
             if (a.dateiname) {
                 const name = document.createElement('span');
