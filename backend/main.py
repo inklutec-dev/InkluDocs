@@ -8338,6 +8338,18 @@ def _exportable_alt_text(img) -> Optional[str]:
     return alt_text if alt_text.strip() else ""
 
 
+def _tagging_alt_text(img) -> str:
+    """Alt-Text, den das Tagging nach dem PDFix-Lauf in die Figure schreibt (09.10.2026, Steve: „Feld = Datei“) — der Text
+    des Exports (_exportable_alt_text): Feldtext; "" = kein Alt-Text (Eintrag entfernt); "dekorativ" = Kennzeichen wie im
+    Export. Einziger Unterschied: Wo der Export eine Figure UNANGETASTET laesst (None = technischer Fehlertext), steht nach
+    dem PDFix-Lauf ein von PDFix gesetzter Text — „unangetastet“ heisst hier deshalb: der Text der Kundendatei (original_alt),
+    sonst keiner. Nie None, damit jede Figure den Feldstand bekommt."""
+    text = _exportable_alt_text(img)
+    if text is None:
+        return img.get("original_alt") or ""
+    return text
+
+
 def _pdfix_lfnr_je_dokument(images: list) -> dict:
     """Laufende Nummer je Bild fuer den PDFix-Rueckweg — PRO DOKUMENT ab 1.
 
@@ -8684,18 +8696,27 @@ def _pdf_in_ablage(user_id: int, project: dict, unit: dict, quelle: str, dateina
         return None
 
 
-def _build_pdf_for_document(unit: dict, output_dir: str,
-                            custom_title: Optional[str] = None,
-                            creator: Optional[str] = None) -> tuple[str, dict]:
-    """Erzeugt die exportierte PDF fuer EIN Dokument (alle Alt-Texte
-    eingebettet). Gibt (output_path, header_info) zurueck. Header_info
-    enthaelt die gleichen Metriken wie der Single-Export davor.
-    custom_title: wird seit 11.09.2026 NICHT mehr als Dokumenttitel verwendet
-    (ein Dateiname ist kein Titel — Michael Karbe/Steve); der Parameter bleibt
-    fuer Aufrufer erhalten und wird ignoriert. Titel-Reihenfolge siehe
-    pdf_export.finalize_export_pdf."""
-    doc = unit["doc"]
-    images = unit["images"]
+class AltTexteNichtGeschrieben(Exception):
+    """Der Schreibweg fuer Alt-Texte ist gescheitert (methode: "pdfix" oder "fitz")."""
+
+    def __init__(self, methode: str, grund: str):
+        super().__init__(grund)
+        self.methode = methode
+
+
+def _alt_texte_einsetzen(doc: dict, images: list, pdf_in: str, pdf_out: str, work_dir: str,
+                         alt_text_fn=None) -> tuple[dict, list, set]:
+    """Schreibt die Alt-Texte der Bildzeilen `images` eines Dokuments aus pdf_in nach pdf_out — der EINE Schreibweg
+    mit der EINEN Zuordnung Bild -> Figure, herausgeloest aus _build_pdf_for_document (09.10.2026, Steve: „Feld = Datei“,
+    dieselbe Stelle auch fuer das Tagging, tagging_api.feld_gleich_datei). Unveraendert gegenueber dem Export bis 09.10.:
+      PDFix-Weg (doc.extraction_method == "pdfix"): laufende Nummer je Dokument (_pdfix_lfnr_je_dokument) -> Heines
+        Import-Skript (pdfix_roundtrip.import_alt_texts_pdfix: nur Alt setzen bzw. entfernen, kein Tagging);
+        "" = Alt-Eintrag entfernen (KEIN_ALT), "dekorativ" = Alt "" (Figure bleibt Figure), None = Figure unangetastet;
+      PyMuPDF-Weg (sonst): Bild-xref -> vorhandenes bzw. neues Figure (pdf_export.write_alt_texts_to_pdf);
+        "" = Bild nicht taggen.
+    alt_text_fn: Text je Bild, Vorgabe _exportable_alt_text (was der Kunde im Feld sieht).
+    Rueckgabe (info, geschriebene Texte, schonen); wirft AltTexteNichtGeschrieben."""
+    alt_text_fn = alt_text_fn or _exportable_alt_text
     extraction_method = doc.get("extraction_method") or "fitz"
 
     alt_texts = {}
@@ -8711,14 +8732,14 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     if extraction_method != "pdfix":
         try:
             from pdf_export import layout_vektorbilder
-            layout_xrefs = layout_vektorbilder(doc["original_path"], images)
+            layout_xrefs = layout_vektorbilder(pdf_in, images)
         except Exception as e:
             print(f"Layout-Pruefung uebersprungen: {e}")
     if layout_xrefs:
         info["layoutbereiche"] = len(layout_xrefs)
 
     for img in images:
-        alt_text = _exportable_alt_text(img)
+        alt_text = alt_text_fn(img)
         if img.get("xref") in layout_xrefs:
             continue
         # PyMuPDF-Weg: "" = Bild nicht taggen (die Quelle ist dort ungetaggt, es gibt nichts
@@ -8739,37 +8760,60 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
             "image_path": img.get("image_path"),
         })
 
-    os.makedirs(output_dir, exist_ok=True)
-    base = doc.get("original_filename") or f"dokument_{doc.get('doc_index', 1)}.pdf"
-    output_path = os.path.join(output_dir, f"inkludocs_{_safe_filename_component(base, base)}")
     schonen: set = set()  # xrefs der selbst geschriebenen Figure-Elemente (fitz-Weg), fuer finalize_export_pdf
 
     if extraction_method == "pdfix":
         try:
             import pdfix_roundtrip as _pdfix
             count = _pdfix.import_alt_texts_pdfix(
-                doc["original_path"], output_path,
-                alt_texts_by_lfnr, work_dir=output_dir)
+                pdf_in, pdf_out,
+                alt_texts_by_lfnr, work_dir=work_dir)
             info["method"] = "pdfix"
             info["tagged"] = count
             info["total"] = len(alt_texts_by_lfnr)
         except Exception as e:
+            raise AltTexteNichtGeschrieben("pdfix", str(e))
+        return info, list(alt_texts_by_lfnr.values()), schonen
+    try:
+        from pdf_export import write_alt_texts_to_pdf
+        result = write_alt_texts_to_pdf(pdf_in, pdf_out, alt_texts, image_metadata)
+    except Exception as e:
+        raise AltTexteNichtGeschrieben("fitz", str(e))
+    if isinstance(result, dict):
+        info["method"] = "fitz"
+        info["tagged"] = result.get("tagged_count", 0)
+        info["total"] = len(alt_texts)
+        # Die eigenen Figure-Elemente duerfen im Abschluss nie als „verwaist“ entfernt werden (14.09.2026).
+        schonen = set(result.get("figure_xrefs") or [])
+        warnings = result.get("warnings") or []
+        if warnings:
+            info["warnings"] = warnings
+    return info, list(alt_texts.values()), schonen
+
+
+def _build_pdf_for_document(unit: dict, output_dir: str,
+                            custom_title: Optional[str] = None,
+                            creator: Optional[str] = None) -> tuple[str, dict]:
+    """Erzeugt die exportierte PDF fuer EIN Dokument (alle Alt-Texte
+    eingebettet). Gibt (output_path, header_info) zurueck. Header_info
+    enthaelt die gleichen Metriken wie der Single-Export davor.
+    custom_title: wird seit 11.09.2026 NICHT mehr als Dokumenttitel verwendet
+    (ein Dateiname ist kein Titel — Michael Karbe/Steve); der Parameter bleibt
+    fuer Aufrufer erhalten und wird ignoriert. Titel-Reihenfolge siehe
+    pdf_export.finalize_export_pdf."""
+    doc = unit["doc"]
+    images = unit["images"]
+
+    os.makedirs(output_dir, exist_ok=True)
+    base = doc.get("original_filename") or f"dokument_{doc.get('doc_index', 1)}.pdf"
+    output_path = os.path.join(output_dir, f"inkludocs_{_safe_filename_component(base, base)}")
+    # Alt-Texte einsetzen: EIN Schreibweg fuer Export und Tagging (09.10.2026, „Feld = Datei“) — _alt_texte_einsetzen.
+    try:
+        info, quelle_texte, schonen = _alt_texte_einsetzen(doc, images, doc["original_path"], output_path, output_dir)
+    except AltTexteNichtGeschrieben as e:
+        if e.methode == "pdfix":
             raise HTTPException(status_code=500, detail=f"PDFix-Export fehlgeschlagen: {str(e)}")
-    else:
-        try:
-            from pdf_export import write_alt_texts_to_pdf
-            result = write_alt_texts_to_pdf(doc["original_path"], output_path, alt_texts, image_metadata)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
-        if isinstance(result, dict):
-            info["method"] = "fitz"
-            info["tagged"] = result.get("tagged_count", 0)
-            info["total"] = len(alt_texts)
-            # Die eigenen Figure-Elemente duerfen im Abschluss nie als „verwaist“ entfernt werden (14.09.2026).
-            schonen = set(result.get("figure_xrefs") or [])
-            warnings = result.get("warnings") or []
-            if warnings:
-                info["warnings"] = warnings
+        raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
 
     # Quickinfos (22.09.2026, Station „Quickinfos“ im PDF-Projekt): Hat das Dokument Formularfelder mit
     # Quickinfo, kommen sie in DIESELBE Datei — eine fertige PDF mit Struktur, Alt-Texten und Quickinfos.
@@ -8817,7 +8861,6 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     # Die Abnahme darf den Export nie scheitern lassen.
     try:
         from export_abnahme import abnahme_pdf, abnahme_loggen
-        quelle_texte = alt_texts_by_lfnr.values() if extraction_method == "pdfix" else alt_texts.values()
         geschrieben = [t for t in quelle_texte if t and t != "dekorativ"]
         info["abnahme"] = abnahme_pdf(output_path, doc.get("original_path"), geschrieben,
                                       erwartet_getaggt=info.get("tagged"))
@@ -10398,6 +10441,8 @@ app.include_router(tagging_api.build_router(tagging_api.Deps(
     tageslimit_wache=tageslimit_wache,
     tageslimit_text=tageslimit_text,
     word_ansicht=_word_dokument_ansicht,   # Word-Projekte: dieselbe Adresse /dokument-ansicht (30.09.2026)
+    alt_texte_einsetzen=_alt_texte_einsetzen,   # Feld = Datei (09.10.2026): Schreibweg des Exports auch nach dem Tagging
+    tagging_alt_text=_tagging_alt_text,
 )))
 
 # ─── KETTE „Komplett barrierefrei machen“ (22.09.2026): Tagging -> Alt-Texte -> Quickinfos in einem Lauf ─────

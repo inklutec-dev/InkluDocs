@@ -87,6 +87,9 @@ class Deps:
     tageslimit_wache: Callable = None          # (user) -> None | {"limit", "genutzt"}  (Automatische Pruefung = KI-Aktion)
     tageslimit_text: Callable = None           # (tl) -> str
     word_ansicht: Callable = None              # (project, user_id) -> dict: Word-Projekt in /dokument-ansicht (30.09.2026)
+    # Feld = Datei (09.10.2026): der Schreibweg des Exports und der Text je Bild (main._alt_texte_einsetzen, _tagging_alt_text)
+    alt_texte_einsetzen: Callable = None       # (doc, zeilen, pdf_in, pdf_out, work_dir, alt_text_fn) -> (info, texte, schonen)
+    tagging_alt_text: Callable = None          # (zeile) -> str
 
 
 _d: Optional[Deps] = None
@@ -230,10 +233,10 @@ async def testfassungen_schleife() -> None:
 
 
 def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe: str, ui_lang: str) -> None:
-    """Testlauf (im eigenen Executor): Originaldatei -> PDFix im Testmodus -> veraPDF -> Bericht. Schreibt NUR in den
-    eigenen Ordner _testweise; keine Credits, keine Aenderung an Dokument, Bildern oder Projektstatus. Alles steht im
-    try, damit die Sperren im finally IMMER freigegeben werden."""
-    ordner = ziel = meta = tmp = ""
+    """Testlauf (im eigenen Executor): Originaldatei -> PDFix im Testmodus -> Alt-Texte aus den Feldern einsetzen (Feld =
+    Datei, 09.10.2026) -> veraPDF -> Bericht. Schreibt NUR in den eigenen Ordner _testweise; keine Credits, keine Aenderung
+    an Dokument, Bildern oder Projektstatus. Alles steht im try, damit die Sperren im finally IMMER freigegeben werden."""
+    ordner = ziel = meta = tmp = tmp_alt = bilder_tmp = ""
     bericht: dict = {}
     try:
         ordner, ziel, meta = test_pfade(user_id, project_id, document_id)
@@ -253,6 +256,15 @@ def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe:
         if not roh.get("testmodus"):
             log.warning("[testweise] Dokument %s: Ergebnis traegt keinen Testmodus-Vermerk — verworfen", document_id)
             raise pdf_tagging.TaggingFehler("Der Testlauf konnte nicht im Testmodus ausgeführt werden")
+        # Feld = Datei (09.10.2026, Steve): auch die Testfassung traegt genau die Alt-Texte aus den Feldern — derselbe
+        # Schritt wie beim bezahlten Tagging (feld_gleich_datei), nur ohne Aenderung an den Bildzeilen. Die Bilder der
+        # Testfassung werden dafuer in einen Wegwerf-Ordner gelesen.
+        bilder_tmp = os.path.join(ordner, f"doc{int(document_id)}_bilder.tmp")
+        os.makedirs(bilder_tmp, exist_ok=True)
+        images = _d.extract_images_from_pdf(tmp, bilder_tmp, project_id)
+        tmp_alt = tmp[:-len(".tmp.pdf")] + ".alt.tmp.pdf"
+        _zeilen, alt_info = feld_gleich_datei(tmp, tmp_alt, images, _bildzeilen(document_id), baum_von_pdfix(roh))
+        os.replace(tmp_alt, tmp)
         v = pdf_tagging.verapdf(tmp, uebers)
         if not _dokument_gibt_es(document_id):   # waehrend des Laufs geloescht: nichts liegen lassen
             raise _DokumentWeg()
@@ -263,6 +275,7 @@ def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe:
             "verapdf": ({"zusammenfassung": v.get("zusammenfassung", ""), "bestanden": v.get("bestanden")} if v else None),
             # schon getaggte Quelle: vorhandene Tags ersetzt (Feedback 20261001 - 1, Punkt 1) — vorher/nachher zum Vergleich
             "tags_ersetzt": bool(roh.get("tags_ersetzt")), "vorher_elemente": (roh.get("vorher") or {}).get("elemente"),
+            "alt_texte": alt_info,   # Feld = Datei (09.10.2026)
         }
         log.info("[testweise] Dokument %s: %s Seiten, %s Elemente, %ss", document_id, bericht["seiten"],
                  bericht["struktur"].get("elemente"), bericht["dauer_s"])
@@ -274,11 +287,15 @@ def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe:
             log.exception("[testweise] Dokument %s fehlgeschlagen", document_id)
         bericht = {"fehler": (str(e) if bekannt else "Unerwarteter Fehler beim Testlauf"), "zeit": time.strftime("%Y-%m-%d %H:%M:%S")}
     finally:
-        try:
-            if tmp and os.path.isfile(tmp):
-                os.remove(tmp)
-        except OSError:
-            pass
+        for p in (tmp, tmp_alt):
+            try:
+                if p and os.path.isfile(p):
+                    os.remove(p)
+            except OSError:
+                pass
+        if bilder_tmp:
+            import shutil
+            shutil.rmtree(bilder_tmp, ignore_errors=True)
         try:
             if bericht is None or not _dokument_gibt_es(document_id):
                 if ordner:
@@ -874,9 +891,23 @@ def _iou(a: tuple, b: tuple) -> float:
     return inter / union if union > 0 else 0.0
 
 
+# Was eine neue Bildzeile von ihrer alten uebernimmt — das ganze Feld (09.10.2026, Steve: „Feld = Datei“). original_alt seit
+# 09.10.2026: der mitgebrachte Text der Kundendatei bleibt der mitgebrachte Text, auch wenn PDFix beim Neu-Taggen die
+# Bildunterschrift als /Alt gesetzt hat (vorher stand danach die Unterschrift im Feld, im Testmodus mit Sternchen). Er ist
+# zugleich der Massstab der Abrechnung (main._alt_text_bearbeitet): unveraendert Mitgebrachtes kostet nichts.
 _UEBERNAHME_SPALTEN = ("alt_text", "alt_text_edited", "langbeschreibung", "image_type", "status", "konfidenz",
-                       "feedback", "needs_review", "gen_language", "context_mode", "alt_text_vorher", "display_name")
+                       "feedback", "needs_review", "gen_language", "context_mode", "alt_text_vorher", "display_name",
+                       "original_alt")
+# Werte einer frisch angelegten Bildzeile (Vorgaben der Tabelle images, _bilder_uebernehmen) — fuer _als_zeilen
+_NEUE_ZEILE = {"alt_text": "", "alt_text_edited": None, "langbeschreibung": "", "image_type": "unknown", "status": "pending",
+               "konfidenz": "mittel", "feedback": "", "needs_review": 0, "gen_language": None, "context_mode": "",
+               "alt_text_vorher": None, "display_name": None}
 HASH_TOLERANZ = 12   # Hamming-Abstand der Bild-Hashes (64 Bit), bis zu dem zwei Renderings als dasselbe Bild gelten
+# Rest je Seite (09.10.2026): Im Testmodus legt PDFix sein Logo an zufaelliger Stelle ueber die Seite; trifft es ein Bild,
+# weicht dessen Rendering ab (gemessen: Abstand 13 statt 7 zum selben Bild; fremde Bilder 21 bis 40). Was nach den sicheren
+# Paaren auf einer Seite uebrig bleibt, wird deshalb mit dieser weiteren Grenze zugeordnet — nur Reste, nie gegen ein Bild,
+# das schon ein sicheres Paar hat, und nie zwischen zwei Bildern mit bekannter, verschiedener Lage auf der Seite.
+HASH_TOLERANZ_REST = 24
 
 
 def _dhash(pfad: str, groesse: int = 8) -> Optional[int]:
@@ -911,30 +942,30 @@ def _echte_bbox(row: dict) -> bool:
     return werte[2] > werte[0] and werte[3] > werte[1]
 
 
-def alt_texte_uebernehmen(conn, document_id: int, alte_bilder: list[dict]) -> int:
-    """Alt-Texte der alten Bildzeilen auf die neu extrahierten Bilder desselben Dokuments uebertragen.
-    Ein altes und ein neues Bild gelten als dasselbe, wenn sie auf derselben Seite liegen und
+def bilder_zuordnen(neue: list[dict], alte: list[dict]) -> list[tuple]:
+    """Welches neu extrahierte Bild ist welches alte Bild desselben Dokuments? Zwei Bilder gelten als dasselbe, wenn sie
+    auf derselben Seite liegen und
       1. beide Seitenkoordinaten haben und sich zu >= BBOX_UEBERLAPPUNG ueberlappen (fitz -> fitz), oder
       2. ihre Bild-Hashes hoechstens HASH_TOLERANZ auseinanderliegen (fitz -> PDFix, PDFix -> PDFix), oder
-      3. es auf der Seite genau ein altes Bild mit Text und genau ein neues Bild gibt.
-    Jedes alte Bild wird hoechstens einmal verwendet. Rueckgabe: Anzahl uebernommener Bilder."""
-    neue = [dict(r) for r in conn.execute(
-        "SELECT id, page_number, bbox_x0, bbox_y0, bbox_x1, bbox_y1, width, height, image_path FROM images WHERE document_id = ?",
-        (document_id,)).fetchall()]
-    kandidaten = [a for a in alte_bilder if (a.get("alt_text") or a.get("alt_text_edited") or a.get("status") == "done")]
-    if not neue or not kandidaten:
-        return 0
+      3. es auf der Seite genau ein altes und genau ein neues Bild gibt.
+    Jedes alte Bild wird hoechstens einmal verwendet. Was danach auf einer Seite uebrig bleibt, wird ueber den Bild-Hash mit
+    der weiteren Grenze HASH_TOLERANZ_REST zugeordnet (09.10.2026, Logo des Testmodus). Kandidaten sind seit 09.10.2026 ALLE alten Bilder (Steve: „Feld =
+    Datei“) — auch ein nie angefasstes mit mitgebrachtem Text und ein bewusst geleertes ('' in alt_text_edited, status
+    pending); vorher nur Bilder mit alt_text, alt_text_edited oder status done, so gingen mitgebrachte Texte und das Leeren
+    beim Neu-Taggen verloren. Rueckgabe [(neu_id, alt_id)]."""
+    if not neue or not alte:
+        return []
     hashes: dict = {}
 
-    def h(row):
-        k = ("n" if row in neue else "a", row["id"])
+    def h(art, row):
+        k = (art, row["id"])
         if k not in hashes:
             hashes[k] = _dhash(row.get("image_path") or "") if row.get("image_path") else None
         return hashes[k]
 
     paare = []   # (score, neu_id, alt_id) — kleiner ist besser
     for neu in neue:
-        for alt in kandidaten:
+        for alt in alte:
             if alt.get("page_number") != neu.get("page_number"):
                 continue
             if _echte_bbox(neu) and _echte_bbox(alt):
@@ -943,7 +974,7 @@ def alt_texte_uebernehmen(conn, document_id: int, alte_bilder: list[dict]) -> in
                 if iou >= BBOX_UEBERLAPPUNG:
                     paare.append((1.0 - iou, neu["id"], alt["id"]))
                     continue
-            hn, ha = h(neu), h(alt)
+            hn, ha = h("n", neu), h("a", alt)
             if hn is not None and ha is not None:
                 abstand = _hamming(hn, ha)
                 if abstand <= HASH_TOLERANZ:
@@ -953,7 +984,7 @@ def alt_texte_uebernehmen(conn, document_id: int, alte_bilder: list[dict]) -> in
     je_seite_alt: dict = {}
     for n in neue:
         je_seite_neu.setdefault(n.get("page_number"), []).append(n)
-    for a in kandidaten:
+    for a in alte:
         je_seite_alt.setdefault(a.get("page_number"), []).append(a)
     for seite, ns in je_seite_neu.items():
         alts = je_seite_alt.get(seite) or []
@@ -962,19 +993,152 @@ def alt_texte_uebernehmen(conn, document_id: int, alte_bilder: list[dict]) -> in
     paare.sort(key=lambda p: p[0])
     benutzt_neu: set = set()
     benutzt_alt: set = set()
-    alt_je_id = {a["id"]: a for a in kandidaten}
-    n = 0
+    out = []
     for _score, neu_id, alt_id in paare:
         if neu_id in benutzt_neu or alt_id in benutzt_alt:
             continue
-        best = alt_je_id[alt_id]
-        werte = [best.get(s) for s in _UEBERNAHME_SPALTEN]
-        conn.execute("UPDATE images SET " + ", ".join(f"{s} = ?" for s in _UEBERNAHME_SPALTEN) + " WHERE id = ?",
-                     (*werte, neu_id))
         benutzt_neu.add(neu_id)
         benutzt_alt.add(alt_id)
-        n += 1
+        out.append((neu_id, alt_id))
+    # Rest je Seite (09.10.2026): uebrige Bilder derselben Seite ueber den Bild-Hash mit der weiteren Grenze
+    rest = []
+    for neu in neue:
+        if neu["id"] in benutzt_neu:
+            continue
+        for alt in alte:
+            if alt["id"] in benutzt_alt or alt.get("page_number") != neu.get("page_number"):
+                continue
+            if _echte_bbox(neu) and _echte_bbox(alt):
+                continue   # beide Lagen bekannt und nicht deckungsgleich: verschiedene Bilder
+            hn, ha = h("n", neu), h("a", alt)
+            if hn is not None and ha is not None:
+                abstand = _hamming(hn, ha)
+                if abstand <= HASH_TOLERANZ_REST:
+                    rest.append((abstand, neu["id"], alt["id"]))
+    rest.sort(key=lambda p: p[0])
+    for _score, neu_id, alt_id in rest:
+        if neu_id in benutzt_neu or alt_id in benutzt_alt:
+            continue
+        benutzt_neu.add(neu_id)
+        benutzt_alt.add(alt_id)
+        out.append((neu_id, alt_id))
+    return out
+
+
+def felder_zuordnen(neue: list[dict], alte: list[dict], baum_neu: bool = True) -> int:
+    """Traegt in die neuen Bildzeilen (in place) das Feld der zugehoerigen alten Zeile ein (_UEBERNAHME_SPALTEN, auch
+    original_alt). Ein neues Bild OHNE alte Entsprechung hat kein Feld, das der Kunde gesehen hat: Hat der Lauf den
+    Strukturbaum neu gebaut (baum_neu, siehe baum_von_pdfix), stammt sein /Alt von PDFix (Bildunterschrift oder Nachbartext,
+    im Testmodus mit Sternchen) und ist weder mitgebracht noch in InkluDocs geschrieben — dann bleibt das Feld leer
+    (original_alt ''), und die Datei bekommt dort keinen Alt-Text. Rueckgabe: Anzahl zugeordneter Bilder."""
+    alt_je_id = {a["id"]: a for a in alte}
+    neu_je_id = {n["id"]: n for n in neue}
+    paare = bilder_zuordnen(neue, alte)
+    for neu_id, alt_id in paare:
+        alt = alt_je_id[alt_id]
+        for spalte in _UEBERNAHME_SPALTEN:
+            neu_je_id[neu_id][spalte] = alt.get(spalte)
+    if baum_neu:
+        getroffen = {neu_id for neu_id, _a in paare}
+        for n in neue:
+            if n["id"] not in getroffen:
+                n["original_alt"] = ""
+    return len(paare)
+
+
+def _zeilen_schreiben(conn, zeilen: list[dict], ids: Optional[list] = None) -> None:
+    for i, z in enumerate(zeilen):
+        conn.execute("UPDATE images SET " + ", ".join(f"{s} = ?" for s in _UEBERNAHME_SPALTEN) + " WHERE id = ?",
+                     (*[z.get(s) for s in _UEBERNAHME_SPALTEN], ids[i] if ids is not None else z["id"]))
+
+
+def alt_texte_uebernehmen(conn, document_id: int, alte_bilder: list[dict], baum_neu: bool = False) -> int:
+    """Felder der alten Bildzeilen auf die schon eingetragenen neuen Bildzeilen desselben Dokuments uebertragen
+    (felder_zuordnen in der Datenbank). Rueckgabe: Anzahl uebernommener Bilder."""
+    neue = [dict(r) for r in conn.execute("SELECT * FROM images WHERE document_id = ? ORDER BY id", (document_id,)).fetchall()]
+    n = felder_zuordnen(neue, alte_bilder, baum_neu)
+    _zeilen_schreiben(conn, neue)
     return n
+
+
+# ---------------------------------------------------------------------------
+# Alt-Texte: Feld = Datei (09.10.2026, Steve)
+# ---------------------------------------------------------------------------
+# In die getaggte Datei kommt genau das an Alt-Texten, was in den Feldern von InkluDocs steht: leer bleibt leer, von Hand
+# Geschriebenes, Generiertes und Mitgebrachtes steht drin — beim „Testweise taggen“ wie beim bezahlten Tagging. PDFix setzt
+# beim Taggen eigene /Alt (Bildunterschrift, im Testmodus mit Sternchen); nach dem Lauf liest InkluDocs die Bilder der neuen
+# Datei, ordnet sie den Feldern zu (felder_zuordnen) und schreibt die Feldtexte mit dem Schreibweg des Exports
+# (main._alt_texte_einsetzen, dieselbe Zuordnung Bild -> Figure) in die Figures. Bewusst geleert und dekorativ wie im Export.
+
+def baum_von_pdfix(bericht: dict) -> bool:
+    """Hat der Lauf den Strukturbaum neu gebaut (ungetaggte Quelle, „Neu taggen“ mit Ersetzen, Weg „Struktur zuerst“)? Dann
+    stammt jedes /Alt der Ausgabe vom Lauf, nicht vom Kunden. Nur wenn PDFix vorhandene Tags behalten hat („Preserve
+    Existing Tags“), sind die /Alt der Ausgabe die der Kundendatei."""
+    vorher = int(((bericht.get("vorher") or {}).get("elemente")) or 0)
+    return bool(bericht.get("tags_ersetzt")) or bericht.get("weg") == "struktur" or vorher == 0
+
+
+def _als_zeilen(images: list) -> list[dict]:
+    """Extraktionsergebnis (extract_images_from_pdf) -> Bildzeilen, wie _bilder_uebernehmen sie anlegt, in derselben
+    Reihenfolge; id und image_index = Position ab 1 (daraus folgt im Export dieselbe laufende Nummer je Figure)."""
+    zeilen = []
+    for i, img in enumerate(images, start=1):
+        bbox = img.get("bbox") or (None, None, None, None)
+        z = dict(_NEUE_ZEILE)
+        z.update({"id": i, "image_index": i, "page_number": img.get("page_number"), "image_path": img.get("image_path"),
+                  "width": img.get("width"), "height": img.get("height"), "xref": img.get("xref"),
+                  "bbox_x0": bbox[0], "bbox_y0": bbox[1], "bbox_x1": bbox[2], "bbox_y1": bbox[3],
+                  "is_vector": 1 if img.get("is_vector") else 0,
+                  "original_alt": ("dekorativ" if img.get("decorative_hint") else img.get("original_alt", ""))})
+        zeilen.append(z)
+    return zeilen
+
+
+def _bildzeilen(document_id: int, conn=None) -> list[dict]:
+    eigene = conn is None
+    conn = conn or _d.get_db()
+    try:
+        return [dict(r) for r in conn.execute("SELECT * FROM images WHERE document_id = ? ORDER BY image_index, id",
+                                              (document_id,)).fetchall()]
+    finally:
+        if eigene:
+            conn.close()
+
+
+def _felder_stand(zeilen: list[dict]) -> list:
+    """Fingerabdruck der Felder (fuer: hat jemand waehrend des Laufs ein Feld geaendert?)."""
+    return sorted((z.get("id"), *[z.get(s) for s in _UEBERNAHME_SPALTEN]) for z in zeilen)
+
+
+def feld_gleich_datei(pdf_in: str, pdf_out: str, images: list, alte: list[dict], baum_neu: bool) -> tuple[list, dict]:
+    """Nach dem PDFix-Lauf: Felder der neu gelesenen Bilder bestimmen (felder_zuordnen) und genau diese Texte mit dem
+    Schreibweg des Exports (main._alt_texte_einsetzen, Text je Bild main._tagging_alt_text) aus pdf_in nach pdf_out
+    schreiben. Ohne Bilder wird pdf_in unveraendert kopiert. Rueckgabe (zeilen, info); wirft TaggingFehler."""
+    import shutil
+    import tempfile
+    if os.path.isfile(pdf_out):
+        os.remove(pdf_out)
+    zeilen = _als_zeilen(images)
+    n = felder_zuordnen(zeilen, alte, baum_neu)
+    info = {"bilder": len(zeilen), "zugeordnet": n, "geschrieben": 0, "methode": ""}
+    if not zeilen:
+        shutil.copyfile(pdf_in, pdf_out)
+        return zeilen, info
+    methode = "pdfix" if any(i.get("source") == "pdfix" for i in images) else "fitz"
+    try:
+        with tempfile.TemporaryDirectory(prefix="altfeld-", dir=os.path.dirname(pdf_out) or None) as arbeit:
+            einsatz, _texte, _schonen = _d.alt_texte_einsetzen({"extraction_method": methode}, zeilen, pdf_in, pdf_out,
+                                                               arbeit, alt_text_fn=_d.tagging_alt_text)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[tagging] Alt-Texte nicht in die Datei geschrieben (%s): %s", methode, e)
+        try:
+            if os.path.isfile(pdf_out):
+                os.remove(pdf_out)
+        except OSError:
+            pass
+        raise pdf_tagging.TaggingFehler("Die Alt-Texte konnten nicht in die getaggte Datei geschrieben werden")
+    info.update({"geschrieben": int(einsatz.get("tagged") or 0), "methode": methode})
+    return zeilen, info
 
 
 def _ziel_pfad(doc: dict) -> str:
@@ -990,8 +1154,9 @@ def _ziel_pfad(doc: dict) -> str:
 @ki_kosten.mit_kunde   # KI-Kosten (05.10.2026)
 def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, sprache_vorgabe: str,
                status_vorher: str, ui_lang: str) -> None:
-    """Der eigentliche Lauf (im Executor): taggen -> pruefen -> Bilder neu extrahieren -> Alt-Texte
-    uebernehmen -> Dokument umhaengen -> Credits. Jeder Fehler landet als Grund im Bericht."""
+    """Der eigentliche Lauf (im Executor): taggen -> Bilder neu extrahieren -> Felder zuordnen und ihre Alt-Texte in die
+    Datei schreiben (Feld = Datei, 09.10.2026) -> pruefen -> Dokument umhaengen -> Credits. Jeder Fehler landet als Grund
+    im Bericht."""
     conn = _d.get_db()
     try:
         doc = dict(conn.execute("SELECT * FROM documents WHERE id = ?", (document_id,)).fetchone())
@@ -1001,6 +1166,7 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
     ersetzen = quelle_getaggt(doc)   # schon getaggte Quelle: vorhandene Tags ersetzen (Feedback 20261001 - 1, Punkt 1)
     ziel = _ziel_pfad(doc)
     ziel_tmp = ziel + f".{int(time.time())}.tmp.pdf"
+    ziel_alt = ziel_tmp[:-len(".tmp.pdf")] + ".alt.tmp.pdf"   # PDFix-Ausgabe + Feldtexte (Feld = Datei, 09.10.2026)
     uebers = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None
     bericht: dict = {}
     try:
@@ -1020,43 +1186,64 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
         else:
             bericht = pdf_tagging.taggen(quelle, ziel_tmp, sprache_vorgabe, arbeitsordner=os.path.dirname(ziel),
                                          tags_ersetzen=ersetzen)
-        bericht["verapdf"] = pdf_tagging.verapdf(ziel_tmp, uebers)
         # Bilder des Dokuments neu extrahieren — jetzt ueber den Strukturbaum.
         img_dir = os.path.join(_d.results_dir, str(user_id), str(project_id), f"doc{doc.get('doc_index') or 1}")
         os.makedirs(img_dir, exist_ok=True)
         images = _d.extract_images_from_pdf(ziel_tmp, img_dir, project_id)
-        os.replace(ziel_tmp, ziel)
-        conn = _d.get_db()
-        try:
-            alte = [dict(r) for r in conn.execute("SELECT * FROM images WHERE document_id = ?", (document_id,)).fetchall()]
-            # Eine Transaktion fuer Loeschen, Neu-Eintragen, Uebernahme und Umhaengen (Muster billing.verbuche):
-            # isolation_level=None, sonst setzt das sqlite3-Modul selbst ein BEGIN ab.
-            conn.isolation_level = None
-            conn.execute("BEGIN IMMEDIATE")
-            conn.execute("DELETE FROM images WHERE document_id = ? AND project_id = ?", (document_id, project_id))
-            methode = _d.bilder_uebernehmen(conn, project_id, document_id, images, "pdf", ziel)
-            uebernommen = alt_texte_uebernehmen(conn, document_id, alte)
-            projekt_texte.texte_aufraeumen(conn, project_id)   # Texte der alten Bildzeilen ohne Verweis (05.10.2026)
-            bericht["bilder"] = {"vorher": len(alte), "nachher": len(images), "uebernommen": uebernommen, "methode": methode}
-            conn.execute(
-                "UPDATE documents SET original_path = ?, roh_path = COALESCE(NULLIF(roh_path, ''), ?), getaggt = 1, "
-                "tagging_status = ?, tagging_bericht = ?, korrektur_bericht = '', pruefung_status = '', pruefung_bericht = '' "
-                "WHERE id = ?",   # neue Datei: alte Pruef-/Korrekturstaende gelten nicht mehr (Pruefbericht Befund 9)
-                (ziel, quelle, STATUS_FERTIG, json.dumps(bericht, ensure_ascii=False), document_id))
-            gesamt = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)).fetchone()[0]
-            fertig = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'", (project_id,)).fetchone()[0]
-            conn.execute("UPDATE projects SET status = 'extracted', total_images = ?, processed_images = ?, "
-                         "extraction_method = COALESCE((SELECT extraction_method FROM documents WHERE project_id = projects.id ORDER BY doc_index LIMIT 1), extraction_method) WHERE id = ?",
-                         (gesamt, fertig, project_id))
-            conn.execute("COMMIT")
-        except Exception:
+        baum_neu = baum_von_pdfix(bericht)
+        for versuch in (1, 2, 3):
+            # Feld = Datei (09.10.2026): die Felder der alten Bildzeilen den neuen Bildern zuordnen und genau diese Texte in
+            # die Figures schreiben (feld_gleich_datei). Die Datenbank bekommt dieselben Zeilen (_zeilen_schreiben) — was im
+            # Feld steht, steht in der Datei.
+            alte = _bildzeilen(document_id)
+            zeilen, bericht["alt_texte"] = feld_gleich_datei(ziel_tmp, ziel_alt, images, alte, baum_neu)
+            bericht["verapdf"] = pdf_tagging.verapdf(ziel_alt, uebers)
+            conn = _d.get_db()
             try:
-                conn.execute("ROLLBACK")
-            except Exception:  # noqa: BLE001
-                pass
-            raise
-        finally:
-            conn.close()
+                # Eine Transaktion fuer Loeschen, Neu-Eintragen, Uebernahme und Umhaengen (Muster billing.verbuche):
+                # isolation_level=None, sonst setzt das sqlite3-Modul selbst ein BEGIN ab.
+                conn.isolation_level = None
+                conn.execute("BEGIN IMMEDIATE")
+                if versuch < 3 and _felder_stand(_bildzeilen(document_id, conn)) != _felder_stand(alte):
+                    # Waehrend des Schreibens hat jemand ein Feld geaendert: mit dem neuen Stand noch einmal schreiben.
+                    conn.execute("ROLLBACK")
+                    log.info("[tagging] Dokument %s: Feld waehrend des Laufs geaendert, Alt-Texte neu geschrieben", document_id)
+                    continue
+                os.replace(ziel_alt, ziel)
+                conn.execute("DELETE FROM images WHERE document_id = ? AND project_id = ?", (document_id, project_id))
+                methode = _d.bilder_uebernehmen(conn, project_id, document_id, images, "pdf", ziel)
+                neue_ids = [r[0] for r in conn.execute(
+                    "SELECT id FROM images WHERE document_id = ? ORDER BY image_index, id", (document_id,)).fetchall()]
+                if len(neue_ids) != len(zeilen):
+                    raise RuntimeError("Bildzeilen und Datei passen nicht zusammen")
+                _zeilen_schreiben(conn, zeilen, neue_ids)
+                uebernommen = bericht["alt_texte"]["zugeordnet"]
+                projekt_texte.texte_aufraeumen(conn, project_id)   # Texte der alten Bildzeilen ohne Verweis (05.10.2026)
+                bericht["bilder"] = {"vorher": len(alte), "nachher": len(images), "uebernommen": uebernommen, "methode": methode}
+                conn.execute(
+                    "UPDATE documents SET original_path = ?, roh_path = COALESCE(NULLIF(roh_path, ''), ?), getaggt = 1, "
+                    "tagging_status = ?, tagging_bericht = ?, korrektur_bericht = '', pruefung_status = '', pruefung_bericht = '' "
+                    "WHERE id = ?",   # neue Datei: alte Pruef-/Korrekturstaende gelten nicht mehr (Pruefbericht Befund 9)
+                    (ziel, quelle, STATUS_FERTIG, json.dumps(bericht, ensure_ascii=False), document_id))
+                gesamt = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)).fetchone()[0]
+                fertig = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'", (project_id,)).fetchone()[0]
+                conn.execute("UPDATE projects SET status = 'extracted', total_images = ?, processed_images = ?, "
+                             "extraction_method = COALESCE((SELECT extraction_method FROM documents WHERE project_id = projects.id ORDER BY doc_index LIMIT 1), extraction_method) WHERE id = ?",
+                             (gesamt, fertig, project_id))
+                conn.execute("COMMIT")
+            except Exception:
+                try:
+                    conn.execute("ROLLBACK")
+                except Exception:  # noqa: BLE001
+                    pass
+                raise
+            finally:
+                conn.close()
+            break
+        try:
+            os.remove(ziel_tmp)   # PDFix-Ausgabe ohne unsere Alt-Texte
+        except OSError:
+            pass
         # Alte Bilddateien, die kein neuer Eintrag mehr nutzt, aufraeumen (nur unterhalb des Bildordners).
         neue_pfade = {os.path.realpath(i.get("image_path") or "") for i in images}
         for a in alte:
@@ -1089,7 +1276,7 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
             log.exception("[tagging] Dokument %s fehlgeschlagen", document_id)
         else:
             log.warning("[tagging] Dokument %s fehlgeschlagen: %s", document_id, grund)
-        for p in (ziel_tmp,):
+        for p in (ziel_tmp, ziel_alt):
             try:
                 if os.path.isfile(p):
                     os.remove(p)

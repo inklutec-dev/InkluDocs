@@ -43,7 +43,10 @@ Skript), PDFix (SDK und eingebaute Aktion). Backend, Endpunkte, Oberfläche (Ans
    „Decorative“ hinein. PDFix schaut das Bild nie an. Diese Schritte entfallen, ebenso der
    „Decorative“-Rückfall für Anmerkungen (Set Annotation Contents, Auto-generated). Die
    Alt-Texte schreibt InkluDocs über die Ansicht „Alt-Texte“ und den Export. „Set Alt“ für
-   Formularfelder (aus dem zugehörigen Inhalt) bleibt.
+   Formularfelder (aus dem zugehörigen Inhalt) bleibt. Achtung (Befund 09.10.2026): Baut PDFix den Baum
+   neu (ungetaggte Quelle oder „Neu taggen“ mit Ersetzen), setzt schon „AutoTag“ selbst die Bildunterschrift
+   bzw. den Nachbarabsatz als /Alt, im Testmodus mit Sternchen. Deshalb schreibt InkluDocs nach jedem Lauf die
+   Feldtexte selbst in die Figures — siehe „Alt-Texte: Feld = Datei“ am Ende.
 3. Alles andere bleibt: Aufräumen, Tags hinzufügen, Tabellen und Überschriften reparieren,
    Titel (Title-Tag → H1 → Info → Dateiname, nie überschreiben), Lesezeichen aus H1–H3,
    PDF/UA-1-Kennung.
@@ -85,17 +88,21 @@ Konten, also keinen Aufruf.
    schreibt erst eine `.tmp.pdf`.
 3. `pdf_tagging.taggen`: Sprache bestimmen, Konfiguration schreiben, Skript ausführen, Ergebnis
    prüfen (Strukturbaum vorhanden), Tag-Statistik vorher/nachher.
-4. veraPDF (PDF/UA-1) über den Konverter-Dienst, in Klartext wie beim Word-Weg. Ausfall des
-   Prüfdienstes ist kein Fehler.
-5. Bilder des Dokuments **neu extrahieren** (jetzt über den Strukturbaum, `extraction_method`
-   pdfix), in **einer Transaktion**: alte Bildzeilen löschen, neue eintragen
-   (`main._bilder_uebernehmen`, derselbe Code wie beim Upload), vorhandene Alt-Texte übernehmen
-   (`alt_texte_uebernehmen`: gleiche Seite UND Rechteck-Überlappung ≥ 0,5 bei Seitenkoordinaten,
-   sonst Bild-Hash dHash mit Abstand ≤ 12 — der PDFix-Weg speichert als bbox nur die Bildmaße —,
-   sonst Eindeutigkeit „ein altes Bild mit Text, ein neues Bild auf der Seite“; übernommen werden
-   Alt-Text, Handtext, Langbeschreibung, Bildtyp, Status, Bewertung), Dokument umhängen (`original_path` →
-   getaggte Datei, `roh_path` bleibt/wird gesetzt, `getaggt = 1`, Bericht), Projekt auf
-   `extracted` mit neuen Zählern.
+4. Bilder des Dokuments **neu extrahieren** (jetzt über den Strukturbaum, `extraction_method`
+   pdfix), die Felder der alten Bildzeilen zuordnen (`felder_zuordnen`/`bilder_zuordnen`: gleiche Seite
+   UND Rechteck-Überlappung ≥ 0,5 bei Seitenkoordinaten, sonst Bild-Hash dHash mit Abstand ≤ 12 — der
+   PDFix-Weg speichert als bbox nur die Bildmaße —, sonst Eindeutigkeit „ein altes, ein neues Bild auf der
+   Seite“, zuletzt Reste je Seite mit Abstand ≤ 24; übernommen wird das ganze Feld: Alt-Text, Handtext,
+   Langbeschreibung, Bildtyp, Status, Bewertung und seit 09.10.2026 der mitgebrachte Text `original_alt`)
+   und **genau diese Feldtexte in die Figures schreiben** (`feld_gleich_datei`, Schreibweg des Exports,
+   siehe „Alt-Texte: Feld = Datei“).
+5. veraPDF (PDF/UA-1) über den Konverter-Dienst auf der fertigen Datei, in Klartext wie beim Word-Weg.
+   Ausfall des Prüfdienstes ist kein Fehler. Dann in **einer Transaktion**: alte Bildzeilen löschen, neue
+   eintragen (`main._bilder_uebernehmen`, derselbe Code wie beim Upload) und mit den zugeordneten Feldern
+   füllen (`_zeilen_schreiben`, dieselben Zeilen, die in die Datei geschrieben wurden), Dokument umhängen
+   (`original_path` → getaggte Datei, `roh_path` bleibt/wird gesetzt, `getaggt = 1`, Bericht), Projekt auf
+   `extracted` mit neuen Zählern. Hat jemand während des Schreibens ein Feld geändert, wird mit dem neuen
+   Stand noch einmal geschrieben.
 6. Alte Bilddateien, die kein neuer Eintrag nutzt, werden gelöscht. Credits werden **nur jetzt**
    verbucht (`usage_events` Quelle `tagging`, Aktion `pdf_tagging`, Preis je Seite).
 7. Fehler: Dokument `fehler` mit nutzertauglichem Grund (nie Pfade oder Tracebacks), Projekt
@@ -752,3 +759,51 @@ kostenlos testweise taggen und die Testfassung herunterladen.“ „Testweise ta
   Ohne Eintrag in der environment-Liste kommt ein Wert aus einer .env-Datei nicht im Container an.
 
 Tests: `tests/test_testfassung_download.py` (Download, Rechte, Dateiname, Schalter an/aus, keine Credits, Hygiene, 30 Tage).
+
+## Alt-Texte: Feld = Datei (09.10.2026, Steve)
+
+**Regel:** In die getaggte Datei kommt genau das an Alt-Texten, was in den Eingabefeldern von InkluDocs steht. Feld leer →
+Datei ohne Alt-Text. Von Hand eingetragen → steht drin. Über uns generiert → steht drin. Mitgebracht und behalten → genau dieser
+Text steht wieder drin. Das gilt für „Testweise taggen“ (kostenlos, Wasserzeichen), für das bezahlte „Barrierefrei machen“ bzw.
+„Neu taggen“ (auch aus Kette und Chatbot) und für Herunterladen und Export. Es liegt in der Hand des Kunden.
+
+**Befund vorher (09.10.2026, Staging, fiktive Gartenfest-PDF mit 7 Bildern):** PDFix-AutoTag setzte beim Neu-Taggen die
+Bildunterschrift als /Alt (Testmodus: Sternchen, z. B. „So*mer“), ein vom Autor als Artefakt markiertes Schmuckbild wurde zur
+Figure mit dem Nachbarabsatz als /Alt. Die Testfassung trug nur diese PDFix-Texte. Beim bezahlten Lauf stand danach die
+Bildunterschrift im Feld statt des mitgebrachten Textes (`original_alt` wurde nicht übernommen), ein bewusst geleertes Feld kam als
+Bildunterschrift zurück, ein mitgebrachter Text ohne Bildunterschrift war weg; nur Hand- und KI-Texte blieben (Kandidaten waren nur
+Bilder mit `alt_text`, `alt_text_edited` oder Status `done`).
+
+**Wie (tagging_api.py):** nach dem PDFix-Lauf `extract_images_from_pdf` auf die neue Datei, `felder_zuordnen(neue, alte, baum_neu)`
+(alle alten Bildzeilen sind Kandidaten, auch nie angefasste und bewusst geleerte; übernommen wird das ganze Feld samt
+`original_alt`), dann `feld_gleich_datei` → `main._alt_texte_einsetzen`. Das ist der aus `_build_pdf_for_document` herausgelöste
+Schreibweg des Exports mit seiner Zuordnung Bild → Figure (laufende Nummer je Dokument, `_pdfix_lfnr_je_dokument`, und Heines
+Import-Skript `AltTag_Import_CSV.py` über `pdfix_roundtrip.import_alt_texts_pdfix` — es setzt bzw. entfernt nur /Alt, taggt nicht
+und schreibt unsere Zeichenkette unverändert, daher keine Sternchen; der Testmodus-Vermerk der Testfassung bleibt). Ohne
+PDFix-Extraktion (Rückfall fitz) gilt der PyMuPDF-Weg des Exports. Der Export selbst ruft dieselbe Funktion, unverändert.
+Text je Bild: `main._tagging_alt_text` = `_exportable_alt_text` (was der Kunde im Feld sieht); nur wo der Export eine Figure
+unangetastet lässt (technischer Fehlertext), gilt nach PDFix der Text der Kundendatei (`original_alt`), sonst keiner.
+- Testfassung (`_test_sync`): dieselben Schritte in einen Wegwerf-Ordner, Bildzeilen bleiben unverändert.
+- Bezahlt (`_lauf_sync`): die Datenbank bekommt genau die Zeilen, die in die Datei geschrieben wurden (`_zeilen_schreiben`).
+- Ein von PDFix **neu** erkanntes Bild ohne alte Entsprechung hat kein Feld, das der Kunde je gesehen hat: Hat der Lauf den Baum
+  neu gebaut (`baum_von_pdfix`: ungetaggte Quelle, Ersetzen, Weg „Struktur zuerst“), ist sein /Alt von PDFix erfunden → Feld leer
+  (`original_alt` ''), Datei ohne Alt-Text. Nur wenn PDFix vorhandene Tags behalten hat, gilt sein /Alt als mitgebracht.
+- Grenze: Im Rückfall ohne PDFix-Extraktion (fitz, nur wenn Heines Export-Skript scheitert; Staging und Prod haben
+  `PDFIX_ENABLED=true`) entfernt der PyMuPDF-Weg kein vorhandenes /Alt — bei leerem Feld bliebe dort der PDFix-Text stehen.
+- Zuordnung im Testmodus: PDFix legt sein Logo an zufälliger Stelle über die Seite; trifft es ein Bild, weicht dessen Rendering ab
+  (gemessen Abstand 13 statt 7). Reste je Seite werden deshalb mit `HASH_TOLERANZ_REST` = 24 zugeordnet (fremde Bilder 21–40,
+  nie zwischen zwei Bildern mit bekannter, verschiedener Lage).
+
+**Was in der Datei steht (wie der Export heute):** Text → /Alt mit genau diesem Text. Feld leer (bewusst geleert, nie etwas da,
+neu erkanntes Bild) → kein /Alt-Eintrag an der Figure (Figure bleibt; veraPDF meldet 7.3-1). „dekorativ“ (Feldtext „dekorativ“
+oder Bildtyp dekorativ ohne Text) → /Alt "" an der Figure (kein Artefakt; veraPDF meldet ebenfalls 7.3-1). Word-Weg: Word-Export
+entfernt `descr` bzw. setzt das Dekorativ-Kennzeichen, „Als PDF“ macht daraus über LibreOffice ein Artefakt.
+
+**Abrechnung unverändert:** Testweise taggen kostet nichts, das bezahlte Tagging unverändert 20 Credits je Seite. Herunterladen
+zählt weiter nur `_alt_text_bearbeitet` (Feldtext ≠ `original_alt`). Weil `original_alt` jetzt der mitgebrachte Text bleibt,
+zählt ein mitgebrachter unveränderter Text vor und nach dem Tagging nie, Hand-, KI-, geleerte und dekorativ gesetzte Felder
+zählen vor und nach dem Tagging gleich. Hinweis: Die kostenlose Testfassung enthält jetzt auch die in InkluDocs bearbeiteten
+Alt-Texte (Steves Regel), trägt aber Wasserzeichen und kann unter dem Logo Text verlieren.
+
+Tests: `tests/test_alttext_feld_datei.py` (Fall-Matrix, Rest je Seite, Abrechnung vor/nach, echter PDFix-Lauf im Testmodus auf
+`tests/fixtures/gartenfest_feld_datei.pdf`: Datei = Feld je Figure, keine Sternchen, Struktur bis auf /Alt gleich).

@@ -324,11 +324,14 @@ class Hygiene(Grundlage):
         with self.ta._start_lock:
             self.ta._test_laeuft[did] = {"seit": time.time(), "user_id": uid}
             self.ta._test_nutzer[uid] = did
+        # ohne Bilder: Feld = Datei (09.10.2026) hat nichts einzusetzen, die Testfassung ist die PDFix-Ausgabe
         with mock.patch.object(self.ta.pdf_tagging, "taggen", side_effect=fake_taggen), \
-             mock.patch.object(self.ta.pdf_tagging, "verapdf", return_value=None):
+             mock.patch.object(self.ta.pdf_tagging, "verapdf", return_value=None), \
+             mock.patch.object(self.ta._d, "extract_images_from_pdf", return_value=[]):
             self.ta._test_sync(pid, did, uid, "de", "de")
         with open(pdf, "rb") as f:
             self.assertEqual(f.read(), b"%PDF-1.7 NEU")
+        self.assertFalse([x for x in os.listdir(ordner) if x.endswith(".tmp") or ".tmp." in x])   # Wegwerf-Ordner weg
         self.assertEqual(sorted(x for x in os.listdir(ordner) if x.endswith(".pdf")), [f"doc{did}_testweise.pdf"])
 
     def test_nach_30_tagen_weg_frische_und_laufende_bleiben(self):

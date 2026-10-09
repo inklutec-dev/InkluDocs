@@ -174,10 +174,13 @@ if fertig and fertig.get("status") == "fertig":
     check((ber.get("sprache") or {}).get("lang") == "de-DE", f"Sprache de-DE erkannt: {(ber.get('sprache') or {}).get('lang')}")
     check((ber.get("nachher") or {}).get("lang") == "de-DE", "Sprache in der Datei gesetzt")
     # veraPDF: bestanden, nicht pruefbar, oder nur die Schriftregel 7.21 (das Test-PDF bettet die
-    # Basisschriften nicht ein — Eigenschaft der Testdatei, nicht des Taggings).
+    # Basisschriften nicht ein — Eigenschaft der Testdatei, nicht des Taggings) und 7.3-1: Seit 09.10.2026 gilt
+    # „Feld = Datei“ (Steve) — das Bild der Testdatei hat kein Alt-Text-Feld, also auch kein /Alt in der Datei
+    # (vorher setzte PDFix den Nachbarabsatz als /Alt). Dass die Figure wirklich ohne /Alt ist, prueft der Dateiteil unten.
     vp = ber.get("verapdf")
-    nur_schriften = vp is not None and all(r.startswith("7.21") for p in vp.get("punkte", []) if p.get("status") == "befund" for r in p.get("regeln", []))
-    check(vp is None or vp.get("bestanden") is True or nur_schriften, f"veraPDF bestanden, nicht pruefbar oder nur Schriftregel: {[p.get('regeln') for p in (vp or {}).get('punkte', []) if p.get('status') == 'befund']}")
+    nur_schriften = vp is not None and all(r.startswith("7.21") or r == "7.3-1" for p in vp.get("punkte", []) if p.get("status") == "befund" for r in p.get("regeln", []))
+    check(vp is None or vp.get("bestanden") is True or nur_schriften, f"veraPDF bestanden, nicht pruefbar oder nur Schriftregel/leeres Alt-Text-Feld: {[p.get('regeln') for p in (vp or {}).get('punkte', []) if p.get('status') == 'befund']}")
+    check((ber.get("alt_texte") or {}).get("bilder") == (ber.get("bilder") or {}).get("nachher"), f"Feld = Datei: Alt-Texte aller Bilder eingesetzt: {ber.get('alt_texte')}")
     check(fertig.get("getaggt") is True, "Dokument gilt als getaggt")
     check(fertig.get("neu_taggen") is True, "Neu-Taggen moeglich (roh_path)")
     check(fertig.get("projekt_status") == "extracted", f"Projekt wieder extracted: {fertig.get('projekt_status')}")
@@ -201,6 +204,9 @@ if fertig and fertig.get("status") == "fertig":
             print("Producer:", prod)
             check(("Trial" in prod) == (ber.get("modus") == "testmodus"), "Producer passt zum Modus")
             check("pdfuaid" in str(xmp), "PDF/UA-Kennung im XMP")
+            # Feld = Datei (09.10.2026): das Bildfeld ist leer -> keine Figure traegt ein /Alt (PDFix setzt sonst den Nachbarabsatz)
+            figs = [o for o in p.objects if isinstance(o, pikepdf.Dictionary) and str(o.get("/S", "")) == "/Figure"]
+            check(figs and all("/Alt" not in f for f in figs), f"Figure ohne /Alt, wie das leere Feld: {[str(f.get('/Alt')) for f in figs]}")
     except ImportError:
         print("(pikepdf lokal nicht vorhanden, Dateipruefung uebersprungen)")
     # Credits: Verbrauch muss um den Preis gestiegen sein
