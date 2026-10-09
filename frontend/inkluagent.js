@@ -85,6 +85,56 @@ function inkluagentKurzhilfeHtml() {
         + '<p class="inkluagent-hilfe-link"><a href="/hilfe/inkluagent">' + t('Alles, was der InkluAgent kann') + '</a></p>';
 }
 
+// Schritt 5 (InkluAgent-Ausbau Runde 1): Ansicht je Konto. In der Agentenansicht (<body data-oberflaeche="agent">, vom
+// Server gesetzt) zeigt eine Projektseite nur die Hauptueberschrift und den InkluAgent, gross und geoeffnet; alles andere
+// im Hauptbereich bekommt hidden (auch fuer Screenreader weg). Die Seitenleiste bleibt. Laeuft nach jedem Neuzeichnen
+// (inkluagentInit), weil die Projektansichten den Hauptbereich neu bauen. Manuelle Ansicht: nichts aendert sich.
+function inkluagentAgentenansicht() {
+    if (!document.body || document.body.getAttribute('data-oberflaeche') !== 'agent') return false;
+    if (window._agentenansichtHierAus) return false;   // „Dieses Projekt in der manuellen Ansicht zeigen“ (nur diese Seite)
+    const main = document.getElementById('main');
+    const sec = main && main.querySelector('.inkluagent-section');
+    if (!sec) return false;
+    const h1 = main.querySelector('h1');
+    const behalten = [sec, h1].filter(Boolean);
+    (function lauf(el) {
+        Array.from(el.children).forEach(k => {
+            if (behalten.indexOf(k) >= 0) return;
+            if (behalten.some(b => k.contains(b))) { lauf(k); return; }
+            if (k.hidden || /^(SCRIPT|STYLE|TEMPLATE|DIALOG)$/.test(k.tagName)) return;
+            k.hidden = true;
+            k.setAttribute('data-agentenansicht', 'aus');
+        });
+    })(main);
+    sec.classList.add('inkluagent-gross');
+    // Hochladen und die Knoepfe des Projekts gibt es in Runde 1 nur in der manuellen Ansicht (das Hochladefeld im Agenten
+    // kommt in Runde 2): ein Knopf zeigt dieses Projekt fuer diese Seite manuell, ohne die gespeicherte Einstellung zu aendern.
+    if (!sec.querySelector('.inkluagent-agentenansicht-hinweis')) {
+        const p = document.createElement('p');
+        p.className = 'inkluagent-agentenansicht-hinweis';
+        p.appendChild(document.createTextNode(t('Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht.') + ' '));
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-secondary';
+        b.textContent = t('Dieses Projekt in der manuellen Ansicht zeigen');
+        b.addEventListener('click', inkluagentAgentenansichtAufheben);
+        p.appendChild(b);
+        const kopf = sec.querySelector('h2');
+        sec.insertBefore(p, kopf ? kopf.nextSibling : sec.firstChild);
+    }
+    return true;
+}
+
+// Nur fuer diese Seite zurueck zur manuellen Ansicht: alles wieder sichtbar, Fokus auf die Hauptueberschrift
+function inkluagentAgentenansichtAufheben() {
+    window._agentenansichtHierAus = true;
+    document.querySelectorAll('[data-agentenansicht="aus"]').forEach(el => { el.hidden = false; el.removeAttribute('data-agentenansicht'); });
+    document.querySelectorAll('.inkluagent-gross').forEach(el => el.classList.remove('inkluagent-gross'));
+    document.querySelectorAll('.inkluagent-agentenansicht-hinweis').forEach(el => el.remove());
+    const h = document.querySelector('#main h1');
+    if (h) { if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1'); h.focus(); }
+}
+
 function inkluagentInit(projectId) {
     const p = inkluagentInitLaden(projectId);
     window._inkluagentBereit = p;
@@ -116,11 +166,14 @@ async function inkluagentInitLaden(projectId) {
     }
     let wasOpen = false;
     try { wasOpen = localStorage.getItem('inkluagent.panel.' + projectId) === 'open'; } catch (e) {}
+    // Agentenansicht (Schritt 5): nur der InkluAgent gross und geoeffnet; der Fokus bleibt, wo er ist. Geoeffnet, ohne es sich
+    // fuer die manuelle Ansicht zu merken — dort steht er weiter so, wie man ihn zuletzt gelassen hat.
+    if (inkluagentAgentenansicht()) { await inkluagentOpen(projectId, false, true); return; }
     if (wasOpen) await inkluagentOpen(projectId, false);
     else if (window._inkluagentNeu != null && String(window._inkluagentNeu) === String(projectId)) inkluagentNeuMarkieren(true);
 }
 
-async function inkluagentOpen(projectId, focusInput) {
+async function inkluagentOpen(projectId, focusInput, nichtMerken) {
     const toggle = document.getElementById('inkluagentToggle');
     const panel = document.getElementById('inkluagentPanel');
     const input = document.getElementById('inkluagentInput');
@@ -129,7 +182,7 @@ async function inkluagentOpen(projectId, focusInput) {
     // Beschriftung bleibt „InkluAgent“ — Auf/Zu-Status meldet aria-expanded.
     toggle.textContent = t('InkluAgent');
     panel.hidden = false;
-    try { localStorage.setItem('inkluagent.panel.' + projectId, 'open'); } catch (e) {}
+    if (!nichtMerken) { try { localStorage.setItem('inkluagent.panel.' + projectId, 'open'); } catch (e) {} }
     const neu = window._inkluagentNeu != null && String(window._inkluagentNeu) === String(projectId);
     inkluagentNeuMarkieren(false);
     await inkluagentLoadHistory(projectId);

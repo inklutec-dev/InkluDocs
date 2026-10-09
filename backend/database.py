@@ -946,6 +946,10 @@ def _migrate_columns(conn):
         # Default 'de', damit bestehende User Deutsch behalten. Steuert NUR die
         # Oberflaechen-Sprache, NICHT die Alt-Text-Ausgabesprache (separates Feature).
         ("users", "language", "ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'de'"),
+        # ANSICHT JE KONTO (InkluAgent-Ausbau Runde 1, Schritt 5, 09.10.2026, inkluagent/ansicht.py): „klassisch“ (Manuelle
+        # Ansicht, Vorgabe auch fuer neue Konten) oder „agent“ (Agentenansicht). Nur gelesen, wenn funktionen.AGENT_ANSICHT an
+        # ist. Rueckwaerts: alter Code liest die Spalte nicht; entfernen mit „ALTER TABLE users DROP COLUMN oberflaeche“.
+        ("users", "oberflaeche", "ALTER TABLE users ADD COLUMN oberflaeche TEXT DEFAULT 'klassisch'"),
         # Gastzugang-Rollen (10.07.2026): Rolle der Einladung — 'kunde' (Endkunde,
         # Default, entspricht dem bisherigen Verhalten) oder 'lektorat'.
         ("shares", "role", "ALTER TABLE shares ADD COLUMN role TEXT DEFAULT 'kunde'"),

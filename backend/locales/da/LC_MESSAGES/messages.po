@@ -11405,3 +11405,51 @@ msgstr "Skift adgangskode og e-mailadresse"
 
 msgid "Team und Gäste einladen"
 msgstr "Inviter team og gæster"
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 5: Ansicht je Konto
+msgid "Wie möchtest du in deinen Projekten arbeiten?"
+msgstr "Hvordan vil du arbejde i dine projekter?"
+
+msgid "Manuelle Ansicht"
+msgstr "Manuel visning"
+
+msgid "Agentenansicht"
+msgstr "Agentvisning"
+
+msgid "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt in jedem Projekt und hilft dir auf Wunsch."
+msgstr "Den vante brugerflade til at arbejde manuelt. InkluAgent ligger sammenklappet i hvert projekt og hjælper dig, når du vil."
+
+msgid "In deinen Projekten siehst du nur den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Die übrigen Seiten bleiben vorerst, wie sie sind."
+msgstr "I dine projekter ser du kun InkluAgent, stor og åben; sidebjælken bliver. De øvrige sider forbliver indtil videre, som de er."
+
+msgid "Ansicht speichern"
+msgstr "Gem visning"
+
+msgid "Schneller wechseln kannst du mit dem Knopf unter der Navigation in der Seitenleiste."
+msgstr "Hurtigere skifter du med knappen under navigationen i sidebjælken."
+
+#, python-brace-format
+msgid "Gespeichert: {ansicht}."
+msgstr "Gemt: {ansicht}."
+
+msgid "Die Ansicht konnte nicht gespeichert werden. Bitte versuch es noch einmal."
+msgstr "Visningen kunne ikke gemmes. Prøv igen."
+
+msgid "Zur manuellen Ansicht wechseln"
+msgstr "Skift til manuel visning"
+
+msgid "Zur Agentenansicht wechseln"
+msgstr "Skift til agentvisning"
+
+msgid "Diese Ansicht gibt es nicht."
+msgstr "Denne visning findes ikke."
+
+msgid "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt in jedem Projekt. In der Agentenansicht siehst du in deinen Projekten nur den InkluAgent groß."
+msgstr "Du vælger din visning i indstillingerne: I den manuelle visning arbejder du manuelt som vanligt, og InkluAgent ligger sammenklappet i hvert projekt. I agentvisningen ser du kun InkluAgent, stort, i dine projekter."
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 5: nur diese Seite manuell
+msgid "Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht."
+msgstr "Upload og projektets knapper finder du i den manuelle visning."
+
+msgid "Dieses Projekt in der manuellen Ansicht zeigen"
+msgstr "Vis dette projekt i den manuelle visning"

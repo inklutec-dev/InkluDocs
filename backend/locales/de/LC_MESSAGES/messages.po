@@ -11709,3 +11709,51 @@ msgstr "Passwort und E-Mail-Adresse ändern"
 
 msgid "Team und Gäste einladen"
 msgstr "Team und Gäste einladen"
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 5: Ansicht je Konto
+msgid "Wie möchtest du in deinen Projekten arbeiten?"
+msgstr "Wie möchtest du in deinen Projekten arbeiten?"
+
+msgid "Manuelle Ansicht"
+msgstr "Manuelle Ansicht"
+
+msgid "Agentenansicht"
+msgstr "Agentenansicht"
+
+msgid "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt in jedem Projekt und hilft dir auf Wunsch."
+msgstr "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt in jedem Projekt und hilft dir auf Wunsch."
+
+msgid "In deinen Projekten siehst du nur den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Die übrigen Seiten bleiben vorerst, wie sie sind."
+msgstr "In deinen Projekten siehst du nur den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Die übrigen Seiten bleiben vorerst, wie sie sind."
+
+msgid "Ansicht speichern"
+msgstr "Ansicht speichern"
+
+msgid "Schneller wechseln kannst du mit dem Knopf unter der Navigation in der Seitenleiste."
+msgstr "Schneller wechseln kannst du mit dem Knopf unter der Navigation in der Seitenleiste."
+
+#, python-brace-format
+msgid "Gespeichert: {ansicht}."
+msgstr "Gespeichert: {ansicht}."
+
+msgid "Die Ansicht konnte nicht gespeichert werden. Bitte versuch es noch einmal."
+msgstr "Die Ansicht konnte nicht gespeichert werden. Bitte versuch es noch einmal."
+
+msgid "Zur manuellen Ansicht wechseln"
+msgstr "Zur manuellen Ansicht wechseln"
+
+msgid "Zur Agentenansicht wechseln"
+msgstr "Zur Agentenansicht wechseln"
+
+msgid "Diese Ansicht gibt es nicht."
+msgstr "Diese Ansicht gibt es nicht."
+
+msgid "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt in jedem Projekt. In der Agentenansicht siehst du in deinen Projekten nur den InkluAgent groß."
+msgstr "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt in jedem Projekt. In der Agentenansicht siehst du in deinen Projekten nur den InkluAgent groß."
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 5: nur diese Seite manuell
+msgid "Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht."
+msgstr "Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht."
+
+msgid "Dieses Projekt in der manuellen Ansicht zeigen"
+msgstr "Dieses Projekt in der manuellen Ansicht zeigen"

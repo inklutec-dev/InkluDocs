@@ -8,7 +8,8 @@
 <link rel="stylesheet" href="/static/dashboard.css?v={{ asset_version }}">
 {% block head_extra %}{% endblock %}
 </head>
-<body>
+{# Ansicht je Konto (InkluAgent-Ausbau Runde 1, Schritt 5): vom Server gesetzt, damit nichts springt; ohne Schalter fehlt das Attribut #}
+<body{% if oberflaeche %} data-oberflaeche="{{ oberflaeche }}"{% endif %}>
 <a href="#main" class="dash-skip">{{ _('Zum Hauptinhalt springen') }}</a>
 {# Icon-Sprite (29.08.2026, Steve): dekorative Symbole fuer Knoepfe. Wird ueber window.icon(name)
    als <svg aria-hidden> eingesetzt — der Knopftext bleibt der zugaengliche Name. #}

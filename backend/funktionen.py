@@ -75,6 +75,10 @@ AGENT_HILFE = _umgebung_an("INKLUAGENT_HILFE")
 # Sprache der Alt-Texte, Bild umbenennen und loeschen, bei Webseiten Webseite umbenennen und loeschen), jedes Werkzeug mit
 # demselben Kern wie der Knopf und derselben Rueckfrage. INKLUAGENT_BILD_WERKZEUGE=an.
 AGENT_BILD_WERKZEUGE = _umgebung_an("INKLUAGENT_BILD_WERKZEUGE")
+# Schritt 5 — Ansicht je Konto (inkluagent/ansicht.py): Einstellung „Ansicht“ (Manuelle Ansicht / Agentenansicht) in den
+# Einstellungen und als schneller Umschalter in der Seitenleiste, gespeichert in users.oberflaeche, beim Seitenbau gesetzt.
+# Neue Konten: manuelle Ansicht. INKLUAGENT_ANSICHT=an.
+AGENT_ANSICHT = _umgebung_an("INKLUAGENT_ANSICHT")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

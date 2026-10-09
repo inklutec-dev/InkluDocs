@@ -388,6 +388,52 @@ function renderSidebar() {
 
   nav.appendChild(ul);
   host.appendChild(nav);
+  ansichtUmschalter(host);
+}
+
+// ─── Ansicht je Konto: schneller Umschalter (InkluAgent-Ausbau Runde 1, Schritt 5) ───
+// Unter der Navigation, nur mit Schalter funktionen.AGENT_ANSICHT (/api/me user.oberflaeche_waehlbar). Der Knopf sagt, was
+// passiert („Zur Agentenansicht wechseln“ / „Zur manuellen Ansicht wechseln“). Danach laedt die Seite neu, der Fokus steht
+// auf der Hauptueberschrift. Hauptort der Einstellung bleibt die Seite „Einstellungen“.
+function ansichtUmschalter(host) {
+  if (!currentUser || !currentUser.oberflaeche_waehlbar) return;
+  const agent = currentUser.oberflaeche === 'agent';
+  const p = document.createElement('p');
+  p.className = 'app-ansicht-wechsel';
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.id = 'ansichtWechselBtn';
+  b.className = 'btn btn-secondary';
+  b.textContent = agent ? t('Zur manuellen Ansicht wechseln') : t('Zur Agentenansicht wechseln');
+  b.addEventListener('click', async () => {
+    // Offene Eingaben erst speichern (wie beim Abmelden) — das Neuladen ginge sonst darueber hinweg
+    if (typeof window.alleAusstehendenSpeichern === 'function') {
+      const fehler = await window.alleAusstehendenSpeichern();
+      if (fehler && typeof window.speicherFehlerMelden === 'function') { window.speicherFehlerMelden(fehler); return; }
+    }
+    const r = await fetch('/api/me/oberflaeche', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                                                   body: JSON.stringify({ oberflaeche: agent ? 'klassisch' : 'agent' }) });
+    if (!r.ok) { if (typeof announce === 'function') announce(t('Die Ansicht konnte nicht gespeichert werden. Bitte versuch es noch einmal.')); return; }
+    try { sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e) { /* ohne Speicher: kein Fokus-Sprung */ }
+    window.location.reload();
+  });
+  p.appendChild(b);
+  host.appendChild(p);
+}
+
+// Nach dem Wechsel: Fokus auf die Hauptueberschrift (die Projektseite baut sie erst nach dem Laden der Daten)
+function ansichtFokusNachWechsel() {
+  let gemerkt = false;
+  try { gemerkt = sessionStorage.getItem('ansichtGewechselt') === '1'; sessionStorage.removeItem('ansichtGewechselt'); } catch (e) { /* egal */ }
+  if (!gemerkt) return;
+  let n = 0;
+  const t0 = setInterval(() => {
+    const h = document.querySelector('#main h1');
+    if (h || ++n > 50) {
+      clearInterval(t0);
+      if (h) { if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1'); h.focus(); }
+    }
+  }, 100);
 }
 
 // Rechtliche Footer-Links (Impressum · Datenschutz · Nutzungsbedingungen) zentral
@@ -467,6 +513,7 @@ function renderLegalNote() {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCurrentUser();   // setzt currentUser, Begrüßung, Tageslimit
   renderSidebar();
+  ansichtFokusNachWechsel();
   renderLegalLinks();
   renderLegalNote();
 });

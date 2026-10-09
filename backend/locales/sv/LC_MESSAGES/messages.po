@@ -11280,3 +11280,51 @@ msgstr "Ändra lösenord och e-postadress"
 
 msgid "Team und Gäste einladen"
 msgstr "Bjud in team och gäster"
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 5: Ansicht je Konto
+msgid "Wie möchtest du in deinen Projekten arbeiten?"
+msgstr "Hur vill du arbeta i dina projekt?"
+
+msgid "Manuelle Ansicht"
+msgstr "Manuell vy"
+
+msgid "Agentenansicht"
+msgstr "Agentvy"
+
+msgid "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt in jedem Projekt und hilft dir auf Wunsch."
+msgstr "Det vanliga gränssnittet för att arbeta för hand. InkluAgent ligger hopfälld i varje projekt och hjälper dig när du vill."
+
+msgid "In deinen Projekten siehst du nur den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Die übrigen Seiten bleiben vorerst, wie sie sind."
+msgstr "I dina projekt ser du bara InkluAgent, stor och öppen; sidofältet finns kvar. Övriga sidor förblir tills vidare som de är."
+
+msgid "Ansicht speichern"
+msgstr "Spara vy"
+
+msgid "Schneller wechseln kannst du mit dem Knopf unter der Navigation in der Seitenleiste."
+msgstr "Snabbare byter du med knappen under navigeringen i sidofältet."
+
+#, python-brace-format
+msgid "Gespeichert: {ansicht}."
+msgstr "Sparat: {ansicht}."
+
+msgid "Die Ansicht konnte nicht gespeichert werden. Bitte versuch es noch einmal."
+msgstr "Vyn kunde inte sparas. Försök igen."
+
+msgid "Zur manuellen Ansicht wechseln"
+msgstr "Byt till manuell vy"
+
+msgid "Zur Agentenansicht wechseln"
+msgstr "Byt till agentvy"
+
+msgid "Diese Ansicht gibt es nicht."
+msgstr "Den här vyn finns inte."
+
+msgid "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt in jedem Projekt. In der Agentenansicht siehst du in deinen Projekten nur den InkluAgent groß."
+msgstr "Du väljer din vy i inställningarna: I den manuella vyn arbetar du för hand som vanligt, och InkluAgent ligger hopfälld i varje projekt. I agentvyn ser du bara InkluAgent, stort, i dina projekt."
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 5: nur diese Seite manuell
+msgid "Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht."
+msgstr "Uppladdning och projektets knappar finns i den manuella vyn."
+
+msgid "Dieses Projekt in der manuellen Ansicht zeigen"
+msgstr "Visa det här projektet i den manuella vyn"

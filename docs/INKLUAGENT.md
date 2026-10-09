@@ -397,3 +397,38 @@ Tests: `tests/test_agent_bild_werkzeuge.py` (7: Schalter aus = sechs Werkzeuge, 
 Ausführung und Namen, PDF/Word unverändert, derselbe Kern wie der Knopf, Umbenennen, Löschen in zwei Schritten auf einer
 Wegwerf-Datenbank, fremdes Bild abgelehnt). Klickprobe lokal 8 von 8 (Bild per Karte gelöscht, Angebot „Alt-Texte generieren“
 mit Preis, Hilfe-Seite nennt die neuen Werkzeuge); Knöpfe am Bild unverändert (200/400/404 wie vorher).
+
+### Schritt 5: Ansicht je Konto (Schalter `AGENT_ANSICHT`, Umgebung `INKLUAGENT_ANSICHT=an`)
+
+Steves Entscheidung (09.10.2026): EINE Einstellung „Ansicht“, Hauptort sind die Einstellungen, dazu ein schneller Umschalter
+in der Seitenleiste. Kern: `backend/inkluagent/ansicht.py`.
+- **Manuelle Ansicht** (intern `klassisch`, Vorgabe, auch für neue Konten): die gewohnte Oberfläche; der InkluAgent steht wie
+  bisher eingeklappt in jedem Projekt und lässt sich für Fragen aufklappen.
+- **Agentenansicht** (intern `agent`): auf einer Projektseite nur die Hauptüberschrift und der InkluAgent, groß und geöffnet;
+  alles andere im Hauptbereich bekommt `hidden` (`frontend/inkluagent.js`, `inkluagentAgentenansicht`, nach jedem Neuzeichnen).
+  Die Seitenleiste bleibt. Seiten ohne Projekt bleiben vorerst, wie sie sind (der Agent für das ganze Konto kommt in Runde 2).
+  Weil der Agent noch keine Dateien annimmt, steht oben im Agenten der Knopf „Dieses Projekt in der manuellen Ansicht zeigen“
+  — nur für diese Seite, die Einstellung bleibt. Das Öffnen in der Agentenansicht ändert nicht, ob der Agent in der manuellen
+  Ansicht auf- oder zugeklappt ist.
+- **Einstellungen** (`templates/einstellungen.html`): Abschnitt „Ansicht“, native Auswahlknöpfe in einer Gruppe mit
+  Beschreibung je Wahl, gespeichert erst mit „Ansicht speichern“ (kein Kontextwechsel beim Auswählen), eine Meldung in der
+  Statuszeile.
+- **Umschalter in der Seitenleiste** unter der Navigation (`dashboard.js`, `ansichtUmschalter`): „Zur Agentenansicht wechseln“
+  bzw. „Zur manuellen Ansicht wechseln“; speichert offene Eingaben vorher, lädt neu, der Fokus steht danach auf der
+  Hauptüberschrift.
+- **Server:** `users.oberflaeche`; `PUT /api/me/oberflaeche` (nur Werte aus `ansicht.OBERFLAECHEN`, 404 bei Schalter aus);
+  `/api/me` liefert `user.oberflaeche` und `user.oberflaeche_waehlbar`; `_render_protected_template` setzt schon beim Seitenbau
+  `<body data-oberflaeche="…">` (ohne Schalter fehlt das Attribut), damit nichts springt.
+- **Erweiterbar:** ein weiterer Wert = ein Eintrag in `OBERFLAECHEN`, `NAMEN`, `BESCHREIBUNG` (und seine Darstellung); die
+  Einstellungsseite und die Prüfung lesen die Liste von dort (Test belegt).
+- Hilfe-Seite: ein Satz zur Ansicht mit Link zu den Einstellungen. 15 neue Texte in sechs Sprachen.
+
+**Migration** (`database._migrate_columns`): `ALTER TABLE users ADD COLUMN oberflaeche TEXT DEFAULT 'klassisch'` — vorwärts
+idempotent beim Start, Bestandskonten bekommen „klassisch“; rückwärts liest alter Code die Spalte nicht, entfernen mit
+`ALTER TABLE users DROP COLUMN oberflaeche` (SQLite ab 3.35). Beides im Test durchgespielt.
+
+Tests: `tests/test_agent_ansicht.py` (10: Spalte und Vorgabe, Rückweg und erneuter Start, Schalter aus, Setzen/Lesen/
+Unbekanntes, Erweiterbarkeit, Endpunkt, Einstellungen in sechs Sprachen mit und ohne Schalter, Seitenrahmen, Oberfläche,
+Texte in allen Katalogen). Klickprobe lokal 25 von 25: Auswahl und Speichern, Seitenbau mit `data-oberflaeche`, Agent groß und
+offen, Rest ausgeblendet, Antwort mit Fokus, axe ohne ernste Verstöße, „nur diese Seite manuell“, Umschalter mit Fokus auf der
+H1, zurück zur manuellen Ansicht mit eingeklapptem Agenten, 320 Pixel ohne waagerechtes Scrollen, Schalter aus: nichts davon.

@@ -942,6 +942,9 @@ async def me(user: dict = Depends(get_current_user)):
             "express_bearbeiter": bool(db_user.get("express_bearbeiter")) and express_api.aktiv(),
             # InkluAgent-Ausbau Runde 1, Schritt 3 (funktionen.AGENT_HILFE): Link „Hilfe“ in der Seitenleiste
             "inkluagent_hilfe": bool(funktionen.AGENT_HILFE),
+            # Schritt 5 (funktionen.AGENT_ANSICHT): Ansicht je Konto und ob sie waehlbar ist (Umschalter in der Seitenleiste)
+            "oberflaeche": _ansicht_me(db_user["id"]),
+            "oberflaeche_waehlbar": bool(funktionen.AGENT_ANSICHT),
         },
         # deprecated: altes Tages-Limit — bleibt bis zur Frontend-Umstellung
         # auf den "abo"-Block mitgeliefert, danach entfernen.
@@ -12066,10 +12069,14 @@ def _render_protected_template(request: Request, template_name: str, **extra):
     # Seit 25.09.2026 ueber get_current_user: gesperrte oder geloeschte Konten landen gleich
     # auf der Anmeldung statt auf einer Seitenhuelle, deren Daten dann 401 liefern.
     try:
-        get_current_user(request)
+        _nutzer = get_current_user(request)
     except HTTPException:
         return RedirectResponse(_login_umleitung(request))
     lang = resolve_ui_language(request)
+    # Ansicht je Konto (InkluAgent-Ausbau Runde 1, Schritt 5): schon beim Seitenbau, damit nichts springt — None, solange
+    # funktionen.AGENT_ANSICHT aus ist (dann bleibt der Seitenrahmen, wie er ist).
+    from inkluagent import ansicht as _ansicht
+    extra.setdefault("oberflaeche", _ansicht.seiten_wert(_nutzer.get("id")))
     return templates.TemplateResponse(
         template_name,
         template_context(request, lang, is_staging=("staging" in BASE_URL), **extra),
@@ -12091,7 +12098,8 @@ async def hilfe_inkluagent_page(request: Request):
     return _render_protected_template(request, "hilfe_inkluagent.html",
                                       hilfe=_hilfe.seite(get_gettext(resolve_ui_language(request))),
                                       tageslimit=DAILY_CHAT_LIMIT, max_zeichen=5000,
-                                      einzel_deckel=bool(funktionen.AGENT_SICHERHEIT))
+                                      einzel_deckel=bool(funktionen.AGENT_SICHERHEIT),
+                                      ansicht_waehlbar=bool(funktionen.AGENT_ANSICHT))
 
 
 @app.get("/projekte", response_class=HTMLResponse)
@@ -12106,7 +12114,35 @@ async def new_project_page(request: Request):
 
 @app.get("/einstellungen", response_class=HTMLResponse)
 async def settings_page(request: Request):
-    return _render_protected_template(request, "einstellungen.html")
+    # Ansicht je Konto (InkluAgent-Ausbau Runde 1, Schritt 5): Hauptort der Einstellung, nur mit Schalter AGENT_ANSICHT
+    from inkluagent import ansicht as _ansicht
+    return _render_protected_template(request, "einstellungen.html",
+                                      ansicht_waehlbar=_ansicht.an(),
+                                      ansicht_auswahl=_ansicht.auswahl(get_gettext(resolve_ui_language(request))))
+
+
+def _ansicht_me(user_id: int) -> str:
+    """/api/me: gespeicherte Ansicht (Schritt 5); ohne Schalter immer die Vorgabe „klassisch“."""
+    from inkluagent import ansicht as _ansicht
+    return _ansicht.fuer_konto(user_id) if _ansicht.an() else _ansicht.VORGABE
+
+
+@app.put("/api/me/oberflaeche")
+async def ansicht_setzen(request: Request, user: dict = Depends(get_current_user)):
+    """Ansicht je Konto setzen (InkluAgent-Ausbau Runde 1, Schritt 5): Einstellungen und Umschalter in der Seitenleiste.
+    Erlaubt sind nur die Werte aus inkluagent/ansicht.OBERFLAECHEN; 404, solange der Schalter aus ist."""
+    funktionen.endpunkt_frei("AGENT_ANSICHT")
+    from inkluagent import ansicht as _ansicht
+    try:
+        data = await request.json()
+    except Exception:  # noqa: BLE001
+        data = {}
+    wert = str((data or {}).get("oberflaeche") or "")
+    if not _ansicht.gueltig(wert):
+        _ = get_gettext(resolve_ui_language(request))
+        raise HTTPException(status_code=400, detail=_("Diese Ansicht gibt es nicht."))
+    _ansicht.setzen(user["id"], wert)
+    return {"ok": True, "oberflaeche": wert}
 
 
 @app.get("/geteilte-projekte", response_class=HTMLResponse)

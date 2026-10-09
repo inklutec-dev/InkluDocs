@@ -991,6 +991,58 @@ header h1 { font-size: 1.3rem; color: white; }
     margin: 0 0 1rem;
     line-height: 1.5;
 }
+/* Schritt 5 (InkluAgent-Ausbau): Agentenansicht — der InkluAgent gross, ohne waagerechtes Scrollen bei 320 px (1.4.10) */
+/* hidden allein reicht nicht, wo ein Bereich selbst display setzt (Karten mit flex/grid) */
+[data-agentenansicht="aus"] {
+    display: none !important;
+}
+.inkluagent-section.inkluagent-gross {
+    margin-top: 1rem;
+    max-width: 60rem;
+}
+.inkluagent-agentenansicht-hinweis {
+    margin: 0 0 0.75rem;
+}
+.inkluagent-gross .inkluagent-log {
+    max-height: none;
+    min-height: 40vh;
+}
+.inkluagent-gross #inkluagentInput {
+    min-height: 6rem;
+}
+.app-ansicht-wechsel {
+    margin: 1rem 0 0;
+    padding: 0 0.75rem;
+}
+.app-ansicht-wechsel .btn {
+    width: 100%;
+    white-space: normal;
+}
+.ansicht-wahl fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+.ansicht-wahl legend {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.ansicht-option {
+    margin: 0 0 0.75rem;
+}
+.ansicht-option input {
+    width: 1.2rem;
+    height: 1.2rem;
+    vertical-align: middle;
+}
+.ansicht-option label {
+    font-weight: 600;
+    margin-left: 0.4rem;
+}
+.ansicht-option .dash-meta {
+    margin: 0.2rem 0 0 1.8rem;
+}
+
 /* Schritt 3 (InkluAgent-Ausbau): Kurzhilfe als echte Liste, Link zur Hilfe-Seite darunter */
 ul.inkluagent-kurzhilfe {
     margin: 0 0 0.4rem;

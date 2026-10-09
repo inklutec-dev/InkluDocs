@@ -17,6 +17,7 @@
         <p>{{ _('Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch. Jedes Projekt hat sein eigenes Gespräch.') }}</p>
         <p>{{ _('Reden kostet nichts. Was er erzeugt oder ändert, kostet dieselben Credits wie der Knopf in der Oberfläche.') }}</p>
         <p>{{ _('Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte oder mit einem kurzen „Ja“.') }}</p>
+        {% if ansicht_waehlbar %}<p>{{ _('In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt in jedem Projekt. In der Agentenansicht siehst du in deinen Projekten nur den InkluAgent groß.') }} <a href="/einstellungen">{{ _('Zu den Einstellungen') }}</a></p>{% endif %}
       </section>
 
       <section class="dash-card" aria-labelledby="hilfe-projekte-h">

@@ -21,6 +21,32 @@
         </nav>
       </section>
 
+      {% if ansicht_waehlbar %}
+      {# ANSICHT JE KONTO (InkluAgent-Ausbau Runde 1, Schritt 5, Steve 09.10.2026): Hauptort der Einstellung. Native
+         Auswahlknoepfe in einer Gruppe, jede Wahl mit Beschreibung; gespeichert wird erst mit dem Knopf (keine
+         Kontextaenderung beim Auswaehlen, WCAG 3.2.2). Das Ergebnis meldet die Statuszeile einmal. Werte und Texte kommen aus
+         inkluagent/ansicht.py — ein weiterer Wert dort erscheint hier von selbst. #}
+      <section class="dash-card" aria-labelledby="ansicht-h">
+        <h2 id="ansicht-h">{{ _('Ansicht') }}</h2>
+        <form id="ansichtForm" class="ansicht-wahl">
+          <fieldset>
+            <legend>{{ _('Wie möchtest du in deinen Projekten arbeiten?') }}</legend>
+            {% for a in ansicht_auswahl %}
+            <div class="ansicht-option">
+              <input type="radio" name="oberflaeche" id="ansicht-{{ a.wert }}" value="{{ a.wert }}"
+                     aria-describedby="ansicht-{{ a.wert }}-text"{% if a.wert == (oberflaeche or 'klassisch') %} checked{% endif %}>
+              <label for="ansicht-{{ a.wert }}">{{ a.name }}</label>
+              <p class="dash-meta" id="ansicht-{{ a.wert }}-text">{{ a.beschreibung }}</p>
+            </div>
+            {% endfor %}
+          </fieldset>
+          <p><button type="submit" class="btn btn-primary">{{ _('Ansicht speichern') }}</button></p>
+          <p id="ansichtStatus" role="status"></p>
+        </form>
+        <p class="dash-meta">{{ _('Schneller wechseln kannst du mit dem Knopf unter der Navigation in der Seitenleiste.') }}</p>
+      </section>
+      {% endif %}
+
       {# Ab 31.07.2026 ist diese Seite eine reine Uebersicht: ausser der
          Sprachwahl steht hier kein Bedienelement und keine Kontoangabe mehr,
          nur h2 + Satz. Seit 14.09.2026 (Michael Karbe, Mail „Einstellungen“) ist
@@ -42,4 +68,36 @@
         <h2 id="api-h"><a href="/api-schluessel">{{ _('API-Schluessel') }}</a></h2>
         <p class="dash-meta">{{ _('Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite.') }}</p>
       </section>
+{% endblock %}
+{% block page_script %}
+{% if ansicht_waehlbar %}
+<script>
+{% raw %}
+(function () {
+  'use strict';
+  // Ansicht speichern (Schritt 5): eine Meldung in der Statuszeile, kein Neuladen; die Seitenleiste nennt danach den
+  // passenden Umschalter (currentUser aus dashboard.js).
+  var form = document.getElementById('ansichtForm');
+  var status = document.getElementById('ansichtStatus');
+  if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var wahl = form.querySelector('input[name="oberflaeche"]:checked');
+    if (!wahl) return;
+    try {
+      var r = await fetch('/api/me/oberflaeche', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ oberflaeche: wahl.value }) });
+      if (!r.ok) throw new Error(String(r.status));
+      var name = (form.querySelector('label[for="' + wahl.id + '"]') || {}).textContent || '';
+      status.textContent = t('Gespeichert: {ansicht}.', { ansicht: name });
+      document.body.setAttribute('data-oberflaeche', wahl.value);
+      if (typeof currentUser !== 'undefined' && currentUser) { currentUser.oberflaeche = wahl.value; if (typeof renderSidebar === 'function') renderSidebar(); }
+    } catch (err) {
+      status.textContent = t('Die Ansicht konnte nicht gespeichert werden. Bitte versuch es noch einmal.');
+    }
+  });
+})();
+{% endraw %}
+</script>
+{% endif %}
 {% endblock %}
