@@ -12,6 +12,7 @@ import sqlite3
 from typing import Any
 
 from ..adapters.inkludocs import get_project_context
+from ..daten import daten   # Seitenkontext = Fremdtext, keine Anweisung (09.10.2026)
 
 log = logging.getLogger(__name__)
 
@@ -133,7 +134,8 @@ def list_project_images(project_id: int, user_id: int) -> dict[str, Any]:
             "width": d.get("width"),
             "height": d.get("height"),
             "pipeline_steps": d.get("pipeline_steps") or "",
-            "context_text": (d.get("context_text") or "")[:200],
+            # Seitenkontext aus dem Dokument bzw. der Webseite: Fremdtext, gekennzeichnet (inkluagent/daten.py)
+            "kontext_daten": daten((d.get("context_text") or "")[:200]),
             "status": d.get("status") or "",
         })
 
@@ -199,7 +201,9 @@ def get_image_metadata(image_id: int, project_id: int, user_id: int) -> dict[str
             "alt_text": d.get("alt_text") or "",
             "alt_text_edited": d.get("alt_text_edited") or "",
             "langbeschreibung": d.get("langbeschreibung") or "",
-            "context_text": d.get("context_text") or "",
+            # Seitenkontext (Text rund um das Bild aus Dokument bzw. Webseite): Fremdtext, gekennzeichnet wie seitentext_daten
+            # der Feld-Werkzeuge (09.10.2026, Konzept InkluAgent 3.2) — vorher ging er ungekennzeichnet ans Modell
+            "kontext_daten": daten(d.get("context_text") or ""),
             "width": d.get("width"),
             "height": d.get("height"),
             "pipeline_steps": d.get("pipeline_steps") or "",

@@ -33,6 +33,8 @@ from typing import Any, Optional
 
 from fastapi import HTTPException
 
+from ..daten import daten, daten_zeilen, text_kennzeichnen   # Fremdtext ist keine Anweisung (09.10.2026)
+
 log = logging.getLogger(__name__)
 
 
@@ -381,7 +383,8 @@ def _doc_kurz(d: dict) -> dict:
         "dokument": d.get("dokument"), "bilder": d.get("bilder"), "alt_texte": d.get("alt_texte"),
         "punkte": [{"bereich": p.get("bereich"), "status": p.get("status"), "text": p.get("text")}
                    for p in ((d.get("pruefung") or {}).get("punkte") or [])],
-        "pruefbericht_hinweise": [b.get("text") for b in (d.get("pruefbericht") or []) if b.get("status") != "ok"],
+        # Saetze des Word-Pruefberichts zitieren das Dokument (Titel, Ueberschriften): gekennzeichnet (daten.py)
+        "pruefbericht_hinweise_daten": [daten(b.get("text")) for b in (d.get("pruefbericht") or []) if b.get("status") != "ok"],
         "warnungen": d.get("warnungen") or [],
     }
 
@@ -417,13 +420,15 @@ def pruefe_word_dokument(project_id: int, user_id: int, document_id: Optional[in
         doks.append({
             "dokument": d.get("dokument"), "document_id": d.get("document_id"),
             "bilder": d.get("bilder"), "alt_texte": d.get("alt_texte"), "bilder_ohne_alt_text": ohne,
-            "pruefbericht": d.get("pruefbericht") or [],
+            # Pruefbericht-Saetze und Hoerprobe zitieren das Dokument: gekennzeichnet (daten.py, 09.10.2026)
+            "pruefbericht": text_kennzeichnen(d.get("pruefbericht") or []),
             "zahlen": d.get("zahlen") or {},
-            "hoerprobe_auszug": hoer[:_HOERPROBE_AUSZUG], "hoerprobe_zeilen": len(hoer),
+            "hoerprobe_auszug_daten": daten_zeilen(hoer[:_HOERPROBE_AUSZUG]), "hoerprobe_zeilen": len(hoer),
         })
     return {"ok": True, "result": {
         "dokumente": doks, "hinweise_gesamt": hinweise_gesamt, "bilder_ohne_alt_text": bilder_ohne,
         "hinweis": ("Die vollstaendige Hoerprobe bekommst du nach einer Umwandlung mit lies_ausgabe(teil='hoerprobe'). "
+                    "Gibst du Hoerprobe-Zeilen wieder, dann ohne die Markierung. "
                     "Fehlen Alt-Texte, schlage dem Nutzer vor, sie zuerst zu erzeugen (generate_alt_text je Bild "
                     "oder Sammellauf in der Oberflaeche), bevor du umwandelst."),
     }}
@@ -491,7 +496,7 @@ def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = 
         "dateiname": r["dateiname"], "preis": r["preis"],
         "alt_texte": r["alt_texte"], "hinweise": r["hinweise"], "zusammenfassung": r["zusammenfassung"],
         "dokumente": [{"dokument": d.get("dokument"), "bilder": d.get("bilder"), "alt_texte": d.get("alt_texte"),
-                       "pruefbericht_hinweise": [b.get("text") for b in (d.get("pruefbericht") or []) if b.get("status") != "ok"],
+                       "pruefbericht_hinweise_daten": [daten(b.get("text")) for b in (d.get("pruefbericht") or []) if b.get("status") != "ok"],
                        "warnungen": d.get("warnungen") or []} for d in r.get("dokumente") or []],
         "download_url": r["download_url"],
         "hinweis": ("Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen der Word-Datei"
@@ -538,10 +543,11 @@ def lies_ausgabe(project_id: int, user_id: int, ausgabe_id: int, teil: str = "be
             eintrag["punkte"] = [{"bereich": p.get("bereich"), "status": p.get("status"), "text": p.get("text")}
                                  for p in ((d.get("pruefung") or {}).get("punkte") or [])]
         if teil in ("pruefbericht", "bericht", "alles"):
-            eintrag["pruefbericht"] = d.get("pruefbericht") or []
+            eintrag["pruefbericht"] = text_kennzeichnen(d.get("pruefbericht") or [])   # zitiert das Dokument (daten.py)
         if teil in ("hoerprobe", "alles"):
             hoer = d.get("hoerprobe") or []
-            eintrag["hoerprobe"] = hoer[:_HOERPROBE_MAX]
+            # Hoerprobe = Text aus dem Dokument: je Zeile gekennzeichnet wie hoerprobe_lesen (09.10.2026)
+            eintrag["hoerprobe_daten"] = daten_zeilen(hoer[:_HOERPROBE_MAX])
             eintrag["hoerprobe_zeilen"] = len(hoer)
             if len(hoer) > _HOERPROBE_MAX:
                 eintrag["hoerprobe_gekuerzt"] = True
@@ -552,6 +558,8 @@ def lies_ausgabe(project_id: int, user_id: int, ausgabe_id: int, teil: str = "be
         "datei_verfuegbar": a["datei_verfuegbar"],
         "download_url": f"/api/ausgaben/{a['id']}/datei" if a["datei_verfuegbar"] else None,
         "teil": teil, "dokumente": doks,
+        **({"hinweis": "Gib die Hörprobe (hoerprobe_daten) ohne die Markierung Zeile für Zeile wieder, ohne Umformulierung."}
+           if teil in ("hoerprobe", "alles") else {}),
     }}
 
 
@@ -583,13 +591,18 @@ def analysiere_word_struktur(project_id: int, user_id: int, document_id: Optiona
             doc_id = int(unit["doc"]["id"])
         except (KeyError, TypeError, ValueError):
             doc_id = None
-        doks.append({"dokument": label, "document_id": doc_id, "titel": st["titel"],
+        # Titel, Gliederung, Absaetze, Zellen und Textanfaenge der Befunde sind Text aus dem Dokument: gekennzeichnet
+        # (inkluagent/daten.py, 09.10.2026); Zahlen, Stil und Befund-Saetze des Lektors bleiben, wie sie sind.
+        tabellen = [dict({k: v for k, v in t.items() if k != "erste_zeile"}, erste_zeile_daten=daten_zeilen(t.get("erste_zeile")))
+                    if isinstance(t, dict) and "erste_zeile" in t else t for t in (st["tabellen"] or [])]
+        doks.append({"dokument": label, "document_id": doc_id, "titel_daten": daten(st["titel"]),
                      "standard_schriftgroesse_pt": st["standard_schriftgroesse"], "zahlen": st["zahlen"],
-                     "gliederung": st["gliederung"], "tabellen": st["tabellen"], "befunde": st["befunde"],
-                     "absaetze": st["absaetze"], "auszug_gekuerzt": st["auszug_gekuerzt"]})
+                     "gliederung": text_kennzeichnen(st["gliederung"]), "tabellen": tabellen,
+                     "befunde": text_kennzeichnen(st["befunde"]),
+                     "absaetze": text_kennzeichnen(st["absaetze"]), "auszug_gekuerzt": st["auszug_gekuerzt"]})
     return {"ok": True, "result": {"dokumente": doks, "hinweis": (
         "Befunde mit sicherheit=hoch sind aus dem Dokument belegt — nenne sie als Tatsache mit Absatznummer und "
-        "Textanfang. Befunde mit sicherheit=mittel sind Vermutungen aus der Optik — nenne sie als Vermutung und frage, "
+        "Textanfang (text_daten, ohne die Markierung). Befunde mit sicherheit=mittel sind Vermutungen aus der Optik — nenne sie als Vermutung und frage, "
         "ob es eine Überschrift sein soll. Du darfst aus dem Absatz-Auszug eigene Beobachtungen ergänzen, gekennzeichnet "
         "als Einschätzung. Umbauen kannst du nichts; sag, was der Nutzer in Word tut (Formatvorlage zuweisen, echte "
         "Liste anlegen). Bewertung am Ende in einem Satz: gut aufgebaut / brauchbar mit n Stellen / ohne Struktur.")}}

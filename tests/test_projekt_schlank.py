@@ -146,9 +146,11 @@ class ProjektSchlankTest(unittest.TestCase):
         with mock.patch.object(tp, "_DB_PATH", db), mock.patch.object(ta, "_DB_PATH", db):
             liste = tp.list_project_images(self.pid, 1)
             self.assertTrue(liste["ok"], liste)
-            self.assertEqual(liste["result"]["images"][0]["context_text"], KAPITEL[:200])
+            # seit 09.10.2026 gekennzeichnet: Seitenkontext = Fremdtext, keine Anweisung (inkluagent/daten.py)
+            from inkluagent.daten import DATEN_MARKE
+            self.assertEqual(liste["result"]["images"][0]["kontext_daten"], DATEN_MARKE + KAPITEL[:200])
             detail = tp.get_image_metadata(self.bild_ids[0], self.pid, 1)
-            self.assertEqual(detail["result"]["context_text"], KAPITEL)
+            self.assertEqual(detail["result"]["kontext_daten"], DATEN_MARKE + KAPITEL)
             gesehen = {}
             import pipelines.v4.orchestrator as orch
             with mock.patch.object(orch, "verify_alt_text_extern", side_effect=lambda *a, **k: gesehen.update(k) or None), \

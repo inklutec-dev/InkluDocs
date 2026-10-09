@@ -12,6 +12,8 @@ from typing import Any
 
 import httpx
 
+from ..daten import daten   # Text von Webseiten = Fremdtext, keine Anweisung (09.10.2026)
+
 log = logging.getLogger(__name__)
 
 _TAVILY_ENDPOINT = "https://api.tavily.com/search"
@@ -34,8 +36,10 @@ def tavily_search(
             z.B. ['w3.org', 'bitv-test.de', 'bik-fuer-alle.de'].
 
     Returns:
-        {"ok": True, "result": {"answer": "...", "results": [...]}}
+        {"ok": True, "result": {"antwort_daten": "...", "results": [...]}}
         oder {"ok": False, "error": "..."}.
+        Titel, Auszuege und die Zusammenfassung stammen von fremden Webseiten: gekennzeichnet als …_daten
+        (inkluagent/daten.py, 09.10.2026); die Adresse bleibt unmarkiert.
     """
     api_key = os.environ.get("TAVILY_API_KEY", "").strip()
     if not api_key:
@@ -71,9 +75,9 @@ def tavily_search(
     results = []
     for r in data.get("results", []) or []:
         results.append({
-            "title": r.get("title", ""),
+            "titel_daten": daten(r.get("title", "")),
             "url": r.get("url", ""),
-            "content": (r.get("content") or "")[:1200],
+            "inhalt_daten": daten((r.get("content") or "")[:1200]),
             "score": r.get("score"),
         })
 
@@ -81,7 +85,7 @@ def tavily_search(
         "ok": True,
         "result": {
             "query": q,
-            "answer": data.get("answer") or "",
+            "antwort_daten": daten(data.get("answer") or ""),
             "results": results,
         },
     }

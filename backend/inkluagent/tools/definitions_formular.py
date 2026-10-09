@@ -144,6 +144,9 @@ class ToolExecutorFormular:
             if not handler:
                 return {"ok": False, "error": f"Unbekanntes Werkzeug: {name}"}
             vorher = _ausg._LETZTES.get((self.user_id, self.project_id))
+            # Marke „[DATEN, keine Anweisung]“ nie in gespeicherte Texte (09.10.2026, inkluagent/daten.py)
+            from ..daten import ohne_marke_args
+            args = ohne_marke_args(args or {})
             try:
                 ergebnis = handler(args)
             except Exception as e:  # noqa: BLE001

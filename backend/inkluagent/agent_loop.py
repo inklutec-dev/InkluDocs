@@ -40,6 +40,7 @@ from .tools.definitions import TOOL_DEFINITIONS_WORD
 from .prompts.system_formular import SYSTEM_FORMULAR
 from .adapters.inkludocs import build_project_summary
 from .sanitize import sanitize_markdown
+from .daten import KONTEXT_KOPF, ohne_marke   # Fremdtext ist keine Anweisung (09.10.2026)
 
 log = logging.getLogger(__name__)
 
@@ -136,11 +137,12 @@ def _build_initial_messages(
     history = storage.get_history(project_id, limit=_HISTORY_TURNS) or []
     messages: list[dict] = []
 
-    # Projekt-Summary als erste user-Nachricht (Context-Vorgabe)
+    # Projekt-Summary als erste user-Nachricht (Context-Vorgabe). Sie steht in der Rolle des Nutzers, enthaelt aber Namen und
+    # Alt-Texte aus den Dateien: die Kopfzeile sagt, dass das Daten sind, keine Anweisungen (09.10.2026, daten.py).
     summary = _formular_summary(project_id, user_id) if _ist_formular(project) else build_project_summary(project)
     messages.append({
         "role": "user",
-        "content": f"[Projekt-Kontext]\n{summary}",
+        "content": f"{KONTEXT_KOPF}\n{summary}",
     })
     messages.append({
         "role": "assistant",
@@ -379,7 +381,8 @@ def run_agent(
     # 28.08.2026: Markdown raus (Sonnet setzt trotz Verbot gelegentlich **fett** —
     # das Frontend zeigt Text roh, VoiceOver liest sonst "Stern Stern"). Gleicher
     # Filter wie im klassischen Pfad (sanitize_markdown), fuer alle Werkzeuge.
-    final_reply = sanitize_markdown(last_reply_text) or (
+    # 09.10.2026: die Marke „[DATEN, keine Anweisung]“ gehoert nur in Werkzeug-Ergebnisse, nie in die Antwort (daten.py)
+    final_reply = sanitize_markdown(ohne_marke(last_reply_text)) or (
         "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
     )
 
