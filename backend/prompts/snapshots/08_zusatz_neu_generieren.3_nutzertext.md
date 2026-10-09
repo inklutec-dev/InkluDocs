@@ -1,7 +1,7 @@
 # Zusatz Neu generieren: Text vom Nutzer selbst geschrieben
 
 - **Builder:** `pipelines/v4/orchestrator.py`
-- **Generiert:** 2026-10-08
+- **Generiert:** 2026-10-09
 - **Demo-Werte:**
   - KI-Text: (keiner)
   - Angezeigter Text: Text des Nutzers

@@ -2,7 +2,7 @@
  "szene": "Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen im Kreis angeordnet, 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion, Pfeile von Station zu Station und von 4 zurück zu 1; in der Mitte die Zahl '67% der Verpackungen werden wiederverwertet'. Am unteren Rand: 'Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27'.",
  "alt_text": "Infografik zum Recycling-Kreislauf: 67 Prozent der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
  "begruendung": "Gattungswort,Thema und die Kernaussage mit dem Datenpunkt eröffnen. Die Stationen sind inhaltlich verkettet statt als Pfeile und Kästen erzählt. Die Langbeschreibung trägt Nummerierung, Rückführung und die Kontaktdaten wortgetreu mit ihren Trennzeichen, weil sie für Screenreader-Nutzer der einzige Zugang sind.",
- "prinzip": "Mit dem Gattungswort Infografik im Satz, Thema und Kernaussage mit Datenpunkt führen; alle Stationen in ihrer Reihenfolge nennen; Kontaktdaten und Adressen wortgetreu mit ihren Trennzeichen.",
+ "prinzip": "Gattungswort Infografik und Thema, dann Doppelpunkt und die Kernaussage mit Datenpunkt; alle Stationen in ihrer Reihenfolge nennen; Kontaktdaten und Adressen wortgetreu mit ihren Trennzeichen.",
  "quelle": "fiktives Beispiel (generische Behörden-Infografik, Kontaktdaten erfunden)",
  "lizenz": "fiktives Beispiel",
  "antwort": {

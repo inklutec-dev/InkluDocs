@@ -1,7 +1,7 @@
 # Zusatz Neu generieren: bisheriger Text von der KI
 
 - **Builder:** `pipelines/v4/orchestrator.py`
-- **Generiert:** 2026-10-08
+- **Generiert:** 2026-10-09
 - **Demo-Werte:**
   - Bisheriger Text: Karte zum Landabtausch im Areal Beispielfeld: Ein Fluss teilt das Gebiet von Nord nach Süd.
   - Vom Nutzer bearbeitet: nein

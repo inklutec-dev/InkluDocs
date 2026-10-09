@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp funktional
 
 - **Builder:** `prompts/builders/beschreibung.py:109`
-- **Generiert:** 2026-10-08
+- **Generiert:** 2026-10-09
 - **Demo-Werte:**
   - width × height: 64 × 64
   - Kontext: Seite 3 von 12

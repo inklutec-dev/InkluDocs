@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp karte
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-10-08
+- **Generiert:** 2026-10-09
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -196,28 +196,29 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-4. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
-   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
-   Gedankenstrich. Senkrechte und waagerechte Balken heißen Balkendiagramm, nicht
-   Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
-   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
+4. Schreibweise. Gattungswort und Thema eröffnen den Alt-Text, ein Doppelpunkt
+   führt direkt zur Aussage: "Karte der Beratungsstellen in Deutschland: 45
+   Standorte, die meisten im Süden". Danach ist der Inhalt Subjekt, nicht mehr die
+   Grafik oder ein Teil von ihr ("Sie zeigt …", "Beide Karten zeigen …"), auch
+   in der Langbeschreibung. Senkrechte und waagerechte Balken heißen
+   Balkendiagramm, nicht Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent),
+   Tausender mit Punkt (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild
+   gedruckt.
 
 5. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
    Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
    zuerst, was die Grafik ist und was sie aussagt, dann die Kernfakten, ohne die
    die Aussage nicht stimmt: bei Diagrammen jede Reihe mit Richtung und dem
    Wert, der sie trägt, bei Tabellen die tragenden Werte, bei Abläufen die
-   Stationen. So kurz wie möglich, so lang wie nötig: meist zwei bis drei kurze
-   Sätze, bei dichten Grafiken bis etwa 350 Zeichen. Die 400 Zeichen des Schemas
-   sind eine Obergrenze, kein Ziel. Schreibe so, wie du es einem Kollegen am
+   Stationen, bei Karten die Orte, Gebiete oder Wege, um die es geht. So kurz wie
+   möglich, so lang wie nötig: zwei bis drei kurze Sätze, meist um 250 Zeichen,
+   bei dichten Grafiken höchstens 350. Schreibe so, wie du es einem Kollegen am
    Telefon sagst, der die Grafik nicht sieht und sofort mitreden muss:
    Alltagssprache, die jeder versteht, kein Amtston, keine Zahlenliste ohne
-   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und
-   vertieft: Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare
-   Texte in Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen,
-   höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer Ansage wie "Das
-   Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem Inhalt. Sie
-   wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl.
+   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und vertieft:
+   Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare Texte in
+   Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen, höchstens 2000
+   Zeichen. Sie wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl.
 
 
 BEISPIELE
@@ -227,7 +228,7 @@ Szene: Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, 
 Antwort:
 {
   "alt_text": "Karte der Beratungsstellen in Deutschland: 45 Beratungsstellen, deutlich konzentriert im Süden um München und Stuttgart, vereinzelt im Norden bei Hamburg. Große Kreise sind Beratungsstellen mit Werkstatt, kleine reine Beratungsstellen.",
-  "langbeschreibung": "Die Karte ist nach Norden ausgerichtet. Von den 45 blauen Markierungen sind 12 große Kreise für Beratungsstellen mit Werkstatt und 33 kleine Kreise für reine Beratungsstellen. Neben den dichten Gruppen im Süden liegen weitere Markierungen im Westen bei Köln und im Osten bei Berlin. Beschriftet sind die Städte München, Stuttgart, Köln, Hamburg und Berlin. Ein Maßstab ist nicht lesbar.",
+  "langbeschreibung": "Norden liegt oben. Von den 45 blauen Markierungen sind 12 große Kreise für Beratungsstellen mit Werkstatt und 33 kleine Kreise für reine Beratungsstellen. Neben den dichten Gruppen im Süden liegen weitere Markierungen im Westen bei Köln und im Osten bei Berlin. Beschriftet sind die Städte München, Stuttgart, Köln, Hamburg und Berlin. Ein Maßstab ist nicht lesbar.",
   "verwendete_inventar_items": [
     "Deutschlandkarte, Norden oben",
     "45 blaue Punkt-Markierungen",
@@ -241,7 +242,7 @@ Antwort:
   "nicht_im_inventar": [],
   "atmosphaere_belege": []
 }
-(Merksatz: Mit dem Gattungswort Karte im Satz, Gebiet und räumlicher Kernaussage führen; Symbolbedeutung aus der Legende direkt aussagen; Ortsnamen wortgetreu; Himmelsrichtungen statt Bildkoordinaten.)
+(Merksatz: Gattungswort Karte und Gebiet, dann Doppelpunkt und die räumliche Kernaussage; Symbolbedeutung aus der Legende direkt aussagen; Ortsnamen wortgetreu; Himmelsrichtungen statt Bildkoordinaten.)
 
 Gegenbeispiel 1
 Szene: Dieselbe Deutschlandkarte: 45 blaue Punkt-Markierungen für Beratungsstellen, Legende mit großen und kleinen Kreisen, Häufung im Süden, beschriftete Städte München, Stuttgart, Köln, Hamburg, Berlin.

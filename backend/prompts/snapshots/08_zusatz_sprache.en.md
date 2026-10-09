@@ -1,7 +1,7 @@
 # Zusatz Ausgabesprache (Beispiel Englisch)
 
 - **Builder:** `pipelines/v4/orchestrator.py`
-- **Generiert:** 2026-10-08
+- **Generiert:** 2026-10-09
 - **Demo-Werte:**
   - Sprache: en
 

@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp tabelle
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-10-08
+- **Generiert:** 2026-10-09
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -194,28 +194,29 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-4. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
-   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
-   Gedankenstrich. Senkrechte und waagerechte Balken heißen Balkendiagramm, nicht
-   Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
-   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
+4. Schreibweise. Gattungswort und Thema eröffnen den Alt-Text, ein Doppelpunkt
+   führt direkt zur Aussage: "Karte der Beratungsstellen in Deutschland: 45
+   Standorte, die meisten im Süden". Danach ist der Inhalt Subjekt, nicht mehr die
+   Grafik oder ein Teil von ihr ("Sie zeigt …", "Beide Karten zeigen …"), auch
+   in der Langbeschreibung. Senkrechte und waagerechte Balken heißen
+   Balkendiagramm, nicht Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent),
+   Tausender mit Punkt (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild
+   gedruckt.
 
 5. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
    Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
    zuerst, was die Grafik ist und was sie aussagt, dann die Kernfakten, ohne die
    die Aussage nicht stimmt: bei Diagrammen jede Reihe mit Richtung und dem
    Wert, der sie trägt, bei Tabellen die tragenden Werte, bei Abläufen die
-   Stationen. So kurz wie möglich, so lang wie nötig: meist zwei bis drei kurze
-   Sätze, bei dichten Grafiken bis etwa 350 Zeichen. Die 400 Zeichen des Schemas
-   sind eine Obergrenze, kein Ziel. Schreibe so, wie du es einem Kollegen am
+   Stationen, bei Karten die Orte, Gebiete oder Wege, um die es geht. So kurz wie
+   möglich, so lang wie nötig: zwei bis drei kurze Sätze, meist um 250 Zeichen,
+   bei dichten Grafiken höchstens 350. Schreibe so, wie du es einem Kollegen am
    Telefon sagst, der die Grafik nicht sieht und sofort mitreden muss:
    Alltagssprache, die jeder versteht, kein Amtston, keine Zahlenliste ohne
-   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und
-   vertieft: Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare
-   Texte in Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen,
-   höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer Ansage wie "Das
-   Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem Inhalt. Sie
-   wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl.
+   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und vertieft:
+   Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare Texte in
+   Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen, höchstens 2000
+   Zeichen. Sie wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl.
 
 
 BEISPIELE
@@ -241,7 +242,7 @@ Antwort:
   "nicht_im_inventar": [],
   "atmosphaere_belege": []
 }
-(Merksatz: Mit dem Gattungswort Tabelle im Satz, Thema und der Kernaussage aus den belegten Endwerten führen; Zahlen und Symbole exakt, Struktur über Gruppen und Perioden statt Layout.)
+(Merksatz: Gattungswort Tabelle und Thema, dann Doppelpunkt und die Kernaussage aus den belegten Endwerten; Zahlen und Symbole exakt, Struktur über Gruppen und Perioden statt Layout.)
 
 Gegenbeispiel 1
 Szene: Dasselbe Periodensystem der Elemente: 118 Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, 1) bis Oganesson (Og, 118).

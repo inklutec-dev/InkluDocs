@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp foto_personen
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-10-08
+- **Generiert:** 2026-10-09
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**

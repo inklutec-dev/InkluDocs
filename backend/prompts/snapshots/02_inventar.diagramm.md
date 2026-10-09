@@ -1,7 +1,7 @@
 # Inventar-Schritt, Bildtyp diagramm
 
 - **Builder:** `prompts/builders/inventar.py:62`
-- **Generiert:** 2026-10-08
+- **Generiert:** 2026-10-09
 - **Demo-Werte:**
   - width × height: 1280 × 720
   - Bildtyp: diagramm

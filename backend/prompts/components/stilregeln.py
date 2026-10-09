@@ -11,6 +11,17 @@ Drei Exporte:
                         Diagramm, Tabelle, Karte, Infografik, Screenshot,
                         Strukturformel. Körperdetails und Namensregel entfallen.
 Die Mini-Familie (Logo, Icon, Bedienelement) hat eine eigene, kürzere Formel.
+
+Oktober 2026 (Stilrunde Karten): Trotz Punkt 3 enthielt rund jeder zweite Kartentext
+eine Ansage ("Sie zeigt …", "Die Karte zeigt …"). Ursache war die Schreibweise-Regel
+der sachlichen Fassung: "Das Gattungswort steht als normales Wort im Satz" sagte nicht,
+was nach dem Kopf kommt. Das Modell schloss Gattungswort und Thema meist als eigenen
+Satz ab und machte im nächsten Satz die Grafik zum Subjekt; das Kartenbeispiel begann
+die Langbeschreibung selbst mit "Die Karte ist …". Punkt 4 legt jetzt fest:
+Gattungswort und Thema, Doppelpunkt, Aussage; danach ist der Inhalt Subjekt, auch in
+der Langbeschreibung (dafür entfiel die doppelte Ansage-Zeile in der Länge). Die
+Längenregel nennt die Kernfakten einer Karte und als Zielmarke meist um 250 Zeichen,
+bei dichten Grafiken höchstens 350. Messung: prompts/ARCHITEKTUR.md, Stand 09.10.2026.
 """
 
 _PUNKT_1 = """1. Wichtigstes zuerst. Führe mit der Information, wegen der das Bild an seiner
@@ -73,28 +84,29 @@ _LAENGE_FOTO = """6. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen:
    Aufzählungszeichen. Sie beginnt nicht mit einer Ansage wie "Das Bild zeigt",
    wiederholt den Alt-Text nicht und widerspricht ihm in keinem Punkt."""
 
-_SCHREIBWEISE_SACHLICH = """5. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
-   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
-   Gedankenstrich. Senkrechte und waagerechte Balken heißen Balkendiagramm, nicht
-   Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
-   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt."""
+_SCHREIBWEISE_SACHLICH = """5. Schreibweise. Gattungswort und Thema eröffnen den Alt-Text, ein Doppelpunkt
+   führt direkt zur Aussage: "Karte der Beratungsstellen in Deutschland: 45
+   Standorte, die meisten im Süden". Danach ist der Inhalt Subjekt, nicht mehr die
+   Grafik oder ein Teil von ihr ("Sie zeigt …", "Beide Karten zeigen …"), auch
+   in der Langbeschreibung. Senkrechte und waagerechte Balken heißen
+   Balkendiagramm, nicht Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent),
+   Tausender mit Punkt (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild
+   gedruckt."""
 
 _LAENGE_SACHLICH = """6. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
    Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
    zuerst, was die Grafik ist und was sie aussagt, dann die Kernfakten, ohne die
    die Aussage nicht stimmt: bei Diagrammen jede Reihe mit Richtung und dem
    Wert, der sie trägt, bei Tabellen die tragenden Werte, bei Abläufen die
-   Stationen. So kurz wie möglich, so lang wie nötig: meist zwei bis drei kurze
-   Sätze, bei dichten Grafiken bis etwa 350 Zeichen. Die 400 Zeichen des Schemas
-   sind eine Obergrenze, kein Ziel. Schreibe so, wie du es einem Kollegen am
+   Stationen, bei Karten die Orte, Gebiete oder Wege, um die es geht. So kurz wie
+   möglich, so lang wie nötig: zwei bis drei kurze Sätze, meist um 250 Zeichen,
+   bei dichten Grafiken höchstens 350. Schreibe so, wie du es einem Kollegen am
    Telefon sagst, der die Grafik nicht sieht und sofort mitreden muss:
    Alltagssprache, die jeder versteht, kein Amtston, keine Zahlenliste ohne
-   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und
-   vertieft: Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare
-   Texte in Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen,
-   höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer Ansage wie "Das
-   Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem Inhalt. Sie
-   wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl."""
+   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und vertieft:
+   Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare Texte in
+   Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen, höchstens 2000
+   Zeichen. Sie wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl."""
 
 STILREGELN_KERN = "STILREGELN (Stil, nicht Fakten)\n\n" + "\n\n".join([_PUNKT_1, _PUNKT_2_FOTO, _PUNKT_3, _PUNKT_4, _PUNKT_5])
 
