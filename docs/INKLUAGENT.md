@@ -352,3 +352,25 @@ ohne Schalter, Knopf gilt immer, Deckel mit Karte, Knopf führt das Angebot aus,
 unabhängig vom Verlauf, Kostendeckel nur heute und nur Zweck chatbot). Klickprobe lokal (Schalter an, Grenze 6): zweite
 Einzelaktion als Karte, „Ja, aber anders“ führt nichts aus, „Ja speichern“ genau das Angebot, siebte Nachricht abgewiesen,
 auch nach „Verlauf leeren“ — 9 von 9; mit Schalter aus die Probe aus Schritt 1 unverändert 14 von 14.
+
+### Schritt 3: Erklärung und Hilfe (Schalter `AGENT_HILFE`, Umgebung `INKLUAGENT_HILFE=an`)
+
+- **Drei Stichpunkte vor dem Chat** statt der langen Einleitung (`frontend/inkluagent.js`, `inkluagentKurzhilfeHtml`, echte
+  Liste): „Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien.“ (zugleich der Hinweis nach KI-VO
+  Art. 50), „Sag ihm in eigenen Worten, was du brauchst.“, „Bevor etwas Credits kostet oder sich nicht rückgängig machen
+  lässt, fragt er dich.“ Darunter der Link „Alles, was der InkluAgent kann“. Der Vorschlag aus dem Konzept „… oder gib ihm
+  eine Datei oder Webadresse“ fehlt bewusst, bis es das Hochladefeld gibt (Runde 2). Schalter aus = die alte Einleitung.
+- **Hilfe-Seite `/hilfe/inkluagent`** (nach der Anmeldung, `templates/hilfe_inkluagent.html`, 404 bei Schalter aus): die
+  Werkzeuglisten je Projektart (PDF-Dokumente, Word-Dokumente, Grafiken, Webseiten) entstehen in `inkluagent/hilfe.py` aus
+  `agent_loop._werkzeugsatz` (Schalter schon angewendet) und den Anzeigenamen aus `tools/namen.py`; „Mit Rückfrage“ = das
+  Werkzeug hat `bestaetigt`. So verspricht die Seite nie mehr, als da ist. Dazu: So arbeitest du mit dem InkluAgent, was er
+  nicht macht (Abo und Zahlung, Konto löschen, Passwort und E-Mail-Adresse, API-Schlüssel, Team und Gäste einladen — mit Link
+  zu den Einstellungen), Grenzen (Tagesgrenze, 5000 Zeichen, mit Schritt 2 der Deckel für Einzelaktionen, KI-Hinweis).
+- **Link „Hilfe“ in der Seitenleiste** an fester Stelle direkt nach „Über uns und Kontakt“ (`dashboard.js`, `NAV_ITEMS`,
+  WCAG 3.2.6), sichtbar mit `/api/me` → `user.inkluagent_hilfe`.
+- Texte in sechs Sprachen (26 neue Einträge je Katalog), check_i18n.py ok.
+
+Tests: `tests/test_agent_hilfe.py` (7: Schalter, Seite aus dem Werkzeugsatz und den Schaltern, Darstellung in sechs
+Sprachen, alle Texte in allen Katalogen, Stichpunkte und alte Einleitung, Link-Position). Klickprobe lokal: 16 von 16
+(Stichpunkte, Link, „Hilfe“ an gleicher Stelle auf Startseite und Projekt, Hilfe-Seite mit aktueller Seite markiert, axe ohne
+ernste Verstöße, Englisch, Schalter aus: alte Einleitung, kein Link, 404).

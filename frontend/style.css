@@ -991,6 +991,14 @@ header h1 { font-size: 1.3rem; color: white; }
     margin: 0 0 1rem;
     line-height: 1.5;
 }
+/* Schritt 3 (InkluAgent-Ausbau): Kurzhilfe als echte Liste, Link zur Hilfe-Seite darunter */
+ul.inkluagent-kurzhilfe {
+    margin: 0 0 0.4rem;
+    padding-left: 1.25rem;
+}
+.inkluagent-hilfe-link {
+    margin: 0 0 1rem;
+}
 .inkluagent-intro em {
     background: var(--bg);
     padding: 0.05rem 0.35rem;

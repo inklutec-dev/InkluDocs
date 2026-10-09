@@ -940,6 +940,8 @@ async def me(user: dict = Depends(get_current_user)):
             # Navigations-Eintrag „Express-Warenkorb“ (Zusatz 05.10.2026): {"modus", "dokumente"} oder None = aus.
             "express_warenkorb": express_api.korb_fuer_me(db_user["id"]),
             "express_bearbeiter": bool(db_user.get("express_bearbeiter")) and express_api.aktiv(),
+            # InkluAgent-Ausbau Runde 1, Schritt 3 (funktionen.AGENT_HILFE): Link „Hilfe“ in der Seitenleiste
+            "inkluagent_hilfe": bool(funktionen.AGENT_HILFE),
         },
         # deprecated: altes Tages-Limit — bleibt bis zur Frontend-Umstellung
         # auf den "abo"-Block mitgeliefert, danach entfernen.
@@ -12064,6 +12066,19 @@ def _render_protected_template(request: Request, template_name: str, **extra):
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
     return _render_protected_template(request, "dashboard.html")
+
+
+@app.get("/hilfe/inkluagent", response_class=HTMLResponse)
+async def hilfe_inkluagent_page(request: Request):
+    """„Alles, was der InkluAgent kann“ (InkluAgent-Ausbau Runde 1, Schritt 3, Schalter funktionen.AGENT_HILFE): nach der
+    Anmeldung, erzeugt aus denselben Quellen wie Werkzeugsatz, Werkzeugnamen und Schalter (inkluagent/hilfe.py) — die Seite
+    verspricht nie mehr, als der Agent gerade kann."""
+    funktionen.endpunkt_frei("AGENT_HILFE")
+    from inkluagent import hilfe as _hilfe
+    return _render_protected_template(request, "hilfe_inkluagent.html",
+                                      hilfe=_hilfe.seite(get_gettext(resolve_ui_language(request))),
+                                      tageslimit=DAILY_CHAT_LIMIT, max_zeichen=5000,
+                                      einzel_deckel=bool(funktionen.AGENT_SICHERHEIT))
 
 
 @app.get("/projekte", response_class=HTMLResponse)

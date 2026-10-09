@@ -31,6 +31,10 @@ function inkluagentSectionHtml(projectId, variante) {
         +       t('InkluAgent')
         +     '</button>'
         +   '</h2>'
+        // InkluAgent-Ausbau Runde 1, Schritt 3 (Schalter funktionen.AGENT_HILFE, window.FUNKTIONEN.agent_hilfe): drei kurze
+        // Stichpunkte statt der langen Einleitung, der erste ist der KI-Hinweis nach KI-VO Art. 50; darunter der Weg zur
+        // Hilfe-Seite. Echte Liste (VoiceOver: „Liste, 3 Objekte“). Schalter aus = die Einleitung wie bisher.
+        + (inkluagentKurzhilfe() ? inkluagentKurzhilfeHtml() : (''
         +   '<p class="inkluagent-intro">'
         // KI-VO Art. 50 Abs. 1 (gilt seit 02.08.2026): Menschen muessen
         // erkennen, dass sie mit einem KI-System sprechen. Der Name
@@ -43,7 +47,7 @@ function inkluagentSectionHtml(projectId, variante) {
         +   (formular
             ? t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>).')
             : t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.'))
-        +   '</p>'
+        +   '</p>'))
         +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
         // tabindex=0 (11.09.2026, axe scrollable-region-focusable): der Verlauf wird bei vielen
         // Nachrichten scrollbar und muss dann per Tastatur erreichbar sein (WCAG 2.1.1).
@@ -65,6 +69,20 @@ function inkluagentSectionHtml(projectId, variante) {
         +     '</form>'
         +   '</div>'
         + '</section>';
+}
+
+// Schritt 3 (InkluAgent-Ausbau Runde 1): Kurzhilfe vor dem Chat — nur mit Schalter (window.FUNKTIONEN aus funktionen.py)
+function inkluagentKurzhilfe() {
+    return !!(window.FUNKTIONEN && window.FUNKTIONEN.agent_hilfe);
+}
+function inkluagentKurzhilfeHtml() {
+    return ''
+        + '<ul class="inkluagent-intro inkluagent-kurzhilfe">'
+        +   '<li>' + t('Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien.') + '</li>'
+        +   '<li>' + t('Sag ihm in eigenen Worten, was du brauchst.') + '</li>'
+        +   '<li>' + t('Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich.') + '</li>'
+        + '</ul>'
+        + '<p class="inkluagent-hilfe-link"><a href="/hilfe/inkluagent">' + t('Alles, was der InkluAgent kann') + '</a></p>';
 }
 
 function inkluagentInit(projectId) {

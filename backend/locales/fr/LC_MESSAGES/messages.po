@@ -11628,3 +11628,83 @@ msgstr "Ces images n’ont pas de texte alternatif : {liste}. Le contrôle PDF l
 # 09.10.2026 InkluAgent-Ausbau Schritt 2: Tages-Kostendeckel
 msgid "Der InkluAgent hat für dein Konto heute das Tageslimit erreicht. Morgen geht es weiter."
 msgstr "L’InkluAgent a atteint la limite du jour pour votre compte. Ça continue demain."
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 3: Kurzhilfe, Hilfe-Seite, Link Hilfe
+msgid "Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien."
+msgstr "L’InkluAgent est une IA et travaille avec vos projets et vos fichiers."
+
+msgid "Sag ihm in eigenen Worten, was du brauchst."
+msgstr "Dites-lui avec vos propres mots ce dont vous avez besoin."
+
+msgid "Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich."
+msgstr "Avant toute action qui coûte des crédits ou ne peut pas être annulée, il vous demande."
+
+msgid "Alles, was der InkluAgent kann"
+msgstr "Tout ce que l’InkluAgent sait faire"
+
+msgid "Hilfe"
+msgstr "Aide"
+
+msgid "So arbeitest du mit dem InkluAgent"
+msgstr "Comment travailler avec l’InkluAgent"
+
+msgid "Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch. Jedes Projekt hat sein eigenes Gespräch."
+msgstr "Vous trouvez l’InkluAgent dans chaque projet : le bouton « InkluAgent » ouvre la conversation. Chaque projet a sa propre conversation."
+
+msgid "Reden kostet nichts. Was er erzeugt oder ändert, kostet dieselben Credits wie der Knopf in der Oberfläche."
+msgstr "Discuter est gratuit. Ce qu’il crée ou modifie coûte les mêmes crédits que le bouton de l’interface."
+
+msgid "Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte oder mit einem kurzen „Ja“."
+msgstr "Pour les actions qui coûtent des crédits ou ne peuvent pas être annulées, une carte indiquant la cible et le prix apparaît sous sa réponse. Vous confirmez avec le bouton de la carte ou par un bref « Oui »."
+
+msgid "Was er in deinen Projekten kann"
+msgstr "Ce qu’il sait faire dans vos projets"
+
+msgid "Ohne Rückfrage"
+msgstr "Sans demande préalable"
+
+msgid "Mit Rückfrage: kostet Credits oder lässt sich nicht rückgängig machen"
+msgstr "Avec demande préalable : coûte des crédits ou ne peut pas être annulé"
+
+msgid "Was der InkluAgent nicht macht"
+msgstr "Ce que l’InkluAgent ne fait pas"
+
+msgid "Das erledigst du selbst in den Einstellungen:"
+msgstr "Vous le faites vous-même dans les paramètres :"
+
+msgid "Zu den Einstellungen"
+msgstr "Aller aux paramètres"
+
+msgid "Grenzen"
+msgstr "Limites"
+
+#, python-brace-format
+msgid "Höchstens {n} Nachrichten am Tag, je Nachricht höchstens {z} Zeichen."
+msgstr "Au maximum {n} messages par jour, au maximum {z} caractères par message."
+
+msgid "Je Nachricht führt er höchstens eine bezahlte Einzelaktion ohne Rückfrage aus; weitere legt er dir als Karte vor."
+msgstr "Par message, il exécute au maximum une action payante unique sans demander ; il vous présente les suivantes sous forme de carte."
+
+msgid "Der InkluAgent ist eine KI. Prüfe wichtige Ergebnisse, bevor du sie weitergibst."
+msgstr "L’InkluAgent est une IA. Vérifiez les résultats importants avant de les transmettre."
+
+msgid "PDF-Dokumente"
+msgstr "Documents PDF"
+
+msgid "Word-Dokumente"
+msgstr "Documents Word"
+
+msgid "Grafiken"
+msgstr "Graphiques"
+
+msgid "Webseiten"
+msgstr "Pages web"
+
+msgid "Abo und Zahlung"
+msgstr "Abonnement et paiement"
+
+msgid "Passwort und E-Mail-Adresse ändern"
+msgstr "Modifier le mot de passe et l’adresse e-mail"
+
+msgid "Team und Gäste einladen"
+msgstr "Inviter l’équipe et des invités"

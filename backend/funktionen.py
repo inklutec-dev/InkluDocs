@@ -66,6 +66,10 @@ def _umgebung_an(name: str) -> bool:
 # Schritt 2 — Sicherheitsfundament (inkluagent/sicherheit.py): hoechstens eine bezahlte Einzelaktion je Nachricht ohne Karte,
 # Ja-Pruefung auf dem Server, Tagesgrenze ueber eigenen Zaehler, Tages-Kostendeckel je Konto. INKLUAGENT_SICHERHEIT=an.
 AGENT_SICHERHEIT = _umgebung_an("INKLUAGENT_SICHERHEIT")
+# Schritt 3 — Erklaerung und Hilfe: drei kurze Stichpunkte vor dem Chat statt der langen Einleitung (der KI-Hinweis nach
+# KI-Verordnung Art. 50 bleibt der erste Punkt), Hilfe-Seite /hilfe/inkluagent (erzeugt aus Werkzeugsatz, Werkzeugnamen und
+# Schaltern, inkluagent/hilfe.py) und der Link „Hilfe“ in der Seitenleiste. INKLUAGENT_HILFE=an.
+AGENT_HILFE = _umgebung_an("INKLUAGENT_HILFE")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {
@@ -109,4 +113,4 @@ def fuer_oberflaeche() -> dict:
     """window.FUNKTIONEN in app.html."""
     return {"ki_pruefung": KI_PRUEFUNG, "korrektur": KORREKTUR, "eigene_pruefungen": EIGENE_PRUEFUNGEN, "urteil": URTEIL,
             "kette": KETTE, "text_zurueck": TEXT_ZURUECK, "strukturansicht": STRUKTURANSICHT, "express": EXPRESS,
-            "tagging_professionell": TAGGING_PROFESSIONELL}
+            "tagging_professionell": TAGGING_PROFESSIONELL, "agent_hilfe": AGENT_HILFE}

@@ -204,6 +204,9 @@ const NAV_ITEMS = [
   // gemeinsame Seite, Kontakt als Abschnitt darauf (/kontakt leitet auf /ueber-uns#kontakt). Seit 25.08.2026 in der
   // Navigation, für Besucher ohne Login in OEFFENTLICH_NAV.
   { href: '/ueber-uns', label: t('Über uns und Kontakt'), aktiv: ['/kontakt'] },
+  // InkluAgent-Ausbau Runde 1, Schritt 3 (09.10.2026): „Hilfe“ immer an derselben Stelle (WCAG 3.2.6), nur mit Schalter
+  // funktionen.AGENT_HILFE (/api/me user.inkluagent_hilfe). Ziel: „Alles, was der InkluAgent kann“.
+  { href: '/hilfe/inkluagent', label: t('Hilfe'), hilfe: true, bereich: '/hilfe' },
   // 25.09.2026 (Steve): „Verwaltung“ mit den Unterseiten Kunden, Umsatz, API, Einstellungen —
   // der Eintrag bleibt auf allen /verwaltung/…-Seiten als aktuelle Seite markiert.
   { href: '/verwaltung/kunden', label: t('Verwaltung'), admin: true, bereich: '/verwaltung' },
@@ -326,6 +329,7 @@ function renderSidebar() {
     if (it.express && !(currentUser && currentUser.express)) return;
     if (it.bearbeiter && !(currentUser && currentUser.express_bearbeiter && !currentUser.is_admin)) return;
     if (it.korb && !expressKorbSichtbar()) return;
+    if (it.hilfe && !(currentUser && currentUser.inkluagent_hilfe)) return;
     const li = document.createElement('li');
     const a = document.createElement('a');
     a.href = it.href;

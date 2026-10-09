@@ -1,0 +1,52 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Alles, was der InkluAgent kann') }} · InkluDocs{% endblock %}
+{% block main %}
+      {# HILFE ZUM INKLUAGENT (InkluAgent-Ausbau Runde 1, Schritt 3, 09.10.2026; Schalter funktionen.AGENT_HILFE): nach der
+         Anmeldung, Link „Hilfe“ in der Seitenleiste immer an derselben Stelle (WCAG 3.2.6). Die Werkzeuglisten kommen aus
+         inkluagent/hilfe.py — aus demselben Werkzeugsatz, denselben Namen und Schaltern wie der Agent selbst. Nur Text und
+         Listen, keine Ansagen. #}
+      <h1>{{ _('Alles, was der InkluAgent kann') }}</h1>
+      <ul class="dash-intro-box hilfe-kurz">
+        <li>{{ _('Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien.') }}</li>
+        <li>{{ _('Sag ihm in eigenen Worten, was du brauchst.') }}</li>
+        <li>{{ _('Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich.') }}</li>
+      </ul>
+
+      <section class="dash-card" aria-labelledby="hilfe-arbeiten-h">
+        <h2 id="hilfe-arbeiten-h">{{ _('So arbeitest du mit dem InkluAgent') }}</h2>
+        <p>{{ _('Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch. Jedes Projekt hat sein eigenes Gespräch.') }}</p>
+        <p>{{ _('Reden kostet nichts. Was er erzeugt oder ändert, kostet dieselben Credits wie der Knopf in der Oberfläche.') }}</p>
+        <p>{{ _('Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte oder mit einem kurzen „Ja“.') }}</p>
+      </section>
+
+      <section class="dash-card" aria-labelledby="hilfe-projekte-h">
+        <h2 id="hilfe-projekte-h">{{ _('Was er in deinen Projekten kann') }}</h2>
+        {% for art in hilfe.projektarten %}
+        <h3 id="hilfe-{{ art.schluessel }}">{{ art.titel }}</h3>
+        {% if art.ohne_rueckfrage %}
+        <h4>{{ _('Ohne Rückfrage') }}</h4>
+        <ul>{% for name in art.ohne_rueckfrage %}<li>{{ name }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if art.mit_rueckfrage %}
+        <h4>{{ _('Mit Rückfrage: kostet Credits oder lässt sich nicht rückgängig machen') }}</h4>
+        <ul>{% for name in art.mit_rueckfrage %}<li>{{ name }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% endfor %}
+      </section>
+
+      <section class="dash-card" aria-labelledby="hilfe-nicht-h">
+        <h2 id="hilfe-nicht-h">{{ _('Was der InkluAgent nicht macht') }}</h2>
+        <p>{{ _('Das erledigst du selbst in den Einstellungen:') }}</p>
+        <ul>{% for t in hilfe.ausserhalb %}<li>{{ t }}</li>{% endfor %}</ul>
+        <p><a href="/einstellungen">{{ _('Zu den Einstellungen') }}</a></p>
+      </section>
+
+      <section class="dash-card" aria-labelledby="hilfe-grenzen-h">
+        <h2 id="hilfe-grenzen-h">{{ _('Grenzen') }}</h2>
+        <ul>
+          <li>{{ _('Höchstens {n} Nachrichten am Tag, je Nachricht höchstens {z} Zeichen.').format(n=tageslimit, z=max_zeichen) }}</li>
+          {% if einzel_deckel %}<li>{{ _('Je Nachricht führt er höchstens eine bezahlte Einzelaktion ohne Rückfrage aus; weitere legt er dir als Karte vor.') }}</li>{% endif %}
+          <li>{{ _('Der InkluAgent ist eine KI. Prüfe wichtige Ergebnisse, bevor du sie weitergibst.') }}</li>
+        </ul>
+      </section>
+{% endblock %}

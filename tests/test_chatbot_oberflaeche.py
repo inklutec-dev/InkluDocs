@@ -34,6 +34,8 @@ class Schalter(unittest.TestCase):
         self.assertIs(schalter.pop("express"), funktionen.EXPRESS)
         # „tagging_professionell“ (09.10.2026) haengt ebenfalls an der Umgebung (TAGGING_PROFESSIONELL, Vorgabe aus)
         self.assertIs(schalter.pop("tagging_professionell"), funktionen.TAGGING_PROFESSIONELL)
+        # InkluAgent-Ausbau Runde 1 (09.10.2026): Schalter an der Umgebung, Vorgabe aus
+        self.assertIs(schalter.pop("agent_hilfe"), funktionen.AGENT_HILFE)
         self.assertEqual(schalter, {"ki_pruefung": False, "korrektur": False, "eigene_pruefungen": False,
                                     "urteil": False, "kette": False, "text_zurueck": False,
                                     "strukturansicht": False})

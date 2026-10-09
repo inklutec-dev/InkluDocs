@@ -11325,3 +11325,83 @@ msgstr "Disse billeder har ingen alternativ tekst: {liste}. Det melder PDF-kontr
 # 09.10.2026 InkluAgent-Ausbau Schritt 2: Tages-Kostendeckel
 msgid "Der InkluAgent hat für dein Konto heute das Tageslimit erreicht. Morgen geht es weiter."
 msgstr "InkluAgent har nået dagens grænse for din konto. Det fortsætter i morgen."
+
+# 09.10.2026 InkluAgent-Ausbau Schritt 3: Kurzhilfe, Hilfe-Seite, Link Hilfe
+msgid "Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien."
+msgstr "InkluAgent er en AI og arbejder med dine projekter og filer."
+
+msgid "Sag ihm in eigenen Worten, was du brauchst."
+msgstr "Fortæl den med dine egne ord, hvad du har brug for."
+
+msgid "Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich."
+msgstr "Før noget koster credits eller ikke kan fortrydes, spørger den dig."
+
+msgid "Alles, was der InkluAgent kann"
+msgstr "Alt, hvad InkluAgent kan"
+
+msgid "Hilfe"
+msgstr "Hjælp"
+
+msgid "So arbeitest du mit dem InkluAgent"
+msgstr "Sådan arbejder du med InkluAgent"
+
+msgid "Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch. Jedes Projekt hat sein eigenes Gespräch."
+msgstr "Du finder InkluAgent i hvert projekt: Knappen „InkluAgent“ åbner samtalen. Hvert projekt har sin egen samtale."
+
+msgid "Reden kostet nichts. Was er erzeugt oder ändert, kostet dieselben Credits wie der Knopf in der Oberfläche."
+msgstr "Det er gratis at tale. Det, den opretter eller ændrer, koster de samme credits som knappen i brugerfladen."
+
+msgid "Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte oder mit einem kurzen „Ja“."
+msgstr "Ved handlinger, der koster credits eller ikke kan fortrydes, står der under svaret et kort med mål og pris. Du bekræfter med kortets knap eller med et kort „Ja“."
+
+msgid "Was er in deinen Projekten kann"
+msgstr "Hvad den kan i dine projekter"
+
+msgid "Ohne Rückfrage"
+msgstr "Uden at spørge først"
+
+msgid "Mit Rückfrage: kostet Credits oder lässt sich nicht rückgängig machen"
+msgstr "Spørger først: koster credits eller kan ikke fortrydes"
+
+msgid "Was der InkluAgent nicht macht"
+msgstr "Hvad InkluAgent ikke gør"
+
+msgid "Das erledigst du selbst in den Einstellungen:"
+msgstr "Det gør du selv i indstillingerne:"
+
+msgid "Zu den Einstellungen"
+msgstr "Til indstillingerne"
+
+msgid "Grenzen"
+msgstr "Grænser"
+
+#, python-brace-format
+msgid "Höchstens {n} Nachrichten am Tag, je Nachricht höchstens {z} Zeichen."
+msgstr "Højst {n} beskeder om dagen, højst {z} tegn pr. besked."
+
+msgid "Je Nachricht führt er höchstens eine bezahlte Einzelaktion ohne Rückfrage aus; weitere legt er dir als Karte vor."
+msgstr "Pr. besked udfører den højst én betalt enkelthandling uden at spørge; flere viser den dig som et kort."
+
+msgid "Der InkluAgent ist eine KI. Prüfe wichtige Ergebnisse, bevor du sie weitergibst."
+msgstr "InkluAgent er en AI. Kontrollér vigtige resultater, før du giver dem videre."
+
+msgid "PDF-Dokumente"
+msgstr "PDF-dokumenter"
+
+msgid "Word-Dokumente"
+msgstr "Word-dokumenter"
+
+msgid "Grafiken"
+msgstr "Grafik"
+
+msgid "Webseiten"
+msgstr "Websider"
+
+msgid "Abo und Zahlung"
+msgstr "Abonnement og betaling"
+
+msgid "Passwort und E-Mail-Adresse ändern"
+msgstr "Skift adgangskode og e-mailadresse"
+
+msgid "Team und Gäste einladen"
+msgstr "Inviter team og gæster"
