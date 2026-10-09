@@ -172,7 +172,7 @@
     if (!gefiltert) metaTeile.push(a.projekt_geloescht ? t('{projekt} (Projekt gelöscht)', { projekt: a.projekt }) : a.projekt);
     else if (a.projekt_geloescht) metaTeile.push(t('Projekt gelöscht'));
     metaTeile.push(a.dateiname);
-    if (a.ausloeser === 'bot') metaTeile.push(t('über den Chatbot'));
+    if (a.ausloeser === 'bot') metaTeile.push(t('über den InkluAgent'));
     text.appendChild(el('p', 'dash-meta', metaTeile.join(' · ')));
     // Kein Befund-Satz ueber dem Herunterladen-Knopf (Michael Karbe, Mail 12.09.2026, Punkt 10): zu viel
     // Text, der Pruefbericht steht in der Klappe „Pruefbericht lesen“ darunter. Bis 13.09. stand hier

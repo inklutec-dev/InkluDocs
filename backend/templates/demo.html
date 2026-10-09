@@ -68,16 +68,16 @@
           <button type="button" class="btn btn-secondary btn-small" data-copy="langField" data-copy-label="{{ _('Langbeschreibung') }}">{{ _('Langbeschreibung kopieren') }}</button>
         </div>
 
-        <!-- Chatbot zum Verfeinern (derselbe InkluAgent). Kopfbalken in Navy wie im Werkzeug. -->
+        <!-- InkluAgent zum Verfeinern (derselbe wie im Werkzeug, Name seit 09.10.2026). Kopfbalken in Navy wie im Werkzeug. -->
         <section class="demo-chat">
-          <h3 class="demo-chat-header">{{ _('Mit dem Assistenten verfeinern') }}</h3>
+          <h3 class="demo-chat-header">{{ _('Mit dem InkluAgent verfeinern') }}</h3>
           <p class="demo-hint">{{ _('Bitte zum Beispiel „mach den Text kürzer" oder stelle Fragen zu Barrierefreiheit (BITV/WCAG).') }}</p>
           <!-- role="log" ist hier noetig (kein natives Element) und impliziert aria-live="polite". -->
           <div id="chatLog" class="demo-chatlog" role="log" aria-label="{{ _('Chat-Verlauf') }}"></div>
           <form id="chatForm" class="demo-chat-form">
-            <label for="chatInput" class="demo-visually-hidden">{{ _('Nachricht an den Assistenten') }}</label>
+            <label for="chatInput" class="demo-visually-hidden">{{ _('Nachricht an den InkluAgent') }}</label>
             <input type="text" id="chatInput" maxlength="2000" autocomplete="off"
-                   placeholder="{{ _('Nachricht an den Assistenten …') }}">
+                   placeholder="{{ _('Nachricht an den InkluAgent …') }}">
             <button type="submit" class="btn btn-primary">{{ _('Senden') }}</button>
           </form>
         </section>

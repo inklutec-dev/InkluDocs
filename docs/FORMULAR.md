@@ -271,7 +271,7 @@ natives `<details>`; Abschluss als natives `<dialog>` (Fokusfang, Escape).
 
 ## InkluAgent im Formular-Projekt (28.08.2026)
 
-Derselbe Chat-Kasten wie bei den Alt-Texten (Knopf „Chatbot“ unter der
+Derselbe Chat-Kasten wie bei den Alt-Texten (Knopf „InkluAgent“ unter der
 Feldliste, nur für den Besitzer), aber mit eigenem Fachteil und eigenem
 Werkzeugsatz: `backend/inkluagent/prompts/system_formular.py` und
 `backend/inkluagent/tools/formular.py` + `definitions_formular.py`. Die Weiche

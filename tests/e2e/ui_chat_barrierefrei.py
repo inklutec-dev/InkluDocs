@@ -4,7 +4,7 @@
   M1  „Genutzt: …“ mit Anzeigenamen vom Server, keine rohen Werkzeugnamen
   N6  Download-Knopf traegt den Dateinamen
   P4-M1  Fokus nur dann auf die neue Antwort, wenn er noch im Chat liegt; sonst „Antwort vom InkluAgent ist da.“ (einmal),
-         bei zugeklapptem Chat „Chatbot, neue Antwort“ am Knopf, beim Oeffnen Fokus auf die Antwort; wer im Chat-Feld
+         bei zugeklapptem Chat „InkluAgent, neue Antwort“ am Knopf, beim Oeffnen Fokus auf die Antwort; wer im Chat-Feld
          weiterschreibt, behaelt Fokus und Text (Antworten hier als Attrappe im Browser, ohne KI)
   P4-M3  veraltete Karte: aus dem Verlauf ohne Knopf („Nicht mehr gültig“); live geklickt: Knopf aria-disabled, Fokus bleibt
   P4-M2  echte Karte aus dem Chat (KI): Dokument per Karte loeschen -> Dokumentkarte sofort weg, Zaehler stimmt, Karte
@@ -220,15 +220,15 @@ with sync_playwright() as p:
         pg.wait_for_timeout(2500)
         a = aktiv()
         knopf = pg.locator("#inkluagentToggle").inner_text().strip()
-        check("C: Chat zugeklappt -> Fokus bleibt am Knopf, Knopf „Chatbot, neue Antwort“, Ansage einmal",
-              a["id"] == "inkluagentToggle" and knopf == "Chatbot, neue Antwort" and len(live_mit("Antwort vom InkluAgent ist da.")) == 1,
+        check("C: Chat zugeklappt -> Fokus bleibt am Knopf, Knopf „InkluAgent, neue Antwort“, Ansage einmal",
+              a["id"] == "inkluagentToggle" and knopf == "InkluAgent, neue Antwort" and len(live_mit("Antwort vom InkluAgent ist da.")) == 1,
               (a, knopf, pg.evaluate("window.__live")))
         pg.click("#inkluagentToggle")
         pg.wait_for_timeout(1500)
         a = aktiv()
         knopf = pg.locator("#inkluagentToggle").inner_text().strip()
         check("C: beim Öffnen Fokus auf die neue Antwort, Hinweis am Knopf weg",
-              a["antwort"] and "Fiktive Antwort C" in a["text"] and knopf == "Chatbot", (a, knopf))
+              a["antwort"] and "Fiktive Antwort C" in a["text"] and knopf == "InkluAgent", (a, knopf))
         pg.evaluate("window.__chatAttrappe = null")
 
         print("== Prüfung 4, M2/M3: Dokument per Karte löschen (echte Karte aus dem Chat) ==")

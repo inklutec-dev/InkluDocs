@@ -90,7 +90,7 @@ def _process_message(project_id: int, user_message: str, user_id: int, system_su
     # 12.05.2026, Gemini seit 10.09.2026 — beide Provider liefern invoke_with_tools).
     # Klassischer 4-Pfad-Dispatcher bleibt unten als Absturz-Fallback des Werkzeug-Modus.
     if (project or {}).get("tool") == "formular" and not (_AGENTIC_ENABLED and _PROVIDER_NAME in _WERKZEUG_PROVIDER):
-        return {"reply": "Der Assistent fuer Formular-Projekte braucht den Werkzeug-Modus. Bitte an den Betreiber wenden.",
+        return {"reply": "Für Formular-Projekte braucht der InkluAgent den Werkzeug-Modus. Bitte an den Betreiber wenden.",
                 "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
     if _AGENTIC_ENABLED and _PROVIDER_NAME in _WERKZEUG_PROVIDER:
         from .agent_loop import run_agent
@@ -101,7 +101,7 @@ def _process_message(project_id: int, user_message: str, user_id: int, system_su
             # Formular-Projekte (Review 28.08.2026): der klassische Pfad kennt nur Bilder —
             # klare Fehlermeldung statt „Welche Bilder soll ich neu generieren?“.
             if (project or {}).get("tool") == "formular":
-                return {"reply": "Entschuldigung, der Assistent ist gerade nicht erreichbar. Bitte in einem Moment erneut versuchen.",
+                return {"reply": "Entschuldigung, der InkluAgent ist gerade nicht erreichbar. Bitte in einem Moment erneut versuchen.",
                         "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
             # Fallthrough zum klassischen Pfad statt User-Fehler
 

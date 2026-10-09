@@ -63,7 +63,7 @@ with sync_playwright() as p:
     print("== C. Link fuehrt ins Regal ==")
     pg.locator(f".inkluagent-message-anhang a[href*='#ausgabe-{aid}']").first.click(); pg.wait_for_timeout(2500)
     li = pg.locator(f"#ausgabe-{aid}")
-    check("Eintrag im Regal mit Vermerk „über den Chatbot“", li.count() == 1 and "über den Chatbot" in li.inner_text(), li.inner_text()[:200] if li.count() else "")
+    check("Eintrag im Regal mit Vermerk „über den InkluAgent“", li.count() == 1 and "über den InkluAgent" in li.inner_text(), li.inner_text()[:200] if li.count() else "")
     check("Fokus auf der H2 des Eintrags", pg.evaluate("() => document.activeElement && document.activeElement.tagName") == "H2")
     # Aufraeumen: Eintrag loeschen
     li.locator("button:has-text('Löschen')").click(); pg.wait_for_timeout(300); li.locator("button:has-text('Ja, löschen')").click(); pg.wait_for_timeout(1500)

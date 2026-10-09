@@ -1254,8 +1254,8 @@ msgid "{u}/{l} Bilder heute"
 msgstr "{u}/{l} Bilder heute"
 
 #: (Phase 03.07.2026) E2, templates/app.html
-msgid "Chatbot"
-msgstr "Chatbot"
+msgid "InkluAgent"
+msgstr "InkluAgent"
 
 #: (Phase 03.07.2026) E2, templates/app.html
 msgid "Bitte den InkluAgent um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
@@ -1929,20 +1929,12 @@ msgid "Langbeschreibung kopieren"
 msgstr "Langbeschreibung kopieren"
 
 #: (04.07.2026) Demo-Seiten i18n
-msgid "Mit dem Assistenten verfeinern"
-msgstr "Mit dem Assistenten verfeinern"
-
-#: (04.07.2026) Demo-Seiten i18n
 msgid "Bitte zum Beispiel „mach den Text kürzer\" oder stelle Fragen zu Barrierefreiheit (BITV/WCAG)."
 msgstr "Bitte zum Beispiel „mach den Text kürzer\" oder stelle Fragen zu Barrierefreiheit (BITV/WCAG)."
 
 #: (04.07.2026) Demo-Seiten i18n
-msgid "Nachricht an den Assistenten"
-msgstr "Nachricht an den Assistenten"
-
-#: (04.07.2026) Demo-Seiten i18n
-msgid "Nachricht an den Assistenten …"
-msgstr "Nachricht an den Assistenten …"
+msgid "Nachricht an den InkluAgent …"
+msgstr "Nachricht an den InkluAgent …"
 
 #: (04.07.2026) Demo-Seiten i18n
 msgid "Gefällt dir das Ergebnis? Für ganze Dokumente und den fertig getaggten Export geht es mit einem Konto weiter."
@@ -2081,16 +2073,8 @@ msgid "Bild und Ergebnis wurden gelöscht. Du kannst ein neues Bild hochladen."
 msgstr "Bild und Ergebnis wurden gelöscht. Du kannst ein neues Bild hochladen."
 
 #: (04.07.2026) Demo-Seiten i18n
-msgid "Assistent denkt nach …"
-msgstr "Assistent denkt nach …"
-
-#: (04.07.2026) Demo-Seiten i18n
 msgid "Entschuldigung, das hat nicht geklappt."
 msgstr "Entschuldigung, das hat nicht geklappt."
-
-#: (04.07.2026) Demo-Seiten i18n
-msgid "Antwort des Assistenten ist da."
-msgstr "Antwort des Assistenten ist da."
 
 #: (04.07.2026) Demo-Seiten i18n
 msgid "Demo testen"
@@ -6023,8 +6007,8 @@ msgstr "{projekt} · {art} · {datum}"
 msgid "{projekt} – alle Dokumente"
 msgstr "{projekt} – alle Dokumente"
 
-msgid "über den Chatbot"
-msgstr "über den Chatbot"
+msgid "über den InkluAgent"
+msgstr "über den InkluAgent"
 
 msgid "Barrierefreie PDF (PDF/UA)"
 msgstr "Barrierefreie PDF (PDF/UA)"
@@ -11189,8 +11173,8 @@ msgstr "Frist ruht bis zur Antwort des Kunden"
 msgid "Gelöschtes Projekt {id}"
 msgstr "Gelöschtes Projekt {id}"
 
-msgid "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
-msgstr "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+msgid "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den InkluAgent) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
+msgstr "Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den InkluAgent) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit."
 
 msgid "Grund für das Stornieren (Pflicht)"
 msgstr "Grund für das Stornieren (Pflicht)"

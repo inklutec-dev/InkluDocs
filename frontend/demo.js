@@ -255,7 +255,7 @@
     if (!msg) return;
     addMsg("user", msg);
     els.chatInput.value = "";
-    announce(t("Assistent denkt nach …"));
+    announce(t("InkluAgent denkt nach..."));
     const { res, data } = await api("/api/demo/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -264,9 +264,9 @@
     if (res.status === 429) { showUpsell(data && data.detail); return; }
     if (!res.ok || !data) { addMsg("bot", (data && data.detail) || t("Entschuldigung, das hat nicht geklappt.")); return; }
     addMsg("bot", data.reply || "");
-    announce(t("Antwort des Assistenten ist da."));
+    announce(t("Antwort vom InkluAgent ist da."));
     if (data.limits) setQuota(data.limits);
-    // Der Assistent kann den Alt-Text geaendert haben — frisch laden
+    // Der InkluAgent kann den Alt-Text geaendert haben — frisch laden
     refreshResultTexts();
   });
 

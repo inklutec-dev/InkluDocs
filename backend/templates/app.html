@@ -4538,10 +4538,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
 
 
-    // ─── InkluAgent (Chatbot pro Projekt) ────────────────────
+    // ─── InkluAgent (KI-Agent pro Projekt) ────────────────────
     // Karbe-Feintuning (06.06.2026):
-    //  - Button-Beschriftung auf nur "Chatbot" (öffnen/schließen wird per
+    //  - Button-Beschriftung auf ein Wort (öffnen/schließen wird per
     //    aria-expanded an Screenreader gemeldet; visuell reicht das Wort).
+    //    Seit 09.10.2026 „InkluAgent“ statt „Chatbot“ (Steve, Michael einverstanden).
     //  - Früherer H2 "Chatbot zur Alt-Text-Hilfe" entfällt, weil der Button
     //    nun selbst die Sektion betitelt (aria-labelledby auf den Button).
     //  - Der erklärende Infotext steht jetzt UNTER dem Button — Karbes Wunsch,
@@ -4554,18 +4555,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">'
             // Akkordeon-Muster (WAI-ARIA, Steve 28.08.2026): der Auf/Zu-Knopf steht IN der Ueberschrift
             // Ebene 2 — per Ueberschriften-Navigation anspringen und sofort druecken; die Nachrichten
-            // sind Ebene 3 darunter. Ein Wort fuer beides: „Chatbot“ (Michaels Wortwahl); „InkluAgent“
-            // bleibt Absender der Nachrichten und steht in der Einleitung.
+            // sind Ebene 3 darunter. Ein Wort fuer beides: „InkluAgent“ (09.10.2026, vorher „Chatbot“) — derselbe
+            // Name wie der Absender der Nachrichten (Ueberschrift 3) und in der Einleitung.
             +   '<h2 id="inkluagentHeading" class="section-title" style="margin:0 0 0.4rem 0;">'
             +     '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
-            +       t('Chatbot')
+            +       t('InkluAgent')
             +     '</button>'
             +   '</h2>'
             +   '<p class="inkluagent-intro">'
             // KI-VO Art. 50 Abs. 1 (gilt seit 02.08.2026): Menschen muessen
-            // erkennen, dass sie mit einem KI-System sprechen. "Chatbot"
-            // waere wohl schon offensichtlich — der ausdrueckliche Satz
-            // macht daraus Gewissheit statt Auslegungsspielraum.
+            // erkennen, dass sie mit einem KI-System sprechen. Der Name
+            // „InkluAgent“ sagt das allein nicht — der ausdrueckliche Satz
+            // „… ist ein KI-Assistent“ direkt unter dem Knopf sagt es.
             // (25.08.2026: stand als Jinja-Kommentar INNERHALB des raw-Blocks,
             // blieb woertlich im JavaScript stehen und brach das ganze
             // App-Skript mit einem SyntaxError ab. Im raw-Block nur
@@ -4638,8 +4639,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const input = document.getElementById('inkluagentInput');
         if (!toggle || !panel) return;
         toggle.setAttribute('aria-expanded', 'true');
-        // Beschriftung bleibt "Chatbot" — Auf/Zu-Status meldet aria-expanded.
-        toggle.textContent = t('Chatbot');
+        // Beschriftung bleibt „InkluAgent“ — Auf/Zu-Status meldet aria-expanded.
+        toggle.textContent = t('InkluAgent');
         panel.hidden = false;
         try { localStorage.setItem('inkluagent.panel.' + projectId, 'open'); } catch (e) {}
         const neu = window._inkluagentNeu != null && String(window._inkluagentNeu) === String(projectId);
@@ -4655,8 +4656,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const panel = document.getElementById('inkluagentPanel');
         if (!toggle || !panel) return;
         toggle.setAttribute('aria-expanded', 'false');
-        // Beschriftung bleibt "Chatbot" — Auf/Zu-Status meldet aria-expanded.
-        toggle.textContent = t('Chatbot');
+        // Beschriftung bleibt „InkluAgent“ — Auf/Zu-Status meldet aria-expanded.
+        toggle.textContent = t('InkluAgent');
         panel.hidden = true;
         const projectId = window._inkluagentProjectId;
         if (projectId) {
@@ -4687,7 +4688,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
     // Pruefung 4 (Barrierefreiheit M1): eine neue Antwort holt den Fokus nur, wenn er noch im Chat liegt (oder nirgends) —
     // wer inzwischen woanders liest oder tippt, bleibt dort und hoert nur „Antwort vom InkluAgent ist da.“ (allgemeine
-    // Ansage-Region); bei zugeklapptem Chat traegt der Knopf „Chatbot, neue Antwort“, bis man ihn oeffnet (dann Fokus auf die
+    // Ansage-Region); bei zugeklapptem Chat traegt der Knopf „InkluAgent, neue Antwort“, bis man ihn oeffnet (dann Fokus auf die
     // Antwort). Wer im Eingabefeld des Chats schon weiterschreibt, behaelt es.
     function inkluagentIstEingabe(el) {
         if (!el) return false;

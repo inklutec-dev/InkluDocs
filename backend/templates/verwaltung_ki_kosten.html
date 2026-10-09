@@ -138,7 +138,7 @@
   let preise = null;
 
   const ZWECK_TEXT = {
-    alttext: t('Alt-Texte'), chatbot: t('Chatbot'), quickinfo: t('Quickinfos'), uebersetzung: t('Übersetzen'),
+    alttext: t('Alt-Texte'), chatbot: t('InkluAgent'), quickinfo: t('Quickinfos'), uebersetzung: t('Übersetzen'),
     tagging_ki: t('Tagging mit KI'), ki_pruefung: t('KI-Prüfung'), unbekannt: t('Sonstiges'),
   };
   const UMGEBUNG_TEXT = { prod: t('Betrieb'), staging: t('Testsystem'), demo: t('Demo'), test: t('Automatische Tests') };
@@ -200,7 +200,7 @@
         { kosten: V.euroGenau(d.kosten_je_credit_cent), pauschale: V.euroGenau(d.pauschale_cent_je_credit) }));
     }
     if (d.kosten_je_credit_ab) {
-      ziel.appendChild(V.el('p', 'dash-sub', t('Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den Chatbot) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit.',
+      ziel.appendChild(V.el('p', 'dash-sub', t('Gezählt für „Kosten je Credit“: {credits} Credits für KI-Arbeit (Alt-Texte, Quickinfos, Übersetzen, Änderungen durch den InkluAgent) und deren KI-Kosten, beides seit {datum}. Tagging, Prüfung, Exporte und Express zählen nicht mit.',
         { credits: V.zahl(d.ki_credits), datum: V.datumZeit(d.kosten_je_credit_ab_lokal || d.messbeginn) })));
     }
     if ((d.nach_umgebung || []).length > 1) {

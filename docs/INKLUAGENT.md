@@ -1,9 +1,18 @@
 # InkluAgent: ein Assistent, mehrere Werkzeuge
 
-Stand 28.08.2026. Der InkluAgent ist der Chatbot in jedem InkluDocs-Projekt
-(Kasten „Chatbot“ unter der Bild- bzw. Feldliste). Er läuft als Tool-Use-Loop
+Stand 28.08.2026. Der InkluAgent ist der KI-Agent in jedem InkluDocs-Projekt
+(Kasten „InkluAgent“ unter der Bild- bzw. Feldliste). Er läuft als Tool-Use-Loop
 auf Sonnet über Bedrock (`backend/inkluagent/agent_loop.py`) und bekommt je
 Werkzeug des Projekts einen eigenen Fachteil, aber denselben Charakter.
+
+**Name in der Oberfläche (09.10.2026, Steve, Michael einverstanden):** überall „InkluAgent“, in allen
+UI-Sprachen unübersetzt — Auf/Zu-Knopf (Überschrift Ebene 2, Auf/Zu meldet `aria-expanded`), Absender der
+Nachrichten, Ansagen, Demo („Mit dem InkluAgent verfeinern“), Vermerk in der Ablage („über den InkluAgent“),
+Verwaltung „KI-Kosten“. Bis dahin hieß der Knopf „Chatbot“. Interne Namen bleiben: Zweck/Quelle `chatbot`
+(Datenbank, Abrechnung), CSS-Klassen `inkluagent-*`, API `/api/projects/{id}/chat`. Den Hinweis nach KI-VO
+Art. 50 gibt der Satz unter dem Knopf („Der InkluAgent ist ein KI-Assistent …“). Nicht umbenannt: Rechtstexte
+(Datenschutz „Chat-Assistent“, Nutzungsbedingungen „KI-Assistent“) und der DSGVO-Hinweis in der Fußzeile —
+die gehen nur zusammen mit der Datenschutzerklärung. Test: `tests/test_inkluagent_name.py`.
 
 ## Gerüst
 
@@ -89,9 +98,9 @@ Werkzeuge (`tools/formular.py`):
 - `tavily_search` — wie bei den Bildern.
 
 Frontend: `app.html` `inkluagentSectionHtml(projectId, 'formular')` liefert
-denselben Kasten (Knopf „Chatbot“, Verlauf, Eingabefeld, Enter sendet) mit
+denselben Kasten (Knopf „InkluAgent“, Verlauf, Eingabefeld, Enter sendet) mit
 Formular-Einleitung; `formular.js` hängt ihn unter die Feldliste (nur Besitzer,
-Gäste bekommen keinen Chatbot) und setzt `refresh_feld`-Aktionen live um
+Gäste bekommen keinen InkluAgent) und setzt `refresh_feld`-Aktionen live um
 (Textfeld, Badge, Beleg — ohne Neu-Rendern, `Formular.chatAktionen`).
 
 ## Werkzeug-Transparenz (28.08.2026)
@@ -239,7 +248,7 @@ gelöscht — beim Start, bei jedem neuen Sofort-Download und bei jeder Export-A
 **Prüfung 4 (30.09.2026, spät):**
 - Fokus nur im Chat: eine neue Antwort bekommt den Fokus nur, wenn er noch im Chat liegt (oder nirgends) und niemand im
   Chat-Feld weiterschreibt (`inkluagentFokusImChat`). Sonst sagt die allgemeine Ansage-Region „Antwort vom InkluAgent ist da.“;
-  bei zugeklapptem Chat heißt der Knopf „Chatbot, neue Antwort“, beim Öffnen bekommt die Antwort den Fokus. Das Eingabefeld
+  bei zugeklapptem Chat heißt der Knopf „InkluAgent, neue Antwort“, beim Öffnen bekommt die Antwort den Fokus. Das Eingabefeld
   bekommt den Fokus nur zurück, wenn er im Chat war.
 - Ansicht nachziehen: Werkzeuge, die den Projektzustand ändern (`ausgaben.AENDERT_ANSICHT`), melden `ansicht_aktualisieren` in
   `actions`; die Oberfläche zeichnet die offene Ansicht still neu (`showProject(id, true)`, kein Fokus auf die H1), der Chat

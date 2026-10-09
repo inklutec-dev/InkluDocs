@@ -5788,7 +5788,7 @@ async def demo_chat(request: Request):
     ).fetchone()
     conn.close()
     if not proj:
-        raise HTTPException(status_code=400, detail="Bitte zuerst ein Bild hochladen, dann hilft der Assistent.")
+        raise HTTPException(status_code=400, detail="Bitte zuerst ein Bild hochladen, dann hilft der InkluAgent.")
     project_id = proj["id"]
     demo_mod.touch_session(uid)  # gleitendes TTL
 
@@ -11611,7 +11611,7 @@ NEUIGKEITEN = [
     {"datum": "02.06.2026", "text": "Getrennte Werkzeuge für PDFs, Webseiten und Grafiken – du legst ein Projekt an und wählst das passende Werkzeug."},
     {"datum": "02.06.2026", "text": "PDF-Bearbeitung verbessert, mit Seitenvorschau für mehr Überblick."},
     {"datum": "02.06.2026", "text": "Verbesserte Barrierefreiheit: klarere Struktur, bessere Bedienung mit Screenreader und Tastatur."},
-    {"datum": "13.05.2026", "text": "Chat-Assistent neu: Jedes Projekt hat jetzt einen eigenen Chatbot, der Bilder einsieht, Alt-Texte bewertet, Vorschläge macht und nach Bestätigung direkt in den Text übernimmt. Aktuell auf Deutsch."},
+    {"datum": "13.05.2026", "text": "InkluAgent neu: Jedes Projekt hat jetzt einen eigenen KI-Agenten, der Bilder einsieht, Alt-Texte bewertet, Vorschläge macht und nach Bestätigung direkt in den Text übernimmt. Aktuell auf Deutsch."},
     {"datum": "13.05.2026", "text": "Mehrsprachigkeit in Vorbereitung: Englisch, Französisch und Spanisch werden in den kommenden Wochen nach und nach ausgerollt."},
     {"datum": "14.04.2026", "text": "Neue dreistufige Prüfpipeline aktiv: Klassifikation, Generierung und automatische Qualitätsprüfung gegen Halluzinationen. Laufende Auswertung zur weiteren Verbesserung."},
     {"datum": "07.04.2026", "text": "Alt-Text-Qualität verbessert: Produktbilder, Diagramme und verlinkte Bilder werden besser erkannt"},

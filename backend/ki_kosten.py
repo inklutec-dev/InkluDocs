@@ -60,7 +60,7 @@ KI_ZWECKE_MIT_CREDITS = ("alttext", "chatbot", "quickinfo", "uebersetzung")
 # Zwecke, wie sie in der Verwaltung erscheinen (Reihenfolge = Anzeige). Neue Zwecke brauchen nur hier eine Zeile.
 ZWECKE = {
     "alttext": "Alt-Texte",
-    "chatbot": "Chatbot",
+    "chatbot": "InkluAgent",   # Anzeigename; der Schluessel „chatbot“ bleibt (Datenbank)
     "quickinfo": "Quickinfos",
     "uebersetzung": "Übersetzen",
     "tagging_ki": "Tagging mit KI",
