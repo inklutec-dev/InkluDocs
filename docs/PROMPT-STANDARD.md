@@ -39,7 +39,7 @@ Wertungen über Stimmung, Wirkung oder Charakter sind erlaubt, wenn der sichtbar
 
 ## Arbeitsteilung Alt-Text und Langbeschreibung
 
-Der Alt-Text trägt Thema, Kernaussage und die Einordnung, die der Kontext belegt. Richtwert: einfache Motive unter 150 Zeichen, komplexe Motive bis 250, Datengrafiken bis 300. Die Langbeschreibung ergänzt Struktur, Werte, Reihenfolgen und Nebendetails. Sie ist Pflicht bei Diagramm, Tabelle, Infografik, Karte, Strukturformel und Screenshot und bei Fotos mit mehr als drei bedeutungstragenden Elementen. Sie wiederholt den Alt-Text nicht.
+Der Alt-Text trägt Thema, Kernaussage und die Einordnung, die der Kontext belegt. Richtwert: einfache Motive unter 150 Zeichen, komplexe Motive bis 250, Datengrafiken meist um 250 und dichte Datengrafiken höchstens 350 (Stilregel Länge der sachlichen Fassung). Datengrafiken eröffnen mit Gattungswort und Thema, dann folgen Doppelpunkt und Aussage; danach ist der Inhalt Subjekt und nicht die Grafik, auch in der Langbeschreibung. Diese Regel steht einmal, in Stilregel 4 der sachlichen Fassung; die Beispiele halten sie ein. Die Langbeschreibung ergänzt Struktur, Werte, Reihenfolgen und Nebendetails. Sie ist Pflicht bei Diagramm, Tabelle, Infografik, Karte, Strukturformel und Screenshot und bei Fotos mit mehr als drei bedeutungstragenden Elementen. Sie wiederholt den Alt-Text nicht.
 
 ## Beispiele
 

@@ -1,10 +1,30 @@
 # InkluDocs Prompt-Architektur (v4)
 
-Stand: 08.10.2026 (Legende vor Alltagswissen; davor 09.09.2026 Gemini-Umstellung und Prompt-Pruefung, 07.09.2026 Mistral-Abbau, 16.07.2026 Paket 1 der Prompt-Generalinspektion).
+Stand: 09.10.2026 (Stilrunde Karten: Einstieg ohne Ansage, Laenge; davor 08.10.2026 Legende vor Alltagswissen, 09.09.2026 Gemini-Umstellung und Prompt-Pruefung, 07.09.2026 Mistral-Abbau, 16.07.2026 Paket 1 der Prompt-Generalinspektion).
 Zielgruppe: kuenftige Leser und Bearbeiter des Prompt-Systems.
 Alle Pfade relativ zur Backend-Wurzel.
 
-## Stand 08.10.2026: Legende vor Alltagswissen
+## Stand 09.10.2026: Stilrunde Karten (Einstieg ohne Ansage, Laenge)
+
+Anlass: Nebenwirkung aus der Legenden-Messung vom 08.10. Rund jeder zweite Kartentext enthielt eine Ansage ("Sie zeigt ...", "Die Karte zeigt ..."), obwohl Stilregel 3 sie verbietet; Karten-Alt-Texte lagen in rund einem Drittel ueber 350 Zeichen.
+
+Ursache (aus den Rohdaten vom 08.10., Staging-Variante B, 47 Karten): Der Alt-Text begann fast immer richtig mit dem Gattungswort. Die Ansage kam danach. Stilregel 4 der sachlichen Fassung sagte nur, das Gattungswort stehe "als normales Wort im Satz", aber nicht, was nach dem Kopf kommt. Das Modell schloss Gattungswort und Thema in 34 von 47 Texten als eigenen Satz mit Punkt ab ("Karte zum Mobilitaetskonzept 2030 der Beispielstadt.") und machte im naechsten Satz die Karte zum Subjekt ("Sie zeigt zwoelf Stadtteile"); mit Doppelpunkt nach dem Kopf folgte fast nie eine Ansage. In der Langbeschreibung war die Karte im ersten Satz immer Subjekt (47 von 47), 17 Mal woertlich "Die Karte ist nach Norden ausgerichtet." aus dem Kartenbeispiel; oft folgte "und zeigt ...". Die Ansage-Zeile in der Laengenregel ("Auch sie beginnt nicht mit einer Ansage") stand doppelt zu Stilregel 3 und half nicht.
+
+Geaendert (eine Stelle je Regel, alle Datengrafiken):
+1. `components/stilregeln.py`, Punkt 4 der sachlichen Fassung (Schreibweise): Gattungswort und Thema eroeffnen den Alt-Text, ein Doppelpunkt fuehrt direkt zur Aussage; danach ist der Inhalt Subjekt, nicht mehr die Grafik oder ein Teil von ihr, auch in der Langbeschreibung. Die doppelte Ansage-Zeile in Punkt 5 entfaellt.
+2. Punkt 5 (Laenge): Kernfakten einer Karte ergaenzt ("die Orte, Gebiete oder Wege, um die es geht"); Zielmarke "meist um 250 Zeichen, bei dichten Grafiken hoechstens 350" statt "bis etwa 350" plus Satz zur Schema-Obergrenze. PROMPT-STANDARD.md nannte "Datengrafiken bis 300" und ist angeglichen.
+3. Beispiele: Karten-Langbeschreibung beginnt mit "Norden liegt oben."; Merksaetze von Karte, Tabelle, Infografik und Strukturformel ohne den alten Wortlaut "Gattungswort ... im Satz".
+Unberuehrt: Legenden-Block, Karten-AUFTRAG, Inventar und Selbstcheck (Wortlaut wie am 08.10. gemessen), Karten-Builder ueberhaupt, Foto-Stilregeln, Pruefpass, Chatbot-Prompt (SYSTEM_AGENT byte-gleich). Test: `tests/test_prompt_stil_daten.py`.
+Verworfen nach Proben: ein Satz im Karten-ALT-TEXT zu Farben und Nebeninhalten und ein Satz zu Vergleichskarten (kuerzten die Parzellenplaene nicht, der zweite erzeugte Echo wie "Vergleichskarten" und "Die Kernaussage:").
+
+Messung (Staging mit ecf659f, Faktenblatt fuer Karten, Temperatur 0,3, fiktive Bilder vom 08.10.; Vergleich mit Variante B vom 08.10., gleiche Auswertungsregel; Bericht: Server `/home/claude/karten-stil-1009/BERICHT.md`):
+- Einstiegs-Ansage im Karten-Alt-Text (erster Satz oder direkt nach dem Kopf): vorher 14 von 47, nachher 4 von 58 (p etwa 0,003). Kopf mit Doppelpunkt 13 von 47, nachher 44 von 58. Rest nur bei den Parzellenplaenen mit zwei Teilkarten ("Zwei Plaene zeigen ...").
+- Langbeschreibung, erster Satz mit Ansage: 16 von 47, nachher 3 von 58; Karte als Subjekt im ersten Satz 47 von 47, nachher 14 von 58. Mitten in der Langbeschreibung beschreiben Vergleichskarten ihre Teile weiter mit "Die linke Karte zeigt ...".
+- Laenge: uebrige Karten Median 284 auf 250 Zeichen, ueber 300 Zeichen 15 von 31 auf 7 von 34, ueber 350 1 von 31 auf 0 von 34. Parzellenplaene mit zwei Teilkarten unveraendert um 380 (ueber 350: 14 von 16, nachher 22 von 24).
+- Legendentreue: Eigentuemer-Fallen 1 von 16 falsch, nachher 0 von 24; Fallen mit Nutzungs-Legenden 0 von 16, nachher 0 von 12; Neu generieren mit einem alten Text "Die Karte zeigt ..." (Temperatur 0,5): Legende 0 von 6 falsch, die alte Ansage in keinem Text uebernommen, einmal "Zwei Plaene vergleichen ...".
+- Kontrollen: Musterbach "ein blaues Band" im Alt-Text 2 von 3, nachher 1 von 6. Inselkarte ohne Legende: das Meer heisst nachher oefter "hellblaue Flaeche" oder "hellblauer Hintergrund" statt Wasser (eigener Vergleich mit dem alten Stand: Wasser genannt alt 6 von 8, neu 2 von 9, p etwa 0,06). Offen.
+- Regression (je 2 Laeufe): Westdeutschland-Karte, Kreisdiagramm, Naehrwerttabelle, Montagefoto und Screenshot gleichwertig. Heliosphaere weiter mit "Sie zeigt ..." nach einem Kopf mit Punkt (2 von 2, vorher 1 von 2) und um 390 Zeichen. Weltbevoelkerung 360 bis 394 Zeichen (vorher 352 bis 355), Werte vollstaendig. Langbeschreibung von Diagramm und Tabelle beginnt weiter oft mit der Grafik ("Das Kreisdiagramm zeigt ..."); deren Reihenfolge-Vorgabe beginnt mit "Diagrammtyp und Thema" beziehungsweise "Thema und Bezugsgroesse".
+
 
 Anlass: Kundenbefund auf Prod. Eine Karte mit zwei Parzellierungsplaenen (heute/geplant) und einer Legende mit Eigentuemerfarben; ein hellblaues Band war laut Legende Gemeindeeigentum. Das Modell (Gemini 3.1 Pro, Bildtyp karte) gab die Legende in der Langbeschreibung richtig wieder und nannte das Band trotzdem Gewaesser ("Ufer", "westlich des Wassers"), auch nach zweimaligem Neu-Generieren. Der Karten-Auftrag hatte schon den Satz "Farben bedeuten, was die Legende sagt (Rot ist keine Gefahr)". Er deckte die Bedeutung von Signaturen ab, nicht den eigentlichen Mechanismus, der in der Messung sichtbar wurde: Das Modell haelt Legende und Alltagsdeutung nicht fuer einen Widerspruch ("Ein hellblaues Band, laut Legende das Verwaltungsvermoegen der Gemeinde, fliesst als Fluss") und setzt die Alltagsdeutung zusaetzlich obendrauf. Beim Neu-Generieren hielt der Variationszusatz ("Faktenlage bleibt identisch") den alten Fehler zusaetzlich fest.
 
