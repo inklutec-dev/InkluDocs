@@ -61,6 +61,8 @@ TRIAL_PRODUCER = "Trial version of PDFix SDK"
 
 # Sprachkuerzel der Erkennung -> BCP-47-Wert fuer /Lang (PDF/UA verlangt einen gueltigen Tag).
 SPRACHEN_BCP47 = {"de": "de-DE", "en": "en-US", "da": "da-DK", "fr": "fr-FR", "es": "es-ES", "sv": "sv-SE"}
+# Form einer Sprachangabe, die wir an PDFix weitergeben (konfig_erzeugen) und aus dem Dokument uebernehmen (sprache_bestimmen).
+_LANG_MUSTER = re.compile(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*")
 # Teilschritte, die je Lauf entfallen (name, Bedingung ueber die Parameter). Siehe Modulkopf.
 _ENTFAELLT = (
     ("set_alt", lambda p: bool(re.search(r"Figure|Formula", p.get("tag_names", "")))),
@@ -136,21 +138,29 @@ def sprache_bestimmen(pdf_pfad: str, vorgabe: str = "de") -> dict:
     """Welche Sprache bekommt das Dokument?
     {"lang": BCP-47, "quelle": "erkannt"|"dokument"|"vorgabe", "overwrite": bool, "hinweis": str, "vorher": str}
     - Text sicher erkannt: diese Sprache; weicht /Lang ab, wird sie ersetzt (Hinweis).
-    - Sonst vorhandenes /Lang behalten.
-    - Sonst die Vorgabe (Projektsprache), mit Hinweis."""
+    - Sonst vorhandenes /Lang behalten, wenn es eine gueltige Sprachangabe ist.
+    - Sonst die Vorgabe (Projektsprache), mit Hinweis.
+    Ungueltiges /Lang (z. B. "de_DE" oder "Deutsch", Skriptpruefung 09.10.2026): vorher brach der Lauf bei unsicherer
+    Erkennung mit „Ungueltige Sprachangabe“ ab (konfig_erzeugen). Jetzt wird es wie ein fehlendes behandelt und mit
+    overwrite ersetzt — sonst liesse PDFix (overwrite=false) den ungueltigen Wert stehen."""
     vorher = _katalog_lang(pdf_pfad)
+    ungueltig = bool(vorher) and not _LANG_MUSTER.fullmatch(vorher)
     erk = sprache_erkennen(_text_probe(pdf_pfad))
     if erk["sicher"]:
         lang = SPRACHEN_BCP47[erk["code"]]
-        if vorher and vorher.split("-")[0].lower() != erk["code"]:
+        if vorher and (ungueltig or vorher.split("-")[0].lower() != erk["code"]):
             return {"lang": lang, "quelle": "erkannt", "overwrite": True, "vorher": vorher,
-                    "hinweis": f"Die Dokumentsprache war auf {vorher} gesetzt, der Text ist {erk['code']} — auf {lang} gesetzt."}
+                    "hinweis": f"Die Dokumentsprache war auf {vorher[:40]} gesetzt, der Text ist {erk['code']} — auf {lang} gesetzt."}
         return {"lang": lang, "quelle": "erkannt", "overwrite": False, "vorher": vorher, "hinweis": ""}
-    if vorher:
+    if vorher and not ungueltig:
         return {"lang": vorher, "quelle": "dokument", "overwrite": False, "vorher": vorher, "hinweis": ""}
     lang = SPRACHEN_BCP47.get((vorgabe or "de").split("-")[0].lower(), "de-DE")
-    return {"lang": lang, "quelle": "vorgabe", "overwrite": False, "vorher": "",
-            "hinweis": f"Die Sprache des Textes war nicht sicher erkennbar; {lang} wurde angenommen (Projektsprache)."}
+    if ungueltig:
+        hinweis = (f"Die Dokumentsprache „{vorher[:40]}“ ist keine gültige Sprachangabe und die Sprache des Textes war nicht "
+                   f"sicher erkennbar; {lang} wurde gesetzt (Projektsprache).")
+    else:
+        hinweis = f"Die Sprache des Textes war nicht sicher erkennbar; {lang} wurde angenommen (Projektsprache)."
+    return {"lang": lang, "quelle": "vorgabe", "overwrite": ungueltig, "vorher": vorher, "hinweis": hinweis}
 
 
 def tag_statistik(pdf_pfad: str) -> dict:
@@ -226,7 +236,7 @@ def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str, struktur_vo
     Tags“) blieb der Baum unveraendert (Messlauf 30.09.2026, und 01.10.2026: Actino Master Word 175 Elemente vorher und
     nachher; mit overwrite 135 Elemente, andere Struktur).
     Rueckgabe: {"entfernt": [Titel...], "sprache": lang, "schritte": n}"""
-    if not re.fullmatch(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*", lang or ""):
+    if not _LANG_MUSTER.fullmatch(lang or ""):
         raise TaggingFehler("Ungueltige Sprachangabe")
     konfig = copy.deepcopy(voreinstellung())
     behalten, entfernt = [], []

@@ -367,7 +367,10 @@ def barrierefrei_machen(project_id: int, user_id: int, document_id: Optional[int
         vorschau["rueckfrage_noetig"] = True
         return {"ok": True, "result": vorschau}
     ui_lang = _ausg._ui_lang(user_id)
-    threading.Thread(target=t.lauf_synchron, args=(project_id, doc["id"], user_id, "", ui_lang), daemon=True,
+    # Sprachvorgabe wie Knopf und Kette (tagging_api / kette_api): Projektsprache vor Kontosprache. Vorher ging hier ""
+    # an den Lauf — bei unsicherer Erkennung ohne /Lang wurde dann immer de-DE gesetzt (Skriptpruefung 09.10.2026).
+    sprache = project.get("alt_language") or ui_lang or "de"
+    threading.Thread(target=t.lauf_synchron, args=(project_id, doc["id"], user_id, sprache, ui_lang), daemon=True,
                      name=f"bot-tagging-{doc['id']}").start()
     time.sleep(0.5)
     return {"ok": True, "result": {
