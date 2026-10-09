@@ -63,7 +63,8 @@ def katalog(sprache):
 
 class Werkzeug(unittest.TestCase):
     def setUp(self):
-        self.app = lies(os.path.join(BACKEND, "templates", "app.html"))
+        # Seit 09.10.2026 steht der Chat-Bereich in frontend/inkluagent.js (Konzept InkluAgent, Schritt 1): beide zusammen
+        self.app = lies(os.path.join(BACKEND, "templates", "app.html")) + lies(os.path.join(FRONTEND, "inkluagent.js"))
 
     def test_knopf_heisst_inkluagent(self):
         """Beschriftung beim Aufbau, beim Oeffnen und beim Schliessen: „InkluAgent“; Auf/Zu meldet aria-expanded."""

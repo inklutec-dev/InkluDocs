@@ -302,3 +302,20 @@ gelöscht — beim Start, bei jedem neuen Sofort-Download und bei jeder Export-A
   Guthaben, „gilt nicht mehr“), nie die Anweisung an das Modell.
 - Download-Links ohne Ablage tragen `gueltig_bis` (24 h); nach Ablauf zeigt der Verlauf „Download … abgelaufen“ statt eines toten
   Links. Token-Metadateien, die in die Ablage zeigen, bleiben (siehe docs/API.md).
+
+## Ausbau Runde 1 (09.10.2026, Konzept „InkluAgent ausbauen“, Schritte 1 bis 5)
+
+Branch `feature/inkluagent-ausbau`, noch nicht im Release-Branch. Jeder Schritt ist ein eigener Commit; die Schritte 2 bis 5
+hängen an je einem Schalter in `backend/funktionen.py`, alle mit Vorgabe AUS (gesetzt über die Umgebung wie EXPRESS).
+
+### Schritt 1: Agent-Skript in eigener Datei
+
+- Der Chat-Bereich (Aufbau, Verlauf, Senden, Karten, Fokus- und Ansageregeln) steht in `frontend/inkluagent.js` statt im
+  Seitenskript von `backend/templates/app.html`. app.html lädt die Datei vor dem Seitenskript; sie definiert nur Funktionen
+  und den Merker `_inkluagentNachziehenWartet` und führt beim Laden nichts aus.
+- Unverändert: der verschobene Block ist byte-gleich (nur 4 Leerzeichen weniger Einrückung; SHA-256 vor und nach dem Umzug
+  `7e0512cb…7fa3`). Kein Schalter nötig.
+- Tests: `tests/test_inkluagent_js.py` (jede Funktion genau einmal und nur dort, Ladereihenfolge, nichts beim Laden, Texte
+  über window.I18N); `tests/test_inkluagent_name.py` liest app.html und inkluagent.js zusammen. check_i18n: 2374 Strings
+  vorher und nachher. Klickprobe auf einer lokalen App (uvicorn, frische Datenbank, Ersatzmodell): vorher und nachher je
+  14 von 14 Prüfpunkten, gleiche Live-Ansagen, gleicher Verlauf.
