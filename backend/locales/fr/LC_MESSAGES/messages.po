@@ -11893,3 +11893,31 @@ msgstr "La conversation précédente n’a pas pu être chargée."
 #, python-brace-format
 msgid "Zu bestätigen im Projekt „{name}“"
 msgstr "À confirmer dans le projet « {name} »"
+
+# InkluAgent-Ausbau Runde 2, Schritt 3: auf jeder Seite (12.10.2026)
+msgid "Zum InkluAgent"
+msgstr "Aller à l’InkluAgent"
+
+msgid "Der InkluAgent ist ein KI-Assistent. Frag ihn nach deinen Projekten, deinem Guthaben oder dem, was gerade läuft. In einem Projekt hilft er bei Alt-Texten, Tagging, Prüfung und mehr."
+msgstr "L’InkluAgent est un assistant IA. Interrogez-le sur vos projets, vos crédits ou ce qui est en cours. Dans un projet, il aide pour les textes alternatifs, le balisage, la vérification et plus encore."
+
+msgid "z.B. 'Welche Projekte habe ich?' oder 'Wie viele Credits habe ich noch?'"
+msgstr "p. ex. « Quels projets ai-je ? » ou « Combien de crédits me reste-t-il ? »"
+
+msgid "Der InkluAgent arbeitet noch an seiner letzten Antwort …"
+msgstr "L’InkluAgent travaille encore à sa dernière réponse …"
+
+msgid "Den Inhalt dieser Seite findest du in der manuellen Ansicht."
+msgstr "Vous trouverez le contenu de cette page dans la vue manuelle."
+
+msgid "Diese Seite in der manuellen Ansicht zeigen"
+msgstr "Afficher cette page dans la vue manuelle"
+
+msgid "Projektliste"
+msgstr "Liste des projets"
+
+msgid "Projekt öffnen"
+msgstr "Ouvrir le projet"
+
+msgid "Laufende Arbeit"
+msgstr "Travail en cours"

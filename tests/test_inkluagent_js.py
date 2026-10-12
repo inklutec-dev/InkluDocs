@@ -50,12 +50,17 @@ class InkluagentJs(unittest.TestCase):
         self.assertIn("inkluagentInit(projectId)", self.app)
 
     def test_beim_laden_nichts_ausfuehren(self):
-        """Nur Funktionen und ein Merker auf oberster Ebene — die Datei laeuft vor dem Seitenskript, dessen Konstanten
-        (main, liveRegion …) es dann noch nicht gibt."""
+        """Nur Funktionen und Merker auf oberster Ebene — die Datei laeuft vor dem Seitenskript, dessen Konstanten
+        (main, liveRegion …) es dann noch nicht gibt. Einzige Ausnahme (Ausbau Runde 2, Schritt 3): inkluagentBereichAufbauen()
+        baut den festen Bereich im Seitenrahmen; es braucht nur t() aus dashboard.js und kehrt ohne Bereich sofort zurueck."""
         oben = [z for z in self.js.split("\n") if z and not z.startswith((" ", "}", "//", "\t"))]
         for z in oben:
             with self.subTest(zeile=z[:60]):
-                self.assertRegex(z, r"^(async function |function |let _inkluagentNachziehenWartet = false;$)")
+                self.assertRegex(z, r"^(async function |function |let _inkluagentNachziehenWartet = false;$|"
+                                    r"let _inkluagentVerfolgt = false;$|inkluagentBereichAufbauen\(\);$)")
+        aufbau = self.js[self.js.index("function inkluagentBereichAufbauen("):]
+        aufbau = aufbau[:aufbau.index("\n}\n")]
+        self.assertIn("if (!bereich || !inkluagentUeberall() || bereich.dataset.gebaut) return;", aufbau)
 
     def test_texte_aus_i18n(self):
         """check_i18n.py liest nur JS-Dateien, die „I18N“ enthalten — sonst fielen die Texte aus der Pruefung."""

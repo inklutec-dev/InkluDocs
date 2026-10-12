@@ -109,7 +109,8 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("eine KI", KURZ[0], "KI-VO Art. 50: der erste Punkt sagt, dass es eine KI ist")
         self.assertIn('<a href="/hilfe/inkluagent">', js)
         self.assertIn("window.FUNKTIONEN.agent_hilfe", js)
-        self.assertEqual(js.count("t('Der InkluAgent ist ein KI-Assistent."), 2, "ohne Schalter bleibt die alte Einleitung")
+        # drei Einleitungen: Bilder, Formular und (Ausbau Runde 2, Schritt 3) Seiten ohne Projekt — jede mit dem KI-Hinweis
+        self.assertEqual(js.count("t('Der InkluAgent ist ein KI-Assistent."), 3, "ohne Schalter bleibt die alte Einleitung")
 
     def test_link_hilfe_in_der_seitenleiste(self):
         dash = lies(FRONTEND, "dashboard.js")

@@ -95,6 +95,11 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     # Grafik- und Webseiten-Projekte (Ausbau Runde 1, Schritt 4)
     "bild_umbenennen": (),
     "bild_loeschen": (),
+    # Seiten ohne Projekt (Ausbau Runde 2, Schritt 3, inkluagent/konto.py): Projekt- und Dateinamen sind Daten
+    "projekte_auflisten": ("projekte[].name_daten",),
+    "projekt_oeffnen": ("name_daten",),
+    "guthaben_lesen": (),
+    "laufende_arbeit": ("laeuft[].projekt_daten", "laeuft[].dokument_daten"),
 }
 
 

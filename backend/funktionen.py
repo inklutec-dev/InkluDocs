@@ -89,6 +89,11 @@ AGENT_HOCHLADEN = _umgebung_an("INKLUAGENT_HOCHLADEN")
 # bleiben im Projekt lesbar, beim Loeschen eines Projekts bleibt das Gespraech (Projektbezug als geloescht markiert).
 # Steves Entscheidung 09.10.2026 (Konzept, Abschnitt 6, Fragen 1 und 2). INKLUAGENT_KONTO=an.
 AGENT_KONTO = _umgebung_an("INKLUAGENT_KONTO")
+# Runde 2, Schritt 3 — der InkluAgent auf JEDER Seite: ein fester Bereich nach dem Hauptinhalt (aside „InkluAgent“, Sprunglink
+# „Zum InkluAgent“), in allen Ansichten eines Projekts (auch Dokument und Barrierefreiheitspruefung — Michael 12.10.2026) und auf
+# Seiten ohne Projekt mit lesenden Konto-Werkzeugen (inkluagent/konto.py). Eine laufende Antwort uebersteht den Seitenwechsel
+# (GET /api/agent/status). Wirkt nur zusammen mit AGENT_KONTO. INKLUAGENT_UEBERALL=an.
+AGENT_UEBERALL = _umgebung_an("INKLUAGENT_UEBERALL")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

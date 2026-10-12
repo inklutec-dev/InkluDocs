@@ -35,6 +35,9 @@ WERKZEUG_NAMEN: dict[str, str] = {
     "ki_kontext_setzen": "KI-Kontext", "eigener_prompt": "Gespeicherte Prompts", "ausgabe_loeschen": "Ablage-Eintrag löschen",
     # Grafik- und Webseiten-Projekte (InkluAgent-Ausbau Runde 1, Schritt 4)
     "bild_umbenennen": "Bild umbenennen", "bild_loeschen": "Bild löschen",
+    # Seiten ohne Projekt (InkluAgent-Ausbau Runde 2, Schritt 3, inkluagent/konto.py)
+    "projekte_auflisten": "Projektliste", "projekt_oeffnen": "Projekt öffnen", "guthaben_lesen": "Guthaben",
+    "laufende_arbeit": "Laufende Arbeit",
 }
 
 

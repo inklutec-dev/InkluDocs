@@ -11465,3 +11465,31 @@ msgstr "Den tidigare konversationen kunde inte läsas in."
 #, python-brace-format
 msgid "Zu bestätigen im Projekt „{name}“"
 msgstr "Ska bekräftas i projektet ”{name}”"
+
+# InkluAgent-Ausbau Runde 2, Schritt 3: auf jeder Seite (12.10.2026)
+msgid "Zum InkluAgent"
+msgstr "Gå till InkluAgent"
+
+msgid "Der InkluAgent ist ein KI-Assistent. Frag ihn nach deinen Projekten, deinem Guthaben oder dem, was gerade läuft. In einem Projekt hilft er bei Alt-Texten, Tagging, Prüfung und mehr."
+msgstr "InkluAgent är en AI-assistent. Fråga den om dina projekt, dina krediter eller vad som pågår just nu. I ett projekt hjälper den med alt-texter, taggning, kontroll och mer."
+
+msgid "z.B. 'Welche Projekte habe ich?' oder 'Wie viele Credits habe ich noch?'"
+msgstr "t.ex. 'Vilka projekt har jag?' eller 'Hur många krediter har jag kvar?'"
+
+msgid "Der InkluAgent arbeitet noch an seiner letzten Antwort …"
+msgstr "InkluAgent arbetar fortfarande med sitt senaste svar …"
+
+msgid "Den Inhalt dieser Seite findest du in der manuellen Ansicht."
+msgstr "Innehållet på den här sidan hittar du i den manuella vyn."
+
+msgid "Diese Seite in der manuellen Ansicht zeigen"
+msgstr "Visa den här sidan i den manuella vyn"
+
+msgid "Projektliste"
+msgstr "Projektlista"
+
+msgid "Projekt öffnen"
+msgstr "Öppna projekt"
+
+msgid "Laufende Arbeit"
+msgstr "Pågående arbete"

@@ -71,6 +71,25 @@ def process_message(project_id: int, user_message: str, user_id: int, system_suf
                                 nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht)
 
 
+def process_konto_message(user_id: int, user_message: str, on_tool=None, nur_mit_karte: bool = False,
+                          ohne_nachricht: Optional[int] = None, _=None) -> dict:
+    """Seite OHNE Projekt (InkluAgent-Ausbau Runde 2, Schritt 3): Konto-Werkzeuge und das Gespraech des Kontos
+    (inkluagent/konto.py). Nur im Werkzeug-Modus; KI-Kosten zaehlen fuer das Konto ohne Projekt."""
+    import ki_kosten
+    with ki_kosten.kontext(user_id=user_id, project_id=None, document_id=None, image_id=None, zweck="chatbot"):
+        if not (_AGENTIC_ENABLED and _PROVIDER_NAME in _WERKZEUG_PROVIDER):
+            return {"reply": "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt.", "intent": "error",
+                    "image_refs": None, "actions": [], "werkzeuge": []}
+        from .agent_loop import run_agent
+        try:
+            return run_agent(None, user_id, user_message, None, _provider, on_tool=on_tool, nur_mit_karte=nur_mit_karte,
+                             konto=True, ohne_nachricht=ohne_nachricht, uebersetzen=_)
+        except Exception:
+            log.exception("agentic run_agent ohne Projekt crashte")
+            return {"reply": "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte erneut versuchen.", "intent": "error",
+                    "image_refs": None, "actions": [], "werkzeuge": []}
+
+
 def _process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None,
                      nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None) -> dict:
     """Hauptfunktion. Returns:

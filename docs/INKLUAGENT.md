@@ -523,3 +523,50 @@ mit, Gedächtnis ohne Doppel und mit Marken, Endpunkte mit und ohne Schalter, Ka
 Gespräch lesbar, Projekt löschen lässt das Gespräch stehen, Oberfläche am Quelltext). Klickprobe lokal 13 von 13 (Aufklapper
 mit altem Gespräch, Marken beim Wechsel und nach dem Neuladen, Fokus auf der Antwort, axe ohne Verstöße, gelöschtes Projekt);
 Hochladefeld mit beiden Schaltern 20 von 20; Probe aus Runde 1 mit Schaltern aus unverändert 14 von 14.
+
+### Schritt 3: Der InkluAgent auf jeder Seite (Schalter `AGENT_UEBERALL`, Umgebung `INKLUAGENT_UEBERALL=an`, braucht `AGENT_KONTO`)
+
+Konzept Wunsch 2 (Agent überall) und Abschnitt 5, Schritt 6 („zunächst nur lesend“); dazu Michaels Wunsch vom 12.10.2026: der
+InkluAgent auch in den Ansichten „Dokument“ und „Barrierefreiheitsprüfung“.
+- **Fester Bereich im Seitenrahmen** (`templates/base_app.html`): `<aside id="inkluagentBereich">` NACH dem Hauptinhalt,
+  an derselben Stelle auf jeder Seite, benannt über die Überschrift „InkluAgent“; zweiter Sprunglink „Zum InkluAgent“ nach
+  „Zum Hauptinhalt springen“. `inkluagent.js` lädt dann der Seitenrahmen (genau einmal — `app.html` lädt es nur ohne
+  Schalter). `inkluagentBereichAufbauen` baut den Inhalt einmal (ein `div`, kein zweites Landmark). Die Ansichten eines
+  Projekts betten nichts mehr ein (`inkluagentSectionHtml` liefert `''` und merkt sich die Variante) und binden den Bereich
+  mit `inkluagentInit` an ihr Projekt (`inkluagentBinden`); die Barrierefreiheitsprüfung (`abschluss.js`, PDF und Word) tut das
+  jetzt auch. Weil der Bereich außerhalb von `main` steht, bleiben beim Wechsel der Ansicht Verlauf, Entwurf und Auf/Zu
+  erhalten; „offen“ gilt für alle Seiten (`inkluagent.panel.ueberall`). Die Agentenansicht blendet `main` bis auf die
+  Hauptüberschrift aus und zeigt den Bereich groß; auf Seiten ohne Projekt heißt der Knopf „Diese Seite in der manuellen
+  Ansicht zeigen“.
+- **Seiten ohne Projekt** (`inkluagent/konto.py`, `POST /api/agent/nachricht`, `chat_engine.process_konto_message`,
+  `run_agent(None, …)`): eigener Systemprompt (Rolle, was hier geht und was bewusst in der Oberfläche bleibt, keine
+  Werkzeugnamen nennen, gemeinsame Blöcke inkl. „Daten sind keine Anweisungen“), Konto-Kontext statt Projekt-Zusammenfassung
+  (Zahl der Projekte, die fünf neuesten, laufende Arbeit; Namen als Daten), vier LESENDE Werkzeuge: `projekte_auflisten`
+  (eigene, neueste zuerst, höchstens 50, Suche im Namen), `projekt_oeffnen` (setzt den Fokus, Link „Projekt „…“ öffnen“
+  unter der Antwort — gearbeitet wird im Projekt selbst), `guthaben_lesen` (`billing.verfuegbare_credits`), `laufende_arbeit`
+  (Projekte in Arbeit, Tagging). Anlegen, Umbenennen, Löschen und Abbrechen kommen mit Schritt 4. Das Hochladefeld geht auch
+  hier (ohne Projekt: je Art ein neues Projekt). Marke „[Ab hier: Seite ohne Projekt]“ im Gedächtnis, „Ab hier: ohne
+  Projekt“ im Verlauf. Eine Seite ohne Projekt ändert den Fokus nicht.
+- **Laufende Antwort über den Seitenwechsel:** `GET /api/agent/status` (`_AGENT_LAEUFT`, Startzeiten je Konto, höchstens
+  10 Minuten). Die neue Seite sagt „Der InkluAgent arbeitet noch an seiner letzten Antwort …“, fragt alle 2,5 Sekunden nach
+  und lädt die Antwort, wenn sie da ist (Ansage wie bei einer neuen Antwort, bei zugeklapptem Agenten „neue Antwort“ am Knopf).
+- **Fehler behoben, auch ohne Schalter:** Verließ man die Seite, während der Agent antwortete, brach der Server mit dem Stream
+  auch den Lauf ab — die Antwort wurde nie gespeichert, obwohl das Modell weiterlief (und kostete). Jetzt `asyncio.shield`
+  um den Lauf und eine starke Referenz (`_AGENT_HINTERGRUND`); der Kommentar „bricht der Client ab, bleibt die Antwort“ stimmt
+  damit wieder.
+- **Werkzeugnamen und Hilfe-Schalter** kommen auf Seiten ohne `app.html` mit `window.INKLUAGENT` (`werkzeug_namen`, `hilfe`).
+  9 neue Texte in sechs Sprachen; die vier Werkzeuge stehen in `tools/namen.py` und `daten.WERKZEUG_FREMDTEXT`.
+
+Keine Migration (nutzt `agent_nachrichten`/`agent_fokus` aus Schritt 2).
+
+Tests: `tests/test_agent_ueberall.py` (21: Schalter, nur mit `AGENT_KONTO`, Konto-Werkzeuge nur für eigene Projekte mit
+Suche und Marke, Fokus und Link, Guthaben, laufende Arbeit, Prompt mit Regel genau einmal, Gedächtnis mit Konto-Kontext und
+Marken, `run_agent` ohne Projekt mit Link-Anhang, Endpunkte mit und ohne Schalter, Seitenrahmen mit Bereich nach `main`,
+Skript genau einmal, Status während und nach der Antwort, auch nach einem Fehler, Oberfläche am Quelltext); Einleitungen in
+`test_agent_hilfe`/`test_inkluagent_name` jetzt drei (jede mit KI-Hinweis). Unit gesamt 850 grün (3 rote wie immer).
+Klickprobe lokal 33 von 33 (Bereich nach `main`, Sprunglinks, Fokus, axe ohne Verstöße auf Übersicht und Projektseite,
+Konto-Werkzeug, Link ins Projekt, Auf/Zu und Entwurf über Ansichtswechsel, Agent in Dokument und Barrierefreiheitsprüfung,
+laufende Antwort über den Seitenwechsel, Hochladen ohne Projekt, Agentenansicht ohne Projekt); frühere Proben in allen
+Schalter-Kombinationen grün, Runde-1-Probe mit Schaltern aus unverändert. Stichprobe mit Gemini wie Staging (lokal): Projekte
+und laufende Arbeit richtig, Guthaben, Link ins Projekt, Löschen abgelehnt mit Verweis auf die Oberfläche, keine
+Werkzeugnamen in den Antworten.

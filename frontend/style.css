@@ -1191,6 +1191,14 @@ ul.inkluagent-kurzhilfe {
 .inkluagent-frueher summary { cursor: pointer; font-weight: 600; }
 .inkluagent-frueher summary:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
 .inkluagent-frueher-liste { margin-top: 0.5rem; }
+/* Fester Bereich auf jeder Seite (Ausbau Runde 2, Schritt 3): nach dem Hauptinhalt, gleiche Breite und Abstaende wie main;
+   h2 dort in der Groesse der Abschnitte (.dash-main h2 greift ausserhalb von main nicht) */
+.inkluagent-bereich { max-width: 880px; padding: 0 1.5rem 3rem; }
+.inkluagent-bereich .inkluagent-section { margin-top: 0; }
+.inkluagent-bereich h2 { font-size: 1.25rem; }
+.inkluagent-bereich h3 { font-size: 1rem; }
+.inkluagent-bereich:focus { outline: none; }
+.inkluagent-bereich:focus-visible .inkluagent-section { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
 .inkluagent-controls {
     display: flex;
     align-items: center;

@@ -75,7 +75,8 @@ class Werkzeug(unittest.TestCase):
 
     def test_ki_hinweis_bleibt(self):
         """KI-VO Art. 50: der Name allein sagt nicht, dass es eine KI ist — der Satz unter dem Knopf sagt es."""
-        self.assertEqual(self.app.count("t('Der InkluAgent ist ein KI-Assistent."), 2)
+        # Bilder, Formular und Seiten ohne Projekt (Ausbau Runde 2, Schritt 3): jede Einleitung beginnt mit dem KI-Hinweis
+        self.assertEqual(self.app.count("t('Der InkluAgent ist ein KI-Assistent."), 3)
 
     def test_absender_und_ansagen(self):
         for text in ("Nachricht an den InkluAgent", "Antwort vom InkluAgent ist da.", "InkluAgent denkt nach..."):

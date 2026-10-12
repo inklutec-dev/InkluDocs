@@ -11590,3 +11590,31 @@ msgstr "Den tidligere samtale kunne ikke indlæses."
 #, python-brace-format
 msgid "Zu bestätigen im Projekt „{name}“"
 msgstr "Skal bekræftes i projektet »{name}«"
+
+# InkluAgent-Ausbau Runde 2, Schritt 3: auf jeder Seite (12.10.2026)
+msgid "Zum InkluAgent"
+msgstr "Gå til InkluAgent"
+
+msgid "Der InkluAgent ist ein KI-Assistent. Frag ihn nach deinen Projekten, deinem Guthaben oder dem, was gerade läuft. In einem Projekt hilft er bei Alt-Texten, Tagging, Prüfung und mehr."
+msgstr "InkluAgent er en AI-assistent. Spørg den om dine projekter, dine credits eller hvad der kører lige nu. I et projekt hjælper den med alt-tekster, tagging, kontrol og mere."
+
+msgid "z.B. 'Welche Projekte habe ich?' oder 'Wie viele Credits habe ich noch?'"
+msgstr "f.eks. 'Hvilke projekter har jeg?' eller 'Hvor mange credits har jeg tilbage?'"
+
+msgid "Der InkluAgent arbeitet noch an seiner letzten Antwort …"
+msgstr "InkluAgent arbejder stadig på sit sidste svar …"
+
+msgid "Den Inhalt dieser Seite findest du in der manuellen Ansicht."
+msgstr "Indholdet på denne side finder du i den manuelle visning."
+
+msgid "Diese Seite in der manuellen Ansicht zeigen"
+msgstr "Vis denne side i den manuelle visning"
+
+msgid "Projektliste"
+msgstr "Projektliste"
+
+msgid "Projekt öffnen"
+msgstr "Åbn projekt"
+
+msgid "Laufende Arbeit"
+msgstr "Igangværende arbejde"

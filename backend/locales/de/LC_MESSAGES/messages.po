@@ -11894,3 +11894,31 @@ msgstr "Das frühere Gespräch konnte nicht geladen werden."
 #, python-brace-format
 msgid "Zu bestätigen im Projekt „{name}“"
 msgstr "Zu bestätigen im Projekt „{name}“"
+
+# InkluAgent-Ausbau Runde 2, Schritt 3: auf jeder Seite (12.10.2026)
+msgid "Zum InkluAgent"
+msgstr "Zum InkluAgent"
+
+msgid "Der InkluAgent ist ein KI-Assistent. Frag ihn nach deinen Projekten, deinem Guthaben oder dem, was gerade läuft. In einem Projekt hilft er bei Alt-Texten, Tagging, Prüfung und mehr."
+msgstr "Der InkluAgent ist ein KI-Assistent. Frag ihn nach deinen Projekten, deinem Guthaben oder dem, was gerade läuft. In einem Projekt hilft er bei Alt-Texten, Tagging, Prüfung und mehr."
+
+msgid "z.B. 'Welche Projekte habe ich?' oder 'Wie viele Credits habe ich noch?'"
+msgstr "z.B. 'Welche Projekte habe ich?' oder 'Wie viele Credits habe ich noch?'"
+
+msgid "Der InkluAgent arbeitet noch an seiner letzten Antwort …"
+msgstr "Der InkluAgent arbeitet noch an seiner letzten Antwort …"
+
+msgid "Den Inhalt dieser Seite findest du in der manuellen Ansicht."
+msgstr "Den Inhalt dieser Seite findest du in der manuellen Ansicht."
+
+msgid "Diese Seite in der manuellen Ansicht zeigen"
+msgstr "Diese Seite in der manuellen Ansicht zeigen"
+
+msgid "Projektliste"
+msgstr "Projektliste"
+
+msgid "Projekt öffnen"
+msgstr "Projekt öffnen"
+
+msgid "Laufende Arbeit"
+msgstr "Laufende Arbeit"

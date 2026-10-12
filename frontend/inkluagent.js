@@ -2,10 +2,14 @@
 //
 // Ausgelagert aus backend/templates/app.html (09.10.2026, Konzept InkluAgent, Schritt 1) — der Code ist unveraendert,
 // nur 4 Leerzeichen weniger eingerueckt (Beleg im Commit: Pruefsumme des Blocks vor und nach dem Umzug gleich).
-// Geladen von app.html VOR dem Seitenskript; diese Datei definiert nur Funktionen (und einen Merker) und fuehrt beim
-// Laden nichts aus. Sie nutzt die globalen Helfer der Seite: t() (Texte aus window.I18N, 6 Sprachen), announce(),
+// Geladen von app.html VOR dem Seitenskript; diese Datei definiert nur Funktionen (und Merker) und fuehrt beim Laden nichts
+// aus — ausser inkluagentBereichAufbauen() am Dateiende, das ohne festen Bereich sofort zurueckkehrt (Schritt 3). Sie nutzt die globalen Helfer der Seite: t() (Texte aus window.I18N, 6 Sprachen), announce(),
 // showProject(), window.WERKZEUG_NAMEN, window.Formular. Aufrufer: app.html (inkluagentSectionHtml/inkluagentInit),
-// dokument.js, formular.js, uebersetzen.js.
+// dokument.js, formular.js, uebersetzen.js, abschluss.js.
+// Ausbau Runde 2, Schritt 3 (Schalter AGENT_UEBERALL, window.INKLUAGENT.ueberall): base_app.html laedt die Datei auf JEDER
+// Seite und hat einen festen Bereich <aside id="inkluagentBereich"> nach dem Hauptinhalt. Dann baut inkluagentBereichAufbauen()
+// den Agenten einmal dort auf; die Ansichten eines Projekts betten nichts mehr ein (inkluagentSectionHtml liefert '') und binden
+// den Bereich mit inkluagentInit an ihr Projekt. Seiten ohne Projekt nutzen das Gespraech des Kontos mit Konto-Werkzeugen.
 
 // ─── InkluAgent (KI-Agent pro Projekt) ────────────────────
 // Karbe-Feintuning (06.06.2026):
@@ -19,9 +23,31 @@
 // Variante (28.08.2026): 'formular' = Quickinfo-Werkzeug — gleicher Kasten, gleiche
 // Bedienung, nur Einleitung und Platzhalter sprechen von Feldern statt Bildern.
 function inkluagentSectionHtml(projectId, variante) {
+    // Schritt 3: der Agent steht im festen Bereich — die Ansicht bettet nichts ein, merkt sich nur ihre Variante fuer inkluagentInit
+    if (inkluagentUeberall()) { window._inkluagentVariante = variante || 'bilder'; return ''; }
+    return inkluagentInhaltHtml(projectId, variante, false);
+}
+function inkluagentUeberall() {
+    return !!(window.INKLUAGENT && window.INKLUAGENT.ueberall && document.getElementById('inkluagentBereich'));
+}
+// Einleitung und Platzhalter je Variante: 'formular' (Felder), 'konto' (Seite ohne Projekt, Schritt 3), sonst Bilder
+function inkluagentEinleitung(variante) {
+    if (variante === 'formular') return t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>).');
+    if (variante === 'konto') return t('Der InkluAgent ist ein KI-Assistent. Frag ihn nach deinen Projekten, deinem Guthaben oder dem, was gerade läuft. In einem Projekt hilft er bei Alt-Texten, Tagging, Prüfung und mehr.');
+    return t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.');
+}
+function inkluagentPlatzhalter(variante) {
+    if (variante === 'formular') return t("z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'");
+    if (variante === 'konto') return t("z.B. 'Welche Projekte habe ich?' oder 'Wie viele Credits habe ich noch?'");
+    return t("z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'");
+}
+// alsBereich (Schritt 3): Inhalt des festen Bereichs — ein div statt section, denn das aside ist schon der Bereich (Landmark)
+function inkluagentInhaltHtml(projectId, variante, alsBereich) {
     const formular = variante === 'formular';
     return ''
-        + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">'
+        + (alsBereich
+            ? '<div class="inkluagent-section" data-variante="' + (variante || 'bilder') + '">'
+            : '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">')
         // Akkordeon-Muster (WAI-ARIA, Steve 28.08.2026): der Auf/Zu-Knopf steht IN der Ueberschrift
         // Ebene 2 — per Ueberschriften-Navigation anspringen und sofort druecken; die Nachrichten
         // sind Ebene 3 darunter. Ein Wort fuer beides: „InkluAgent“ (09.10.2026, vorher „Chatbot“) — derselbe
@@ -44,9 +70,7 @@ function inkluagentSectionHtml(projectId, variante) {
         // blieb woertlich im JavaScript stehen und brach das ganze
         // App-Skript mit einem SyntaxError ab. Im raw-Block nur
         // JS-Kommentare verwenden.)
-        +   (formular
-            ? t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>).')
-            : t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.'))
+        +   inkluagentEinleitung(variante)
         +   '</p>'))
         +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
         // tabindex=0 (11.09.2026, axe scrollable-region-focusable): der Verlauf wird bei vielen
@@ -61,7 +85,7 @@ function inkluagentSectionHtml(projectId, variante) {
         +     '<form id="inkluagentForm" class="inkluagent-form" novalidate>'
         +       '<label for="inkluagentInput" class="visually-hidden">' + t('Nachricht an den InkluAgent') + '</label>'
         +       '<textarea id="inkluagentInput" rows="2" maxlength="5000" '
-        +         'placeholder="' + (formular ? t("z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'") : t("z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'")) + '" '
+        +         'placeholder="' + inkluagentPlatzhalter(variante) + '" '
         +         'aria-describedby="inkluagentHint"></textarea>'
         +       '<div id="inkluagentHint" class="inkluagent-hint">' + t('Enter sendet, Shift+Enter macht einen Zeilenumbruch. Maximal 5000 Zeichen.') + '</div>'
         +       (inkluagentHochladenAn() ? inkluagentHochladeHtml() : '')
@@ -71,7 +95,7 @@ function inkluagentSectionHtml(projectId, variante) {
         +       '</div>'
         +     '</form>'
         +   '</div>'
-        + '</section>';
+        + (alsBereich ? '</div>' : '</section>');
 }
 
 // Runde 2, Schritt 1 (Schalter funktionen.AGENT_HOCHLADEN, window.INKLUAGENT aus base_app.html): Dateien und eine Webadresse
@@ -134,7 +158,7 @@ async function inkluagentHochladen(projectId, dateien, webadresse) {
     const fd = new FormData();
     dateien.forEach(f => fd.append('dateien', f, f.name));
     fd.append('webadresse', webadresse || '');
-    fd.append('project_id', String(projectId));
+    if (projectId != null) fd.append('project_id', String(projectId));
     inkluagentSetStatus(dateien.length ? t('Wird hochgeladen …') : t('Webadresse wird geladen …'), false);
     let res;
     try {
@@ -160,7 +184,7 @@ function inkluagentHochladenSatz(ergebnisse) {
 
 // Schritt 3 (InkluAgent-Ausbau Runde 1): Kurzhilfe vor dem Chat — nur mit Schalter (window.FUNKTIONEN aus funktionen.py)
 function inkluagentKurzhilfe() {
-    return !!(window.FUNKTIONEN && window.FUNKTIONEN.agent_hilfe);
+    return !!((window.FUNKTIONEN && window.FUNKTIONEN.agent_hilfe) || (window.INKLUAGENT && window.INKLUAGENT.hilfe));
 }
 function inkluagentKurzhilfeHtml() {
     return ''
@@ -180,8 +204,9 @@ function inkluagentAgentenansicht() {
     if (!document.body || document.body.getAttribute('data-oberflaeche') !== 'agent') return false;
     if (window._agentenansichtHierAus) return false;   // „Dieses Projekt in der manuellen Ansicht zeigen“ (nur diese Seite)
     const main = document.getElementById('main');
-    const sec = main && main.querySelector('.inkluagent-section');
-    if (!sec) return false;
+    // Schritt 3: im festen Bereich steht der Agent nach main (dann bleibt in main nur die Hauptueberschrift)
+    const sec = document.querySelector('.inkluagent-section');
+    if (!main || !sec) return false;
     const h1 = main.querySelector('h1');
     const behalten = [sec, h1].filter(Boolean);
     (function lauf(el) {
@@ -200,12 +225,14 @@ function inkluagentAgentenansicht() {
         const p = document.createElement('p');
         p.className = 'inkluagent-agentenansicht-hinweis';
         // Mit dem Hochladefeld (Runde 2, Schritt 1) geht Hochladen auch hier — dann nennt der Hinweis nur noch die Knoepfe
-        p.appendChild(document.createTextNode((inkluagentHochladenAn() ? t('Die Knöpfe des Projekts findest du in der manuellen Ansicht.')
-                                                                       : t('Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht.')) + ' '));
+        const ohneProjekt = window._inkluagentProjectId == null;
+        p.appendChild(document.createTextNode((ohneProjekt ? t('Den Inhalt dieser Seite findest du in der manuellen Ansicht.')
+            : (inkluagentHochladenAn() ? t('Die Knöpfe des Projekts findest du in der manuellen Ansicht.')
+                                       : t('Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht.'))) + ' '));
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'btn btn-secondary';
-        b.textContent = t('Dieses Projekt in der manuellen Ansicht zeigen');
+        b.textContent = ohneProjekt ? t('Diese Seite in der manuellen Ansicht zeigen') : t('Dieses Projekt in der manuellen Ansicht zeigen');
         b.addEventListener('click', inkluagentAgentenansichtAufheben);
         p.appendChild(b);
         const kopf = sec.querySelector('h2');
@@ -225,9 +252,107 @@ function inkluagentAgentenansichtAufheben() {
 }
 
 function inkluagentInit(projectId) {
-    const p = inkluagentInitLaden(projectId);
+    const p = inkluagentUeberall() ? inkluagentBinden(projectId) : inkluagentInitLaden(projectId);
     window._inkluagentBereit = p;
     return p;
+}
+// Bedienung (Auf/Zu, Senden, Enter) — im festen Bereich EINMAL, in eingebetteten Ansichten nach jedem Neuzeichnen
+function inkluagentBedienungAnbinden() {
+    const toggle = document.getElementById('inkluagentToggle');
+    const input = document.getElementById('inkluagentInput');
+    const form = document.getElementById('inkluagentForm');
+    if (!toggle || toggle.dataset.angebunden) return !!toggle;
+    toggle.dataset.angebunden = '1';
+    toggle.addEventListener('click', () => {
+        const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+        if (isOpen) inkluagentClose(); else inkluagentOpen(window._inkluagentProjectId, true);
+    });
+    if (form) form.addEventListener('submit', (e) => { e.preventDefault(); inkluagentSend(); });
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); inkluagentSend(); }
+        });
+    }
+    return true;
+}
+// Wo „offen“ gemerkt wird: je Projekt (eingebettet) oder einmal fuer alle Seiten (fester Bereich)
+function inkluagentMerkSchluessel(projectId) {
+    return inkluagentUeberall() ? 'inkluagent.panel.ueberall' : 'inkluagent.panel.' + projectId;
+}
+
+// ─── Schritt 3: fester Bereich auf jeder Seite ───────────────────────────────────────────────────────────────────────────────
+// Einmal je Seite: Inhalt in <aside id="inkluagentBereich"> bauen. Projektseiten (/app) binden ihn, sobald ihre Ansicht gezeichnet
+// ist (inkluagentInit); alle anderen Seiten sofort ohne Projekt.
+function inkluagentBereichAufbauen() {
+    const bereich = document.getElementById('inkluagentBereich');
+    if (!bereich || !inkluagentUeberall() || bereich.dataset.gebaut) return;
+    bereich.dataset.gebaut = '1';
+    const projektseite = /^\/app\/?$/.test(window.location.pathname);
+    bereich.innerHTML = inkluagentInhaltHtml(null, projektseite ? 'bilder' : 'konto', true);
+    inkluagentBedienungAnbinden();
+    // Seiten ohne Projekt: binden, wenn die Seite steht (ihre Skripte bauen main oft erst noch auf — wichtig fuer die Agentenansicht)
+    if (!projektseite) {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => inkluagentInit(null), { once: true });
+        else inkluagentInit(null);
+    }
+}
+function inkluagentVarianteSetzen(variante) {
+    const sec = document.querySelector('#inkluagentBereich .inkluagent-section');
+    if (!sec || sec.dataset.variante === variante) return;
+    sec.dataset.variante = variante;
+    const intro = sec.querySelector('p.inkluagent-intro');
+    if (intro) intro.innerHTML = inkluagentEinleitung(variante);   // Texte aus dem eigenen Katalog (mit <em>)
+    const input = document.getElementById('inkluagentInput');
+    if (input) input.placeholder = inkluagentPlatzhalter(variante);
+}
+// Den festen Bereich an ein Projekt binden (oder an keins: null). Gleiches Projekt nach einem Neuzeichnen der Ansicht: nur die
+// Agentenansicht neu anwenden — Verlauf, Entwurf und Auf/Zu bleiben, weil der Bereich ausserhalb von main steht.
+async function inkluagentBinden(projectId) {
+    inkluagentBereichAufbauen();
+    const pid = projectId == null ? null : projectId;
+    const neu = !window._inkluagentGebunden || String(window._inkluagentProjectId) !== String(pid);
+    window._inkluagentGebunden = true;
+    window._inkluagentProjectId = pid;
+    inkluagentVarianteSetzen(pid == null ? 'konto' : (window._inkluagentVariante || 'bilder'));
+    window._inkluagentVariante = null;
+    const hg = window._inkluagentHochgeladen;
+    if (hg && hg.projectId === String(pid)) inkluagentHochgeladenZeigen(pid, hg.ergebnisse);
+    const gross = inkluagentAgentenansicht();
+    if (!neu) return;
+    let wasOpen = false;
+    try { wasOpen = localStorage.getItem(inkluagentMerkSchluessel(pid)) === 'open'; } catch (e) {}
+    if (gross) await inkluagentOpen(pid, false, true);
+    else if (wasOpen) await inkluagentOpen(pid, false);
+    inkluagentLaufVerfolgen();
+}
+// Laufende Antwort (Schritt 3): hat der Server fuer dieses Konto noch eine Antwort in Arbeit (z. B. weil man die Seite gewechselt
+// hat), sagt die Statuszeile es und die Seite fragt nach, bis sie da ist — dann neu laden und melden wie eine neue Antwort.
+let _inkluagentVerfolgt = false;
+async function inkluagentLaufVerfolgen() {
+    if (!inkluagentUeberall() || _inkluagentVerfolgt) return;
+    const sendBtn = document.getElementById('inkluagentSendBtn');
+    if (sendBtn && sendBtn.disabled) return;   // diese Seite sendet gerade selbst
+    let laeuft = false;
+    try { laeuft = !!(await (await fetch('/api/agent/status')).json()).laeuft; } catch (e) { return; }
+    if (!laeuft) return;
+    _inkluagentVerfolgt = true;
+    inkluagentSetStatus(t('Der InkluAgent arbeitet noch an seiner letzten Antwort …'), false);
+    const ende = Date.now() + 10 * 60 * 1000;
+    while (Date.now() < ende) {
+        await new Promise(r => setTimeout(r, 2500));
+        try { laeuft = !!(await (await fetch('/api/agent/status')).json()).laeuft; } catch (e) { laeuft = true; }
+        if (!laeuft) break;
+    }
+    _inkluagentVerfolgt = false;
+    inkluagentSetStatus('', false);
+    const panel = document.getElementById('inkluagentPanel');
+    const fokussieren = inkluagentFokusImChat();
+    if (panel && !panel.hidden) {
+        await inkluagentLoadHistory(window._inkluagentProjectId);
+        inkluagentAntwortMelden(inkluagentLetzteAntwort(), fokussieren);
+    } else {
+        inkluagentAntwortMelden(null, false);
+    }
 }
 async function inkluagentInitLaden(projectId) {
     window._inkluagentProjectId = projectId;
@@ -274,7 +399,7 @@ async function inkluagentOpen(projectId, focusInput, nichtMerken) {
     // Beschriftung bleibt „InkluAgent“ — Auf/Zu-Status meldet aria-expanded.
     toggle.textContent = t('InkluAgent');
     panel.hidden = false;
-    if (!nichtMerken) { try { localStorage.setItem('inkluagent.panel.' + projectId, 'open'); } catch (e) {} }
+    if (!nichtMerken) { try { localStorage.setItem(inkluagentMerkSchluessel(projectId), 'open'); } catch (e) {} }
     const neu = window._inkluagentNeu != null && String(window._inkluagentNeu) === String(projectId);
     inkluagentNeuMarkieren(false);
     await inkluagentLoadHistory(projectId);
@@ -292,8 +417,8 @@ function inkluagentClose() {
     toggle.textContent = t('InkluAgent');
     panel.hidden = true;
     const projectId = window._inkluagentProjectId;
-    if (projectId) {
-        try { localStorage.removeItem('inkluagent.panel.' + projectId); } catch (e) {}
+    if (projectId || inkluagentUeberall()) {
+        try { localStorage.removeItem(inkluagentMerkSchluessel(projectId)); } catch (e) {}
     }
 }
 
@@ -314,7 +439,7 @@ function inkluagentMarkeAnhaengen(log, projektId, name, geloescht) {
 }
 async function inkluagentKontoVerlaufLaden(projectId, log) {
     try {
-        const res = await fetch('/api/agent/verlauf?projekt=' + encodeURIComponent(projectId));
+        const res = await fetch('/api/agent/verlauf' + (projectId == null ? '' : '?projekt=' + encodeURIComponent(projectId)));
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) { inkluagentSetStatus(t('Verlauf konnte nicht geladen werden.'), true); return; }
         const data = await res.json();
@@ -338,7 +463,8 @@ async function inkluagentKontoVerlaufLaden(projectId, log) {
 function inkluagentMarkeVorNachricht(projectId) {
     const log = document.getElementById('inkluagentLog');
     if (!inkluagentKonto() || !log) return;
-    if (window._inkluagentLetztesProjekt !== String(projectId)) inkluagentMarkeAnhaengen(log, projectId, window._inkluagentProjektName || '', false);
+    const ziel = projectId == null ? null : String(projectId);
+    if (window._inkluagentLetztesProjekt !== ziel) inkluagentMarkeAnhaengen(log, projectId, window._inkluagentProjektName || '', false);
 }
 function inkluagentFrueherZeigen(projectId, anzahl) {
     const panel = document.getElementById('inkluagentPanel');
@@ -522,7 +648,8 @@ function inkluagentAktionenKarten(actions) {
 // Zeile „Genutzt: …“ unter jeder Antwort. Seit Pruefung 3 (30.09.2026, M1) kommen ALLE Namen vom Server
 // (window.WERKZEUG_NAMEN, inkluagent/tools/namen.py, 6 Sprachen) — nie ein roher Name wie „dokument_stand“.
 function inkluagentWerkzeugLabel(name) {
-    const map = window.WERKZEUG_NAMEN || {};
+    // Seiten ohne app.html (Schritt 3): die Namen kommen mit window.INKLUAGENT
+    const map = window.WERKZEUG_NAMEN || (window.INKLUAGENT && window.INKLUAGENT.werkzeug_namen) || {};
     return map[name] || t('Werkzeug');
 }
 function inkluagentWerkzeugText(werkzeuge) {
@@ -603,6 +730,15 @@ function inkluagentAnhangEl(anhang) {
                 karte.appendChild(b); karte.appendChild(st);
             }
             box.appendChild(karte);
+            return;
+        }
+        // Link unter der Antwort (Schritt 3, projekt_oeffnen): nur Adressen dieser Seite (beginnen mit „/“)
+        if (a && a.art === 'link' && typeof a.url === 'string' && /^\/(?!\/)/.test(a.url)) {
+            const l = document.createElement('a');
+            l.className = 'btn btn-secondary';
+            l.href = a.url;
+            l.textContent = a.text || a.url;
+            box.appendChild(l);
             return;
         }
         if (!a || !a.download_url) return;
@@ -695,7 +831,9 @@ async function inkluagentSend() {
     const input = document.getElementById('inkluagentInput');
     const sendBtn = document.getElementById('inkluagentSendBtn');
     const log = document.getElementById('inkluagentLog');
-    if (!projectId || !input || !sendBtn || !log) return;
+    // Ohne Projekt nur im festen Bereich (Schritt 3): dann geht die Nachricht an /api/agent/nachricht
+    const ohneProjekt = projectId == null;
+    if ((ohneProjekt && !inkluagentUeberall()) || (!ohneProjekt && !projectId) || !input || !sendBtn || !log) return;
     if (sendBtn.disabled) return;   // Enter waehrend des Hochladens oder Antwortens: nichts doppelt senden
     const message = input.value.trim();
     // Hochladefeld (Runde 2, Schritt 1): Dateien oder Webadresse duerfen ohne eigenen Text gesendet werden
@@ -731,7 +869,7 @@ async function inkluagentSend() {
         if (dateienEl) dateienEl.value = '';
         if (webEl) webEl.value = '';
         satz = inkluagentHochladenSatz(ergebnisse);
-        nachziehenHochladen = ergebnisse.some(e => e.ok && String(e.project_id) === String(projectId));
+        nachziehenHochladen = !ohneProjekt && ergebnisse.some(e => e.ok && String(e.project_id) === String(projectId));
         // Nichts angekommen und kein eigener Text: keine Nachricht an den Agenten (die Gruende stehen schon am Feld)
         if (!message && !ergebnisse.some(e => e.ok)) {
             inkluagentSetStatus(satz, true);
@@ -751,7 +889,7 @@ async function inkluagentSend() {
     try {
         // Stream (NDJSON, 28.08.2026): je Werkzeugaufruf eine Zeile -> Live-Zeile im Status
         // (aria-live, VoiceOver sagt sie an), am Ende die Antwort mit Werkzeugliste.
-        const res = await fetch('/api/projects/' + projectId + '/chat', {
+        const res = await fetch(ohneProjekt ? '/api/agent/nachricht' : '/api/projects/' + projectId + '/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
             body: JSON.stringify(hochgeladen ? { message, hochgeladen } : { message })
@@ -843,3 +981,7 @@ async function inkluagentSend() {
         else if (inkluagentFokusImChat() && document.activeElement !== input) { input.focus(); }
     }
 }
+
+// Schritt 3: den festen Bereich gleich beim Laden bauen (das aside steht im Seitenrahmen vor diesem Skript); ohne Schalter oder
+// ohne Bereich (app.html bettet ein) passiert nichts.
+inkluagentBereichAufbauen();

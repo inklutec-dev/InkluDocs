@@ -11891,3 +11891,31 @@ msgstr "The earlier conversation could not be loaded."
 #, python-brace-format
 msgid "Zu bestätigen im Projekt „{name}“"
 msgstr "To be confirmed in project “{name}”"
+
+# InkluAgent-Ausbau Runde 2, Schritt 3: auf jeder Seite (12.10.2026)
+msgid "Zum InkluAgent"
+msgstr "Skip to InkluAgent"
+
+msgid "Der InkluAgent ist ein KI-Assistent. Frag ihn nach deinen Projekten, deinem Guthaben oder dem, was gerade läuft. In einem Projekt hilft er bei Alt-Texten, Tagging, Prüfung und mehr."
+msgstr "The InkluAgent is an AI assistant. Ask it about your projects, your credits or what is currently running. Inside a project it helps with alt texts, tagging, checks and more."
+
+msgid "z.B. 'Welche Projekte habe ich?' oder 'Wie viele Credits habe ich noch?'"
+msgstr "e.g. 'Which projects do I have?' or 'How many credits do I have left?'"
+
+msgid "Der InkluAgent arbeitet noch an seiner letzten Antwort …"
+msgstr "The InkluAgent is still working on its last answer …"
+
+msgid "Den Inhalt dieser Seite findest du in der manuellen Ansicht."
+msgstr "You will find the content of this page in the manual view."
+
+msgid "Diese Seite in der manuellen Ansicht zeigen"
+msgstr "Show this page in the manual view"
+
+msgid "Projektliste"
+msgstr "Project list"
+
+msgid "Projekt öffnen"
+msgstr "Open project"
+
+msgid "Laufende Arbeit"
+msgstr "Work in progress"

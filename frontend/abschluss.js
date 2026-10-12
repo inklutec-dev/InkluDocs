@@ -453,6 +453,13 @@
         kiTimer = setTimeout(tick, 2500);
     }
 
+    // InkluAgent auch in der Barrierefreiheitsprüfung (Michael Karbe, WhatsApp 12.10.2026): mit dem festen Bereich (Ausbau Runde 2,
+    // Schritt 3, Schalter AGENT_UEBERALL) wird er an dieses Projekt gebunden. Ohne Schalter bleibt die Ansicht ohne Agenten
+    // (Steve 12.10.2026: kein eigener Einbau vorab).
+    function inkluagentHierBinden(projectId) {
+        if (typeof inkluagentUeberall === 'function' && inkluagentUeberall()) inkluagentInit(projectId);
+    }
+
     async function showProject(projectId, erneut) {
         const lauf = typeof ansichtLaufMerken === 'function' ? ansichtLaufMerken() : 0;   // Befund 1 (05.10.2026): nur der juengste Ansichtswechsel zeichnet
         const veraltet = () => typeof ansichtNochAktuell === 'function' && !ansichtNochAktuell(lauf);
@@ -499,6 +506,7 @@
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
             + (docs.length ? '' : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
             + '<div id="abListe">' + docs.map((d, i) => karteHtml(project, d, i + 1, docs.length)).join('') + '</div>';
+        inkluagentHierBinden(project.id);
         if (window.Dokument && typeof Dokument.kiKlappenBinden === 'function') Dokument.kiKlappenBinden();
         document.querySelectorAll('details.ab-klappe').forEach(el => {
             const gezeichnetOffen = el.open;
@@ -730,6 +738,7 @@
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
             + (docs.length ? '' : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
             + '<div id="abListe">' + docs.map((d, i) => wordKarteHtml(project, d, i + 1, docs.length)).join('') + '</div>';
+        inkluagentHierBinden(project.id);
         document.querySelectorAll('details.ab-klappe').forEach(el => {
             const gezeichnetOffen = el.open;
             let erstesEreignis = true;

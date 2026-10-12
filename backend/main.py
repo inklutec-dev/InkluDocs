@@ -11550,11 +11550,49 @@ async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depen
             "actions": actions}
 
 
+# Laufende Antworten je Konto (InkluAgent-Ausbau Runde 2, Schritt 3): Startzeiten, solange der Agent an einer Antwort arbeitet.
+# GET /api/agent/status liest das — eine neue Seite sagt „antwortet noch“ und holt die Antwort, wenn sie da ist (die Antwort
+# speichert der Server auch, wenn der Browser die Seite inzwischen gewechselt hat). Nur im Prozess (ein uvicorn-Worker).
+_AGENT_LAEUFT: dict[int, list] = {}
+_AGENT_HINTERGRUND: set = set()   # Laeufe, die nach einem Abbruch des Streams weiterlaufen (_agent_nachricht, strom)
+_AGENT_LAEUFT_HOECHSTENS = 600   # Sekunden; aeltere Eintraege gelten als haengengeblieben
+
+
+def _agent_laeuft(user_id: int) -> bool:
+    jetzt = time.time()
+    return any(jetzt - t < _AGENT_LAEUFT_HOECHSTENS for t in _AGENT_LAEUFT.get(user_id, []))
+
+
+@app.get("/api/agent/status")
+async def agent_status(user: dict = Depends(get_current_user)):
+    """Arbeitet der InkluAgent gerade an einer Antwort fuer dieses Konto? (Schritt 3, Schalter AGENT_UEBERALL)"""
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_UEBERALL")
+    return {"laeuft": _agent_laeuft(user["id"])}
+
+
+@app.post("/api/agent/nachricht")
+async def agent_nachricht(request: Request, user: dict = Depends(get_current_user)):
+    """InkluAgent auf einer Seite OHNE Projekt (Ausbau Runde 2, Schritt 3, Schalter AGENT_UEBERALL, braucht AGENT_KONTO): dieselbe
+    Nachricht wie im Projekt (Hochladefeld, Chat-Bremse, Gespraech des Kontos, Stream), aber mit den Konto-Werkzeugen
+    (inkluagent/konto.py)."""
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_UEBERALL")
+    funktionen.endpunkt_frei("AGENT_KONTO")
+    data = await request.json()
+    return await _agent_nachricht(request, user, None, data)
+
+
 @app.post("/api/projects/{project_id}/chat")
 async def chat_send_message(project_id: int, request: Request, user: dict = Depends(get_current_user)):
     _require_inkluagent()
     _require_project_owned(project_id, user["id"])
     data = await request.json()
+    return await _agent_nachricht(request, user, project_id, data)
+
+
+async def _agent_nachricht(request: Request, user: dict, project_id: Optional[int], data: dict):
+    """Eine Nachricht an den InkluAgent — im Projekt (project_id) oder auf einer Seite ohne Projekt (None, Schritt 3)."""
     message = (data.get("message") or "").strip()
     # Runde 2, Schritt 1 (funktionen.AGENT_HOCHLADEN): nach dem Hochladefeld darf der eigene Text fehlen — dann steht nur die
     # Kurzzeile im Verlauf. Die Notiz wird erst NACH der Chat-Bremse abgeholt (einmalig), damit eine abgewiesene Nachricht sie
@@ -11596,16 +11634,26 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
         raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
 
     from inkluagent import storage
-    from inkluagent.chat_engine import process_message
+    from inkluagent.chat_engine import process_konto_message, process_message
 
     # Gespraech je Konto (Ausbau Runde 2, Schritt 2): die Nachricht kommt ins Gespraech des Kontos, mit diesem Projekt als Marke
-    # und Fokus. nid: das Modell bekommt sie als neue Nachricht, nicht noch einmal aus dem Verlauf.
-    konto = funktionen.AGENT_KONTO
+    # und Fokus (ohne Projekt — Schritt 3 — bleibt der Fokus). nid: das Modell bekommt sie als neue Nachricht, nicht noch
+    # einmal aus dem Verlauf.
+    konto = funktionen.AGENT_KONTO or project_id is None
     if konto:
         nid = storage.konto_anhaengen(user["id"], project_id, "user", message)
-        storage.fokus_setzen(user["id"], project_id)
+        if project_id:
+            storage.fokus_setzen(user["id"], project_id)
     else:
         nid = storage.append_message(project_id, "user", message)
+    _ui = get_gettext(resolve_ui_language(request))
+
+    def verarbeiten(on_tool=None) -> dict:
+        if project_id is None:
+            return process_konto_message(user["id"], message_modell, on_tool=on_tool, nur_mit_karte=nur_mit_karte,
+                                         ohne_nachricht=nid, _=_ui)
+        return process_message(project_id, message_modell, user["id"], on_tool=on_tool, nur_mit_karte=nur_mit_karte,
+                               konto=konto, ohne_nachricht=nid)
     if funktionen.AGENT_SICHERHEIT:   # angenommene Nachricht zaehlen (unabhaengig von Projekten und Verlauf)
         from inkluagent import sicherheit as _sicherheit
         _sicherheit.tageszaehler_erhoehen(user["id"])
@@ -11635,11 +11683,22 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
     # Endpunkt je Werkzeugaufruf eine Zeile {"type":"tool","name":...} und am Ende
     # {"type":"reply", ...} — die Oberflaeche zeigt live „Ruft gerade auf: …“. Ohne den
     # Header bleibt die bisherige JSON-Antwort (API-Kunden, Demo, Tests).
+    start = time.time()
+    _AGENT_LAEUFT.setdefault(user["id"], []).append(start)
+
+    def _fertig():
+        laeuft = _AGENT_LAEUFT.get(user["id"], [])
+        if start in laeuft:
+            laeuft.remove(start)
+        if not laeuft:
+            _AGENT_LAEUFT.pop(user["id"], None)
+
     if "application/x-ndjson" not in (request.headers.get("accept") or ""):
-        result = await loop.run_in_executor(None, lambda: process_message(project_id, message_modell, user["id"],
-                                                                          nur_mit_karte=nur_mit_karte, konto=konto,
-                                                                          ohne_nachricht=nid))
-        return _antwort(result)
+        try:
+            result = await loop.run_in_executor(None, verarbeiten)
+            return _antwort(result)
+        finally:
+            _fertig()
 
     queue: asyncio.Queue = asyncio.Queue()
 
@@ -11651,18 +11710,20 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
         # Client ab, bleibt die Antwort trotzdem im Verlauf; Fehlerantworten werden NICHT
         # persistiert (sonst landen sie im Kontext des naechsten Turns). DB-Zugriff im Executor.
         try:
-            r = await loop.run_in_executor(
-                None, lambda: process_message(project_id, message_modell, user["id"], on_tool=on_tool, nur_mit_karte=nur_mit_karte,
-                                              konto=konto, ohne_nachricht=nid))
+            r = await loop.run_in_executor(None, lambda: verarbeiten(on_tool))
             out = await loop.run_in_executor(None, _antwort, r)
         except Exception:
             logger.exception("Chat-Stream: process_message crashte")
             out = {"reply": "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte erneut versuchen.",
                    "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
+        finally:
+            _fertig()
         await queue.put({"type": "done", "result": out})
 
     async def strom():
         aufgabe = asyncio.ensure_future(lauf())
+        _AGENT_HINTERGRUND.add(aufgabe)   # starke Referenz, sonst kann ein abgekoppelter Lauf eingesammelt werden
+        aufgabe.add_done_callback(_AGENT_HINTERGRUND.discard)
         try:
             while True:
                 ev = await queue.get()
@@ -11674,7 +11735,10 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
                 yield json.dumps(ev, ensure_ascii=False) + "\n"
         finally:
             if not aufgabe.done():
-                await aufgabe
+                # Bricht der Browser ab (Seitenwechsel), bricht der Server den Stream ab — und ohne shield mit ihm den Lauf:
+                # die Antwort ging verloren, obwohl das Modell weiterlief (gefunden 12.10.2026, Ausbau Runde 2, Schritt 3). Mit
+                # shield laeuft der Lauf zu Ende und speichert die Antwort; die neue Seite holt sie (GET /api/agent/status).
+                await asyncio.shield(aufgabe)
 
     return StreamingResponse(strom(), media_type="application/x-ndjson",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
@@ -11703,12 +11767,20 @@ async def agent_hochladen(request: Request, dateien: Optional[list[UploadFile]] 
     return erg
 
 
-def _inkluagent_schalter() -> dict:
-    """window.INKLUAGENT (base_app.html): was der InkluAgent auf dieser Seite kann — Runde 2, je Schritt ein Schalter."""
+def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
+    """window.INKLUAGENT (base_app.html): was der InkluAgent auf dieser Seite kann — Runde 2, je Schritt ein Schalter.
+    ueberall (Schritt 3, braucht AGENT_KONTO): der Agent steht auf jeder Seite; dann bringt die Seite auch die Werkzeugnamen
+    und den Hilfe-Schalter mit, die sonst nur app.html setzt."""
     from inkluagent import hochladen as _hl
-    return {"hochladen": bool(funktionen.AGENT_HOCHLADEN and INKLUAGENT_ENABLED), "max_dateien": _hl.max_dateien(),
-            "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024),
-            "konto": bool(funktionen.AGENT_KONTO and INKLUAGENT_ENABLED)}
+    konto = bool(funktionen.AGENT_KONTO and INKLUAGENT_ENABLED)
+    ueberall = bool(konto and funktionen.AGENT_UEBERALL)
+    out = {"hochladen": bool(funktionen.AGENT_HOCHLADEN and INKLUAGENT_ENABLED), "max_dateien": _hl.max_dateien(),
+           "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024), "konto": konto, "ueberall": ueberall}
+    if ueberall:
+        from inkluagent.tools import namen as _werkzeug_namen
+        out["werkzeug_namen"] = _werkzeug_namen.fuer_oberflaeche(get_gettext(lang or "de"))
+        out["hilfe"] = bool(funktionen.AGENT_HILFE)
+    return out
 
 
 @app.delete("/api/projects/{project_id}/chat")
@@ -12177,7 +12249,7 @@ def _render_protected_template(request: Request, template_name: str, **extra):
     # funktionen.AGENT_ANSICHT aus ist (dann bleibt der Seitenrahmen, wie er ist).
     from inkluagent import ansicht as _ansicht
     extra.setdefault("oberflaeche", _ansicht.seiten_wert(_nutzer.get("id")))
-    extra.setdefault("inkluagent_schalter", _inkluagent_schalter())   # Runde 2: window.INKLUAGENT
+    extra.setdefault("inkluagent_schalter", _inkluagent_schalter(lang))   # Runde 2: window.INKLUAGENT
     return templates.TemplateResponse(
         template_name,
         template_context(request, lang, is_staging=("staging" in BASE_URL), **extra),

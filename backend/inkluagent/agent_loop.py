@@ -159,6 +159,10 @@ def projekt_marke(name: str, geloescht: bool = False) -> str:
     return f"[Projektwechsel: ab hier geht es um Projekt {DATEN_MARKE}„{name}“{' (inzwischen gelöscht)' if geloescht else ''}]"
 
 
+# Nachrichten von Seiten ohne Projekt (Ausbau Runde 2, Schritt 3, inkluagent/konto.py)
+OHNE_PROJEKT_MARKE = "[Ab hier: Seite ohne Projekt]"
+
+
 def _mit_marken(history: list[dict]) -> list[dict]:
     """Gespraech des Kontos: vor die erste Nachricht jedes Projektabschnitts die Marke setzen, und vor die neue Nachricht,
     wenn das aktuelle Projekt ein anderes ist als zuletzt. Rueckgabe ohne Marke fuer die neue Nachricht, die haengt der Aufrufer an."""
@@ -168,7 +172,8 @@ def _mit_marken(history: list[dict]) -> list[dict]:
         pid = h.get("project_id")
         content = h.get("content", "")
         if pid != vorher:
-            content = projekt_marke(h.get("projekt_name") or "", h.get("projekt_geloescht")) + "\n" + content
+            marke = projekt_marke(h.get("projekt_name") or "", h.get("projekt_geloescht")) if pid is not None else OHNE_PROJEKT_MARKE
+            content = marke + "\n" + content
             vorher = pid
         out.append(dict(h, content=content))
     return out
@@ -277,6 +282,7 @@ def run_agent(
     nur_mit_karte: bool = False,
     konto: bool = False,
     ohne_nachricht: Optional[int] = None,
+    uebersetzen=None,
 ) -> dict[str, Any]:
     """Führt den agentic Loop aus. Returns:
         {"reply": str, "intent": "agentic", "image_refs": [...] or None,
@@ -294,12 +300,20 @@ def run_agent(
     auf: …“ an die Oberflaeche. Ergebnis enthaelt zusaetzlich "werkzeuge": Namen
     in Aufrufreihenfolge (leer = ohne Werkzeug aus dem Verlauf geantwortet).
     """
-    tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
+    if project is None:
+        # Runde 2, Schritt 3: Seite ohne Projekt — Konto-Werkzeuge, Konto-Kontext, Gespraech des Kontos (inkluagent/konto.py)
+        from . import konto as _konto
+        tool_defs, executor, system_base = _konto.werkzeugsatz(user_id, uebersetzen)
+    else:
+        tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
     # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
     sicherheit.nachricht_merken(executor.turn_id, user_message)
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
     executor.nur_mit_karte = bool(nur_mit_karte)
-    messages = _build_initial_messages(project_id, user_message, project, user_id, konto=konto, ohne_nachricht=ohne_nachricht)
+    if project is None:
+        messages = _konto.nachrichten(user_id, user_message, ohne_nachricht=ohne_nachricht, verlauf_laenge=_HISTORY_TURNS)
+    else:
+        messages = _build_initial_messages(project_id, user_message, project, user_id, konto=konto, ohne_nachricht=ohne_nachricht)
     system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
 
     actions_log: list[dict] = []
