@@ -11971,3 +11971,37 @@ msgstr "Crée des textes alternatifs pour toutes les images."
 
 msgid "Was fehlt noch, damit das Dokument barrierefrei ist?"
 msgstr "Que manque-t-il encore pour que le document soit accessible ?"
+
+# InkluAgent: Webadressen in der Nachricht (12.10.2026)
+#, python-brace-format
+msgid "PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Webadressen schreibst du einfach in deine Nachricht. Der InkluAgent legt alles ins passende Projekt und nennt dir die Preise, bevor etwas startet."
+msgstr "PDF, Word (.docx) et images, {n} fichiers au maximum, {mb} Mo chacun au maximum. Écrivez simplement les adresses web dans votre message. L’InkluAgent place tout dans le bon projet et vous indique les prix avant que quoi que ce soit ne démarre."
+
+msgid "Was soll mit der Webseite passieren?"
+msgstr "Que faire de la page web ?"
+
+#, python-brace-format
+msgid "Webseite „{url}“ als neues Projekt laden, kostenlos."
+msgstr "Charger la page web « {url} » comme nouveau projet, gratuitement."
+
+msgid "Webseite als neues Projekt laden"
+msgstr "Charger la page web comme nouveau projet"
+
+msgid "Als neues Projekt laden"
+msgstr "Charger comme nouveau projet"
+
+#, python-brace-format
+msgid "Webseite „{url}“ zum Projekt „{projekt}“ hinzufügen, kostenlos."
+msgstr "Ajouter la page web « {url} » au projet « {projekt} », gratuitement."
+
+#, python-brace-format
+msgid "Webseite zum Projekt „{projekt}“ hinzufügen"
+msgstr "Ajouter la page web au projet « {projekt} »"
+
+#, python-brace-format
+msgid "Zum Projekt „{projekt}“ hinzufügen"
+msgstr "Ajouter au projet « {projekt} »"
+
+#, python-brace-format
+msgid "Webseite „{url}“ ist geladen."
+msgstr "La page web « {url} » est chargée."

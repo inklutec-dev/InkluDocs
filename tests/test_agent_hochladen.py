@@ -429,13 +429,13 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("(inkluagentHochladenAn() ? inkluagentHochladeHtml() : '')", self.js)
         self.assertIn("window.INKLUAGENT && window.INKLUAGENT.hochladen", self._funktion("inkluagentHochladenAn"))
 
-    def test_native_felder_mit_sichtbarem_label(self):
+    def test_natives_feld_mit_sichtbarem_label(self):
         html = self._funktion("inkluagentHochladeHtml")
         self.assertIn('<label for="inkluagentDateien">', html)
         self.assertIn('type="file" id="inkluagentDateien" multiple', html)
-        self.assertIn('<label for="inkluagentWebadresse">', html)
-        self.assertIn('type="url" id="inkluagentWebadresse"', html)
-        self.assertIn("t('Webadresse (freiwillig)')", html, "freiwillig steht im sichtbaren Label (Runde 10)")
+        # Steve 12.10.2026: kein eigenes Feld fuer Webadressen — sie stehen in der Nachricht (test_agent_webadressen.py)
+        self.assertNotIn('type="url"', html)
+        self.assertIn("Webadressen schreibst du einfach in deine Nachricht.", html)
 
     def test_ergebnisliste_ohne_innerhtml(self):
         f = self._funktion("inkluagentHochgeladenZeigen")

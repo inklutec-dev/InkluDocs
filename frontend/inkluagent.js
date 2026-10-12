@@ -80,8 +80,8 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         // UND Fokus) und die eigene Nachricht als Echo. Jetzt sagt nichts im Verlauf von selbst etwas an: die neue Antwort
         // bekommt den Fokus (der Screenreader liest sie vollständig), Warten und Fehler meldet die Statuszeile.
         +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="off" aria-label="' + t('Chat-Verlauf') + '" tabindex="0"></div>'
-        // novalidate (Runde 2, Schritt 1): eine unvollstaendige Webadresse meldet inkluagentSend in der Statuszeile und setzt den
-        // Fokus ins Feld — statt der Blase des Browsers, die ohne Ansage verschwindet und das Senden still verhindert
+        // novalidate (Runde 2, Schritt 1): Meldungen kommen aus inkluagentSend in die Statuszeile — nie die Blase des Browsers, die
+        // ohne Ansage verschwindet und das Senden still verhindert
         +     '<form id="inkluagentForm" class="inkluagent-form" novalidate>'
         +       '<label for="inkluagentInput" class="visually-hidden">' + t('Nachricht an den InkluAgent') + '</label>'
         +       '<textarea id="inkluagentInput" rows="2" maxlength="5000" '
@@ -98,8 +98,8 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         + (alsBereich ? '</div>' : '</section>');
 }
 
-// Runde 2, Schritt 1 (Schalter funktionen.AGENT_HOCHLADEN, window.INKLUAGENT aus base_app.html): Dateien und eine Webadresse
-// gehen mit der Nachricht an den Agenten. Native Felder mit sichtbarem Label (Datei-Auswahl, type=url); die Zuordnung zu
+// Runde 2, Schritt 1 (Schalter funktionen.AGENT_HOCHLADEN, window.INKLUAGENT aus base_app.html): Dateien gehen mit der
+// Nachricht an den Agenten (Webadressen stehen seit 12.10.2026 in der Nachricht selbst). Natives Feld mit sichtbarem Label (Datei-Auswahl); die Zuordnung zu
 // Projekten macht der Server (/api/agent/hochladen), das Ergebnis steht als Liste unter dem Feld.
 function inkluagentHochladenAn() {
     return !!(window.INKLUAGENT && window.INKLUAGENT.hochladen);
@@ -111,10 +111,10 @@ function inkluagentHochladeHtml() {
         +   '<label for="inkluagentDateien">' + t('Dateien mitschicken') + '</label>'
         +   '<input type="file" id="inkluagentDateien" multiple aria-describedby="inkluagentHochladenHint" '
         +     'accept=".pdf,.docx,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif,.bmp,.tif,.tiff,.svg">'
-        +   '<label for="inkluagentWebadresse">' + t('Webadresse (freiwillig)') + '</label>'
-        +   '<input type="url" id="inkluagentWebadresse" autocomplete="url" placeholder="https://" aria-describedby="inkluagentHochladenHint">'
+        // Kein eigenes Feld fuer Webadressen (Steve 12.10.2026): eine Adresse steht einfach in der Nachricht, der Server erkennt sie
+        // und der Agent fragt mit Knoepfen, was damit passieren soll (hochladen.webadressen_karten)
         +   '<p id="inkluagentHochladenHint" class="inkluagent-hint">'
-        +     t('PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Der InkluAgent legt sie ins passende Projekt und nennt dir die Preise, bevor etwas startet.',
+        +     t('PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Webadressen schreibst du einfach in deine Nachricht. Der InkluAgent legt alles ins passende Projekt und nennt dir die Preise, bevor etwas startet.',
                 { n: k.max_dateien || 10, mb: k.max_mb || 50 })
         +   '</p>'
         +   '<ul id="inkluagentHochgeladen" class="inkluagent-hochgeladen" aria-label="' + t('Ergebnis des Hochladens') + '" hidden></ul>'
@@ -911,23 +911,17 @@ async function inkluagentSend() {
     if ((ohneProjekt && !inkluagentUeberall()) || (!ohneProjekt && !projectId) || !input || !sendBtn || !log) return;
     if (sendBtn.disabled) return;   // Enter waehrend des Hochladens oder Antwortens: nichts doppelt senden
     const message = input.value.trim();
-    // Hochladefeld (Runde 2, Schritt 1): Dateien oder Webadresse duerfen ohne eigenen Text gesendet werden
+    // Hochladefeld (Runde 2, Schritt 1): Dateien duerfen ohne eigenen Text gesendet werden (Webadressen stehen in der Nachricht)
     const dateienEl = document.getElementById('inkluagentDateien');
-    const webEl = document.getElementById('inkluagentWebadresse');
     const dateien = (inkluagentHochladenAn() && dateienEl && dateienEl.files) ? Array.from(dateienEl.files) : [];
-    const webadresse = (inkluagentHochladenAn() && webEl) ? webEl.value.trim() : '';
-    if (!message && !dateien.length && !webadresse) {
+    const webadresse = '';
+    if (!message && !dateien.length) {
         inkluagentSetStatus(inkluagentHochladenAn() ? t('Bitte eine Nachricht eingeben oder eine Datei auswählen.') : t('Bitte eine Nachricht eingeben.'), true);
         input.focus();
         return;
     }
     if (message.length > 5000) {
         inkluagentSetStatus(t('Nachricht ist zu lang (max. 5000 Zeichen).'), true);
-        return;
-    }
-    if (webEl && webadresse && !webEl.checkValidity()) {
-        inkluagentSetStatus(t('Bitte eine vollständige Webadresse eingeben, zum Beispiel https://www.beispiel.de'), true);
-        webEl.focus();
         return;
     }
     sendBtn.disabled = true;
@@ -942,7 +936,6 @@ async function inkluagentSend() {
         const ergebnisse = erg.ergebnisse || [];
         inkluagentHochgeladenZeigen(projectId, ergebnisse);
         if (dateienEl) dateienEl.value = '';
-        if (webEl) webEl.value = '';
         satz = inkluagentHochladenSatz(ergebnisse);
         nachziehenHochladen = !ohneProjekt && ergebnisse.some(e => e.ok && String(e.project_id) === String(projectId));
         // Nichts angekommen und kein eigener Text: keine Nachricht an den Agenten (die Gruende stehen schon am Feld)

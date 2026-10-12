@@ -164,6 +164,8 @@ class KontoExecutor:
                 if not aendern_an():
                     return {"ok": False, "error": "Diese Funktion gibt es hier nicht."}
                 return getattr(self, "_" + name)(args)
+            if name == "webseite_laden" and funktionen.an("AGENT_HOCHLADEN"):
+                return self._webseite_laden(args)
             if name == "laufende_arbeit":
                 liste = []
                 for x in laufende(self.user_id):
@@ -289,6 +291,42 @@ class KontoExecutor:
                                        "hinweis": ("Es lief nichts, was sich abbrechen lässt." if not angefordert else
                                                    "Der Lauf endet nach dem Schritt, der gerade in Arbeit ist; Fertiges bleibt."),
                                        **({"tagging_laeuft": "Tagging lässt sich nicht abbrechen."} if tagging else {})}}
+
+    def _webseite_laden(self, args: dict) -> dict:
+        """Nur ueber den Knopf einer Karte aus hochladen.webadressen_karten (das Modell hat dieses Werkzeug nicht): die Webadresse
+        aus der eigenen Nachricht des Nutzers als neues Projekt laden oder an das Webseiten-Projekt haengen — ueber
+        hochladen.hochladen (Bremsen, Schutz gegen interne Adressen in scan_url). Die andere Karte derselben Adresse verfaellt."""
+        from . import hochladen
+        from .kern import warten
+        from .tools import ausgaben
+        url = str(args.get("url") or "")
+        ziel = args.get("project_id")
+        schluessel = (self.user_id, 0, "webseite_laden", url, int(ziel or 0))
+        vorher = ausgaben._LETZTES.get((self.user_id, 0))
+        if getattr(ausgaben._KARTE, "id", None) is None:
+            return {"ok": False, "error": "Webadressen lädt nur der Knopf einer Karte."}
+        grund = ausgaben._angebot_einloesen(schluessel, 0, self.turn_id)
+        if grund:
+            return ausgaben.nachbereiten({"ok": True, "result": {"rueckfrage_noetig": True, "hinweis": grund}}, "webseite_laden",
+                                         args, self.user_id, 0, vorher)
+        with ausgaben._SPERRE:   # die andere Karte derselben Adresse gilt nicht mehr
+            for k in [k for k in ausgaben._ANGEBOTE if len(k) == 5 and k[:4] == (self.user_id, 0, "webseite_laden", url)]:
+                alt = ausgaben._ANGEBOTE.pop(k)
+                ausgaben._NACH_ID.pop(alt.get("id"), None)
+                ausgaben._VERBRAUCHT.setdefault((self.user_id, 0), []).append((alt.get("id"), alt, False))
+        erg = warten(hochladen.hochladen({"id": self.user_id}, [], url, int(ziel) if ziel else None, request=None, _=self._))
+        e = (erg.get("ergebnisse") or [{}])[0] if erg.get("ok") else {"ok": False, "fehler": erg.get("fehler_text")}
+        if not e.get("ok"):
+            return ausgaben.nachbereiten({"ok": False, "error": e.get("fehler") or "Die Seite ließ sich nicht laden."}, "webseite_laden",
+                                         args, self.user_id, 0, vorher)
+        pid = int(e["project_id"])
+        r = {"ok": True, "result": {"project_id": pid, "neues_projekt": bool(e.get("neues_projekt")), "bilder": e.get("bilder"),
+                                    "name_daten": daten(e.get("projekt") or "")},
+             "anhang": {"art": "link", "url": f"/app?projekt={pid}",
+                        "text": self._("Projekt „{projekt}“ öffnen").format(projekt=e.get("projekt") or "")}}
+        if ziel:
+            r["aktualisieren"] = True   # die offene Ansicht des Webseiten-Projekts zeigt die neue Seite
+        return ausgaben.nachbereiten(r, "webseite_laden", args, self.user_id, 0, vorher)
 
     def _oeffnen(self, project_id) -> dict:
         from database import get_db

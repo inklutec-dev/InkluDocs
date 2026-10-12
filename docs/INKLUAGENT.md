@@ -631,3 +631,25 @@ Tests: `tests/test_agent_bloecke.py` (5: Filter mit und ohne Schalter, idempoten
 `innerHTML`, Seite erfährt den Schalter). Klickprobe lokal 10 von 10 (Liste mit drei Punkten ohne Zeichen, nummerierte Liste,
 Absätze, „1. Oktober …“ bleibt Absatz, sichtbar als Aufzählung, axe ohne Verstöße, nach dem Neuladen gleich, ohne Schalter wie
 bisher).
+
+### Webadressen in der Nachricht statt eigenem Feld (Steve 12.10.2026; Schalter `AGENT_HOCHLADEN` + `AGENT_KONTO`)
+
+„Wir brauchen keine verschiedenen Hochladeknöpfe“: das Feld „Webadresse“ aus Schritt 1 ist weg, es bleibt der eine Knopf für
+Dateien. Eine Webadresse schreibt man einfach in die Nachricht.
+- **Erkennen** (`hochladen.finde_webadressen`): nur in der EIGENEN Nachricht des Nutzers, mit `http(s)://` oder `www.` am Anfang
+  (ein bloßes „beispiel.de“ ist zu oft ein Satzteil, E-Mail-Adressen zählen nicht), Satzzeichen am Ende fallen weg, `www.`
+  bekommt `https://`, doppelte einmal, höchstens drei.
+- **Karten** (`hochladen.webadressen_karten`, Titel „Was soll mit der Webseite passieren?“): je Adresse „Als neues Projekt
+  laden“, im Webseiten-Projekt zusätzlich „Zum Projekt „…“ hinzufügen“ — kostenlos. Angebote unter dem Konto-Schlüssel,
+  Knopf über `POST /api/agent/bestaetigen` (auf jeder Seite). Das Modell bekommt eine Notiz (Adressen als Daten gekennzeichnet)
+  und fragt, was der Nutzer möchte; in dieser Nachricht startet nichts Kostenpflichtiges ohne Karte.
+- **Laden nur über den Knopf** (`konto.KontoExecutor` „webseite_laden“, kein Werkzeug des Modells): über `hochladen.hochladen`
+  (Bremse Webadressen je Stunde und neue Projekte je Tag, Schutz gegen interne Adressen in `scan_url`); die andere Karte
+  derselben Adresse verfällt („Nicht mehr gültig“). Ins offene Webseiten-Projekt geladen: die Ansicht wird nachgezogen; neues
+  Projekt: Link „Projekt „…“ öffnen“. Adressen aus Dokumenten, Webseiten oder Werkzeug-Ergebnissen bietet der Agent nie an
+  (Prompt-Zusatz im Hochladefeld angepasst). 9 neue Texte.
+
+Tests: `tests/test_agent_webadressen.py` (6: Erkennung, Karten je Projektart, Modell kann nicht selbst laden, Nachricht mit
+Adresse → Karten und Notiz, Knopf lädt und die andere Karte verfällt, ohne Projekt neues Projekt mit Link, ohne Schalter keine
+Karten); `test_agent_hochladen` angepasst. Klickprobe lokal 10 von 10 (mit einer echten öffentlichen Seite), Hochlade-Probe
+19 von 19. Unit gesamt 871 grün.

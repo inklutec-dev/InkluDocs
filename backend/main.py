@@ -11491,7 +11491,6 @@ async def agent_bestaetigen(request: Request, user: dict = Depends(get_current_u
     """Knopf einer Karte aus einer Seite OHNE Projekt (InkluAgent-Ausbau Runde 2, Schritt 4: Projekt loeschen) — dieselbe Logik
     wie im Projekt; das Angebot liegt unter dem Konto-Schluessel (Projekt 0), ausgefuehrt mit den Konto-Werkzeugen."""
     _require_inkluagent()
-    funktionen.endpunkt_frei("AGENT_KONTO_WERKZEUGE")
     funktionen.endpunkt_frei("AGENT_KONTO")
     try:
         data = await request.json()
@@ -11521,7 +11520,8 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
         if project_id is None:   # Konto-Werkzeuge (Schritt 4)
             from inkluagent import konto as _konto
             defs, executor, _system = _konto.werkzeugsatz(user["id"], _)
-            if angebot["werkzeug"] not in {d["name"] for d in defs}:
+            erlaubt = {d["name"] for d in defs} | ({"webseite_laden"} if funktionen.AGENT_HOCHLADEN else set())
+            if angebot["werkzeug"] not in erlaubt:
                 return {"ok": False, "error": _("Diese Funktion gibt es hier nicht.")}
             _ag._LETZTES[(user["id"], 0)] = angebot_id
             return _ag.karte_ausfuehren(angebot_id, angebot["werkzeug"], angebot.get("args") or {}, executor)
@@ -11660,6 +11660,24 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             nur_mit_karte = True
     if not message:
         raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
+    # Webadressen in der EIGENEN Nachricht (Steve 12.10.2026: kein eigenes Feld): Karten „als neues Projekt laden“ / „zum
+    # Projekt hinzufügen“ unter der Antwort, eine Notiz fuer das Modell; geladen wird nur ueber den Knopf (konto.webseite_laden).
+    webkarten = []
+    if funktionen.AGENT_HOCHLADEN and funktionen.AGENT_KONTO:
+        from inkluagent import hochladen as _hl
+        _urls = _hl.finde_webadressen(data.get("message") or "")
+        if _urls:
+            _projekt = None
+            if project_id:
+                conn = get_db()
+                try:
+                    _r = conn.execute("SELECT id, name, filename, tool FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
+                finally:
+                    conn.close()
+                _projekt = dict(_r) if _r else None
+            webkarten, _web_notiz = _hl.webadressen_karten(user["id"], _urls, _projekt, get_gettext(resolve_ui_language(request)))
+            message_modell = message_modell + "\n\n" + _web_notiz
+            nur_mit_karte = True
 
     from inkluagent import storage
     from inkluagent.chat_engine import process_konto_message, process_message
@@ -11690,6 +11708,8 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
     def _antwort(result: dict) -> dict:
         # anhang (11.09.2026, Meine Ausgaben): Download-Knoepfe unter der Antwort (Umwandlung/Word-Export
         # durch den Bot) — wird mitgespeichert, damit der Verlauf sie nach einem Neuladen noch zeigt.
+        if webkarten and result.get("intent") != "error":   # Karten zu Webadressen aus der Nachricht (siehe oben)
+            result = dict(result, anhang=(list(result.get("anhang") or []) + webkarten))
         speichern = (lambda *a, **k: storage.konto_anhaengen(user["id"], *a, **k)) if konto else storage.append_message
         speichern(
             project_id, "assistant", result["reply"],
