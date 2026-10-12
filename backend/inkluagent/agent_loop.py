@@ -314,6 +314,13 @@ def run_agent(
         tool_defs, executor, system_base = _konto.werkzeugsatz(user_id, uebersetzen)
     else:
         tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
+    # Begleiter durch InkluDocs (Steve 12.10.2026, Schalter AGENT_BEGLEITER): Hinfuehren und harmlose Einstellungen — in jedem
+    # Gespraech, mit und ohne Projekt; ausgefuehrt von inkluagent/begleiter.py, nicht vom Executor des Projekts
+    from . import begleiter as _begleiter
+    begleiter_an = _begleiter.an()
+    if begleiter_an:
+        tool_defs = list(tool_defs) + _begleiter.werkzeuge(user_id)
+        system_base = system_base + "\n\n" + _begleiter.PROMPT
     # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
     sicherheit.nachricht_merken(executor.turn_id, user_message)
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
@@ -389,7 +396,10 @@ def run_agent(
                     on_tool(name, args)
                 except Exception:
                     log.exception("on_tool-Callback fehlgeschlagen (ignoriert)")
-            result = executor.execute(name, args)
+            if begleiter_an and name in _begleiter.NAMEN:
+                result = _begleiter.ausfuehren(name, args, user_id)
+            else:
+                result = executor.execute(name, args)
             vorher = len(actions_log)
             actions_log.append({
                 "tool": name,

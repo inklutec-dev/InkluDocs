@@ -445,7 +445,9 @@ class Oberflaeche(unittest.TestCase):
     def test_senden_laedt_zuerst_hoch_und_gibt_die_notiz_weiter(self):
         f = self._funktion("inkluagentSend")
         self.assertLess(f.index("inkluagentHochladen(projectId"), f.index("'/api/projects/' + projectId + '/chat'"))
-        self.assertIn("{ message, hochgeladen }", f)
+        # seit 12.10.2026 baut inkluagentNachrichtDaten den Inhalt (Begleiter schickt die Seite mit)
+        self.assertIn("JSON.stringify(inkluagentNachrichtDaten(message, hochgeladen))", f)
+        self.assertIn("{ message, hochgeladen }", self._funktion("inkluagentNachrichtDaten"))
         self.assertIn("if (sendBtn.disabled) return;", f, "Enter waehrend des Hochladens sendet nicht doppelt")
 
 

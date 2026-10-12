@@ -865,3 +865,38 @@ Tests: `tests/test_agent_arbeitsfenster.py` (Fortschritt im Status mit und ohne 
 räumt ab, Klasse `AgentenansichtKorrekturen`); `test_agent_ansicht` prüft die neue CSS-Regel. Klickproben lokal: Seitenwechsel
 10/10 (Schritte auf der neuen Seite und angesagt, Statuszeile manuell, Projektansicht frisch ohne Neuladen, erste Überschrift H1),
 Agentenansicht-Korrekturen 7/7; alle älteren Proben mit den Staging-Schaltern grün.
+
+### Begleiter durch InkluDocs, Agentenansicht mit Inhalt, Überblick (Steve 12.10.2026; Schalter `AGENT_BEGLEITER`, Umgebung `INKLUAGENT_BEGLEITER=an`, braucht `AGENT_UEBERALL`)
+
+Steve: „Wenn man was sucht, sagt man dem Agenten ‚bring mich zu den Einstellungen‘ — wie ein Guide, der einen durch das System
+begleitet“; „im Agentenmodus an alle Infos rankommen“; „der Agent darf alle Einstellungen vornehmen, sofern ich das ausdrücklich
+bestätige oder er mich dahin führt“.
+- **Feste Zielliste** (`inkluagent/begleiter.py`, `_ORTE`): Schlüssel, Seite, Element-id (sonst Überschrift 1), Name (msgid) und
+  was man dort tut; Express-Ziele nur mit Express, „Frühere Gespräche“ nur mit Gesprächen, „Ansicht“ nur mit Ansichtswahl.
+- **Werkzeug `hinfuehren`** (in jedem Gespräch, mit und ohne Projekt; `agent_loop` hängt es an und führt es selbst aus):
+  `sofort=true` bei ausdrücklichem Wunsch („bring mich“) → Aktion `hinfuehren` (die Seite wechselt nach der Antwort zu
+  `<pfad>?hin=<id>`); sonst nur der Knopf „Hinführen: …“ unter der Antwort. Die Zielseite (`inkluagentHinfuehrenBeimLaden`) sucht
+  das Ziel (wartet bis 4 s, klappt `details` auf), setzt den Fokus, markiert es 6 s sichtbar und nimmt den Parameter aus der
+  Adresse. Nur ids nach `^[A-Za-z][\w-]{0,40}$`.
+- **Werkzeug `einstellung_aendern`** nur auf ausdrücklichen Wunsch (in jeder Sprache): `sprache` → Aktion `sprache_wechseln`, die
+  Seite geht über `/set-language/<code>` (Konto und Cookie) zurück auf dieselbe Seite, Fokus auf die Überschrift 1; unter der
+  Antwort „Zurück zu <bisherige Sprache>“, beschriftet in der bisherigen Sprache. `ansicht` → `ansicht.setzen`, Seite lädt neu.
+  E-Mail, Passwort, API-Schlüssel, Team, Abo, Kündigen, Widerruf, Zahlung, Konto löschen: nie selbst — hinführen.
+- **„Frag die Seite“:** die Seite schickt `seite: {pfad, titel}` mit; der Server hängt eine Notiz an die Nachricht für das Modell
+  (Pfad geprüft, Überschrift mit Daten-Marke, „Dort: …“ aus der Zielliste). Im Verlauf steht nur die eigene Nachricht.
+- **Agentenansicht mit Inhalt** (mit Arbeitsfenster): ausgeblendet wird nur noch auf der Startseite (Chat-Start) und den
+  Projektseiten; alle anderen Seiten zeigen ihren Inhalt, der Agent steht darunter im Chatstil. Der zentrierte Chat-Start nur dort
+  (`html.agentenansicht-chatstart`).
+- **Überblick im Arbeitsfenster** (`GET /api/agent/ueberblick`, ohne KI): Guthaben, was gerade läuft, Express (offene Aufträge,
+  Warenkorb), die drei zuletzt bearbeiteten Projekte als Links — sichtbar, solange kein Auftrag läuft, neu geladen nach jedem
+  Auftrag; „Stand vorlesen“ liest ihn mit.
+- **Kosten:** ohne Begleiter ändert sich nichts; mit ihm liest das Modell je Aufruf rund 1.000 Wortteile mehr (Zielliste, Regeln,
+  Seite) — mit Gemini 3.8 Flash etwa 0,07 Cent je Aufruf (ab 2027 0,13 Cent). Überblick, Hinführen-Knopf, Fokus: keine KI.
+- 11 neue Texte (Oberfläche, Werkzeugnamen) in sechs Sprachen; die 32 Zielnamen gab es schon.
+
+Tests: `tests/test_agent_begleiter.py` (15: Schalter, Ziele je Funktion, Ziel-URLs und ids auf den Seiten, sofort/anbieten/
+unbekannt, Sprache mit Rückweg, Ansicht nur mit Ansichtswahl, Heikles nie selbst, Seite als Daten, Schleife nur mit Schalter,
+Notiz ans Modell und nicht in den Verlauf, Seiten-Schalter, Überblick, Oberfläche). Klickprobe lokal 17 von 17 (Einstellungen mit
+Inhalt in der Agentenansicht, axe ganze Seite ohne Verstöße, Überblick, Startseite bleibt Chat-Start, „bring mich zu“ mit Fokus
+und Markierung, „Was kann ich hier machen?“, „wo finde ich“ mit Knopf, Sprache Englisch und zurück, Ansicht auf Wunsch); alle
+übrigen zehn Proben mit allen Staging-Schaltern grün.

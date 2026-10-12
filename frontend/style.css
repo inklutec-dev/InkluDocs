@@ -1477,7 +1477,7 @@ html.agentenansicht-chatstil .inkluagent-bereich { max-width: 84rem; }
 }
 .inkluagent-gespraech { display: flex; flex-direction: column; width: 100%; max-width: 46rem; margin: 0 auto; }
 /* Leeres Gespraech: Eingabe in der Mitte der Flaeche wie bei ChatGPT */
-.inkluagent-gespraech:has(> .inkluagent-log:empty) { min-height: 50vh; justify-content: center; }
+html.agentenansicht-chatstart .inkluagent-gespraech:has(> .inkluagent-log:empty) { min-height: 50vh; justify-content: center; }
 .inkluagent-chatstil .inkluagent-log { border: 0; background: transparent; max-height: none; min-height: 0; padding: 0; overflow: visible; margin: 0 0 0.5rem; }
 .inkluagent-chatstil .inkluagent-message { margin: 0 0 1.25rem; border-left: 0; }
 .inkluagent-chatstil .inkluagent-message.user { background: #e6ecf5; border-radius: 1.25rem; padding: 0.7rem 1rem; margin-left: auto;
@@ -1571,3 +1571,13 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leis
 /* Agentenansicht: „InkluAgent“ als schlichte Ueberschrift ohne Auf/Zu (Steve 12.10.2026) */
 .inkluagent-chatstil .inkluagent-titel { font-size: 1.15rem; color: var(--primary); }
 .inkluagent-toggle[hidden] { display: none; }   /* die Knopf-Regel setzt display: block — sonst bliebe er sichtbar */
+/* Begleiter (Steve 12.10.2026): das Ziel eines Hinfuehrens ist einige Sekunden deutlich markiert (zusaetzlich zum Fokus) */
+.inkluagent-hin-ziel { outline: 4px solid var(--accent) !important; outline-offset: 4px; background: #fff3e6; border-radius: 4px;
+    transition: background 0.4s; }
+@media (prefers-reduced-motion: reduce) { .inkluagent-hin-ziel { transition: none; } }
+/* Ueberblick im Arbeitsfenster, solange der Agent nichts tut */
+.arbeitsfenster-ueberblick { margin: 0.9rem 0 0; }
+.arbeitsfenster-ueberblick dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.3rem 0.75rem; margin: 0; font-size: 0.95rem; }
+.arbeitsfenster-ueberblick dt { font-weight: 600; color: var(--text-muted); }
+.arbeitsfenster-ueberblick dd { margin: 0; overflow-wrap: anywhere; }
+.arbeitsfenster-ueberblick ul { margin: 0; padding-left: 1.1rem; }

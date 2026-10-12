@@ -116,6 +116,10 @@ AGENT_GESPRAECHE = _umgebung_an("INKLUAGENT_GESPRAECHE")
 # Schritte, Vorschau des Bildes, an dem der Agent arbeitet), in der Seitenleiste der Abschnitt „Gespräche“. Die manuelle Ansicht
 # bleibt, wie sie ist. Braucht AGENT_ANSICHT und AGENT_UEBERALL. INKLUAGENT_ARBEITSFENSTER=an.
 AGENT_ARBEITSFENSTER = _umgebung_an("INKLUAGENT_ARBEITSFENSTER")
+# Begleiter durch InkluDocs (Steve 12.10.2026): der InkluAgent bringt den Nutzer zu jeder Stelle der Oberflaeche („Bring mich zu
+# den Einstellungen“), weiss, auf welcher Seite er ist („Was kann ich hier machen?“), und aendert auf ausdruecklichen Wunsch die
+# Sprache der Oberflaeche und die Ansicht (inkluagent/begleiter.py). Braucht AGENT_UEBERALL. INKLUAGENT_BEGLEITER=an.
+AGENT_BEGLEITER = _umgebung_an("INKLUAGENT_BEGLEITER")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

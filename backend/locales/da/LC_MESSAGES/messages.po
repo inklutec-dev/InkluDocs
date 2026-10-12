@@ -11957,3 +11957,42 @@ msgstr "Mellemstatus: {text}"
 # Livestream: Stand beim Schreiben (Steve 12.10.2026)
 msgid "Schreibt die Antwort …"
 msgstr "Skriver svaret …"
+
+# Begleiter und Ueberblick (Steve 12.10.2026)
+#, python-brace-format
+msgid "{n} Credits"
+msgstr "{n} credits"
+
+msgid "Läuft gerade"
+msgstr "Kører nu"
+
+msgid "Express"
+msgstr "Express"
+
+#, python-brace-format
+msgid "{offen} offen, {korb} im Warenkorb"
+msgstr "{offen} åbne, {korb} i kurven"
+
+msgid "Zuletzt bearbeitet"
+msgstr "Senest redigeret"
+
+#, python-brace-format
+msgid "Hinführen: {name}"
+msgstr "Før mig derhen: {name}"
+
+#, python-brace-format
+msgid "Zurück zu {sprache}"
+msgstr "Tilbage til {sprache}"
+
+msgid "Auslesen"
+msgstr "Læser filen"
+
+msgid "Generierung oder Übersetzung"
+msgstr "Generering eller oversættelse"
+
+# Werkzeugnamen Begleiter (12.10.2026)
+msgid "Hinführen"
+msgstr "Før mig derhen"
+
+msgid "Einstellung ändern"
+msgstr "Skift indstilling"

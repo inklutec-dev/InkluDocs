@@ -43,6 +43,8 @@ WERKZEUG_NAMEN: dict[str, str] = {
     "lauf_abbrechen": "Laufende Arbeit abbrechen",
     # Gespraeche (12.10.2026)
     "fruehere_gespraeche": "Frühere Gespräche",
+    # Begleiter (12.10.2026, inkluagent/begleiter.py)
+    "hinfuehren": "Hinführen", "einstellung_aendern": "Einstellung ändern",
 }
 
 

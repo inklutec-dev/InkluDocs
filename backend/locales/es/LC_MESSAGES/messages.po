@@ -12260,3 +12260,42 @@ msgstr "Estado intermedio: {text}"
 # Livestream: Stand beim Schreiben (Steve 12.10.2026)
 msgid "Schreibt die Antwort …"
 msgstr "Escribiendo la respuesta …"
+
+# Begleiter und Ueberblick (Steve 12.10.2026)
+#, python-brace-format
+msgid "{n} Credits"
+msgstr "{n} créditos"
+
+msgid "Läuft gerade"
+msgstr "En curso"
+
+msgid "Express"
+msgstr "Express"
+
+#, python-brace-format
+msgid "{offen} offen, {korb} im Warenkorb"
+msgstr "{offen} abiertos, {korb} en el carrito"
+
+msgid "Zuletzt bearbeitet"
+msgstr "Editados recientemente"
+
+#, python-brace-format
+msgid "Hinführen: {name}"
+msgstr "Llévame allí: {name}"
+
+#, python-brace-format
+msgid "Zurück zu {sprache}"
+msgstr "Volver a {sprache}"
+
+msgid "Auslesen"
+msgstr "Leyendo el archivo"
+
+msgid "Generierung oder Übersetzung"
+msgstr "Generación o traducción"
+
+# Werkzeugnamen Begleiter (12.10.2026)
+msgid "Hinführen"
+msgstr "Llévame allí"
+
+msgid "Einstellung ändern"
+msgstr "Cambiar un ajuste"

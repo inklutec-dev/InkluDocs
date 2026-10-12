@@ -12258,3 +12258,42 @@ msgstr "Interim note: {text}"
 # Livestream: Stand beim Schreiben (Steve 12.10.2026)
 msgid "Schreibt die Antwort …"
 msgstr "Writing the answer …"
+
+# Begleiter und Ueberblick (Steve 12.10.2026)
+#, python-brace-format
+msgid "{n} Credits"
+msgstr "{n} credits"
+
+msgid "Läuft gerade"
+msgstr "Running now"
+
+msgid "Express"
+msgstr "Express"
+
+#, python-brace-format
+msgid "{offen} offen, {korb} im Warenkorb"
+msgstr "{offen} open, {korb} in the cart"
+
+msgid "Zuletzt bearbeitet"
+msgstr "Last edited"
+
+#, python-brace-format
+msgid "Hinführen: {name}"
+msgstr "Take me there: {name}"
+
+#, python-brace-format
+msgid "Zurück zu {sprache}"
+msgstr "Back to {sprache}"
+
+msgid "Auslesen"
+msgstr "Reading the file"
+
+msgid "Generierung oder Übersetzung"
+msgstr "Generating or translating"
+
+# Werkzeugnamen Begleiter (12.10.2026)
+msgid "Hinführen"
+msgstr "Take me there"
+
+msgid "Einstellung ändern"
+msgstr "Change setting"

@@ -11760,6 +11760,37 @@ async def agent_status(user: dict = Depends(get_current_user)):
     return out
 
 
+@app.get("/api/agent/ueberblick")
+async def agent_ueberblick(user: dict = Depends(get_current_user)):
+    """Ueberblick fuer das Arbeitsfenster, solange der InkluAgent nichts tut (Steve 12.10.2026; Schalter AGENT_ARBEITSFENSTER):
+    Guthaben, was gerade laeuft, Express (offene Auftraege, Warenkorb) und die drei zuletzt bearbeiteten Projekte. Ohne KI —
+    nur Datenbank. Namen sind Nutzerdaten; die Seite setzt sie mit textContent."""
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_ARBEITSFENSTER")
+    import billing
+    from inkluagent import konto as _konto
+    v = billing.verfuegbare_credits(user["id"])
+    out: dict = {"guthaben": None if v is None else int(v),
+                 "laeuft": [{"project_id": x["project_id"], "projekt": x["projekt"], "was": x["was"]}
+                            for x in _konto.laufende(user["id"])][:5]}
+    conn = get_db()
+    try:
+        out["projekte"] = [{"project_id": r["id"], "name": r["name"] or r["filename"] or ""} for r in conn.execute(
+            "SELECT id, name, filename FROM projects WHERE user_id = ? ORDER BY COALESCE(updated_at, created_at) DESC, id DESC LIMIT 3",
+            (user["id"],)).fetchall()]
+        out["express"] = None
+        if funktionen.EXPRESS or express.hat_bestellte(user["id"]):
+            try:
+                offen = conn.execute("SELECT COUNT(*) FROM express_auftraege WHERE user_id = ? AND status NOT IN "
+                                     "('entwurf', 'geliefert', 'storniert')", (user["id"],)).fetchone()[0]
+            except sqlite3.OperationalError:
+                offen = 0
+            out["express"] = {"offen": int(offen), "warenkorb": int(express.korb_kurz(user["id"])["dokumente"])}
+    finally:
+        conn.close()
+    return out
+
+
 @app.post("/api/agent/nachricht")
 async def agent_nachricht(request: Request, user: dict = Depends(get_current_user)):
     """InkluAgent auf einer Seite OHNE Projekt (Ausbau Runde 2, Schritt 3, Schalter AGENT_UEBERALL, braucht AGENT_KONTO): dieselbe
@@ -11846,6 +11877,13 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             message_modell = message_modell + "\n\n" + _web_notiz
             nur_mit_karte = True
     webkarten = eingang_karten + webkarten
+    # Begleiter (Steve 12.10.2026, „Frag die Seite“): auf welcher Seite der Nutzer gerade ist — Pfad geprueft, Titel als Daten
+    if funktionen.AGENT_BEGLEITER:
+        from inkluagent import begleiter as _begleiter_seite
+        if _begleiter_seite.an():
+            _seite = _begleiter_seite.seite_notiz(data.get("seite"), user["id"])
+            if _seite:
+                message_modell = message_modell + "\n\n" + _seite
 
     from inkluagent import storage
     from inkluagent.chat_engine import process_konto_message, process_message
@@ -11860,9 +11898,13 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             storage.fokus_setzen(user["id"], project_id)
     else:
         nid = storage.append_message(project_id, "user", message)
-    _ui = get_gettext(resolve_ui_language(request))
+    _ui_sprache = resolve_ui_language(request)
+    _ui = get_gettext(_ui_sprache)
 
     def verarbeiten(on_tool=None) -> dict:
+        if funktionen.AGENT_BEGLEITER:   # Begleiter: Sprache der Oberflaeche und Uebersetzung fuer Links (Arbeits-Thread)
+            from inkluagent import begleiter as _begleiter_lauf
+            _begleiter_lauf.kontext_setzen(_ui_sprache, _ui)
         if project_id is None:
             return process_konto_message(user["id"], message_modell, on_tool=on_tool, nur_mit_karte=nur_mit_karte,
                                          ohne_nachricht=nid, _=_ui)
@@ -12035,7 +12077,9 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
            "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024), "konto": konto, "ueberall": ueberall,
            "bloecke": bool(funktionen.AGENT_BLOECKE), "gespraeche": bool(konto and funktionen.AGENT_GESPRAECHE),
            # Agentenansicht wie ChatGPT mit Arbeitsfenster und „Gespräche“ in der Seitenleiste (Michael Karbe, Punkt 6)
-           "arbeitsfenster": bool(ueberall and funktionen.AGENT_ANSICHT and funktionen.AGENT_ARBEITSFENSTER)}
+           "arbeitsfenster": bool(ueberall and funktionen.AGENT_ANSICHT and funktionen.AGENT_ARBEITSFENSTER),
+           # Begleiter durch InkluDocs (12.10.2026): Seite mitschicken, Hinfuehren, Sprache/Ansicht auf Wunsch
+           "begleiter": bool(ueberall and funktionen.AGENT_BEGLEITER)}
     # Knopf „Dateien anhängen“ in der Agentenansicht (Steve 12.10.2026): derselbe Weg wie das Feld (POST /api/agent/hochladen)
     out["anhaengen"] = bool(out["arbeitsfenster"] and funktionen.AGENT_HOCHLADEN)
     if ueberall:

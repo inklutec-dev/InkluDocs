@@ -107,6 +107,10 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     "lauf_abbrechen": ("name_daten",),
     # Gespraeche (12.10.2026): Titel = erste Frage des Nutzers, Projektnamen
     "fruehere_gespraeche": ("gespraeche[].titel_daten", "gespraeche[].projekte_daten"),
+    # Begleiter (12.10.2026): feste Ziele und Einstellungen — kein Fremdtext im Ergebnis (die Seite des Nutzers geht als
+    # Notiz mit Daten-Marke an die Nachricht, inkluagent/begleiter.seite_notiz)
+    "hinfuehren": (),
+    "einstellung_aendern": (),
 }
 
 

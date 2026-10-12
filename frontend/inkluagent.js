@@ -393,6 +393,15 @@ function inkluagentAgentenansicht() {
     // Schritt 3: im festen Bereich steht der Agent nach main (dann bleibt in main nur die Hauptueberschrift)
     const sec = document.querySelector('.inkluagent-section');
     if (!main || !sec) return false;
+    // Steve 12.10.2026: „im Agentenmodus an alle Infos rankommen“ — mit Arbeitsfenster blendet die Agentenansicht den Inhalt nur
+    // dort aus, wo der Agent die Arbeit uebernimmt (Startseite = Chat-Start, Projektseiten). Alle anderen Seiten zeigen ihren
+    // Inhalt; der Agent steht darunter im Chatstil (offen, ohne Auf/Zu).
+    if (inkluagentArbeitsfensterAn() && !inkluagentInhaltAusblenden()) {
+        sec.classList.add('inkluagent-gross');
+        inkluagentChatstil(true);
+        inkluagentArbeitsZeigen();
+        return true;
+    }
     const h1 = main.querySelector('h1');
     const behalten = [sec, h1].filter(Boolean);
     (function lauf(el) {
@@ -443,6 +452,11 @@ function inkluagentAgentenansicht() {
     return true;
 }
 
+function inkluagentInhaltAusblenden() {
+    const p = window.location.pathname;
+    return p === '/dashboard' || /^\/app\/?$/.test(p);
+}
+
 // Nur fuer diese Seite zurueck zur manuellen Ansicht: alles wieder sichtbar, Fokus auf die Hauptueberschrift
 function inkluagentAgentenansichtAufheben() {
     window._agentenansichtHierAus = true;
@@ -484,6 +498,8 @@ function inkluagentChatstil(an) {
     const beschreibung = panel.querySelector('.inkluagent-beschreibung');
     sec.classList.toggle('inkluagent-chatstil', an);
     document.documentElement.classList.toggle('agentenansicht-chatstil', an);
+    // Chat-Start (leeres Gespraech mittig) nur dort, wo der Agent die Seite ersetzt — nicht unter dem Inhalt anderer Seiten
+    document.documentElement.classList.toggle('agentenansicht-chatstart', an && inkluagentInhaltAusblenden());
     // Steve 12.10.2026: in der Agentenansicht laesst sich der Agent nicht auf- und zuklappen — die Ueberschrift 2 „InkluAgent“
     // ist dann schlicht (der Knopf ist weg, der Bereich immer offen); zurueck in der manuellen Ansicht ist der Knopf wieder da
     const toggle = document.getElementById('inkluagentToggle');
@@ -557,11 +573,14 @@ function inkluagentArbeitsfensterBauen() {
         + '<p class="arbeitsfenster-ansagen"><input type="checkbox" id="arbeitsAnsagen"> <label for="arbeitsAnsagen">'
         +   t('Jeden Schritt ansagen') + '</label></p>'
         + '<dl id="arbeitsAngaben" class="arbeitsfenster-angaben" hidden></dl>'
+        // Ueberblick, solange er nichts tut (Steve 12.10.2026): Guthaben, was laeuft, Express, zuletzt bearbeitet
+        + '<div id="arbeitsUeberblick" class="arbeitsfenster-ueberblick" hidden><h3>' + t('Überblick') + '</h3><dl></dl></div>'
         + '<figure id="arbeitsBild" class="arbeitsfenster-bild" hidden><img alt=""><figcaption></figcaption></figure>'
         + '<div id="arbeitsErgebnis" class="arbeitsfenster-ergebnis" hidden><h3>' + t('Zuletzt fertig') + '</h3><p></p></div>'
         + '<h3 id="arbeitsSchritteTitel" hidden>' + t('Schritte') + '</h3>'
         + '<ol id="arbeitsSchritte" class="arbeitsfenster-schritte" aria-labelledby="arbeitsSchritteTitel" hidden></ol>';
     s.querySelector('#arbeitsVorlesen').addEventListener('click', inkluagentStandVorlesen);
+    setTimeout(inkluagentUeberblickLaden, 0);
     const ansagen = s.querySelector('#arbeitsAnsagen');
     ansagen.checked = inkluagentSchritteAnsagen();
     ansagen.addEventListener('change', () => {
@@ -618,6 +637,28 @@ function inkluagentArbeitsAngaben(z) {
     if (ziel && ziel.seite) out.push([t('Seite'), String(ziel.seite)]);
     return out;
 }
+// Ueberblick laden (ohne KI, nur Datenbank) — beim Aufbau des Arbeitsfensters und nach jedem Auftrag
+function inkluagentUeberblickLaden() {
+    if (window._arbeitsUeberblickLaedt) return;
+    window._arbeitsUeberblickLaedt = true;
+    fetch('/api/agent/ueberblick').then(r => r.ok ? r.json() : null).then(d => {
+        window._arbeitsUeberblick = d || null;
+        inkluagentArbeitsZeigen();
+    }).catch(() => {}).finally(() => { window._arbeitsUeberblickLaedt = false; });
+}
+// Zeilen des Ueberblicks: [Bezeichnung, Text oder Liste von Links]
+function inkluagentUeberblickZeilen() {
+    const d = window._arbeitsUeberblick;
+    if (!d) return [];
+    const out = [];
+    out.push([t('Guthaben'), d.guthaben == null ? t('unbegrenzt') : t('{n} Credits', { n: d.guthaben })]);
+    const laeuft = Array.isArray(d.laeuft) ? d.laeuft : [];
+    out.push([t('Läuft gerade'), laeuft.length ? laeuft.map(x => String(x.projekt || '') + ': ' + t(String(x.was || ''))).join('; ') : t('nichts')]);
+    if (d.express) out.push([t('Express'), t('{offen} offen, {korb} im Warenkorb', { offen: d.express.offen || 0, korb: d.express.warenkorb || 0 })]);
+    const projekte = Array.isArray(d.projekte) ? d.projekte : [];
+    if (projekte.length) out.push([t('Zuletzt bearbeitet'), projekte]);
+    return out;
+}
 function inkluagentArbeitsZeigen() {
     const f = document.getElementById('arbeitsfenster');
     if (!f) return;
@@ -646,6 +687,31 @@ function inkluagentArbeitsZeigen() {
         dl.appendChild(dt); dl.appendChild(dd);
     });
     dl.hidden = !angaben.length;
+    // Ueberblick nur, solange kein Auftrag laeuft
+    const ub = f.querySelector('#arbeitsUeberblick');
+    const ubdl = ub.querySelector('dl');
+    ubdl.textContent = '';
+    const zeilen = z.laeuft ? [] : inkluagentUeberblickZeilen();
+    zeilen.forEach(([k, v]) => {
+        const dt = document.createElement('dt'); dt.textContent = k;
+        const dd = document.createElement('dd');
+        if (Array.isArray(v)) {
+            const ul = document.createElement('ul');
+            v.forEach(pr => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '/app?projekt=' + encodeURIComponent(pr.project_id);
+                a.textContent = String(pr.name || '');
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+            dd.appendChild(ul);
+        } else {
+            dd.textContent = v;
+        }
+        ubdl.appendChild(dt); ubdl.appendChild(dd);
+    });
+    ub.hidden = !zeilen.length;
     // Vorschau: die ganze Seite (Seitenansicht), sonst das Bild selbst — nur Adressen der eigenen Bild-Endpunkte
     const fig = f.querySelector('#arbeitsBild');
     const img = fig.querySelector('img');
@@ -784,6 +850,7 @@ function inkluagentArbeitsEnde(wartet) {
     z.schritte.forEach(x => { x.fertig = true; });
     z.stand = wartet ? t('Wartet auf dich: Bitte entscheide unter der Antwort.') : t('Fertig. Die Antwort steht im Gespräch.');
     inkluagentArbeitsMerken();
+    inkluagentUeberblickLaden();   // Guthaben, Laeufe und Projekte koennen sich geaendert haben
 }
 function inkluagentArbeitsFehler(text) {
     if (!inkluagentChatstilAktiv()) return;
@@ -803,6 +870,7 @@ function inkluagentStandVorlesen() {
     const teile = [z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.')]
         .concat(inkluagentArbeitsAngaben(z).map(([k, v]) => k + ': ' + v));
     if (z.ergebnis && z.ergebnis.text) teile.push(t('Zuletzt fertig') + ': ' + z.ergebnis.schritt + ': ' + z.ergebnis.text);
+    if (!z.laeuft) inkluagentUeberblickZeilen().forEach(([k, v]) => teile.push(k + ': ' + (Array.isArray(v) ? v.map(x => x.name).join(', ') : v)));
     announce(teile.map(x => x.replace(/[.\s]+$/, '')).join('. ') + '.');
 }
 // Wartet eine Antwort auf eine Entscheidung (offene Karte)?
@@ -848,6 +916,7 @@ function inkluagentBereichAufbauen() {
     const bereich = document.getElementById('inkluagentBereich');
     if (!bereich || !inkluagentUeberall() || bereich.dataset.gebaut) return;
     bereich.dataset.gebaut = '1';
+    if (window.INKLUAGENT && window.INKLUAGENT.begleiter) inkluagentHinfuehrenBeimLaden();   // Begleiter: Ziel auf dieser Seite
     const projektseite = /^\/app\/?$/.test(window.location.pathname);
     bereich.innerHTML = inkluagentInhaltHtml(null, projektseite ? 'bilder' : 'konto', true);
     inkluagentBedienungAnbinden();
@@ -1292,6 +1361,52 @@ function inkluagentAktionenKarten(actions) {
 // Seitenwechsel (Steve 12.10.2026): geht es nach einer Antwort um GENAU ein Projekt (oeffnen, anlegen, Datei oder Webseite als
 // Projekt), schickt der Server {"type": "seite_wechseln", "url": "/app?projekt=…"}. Die Seite wechselt dorthin; mit agent=offen ist
 // der InkluAgent dort offen und der Fokus steht auf dieser Antwort (inkluagentBinden). Nur Projektseiten dieser Anwendung.
+// Begleiter (Steve 12.10.2026): hinfuehren (Zielseite, dort Fokus aufs Ziel), sprache_wechseln (ueber /set-language, setzt Konto
+// und Cookie, zurueck auf diese Seite), neu_laden (Ansicht gewechselt). Danach steht der Fokus auf dem Ziel bzw. der Ueberschrift 1.
+function inkluagentBegleiterAktion(actions) {
+    const a = (actions || []).find(x => x && ['hinfuehren', 'sprache_wechseln', 'neu_laden'].indexOf(x.type) >= 0);
+    if (!a) return false;
+    if (a.type === 'hinfuehren' && typeof a.url === 'string' && /^\/[A-Za-z0-9\/_-]*\?hin=[A-Za-z][\w-]{0,40}$/.test(a.url)) {
+        window.location.href = a.url;
+        return true;
+    }
+    if (a.type === 'sprache_wechseln' && /^[a-z]{2}$/.test(a.sprache || '')) {
+        try { sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e) { /* ohne Speicher: kein Fokus-Sprung */ }
+        window.location.href = '/set-language/' + a.sprache;
+        return true;
+    }
+    if (a.type === 'neu_laden') {
+        try { sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e) { /* ohne Speicher: kein Fokus-Sprung */ }
+        window.location.reload();
+        return true;
+    }
+    return false;
+}
+// Zielseite eines Hinfuehrens (?hin=<id> bzw. ueberschrift): Ziel suchen (die Seite baut oft noch), aufklappen, Fokus, sichtbar
+// markieren; der Parameter verschwindet aus der Adresse. Nur ids aus der festen Liste des Servers (inkluagent/begleiter.py).
+function inkluagentHinfuehrenBeimLaden() {
+    let ziel = null;
+    try { ziel = new URLSearchParams(window.location.search).get('hin'); } catch (e) { return; }
+    if (!ziel || !/^[A-Za-z][\w-]{0,40}$/.test(ziel)) return;
+    try { const u = new URL(window.location.href); u.searchParams.delete('hin'); history.replaceState(history.state, '', u); } catch (e) {}
+    let n = 0;
+    const suchen = () => {
+        const el = ziel === 'ueberschrift' ? document.querySelector('#main h1') : document.getElementById(ziel);
+        const det = el && el.closest('details');
+        if (det && !det.open) det.open = true;
+        if (!el || !(el.offsetWidth || el.offsetHeight || el.getClientRects().length)) {
+            if (++n < 40) setTimeout(suchen, 100);
+            return;
+        }
+        if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) el.setAttribute('tabindex', '-1');
+        el.classList.add('inkluagent-hin-ziel');
+        el.scrollIntoView({ block: 'center' });
+        el.focus({ preventScroll: true });
+        setTimeout(() => el.classList.remove('inkluagent-hin-ziel'), 6000);
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', suchen, { once: true });
+    else suchen();
+}
 function inkluagentSeiteWechseln(actions) {
     const a = (actions || []).find(x => x && x.type === 'seite_wechseln' && typeof x.url === 'string' && /^\/app\?projekt=\d+$/.test(x.url));
     if (!a) return false;
@@ -1542,6 +1657,16 @@ function inkluagentSetStatus(text, isError) {
     if (isError && text && typeof inkluagentArbeitsFehler === 'function') inkluagentArbeitsFehler(text);
 }
 
+// Was mit der Nachricht an den Server geht; mit Begleiter auch die Seite, auf der der Nutzer gerade ist (Pfad, Ueberschrift 1)
+function inkluagentNachrichtDaten(message, hochgeladen) {
+    const d = hochgeladen ? { message, hochgeladen } : { message };
+    if (window.INKLUAGENT && window.INKLUAGENT.begleiter) {
+        const h1 = document.querySelector('#main h1');
+        d.seite = { pfad: window.location.pathname, titel: h1 ? h1.textContent.trim().slice(0, 120) : '' };
+    }
+    return d;
+}
+
 async function inkluagentSend() {
     const projectId = window._inkluagentProjectId;
     const input = document.getElementById('inkluagentInput');
@@ -1610,7 +1735,7 @@ async function inkluagentSend() {
         const res = await fetch(ohneProjekt ? '/api/agent/nachricht' : '/api/projects/' + projectId + '/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
-            body: JSON.stringify(hochgeladen ? { message, hochgeladen } : { message })
+            body: JSON.stringify(inkluagentNachrichtDaten(message, hochgeladen))
         });
         if (res.status === 401) { window.location.href = '/login'; return; }
         if (!res.ok) {
@@ -1665,7 +1790,7 @@ async function inkluagentSend() {
             // Die neue Antwort sichtbar machen (die Seite scrollt, nicht der Verlauf)
             if (antwortEl && antwortEl.scrollIntoView) antwortEl.scrollIntoView({ block: 'nearest' });
         }
-        if (inkluagentSeiteWechseln(data.actions)) { window._inkluagentFokusAntwort = true; return; }
+        if (inkluagentSeiteWechseln(data.actions) || inkluagentBegleiterAktion(data.actions)) { window._inkluagentFokusAntwort = true; return; }
         let nachziehen = inkluagentAktionenKarten(data.actions);
         // Fokus auf die Antwort statt zurueck ins Eingabefeld: der Screenreader liest sie
         // vollstaendig und von vorn; Tab fuehrt danach zum Eingabefeld.

@@ -11832,3 +11832,42 @@ msgstr "Delstatus: {text}"
 # Livestream: Stand beim Schreiben (Steve 12.10.2026)
 msgid "Schreibt die Antwort …"
 msgstr "Skriver svaret …"
+
+# Begleiter und Ueberblick (Steve 12.10.2026)
+#, python-brace-format
+msgid "{n} Credits"
+msgstr "{n} krediter"
+
+msgid "Läuft gerade"
+msgstr "Pågår nu"
+
+msgid "Express"
+msgstr "Express"
+
+#, python-brace-format
+msgid "{offen} offen, {korb} im Warenkorb"
+msgstr "{offen} öppna, {korb} i varukorgen"
+
+msgid "Zuletzt bearbeitet"
+msgstr "Senast redigerade"
+
+#, python-brace-format
+msgid "Hinführen: {name}"
+msgstr "Ta mig dit: {name}"
+
+#, python-brace-format
+msgid "Zurück zu {sprache}"
+msgstr "Tillbaka till {sprache}"
+
+msgid "Auslesen"
+msgstr "Läser filen"
+
+msgid "Generierung oder Übersetzung"
+msgstr "Generering eller översättning"
+
+# Werkzeugnamen Begleiter (12.10.2026)
+msgid "Hinführen"
+msgstr "Ta mig dit"
+
+msgid "Einstellung ändern"
+msgstr "Ändra inställning"
