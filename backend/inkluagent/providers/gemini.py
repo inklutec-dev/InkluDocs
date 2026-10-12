@@ -86,6 +86,9 @@ def _gekuerzt(text: str) -> str:
 
 
 class GeminiProvider(LLMProvider):
+    # Livestream (Arbeitsfenster, 12.10.2026): invoke_with_tools nimmt on_text und liefert den Antworttext Stueck fuer Stueck
+    kann_streamen = True
+
     def __init__(self) -> None:
         from pipelines.v4 import gemini_auth
         try:
@@ -125,6 +128,54 @@ class GeminiProvider(LLMProvider):
                     continue
                 raise letzter from e
         raise letzter or GeminiProviderError("Gemini-Aufruf fehlgeschlagen")
+
+    def _aufruf_strom(self, model: str, body: dict, on_text) -> tuple[dict, bool]:
+        """Wie _aufruf, aber ueber streamGenerateContent (SSE): Textteile gehen sofort an on_text. Ergebnis wie generateContent —
+        zusammenhaengender Text als ein Teil, Funktionsaufrufe unveraendert (mit Gedankensignatur), finishReason, usageMetadata
+        (Kosten wie bisher). Zweiter Wert: ob schon Text gesendet wurde. Scheitert der Aufruf, bevor Text kam, nimmt der
+        Aufrufer den Weg ohne Stream."""
+        from pipelines.v4 import gemini_auth
+        url = _endpunkt(model).replace(":generateContent", ":streamGenerateContent")
+        url += ("&" if "?" in url else "?") + "alt=sse"
+        req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=gemini_auth.kopfzeilen())
+        parts: list[dict] = []
+        finish = ""
+        usage: dict = {}
+        feedback = None
+        gesendet = False
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
+            for roh in r:
+                zeile = roh.decode("utf-8", "ignore").strip()
+                if not zeile.startswith("data:"):
+                    continue
+                try:
+                    stueck = json.loads(zeile[5:].strip())
+                except ValueError:
+                    continue
+                usage = stueck.get("usageMetadata") or usage
+                feedback = stueck.get("promptFeedback") or feedback
+                kandidat = (stueck.get("candidates") or [{}])[0] or {}
+                finish = kandidat.get("finishReason") or finish
+                for p in ((kandidat.get("content") or {}).get("parts") or []):
+                    letzter_text = bool(parts) and "text" in parts[-1] and not parts[-1].get("thought") and "functionCall" not in parts[-1]
+                    if p.get("text") and not p.get("thought") and "functionCall" not in p:
+                        if letzter_text:
+                            parts[-1]["text"] += p["text"]
+                            if p.get("thoughtSignature"):
+                                parts[-1]["thoughtSignature"] = p["thoughtSignature"]
+                        else:
+                            parts.append(dict(p))
+                        on_text(p["text"])
+                        gesendet = True
+                    elif p.get("thoughtSignature") and not p.get("text") and "functionCall" not in p and letzter_text:
+                        parts[-1]["thoughtSignature"] = p["thoughtSignature"]   # Signatur im letzten Stueck des Textes
+                    elif p:
+                        parts.append(dict(p))
+        antwort: dict = {"candidates": [{"content": {"role": "model", "parts": parts}, "finishReason": finish}], "usageMetadata": usage}
+        if feedback:
+            antwort["promptFeedback"] = feedback
+        ki_kosten.erfasse_gemini(model, antwort, schritt="chat", standard_zweck="chatbot")
+        return antwort, gesendet
 
     # ------------------------------------------------------------ Umsetzung
     def _teile_aus_content(self, content: Any, namen: dict[str, str]) -> list[dict]:
@@ -216,7 +267,8 @@ class GeminiProvider(LLMProvider):
             raise GeminiProviderError(f"Unerwartetes Gemini-Antwortformat: {e}; raw: {str(antwort)[:300]}") from e
 
     def invoke_with_tools(self, anthropic_messages: list[dict], tools: list[dict], system: Optional[str] = None,
-                          model: Optional[str] = None, max_tokens: int = 4096, temperature: float = 0.3) -> dict[str, Any]:
+                          model: Optional[str] = None, max_tokens: int = 4096, temperature: float = 0.3,
+                          on_text=None) -> dict[str, Any]:
         chosen = model or _DEFAULT_MODEL_TEXT
         body: dict = {"contents": self._contents(anthropic_messages),
                       "generationConfig": {"temperature": _TEMPERATUR, "maxOutputTokens": max_tokens + 2048}}
@@ -229,7 +281,16 @@ class GeminiProvider(LLMProvider):
             body["systemInstruction"] = {"parts": [{"text": system}]}
         debug = os.getenv("DEBUG_GEN_RAW", "false").lower() == "true"
         for versuch in range(2):
-            antwort = self._aufruf(chosen, body)
+            antwort = None
+            if on_text:
+                try:
+                    antwort, _gesendet = self._aufruf_strom(chosen, body, on_text)
+                except Exception as e:  # noqa: BLE001
+                    log.warning("Gemini-Stream fehlgeschlagen (%s) — ohne Stream", e)
+                    on_text(None)   # angefangenen Entwurf verwerfen
+                    antwort = None
+            if antwort is None:
+                antwort = self._aufruf(chosen, body)
             try:
                 parts = antwort["candidates"][0]["content"].get("parts", [])
                 finish = antwort["candidates"][0].get("finishReason", "")
@@ -247,6 +308,8 @@ class GeminiProvider(LLMProvider):
                 log.warning("Gemini-Antwort entgleist (Versuch %d, finish=%s, %d Zeichen) — %s", versuch + 1, finish, len(text_roh),
                             "wiederhole" if versuch == 0 else "kuerze")
                 if versuch == 0:
+                    if on_text:
+                        on_text(None)   # der Entwurf war entgleist: verwerfen, der zweite Versuch streamt neu
                     continue
                 parts = [{"text": _gekuerzt(text_roh)}]
             break

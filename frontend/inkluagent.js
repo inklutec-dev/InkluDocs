@@ -514,12 +514,22 @@ function inkluagentArbeitsfensterBauen() {
         + '<h2 id="arbeitsfensterTitel">' + t('Arbeitsfenster') + '</h2>'
         + '<p id="arbeitsStand" class="arbeitsfenster-stand"></p>'
         + '<progress id="arbeitsFortschritt" class="arbeitsfenster-fortschritt" aria-labelledby="arbeitsStand" hidden></progress>'
+        + '<p id="arbeitsNotiz" class="arbeitsfenster-notiz" hidden></p>'
         + '<button type="button" id="arbeitsVorlesen" class="btn btn-secondary">' + t('Stand vorlesen') + '</button>'
+        // Livestream (Steve 12.10.2026): jeden Schritt ansagen — von Anfang an an, die Wahl bleibt in diesem Browser
+        + '<p class="arbeitsfenster-ansagen"><input type="checkbox" id="arbeitsAnsagen"> <label for="arbeitsAnsagen">'
+        +   t('Jeden Schritt ansagen') + '</label></p>'
         + '<dl id="arbeitsAngaben" class="arbeitsfenster-angaben" hidden></dl>'
         + '<figure id="arbeitsBild" class="arbeitsfenster-bild" hidden><img alt=""><figcaption></figcaption></figure>'
+        + '<div id="arbeitsErgebnis" class="arbeitsfenster-ergebnis" hidden><h3>' + t('Zuletzt fertig') + '</h3><p></p></div>'
         + '<h3 id="arbeitsSchritteTitel" hidden>' + t('Schritte') + '</h3>'
         + '<ol id="arbeitsSchritte" class="arbeitsfenster-schritte" aria-labelledby="arbeitsSchritteTitel" hidden></ol>';
     s.querySelector('#arbeitsVorlesen').addEventListener('click', inkluagentStandVorlesen);
+    const ansagen = s.querySelector('#arbeitsAnsagen');
+    ansagen.checked = inkluagentSchritteAnsagen();
+    ansagen.addEventListener('change', () => {
+        try { localStorage.setItem('inkluagent.schritte_ansagen', ansagen.checked ? 'an' : 'aus'); } catch (e) { /* nur diese Seite */ }
+    });
     return s;
 }
 // Zustand je Tab (sessionStorage „inkluagent.arbeitsfenster“), damit er einen Seitenwechsel ins Projekt uebersteht; nach 30 Minuten
@@ -577,6 +587,19 @@ function inkluagentArbeitsZeigen() {
     const z = inkluagentArbeitsZustand();
     f.querySelector('#arbeitsStand').textContent = z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.');
     f.querySelector('#arbeitsFortschritt').hidden = !z.laeuft;
+    const notiz = f.querySelector('#arbeitsNotiz');
+    notiz.textContent = z.notiz ? t('Zwischenstand: {text}', { text: String(z.notiz) }) : '';
+    notiz.hidden = !z.notiz;
+    const erg = f.querySelector('#arbeitsErgebnis');
+    const p = erg.querySelector('p');
+    p.textContent = '';
+    if (z.ergebnis && z.ergebnis.text) {
+        const b = document.createElement('strong');
+        b.textContent = String(z.ergebnis.schritt || '') + ': ';
+        p.appendChild(b);
+        p.appendChild(document.createTextNode(String(z.ergebnis.text)));
+    }
+    erg.hidden = !(z.ergebnis && z.ergebnis.text);
     const dl = f.querySelector('#arbeitsAngaben');
     dl.textContent = '';
     const angaben = inkluagentArbeitsAngaben(z);
@@ -610,23 +633,94 @@ function inkluagentArbeitsZeigen() {
     ol.textContent = '';
     z.schritte.forEach(x => {
         const li = document.createElement('li');
-        li.dataset.zustand = x.fertig ? 'erledigt' : 'laeuft';
+        li.dataset.zustand = x.fehler ? 'fehler' : (x.fertig ? 'erledigt' : 'laeuft');
         li.appendChild(document.createTextNode(String(x.text || '')));
         const sp = document.createElement('span');
         sp.className = 'schritt-zustand';
-        sp.textContent = ' – ' + (x.fertig ? t('erledigt') : t('läuft'));
+        sp.textContent = ' – ' + (x.fehler ? t('hat nicht geklappt') : (x.fertig ? t('erledigt') : t('läuft')));
         li.appendChild(sp);
         ol.appendChild(li);
     });
     ol.hidden = !z.schritte.length;
     f.querySelector('#arbeitsSchritteTitel').hidden = ol.hidden;
 }
+// „Jeden Schritt ansagen“ (Vorgabe an; ohne Speicher auch an)
+function inkluagentSchritteAnsagen() {
+    const k = document.getElementById('arbeitsAnsagen');
+    if (k) return k.checked;
+    try { return localStorage.getItem('inkluagent.schritte_ansagen') !== 'aus'; } catch (e) { return true; }
+}
+// Livestream (Steve 12.10.2026): die Antwort waechst sichtbar als Entwurf (Wort fuer Wort aus dem Stream); die fertige, bereinigte
+// Antwort ersetzt ihn. Der Verlauf sagt nichts von selbst an (aria-live off) — VoiceOver bekommt die fertige Antwort mit dem Fokus.
+function inkluagentEntwurfText(stueck) {
+    const log = document.getElementById('inkluagentLog');
+    if (!log || typeof stueck !== 'string') return;
+    let el = document.getElementById('inkluagentEntwurf');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'inkluagentEntwurf';
+        el.className = 'inkluagent-message assistant inkluagent-entwurf';
+        el.setAttribute('aria-busy', 'true');
+        const h = document.createElement('h3');
+        h.className = 'inkluagent-message-role';
+        h.textContent = 'InkluAgent';
+        const c = document.createElement('div');
+        c.className = 'inkluagent-message-content';
+        el.appendChild(h);
+        el.appendChild(c);
+        log.appendChild(el);
+        window._inkluagentEntwurf = '';
+        // Arbeitsfenster: jetzt schreibt er (ohne Ansage — die fertige Antwort bekommt den Fokus)
+        if (inkluagentChatstilAktiv()) {
+            const z = inkluagentArbeitsZustand();
+            if (z.laeuft) { z.stand = t('Schreibt die Antwort …'); inkluagentArbeitsMerken(); }
+        }
+    }
+    window._inkluagentEntwurf = (window._inkluagentEntwurf || '') + stueck;
+    if (window._inkluagentEntwurfPlan) return;
+    window._inkluagentEntwurfPlan = requestAnimationFrame(() => {
+        window._inkluagentEntwurfPlan = 0;
+        const e = document.getElementById('inkluagentEntwurf');
+        if (!e) return;
+        const unten = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200;
+        // Sterne und Rauten wie die Bereinigung auf dem Server (sanitize_markdown) — nur fuer den Entwurf
+        e.querySelector('.inkluagent-message-content').textContent = window._inkluagentEntwurf.replace(/\*\*|__/g, '').replace(/^#{1,6}\s*/gm, '');
+        if (unten) window.scrollTo(0, document.documentElement.scrollHeight);   // mitlaufen, wer unten liest
+    });
+}
+function inkluagentEntwurfVerwerfen() {
+    const el = document.getElementById('inkluagentEntwurf');
+    if (el) el.remove();
+    window._inkluagentEntwurf = '';
+}
+// Gestreamter Text vor Werkzeugen ist ein Zwischenstand: raus aus dem Gespraech, ins Arbeitsfenster
+function inkluagentEntwurfZwischen() {
+    const text = (window._inkluagentEntwurf || '').replace(/\*\*|__/g, '').trim();
+    inkluagentEntwurfVerwerfen();
+    if (!text || !inkluagentChatstilAktiv()) return;
+    const z = inkluagentArbeitsZustand();
+    z.notiz = text.slice(0, 400);
+    inkluagentArbeitsMerken();
+}
+// Ergebnis eines Werkzeugs: Schritt erledigt oder „hat nicht geklappt“, neuer Alt-Text/Quickinfo unter „Zuletzt fertig“
+function inkluagentArbeitsFertig(ev) {
+    if (!inkluagentChatstilAktiv() || !ev) return;
+    const z = inkluagentArbeitsZustand();
+    const schritt = z.schritte.slice().reverse().find(x => !x.fertig);
+    if (schritt) {
+        schritt.fertig = true;
+        if (!ev.ok) schritt.fehler = true;
+    }
+    if (ev.ok && ev.text) z.ergebnis = { schritt: schritt ? schritt.text : inkluagentWerkzeugLabel(ev.name), text: String(ev.text) };
+    inkluagentArbeitsMerken();
+    if (!ev.ok && schritt && inkluagentSchritteAnsagen()) announce(schritt.text + ' – ' + t('hat nicht geklappt'));
+}
 // Lauf: Start (Schritte neu, ausser man verfolgt den Lauf einer vorigen Seite), je Werkzeug ein Schritt, Ende, Fehler
 function inkluagentArbeitsStart(text, behalten) {
     if (!inkluagentChatstilAktiv()) return;
     const z = inkluagentArbeitsZustand();
     z.laeuft = true;
-    if (!behalten) z.schritte = [];
+    if (!behalten) { z.schritte = []; z.notiz = ''; z.ergebnis = null; }
     z.stand = text || t('Arbeitet: liest deine Nachricht und plant die Schritte.');
     inkluagentArbeitsMerken();
 }
@@ -644,6 +738,7 @@ function inkluagentArbeitsSchritt(name, ziel) {
     }
     z.stand = t('Arbeitet an: {schritt}', { schritt: text });
     inkluagentArbeitsMerken();
+    if (inkluagentSchritteAnsagen()) announce(text);   // „Jeden Schritt ansagen“ (Steve 12.10.2026)
 }
 function inkluagentArbeitsEnde(wartet) {
     if (!inkluagentChatstilAktiv()) return;
@@ -670,6 +765,7 @@ function inkluagentStandVorlesen() {
     const z = inkluagentArbeitsZustand();
     const teile = [z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.')]
         .concat(inkluagentArbeitsAngaben(z).map(([k, v]) => k + ': ' + v));
+    if (z.ergebnis && z.ergebnis.text) teile.push(t('Zuletzt fertig') + ': ' + z.ergebnis.schritt + ': ' + z.ergebnis.text);
     announce(teile.map(x => x.replace(/[.\s]+$/, '')).join('. ') + '.');
 }
 // Wartet eine Antwort auf eine Entscheidung (offene Karte)?
@@ -1471,6 +1567,14 @@ async function inkluagentSend() {
                         genutzt.push(ev.name);
                         if (chatstil) inkluagentArbeitsSchritt(ev.name, ev.ziel);
                         else inkluagentSetStatus(t('Ruft gerade auf: {w}', { w: inkluagentWerkzeugLabel(ev.name) }), false);
+                    } else if (ev.type === 'werkzeug_fertig') {   // Livestream (Arbeitsfenster): Ergebnis je Werkzeug
+                        if (chatstil) inkluagentArbeitsFertig(ev);
+                    } else if (ev.type === 'text') {   // Antwort Wort fuer Wort (nur im Chatstil sichtbar)
+                        if (chatstil) inkluagentEntwurfText(ev.text);
+                    } else if (ev.type === 'text_neu') {
+                        inkluagentEntwurfVerwerfen();
+                    } else if (ev.type === 'zwischen') {
+                        if (chatstil) inkluagentEntwurfZwischen(); else inkluagentEntwurfVerwerfen();
                     } else if (ev.type === 'reply') { data = ev; }
                 }
             }
@@ -1481,6 +1585,7 @@ async function inkluagentSend() {
         if (!data) { inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true); return; }
         // Fokusregel (Pruefung 4, M1) VOR allem anderen bestimmen: liegt der Fokus noch im Chat?
         const fokussieren = inkluagentFokusImChat();
+        inkluagentEntwurfVerwerfen();   // die fertige Antwort ersetzt den Entwurf aus dem Stream
         const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'), Array.isArray(data.werkzeuge) ? data.werkzeuge : genutzt, data.anhang);
         log.scrollTop = log.scrollHeight;
         inkluagentSetStatus('', false);
@@ -1536,6 +1641,7 @@ async function inkluagentSend() {
         inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
     } finally {
         sendBtn.disabled = false;
+        inkluagentEntwurfVerwerfen();   // abgebrochen: kein halber Entwurf bleibt stehen
         // Sicherheitsnetz: kein Weg darf das Arbeitsfenster auf „arbeitet“ stehen lassen
         if (window._arbeits && window._arbeits.laeuft) inkluagentArbeitsEnde(false);
         // In dieses Projekt hochgeladen, aber die Antwort kam nicht: die Ansicht trotzdem nachziehen (neue Dokumente, Bilder)

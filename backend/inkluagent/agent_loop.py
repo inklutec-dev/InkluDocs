@@ -303,6 +303,10 @@ def run_agent(
     Werkzeugaufruf — der Chat-Endpunkt streamt daraus die Live-Zeile „Ruft gerade
     auf: …“ an die Oberflaeche. Ergebnis enthaelt zusaetzlich "werkzeuge": Namen
     in Aufrufreihenfolge (leer = ohne Werkzeug aus dem Verlauf geantwortet).
+    Livestream (Arbeitsfenster, 12.10.2026): on_tool darf zusaetzlich Attribute tragen — .fertig(name, args, result,
+    neue_aktionen) nach jedem Werkzeug, .text(stueck) fuer die Antwort Wort fuer Wort (None = bisherigen Entwurf verwerfen; nur
+    wenn der Provider kann_streamen), .zwischen() wenn gestreamter Text nur ein Zwischenstand vor Werkzeugen war. Fehlen sie,
+    bleibt alles wie bisher.
     """
     if project is None:
         # Runde 2, Schritt 3: Seite ohne Projekt — Konto-Werkzeuge, Konto-Kontext, Gespraech des Kontos (inkluagent/konto.py)
@@ -325,6 +329,9 @@ def run_agent(
     anhaenge: list[dict] = []   # Download-Knoepfe unter der Antwort (Meine Ausgaben, 11.09.2026)
     image_refs_seen: set[int] = set()
     last_reply_text = ""
+    melder_fertig = getattr(on_tool, "fertig", None) if on_tool else None
+    melder_text = getattr(on_tool, "text", None) if on_tool else None
+    strom = {"on_text": melder_text} if melder_text and getattr(provider, "kann_streamen", False) else {}
 
     for iteration in range(_MAX_ITERATIONS):
         try:
@@ -334,6 +341,7 @@ def run_agent(
                 system=system_text,
                 max_tokens=_DEFAULT_MAX_TOKENS,
                 temperature=0.3,
+                **strom,
             )
         except BedrockProviderError as e:
             log.exception("Bedrock-Call im agentic Loop fehlgeschlagen")
@@ -359,6 +367,13 @@ def run_agent(
             log.info("Agent fertig nach %d Iterationen, stop=%s", iteration, stop_reason)
             break
 
+        # Gestreamter Text vor Werkzeugen war nur ein Zwischenstand (die Oberflaeche nimmt ihn aus der Antwort)
+        if strom and getattr(on_tool, "zwischen", None):
+            try:
+                on_tool.zwischen()
+            except Exception:
+                log.exception("zwischen-Callback fehlgeschlagen (ignoriert)")
+
         # Tool-Calls ausführen
         tool_results: list[dict] = []
         pending_images: list[bytes] = []
@@ -375,6 +390,7 @@ def run_agent(
                 except Exception:
                     log.exception("on_tool-Callback fehlgeschlagen (ignoriert)")
             result = executor.execute(name, args)
+            vorher = len(actions_log)
             actions_log.append({
                 "tool": name,
                 "args": args,
@@ -420,6 +436,13 @@ def run_agent(
                     "quickinfo_ki": r.get("ki_vorschlag") or r.get("quickinfo", ""),
                     "uebernommen": r.get("uebernommen", True),
                 })
+
+            # Livestream: Ergebnis dieses Werkzeugs (ok, Fehler, neuer Alt-Text/Quickinfo) an die Oberflaeche
+            if melder_fertig:
+                try:
+                    melder_fertig(name, args, result, actions_log[vorher:])
+                except Exception:
+                    log.exception("fertig-Callback fehlgeschlagen (ignoriert)")
 
             # Pruefung 4 (M2/M3): Zustand verbrauchter Karten und „Ansicht nachziehen“ gehen an die Oberflaeche, nicht ans Modell
             if isinstance(result, dict):

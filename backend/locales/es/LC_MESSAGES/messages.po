@@ -12229,3 +12229,34 @@ msgstr "Subiendo 1 archivo …"
 #, python-brace-format
 msgid "Lädt {n} Dateien hoch …"
 msgstr "Subiendo {n} archivos …"
+
+# Ansicht: Beschreibungen passend zu den Schaltern (Steve 12.10.2026)
+msgid "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch."
+msgstr "La interfaz de siempre para trabajar a mano. El InkluAgent está plegado al final de cada página y te ayuda cuando lo pidas."
+
+msgid "Auf jeder Seite siehst du nur die Überschrift und den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "En cada página solo ves el título y el InkluAgent, grande y abierto; la barra lateral se mantiene. Puedes recuperar el contenido de una página en cualquier momento con un botón."
+
+msgid "Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Rechts zeigt das Arbeitsfenster, woran er gerade arbeitet. Die Seitenleiste bleibt, den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "Trabajas conversando con el InkluAgent, como en un chat. A la derecha, la ventana de trabajo muestra en qué está trabajando ahora. La barra lateral se mantiene y puedes recuperar el contenido de una página en cualquier momento con un botón."
+
+msgid "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt unten auf jeder Seite. In der Agentenansicht arbeitest du im Gespräch mit dem InkluAgent; den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "En los ajustes eliges tu vista: en la vista manual trabajas a mano como siempre y el InkluAgent está plegado al final de cada página. En la vista de agente trabajas conversando con el InkluAgent; puedes recuperar el contenido de una página en cualquier momento con un botón."
+
+# Livestream im Arbeitsfenster (Steve 12.10.2026)
+msgid "Jeden Schritt ansagen"
+msgstr "Anunciar cada paso"
+
+msgid "Zuletzt fertig"
+msgstr "Último terminado"
+
+msgid "hat nicht geklappt"
+msgstr "no ha funcionado"
+
+#, python-brace-format
+msgid "Zwischenstand: {text}"
+msgstr "Estado intermedio: {text}"
+
+# Livestream: Stand beim Schreiben (Steve 12.10.2026)
+msgid "Schreibt die Antwort …"
+msgstr "Escribiendo la respuesta …"

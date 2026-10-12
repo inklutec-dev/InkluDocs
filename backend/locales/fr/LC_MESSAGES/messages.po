@@ -12229,3 +12229,34 @@ msgstr "Envoi d'1 fichier …"
 #, python-brace-format
 msgid "Lädt {n} Dateien hoch …"
 msgstr "Envoi de {n} fichiers …"
+
+# Ansicht: Beschreibungen passend zu den Schaltern (Steve 12.10.2026)
+msgid "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch."
+msgstr "L'interface habituelle pour travailler à la main. L'InkluAgent se trouve replié en bas de chaque page et t'aide sur demande."
+
+msgid "Auf jeder Seite siehst du nur die Überschrift und den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "Sur chaque page, tu ne vois que le titre et l'InkluAgent, grand et ouvert ; la barre latérale reste. Tu peux faire revenir le contenu d'une page à tout moment avec un bouton."
+
+msgid "Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Rechts zeigt das Arbeitsfenster, woran er gerade arbeitet. Die Seitenleiste bleibt, den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "Tu travailles en conversation avec l'InkluAgent, comme dans un chat. À droite, la fenêtre de travail montre ce sur quoi il travaille en ce moment. La barre latérale reste, et tu peux faire revenir le contenu d'une page à tout moment avec un bouton."
+
+msgid "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt unten auf jeder Seite. In der Agentenansicht arbeitest du im Gespräch mit dem InkluAgent; den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "Dans les paramètres, tu choisis ton affichage : dans l'affichage manuel, tu travailles à la main comme d'habitude, et l'InkluAgent se trouve replié en bas de chaque page. Dans l'affichage agent, tu travailles en conversation avec l'InkluAgent ; tu peux faire revenir le contenu d'une page à tout moment avec un bouton."
+
+# Livestream im Arbeitsfenster (Steve 12.10.2026)
+msgid "Jeden Schritt ansagen"
+msgstr "Annoncer chaque étape"
+
+msgid "Zuletzt fertig"
+msgstr "Dernier terminé"
+
+msgid "hat nicht geklappt"
+msgstr "n'a pas fonctionné"
+
+#, python-brace-format
+msgid "Zwischenstand: {text}"
+msgstr "Point intermédiaire : {text}"
+
+# Livestream: Stand beim Schreiben (Steve 12.10.2026)
+msgid "Schreibt die Antwort …"
+msgstr "Rédige la réponse …"

@@ -161,6 +161,27 @@ class MitServer(unittest.TestCase):
         zeilen = self._strom()
         self.assertTrue(all("ziel" not in z for z in zeilen if z["type"] == "tool"), "ohne Schalter wie bisher")
 
+    def test_livestream_zeilen_und_der_lauf_endet(self):
+        """Regression 12.10.2026: eine Hilfsfunktion „_fertig“ ueberdeckte die gleichnamige des Endpunkts — der Stream endete nie."""
+        def antwort(*a, on_tool=None, **kw):
+            on_tool.text("Hallo ")
+            on_tool.text(None)
+            on_tool.text("Neu ")
+            on_tool.zwischen()
+            on_tool("revert_alt_text", {"image_id": self.b})
+            on_tool.fertig("revert_alt_text", {"image_id": self.b}, {"ok": True}, [{"type": "refresh_image", "alt_text": "Neu (fiktiv)"}])
+            return {"reply": "Fertig (fiktiv).", "intent": "agentic", "werkzeuge": ["revert_alt_text"]}
+        with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True), \
+                mock.patch.object(self.chat_engine, "process_message", side_effect=antwort):
+            r = self.c.post(f"/api/projects/{self.p}/chat", json={"message": "Setz Bild 1 zurück."},
+                            headers={"Accept": "application/x-ndjson"})
+        zeilen = [json.loads(z) for z in r.text.splitlines() if z.strip()]
+        self.assertEqual([z["type"] for z in zeilen], ["text", "text_neu", "text", "zwischen", "tool", "werkzeug_fertig", "reply"])
+        self.assertEqual(zeilen[5], {"type": "werkzeug_fertig", "name": "revert_alt_text", "ok": True, "text": "Neu (fiktiv)"})
+        self.assertFalse(self.main._agent_laeuft(self.u["id"]) if hasattr(self.main, "_agent_laeuft")
+                         else self.main._AGENT_LAEUFT.get(self.u["id"]), "der Lauf ist ausgetragen")
+        self.assertNotIn("def _fertig(name", lies(BACKEND, "main.py"))
+
     def test_schalter_fuer_die_seite(self):
         s = self.main._inkluagent_schalter
         self.assertFalse(funktionen.AGENT_ARBEITSFENSTER, "Vorgabe aus")
@@ -215,7 +236,8 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("t('InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster.')", send)
         self.assertIn("inkluagentArbeitsEnde(inkluagentWartetAufDich(data.anhang))", send)
         self.assertIn("inkluagentArbeitsFehler(text)", self.funktion("inkluagentSetStatus"))
-        self.assertNotIn("announce(", self.funktion("inkluagentArbeitsSchritt"))
+        # Steve 12.10.2026 (spaeter): Schritte nur mit dem Kaestchen „Jeden Schritt ansagen“ ansagen
+        self.assertIn("if (inkluagentSchritteAnsagen()) announce(text);", self.funktion("inkluagentArbeitsSchritt"))
         self.assertIn("announce(", self.funktion("inkluagentStandVorlesen"))
 
     def test_daten_nur_als_text_und_nur_eigene_bildadressen(self):
@@ -314,6 +336,158 @@ class Anhaengen(unittest.TestCase):
         self.assertIn("inkluagentAnhangBauen(form, gespraech);", stil)
         self.assertIn("inkluagentAnhangEntfernenAlles();", stil)
         self.assertNotIn("inkluagentSetStatus", funktion("inkluagentAnhaengeHinzu"), "Meldungen nie ueber die Statuszeile des Auftrags")
+
+
+
+class AnsichtTexte(unittest.TestCase):
+    """Steve 12.10.2026: „Die übrigen Seiten bleiben vorerst, wie sie sind“ war veraltet — die Beschreibungen folgen den Schaltern."""
+
+    def test_beschreibung_je_nach_schalter(self):
+        from inkluagent import ansicht
+        self.assertIn("in jedem Projekt", ansicht.beschreibung("klassisch"), "ohne Schalter wie bisher")
+        self.assertIn("vorerst", ansicht.beschreibung("agent"))
+        with mock.patch.object(funktionen, "AGENT_UEBERALL", True), mock.patch.object(funktionen, "AGENT_KONTO", True):
+            self.assertIn("unten auf jeder Seite", ansicht.beschreibung("klassisch"))
+            self.assertIn("Auf jeder Seite siehst du nur die Überschrift", ansicht.beschreibung("agent"))
+            with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True):
+                self.assertIn("Arbeitsfenster", ansicht.beschreibung("agent"))
+                self.assertEqual([a["beschreibung"] for a in ansicht.auswahl()][1], ansicht.BESCHREIBUNG_ARBEITSFENSTER)
+
+    def test_texte_in_allen_sprachen(self):
+        from inkluagent import ansicht
+        texte = list(ansicht.BESCHREIBUNG_UEBERALL.values()) + [ansicht.BESCHREIBUNG_ARBEITSFENSTER]
+        for sprache in ("de", "en", "fr", "es", "da", "sv"):
+            po = lies(BACKEND, "locales", sprache, "LC_MESSAGES", "messages.po")
+            for text in texte:
+                self.assertIn('msgid "' + text + '"', po, (sprache, text[:40]))
+        self.assertIn("inkluagent_schalter.ueberall", lies(BACKEND, "templates", "hilfe_inkluagent.html"))
+
+
+
+class Livestream(unittest.TestCase):
+    """Livestream im Arbeitsfenster (Steve 12.10.2026): Ergebnis je Werkzeug, Antwort Wort fuer Wort, Zwischenstand."""
+
+    def test_ergebnis_je_werkzeug(self):
+        e = arbeitsfenster.ergebnis
+        self.assertEqual(e("view_image", {"ok": False, "error": "Bild nicht gefunden." + "x" * 300}, [])["fehler"][:20], "Bild nicht gefunden.")
+        self.assertEqual(len(e("view_image", {"ok": False, "error": "y" * 900}, [])["fehler"]), 200)
+        self.assertEqual(e("revert_alt_text", {"ok": True}, [{"type": "refresh_image", "alt_text": "Neu (fiktiv)"}]),
+                         {"ok": True, "text": "Neu (fiktiv)"})
+        self.assertEqual(e("generate_quickinfo", {"ok": True}, [{"type": "refresh_feld", "quickinfo": "Q (fiktiv)"}])["text"], "Q (fiktiv)")
+        self.assertEqual(e("generate_alt_text", {"ok": True, "result": {"alt_text": "G (fiktiv)"}}, [])["text"], "G (fiktiv)")
+        self.assertEqual(e("list_project_images", {"ok": True, "result": {"x": 1}}, []), {"ok": True})
+        self.assertEqual(e("x", "kaputt", []), {"ok": False, "fehler": ""})
+
+    def test_schleife_streamt_meldet_zwischenstand_und_ergebnis(self):
+        from inkluagent import agent_loop
+        u = nutzer()
+        ereignisse = []
+
+        class Modell:
+            kann_streamen = True
+
+            def __init__(self):
+                self.n = 0
+
+            def invoke_with_tools(self, anthropic_messages, tools, system=None, max_tokens=4096, temperature=0.3, on_text=None):
+                self.n += 1
+                if self.n == 1:
+                    on_text("Ich sehe nach. ")
+                    return {"content": [{"type": "text", "text": "Ich sehe nach. "},
+                                        {"type": "tool_use", "id": "t1", "name": "projekte_auflisten", "input": {}}], "stop_reason": "tool_use"}
+                on_text("Fertig ")
+                on_text("(fiktiv).")
+                return {"content": [{"type": "text", "text": "Fertig (fiktiv)."}], "stop_reason": "end_turn"}
+
+        def melder(name, args):
+            ereignisse.append(("tool", name))
+        melder.text = lambda t: ereignisse.append(("text", t))
+        melder.zwischen = lambda: ereignisse.append(("zwischen",))
+        melder.fertig = lambda name, args, result, neu: ereignisse.append(("fertig", name, bool(result.get("ok"))))
+        with mock.patch.object(funktionen, "AGENT_KONTO", True), mock.patch.object(funktionen, "AGENT_UEBERALL", True):
+            r = agent_loop.run_agent(None, u["id"], "Welche Projekte habe ich?", None, Modell(), on_tool=melder)
+        self.assertEqual(ereignisse, [("text", "Ich sehe nach. "), ("zwischen",), ("tool", "projekte_auflisten"),
+                                      ("fertig", "projekte_auflisten", True), ("text", "Fertig "), ("text", "(fiktiv).")])
+        self.assertEqual(r["reply"], "Fertig (fiktiv).")
+
+    def test_ohne_stream_faehigkeit_kein_on_text(self):
+        from inkluagent import agent_loop
+        u = nutzer()
+
+        class Alt:   # wie BedrockProvider: kennt on_text nicht
+            def invoke_with_tools(self, anthropic_messages, tools, system=None, max_tokens=4096, temperature=0.3):
+                return {"content": [{"type": "text", "text": "Alt (fiktiv)."}], "stop_reason": "end_turn"}
+
+        def melder(name, args):
+            pass
+        melder.text = lambda t: self.fail("kein Stream ohne kann_streamen")
+        with mock.patch.object(funktionen, "AGENT_KONTO", True), mock.patch.object(funktionen, "AGENT_UEBERALL", True):
+            self.assertEqual(agent_loop.run_agent(None, u["id"], "Hallo", None, Alt(), on_tool=melder)["reply"], "Alt (fiktiv).")
+
+
+class GeminiStrom(unittest.TestCase):
+    """GeminiProvider ueber streamGenerateContent (SSE): Text an on_text, Ergebnis wie generateContent, Kosten wie bisher."""
+
+    def setUp(self):
+        try:
+            from inkluagent.providers import gemini
+        except Exception as e:  # noqa: BLE001
+            raise unittest.SkipTest(f"Gemini-Provider nicht ladbar: {e}")
+        self.gemini = gemini
+        self.p = object.__new__(gemini.GeminiProvider)
+        self.p._zaehler = 0
+        self.urls = []
+        self.kosten = []
+        mock.patch.object(gemini, "_endpunkt", return_value="https://modell.invalid/v1/models/m:generateContent").start()
+        mock.patch("pipelines.v4.gemini_auth.kopfzeilen", return_value={}).start()
+        mock.patch.object(gemini.ki_kosten, "erfasse_gemini", side_effect=lambda m, a, **k: self.kosten.append(a)).start()
+
+    def tearDown(self):
+        mock.patch.stopall()
+
+    def _sse(self, *stuecke):
+        zeilen = [("data: " + json.dumps(x) + "\n").encode() for x in stuecke]
+        test = self
+
+        class Antwort:
+            def __enter__(self):
+                return iter(zeilen)
+
+            def __exit__(self, *a):
+                return False
+
+        def urlopen(req, timeout=None):
+            test.urls.append(req.full_url)
+            return Antwort()
+        return mock.patch("urllib.request.urlopen", side_effect=urlopen)
+
+    def test_text_stueckweise(self):
+        stuecke = []
+        with self._sse({"candidates": [{"content": {"parts": [{"text": "Hallo "}]}}]},
+                       {"candidates": [{"content": {"parts": [{"text": "Welt, hier schreibt der Test (fiktiv).", "thoughtSignature": "sig"}]}, "finishReason": "STOP"}],
+                        "usageMetadata": {"promptTokenCount": 10, "candidatesTokenCount": 3}}):
+            r = self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=stuecke.append)
+        self.assertEqual(stuecke, ["Hallo ", "Welt, hier schreibt der Test (fiktiv)."])
+        self.assertEqual(r["content"], [{"type": "text", "text": "Hallo Welt, hier schreibt der Test (fiktiv)."}])
+        self.assertEqual(r["stop_reason"], "end_turn")
+        self.assertTrue(self.urls[0].endswith(":streamGenerateContent?alt=sse"), self.urls)
+        self.assertEqual(self.kosten[0]["usageMetadata"]["candidatesTokenCount"], 3, "Kosten wie bisher erfasst")
+
+    def test_funktionsaufruf_mit_signatur(self):
+        teil = {"functionCall": {"name": "projekte_auflisten", "args": {}}, "thoughtSignature": "sig2"}
+        with self._sse({"candidates": [{"content": {"parts": [teil]}, "finishReason": "STOP"}]}):
+            r = self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=lambda t: self.fail("kein Text"))
+        self.assertEqual(r["stop_reason"], "tool_use")
+        self.assertEqual(r["content"][0]["_gemini_part"], teil, "Gedankensignatur bleibt fuer den Folgeaufruf")
+
+    def test_stream_scheitert_ohne_text_weg_ohne_stream(self):
+        stuecke = []
+        normal = {"candidates": [{"content": {"parts": [{"text": "Ohne Stream (fiktiv)."}]}, "finishReason": "STOP"}]}
+        with mock.patch("urllib.request.urlopen", side_effect=OSError("weg")), \
+                mock.patch.object(self.gemini.GeminiProvider, "_aufruf", return_value=normal):
+            r = self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=stuecke.append)
+        self.assertEqual(stuecke, [None], "angefangener Entwurf wird verworfen")
+        self.assertEqual(r["content"][0]["text"], "Ohne Stream (fiktiv).")
 
 
 if __name__ == "__main__":

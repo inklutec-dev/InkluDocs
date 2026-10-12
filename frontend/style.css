@@ -1558,3 +1558,12 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leis
 .arbeitsfenster-schritte li { margin: 0.2rem 0; }
 .arbeitsfenster-schritte li[data-zustand="laeuft"] { font-weight: 600; }
 .arbeitsfenster-schritte .schritt-zustand { color: var(--text-muted); font-weight: 400; }
+/* Livestream (Steve 12.10.2026): Zwischenstand, „Jeden Schritt ansagen“, „Zuletzt fertig“, Schritt mit Fehler, Entwurf der Antwort */
+.arbeitsfenster-notiz { margin: 0 0 0.6rem; font-style: italic; color: var(--text-muted); overflow-wrap: anywhere; }
+.arbeitsfenster-ansagen { margin: 0.6rem 0 0; display: flex; align-items: center; gap: 0.4rem; }
+.arbeitsfenster-ansagen input { width: 1.15rem; height: 1.15rem; accent-color: var(--primary); }
+.arbeitsfenster-ergebnis { margin: 0.9rem 0 0; padding: 0.6rem 0.75rem; background: var(--bg); border-left: 4px solid var(--accent); border-radius: 6px; }
+.arbeitsfenster-ergebnis h3 { margin: 0 0 0.3rem; }
+.arbeitsfenster-ergebnis p { margin: 0; overflow-wrap: anywhere; font-size: 0.95rem; }
+.arbeitsfenster-schritte li[data-zustand="fehler"] .schritt-zustand { color: var(--error); font-weight: 600; }
+.inkluagent-entwurf .inkluagent-message-content { white-space: pre-line; }

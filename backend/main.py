@@ -11870,6 +11870,9 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
 
     queue: asyncio.Queue = asyncio.Queue()
 
+    def _senden(ev):
+        loop.call_soon_threadsafe(queue.put_nowait, ev)
+
     def on_tool(name, args):
         ev = {"type": "tool", "name": name}
         # Arbeitsfenster (Agentenansicht wie ChatGPT, 12.10.2026): woran der Agent arbeitet — aus der Datenbank, nur eigene Kennungen
@@ -11878,7 +11881,26 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             _z = _af.ziel(user["id"], project_id, args)
             if _z:
                 ev["ziel"] = _z
-        loop.call_soon_threadsafe(queue.put_nowait, ev)
+        _senden(ev)
+
+    # Livestream (Arbeitsfenster, 12.10.2026): Ergebnis je Werkzeug („werkzeug_fertig“), die Antwort Wort fuer Wort („text“,
+    # „text_neu“ = Entwurf verwerfen) und „zwischen“ (gestreamter Text war nur ein Zwischenstand vor Werkzeugen). agent_loop liest
+    # die Attribute an on_tool; ohne Schalter fehlen sie und alles bleibt wie bisher. Die Antwort selbst bleibt die „reply“-Zeile.
+    if funktionen.AGENT_ARBEITSFENSTER:
+        from inkluagent import arbeitsfenster as _af_strom
+
+        # Name mit Bedacht: „_fertig“ gibt es oben schon (traegt den Lauf aus _AGENT_LAEUFT aus) — nicht ueberdecken
+        def _werkzeug_fertig(name, args, result, neue_aktionen):
+            ev = {"type": "werkzeug_fertig", "name": name}
+            ev.update(_af_strom.ergebnis(name, result, neue_aktionen))
+            _senden(ev)
+
+        def _text(stueck):
+            _senden({"type": "text_neu"} if stueck is None else {"type": "text", "text": str(stueck)})
+
+        def _zwischen():
+            _senden({"type": "zwischen"})
+        on_tool.fertig, on_tool.text, on_tool.zwischen = _werkzeug_fertig, _text, _zwischen
 
     async def lauf():
         # Review 28.08.2026: Speichern gehoert in den Lauf, nicht in den Stream — bricht der

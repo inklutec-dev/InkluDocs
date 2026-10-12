@@ -96,3 +96,25 @@ def _feld(conn, project_id: int, feld_id: int) -> Optional[dict]:
            "seite": r["page_number"] if r["page_number"] and r["page_number"] > 0 else None}
     out.update(_dokument(conn, project_id, r["document_id"]))
     return out
+
+
+def ergebnis(name: str, result, neue_aktionen) -> dict:
+    """Livestream (12.10.2026): Kurzfassung nach einem Werkzeug — ok, bei Fehler der Grund (gekuerzt), bei Alt-Text und Quickinfo
+    der neue Text (aus den Aktionen fuer die Oberflaeche bzw. dem Ergebnis von generate_alt_text). Die Seite setzt alles mit
+    textContent."""
+    ok = isinstance(result, dict) and bool(result.get("ok"))
+    out: dict = {"ok": ok}
+    if not ok:
+        out["fehler"] = str(result.get("error") or "")[:200] if isinstance(result, dict) else ""
+        return out
+    text = ""
+    for a in neue_aktionen or []:
+        if isinstance(a, dict) and a.get("type") == "refresh_image":
+            text = a.get("alt_text") or ""
+        elif isinstance(a, dict) and a.get("type") == "refresh_feld":
+            text = a.get("quickinfo") or ""
+    if not text and name == "generate_alt_text" and isinstance(result.get("result"), dict):
+        text = result["result"].get("alt_text") or ""
+    if text:
+        out["text"] = str(text)[:500]
+    return out

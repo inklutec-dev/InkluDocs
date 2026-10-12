@@ -12227,3 +12227,34 @@ msgstr "Uploading 1 file …"
 #, python-brace-format
 msgid "Lädt {n} Dateien hoch …"
 msgstr "Uploading {n} files …"
+
+# Ansicht: Beschreibungen passend zu den Schaltern (Steve 12.10.2026)
+msgid "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch."
+msgstr "The familiar interface for working by hand. The InkluAgent sits collapsed at the bottom of every page and helps you when you ask."
+
+msgid "Auf jeder Seite siehst du nur die Überschrift und den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "On every page you only see the heading and the InkluAgent, large and open; the sidebar stays. You can bring back a page's content at any time with a button."
+
+msgid "Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Rechts zeigt das Arbeitsfenster, woran er gerade arbeitet. Die Seitenleiste bleibt, den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "You work in a conversation with the InkluAgent, like in a chat. On the right, the work panel shows what it is working on right now. The sidebar stays, and you can bring back a page's content at any time with a button."
+
+msgid "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt unten auf jeder Seite. In der Agentenansicht arbeitest du im Gespräch mit dem InkluAgent; den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "In the settings you choose your view: in the manual view you work by hand as usual, and the InkluAgent sits collapsed at the bottom of every page. In the agent view you work in a conversation with the InkluAgent; you can bring back a page's content at any time with a button."
+
+# Livestream im Arbeitsfenster (Steve 12.10.2026)
+msgid "Jeden Schritt ansagen"
+msgstr "Announce every step"
+
+msgid "Zuletzt fertig"
+msgstr "Last finished"
+
+msgid "hat nicht geklappt"
+msgstr "did not work"
+
+#, python-brace-format
+msgid "Zwischenstand: {text}"
+msgstr "Interim note: {text}"
+
+# Livestream: Stand beim Schreiben (Steve 12.10.2026)
+msgid "Schreibt die Antwort …"
+msgstr "Writing the answer …"

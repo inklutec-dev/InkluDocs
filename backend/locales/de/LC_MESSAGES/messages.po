@@ -12230,3 +12230,34 @@ msgstr "Lädt 1 Datei hoch …"
 #, python-brace-format
 msgid "Lädt {n} Dateien hoch …"
 msgstr "Lädt {n} Dateien hoch …"
+
+# Ansicht: Beschreibungen passend zu den Schaltern (Steve 12.10.2026)
+msgid "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch."
+msgstr "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch."
+
+msgid "Auf jeder Seite siehst du nur die Überschrift und den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "Auf jeder Seite siehst du nur die Überschrift und den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+
+msgid "Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Rechts zeigt das Arbeitsfenster, woran er gerade arbeitet. Die Seitenleiste bleibt, den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Rechts zeigt das Arbeitsfenster, woran er gerade arbeitet. Die Seitenleiste bleibt, den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+
+msgid "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt unten auf jeder Seite. In der Agentenansicht arbeitest du im Gespräch mit dem InkluAgent; den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt unten auf jeder Seite. In der Agentenansicht arbeitest du im Gespräch mit dem InkluAgent; den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+
+# Livestream im Arbeitsfenster (Steve 12.10.2026)
+msgid "Jeden Schritt ansagen"
+msgstr "Jeden Schritt ansagen"
+
+msgid "Zuletzt fertig"
+msgstr "Zuletzt fertig"
+
+msgid "hat nicht geklappt"
+msgstr "hat nicht geklappt"
+
+#, python-brace-format
+msgid "Zwischenstand: {text}"
+msgstr "Zwischenstand: {text}"
+
+# Livestream: Stand beim Schreiben (Steve 12.10.2026)
+msgid "Schreibt die Antwort …"
+msgstr "Schreibt die Antwort …"

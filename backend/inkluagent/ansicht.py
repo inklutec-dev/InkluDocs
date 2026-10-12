@@ -25,6 +25,22 @@ BESCHREIBUNG = {
     "klassisch": "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt in jedem Projekt und hilft dir auf Wunsch.",
     "agent": "In deinen Projekten siehst du nur den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Die übrigen Seiten bleiben vorerst, wie sie sind.",
 }
+# Seit der InkluAgent auf jeder Seite steht (Runde 2, Schritt 3) und die Agentenansicht wie ChatGPT arbeitet (Arbeitsfenster,
+# 12.10.2026), stimmen die Saetze oben nur noch ohne diese Schalter (Steve 12.10.2026: „die übrigen Seiten bleiben“ war veraltet).
+BESCHREIBUNG_UEBERALL = {
+    "klassisch": "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch.",
+    "agent": "Auf jeder Seite siehst du nur die Überschrift und den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück.",
+}
+BESCHREIBUNG_ARBEITSFENSTER = ("Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Rechts zeigt das Arbeitsfenster, woran er "
+                               "gerade arbeitet. Die Seitenleiste bleibt, den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück.")
+
+
+def beschreibung(wert: str) -> str:
+    """Beschreibung einer Ansicht passend zu den Schaltern (msgid; uebersetzt der Aufrufer)."""
+    ueberall = funktionen.an("AGENT_UEBERALL") and funktionen.an("AGENT_KONTO")
+    if wert == "agent" and ueberall and funktionen.an("AGENT_ARBEITSFENSTER"):
+        return BESCHREIBUNG_ARBEITSFENSTER
+    return (BESCHREIBUNG_UEBERALL if ueberall else BESCHREIBUNG)[wert]
 
 
 def an() -> bool:
@@ -70,4 +86,4 @@ def seiten_wert(user_id: Optional[int]) -> Optional[str]:
 def auswahl(_=None) -> list[dict]:
     """Die Einstellungsseite: [{"wert", "name", "beschreibung"}] in der Reihenfolge von OBERFLAECHEN, uebersetzt."""
     _ = _ or (lambda s: s)
-    return [{"wert": w, "name": _(NAMEN[w]), "beschreibung": _(BESCHREIBUNG[w])} for w in OBERFLAECHEN]
+    return [{"wert": w, "name": _(NAMEN[w]), "beschreibung": _(beschreibung(w))} for w in OBERFLAECHEN]

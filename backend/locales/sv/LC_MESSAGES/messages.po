@@ -11801,3 +11801,34 @@ msgstr "Laddar upp 1 fil …"
 #, python-brace-format
 msgid "Lädt {n} Dateien hoch …"
 msgstr "Laddar upp {n} filer …"
+
+# Ansicht: Beschreibungen passend zu den Schaltern (Steve 12.10.2026)
+msgid "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch."
+msgstr "Det välkända gränssnittet för att arbeta för hand. InkluAgent står hopfälld längst ned på varje sida och hjälper dig när du vill."
+
+msgid "Auf jeder Seite siehst du nur die Überschrift und den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "På varje sida ser du bara rubriken och InkluAgent, stor och öppen; sidofältet finns kvar. Innehållet på en sida får du tillbaka när som helst med en knapp."
+
+msgid "Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Rechts zeigt das Arbeitsfenster, woran er gerade arbeitet. Die Seitenleiste bleibt, den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "Du arbetar i ett samtal med InkluAgent, som i en chatt. Till höger visar arbetsfönstret vad den arbetar med just nu. Sidofältet finns kvar, och innehållet på en sida får du tillbaka när som helst med en knapp."
+
+msgid "In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt unten auf jeder Seite. In der Agentenansicht arbeitest du im Gespräch mit dem InkluAgent; den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück."
+msgstr "I inställningarna väljer du din vy: I den manuella vyn arbetar du som vanligt för hand, och InkluAgent står hopfälld längst ned på varje sida. I agentvyn arbetar du i ett samtal med InkluAgent; innehållet på en sida får du tillbaka när som helst med en knapp."
+
+# Livestream im Arbeitsfenster (Steve 12.10.2026)
+msgid "Jeden Schritt ansagen"
+msgstr "Läs upp varje steg"
+
+msgid "Zuletzt fertig"
+msgstr "Senast klart"
+
+msgid "hat nicht geklappt"
+msgstr "fungerade inte"
+
+#, python-brace-format
+msgid "Zwischenstand: {text}"
+msgstr "Delstatus: {text}"
+
+# Livestream: Stand beim Schreiben (Steve 12.10.2026)
+msgid "Schreibt die Antwort …"
+msgstr "Skriver svaret …"

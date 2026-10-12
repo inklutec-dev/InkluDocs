@@ -807,3 +807,39 @@ Oberfläche am Quelltext). Klickprobe lokal 24 von 24 (Knopf statt Feld, Tab-Rei
 sichtbar und angesagt, axe ohne Verstöße, Entfernen mit Fokus, Hineinziehen und Einfügen, zu groß, Senden lädt ins Projekt mit
 Ergebnis und Antwort, ohne Projekt neues Projekt mit Seitenwechsel, 320 Pixel, nur diese Seite manuell und manuelle Ansicht ohne
 Knopf).
+
+### Livestream im Arbeitsfenster (Steve 12.10.2026; mit `AGENT_ARBEITSFENSTER`)
+
+Steve: „Es wäre schon cool, wenn es wie ein Livestream wäre.“ Unser Agent bedient keinen Browser, er arbeitet direkt an den
+Daten — „live zuschauen“ heißt deshalb: die Antwort entsteht sichtbar Wort für Wort, jedes Werkzeug meldet sein Ergebnis, und wer
+will, hört jeden Schritt.
+- **Antwort Wort für Wort:** `GeminiProvider.invoke_with_tools(on_text=…)` ruft `streamGenerateContent?alt=sse` auf
+  (`_aufruf_strom`): Textstücke gehen sofort an `on_text`, das Ergebnis ist wie bei `generateContent` (zusammenhängender Text als
+  ein Teil, Funktionsaufrufe unverändert mit Gedankensignatur, `finishReason`, `usageMetadata` → KI-Kosten wie bisher).
+  Scheitert der Stream, bevor Text kam, geht derselbe Aufruf ohne Stream; eine entgleiste Antwort (zweiter Versuch) verwirft den
+  Entwurf (`on_text(None)`). Provider ohne `kann_streamen` (Bedrock) bleiben ohne Stream. Auf der Seite wächst im Chatstil ein
+  Entwurf (`#inkluagentEntwurf`, `aria-busy`, Sterne/Rauten wie `sanitize_markdown` entfernt), das Arbeitsfenster sagt „Schreibt
+  die Antwort …“; die fertige, bereinigte Antwort ersetzt ihn und bekommt den Fokus. Der Verlauf sagt nichts von selbst an.
+- **Zwischenstand:** Schreibt das Modell Text und ruft danach Werkzeuge auf, war der Text nur ein Zwischenstand
+  (`agent_loop` → `on_tool.zwischen()`): er verschwindet aus dem Gespräch und steht im Arbeitsfenster („Zwischenstand: …“).
+- **Ergebnis je Werkzeug** (`agent_loop` → `on_tool.fertig(name, args, result, neue_aktionen)`, `arbeitsfenster.ergebnis`): Zeile
+  `werkzeug_fertig` mit `ok`, bei Fehler der Grund (200 Zeichen), bei Alt-Text/Quickinfo der neue Text (500 Zeichen). Der Schritt
+  heißt dann „erledigt“ oder „hat nicht geklappt“; neuer Text steht unter „Zuletzt fertig“ (auch in „Stand vorlesen“).
+- **„Jeden Schritt ansagen“:** Kästchen im Arbeitsfenster, Vorgabe an, Wahl in `localStorage` („inkluagent.schritte_ansagen“).
+  An: jeder Schritt wird kurz angesagt („Bild ansehen – Bild 3“), ein gescheiterter mit „hat nicht geklappt“.
+- **Endpunkt:** die Attribute `fertig`, `text`, `zwischen` hängen an `on_tool` (nur mit Schalter; Zeilen `werkzeug_fertig`, `text`,
+  `text_neu`, `zwischen`). Achtung beim Benennen: eine Hilfsfunktion `_fertig` überdeckte zuerst die gleichnamige des Endpunkts
+  (trägt den Lauf aus `_AGENT_LAEUFT` aus) — der Stream endete nie. Test `test_livestream_zeilen_und_der_lauf_endet` hält das fest.
+- Ohne Chatstil (manuelle Ansicht) ignoriert die Seite die neuen Zeilen; dort bleibt die Live-Zeile „Ruft gerade auf: …“.
+- 5 neue Texte in sechs Sprachen.
+
+**Ansicht-Beschreibungen** (Steve 12.10.2026: „Die übrigen Seiten bleiben vorerst, wie sie sind“ war veraltet):
+`ansicht.beschreibung()` wählt je nach Schaltern — ohne `AGENT_UEBERALL` die alten Sätze, mit ihm „unten auf jeder Seite“ bzw.
+„Auf jeder Seite siehst du nur die Überschrift und den InkluAgent …“, mit Arbeitsfenster „Du arbeitest im Gespräch mit dem
+InkluAgent, wie in einem Chat …“. Die Hilfe-Seite nimmt den passenden Satz. 4 neue Texte.
+
+Tests: `tests/test_agent_arbeitsfenster.py`, Klassen `Livestream` (Ergebnis je Werkzeug, Schleife mit Stream/Zwischenstand/
+Ergebnis, Provider ohne Stream), `GeminiStrom` (Text stückweise mit Kosten, Funktionsaufruf mit Signatur, Rückfall ohne Stream),
+`AnsichtTexte`, Endpunkt-Test für alle Zeilen und das Austragen des Laufs. Klickprobe lokal 19 von 19 (Entwurf wächst und wird
+ersetzt, Fokus, Zwischenstand, Ansagen an/aus, „Zuletzt fertig“ und „Stand vorlesen“, Fehler eines Werkzeugs, axe, manuelle
+Ansicht ohne Entwurf); Proben Arbeitsfenster 35/35 und Anhängen 24/24 mit allen Staging-Schaltern.
