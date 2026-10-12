@@ -78,6 +78,17 @@ services:
       - INKLUAGENT_GEMINI_TEMPERATURE=${INKLUAGENT_GEMINI_TEMPERATURE:-1.0}
       - INKLUAGENT_GEMINI_MODEL_TEXT=${INKLUAGENT_GEMINI_MODEL_TEXT:-gemini-3.1-pro-preview}
       - INKLUAGENT_GEMINI_MODEL_VISION=${INKLUAGENT_GEMINI_MODEL_VISION:-gemini-3.1-pro-preview}
+      # InkluAgent-Ausbau Runde 1 und 2 (12.10.2026, Steve: „auf Staging vollkommen verfuegbar“): je Schritt ein Schalter,
+      # hier an. Prod (docker-compose.yml) setzt sie nicht = aus (backend/funktionen.py). Doku: docs/INKLUAGENT.md
+      - INKLUAGENT_SICHERHEIT=${INKLUAGENT_SICHERHEIT:-an}
+      - INKLUAGENT_HILFE=${INKLUAGENT_HILFE:-an}
+      - INKLUAGENT_BILD_WERKZEUGE=${INKLUAGENT_BILD_WERKZEUGE:-an}
+      - INKLUAGENT_ANSICHT=${INKLUAGENT_ANSICHT:-an}
+      - INKLUAGENT_HOCHLADEN=${INKLUAGENT_HOCHLADEN:-an}
+      - INKLUAGENT_KONTO=${INKLUAGENT_KONTO:-an}
+      - INKLUAGENT_UEBERALL=${INKLUAGENT_UEBERALL:-an}
+      - INKLUAGENT_KONTO_WERKZEUGE=${INKLUAGENT_KONTO_WERKZEUGE:-an}
+      - INKLUAGENT_BLOECKE=${INKLUAGENT_BLOECKE:-an}
       # AWS Bedrock (08.05.2026): Anthropic Claude über Frankfurt fuer v4
       - AWS_REGION=${AWS_REGION:-eu-central-1}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
