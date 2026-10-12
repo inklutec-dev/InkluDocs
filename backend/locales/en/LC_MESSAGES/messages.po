@@ -11935,3 +11935,37 @@ msgstr "The project has been deleted."
 
 msgid "Zur Übersicht"
 msgstr "To the overview"
+
+# InkluAgent-Ausbau Runde 2: Hilfe im Bereich des InkluAgent (12.10.2026)
+msgid "Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien. Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich."
+msgstr "The InkluAgent is an AI and works with your projects and files. Before anything costs credits or cannot be undone, it asks you."
+
+msgid "Sag ihm in eigenen Worten, was du brauchst, zum Beispiel:"
+msgstr "Tell it in your own words what you need, for example:"
+
+msgid "Schreib eine Quickinfo für Feld 5."
+msgstr "Write a quick info for field 5."
+
+msgid "Welche Felder haben noch keine Quickinfo?"
+msgstr "Which fields do not have a quick info yet?"
+
+msgid "Fasse die Quickinfos kürzer."
+msgstr "Make the quick infos shorter."
+
+msgid "Welche Projekte habe ich?"
+msgstr "Which projects do I have?"
+
+msgid "Öffne mein neuestes Projekt."
+msgstr "Open my newest project."
+
+msgid "Wie viele Credits habe ich noch?"
+msgstr "How many credits do I have left?"
+
+msgid "Beschreibe Bild 3 in leichter Sprache."
+msgstr "Describe image 3 in plain language."
+
+msgid "Erstelle Alt-Texte für alle Bilder."
+msgstr "Create alt texts for all images."
+
+msgid "Was fehlt noch, damit das Dokument barrierefrei ist?"
+msgstr "What is still missing for the document to be accessible?"

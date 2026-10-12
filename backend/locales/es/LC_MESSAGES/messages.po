@@ -11937,3 +11937,37 @@ msgstr "El proyecto se ha eliminado."
 
 msgid "Zur Übersicht"
 msgstr "Ir a la vista general"
+
+# InkluAgent-Ausbau Runde 2: Hilfe im Bereich des InkluAgent (12.10.2026)
+msgid "Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien. Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich."
+msgstr "El InkluAgent es una IA y trabaja con tus proyectos y archivos. Antes de que algo cueste créditos o no se pueda deshacer, te pregunta."
+
+msgid "Sag ihm in eigenen Worten, was du brauchst, zum Beispiel:"
+msgstr "Dile con tus propias palabras lo que necesitas, por ejemplo:"
+
+msgid "Schreib eine Quickinfo für Feld 5."
+msgstr "Escribe una ayuda rápida para el campo 5."
+
+msgid "Welche Felder haben noch keine Quickinfo?"
+msgstr "¿Qué campos aún no tienen ayuda rápida?"
+
+msgid "Fasse die Quickinfos kürzer."
+msgstr "Acorta las ayudas rápidas."
+
+msgid "Welche Projekte habe ich?"
+msgstr "¿Qué proyectos tengo?"
+
+msgid "Öffne mein neuestes Projekt."
+msgstr "Abre mi proyecto más reciente."
+
+msgid "Wie viele Credits habe ich noch?"
+msgstr "¿Cuántos créditos me quedan?"
+
+msgid "Beschreibe Bild 3 in leichter Sprache."
+msgstr "Describe la imagen 3 en lenguaje sencillo."
+
+msgid "Erstelle Alt-Texte für alle Bilder."
+msgstr "Crea textos alternativos para todas las imágenes."
+
+msgid "Was fehlt noch, damit das Dokument barrierefrei ist?"
+msgstr "¿Qué falta todavía para que el documento sea accesible?"

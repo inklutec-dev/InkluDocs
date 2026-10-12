@@ -60,7 +60,7 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         // InkluAgent-Ausbau Runde 1, Schritt 3 (Schalter funktionen.AGENT_HILFE, window.FUNKTIONEN.agent_hilfe): drei kurze
         // Stichpunkte statt der langen Einleitung, der erste ist der KI-Hinweis nach KI-VO Art. 50; darunter der Weg zur
         // Hilfe-Seite. Echte Liste (VoiceOver: „Liste, 3 Objekte“). Schalter aus = die Einleitung wie bisher.
-        + (inkluagentKurzhilfe() ? inkluagentKurzhilfeHtml() : (''
+        + (inkluagentKurzhilfe() ? inkluagentKurzhilfeHtml(variante) : (''
         +   '<p class="inkluagent-intro">'
         // KI-VO Art. 50 Abs. 1 (gilt seit 02.08.2026): Menschen muessen
         // erkennen, dass sie mit einem KI-System sprechen. Der Name
@@ -186,13 +186,28 @@ function inkluagentHochladenSatz(ergebnisse) {
 function inkluagentKurzhilfe() {
     return !!((window.FUNKTIONEN && window.FUNKTIONEN.agent_hilfe) || (window.INKLUAGENT && window.INKLUAGENT.hilfe));
 }
-function inkluagentKurzhilfeHtml() {
+// Steve 09.10.2026: die Hilfe gehoert IN den Bereich des InkluAgent, nicht in die Seitenleiste — der KI-Hinweis (KI-VO Art. 50)
+// mit dem Versprechen „fragt dich“, zwei, drei Anwendungsbeispiele passend zur Seite und der Link zur Hilfe-Seite.
+function inkluagentBeispiele(variante) {
+    if (variante === 'formular') return [t('Schreib eine Quickinfo für Feld 5.'), t('Welche Felder haben noch keine Quickinfo?'),
+                                         t('Fasse die Quickinfos kürzer.')];
+    if (variante === 'konto') return [t('Welche Projekte habe ich?'), t('Öffne mein neuestes Projekt.'), t('Wie viele Credits habe ich noch?')];
+    return [t('Beschreibe Bild 3 in leichter Sprache.'), t('Erstelle Alt-Texte für alle Bilder.'),
+            t('Was fehlt noch, damit das Dokument barrierefrei ist?')];
+}
+function inkluagentBeispieleHtml(variante) {
+    return inkluagentBeispiele(variante).map(b => '<li>' + escHtmlAgent(b) + '</li>').join('');
+}
+function escHtmlAgent(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function inkluagentKurzhilfeHtml(variante) {
     return ''
-        + '<ul class="inkluagent-intro inkluagent-kurzhilfe">'
-        +   '<li>' + t('Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien.') + '</li>'
-        +   '<li>' + t('Sag ihm in eigenen Worten, was du brauchst.') + '</li>'
-        +   '<li>' + t('Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich.') + '</li>'
-        + '</ul>'
+        + '<div class="inkluagent-intro inkluagent-kurzhilfe">'
+        +   '<p>' + t('Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien. Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich.') + '</p>'
+        +   '<p id="inkluagentBeispieleTitel" class="inkluagent-beispiele-titel">' + t('Sag ihm in eigenen Worten, was du brauchst, zum Beispiel:') + '</p>'
+        +   '<ul class="inkluagent-beispiele" aria-labelledby="inkluagentBeispieleTitel">' + inkluagentBeispieleHtml(variante) + '</ul>'
+        + '</div>'
         + '<p class="inkluagent-hilfe-link"><a href="/hilfe/inkluagent">' + t('Alles, was der InkluAgent kann') + '</a></p>';
 }
 
@@ -302,6 +317,8 @@ function inkluagentVarianteSetzen(variante) {
     sec.dataset.variante = variante;
     const intro = sec.querySelector('p.inkluagent-intro');
     if (intro) intro.innerHTML = inkluagentEinleitung(variante);   // Texte aus dem eigenen Katalog (mit <em>)
+    const beispiele = sec.querySelector('ul.inkluagent-beispiele');
+    if (beispiele) beispiele.innerHTML = inkluagentBeispieleHtml(variante);   // maskiert (escHtmlAgent)
     const input = document.getElementById('inkluagentInput');
     if (input) input.placeholder = inkluagentPlatzhalter(variante);
 }

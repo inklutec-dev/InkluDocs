@@ -601,3 +601,15 @@ Umbenennen nur eigene, Löschen nur über den Knopf inklusive getipptem Ja, Dopp
 während eines Laufs, fremdes Projekt, Knopf ohne Schalter 404, Lauf abbrechen, Oberfläche). Klickprobe lokal 14 von 14
 (Anlegen mit Link, Karte mit Projekt und Warnung, getipptes Ja löscht nicht, Knopf löscht, Karte „Erledigt“, Konto-Karte auf der
 Projektseite, gelöschtes offenes Projekt ohne Seitenwechsel, axe ohne Verstöße).
+
+### Hilfe im Bereich des InkluAgent (Steves Vorgabe vom 09.10.2026, Schalter `AGENT_HILFE` aus Runde 1)
+
+Statt drei Stichpunkten und einem Link „Hilfe“ in der Seitenleiste steht die Hilfe jetzt im Bereich des InkluAgent selbst
+(`frontend/inkluagent.js`, `inkluagentKurzhilfeHtml`): der KI-Hinweis (KI-VO Art. 50) mit dem Versprechen „Bevor etwas Credits
+kostet oder sich nicht rückgängig machen lässt, fragt er dich.“, dann „Sag ihm in eigenen Worten, was du brauchst, zum
+Beispiel:“ mit drei Anwendungsbeispielen passend zur Seite (`inkluagentBeispiele`: Bilder, Formular, Seiten ohne Projekt — im
+festen Bereich wechseln sie beim Binden an ein Projekt mit), darunter der Link „Alles, was der InkluAgent kann“ zur
+Hilfe-Seite. Der Seitenleisten-Eintrag „Hilfe“ ist wieder weg (`dashboard.js`); die Hilfe-Seite behält ihre drei Stichpunkte.
+Sichtbar heißt es überall „InkluAgent“ bzw. „Agent“, nirgends „Chatbot“ (geprüft: Vorlagen, Skripte, Kataloge). 11 neue Texte.
+Tests: `test_agent_hilfe.py` angepasst (Beispiele und Link im Agenten, kein Seitenleisten-Link). Klickprobe lokal 11 von 11
+(Übersicht und Projektseite im festen Bereich, eingebettet ohne festen Bereich, axe ohne Verstöße).

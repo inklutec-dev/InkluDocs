@@ -1044,6 +1044,8 @@ header h1 { font-size: 1.3rem; color: white; }
 }
 
 /* Schritt 3 (InkluAgent-Ausbau): Kurzhilfe als echte Liste, Link zur Hilfe-Seite darunter */
+.inkluagent-kurzhilfe p { margin: 0 0 0.4rem; }
+.inkluagent-kurzhilfe ul.inkluagent-beispiele { margin: 0 0 0.4rem; padding-left: 1.2rem; }
 ul.inkluagent-kurzhilfe {
     margin: 0 0 0.4rem;
     padding-left: 1.25rem;

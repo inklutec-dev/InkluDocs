@@ -11937,3 +11937,37 @@ msgstr "Le projet a été supprimé."
 
 msgid "Zur Übersicht"
 msgstr "Vers l’aperçu"
+
+# InkluAgent-Ausbau Runde 2: Hilfe im Bereich des InkluAgent (12.10.2026)
+msgid "Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien. Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich."
+msgstr "L’InkluAgent est une IA et travaille avec vos projets et vos fichiers. Avant toute action qui coûte des crédits ou ne peut pas être annulée, il vous demande."
+
+msgid "Sag ihm in eigenen Worten, was du brauchst, zum Beispiel:"
+msgstr "Dites-lui avec vos propres mots ce dont vous avez besoin, par exemple :"
+
+msgid "Schreib eine Quickinfo für Feld 5."
+msgstr "Rédige une info-bulle pour le champ 5."
+
+msgid "Welche Felder haben noch keine Quickinfo?"
+msgstr "Quels champs n’ont pas encore d’info-bulle ?"
+
+msgid "Fasse die Quickinfos kürzer."
+msgstr "Raccourcis les info-bulles."
+
+msgid "Welche Projekte habe ich?"
+msgstr "Quels projets ai-je ?"
+
+msgid "Öffne mein neuestes Projekt."
+msgstr "Ouvre mon projet le plus récent."
+
+msgid "Wie viele Credits habe ich noch?"
+msgstr "Combien de crédits me reste-t-il ?"
+
+msgid "Beschreibe Bild 3 in leichter Sprache."
+msgstr "Décris l’image 3 en langage simple."
+
+msgid "Erstelle Alt-Texte für alle Bilder."
+msgstr "Crée des textes alternatifs pour toutes les images."
+
+msgid "Was fehlt noch, damit das Dokument barrierefrei ist?"
+msgstr "Que manque-t-il encore pour que le document soit accessible ?"

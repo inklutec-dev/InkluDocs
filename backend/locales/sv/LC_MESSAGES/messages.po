@@ -11509,3 +11509,37 @@ msgstr "Projektet är raderat."
 
 msgid "Zur Übersicht"
 msgstr "Till översikten"
+
+# InkluAgent-Ausbau Runde 2: Hilfe im Bereich des InkluAgent (12.10.2026)
+msgid "Der InkluAgent ist eine KI und arbeitet mit deinen Projekten und Dateien. Bevor etwas Credits kostet oder sich nicht rückgängig machen lässt, fragt er dich."
+msgstr "InkluAgent är en AI och arbetar med dina projekt och filer. Innan något kostar krediter eller inte kan ångras frågar den dig."
+
+msgid "Sag ihm in eigenen Worten, was du brauchst, zum Beispiel:"
+msgstr "Berätta med egna ord vad du behöver, till exempel:"
+
+msgid "Schreib eine Quickinfo für Feld 5."
+msgstr "Skriv en snabbinfo för fält 5."
+
+msgid "Welche Felder haben noch keine Quickinfo?"
+msgstr "Vilka fält har ännu ingen snabbinfo?"
+
+msgid "Fasse die Quickinfos kürzer."
+msgstr "Gör snabbinfona kortare."
+
+msgid "Welche Projekte habe ich?"
+msgstr "Vilka projekt har jag?"
+
+msgid "Öffne mein neuestes Projekt."
+msgstr "Öppna mitt senaste projekt."
+
+msgid "Wie viele Credits habe ich noch?"
+msgstr "Hur många krediter har jag kvar?"
+
+msgid "Beschreibe Bild 3 in leichter Sprache."
+msgstr "Beskriv bild 3 på lättläst svenska."
+
+msgid "Erstelle Alt-Texte für alle Bilder."
+msgstr "Skapa alt-texter för alla bilder."
+
+msgid "Was fehlt noch, damit das Dokument barrierefrei ist?"
+msgstr "Vad saknas fortfarande för att dokumentet ska vara tillgängligt?"

@@ -102,23 +102,27 @@ class Seite(unittest.TestCase):
 
 
 class Oberflaeche(unittest.TestCase):
-    def test_drei_stichpunkte_mit_ki_hinweis_und_link(self):
+    def test_ki_hinweis_beispiele_und_link_im_agenten(self):
+        """Steve 09.10.2026: Hilfe IM Bereich des InkluAgent — KI-Hinweis (KI-VO Art. 50) mit „fragt dich“, drei Beispiele je
+        Seite (Bilder, Formular, ohne Projekt) und der Link zur Hilfe-Seite. Die drei Stichpunkte stehen weiter auf der Seite."""
         js = lies(FRONTEND, "inkluagent.js")
-        for text in KURZ + ("Alles, was der InkluAgent kann",):
-            self.assertIn("t('" + text + "')", js)
-        self.assertIn("eine KI", KURZ[0], "KI-VO Art. 50: der erste Punkt sagt, dass es eine KI ist")
+        self.assertIn("t('" + KURZ[0] + " " + KURZ[2] + "')", js)
+        self.assertIn("t('Sag ihm in eigenen Worten, was du brauchst, zum Beispiel:')", js)
+        self.assertIn("t('Alles, was der InkluAgent kann')", js)
+        beispiele = js[js.index("function inkluagentBeispiele("):]
+        beispiele = beispiele[:beispiele.index("\n}\n")]
+        self.assertEqual(beispiele.count("t('"), 9, "je drei Beispiele fuer Formular, Seiten ohne Projekt und Bilder")
+        self.assertIn("eine KI", KURZ[0], "KI-VO Art. 50: der erste Satz sagt, dass es eine KI ist")
         self.assertIn('<a href="/hilfe/inkluagent">', js)
         self.assertIn("window.FUNKTIONEN.agent_hilfe", js)
         # drei Einleitungen: Bilder, Formular und (Ausbau Runde 2, Schritt 3) Seiten ohne Projekt — jede mit dem KI-Hinweis
         self.assertEqual(js.count("t('Der InkluAgent ist ein KI-Assistent."), 3, "ohne Schalter bleibt die alte Einleitung")
 
-    def test_link_hilfe_in_der_seitenleiste(self):
+    def test_kein_link_hilfe_in_der_seitenleiste(self):
+        """Steve 09.10.2026: der Link „Hilfe“ aus Runde 1, Schritt 3 kommt wieder aus der Seitenleiste."""
         dash = lies(FRONTEND, "dashboard.js")
-        self.assertIn("{ href: '/hilfe/inkluagent', label: t('Hilfe'), hilfe: true", dash)
-        self.assertIn("if (it.hilfe && !(currentUser && currentUser.inkluagent_hilfe)) return;", dash)
-        # feste Stelle: direkt nach „Über uns und Kontakt“, vor den Eintraegen fuer Admins und Bearbeiter
-        self.assertLess(dash.index("label: t('Über uns und Kontakt')"), dash.index("label: t('Hilfe')"))
-        self.assertLess(dash.index("label: t('Hilfe')"), dash.index("label: t('Verwaltung')"))
+        self.assertNotIn("href: '/hilfe/inkluagent'", dash)
+        self.assertNotIn("it.hilfe", dash)
 
 
 if __name__ == "__main__":
