@@ -653,3 +653,40 @@ Tests: `tests/test_agent_webadressen.py` (6: Erkennung, Karten je Projektart, Mo
 Adresse → Karten und Notiz, Knopf lädt und die andere Karte verfällt, ohne Projekt neues Projekt mit Link, ohne Schalter keine
 Karten); `test_agent_hochladen` angepasst. Klickprobe lokal 10 von 10 (mit einer echten öffentlichen Seite), Hochlade-Probe
 19 von 19. Unit gesamt 871 grün.
+
+### Gespräche: „Neues Gespräch“, „Frühere Gespräche“, „Hier weitermachen“ (Steve 12.10.2026; Schalter `AGENT_GESPRAECHE`, braucht `AGENT_KONTO`)
+
+Steve: ein neuer Chat auf Knopfdruck, die alten bleiben erreichbar — aber übersichtlich (die Gesprächsliste im InkluEdit-Agenten
+fand sein Stiefsohn unübersichtlich). Deshalb steht im Agenten nur der Knopf „Neues Gespräch“ und der Link „Frühere Gespräche“;
+die Liste ist eine eigene Seite.
+- **Speicher** (`inkluagent/storage.py`, Abschnitt „Gespräche“): Tabelle `agent_gespraeche` (Titel = erste Frage, eine Zeile,
+  höchstens 80 Zeichen; angelegt, zuletzt), `agent_nachrichten.gespraech_id`, `agent_fokus.gespraech_id` (laufendes Gespräch).
+  Jede Nachricht gehört zum laufenden Gespräch; gibt es keins, wird eins angelegt und Nachrichten von vorher kommen hinein.
+  `neues_gespraech` (ein leeres laufendes wird weiterbenutzt), `gespraech_fortsetzen`, `gespraeche_liste` (neueste zuerst,
+  leere fehlen; Titel, Zahl, beteiligte Projekte mit „gelöscht“, letztes Projekt, laufendes; Filter Projekt und Suche),
+  `gespraech_lesen`. `konto_verlauf` und damit das Gedächtnis des Agenten lesen nur das laufende Gespräch — „Neues Gespräch“
+  beginnt ohne den alten Zusammenhang. Konto löschen nimmt `agent_gespraeche` mit.
+- **Endpunkte:** `POST /api/agent/gespraech/neu`, `GET /api/agent/gespraeche` (`projekt`, `suche`),
+  `POST /api/agent/gespraeche/{id}/fortsetzen` (Antwort `weiter`: das letzte noch vorhandene Projekt des Gesprächs, sonst die
+  Übersicht, je mit `agent=offen`). Nur eigene Gespräche (sonst 404), Schalter aus = 404.
+- **Seiten:** `/gespraeche` (`templates/gespraeche.html`): Überschrift 1 „Frühere Gespräche“, je Gespräch eine Überschrift 2 mit
+  Link (per Überschriften-Navigation durchgehen), darunter Datum (Berlin), Zahl der Nachrichten, „läuft gerade“ und Projekte;
+  `?projekt=` filtert. `/gespraeche/{id}` (`templates/gespraech.html`): Überschrift 1 = erste Frage, Knopf „Hier
+  weitermachen“, Verlauf wie im Agenten (Absender als Überschrift 3, Antworten als Absätze und Listen über
+  `inkluagent/bloecke.py`, Projektmarken), nur lesen.
+- **Agent:** Leiste oben im Agenten (`inkluagentGespraechLeisteHtml`); „Neues Gespräch“ leert den Verlauf, sagt „Neues Gespräch
+  begonnen. Das bisherige findest du unter „Frühere Gespräche“.“ und setzt den Fokus ins Eingabefeld. Nach „Hier weitermachen“
+  (`?agent=offen`) öffnet sich der Agent, der Parameter verschwindet aus der Adresse, der Fokus steht auf der letzten Nachricht.
+  Der Aufklapper „Früheres Gespräch in diesem Projekt“ (altes Projektgespräch) steht unter der Leiste.
+- **Verweis durch den Agenten** (Seiten ohne Projekt, `konto.py` „fruehere_gespraeche“, Projekt oder Stichwort): bis zu fünf
+  Gespräche (ohne das laufende), Titel und Projekte als Daten; unter der Antwort Links „Gespräch „…“ lesen“ zu den drei neuesten.
+  `run_agent` nimmt dafür mehrere Links aus einem Werkzeug.
+- **Hilfe-Seite** beschreibt je nach Schalter: Agent auf jeder Seite mit Sprunglink, ein durchgehendes Gespräch mit Marken,
+  „Neues Gespräch“ / „Frühere Gespräche“ / „Hier weitermachen“. 23 neue Texte in sechs Sprachen.
+
+**Migration:** `CREATE TABLE IF NOT EXISTS agent_gespraeche` (idempotent) und zwei Spalten über `_migrate_columns`; rückwärts liest
+alter Code sie nicht (`DROP TABLE agent_gespraeche`, Spalten bleiben unbenutzt).
+
+Tests: `tests/test_agent_gespraeche.py` (14). Klickprobe lokal 15 von 15 (Leiste, neues Gespräch, Agent verlinkt das frühere,
+Liste neueste zuerst mit „läuft gerade“ und Projekten, Lese-Seite mit Marke, axe ohne Verstöße auf beiden Seiten, „Hier
+weitermachen“ ins Projekt mit offenem Agenten und Fokus). Probe Gespräch je Konto 13 von 13. Unit gesamt 885 grün.

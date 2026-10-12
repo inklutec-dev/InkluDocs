@@ -757,6 +757,19 @@ def init_db():
             geaendert_am TEXT DEFAULT (datetime('now'))
         )
     ''')
+    # Gespraeche (Steve 12.10.2026): „Neues Gespräch“ beginnt ein neues, die frueheren bleiben lesbar (Seite „Frühere
+    # Gespräche“, „Hier weitermachen“). agent_nachrichten.gespraech_id und agent_fokus.gespraech_id (aktuelles Gespraech) kommen
+    # ueber _migrate_columns. Rueckwaerts: alter Code liest Tabelle und Spalten nicht; entfernen mit „DROP TABLE agent_gespraeche“.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS agent_gespraeche (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            titel TEXT NOT NULL DEFAULT '',
+            angelegt_am TEXT DEFAULT (datetime('now')),
+            zuletzt_am TEXT DEFAULT (datetime('now'))
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_gespraeche_konto ON agent_gespraeche(user_id, zuletzt_am)")
 
     # EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Kunden lassen Dokumente von Profis aufbereiten oder pruefen,
     # Lieferung innerhalb einer Frist, Bezahlung in Credits (vorgemerkt bei der Bestellung, abgebucht bei der Lieferung,
@@ -1112,6 +1125,9 @@ def _migrate_columns(conn):
         # INKLUAGENT Werkzeug-Transparenz (28.08.2026): welche Werkzeuge der Agent fuer diese
         # Antwort aufgerufen hat (JSON-Liste der Namen, Reihenfolge = Aufrufreihenfolge).
         ("chat_messages", "werkzeuge", "ALTER TABLE chat_messages ADD COLUMN werkzeuge TEXT"),
+        # Gespraeche des InkluAgent (12.10.2026): zu welchem Gespraech eine Nachricht gehoert, welches gerade laeuft
+        ("agent_nachrichten", "gespraech_id", "ALTER TABLE agent_nachrichten ADD COLUMN gespraech_id INTEGER"),
+        ("agent_fokus", "gespraech_id", "ALTER TABLE agent_fokus ADD COLUMN gespraech_id INTEGER"),
         # KI-FACH (28.08.2026, Steve: wie alt_text/alt_text_edited bei Bildern): der letzte
         # KI-Vorschlag bleibt erhalten, auch wenn von Hand darueber geschrieben wird —
         # Knopf „KI-Vorschlag uebernehmen“ holt ihn zurueck.
@@ -1462,7 +1478,7 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM email_verifications WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM user_prompts WHERE user_id = ?", (user_id,))
     # InkluAgent (Ausbau Runde 1/2): Gespraech je Konto, Fokus und Zaehler des Kontos
-    for _tabelle in ("agent_nachrichten", "agent_fokus", "agent_zaehler", "agent_tageszaehler"):
+    for _tabelle in ("agent_nachrichten", "agent_fokus", "agent_zaehler", "agent_tageszaehler", "agent_gespraeche"):
         conn.execute(f"DELETE FROM {_tabelle} WHERE user_id = ?", (user_id,))
     # Quickinfo-Werkzeug (27.08.2026): Stammdaten-Bibliothek des Kontos.
     conn.execute("DELETE FROM stammdaten WHERE user_id = ?", (user_id,))

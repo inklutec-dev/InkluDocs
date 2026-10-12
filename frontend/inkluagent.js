@@ -73,6 +73,7 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         +   inkluagentEinleitung(variante)
         +   '</p>'))
         +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
+        +     (inkluagentGespraecheAn() ? inkluagentGespraechLeisteHtml() : '')
         // tabindex=0 (11.09.2026, axe scrollable-region-focusable): der Verlauf wird bei vielen
         // Nachrichten scrollbar und muss dann per Tastatur erreichbar sein (WCAG 2.1.1).
         // aria-live="off" (Pruefung 3 Barrierefreiheit, H1/N1): role=log ist sonst von selbst „polite“ — beim Neuzeichnen
@@ -283,6 +284,8 @@ function inkluagentBedienungAnbinden() {
         if (isOpen) inkluagentClose(); else inkluagentOpen(window._inkluagentProjectId, true);
     });
     if (form) form.addEventListener('submit', (e) => { e.preventDefault(); inkluagentSend(); });
+    const neu = document.getElementById('inkluagentNeuesGespraech');
+    if (neu) neu.addEventListener('click', inkluagentNeuesGespraech);
     if (input) {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); inkluagentSend(); }
@@ -338,7 +341,15 @@ async function inkluagentBinden(projectId) {
     if (!neu) return;
     let wasOpen = false;
     try { wasOpen = localStorage.getItem(inkluagentMerkSchluessel(pid)) === 'open'; } catch (e) {}
-    if (gross) await inkluagentOpen(pid, false, true);
+    // „Hier weitermachen“ (Seite „Frühere Gespräche“) fuehrt mit ?agent=offen hierher: Agent auf, Fokus auf die letzte Nachricht
+    const weiter = new URLSearchParams(window.location.search).get('agent') === 'offen';
+    if (weiter) {
+        try { const u = new URL(window.location.href); u.searchParams.delete('agent'); history.replaceState(history.state, '', u); } catch (e) {}
+        await inkluagentOpen(pid, false);
+        const alle = document.querySelectorAll('#inkluagentLog .inkluagent-message');
+        if (alle.length) alle[alle.length - 1].focus();
+        else { const i = document.getElementById('inkluagentInput'); if (i) i.focus(); }
+    } else if (gross) await inkluagentOpen(pid, false, true);
     else if (wasOpen) await inkluagentOpen(pid, false);
     inkluagentLaufVerfolgen();
 }
@@ -395,6 +406,8 @@ async function inkluagentInitLaden(projectId) {
             }
         });
     }
+    const neuesGespraech = document.getElementById('inkluagentNeuesGespraech');
+    if (neuesGespraech) neuesGespraech.addEventListener('click', inkluagentNeuesGespraech);
     // Ergebnis des letzten Hochladens bleibt nach dem Neuzeichnen der Ansicht stehen (gleiches Projekt)
     const hg = window._inkluagentHochgeladen;
     if (hg && hg.projectId === String(projectId)) inkluagentHochgeladenZeigen(projectId, hg.ergebnisse);
@@ -445,6 +458,36 @@ function inkluagentClose() {
 // zeigt der Server ohne Knopf („Zu bestätigen im Projekt …“).
 function inkluagentKonto() {
     return !!(window.INKLUAGENT && window.INKLUAGENT.konto);
+}
+// Gespraeche (Steve 12.10.2026, Schalter AGENT_GESPRAECHE): oben im Agenten nur zwei Dinge — „Neues Gespräch“ und der Link
+// „Frühere Gespräche“ auf eine eigene Seite (die Liste steht bewusst nicht im Agenten).
+function inkluagentGespraecheAn() {
+    return !!(window.INKLUAGENT && window.INKLUAGENT.gespraeche);
+}
+function inkluagentGespraechLeisteHtml() {
+    return '<div class="inkluagent-gespraech-leiste">'
+        + '<button type="button" id="inkluagentNeuesGespraech" class="btn btn-secondary">' + t('Neues Gespräch') + '</button>'
+        + '<a href="/gespraeche">' + t('Frühere Gespräche') + '</a>'
+        + '</div>';
+}
+async function inkluagentNeuesGespraech() {
+    const btn = document.getElementById('inkluagentNeuesGespraech');
+    if (!btn || btn.getAttribute('aria-disabled') === 'true') return;
+    btn.setAttribute('aria-disabled', 'true');
+    try {
+        const res = await fetch('/api/agent/gespraech/neu', { method: 'POST' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const log = document.getElementById('inkluagentLog');
+        if (log) log.textContent = '';
+        window._inkluagentLetztesProjekt = undefined;
+        inkluagentSetStatus(t('Neues Gespräch begonnen. Das bisherige findest du unter „Frühere Gespräche“.'), false);
+        const input = document.getElementById('inkluagentInput');
+        if (input) input.focus();
+    } catch (e) {
+        inkluagentSetStatus(t('Das ging nicht. Bitte erneut versuchen.'), true);
+    } finally {
+        btn.removeAttribute('aria-disabled');
+    }
 }
 function inkluagentMarkeAnhaengen(log, projektId, name, geloescht) {
     const p = document.createElement('p');
@@ -524,7 +567,8 @@ function inkluagentFrueherZeigen(projectId, anzahl) {
             delete box.dataset.geladen;
         }
     });
-    panel.insertBefore(d, panel.firstChild);
+    const log = document.getElementById('inkluagentLog');
+    panel.insertBefore(d, (log && log.parentNode === panel) ? log : panel.firstChild);   // unter „Neues Gespräch“, über dem Verlauf
 }
 
 async function inkluagentLoadHistory(projectId) {

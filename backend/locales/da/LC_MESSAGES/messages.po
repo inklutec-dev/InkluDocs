@@ -11702,3 +11702,76 @@ msgstr "Føj til projektet »{projekt}«"
 #, python-brace-format
 msgid "Webseite „{url}“ ist geladen."
 msgstr "Websiden »{url}« er indlæst."
+
+# InkluAgent: Gespräche (12.10.2026)
+msgid "Neues Gespräch"
+msgstr "Ny samtale"
+
+msgid "Frühere Gespräche"
+msgstr "Tidligere samtaler"
+
+msgid "Neues Gespräch begonnen. Das bisherige findest du unter „Frühere Gespräche“."
+msgstr "Ny samtale startet. Den forrige finder du under »Tidligere samtaler«."
+
+msgid "Das ging nicht. Bitte erneut versuchen."
+msgstr "Det lykkedes ikke. Prøv igen."
+
+msgid "Gespräch wird fortgesetzt …"
+msgstr "Samtalen fortsættes …"
+
+msgid "Hier stehen deine Gespräche mit dem InkluAgent, das neueste zuerst. Öffne eines zum Nachlesen; dort kannst du es fortsetzen."
+msgstr "Her står dine samtaler med InkluAgent, den nyeste først. Åbn en for at læse den; der kan du fortsætte den."
+
+#, python-brace-format
+msgid "Nur Gespräche zum Projekt „{name}“."
+msgstr "Kun samtaler om projektet »{name}«."
+
+msgid "Alle Gespräche zeigen"
+msgstr "Vis alle samtaler"
+
+msgid "Noch keine Gespräche."
+msgstr "Endnu ingen samtaler."
+
+msgid "Gespräch ohne Titel"
+msgstr "Samtale uden titel"
+
+msgid "1 Nachricht"
+msgstr "1 besked"
+
+#, python-brace-format
+msgid "{n} Nachrichten"
+msgstr "{n} beskeder"
+
+msgid "läuft gerade"
+msgstr "i gang"
+
+msgid "Projekte:"
+msgstr "Projekter:"
+
+msgid "gelöscht"
+msgstr "slettet"
+
+msgid "Zurück zu „Frühere Gespräche“"
+msgstr "Tilbage til »Tidligere samtaler«"
+
+msgid "Hier weitermachen"
+msgstr "Fortsæt her"
+
+#, python-brace-format
+msgid "Gespräch „{titel}“ lesen"
+msgstr "Læs samtalen »{titel}«"
+
+msgid "Den InkluAgent findest du auf jeder Seite, nach dem Hauptinhalt; oben auf der Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Der Knopf „InkluAgent“ öffnet das Gespräch."
+msgstr "InkluAgent finder du på hver side, efter hovedindholdet; øverst på siden fører springlinket »Gå til InkluAgent« direkte derhen. Knappen »InkluAgent« åbner samtalen."
+
+msgid "Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch."
+msgstr "InkluAgent finder du i hvert projekt: Knappen »InkluAgent« åbner samtalen."
+
+msgid "Er führt ein durchgehendes Gespräch über alle deine Projekte; wo es um ein anderes Projekt geht, steht „Ab hier: Projekt …“."
+msgstr "Den fører én samlet samtale på tværs af alle dine projekter; hvor det handler om et andet projekt, står der »Herfra: projekt …«."
+
+msgid "Mit „Neues Gespräch“ beginnst du frisch; frühere Gespräche findest du unter „Frühere Gespräche“ und setzt sie dort mit „Hier weitermachen“ fort."
+msgstr "Med »Ny samtale« starter du forfra; tidligere samtaler finder du under »Tidligere samtaler« og fortsætter dem der med »Fortsæt her«."
+
+msgid "Jedes Projekt hat sein eigenes Gespräch."
+msgstr "Hvert projekt har sin egen samtale."

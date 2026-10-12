@@ -13,7 +13,7 @@ import threading  # Abo-Tageslauf (Erinnerungen/Verlaengerungen) ohne Cron
 import time
 import io
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from urllib.parse import urljoin, urlparse
 import smtplib
@@ -11466,7 +11466,118 @@ async def agent_verlauf(request: Request, projekt: Optional[int] = None, user: d
             conn.close()
         if eigen:
             frueher, name = storage.anzahl(projekt), (eigen["name"] or eigen["filename"] or "")
-    return {"messages": nachrichten, "frueher": frueher, "projekt_name": name}
+    return {"messages": nachrichten, "frueher": frueher, "projekt_name": name,
+            "gespraeche": bool(funktionen.AGENT_GESPRAECHE)}
+
+
+# ─── Gespraeche des InkluAgent (Steve 12.10.2026, Schalter AGENT_GESPRAECHE + AGENT_KONTO) ──────────────────────────────────
+def _gespraeche_frei() -> None:
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_GESPRAECHE")
+    funktionen.endpunkt_frei("AGENT_KONTO")
+
+
+def _gespraech_datum(wert: str) -> str:
+    """„2026-10-12 11:45:00“ (UTC, SQLite) -> „12.10.2026, 13:45“ (Berlin)."""
+    try:
+        from zoneinfo import ZoneInfo
+        d = datetime.strptime(str(wert)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).astimezone(ZoneInfo("Europe/Berlin"))
+        return d.strftime("%d.%m.%Y, %H:%M")
+    except Exception:  # noqa: BLE001
+        return str(wert or "")
+
+
+def _gespraech_weiter(user_id: int, g: dict) -> str:
+    """Wohin „Hier weitermachen“ fuehrt: ins letzte (noch vorhandene, eigene) Projekt des Gespraechs, sonst auf die Uebersicht —
+    mit offenem InkluAgent (agent=offen)."""
+    pid = g.get("letztes_projekt")
+    if pid:
+        conn = get_db()
+        try:
+            if conn.execute("SELECT 1 FROM projects WHERE id = ? AND user_id = ?", (pid, user_id)).fetchone():
+                return f"/app?projekt={pid}&agent=offen"
+        finally:
+            conn.close()
+    return "/dashboard?agent=offen"
+
+
+@app.post("/api/agent/gespraech/neu")
+async def agent_gespraech_neu(user: dict = Depends(get_current_user)):
+    """„Neues Gespräch“: das bisherige bleibt unter „Frühere Gespräche“, der Agent beginnt ohne den alten Zusammenhang."""
+    _gespraeche_frei()
+    from inkluagent import storage
+    return {"ok": True, "gespraech_id": storage.neues_gespraech(user["id"])}
+
+
+@app.get("/api/agent/gespraeche")
+async def agent_gespraeche(projekt: Optional[int] = None, suche: str = "", user: dict = Depends(get_current_user)):
+    _gespraeche_frei()
+    from inkluagent import storage
+    liste = storage.gespraeche_liste(user["id"], projekt, (suche or "")[:100])
+    for g in liste:
+        g["datum"] = _gespraech_datum(g["zuletzt_am"])
+    return {"gespraeche": liste}
+
+
+@app.post("/api/agent/gespraeche/{gespraech_id}/fortsetzen")
+async def agent_gespraech_fortsetzen(gespraech_id: int, user: dict = Depends(get_current_user)):
+    """„Hier weitermachen“: dieses Gespraech wird wieder das laufende; Antwort nennt die Seite, auf der es weitergeht."""
+    _gespraeche_frei()
+    from inkluagent import storage
+    if not storage.gespraech_fortsetzen(user["id"], gespraech_id):
+        raise HTTPException(status_code=404, detail="Gespräch nicht gefunden")
+    g = next((x for x in storage.gespraeche_liste(user["id"]) if x["id"] == gespraech_id), {})
+    return {"ok": True, "weiter": _gespraech_weiter(user["id"], g)}
+
+
+@app.get("/gespraeche", response_class=HTMLResponse)
+async def gespraeche_seite(request: Request, projekt: Optional[int] = None):
+    """Seite „Frühere Gespräche“: schlichte Liste, neueste zuerst (Steve 12.10.2026: nicht im Agenten selbst — die Liste dort
+    fand man in InkluEdit unuebersichtlich). Mit ?projekt= nur Gespraeche zu diesem Projekt."""
+    if not (funktionen.AGENT_GESPRAECHE and funktionen.AGENT_KONTO and INKLUAGENT_ENABLED):
+        raise HTTPException(status_code=404, detail="Nicht gefunden")
+    try:
+        nutzer = get_current_user(request)
+    except HTTPException:
+        return RedirectResponse(_login_umleitung(request))
+    from inkluagent import storage
+    liste = storage.gespraeche_liste(nutzer["id"], projekt)
+    for g in liste:
+        g["datum"] = _gespraech_datum(g["zuletzt_am"])
+    projekt_name = ""
+    if projekt:
+        conn = get_db()
+        try:
+            r = conn.execute("SELECT name, filename FROM projects WHERE id = ? AND user_id = ?", (projekt, nutzer["id"])).fetchone()
+        finally:
+            conn.close()
+        projekt_name = (r["name"] or r["filename"] or "") if r else ""
+    return _render_protected_template(request, "gespraeche.html", gespraeche=liste, projekt_filter=projekt, projekt_name=projekt_name)
+
+
+@app.get("/gespraeche/{gespraech_id}", response_class=HTMLResponse)
+async def gespraech_seite(request: Request, gespraech_id: int):
+    """Ein frueheres Gespraech zum Nachlesen (Absaetze und Listen wie im Agenten, Projektmarken), Knopf „Hier weitermachen“."""
+    if not (funktionen.AGENT_GESPRAECHE and funktionen.AGENT_KONTO and INKLUAGENT_ENABLED):
+        raise HTTPException(status_code=404, detail="Nicht gefunden")
+    try:
+        nutzer = get_current_user(request)
+    except HTTPException:
+        return RedirectResponse(_login_umleitung(request))
+    from inkluagent import storage
+    from inkluagent.bloecke import bloecke
+    nachrichten = storage.gespraech_lesen(nutzer["id"], gespraech_id)
+    if nachrichten is None:
+        raise HTTPException(status_code=404, detail="Gespräch nicht gefunden")
+    g = next((x for x in storage.gespraeche_liste(nutzer["id"]) if x["id"] == gespraech_id), None) or {
+        "id": gespraech_id, "titel": "", "zuletzt_am": "", "anzahl": 0, "projekte": [], "aktuell": False}
+    g["datum"] = _gespraech_datum(g.get("zuletzt_am"))
+    vorher = object()
+    for n in nachrichten:
+        n["marke"] = n["project_id"] != vorher
+        vorher = n["project_id"]
+        n["bloecke"] = bloecke(n["content"]) if n["role"] == "assistant" else [{"art": "p", "zeilen": [n["content"]], "start": 1}]
+    return _render_protected_template(request, "gespraech.html", gespraech=g, nachrichten=nachrichten)
 
 
 @app.post("/api/projects/{project_id}/chat/bestaetigen")
@@ -11824,7 +11935,7 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
     ueberall = bool(konto and funktionen.AGENT_UEBERALL)
     out = {"hochladen": bool(funktionen.AGENT_HOCHLADEN and INKLUAGENT_ENABLED), "max_dateien": _hl.max_dateien(),
            "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024), "konto": konto, "ueberall": ueberall,
-           "bloecke": bool(funktionen.AGENT_BLOECKE)}
+           "bloecke": bool(funktionen.AGENT_BLOECKE), "gespraeche": bool(konto and funktionen.AGENT_GESPRAECHE)}
     if ueberall:
         from inkluagent.tools import namen as _werkzeug_namen
         out["werkzeug_namen"] = _werkzeug_namen.fuer_oberflaeche(get_gettext(lang or "de"))
@@ -12321,7 +12432,10 @@ async def hilfe_inkluagent_page(request: Request):
                                       hilfe=_hilfe.seite(get_gettext(resolve_ui_language(request))),
                                       tageslimit=DAILY_CHAT_LIMIT, max_zeichen=5000,
                                       einzel_deckel=bool(funktionen.AGENT_SICHERHEIT),
-                                      ansicht_waehlbar=bool(funktionen.AGENT_ANSICHT))
+                                      ansicht_waehlbar=bool(funktionen.AGENT_ANSICHT),
+                                      gespraech_je_konto=bool(funktionen.AGENT_KONTO),
+                                      ueberall=bool(funktionen.AGENT_KONTO and funktionen.AGENT_UEBERALL),
+                                      gespraeche=bool(funktionen.AGENT_KONTO and funktionen.AGENT_GESPRAECHE))
 
 
 @app.get("/projekte", response_class=HTMLResponse)

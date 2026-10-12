@@ -1,0 +1,54 @@
+{% extends "base_app.html" %}
+{% block title %}{{ gespraech.titel or _('Gespräch ohne Titel') }} – {{ _('Frühere Gespräche') }} · InkluDocs{% endblock %}
+{% block main %}
+      {# EIN FRUEHERES GESPRAECH zum Nachlesen (Steve 12.10.2026): Ueberschrift 1 = erste Frage, „Hier weitermachen“ macht es
+         wieder zum laufenden Gespraech und oeffnet das letzte Projekt mit offenem InkluAgent. Nachrichten wie im Agenten:
+         Absender als Ueberschrift 3, Antworten als Absaetze und Listen (inkluagent/bloecke.py), Projektmarken. Nur lesen. #}
+      <p><a href="/gespraeche">{{ _('Zurück zu „Frühere Gespräche“') }}</a></p>
+      <h1>{{ gespraech.titel or _('Gespräch ohne Titel') }}</h1>
+      <p class="gespraech-meta">{{ gespraech.datum }}{% if gespraech.aktuell %} · {{ _('läuft gerade') }}{% endif %}</p>
+      <p class="gespraech-weiter">
+        <button type="button" class="btn btn-primary" id="gespraechWeiter" data-id="{{ gespraech.id }}">{{ _('Hier weitermachen') }}</button>
+        <span id="gespraechStatus" role="status"></span>
+      </p>
+      <section class="dash-card gespraech-verlauf" aria-labelledby="gespraech-verlauf-h">
+        <h2 id="gespraech-verlauf-h">{{ _('Verlauf') }}</h2>
+        {% for n in nachrichten %}
+        {% if n.marke %}<p class="inkluagent-marke">{% if n.project_id is none %}{{ _('Ab hier: ohne Projekt') }}{% elif n.projekt_geloescht %}{{ _('Ab hier: Projekt „{name}“ (gelöscht)').format(name=n.projekt_name) }}{% else %}{{ _('Ab hier: Projekt „{name}“').format(name=n.projekt_name) }}{% endif %}</p>{% endif %}
+        <div class="inkluagent-message {{ 'user' if n.role == 'user' else 'assistant' }}">
+          <h3 class="inkluagent-message-role">{{ _('Du') if n.role == 'user' else 'InkluAgent' }}</h3>
+          <div class="inkluagent-message-content">
+            {% for b in n.bloecke %}
+            {% if b.art == 'p' %}<p>{{ b.zeilen[0] }}</p>
+            {% elif b.art == 'ul' %}<ul>{% for z in b.zeilen %}<li>{{ z }}</li>{% endfor %}</ul>
+            {% else %}<ol{% if b.start != 1 %} start="{{ b.start }}"{% endif %}>{% for z in b.zeilen %}<li>{{ z }}</li>{% endfor %}</ol>{% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </section>
+{% endblock %}
+{% block page_script %}
+<script>
+// „Hier weitermachen“: Gespraech wieder laufend machen und dorthin, wo es weitergeht (letztes Projekt, Agent offen)
+(function () {
+  const b = document.getElementById('gespraechWeiter');
+  const st = document.getElementById('gespraechStatus');
+  if (!b) return;
+  b.addEventListener('click', async () => {
+    if (b.getAttribute('aria-disabled') === 'true') return;
+    b.setAttribute('aria-disabled', 'true');
+    try {
+      const res = await fetch('/api/agent/gespraeche/' + encodeURIComponent(b.dataset.id) + '/fortsetzen', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.weiter || data.weiter.charAt(0) !== '/') throw new Error();
+      st.textContent = t('Gespräch wird fortgesetzt …');
+      window.location.href = data.weiter;
+    } catch (e) {
+      st.textContent = t('Das ging nicht. Bitte erneut versuchen.');
+      b.removeAttribute('aria-disabled');
+    }
+  });
+})();
+</script>
+{% endblock %}

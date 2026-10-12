@@ -428,8 +428,10 @@ def run_agent(
             # Oberflaeche — aus dem tool_result nehmen (das Modell braucht ihn nicht), an die Antwort haengen.
             anhang = result.pop("anhang", None) if isinstance(result, dict) else None
             if anhang and result.get("ok"):
-                anhaenge.append(anhang)
-                actions_log.append(dict({"type": "anhang"}, **anhang))
+                # mehrere Links aus einem Werkzeug (fruehere_gespraeche, 12.10.2026) kommen als Liste
+                for a in (anhang if isinstance(anhang, list) else [anhang]):
+                    anhaenge.append(a)
+                    actions_log.append(dict({"type": "anhang"}, **a))
 
             # image_bytes-Sonderfall (view_image / view_field)
             img_bytes = result.pop("image_bytes", None) if isinstance(result, dict) else None

@@ -86,6 +86,17 @@ TOOL_DEFINITIONS_KONTO_AENDERN: list[dict] = [
     },
 ]
 AENDERN = frozenset(d["name"] for d in TOOL_DEFINITIONS_KONTO_AENDERN)
+
+# Gespraeche (Steve 12.10.2026, Schalter AGENT_GESPRAECHE): fruehere Gespraeche zu einem Projekt oder Thema finden und verlinken
+TOOL_DEFINITION_GESPRAECHE = {
+    "name": "fruehere_gespraeche",
+    "description": ("Frühere Gespräche mit dir finden — zu einem Projekt (project_id) oder einem Stichwort (suche), neueste "
+                    "zuerst, ohne das laufende. Unter deiner Antwort stehen Links zum Nachlesen; dort kann der Nutzer mit „Hier "
+                    "weitermachen“ fortsetzen. Kostenlos."),
+    "input_schema": {"type": "object", "properties": {
+        "project_id": {"type": "integer", "description": "nur Gespräche zu diesem Projekt (optional)"},
+        "suche": {"type": "string", "description": "Stichwort im Titel, im Projektnamen oder im Text (optional)"}}},
+}
 _ABBRECHEN = ("/api/projects/{project_id}/generate/abbrechen", "/api/projects/{project_id}/uebersetzung/abbrechen",
               "/api/projects/{project_id}/quickinfos/abbrechen")
 
@@ -166,6 +177,8 @@ class KontoExecutor:
                 return getattr(self, "_" + name)(args)
             if name == "webseite_laden" and funktionen.an("AGENT_HOCHLADEN"):
                 return self._webseite_laden(args)
+            if name == "fruehere_gespraeche" and funktionen.an("AGENT_GESPRAECHE"):
+                return self._fruehere_gespraeche(args)
             if name == "laufende_arbeit":
                 liste = []
                 for x in laufende(self.user_id):
@@ -292,6 +305,25 @@ class KontoExecutor:
                                                    "Der Lauf endet nach dem Schritt, der gerade in Arbeit ist; Fertiges bleibt."),
                                        **({"tagging_laeuft": "Tagging lässt sich nicht abbrechen."} if tagging else {})}}
 
+    def _fruehere_gespraeche(self, args: dict) -> dict:
+        from . import storage
+        try:
+            pid = int(args["project_id"]) if args.get("project_id") not in (None, "") else None
+        except (TypeError, ValueError):
+            pid = None
+        suche = str(args.get("suche") or "").strip()[:100]
+        liste = [g for g in storage.gespraeche_liste(self.user_id, pid, suche) if not g["aktuell"]][:5]
+        ergebnis = [{"gespraech_id": g["id"], "titel_daten": daten(g["titel"]), "zuletzt": _datum(g["zuletzt_am"]),
+                     "nachrichten": g["anzahl"], "projekte_daten": [daten(p["name"]) for p in g["projekte"]]} for g in liste]
+        links = [{"art": "link", "url": f"/gespraeche/{g['id']}",
+                  "text": self._("Gespräch „{titel}“ lesen").format(titel=g["titel"] or self._("Gespräch ohne Titel"))} for g in liste[:3]]
+        r = {"ok": True, "result": {"anzahl": len(ergebnis), "gespraeche": ergebnis,
+                                    "hinweis": ("Keine früheren Gespräche dazu." if not ergebnis else
+                                                "Unter deiner Antwort stehen Links zu den drei neuesten; dort steht „Hier weitermachen“.")}}
+        if links:
+            r["anhang"] = links
+        return r
+
     def _webseite_laden(self, args: dict) -> dict:
         """Nur ueber den Knopf einer Karte aus hochladen.webadressen_karten (das Modell hat dieses Werkzeug nicht): die Webadresse
         aus der eigenen Nachricht des Nutzers als neues Projekt laden oder an das Webseiten-Projekt haengen — ueber
@@ -355,7 +387,10 @@ def werkzeugsatz(user_id: int, _=None):
     if funktionen.an("AGENT_HOCHLADEN"):
         from . import hochladen
         system = system + "\n\n" + hochladen.PROMPT_ZUSATZ
-    defs = TOOL_DEFINITIONS_KONTO + (TOOL_DEFINITIONS_KONTO_AENDERN if aendern_an() else [])
+    defs = (TOOL_DEFINITIONS_KONTO + (TOOL_DEFINITIONS_KONTO_AENDERN if aendern_an() else [])
+            + ([TOOL_DEFINITION_GESPRAECHE] if funktionen.an("AGENT_GESPRAECHE") else []))
+    if funktionen.an("AGENT_GESPRAECHE"):
+        system = system + "\n\n" + _GESPRAECHE
     return [dict(d) for d in defs], KontoExecutor(user_id, _), system
 
 
@@ -399,6 +434,21 @@ Bei mehreren Projekten mit ähnlichem Namen fragst du nach, welches gemeint ist,
 
 _NICHT_AENDERN = ("* Projekte anlegen, umbenennen oder löschen und Läufe abbrechen: das geht über die Oberfläche. Neue Projekte "
                   "entstehen über „Neues Projekt“ oder — wenn das Hochladefeld da ist — durch Hochladen hier im Agenten.\n")
+
+
+_GESPRAECHE = """Frühere Gespräche
+Spricht der Nutzer über ein Projekt oder ein Thema, über das ihr schon früher gesprochen habt, findest du mit fruehere_gespraeche die passenden Gespräche und sagst in einem Satz, dass unter deiner Antwort Links stehen; dort kann er mit „Hier weitermachen“ fortsetzen. Das laufende Gespräch ist nicht dabei. Neue Gespräche beginnt der Nutzer selbst mit dem Knopf „Neues Gespräch“."""
+
+
+def _datum(wert: str) -> str:
+    """UTC aus der Datenbank -> „12.10.2026, 13:45“ (Berlin)."""
+    try:
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+        d = datetime.strptime(str(wert)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).astimezone(ZoneInfo("Europe/Berlin"))
+        return d.strftime("%d.%m.%Y, %H:%M")
+    except Exception:  # noqa: BLE001
+        return str(wert or "")
 
 
 def system_konto(aendern: bool = False) -> str:

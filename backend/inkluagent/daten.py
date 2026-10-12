@@ -105,6 +105,8 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     "projekt_umbenennen": ("name_daten",),
     "projekt_loeschen": ("name_daten",),
     "lauf_abbrechen": ("name_daten",),
+    # Gespraeche (12.10.2026): Titel = erste Frage des Nutzers, Projektnamen
+    "fruehere_gespraeche": ("gespraeche[].titel_daten", "gespraeche[].projekte_daten"),
 }
 
 

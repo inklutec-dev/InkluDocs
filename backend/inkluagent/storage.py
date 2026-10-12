@@ -116,31 +116,156 @@ def konto_anhaengen(
         if project_id:
             p = conn.execute("SELECT name, filename FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
             name = ((p["name"] or p["filename"]) if p else "") or ""
+        gid = _aktuelles_gespraech(conn, user_id)
         cursor = conn.execute(
-            "INSERT INTO agent_nachrichten (user_id, project_id, projekt_name, role, content, image_refs, intent, werkzeuge, anhang) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO agent_nachrichten (user_id, project_id, projekt_name, role, content, image_refs, intent, werkzeuge, anhang, "
+            "gespraech_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 user_id, project_id, name, role, content,
                 json.dumps(image_refs) if image_refs else None,
                 intent,
                 json.dumps(werkzeuge) if werkzeuge is not None else None,
                 json.dumps(anhang, ensure_ascii=False) if anhang else None,
+                gid,
             ),
         )
+        # Titel = die erste Frage (eine Zeile, gekuerzt); zuletzt = jetzt
+        conn.execute("UPDATE agent_gespraeche SET zuletzt_am = datetime('now'), titel = CASE WHEN titel = '' AND ? = 'user' "
+                     "THEN ? ELSE titel END WHERE id = ?", (role, _titel(content), gid))
         conn.commit()
         return cursor.lastrowid
     finally:
         conn.close()
 
 
-def konto_verlauf(user_id: int, limit: int = 200) -> list[dict]:
-    """Die juengsten `limit` Nachrichten des Kontos, aelteste zuerst, je mit Projektmarke (project_id, projekt_name,
-    projekt_geloescht)."""
+# ─── Gespraeche (Steve 12.10.2026): „Neues Gespräch“, „Frühere Gespräche“, „Hier weitermachen“ ─────────────────────────────
+TITEL_LAENGE = 80
+
+
+def _titel(text: str) -> str:
+    """Die erste Frage als Titel: erste Zeile, ohne die Kurzzeile des Hochladefelds, hoechstens 80 Zeichen."""
+    zeile = next((z.strip() for z in (text or "").splitlines() if z.strip()), "")
+    return zeile if len(zeile) <= TITEL_LAENGE else zeile[:TITEL_LAENGE - 1].rstrip() + "…"
+
+
+def _aktuelles_gespraech(conn, user_id: int) -> int:
+    """Das laufende Gespraech des Kontos (agent_fokus.gespraech_id). Gibt es keins, wird eins angelegt; Nachrichten von vor den
+    Gespraechen (gespraech_id leer) gehoeren dann dazu, und die erste Frage wird sein Titel."""
+    r = conn.execute("SELECT f.gespraech_id FROM agent_fokus f JOIN agent_gespraeche g ON g.id = f.gespraech_id "
+                     "WHERE f.user_id = ? AND g.user_id = ?", (user_id, user_id)).fetchone()
+    if r and r["gespraech_id"]:
+        return int(r["gespraech_id"])
+    neu = conn.execute("SELECT id FROM agent_gespraeche WHERE user_id = ? ORDER BY zuletzt_am DESC, id DESC LIMIT 1", (user_id,)).fetchone()
+    gid = int(neu["id"]) if neu else int(conn.execute("INSERT INTO agent_gespraeche (user_id) VALUES (?)", (user_id,)).lastrowid)
+    alt = conn.execute("SELECT content FROM agent_nachrichten WHERE user_id = ? AND gespraech_id IS NULL AND role = 'user' "
+                       "ORDER BY id LIMIT 1", (user_id,)).fetchone()
+    conn.execute("UPDATE agent_nachrichten SET gespraech_id = ? WHERE user_id = ? AND gespraech_id IS NULL", (gid, user_id))
+    if alt:
+        conn.execute("UPDATE agent_gespraeche SET titel = ? WHERE id = ? AND titel = ''", (_titel(alt["content"]), gid))
+    _gespraech_merken(conn, user_id, gid)
+    return gid
+
+
+def _gespraech_merken(conn, user_id: int, gid: Optional[int]) -> None:
+    conn.execute("INSERT INTO agent_fokus (user_id, gespraech_id, geaendert_am) VALUES (?, ?, datetime('now')) "
+                 "ON CONFLICT(user_id) DO UPDATE SET gespraech_id = excluded.gespraech_id", (user_id, gid))
+
+
+def aktuelles_gespraech(user_id: int) -> int:
     conn = get_db()
     try:
+        gid = _aktuelles_gespraech(conn, user_id)
+        conn.commit()
+        return gid
+    finally:
+        conn.close()
+
+
+def neues_gespraech(user_id: int) -> int:
+    """Beginnt ein neues Gespraech (das bisherige bleibt unter „Frühere Gespräche“). Ein leeres laufendes wird weiterbenutzt."""
+    conn = get_db()
+    try:
+        alt = _aktuelles_gespraech(conn, user_id)
+        leer = not conn.execute("SELECT 1 FROM agent_nachrichten WHERE gespraech_id = ? LIMIT 1", (alt,)).fetchone()
+        gid = alt if leer else int(conn.execute("INSERT INTO agent_gespraeche (user_id) VALUES (?)", (user_id,)).lastrowid)
+        _gespraech_merken(conn, user_id, gid)
+        conn.commit()
+        return gid
+    finally:
+        conn.close()
+
+
+def gespraech_fortsetzen(user_id: int, gid: int) -> bool:
+    """„Hier weitermachen“: dieses (eigene) Gespraech wird wieder das laufende."""
+    conn = get_db()
+    try:
+        if not conn.execute("SELECT 1 FROM agent_gespraeche WHERE id = ? AND user_id = ?", (gid, user_id)).fetchone():
+            return False
+        _gespraech_merken(conn, user_id, gid)
+        conn.execute("UPDATE agent_gespraeche SET zuletzt_am = datetime('now') WHERE id = ?", (gid,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def gespraeche_liste(user_id: int, project_id: Optional[int] = None, suche: str = "", limit: int = 100) -> list[dict]:
+    """Gespraeche mit Nachrichten, neueste zuerst: Titel, Datum, Zahl der Nachrichten, beteiligte Projekte, laufendes. Mit
+    project_id nur Gespraeche, in denen es um dieses Projekt ging; mit suche nur solche, deren Titel, Projektname oder Text sie
+    enthaelt."""
+    conn = get_db()
+    try:
+        aktuell = _aktuelles_gespraech(conn, user_id)
+        conn.commit()
+        sql = ("SELECT g.id, g.titel, g.angelegt_am, g.zuletzt_am, COUNT(n.id) AS anzahl, MAX(n.project_id) AS irgendein_projekt "
+               "FROM agent_gespraeche g JOIN agent_nachrichten n ON n.gespraech_id = g.id WHERE g.user_id = ?")
+        werte: list = [user_id]
+        if project_id:
+            sql += " AND g.id IN (SELECT gespraech_id FROM agent_nachrichten WHERE user_id = ? AND project_id = ?)"
+            werte += [user_id, project_id]
+        if suche:
+            sql += (" AND g.id IN (SELECT gespraech_id FROM agent_nachrichten WHERE user_id = ? AND (content LIKE ? OR projekt_name LIKE ?)"
+                    " UNION SELECT id FROM agent_gespraeche WHERE user_id = ? AND titel LIKE ?)")
+            werte += [user_id, f"%{suche}%", f"%{suche}%", user_id, f"%{suche}%"]
+        rows = conn.execute(sql + " GROUP BY g.id ORDER BY g.zuletzt_am DESC, g.id DESC LIMIT ?", (*werte, limit)).fetchall()
+        out = []
+        for r in rows:
+            projekte = conn.execute(
+                "SELECT project_id, projekt_name, MAX(projekt_geloescht) AS geloescht FROM agent_nachrichten WHERE gespraech_id = ? "
+                "AND project_id IS NOT NULL GROUP BY project_id ORDER BY MIN(id)", (r["id"],)).fetchall()
+            letzte = conn.execute("SELECT project_id FROM agent_nachrichten WHERE gespraech_id = ? AND project_id IS NOT NULL "
+                                  "AND projekt_geloescht = 0 ORDER BY id DESC LIMIT 1", (r["id"],)).fetchone()
+            out.append({"id": r["id"], "titel": r["titel"] or "", "angelegt_am": r["angelegt_am"], "zuletzt_am": r["zuletzt_am"],
+                        "anzahl": r["anzahl"], "aktuell": r["id"] == aktuell,
+                        "projekte": [{"project_id": p["project_id"], "name": p["projekt_name"] or "", "geloescht": bool(p["geloescht"])}
+                                     for p in projekte],
+                        "letztes_projekt": letzte["project_id"] if letzte else None})
+        return out
+    finally:
+        conn.close()
+
+
+def gespraech_lesen(user_id: int, gid: int) -> Optional[list[dict]]:
+    """Alle Nachrichten eines eigenen Gespraechs, aelteste zuerst (wie konto_verlauf) — None, wenn es nicht dem Konto gehoert."""
+    conn = get_db()
+    try:
+        if not conn.execute("SELECT 1 FROM agent_gespraeche WHERE id = ? AND user_id = ?", (gid, user_id)).fetchone():
+            return None
+    finally:
+        conn.close()
+    return konto_verlauf(user_id, limit=1000, gespraech_id=gid)
+
+
+def konto_verlauf(user_id: int, limit: int = 200, gespraech_id: Optional[int] = None) -> list[dict]:
+    """Die juengsten `limit` Nachrichten des LAUFENDEN Gespraechs (oder von gespraech_id), aelteste zuerst, je mit Projektmarke
+    (project_id, projekt_name, projekt_geloescht)."""
+    conn = get_db()
+    try:
+        gid = gespraech_id or _aktuelles_gespraech(conn, user_id)
+        conn.commit()
         rows = conn.execute(
             "SELECT id, role, content, image_refs, intent, created_at, werkzeuge, anhang, project_id, projekt_name, projekt_geloescht "
-            "FROM agent_nachrichten WHERE user_id = ? ORDER BY id DESC LIMIT ?", (user_id, limit)).fetchall()
+            "FROM agent_nachrichten WHERE user_id = ? AND gespraech_id = ? ORDER BY id DESC LIMIT ?", (user_id, gid, limit)).fetchall()
     finally:
         conn.close()
     out = []

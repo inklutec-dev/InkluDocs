@@ -15,7 +15,11 @@
 
       <section class="dash-card" aria-labelledby="hilfe-arbeiten-h">
         <h2 id="hilfe-arbeiten-h">{{ _('So arbeitest du mit dem InkluAgent') }}</h2>
-        <p>{{ _('Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch. Jedes Projekt hat sein eigenes Gespräch.') }}</p>
+        {# Seit 12.10.2026 je nach Schalter: Agent auf jeder Seite (AGENT_UEBERALL), ein Gespraech je Konto (AGENT_KONTO), Gespraeche #}
+        {% if ueberall %}<p>{{ _('Den InkluAgent findest du auf jeder Seite, nach dem Hauptinhalt; oben auf der Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Der Knopf „InkluAgent“ öffnet das Gespräch.') }}</p>
+        {% else %}<p>{{ _('Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch.') }}</p>{% endif %}
+        {% if gespraech_je_konto %}<p>{{ _('Er führt ein durchgehendes Gespräch über alle deine Projekte; wo es um ein anderes Projekt geht, steht „Ab hier: Projekt …“.') }}{% if gespraeche %} {{ _('Mit „Neues Gespräch“ beginnst du frisch; frühere Gespräche findest du unter „Frühere Gespräche“ und setzt sie dort mit „Hier weitermachen“ fort.') }}{% endif %}</p>
+        {% else %}<p>{{ _('Jedes Projekt hat sein eigenes Gespräch.') }}</p>{% endif %}
         <p>{{ _('Reden kostet nichts. Was er erzeugt oder ändert, kostet dieselben Credits wie der Knopf in der Oberfläche.') }}</p>
         <p>{{ _('Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte oder mit einem kurzen „Ja“.') }}</p>
         {% if ansicht_waehlbar %}<p>{{ _('In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt in jedem Projekt. In der Agentenansicht siehst du in deinen Projekten nur den InkluAgent groß.') }} <a href="/einstellungen">{{ _('Zu den Einstellungen') }}</a></p>{% endif %}

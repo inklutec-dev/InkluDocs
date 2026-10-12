@@ -1,0 +1,26 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Frühere Gespräche') }} · InkluDocs{% endblock %}
+{% block main %}
+      {# FRUEHERE GESPRAECHE MIT DEM INKLUAGENT (Steve 12.10.2026, Schalter funktionen.AGENT_GESPRAECHE): eine schlichte Liste,
+         neueste zuerst — jedes Gespraech eine Ueberschrift 2 mit Link (per Ueberschriften-Navigation durchgehen), darunter
+         Datum, Zahl der Nachrichten und Projekte. Bewusst NICHT im Agenten selbst (die Liste dort fand man in InkluEdit
+         unuebersichtlich). Nur Text und Links, keine Ansagen. #}
+      <h1>{{ _('Frühere Gespräche') }}</h1>
+      <p class="dash-intro-box">{{ _('Hier stehen deine Gespräche mit dem InkluAgent, das neueste zuerst. Öffne eines zum Nachlesen; dort kannst du es fortsetzen.') }}</p>
+      {% if projekt_filter %}
+      <p>{{ _('Nur Gespräche zum Projekt „{name}“.').format(name=projekt_name) }} <a href="/gespraeche">{{ _('Alle Gespräche zeigen') }}</a></p>
+      {% endif %}
+      {% if not gespraeche %}
+      <p>{{ _('Noch keine Gespräche.') }}</p>
+      {% else %}
+      <ul class="gespraeche-liste">
+        {% for g in gespraeche %}
+        <li class="gespraech-eintrag">
+          <h2 class="gespraech-titel"><a href="/gespraeche/{{ g.id }}">{{ g.titel or _('Gespräch ohne Titel') }}</a></h2>
+          <p class="gespraech-meta">{{ g.datum }} · {{ _('1 Nachricht') if g.anzahl == 1 else _('{n} Nachrichten').format(n=g.anzahl) }}{% if g.aktuell %} · {{ _('läuft gerade') }}{% endif %}</p>
+          {% if g.projekte %}<p class="gespraech-meta">{{ _('Projekte:') }} {% for pr in g.projekte %}{{ pr.name }}{% if pr.geloescht %} ({{ _('gelöscht') }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+{% endblock %}

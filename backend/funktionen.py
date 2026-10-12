@@ -103,6 +103,10 @@ AGENT_KONTO_WERKZEUGE = _umgebung_an("INKLUAGENT_KONTO_WERKZEUGE")
 # „gerade Projektlisten werden so fuer VoiceOver navigierbar“). Der Server macht aus Aufzaehlungen des Modells „• “-Zeilen
 # (statt sie zu loeschen), die Seite baut daraus p/ul/ol mit textContent — kein Markdown, kein innerHTML. INKLUAGENT_BLOECKE=an.
 AGENT_BLOECKE = _umgebung_an("INKLUAGENT_BLOECKE")
+# Gespraeche (Steve 12.10.2026): Knopf „Neues Gespräch“ und Link „Frühere Gespräche“ im InkluAgent, eigene Seite mit schlichter
+# Liste (neueste zuerst) und Lese-Seite mit „Hier weitermachen“; auf Seiten ohne Projekt findet der Agent fruehere Gespraeche
+# zu einem Projekt und verlinkt sie. Braucht AGENT_KONTO. INKLUAGENT_GESPRAECHE=an.
+AGENT_GESPRAECHE = _umgebung_an("INKLUAGENT_GESPRAECHE")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

@@ -12005,3 +12005,76 @@ msgstr "Añadir al proyecto «{projekt}»"
 #, python-brace-format
 msgid "Webseite „{url}“ ist geladen."
 msgstr "La página web «{url}» se ha cargado."
+
+# InkluAgent: Gespräche (12.10.2026)
+msgid "Neues Gespräch"
+msgstr "Nueva conversación"
+
+msgid "Frühere Gespräche"
+msgstr "Conversaciones anteriores"
+
+msgid "Neues Gespräch begonnen. Das bisherige findest du unter „Frühere Gespräche“."
+msgstr "Nueva conversación iniciada. La anterior la encontrarás en «Conversaciones anteriores»."
+
+msgid "Das ging nicht. Bitte erneut versuchen."
+msgstr "No ha funcionado. Inténtalo de nuevo."
+
+msgid "Gespräch wird fortgesetzt …"
+msgstr "Continuando la conversación …"
+
+msgid "Hier stehen deine Gespräche mit dem InkluAgent, das neueste zuerst. Öffne eines zum Nachlesen; dort kannst du es fortsetzen."
+msgstr "Aquí están tus conversaciones con el InkluAgent, la más reciente primero. Abre una para leerla; allí puedes continuarla."
+
+#, python-brace-format
+msgid "Nur Gespräche zum Projekt „{name}“."
+msgstr "Solo conversaciones sobre el proyecto «{name}»."
+
+msgid "Alle Gespräche zeigen"
+msgstr "Mostrar todas las conversaciones"
+
+msgid "Noch keine Gespräche."
+msgstr "Todavía no hay conversaciones."
+
+msgid "Gespräch ohne Titel"
+msgstr "Conversación sin título"
+
+msgid "1 Nachricht"
+msgstr "1 mensaje"
+
+#, python-brace-format
+msgid "{n} Nachrichten"
+msgstr "{n} mensajes"
+
+msgid "läuft gerade"
+msgstr "en curso"
+
+msgid "Projekte:"
+msgstr "Proyectos:"
+
+msgid "gelöscht"
+msgstr "eliminado"
+
+msgid "Zurück zu „Frühere Gespräche“"
+msgstr "Volver a «Conversaciones anteriores»"
+
+msgid "Hier weitermachen"
+msgstr "Continuar aquí"
+
+#, python-brace-format
+msgid "Gespräch „{titel}“ lesen"
+msgstr "Leer la conversación «{titel}»"
+
+msgid "Den InkluAgent findest du auf jeder Seite, nach dem Hauptinhalt; oben auf der Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Der Knopf „InkluAgent“ öffnet das Gespräch."
+msgstr "Encontrarás el InkluAgent en cada página, después del contenido principal; arriba, el enlace de salto «Ir al InkluAgent» lleva directamente allí. El botón «InkluAgent» abre la conversación."
+
+msgid "Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch."
+msgstr "Encontrarás el InkluAgent en cada proyecto: el botón «InkluAgent» abre la conversación."
+
+msgid "Er führt ein durchgehendes Gespräch über alle deine Projekte; wo es um ein anderes Projekt geht, steht „Ab hier: Projekt …“."
+msgstr "Mantiene una conversación continua sobre todos tus proyectos; cuando se trata de otro proyecto, pone «A partir de aquí: proyecto …»."
+
+msgid "Mit „Neues Gespräch“ beginnst du frisch; frühere Gespräche findest du unter „Frühere Gespräche“ und setzt sie dort mit „Hier weitermachen“ fort."
+msgstr "Con «Nueva conversación» empiezas de cero; las anteriores están en «Conversaciones anteriores» y allí las continúas con «Continuar aquí»."
+
+msgid "Jedes Projekt hat sein eigenes Gespräch."
+msgstr "Cada proyecto tiene su propia conversación."

@@ -12003,3 +12003,76 @@ msgstr "Add to project “{projekt}”"
 #, python-brace-format
 msgid "Webseite „{url}“ ist geladen."
 msgstr "Web page “{url}” has been loaded."
+
+# InkluAgent: Gespräche (12.10.2026)
+msgid "Neues Gespräch"
+msgstr "New conversation"
+
+msgid "Frühere Gespräche"
+msgstr "Earlier conversations"
+
+msgid "Neues Gespräch begonnen. Das bisherige findest du unter „Frühere Gespräche“."
+msgstr "New conversation started. You will find the previous one under “Earlier conversations”."
+
+msgid "Das ging nicht. Bitte erneut versuchen."
+msgstr "That did not work. Please try again."
+
+msgid "Gespräch wird fortgesetzt …"
+msgstr "Continuing the conversation …"
+
+msgid "Hier stehen deine Gespräche mit dem InkluAgent, das neueste zuerst. Öffne eines zum Nachlesen; dort kannst du es fortsetzen."
+msgstr "Here are your conversations with the InkluAgent, newest first. Open one to read it; there you can continue it."
+
+#, python-brace-format
+msgid "Nur Gespräche zum Projekt „{name}“."
+msgstr "Only conversations about project “{name}”."
+
+msgid "Alle Gespräche zeigen"
+msgstr "Show all conversations"
+
+msgid "Noch keine Gespräche."
+msgstr "No conversations yet."
+
+msgid "Gespräch ohne Titel"
+msgstr "Untitled conversation"
+
+msgid "1 Nachricht"
+msgstr "1 message"
+
+#, python-brace-format
+msgid "{n} Nachrichten"
+msgstr "{n} messages"
+
+msgid "läuft gerade"
+msgstr "current"
+
+msgid "Projekte:"
+msgstr "Projects:"
+
+msgid "gelöscht"
+msgstr "deleted"
+
+msgid "Zurück zu „Frühere Gespräche“"
+msgstr "Back to “Earlier conversations”"
+
+msgid "Hier weitermachen"
+msgstr "Continue here"
+
+#, python-brace-format
+msgid "Gespräch „{titel}“ lesen"
+msgstr "Read conversation “{titel}”"
+
+msgid "Den InkluAgent findest du auf jeder Seite, nach dem Hauptinhalt; oben auf der Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Der Knopf „InkluAgent“ öffnet das Gespräch."
+msgstr "You will find the InkluAgent on every page, after the main content; at the top of the page the skip link “Skip to InkluAgent” takes you straight there. The “InkluAgent” button opens the conversation."
+
+msgid "Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch."
+msgstr "You will find the InkluAgent in every project: the “InkluAgent” button opens the conversation."
+
+msgid "Er führt ein durchgehendes Gespräch über alle deine Projekte; wo es um ein anderes Projekt geht, steht „Ab hier: Projekt …“."
+msgstr "It keeps one continuous conversation across all your projects; where it turns to another project, it says “From here: project …”."
+
+msgid "Mit „Neues Gespräch“ beginnst du frisch; frühere Gespräche findest du unter „Frühere Gespräche“ und setzt sie dort mit „Hier weitermachen“ fort."
+msgstr "“New conversation” starts afresh; you will find earlier conversations under “Earlier conversations” and can continue them there with “Continue here”."
+
+msgid "Jedes Projekt hat sein eigenes Gespräch."
+msgstr "Each project has its own conversation."

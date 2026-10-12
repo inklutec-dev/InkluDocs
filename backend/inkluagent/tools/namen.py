@@ -41,6 +41,8 @@ WERKZEUG_NAMEN: dict[str, str] = {
     # Schritt 4: Konto-Werkzeuge, die etwas aendern
     "projekt_anlegen": "Projekt anlegen", "projekt_umbenennen": "Projekt umbenennen", "projekt_loeschen": "Projekt löschen",
     "lauf_abbrechen": "Laufende Arbeit abbrechen",
+    # Gespraeche (12.10.2026)
+    "fruehere_gespraeche": "Frühere Gespräche",
 }
 
 

@@ -1199,6 +1199,13 @@ ul.inkluagent-kurzhilfe {
 .inkluagent-frueher summary { cursor: pointer; font-weight: 600; }
 .inkluagent-frueher summary:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
 .inkluagent-frueher-liste { margin-top: 0.5rem; }
+/* Gespraeche (12.10.2026): „Neues Gespräch“ und „Frühere Gespräche“ oben im Agenten; Seite „Frühere Gespräche“ */
+.inkluagent-gespraech-leiste { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 0 0 0.75rem; }
+.gespraeche-liste { list-style: none; padding: 0; margin: 1rem 0 0; }
+.gespraech-eintrag { border-bottom: 1px solid var(--border); padding: 0.75rem 0; }
+.gespraech-eintrag h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.gespraech-meta { margin: 0.1rem 0; color: var(--text-muted); font-size: 0.95rem; }
+.gespraech-verlauf { margin-top: 1rem; }
 /* Fester Bereich auf jeder Seite (Ausbau Runde 2, Schritt 3): nach dem Hauptinhalt, gleiche Breite und Abstaende wie main;
    h2 dort in der Groesse der Abschnitte (.dash-main h2 greift ausserhalb von main nicht) */
 .inkluagent-bereich { max-width: 880px; padding: 0 1.5rem 3rem; }
