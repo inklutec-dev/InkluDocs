@@ -38,6 +38,9 @@ WERKZEUG_NAMEN: dict[str, str] = {
     # Seiten ohne Projekt (InkluAgent-Ausbau Runde 2, Schritt 3, inkluagent/konto.py)
     "projekte_auflisten": "Projektliste", "projekt_oeffnen": "Projekt öffnen", "guthaben_lesen": "Guthaben",
     "laufende_arbeit": "Laufende Arbeit",
+    # Schritt 4: Konto-Werkzeuge, die etwas aendern
+    "projekt_anlegen": "Projekt anlegen", "projekt_umbenennen": "Projekt umbenennen", "projekt_loeschen": "Projekt löschen",
+    "lauf_abbrechen": "Laufende Arbeit abbrechen",
 }
 
 

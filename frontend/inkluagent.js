@@ -640,8 +640,30 @@ function inkluagentAktionenKarten(actions) {
         if (!a) return;
         if (a.type === 'karte') inkluagentKarteSetzen(a.angebot_id, a);
         if (a.type === 'ansicht_aktualisieren') nachziehen = true;
+        if (a.type === 'projekt_geloescht') inkluagentProjektWeg(a.project_id);
     });
     return nachziehen;
+}
+
+// Schritt 4: der Agent hat das Projekt geloescht, auf dessen Seite man ist — der Hauptbereich sagt das und verlinkt die Uebersicht.
+// Kein automatischer Seitenwechsel (der Fokus bleibt auf dem Knopf der Karte, die Antwort ist noch zu hoeren); der Agent bleibt.
+function inkluagentProjektWeg(projectId) {
+    if (window._inkluagentProjectId == null || String(projectId) !== String(window._inkluagentProjectId)) return;
+    const main = document.getElementById('main');
+    if (!main) return;
+    main.textContent = '';
+    const h = document.createElement('h1');
+    h.textContent = t('Projekt gelöscht');
+    const p = document.createElement('p');
+    p.textContent = t('Das Projekt ist gelöscht.') + ' ';
+    const a = document.createElement('a');
+    a.href = '/dashboard';
+    a.textContent = t('Zur Übersicht');
+    p.appendChild(a);
+    main.appendChild(h);
+    main.appendChild(p);
+    window._inkluagentProjectId = null;
+    announce(t('Das Projekt ist gelöscht.'));
 }
 
 // Werkzeug-Transparenz (Steve 28.08.2026): Namen der Agenten-Werkzeuge fuer die Live-Zeile „Ruft gerade auf: …“ und die
@@ -663,13 +685,14 @@ function inkluagentWerkzeugText(werkzeuge) {
 // Angebot aus (POST /chat/bestaetigen mit seiner Kennung). Pruefung 4 (M3): waehrend der Anfrage aria-disabled statt disabled
 // (der Fokus bleibt auf dem Knopf), danach traegt die Karte ihren Zustand („Erledigt“ / „Nicht mehr gültig“); Fehler stehen
 // in ihrer Statuszeile. Das Ergebnis kommt als neue Antwort — Fokus nach der Regel oben (M1).
-async function inkluagentBestaetigen(angebotId, btn, statusEl) {
+async function inkluagentBestaetigen(angebotId, btn, statusEl, konto) {
     const projectId = window._inkluagentProjectId;
-    if (!projectId || !btn || btn.getAttribute('aria-disabled') === 'true') return;
+    // konto (Ausbau Runde 2, Schritt 4): Karten aus Seiten ohne Projekt (Projekt löschen) gelten auf jeder Seite
+    if ((!konto && !projectId) || !btn || btn.getAttribute('aria-disabled') === 'true') return;
     btn.setAttribute('aria-disabled', 'true');
     if (statusEl) statusEl.textContent = t('Wird ausgeführt …');
     try {
-        const res = await fetch('/api/projects/' + projectId + '/chat/bestaetigen', {
+        const res = await fetch(konto ? '/api/agent/bestaetigen' : '/api/projects/' + projectId + '/chat/bestaetigen', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ angebot_id: angebotId }) });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -726,7 +749,7 @@ function inkluagentAnhangEl(anhang) {
                 const st = document.createElement('p');
                 st.className = 'inkluagent-bestaetigung-status';
                 st.setAttribute('role', 'status');
-                b.addEventListener('click', () => inkluagentBestaetigen(a.angebot_id, b, st));
+                b.addEventListener('click', () => inkluagentBestaetigen(a.angebot_id, b, st, !!a.konto));
                 karte.appendChild(b); karte.appendChild(st);
             }
             box.appendChild(karte);

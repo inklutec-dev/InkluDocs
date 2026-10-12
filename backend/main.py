@@ -11450,7 +11450,8 @@ async def agent_verlauf(request: Request, projekt: Optional[int] = None, user: d
     _ = get_gettext(resolve_ui_language(request))
     nachrichten = _ag.karten_im_verlauf(storage.konto_verlauf(user["id"]), _)
     for n in nachrichten:
-        if n.get("project_id") == projekt:
+        # Karten aus Seiten ohne Projekt (Schritt 4) bestaetigt man ueberall (POST /api/agent/bestaetigen)
+        if n.get("project_id") == projekt or n.get("project_id") is None:
             continue
         for a in (n.get("anhang") or []):
             if isinstance(a, dict) and a.get("art") == "bestaetigung" and a.get("zustand") in (None, "", "offen"):
@@ -11482,14 +11483,33 @@ async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depen
         data = await request.json()
     except Exception:  # noqa: BLE001
         data = {}
+    return await _karte_bestaetigen(request, user, project_id, data)
+
+
+@app.post("/api/agent/bestaetigen")
+async def agent_bestaetigen(request: Request, user: dict = Depends(get_current_user)):
+    """Knopf einer Karte aus einer Seite OHNE Projekt (InkluAgent-Ausbau Runde 2, Schritt 4: Projekt loeschen) — dieselbe Logik
+    wie im Projekt; das Angebot liegt unter dem Konto-Schluessel (Projekt 0), ausgefuehrt mit den Konto-Werkzeugen."""
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_KONTO_WERKZEUGE")
+    funktionen.endpunkt_frei("AGENT_KONTO")
+    try:
+        data = await request.json()
+    except Exception:  # noqa: BLE001
+        data = {}
+    return await _karte_bestaetigen(request, user, None, data)
+
+
+async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[int], data: dict):
     _ = get_gettext(resolve_ui_language(request))
     from inkluagent import storage
     from inkluagent.tools import ausgaben as _ag
+    schluessel_projekt = project_id or 0   # Konto-Angebote (Schritt 4) liegen unter Projekt 0
     angebot_id = str((data or {}).get("angebot_id") or "")
-    treffer, grund = _ag.angebot_reservieren(angebot_id, user["id"], project_id)
+    treffer, grund = _ag.angebot_reservieren(angebot_id, user["id"], schluessel_projekt)
     if not treffer:
         if grund == "erledigt":
-            felder = _ag.erledigte_karte(angebot_id, user["id"], project_id)
+            felder = _ag.erledigte_karte(angebot_id, user["id"], schluessel_projekt)
             return JSONResponse(status_code=409, content={"detail": _("Schon bestätigt."), "karte": felder})
         abgelaufen = {"zustand": "abgelaufen", "titel": _("Nicht mehr gültig")}
         return JSONResponse(status_code=404, content={"detail": _("Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu."),
@@ -11498,6 +11518,13 @@ async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depen
 
     def _ausfuehren() -> dict:
         from inkluagent.agent_loop import _werkzeugsatz
+        if project_id is None:   # Konto-Werkzeuge (Schritt 4)
+            from inkluagent import konto as _konto
+            defs, executor, _system = _konto.werkzeugsatz(user["id"], _)
+            if angebot["werkzeug"] not in {d["name"] for d in defs}:
+                return {"ok": False, "error": _("Diese Funktion gibt es hier nicht.")}
+            _ag._LETZTES[(user["id"], 0)] = angebot_id
+            return _ag.karte_ausfuehren(angebot_id, angebot["werkzeug"], angebot.get("args") or {}, executor)
         conn = get_db()
         try:
             project = dict(conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone())
@@ -11519,6 +11546,7 @@ async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depen
     actions = [dict({"type": "karte"}, **k) for k in karten]
     if r.pop("aktualisieren", False):
         actions.append({"type": "ansicht_aktualisieren"})
+    actions += r.pop("aktionen", None) or []   # Konto-Werkzeuge (Schritt 4): z. B. {"type": "projekt_geloescht"}
     karte = next((k for k in karten if k.get("angebot_id") == angebot_id), None)
     res = r.get("result") or {}
     if not (r.get("ok") and not res.get("rueckfrage_noetig")):
@@ -11539,7 +11567,7 @@ async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depen
 
     def _speichern():
         frage = _("Bestätigt über den Knopf: {text}").format(text=angebot.get("beschreibung") or angebot.get("text") or "")
-        if funktionen.AGENT_KONTO:   # Gespraech je Konto (Ausbau Runde 2, Schritt 2)
+        if funktionen.AGENT_KONTO or project_id is None:   # Gespraech je Konto (Ausbau Runde 2, Schritt 2)
             storage.konto_anhaengen(user["id"], project_id, "user", frage)
             storage.konto_anhaengen(user["id"], project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
             return

@@ -11922,3 +11922,19 @@ msgstr "Projekt öffnen"
 
 msgid "Laufende Arbeit"
 msgstr "Laufende Arbeit"
+
+# InkluAgent-Ausbau Runde 2, Schritt 4: Konto-Werkzeuge (12.10.2026)
+msgid "Projekt umbenennen"
+msgstr "Projekt umbenennen"
+
+msgid "Projekt löschen"
+msgstr "Projekt löschen"
+
+msgid "Laufende Arbeit abbrechen"
+msgstr "Laufende Arbeit abbrechen"
+
+msgid "Das Projekt ist gelöscht."
+msgstr "Das Projekt ist gelöscht."
+
+msgid "Zur Übersicht"
+msgstr "Zur Übersicht"

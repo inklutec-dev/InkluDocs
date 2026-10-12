@@ -11493,3 +11493,19 @@ msgstr "Öppna projekt"
 
 msgid "Laufende Arbeit"
 msgstr "Pågående arbete"
+
+# InkluAgent-Ausbau Runde 2, Schritt 4: Konto-Werkzeuge (12.10.2026)
+msgid "Projekt umbenennen"
+msgstr "Byt namn på projekt"
+
+msgid "Projekt löschen"
+msgstr "Radera projekt"
+
+msgid "Laufende Arbeit abbrechen"
+msgstr "Avbryt pågående arbete"
+
+msgid "Das Projekt ist gelöscht."
+msgstr "Projektet är raderat."
+
+msgid "Zur Übersicht"
+msgstr "Till översikten"

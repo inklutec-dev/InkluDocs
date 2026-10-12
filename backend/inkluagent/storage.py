@@ -213,9 +213,9 @@ def karte_aktualisieren(project_id: int, angebot_id: str, felder: dict) -> int:
             if geaendert:
                 conn.execute("UPDATE chat_messages SET anhang = ? WHERE id = ?", (json.dumps(liste, ensure_ascii=False), r["id"]))
                 n += 1
-        # Gespraech je Konto (Runde 2, Schritt 2): dieselbe Karte steht dort, wenn der Schalter an war
-        for r in conn.execute("SELECT id, anhang FROM agent_nachrichten WHERE project_id = ? AND anhang LIKE ?",
-                              (project_id, f"%{angebot_id}%")).fetchall():
+        # Gespraech je Konto (Runde 2, Schritt 2): dieselbe Karte steht dort, wenn der Schalter an war. Ohne Projekt-Filter: auch
+        # Karten aus Seiten ohne Projekt (Schritt 4, Projekt 0 im Angebot, NULL im Gespraech); Angebots-Kennungen sind eindeutig.
+        for r in conn.execute("SELECT id, anhang FROM agent_nachrichten WHERE anhang LIKE ?", (f"%{angebot_id}%",)).fetchall():
             try:
                 liste = json.loads(r["anhang"]) or []
             except ValueError:

@@ -100,6 +100,11 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     "projekt_oeffnen": ("name_daten",),
     "guthaben_lesen": (),
     "laufende_arbeit": ("laeuft[].projekt_daten", "laeuft[].dokument_daten"),
+    # Schritt 4 (Konto-Werkzeuge, die etwas aendern)
+    "projekt_anlegen": ("name_daten",),
+    "projekt_umbenennen": ("name_daten",),
+    "projekt_loeschen": ("name_daten",),
+    "lauf_abbrechen": ("name_daten",),
 }
 
 

@@ -182,7 +182,7 @@ def karte_ausfuehren(angebot_id: str, werkzeug: str, args: dict, executor) -> di
 
 
 # Karte unter der Antwort (Pruefung 3): Text und Knopf vom SERVER, nicht vom Modell
-_UNUMKEHRBAR = ("ausgabe_loeschen", "dokument_loeschen", "bild_loeschen")
+_UNUMKEHRBAR = ("ausgabe_loeschen", "dokument_loeschen", "bild_loeschen", "projekt_loeschen")   # projekt_loeschen: Konto (Schritt 4)
 
 
 def karte_anhaengen(result: dict, werkzeug: str, args: dict, user_id: int, project_id: int, vorher_id: Optional[str]) -> dict:

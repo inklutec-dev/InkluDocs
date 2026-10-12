@@ -11921,3 +11921,19 @@ msgstr "Ouvrir le projet"
 
 msgid "Laufende Arbeit"
 msgstr "Travail en cours"
+
+# InkluAgent-Ausbau Runde 2, Schritt 4: Konto-Werkzeuge (12.10.2026)
+msgid "Projekt umbenennen"
+msgstr "Renommer le projet"
+
+msgid "Projekt löschen"
+msgstr "Supprimer le projet"
+
+msgid "Laufende Arbeit abbrechen"
+msgstr "Annuler le travail en cours"
+
+msgid "Das Projekt ist gelöscht."
+msgstr "Le projet a été supprimé."
+
+msgid "Zur Übersicht"
+msgstr "Vers l’aperçu"

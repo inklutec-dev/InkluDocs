@@ -570,3 +570,34 @@ laufende Antwort über den Seitenwechsel, Hochladen ohne Projekt, Agentenansicht
 Schalter-Kombinationen grün, Runde-1-Probe mit Schaltern aus unverändert. Stichprobe mit Gemini wie Staging (lokal): Projekte
 und laufende Arbeit richtig, Guthaben, Link ins Projekt, Löschen abgelehnt mit Verweis auf die Oberfläche, keine
 Werkzeugnamen in den Antworten.
+
+### Schritt 4: Konto-Werkzeuge, die etwas ändern (Schalter `AGENT_KONTO_WERKZEUGE`, Umgebung `INKLUAGENT_KONTO_WERKZEUGE=an`)
+
+Wirkt mit `AGENT_UEBERALL` und `AGENT_KONTO` (Seiten ohne Projekt). Konzept Abschnitt 5, Schritt 7, und Abschnitt 6, Frage 8
+(„Projekt löschen nur per Knopf“). Kern: `inkluagent/konto.py`, je derselbe Endpunkt wie der Knopf der Oberfläche
+(`inkluagent/kern.py`: `endpunkt`, `Anfrage`, `warten`).
+- `projekt_anlegen` (Name, Art pdf/word/formular/grafik/web) über `POST /api/projects`; Bremse wie beim Hochladefeld (neue
+  Projekte je Konto und Tag, `agent_zaehler`); Link „Projekt „…“ öffnen“ unter der Antwort. Kostenlos.
+- `projekt_umbenennen` über `PATCH /api/projects/{id}`. Kostenlos, nur eigene Projekte.
+- `projekt_loeschen`: ohne Bestätigung legt der Server ein Angebot unter dem Konto-Schlüssel (Projekt 0) ab und eine Karte
+  „Bestätigung nötig — Projekt löschen: „…“. Das lässt sich nicht rückgängig machen.“ mit Knopf „Projekt löschen („…“)
+  bestätigen“ (`ausgaben.nachbereiten`, `_UNUMKEHRBAR`). Das Modell kann nicht selbst bestätigen: das Werkzeug hat kein Feld
+  `bestaetigt`, und ein `bestaetigt` ohne Knopf (`ausgaben._KARTE`) wird abgewiesen — ein getipptes Ja löscht nie. Der Knopf
+  geht an `POST /api/agent/bestaetigen` (gemeinsame Logik mit dem Projekt-Knopf: `main._karte_bestaetigen`), auch von einer
+  Projektseite aus (Karte mit `konto: true`). Nicht, solange im Projekt etwas läuft (vor der Karte und beim Klick geprüft).
+  Gelöscht wird über `DELETE /api/projects/{id}` (Gespräch bleibt, Bezug als gelöscht markiert — Schritt 2). Ist das gelöschte
+  Projekt die offene Seite, zeigt der Hauptbereich „Projekt gelöscht“ mit Link zur Übersicht — ohne Seitenwechsel, der Fokus
+  bleibt auf dem Knopf.
+- `lauf_abbrechen` über die Abbrechen-Endpunkte der Generierung, Übersetzung und Quickinfos; Tagging lässt sich nicht abbrechen
+  (sagt das Ergebnis). Nur auf ausdrücklichen Wunsch.
+- Prompt: Abschnitt „Was du hier außerdem ändern kannst“ nur mit Schalter, sonst „das geht über die Oberfläche“; bei ähnlichen
+  Namen nachfragen. Kartenzustand im Gespräch des Kontos ohne Projekt-Filter (`storage.karte_aktualisieren`, Kennungen sind
+  eindeutig). 5 neue Texte in sechs Sprachen.
+
+Keine Migration.
+
+Tests: `tests/test_agent_konto_werkzeuge.py` (10: Schalter und Werkzeugsatz ohne `bestaetigt`, Anlegen mit Link und Bremse,
+Umbenennen nur eigene, Löschen nur über den Knopf inklusive getipptem Ja, Doppelklick 409, Karte im Verlauf „Erledigt“, nicht
+während eines Laufs, fremdes Projekt, Knopf ohne Schalter 404, Lauf abbrechen, Oberfläche). Klickprobe lokal 14 von 14
+(Anlegen mit Link, Karte mit Projekt und Warnung, getipptes Ja löscht nicht, Knopf löscht, Karte „Erledigt“, Konto-Karte auf der
+Projektseite, gelöschtes offenes Projekt ohne Seitenwechsel, axe ohne Verstöße).

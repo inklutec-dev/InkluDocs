@@ -94,6 +94,11 @@ AGENT_KONTO = _umgebung_an("INKLUAGENT_KONTO")
 # Seiten ohne Projekt mit lesenden Konto-Werkzeugen (inkluagent/konto.py). Eine laufende Antwort uebersteht den Seitenwechsel
 # (GET /api/agent/status). Wirkt nur zusammen mit AGENT_KONTO. INKLUAGENT_UEBERALL=an.
 AGENT_UEBERALL = _umgebung_an("INKLUAGENT_UEBERALL")
+# Runde 2, Schritt 4 — Konto-Werkzeuge, die etwas aendern (inkluagent/konto.py): Projekt anlegen (Name, Art; Bremse wie beim
+# Hochladefeld), umbenennen, loeschen (NUR ueber den Knopf der Karte, nie per getipptem Ja, nicht waehrend eines Laufs) und
+# laufende Arbeit abbrechen — je ueber denselben Endpunkt wie der Knopf der Oberflaeche. Wirkt nur mit AGENT_UEBERALL und
+# AGENT_KONTO. INKLUAGENT_KONTO_WERKZEUGE=an.
+AGENT_KONTO_WERKZEUGE = _umgebung_an("INKLUAGENT_KONTO_WERKZEUGE")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {
