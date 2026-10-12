@@ -11867,3 +11867,29 @@ msgstr "{n} nouveaux projets ont déjà été créés aujourd’hui via l’Inkl
 #, python-brace-format
 msgid "In dieser Stunde wurden schon {n} Webadressen geladen. Bitte später noch einmal."
 msgstr "{n} adresses web ont déjà été chargées cette heure-ci. Veuillez réessayer plus tard."
+
+# InkluAgent-Ausbau Runde 2, Schritt 2: Gespräch je Konto (12.10.2026)
+msgid "Ab hier: ohne Projekt"
+msgstr "À partir d’ici : sans projet"
+
+#, python-brace-format
+msgid "Ab hier: Projekt „{name}“"
+msgstr "À partir d’ici : projet « {name} »"
+
+#, python-brace-format
+msgid "Ab hier: Projekt „{name}“ (gelöscht)"
+msgstr "À partir d’ici : projet « {name} » (supprimé)"
+
+msgid "Früheres Gespräch in diesem Projekt (1 Nachricht)"
+msgstr "Conversation précédente dans ce projet (1 message)"
+
+#, python-brace-format
+msgid "Früheres Gespräch in diesem Projekt ({n} Nachrichten)"
+msgstr "Conversation précédente dans ce projet ({n} messages)"
+
+msgid "Das frühere Gespräch konnte nicht geladen werden."
+msgstr "La conversation précédente n’a pas pu être chargée."
+
+#, python-brace-format
+msgid "Zu bestätigen im Projekt „{name}“"
+msgstr "À confirmer dans le projet « {name} »"

@@ -727,6 +727,36 @@ def init_db():
             PRIMARY KEY (user_id, schluessel)
         )
     ''')
+    # INKLUAGENT-AUSBAU Runde 2, Schritt 2 (12.10.2026, inkluagent/storage.py): EIN Gespraech je Konto. Projekt nur als
+    # freiwilliger Bezug OHNE Loeschkaskade (chat_messages verlangt ein Projekt und loescht mit ihm); projekt_name ist die
+    # Momentaufnahme fuer die Projektmarke, projekt_geloescht setzt delete_project. agent_fokus: woran das Gespraech gerade
+    # arbeitet. Vorwaerts: diese Zeilen (idempotent). Rueckwaerts: alter Code liest die Tabellen nicht; entfernen mit
+    # „DROP TABLE agent_nachrichten“ und „DROP TABLE agent_fokus“.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS agent_nachrichten (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            project_id INTEGER,
+            projekt_name TEXT NOT NULL DEFAULT '',
+            projekt_geloescht INTEGER NOT NULL DEFAULT 0,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            image_refs TEXT,
+            intent TEXT,
+            werkzeuge TEXT,
+            anhang TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_nachrichten_konto ON agent_nachrichten(user_id, id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_nachrichten_projekt ON agent_nachrichten(project_id)")
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS agent_fokus (
+            user_id INTEGER PRIMARY KEY,
+            project_id INTEGER,
+            geaendert_am TEXT DEFAULT (datetime('now'))
+        )
+    ''')
 
     # EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Kunden lassen Dokumente von Profis aufbereiten oder pruefen,
     # Lieferung innerhalb einer Frist, Bezahlung in Credits (vorgemerkt bei der Bestellung, abgebucht bei der Lieferung,
@@ -1431,6 +1461,9 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM email_changes WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM email_verifications WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM user_prompts WHERE user_id = ?", (user_id,))
+    # InkluAgent (Ausbau Runde 1/2): Gespraech je Konto, Fokus und Zaehler des Kontos
+    for _tabelle in ("agent_nachrichten", "agent_fokus", "agent_zaehler", "agent_tageszaehler"):
+        conn.execute(f"DELETE FROM {_tabelle} WHERE user_id = ?", (user_id,))
     # Quickinfo-Werkzeug (27.08.2026): Stammdaten-Bibliothek des Kontos.
     conn.execute("DELETE FROM stammdaten WHERE user_id = ?", (user_id,))
     # Meine Ablage (11.09.2026): Eintraege des Kontos ausdruecklich loeschen (Dateien unter
@@ -1617,7 +1650,12 @@ def get_daily_chat_count(user_id: int) -> int:
                WHERE p.user_id = ? AND m.role = 'user' AND date(m.created_at) = date('now')""",
             (user_id,)
         ).fetchone()
-        return row[0] if row else 0
+        # Gespraech je Konto (InkluAgent-Ausbau Runde 2, Schritt 2): diese Nachrichten stehen in agent_nachrichten
+        konto = conn.execute(
+            "SELECT COUNT(*) FROM agent_nachrichten WHERE user_id = ? AND role = 'user' AND date(created_at) = date('now')",
+            (user_id,)
+        ).fetchone()
+        return (row[0] if row else 0) + (konto[0] if konto else 0)
     finally:
         conn.close()
 

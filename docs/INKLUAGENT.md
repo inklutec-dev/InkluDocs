@@ -460,7 +460,8 @@ Modell. Kern: `backend/inkluagent/hochladen.py`, Endpunkt `POST /api/agent/hochl
 - **Notiz für das Modell:** Fakten und Preise je Datei (`notiz_text`, Namen als Daten gekennzeichnet), im Prozess abgelegt
   (30 Minuten), einmal abholbar und nur vom eigenen Nutzer (`notiz_holen`). Der Chat-Endpunkt nimmt `hochgeladen` (Kennung)
   an, holt die Notiz erst nach der Chat-Bremse (eine abgewiesene Nachricht verbraucht sie nicht) und hängt sie für das Modell
-  an. Im Verlauf steht nur die Kurzzeile für Menschen („Hochgeladen: a.pdf, b.docx. Nicht hochgeladen: c.doc“,
+  an (Dateinamen bekommt das Modell nur dort, als Daten gekennzeichnet). Im Verlauf steht nur die Kurzzeile für Menschen
+  („Hochgeladen: a.pdf, b.docx. Nicht hochgeladen: c.doc“,
   `kurzzeile`/`nachricht_fuer_verlauf`). Die Seite bekommt die Notiz nie.
 - **Nichts Kostenpflichtiges ohne Karte:** in der Nachricht mit hochgeladenen Dateien legen auch die vier Einzelaktionen
   (`EINZEL_BEZAHLT`) erst eine Karte vor (`executor.nur_mit_karte`, `sicherheit.einzel_vorab`, Hinweis `G_HOCHGELADEN`) —
@@ -481,3 +482,44 @@ Verstöße, leeres Senden, unvollständige Webadresse, drei Dateien mit Liste, K
 auf der Antwort, Datei im Projekt, neues Projekt, Verlauf ohne Notiz, Schalter aus ohne Feld). Stichprobe mit Gemini wie
 Staging (lokale App, fiktive Daten): Zuordnung und Preise genannt, nichts gestartet, Anweisung im Dateinamen erkannt und nicht
 ausgeführt.
+
+### Schritt 2: Ein Gespräch je Konto (Schalter `AGENT_KONTO`, Umgebung `INKLUAGENT_KONTO=an`)
+
+Steves Entscheidung (09.10.2026, Konzept Abschnitt 6, Fragen 1 und 2): ein durchgehendes Gespräch je Konto mit
+Projektmarken; die alten Projektgespräche bleiben im Projekt lesbar; wird ein Projekt gelöscht, bleibt das Gespräch und der
+Projektbezug gilt als gelöscht. Kern: `backend/inkluagent/storage.py` (Abschnitt „Gespräch je Konto“).
+- **Speicher:** Tabelle `agent_nachrichten` (Konto, Projekt als freiwilliger Bezug ohne Löschkaskade, Momentaufnahme des
+  Projektnamens, `projekt_geloescht`, Rolle, Text, Werkzeuge, Anhang) und `agent_fokus` (woran das Gespräch gerade arbeitet;
+  heute die Projektseite, auf der man schreibt — Seiten ohne Projekt kommen mit Schritt 3). Der Chat-Endpunkt und der Knopf
+  der Karte schreiben mit Schalter dorthin statt in `chat_messages`. `delete_project` markiert den Bezug
+  (`projekt_geloescht_markieren`) und löst den Fokus; `delete_user_data` löscht Gespräch, Fokus und die Zähler des Kontos
+  (`agent_zaehler`, `agent_tageszaehler` — die fehlten dort bisher). Die Tagesgrenze ohne `AGENT_SICHERHEIT`
+  (`get_daily_chat_count`) zählt beide Tabellen.
+- **Gedächtnis des Agenten** (`agent_loop._build_initial_messages`): die jüngsten 20 Nachrichten des Kontos; wo das Projekt
+  wechselt, steht vor der ersten Nachricht die Marke „[Projektwechsel: ab hier geht es um Projekt „…“]“ (Name als Daten
+  gekennzeichnet, „inzwischen gelöscht“ bei gelöschten), ebenso vor der neuen Nachricht, wenn zuletzt ein anderes Projekt dran
+  war. Die Werkzeuge arbeiten weiter auf dem Projekt der Seite.
+- **Zwei Fehler behoben, auch ohne Schalter:** (1) Der Agent bekam die ÄLTESTEN 20 Nachrichten statt der jüngsten
+  (`get_history` mit `LIMIT` liefert die ältesten; jetzt `storage.get_recent`) — in langen Gesprächen sah er den Anfang statt
+  des aktuellen Stands. (2) Die eben gespeicherte Nachricht kam doppelt beim Modell an (aus dem Verlauf und als neue Nachricht);
+  jetzt gibt der Endpunkt ihre Kennung mit (`ohne_nachricht`, auch in der Demo). Dazu: das Gedächtnis beginnt immer mit einer
+  Nutzer-Nachricht, zwei Nachrichten derselben Rolle hintereinander werden zusammengefasst (`_normalisieren`).
+- **Verlauf für die Seite:** `GET /api/agent/verlauf?projekt=<id>` (404 bei Schalter aus): Nachrichten des Kontos mit
+  `project_id`, `projekt_name`, `projekt_geloescht`; `frueher` = Zahl der Nachrichten im alten Gespräch dieses Projekts (nur
+  eigene Projekte); offene Karten ANDERER Projekte kommen ohne Knopf („Zu bestätigen im Projekt „…““), denn ein Angebot gilt
+  nur in seinem Projekt.
+- **Oberfläche** (`frontend/inkluagent.js`): Projektmarken als Absatz im Verlauf („Ab hier: Projekt „…““, „(gelöscht)“),
+  auch live vor der eigenen Nachricht; über dem Verlauf das native Aufklappelement „Früheres Gespräch in diesem Projekt
+  (n Nachrichten)“, das alte Gespräch wird erst beim Aufklappen geladen und nur gelesen (keine Karten, keine Downloads).
+  7 neue Texte in sechs Sprachen.
+
+**Migration** (`database.init_db`): `CREATE TABLE IF NOT EXISTS agent_nachrichten (…)` mit zwei Indizes und
+`CREATE TABLE IF NOT EXISTS agent_fokus (…)` — vorwärts idempotent; rückwärts liest alter Code die Tabellen nicht, entfernen mit
+`DROP TABLE agent_nachrichten` und `DROP TABLE agent_fokus`. Die alten Projektgespräche in `chat_messages` bleiben unverändert.
+
+Tests: `tests/test_agent_konto.py` (20: Schalter, Gespräch über Projekte mit Marke und Fokus, fremdes Projekt gibt keinen Namen
+preis, Projekt löschen markiert, jüngste Nachrichten, Karte im Gespräch des Kontos, Tagesgrenze, Konto löschen nimmt alles
+mit, Gedächtnis ohne Doppel und mit Marken, Endpunkte mit und ohne Schalter, Karten anderer Projekte ohne Knopf, früheres
+Gespräch lesbar, Projekt löschen lässt das Gespräch stehen, Oberfläche am Quelltext). Klickprobe lokal 13 von 13 (Aufklapper
+mit altem Gespräch, Marken beim Wechsel und nach dem Neuladen, Fokus auf der Antwort, axe ohne Verstöße, gelöschtes Projekt);
+Hochladefeld mit beiden Schaltern 20 von 20; Probe aus Runde 1 mit Schaltern aus unverändert 14 von 14.

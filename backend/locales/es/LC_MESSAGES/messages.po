@@ -11867,3 +11867,29 @@ msgstr "Hoy ya se han creado {n} proyectos nuevos con el InkluAgent. Mañana pod
 #, python-brace-format
 msgid "In dieser Stunde wurden schon {n} Webadressen geladen. Bitte später noch einmal."
 msgstr "En esta hora ya se han cargado {n} direcciones web. Inténtalo de nuevo más tarde."
+
+# InkluAgent-Ausbau Runde 2, Schritt 2: Gespräch je Konto (12.10.2026)
+msgid "Ab hier: ohne Projekt"
+msgstr "A partir de aquí: sin proyecto"
+
+#, python-brace-format
+msgid "Ab hier: Projekt „{name}“"
+msgstr "A partir de aquí: proyecto «{name}»"
+
+#, python-brace-format
+msgid "Ab hier: Projekt „{name}“ (gelöscht)"
+msgstr "A partir de aquí: proyecto «{name}» (eliminado)"
+
+msgid "Früheres Gespräch in diesem Projekt (1 Nachricht)"
+msgstr "Conversación anterior en este proyecto (1 mensaje)"
+
+#, python-brace-format
+msgid "Früheres Gespräch in diesem Projekt ({n} Nachrichten)"
+msgstr "Conversación anterior en este proyecto ({n} mensajes)"
+
+msgid "Das frühere Gespräch konnte nicht geladen werden."
+msgstr "No se ha podido cargar la conversación anterior."
+
+#, python-brace-format
+msgid "Zu bestätigen im Projekt „{name}“"
+msgstr "Pendiente de confirmar en el proyecto «{name}»"

@@ -42,7 +42,7 @@ from .tools.definitions import TOOL_DEFINITIONS_WORD
 from .prompts.system_formular import SYSTEM_FORMULAR
 from .adapters.inkludocs import build_project_summary
 from .sanitize import sanitize_markdown
-from .daten import KONTEXT_KOPF, ohne_marke   # Fremdtext ist keine Anweisung (09.10.2026)
+from .daten import DATEN_MARKE, KONTEXT_KOPF, ohne_marke   # Fremdtext ist keine Anweisung (09.10.2026)
 from . import sicherheit   # Sicherheitsfundament (Ausbau Runde 1, Schritt 2, Schalter AGENT_SICHERHEIT)
 
 log = logging.getLogger(__name__)
@@ -153,18 +153,68 @@ def _formular_summary(project_id: int, user_id: int) -> str:
             "im Konto. Details je Feld: list_form_fields / get_field_details.")
 
 
+def projekt_marke(name: str, geloescht: bool = False) -> str:
+    """Marke im Gedaechtnis des Agenten, wenn das Gespraech des Kontos das Projekt wechselt (Ausbau Runde 2, Schritt 2). Der
+    Name stammt vom Nutzer oder aus einer Datei: als Daten gekennzeichnet."""
+    return f"[Projektwechsel: ab hier geht es um Projekt {DATEN_MARKE}„{name}“{' (inzwischen gelöscht)' if geloescht else ''}]"
+
+
+def _mit_marken(history: list[dict]) -> list[dict]:
+    """Gespraech des Kontos: vor die erste Nachricht jedes Projektabschnitts die Marke setzen, und vor die neue Nachricht,
+    wenn das aktuelle Projekt ein anderes ist als zuletzt. Rueckgabe ohne Marke fuer die neue Nachricht, die haengt der Aufrufer an."""
+    out: list[dict] = []
+    vorher = object()
+    for h in history:
+        pid = h.get("project_id")
+        content = h.get("content", "")
+        if pid != vorher:
+            content = projekt_marke(h.get("projekt_name") or "", h.get("projekt_geloescht")) + "\n" + content
+            vorher = pid
+        out.append(dict(h, content=content))
+    return out
+
+
+def _normalisieren(messages: list[dict]) -> list[dict]:
+    """Abwechselnd Nutzer und Agent, beginnend mit dem Nutzer: aufeinanderfolgende Nachrichten derselben Rolle zusammenfassen
+    (eine Antwort, die nicht gespeichert wurde, hinterlaesst zwei Nutzer-Nachrichten hintereinander)."""
+    out: list[dict] = []
+    for m in messages:
+        if out and out[-1]["role"] == m["role"] and isinstance(out[-1]["content"], str) and isinstance(m["content"], str):
+            out[-1] = {"role": m["role"], "content": out[-1]["content"] + "\n\n" + m["content"]}
+        else:
+            out.append(dict(m))
+    return out
+
+
 def _build_initial_messages(
     project_id: int,
     user_message: str,
     project: dict,
     user_id: int = 0,
+    konto: bool = False,
+    ohne_nachricht: Optional[int] = None,
 ) -> list[dict]:
     """Baut die Anthropic-Format messages-Liste aus storage-History + user_message.
 
     History-Format aus storage: [{"role": "user|assistant", "content": "..."}].
     Tool-Calls werden NICHT in History gespeichert (vereinfacht den Reload).
+    Die JUENGSTEN _HISTORY_TURNS Nachrichten (bis 12.10.2026 lieferte get_history mit LIMIT die aeltesten — in langen
+    Gespraechen sah der Agent den Anfang statt des aktuellen Stands).
+    konto (Ausbau Runde 2, Schritt 2, Schalter AGENT_KONTO): das Gespraech des Kontos ueber alle Projekte, mit Projektmarken.
+    ohne_nachricht: Kennung der Nachricht dieser Runde, die der Endpunkt schon gespeichert hat — sie kommt als user_message
+    (fuer das Modell, z. B. mit der Notiz des Hochladefelds) und nicht noch einmal aus dem Verlauf (bis 12.10.2026 doppelt).
     """
-    history = storage.get_history(project_id, limit=_HISTORY_TURNS) or []
+    history = (storage.konto_verlauf(user_id, limit=_HISTORY_TURNS + 1) if konto else storage.get_recent(project_id, limit=_HISTORY_TURNS + 1)) or []
+    history = [h for h in history if not (ohne_nachricht and h.get("id") == ohne_nachricht)][-_HISTORY_TURNS:]
+    # Das Gedaechtnis beginnt mit einer Nutzer-Nachricht (abgeschnittener Anfang)
+    while history and history[0].get("role") != "user":
+        history = history[1:]
+    if konto:
+        letztes = history[-1].get("project_id") if history else None
+        history = _mit_marken(history)
+        if letztes != project_id:
+            name = (project or {}).get("name") or (project or {}).get("filename") or ""
+            user_message = projekt_marke(name) + "\n" + user_message
     messages: list[dict] = []
 
     # Projekt-Summary als erste user-Nachricht (Context-Vorgabe). Sie steht in der Rolle des Nutzers, enthaelt aber Namen und
@@ -186,7 +236,7 @@ def _build_initial_messages(
             messages.append({"role": role, "content": content})
 
     messages.append({"role": "user", "content": user_message})
-    return messages
+    return _normalisieren(messages)
 
 
 def _append_tool_results(
@@ -225,6 +275,8 @@ def run_agent(
     system_suffix: str = None,
     on_tool=None,
     nur_mit_karte: bool = False,
+    konto: bool = False,
+    ohne_nachricht: Optional[int] = None,
 ) -> dict[str, Any]:
     """Führt den agentic Loop aus. Returns:
         {"reply": str, "intent": "agentic", "image_refs": [...] or None,
@@ -247,7 +299,7 @@ def run_agent(
     sicherheit.nachricht_merken(executor.turn_id, user_message)
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
     executor.nur_mit_karte = bool(nur_mit_karte)
-    messages = _build_initial_messages(project_id, user_message, project, user_id)
+    messages = _build_initial_messages(project_id, user_message, project, user_id, konto=konto, ohne_nachricht=ohne_nachricht)
     system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
 
     actions_log: list[dict] = []

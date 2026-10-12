@@ -5799,11 +5799,12 @@ async def demo_chat(request: Request):
 
     from inkluagent import storage
     from inkluagent.chat_engine import process_message
-    storage.append_message(project_id, "user", message)
+    nid = storage.append_message(project_id, "user", message)
     # WICHTIG: system_suffix haengt die Demo-Leitplanke an — der Standard-Prompt
     # des Agenten bleibt unveraendert (Default None im normalen, eingeloggten Pfad).
+    # ohne_nachricht (12.10.2026): die eben gespeicherte Nachricht nicht noch einmal aus dem Verlauf ans Modell
     result = await asyncio.get_event_loop().run_in_executor(
-        None, lambda: process_message(project_id, message, uid, system_suffix=demo_mod.DEMO_GUARDRAIL)
+        None, lambda: process_message(project_id, message, uid, system_suffix=demo_mod.DEMO_GUARDRAIL, ohne_nachricht=nid)
     )
     storage.append_message(
         project_id, "assistant", result["reply"],
@@ -7055,6 +7056,9 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
     # ueber ON DELETE CASCADE + PRAGMA foreign_keys=ON ohnehin (Prod/Staging 12.09.: 0 Waisen),
     # hier trotzdem ausdruecklich — wie in delete_user_data, damit nichts am Pragma haengt.
     conn.execute("DELETE FROM chat_messages WHERE project_id = ?", (project_id,))
+    # Gespraech je Konto (InkluAgent-Ausbau Runde 2, Schritt 2; Steve 09.10.2026): es BLEIBT, der Projektbezug gilt als geloescht
+    from inkluagent import storage as _agent_storage
+    _agent_storage.projekt_geloescht_markieren(conn, project_id)
     conn.execute("DELETE FROM messages WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM shares WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
@@ -11433,6 +11437,37 @@ async def chat_get_history(project_id: int, request: Request, user: dict = Depen
     return {"messages": _ag.karten_im_verlauf(storage.get_history(project_id), get_gettext(resolve_ui_language(request)))}
 
 
+@app.get("/api/agent/verlauf")
+async def agent_verlauf(request: Request, projekt: Optional[int] = None, user: dict = Depends(get_current_user)):
+    """Gespraech des Kontos (InkluAgent-Ausbau Runde 2, Schritt 2, Schalter funktionen.AGENT_KONTO): die juengsten Nachrichten
+    ueber alle Projekte, je mit Projektmarke. `projekt` = die Seite, auf der man ist: offene Karten anderer Projekte bekommen
+    keinen Knopf (sie gelten nur in ihrem Projekt), und `frueher` nennt, wie viele Nachrichten das alte Gespraech dieses
+    Projekts hat (GET /api/projects/{id}/chat/history, bleibt lesbar)."""
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_KONTO")
+    from inkluagent import storage
+    from inkluagent.tools import ausgaben as _ag
+    _ = get_gettext(resolve_ui_language(request))
+    nachrichten = _ag.karten_im_verlauf(storage.konto_verlauf(user["id"]), _)
+    for n in nachrichten:
+        if n.get("project_id") == projekt:
+            continue
+        for a in (n.get("anhang") or []):
+            if isinstance(a, dict) and a.get("art") == "bestaetigung" and a.get("zustand") in (None, "", "offen"):
+                a.update({"zustand": "anderes_projekt",
+                          "titel": _("Zu bestätigen im Projekt „{name}“").format(name=n.get("projekt_name") or "")})
+    frueher, name = 0, ""
+    if projekt:
+        conn = get_db()
+        try:
+            eigen = conn.execute("SELECT name, filename FROM projects WHERE id = ? AND user_id = ?", (projekt, user["id"])).fetchone()
+        finally:
+            conn.close()
+        if eigen:
+            frueher, name = storage.anzahl(projekt), (eigen["name"] or eigen["filename"] or "")
+    return {"messages": nachrichten, "frueher": frueher, "projekt_name": name}
+
+
 @app.post("/api/projects/{project_id}/chat/bestaetigen")
 async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Bestaetigungs-Karte unter einer Chatbot-Antwort (Pruefung 3, 30.09.2026, Entwicklung N1): fuehrt GENAU das Angebot aus,
@@ -11503,8 +11538,12 @@ async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depen
     anhaenge = [anhang] if (anhang and anhang.get("art") != "bestaetigung") else []
 
     def _speichern():
-        storage.append_message(project_id, "user", _("Bestätigt über den Knopf: {text}").format(
-            text=angebot.get("beschreibung") or angebot.get("text") or ""))
+        frage = _("Bestätigt über den Knopf: {text}").format(text=angebot.get("beschreibung") or angebot.get("text") or "")
+        if funktionen.AGENT_KONTO:   # Gespraech je Konto (Ausbau Runde 2, Schritt 2)
+            storage.konto_anhaengen(user["id"], project_id, "user", frage)
+            storage.konto_anhaengen(user["id"], project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
+            return
+        storage.append_message(project_id, "user", frage)
         storage.append_message(project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
     await asyncio.get_running_loop().run_in_executor(None, _speichern)
     return {"ok": True, "reply": antwort, "anhang": anhaenge, "werkzeuge": [angebot["werkzeug"]], "karte": karte,
@@ -11559,7 +11598,14 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
     from inkluagent import storage
     from inkluagent.chat_engine import process_message
 
-    storage.append_message(project_id, "user", message)
+    # Gespraech je Konto (Ausbau Runde 2, Schritt 2): die Nachricht kommt ins Gespraech des Kontos, mit diesem Projekt als Marke
+    # und Fokus. nid: das Modell bekommt sie als neue Nachricht, nicht noch einmal aus dem Verlauf.
+    konto = funktionen.AGENT_KONTO
+    if konto:
+        nid = storage.konto_anhaengen(user["id"], project_id, "user", message)
+        storage.fokus_setzen(user["id"], project_id)
+    else:
+        nid = storage.append_message(project_id, "user", message)
     if funktionen.AGENT_SICHERHEIT:   # angenommene Nachricht zaehlen (unabhaengig von Projekten und Verlauf)
         from inkluagent import sicherheit as _sicherheit
         _sicherheit.tageszaehler_erhoehen(user["id"])
@@ -11568,7 +11614,8 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
     def _antwort(result: dict) -> dict:
         # anhang (11.09.2026, Meine Ausgaben): Download-Knoepfe unter der Antwort (Umwandlung/Word-Export
         # durch den Bot) — wird mitgespeichert, damit der Verlauf sie nach einem Neuladen noch zeigt.
-        storage.append_message(
+        speichern = (lambda *a, **k: storage.konto_anhaengen(user["id"], *a, **k)) if konto else storage.append_message
+        speichern(
             project_id, "assistant", result["reply"],
             image_refs=result.get("image_refs"),
             intent=result.get("intent"),
@@ -11590,7 +11637,8 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
     # Header bleibt die bisherige JSON-Antwort (API-Kunden, Demo, Tests).
     if "application/x-ndjson" not in (request.headers.get("accept") or ""):
         result = await loop.run_in_executor(None, lambda: process_message(project_id, message_modell, user["id"],
-                                                                          nur_mit_karte=nur_mit_karte))
+                                                                          nur_mit_karte=nur_mit_karte, konto=konto,
+                                                                          ohne_nachricht=nid))
         return _antwort(result)
 
     queue: asyncio.Queue = asyncio.Queue()
@@ -11604,7 +11652,8 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
         # persistiert (sonst landen sie im Kontext des naechsten Turns). DB-Zugriff im Executor.
         try:
             r = await loop.run_in_executor(
-                None, lambda: process_message(project_id, message_modell, user["id"], on_tool=on_tool, nur_mit_karte=nur_mit_karte))
+                None, lambda: process_message(project_id, message_modell, user["id"], on_tool=on_tool, nur_mit_karte=nur_mit_karte,
+                                              konto=konto, ohne_nachricht=nid))
             out = await loop.run_in_executor(None, _antwort, r)
         except Exception:
             logger.exception("Chat-Stream: process_message crashte")
@@ -11658,7 +11707,8 @@ def _inkluagent_schalter() -> dict:
     """window.INKLUAGENT (base_app.html): was der InkluAgent auf dieser Seite kann — Runde 2, je Schritt ein Schalter."""
     from inkluagent import hochladen as _hl
     return {"hochladen": bool(funktionen.AGENT_HOCHLADEN and INKLUAGENT_ENABLED), "max_dateien": _hl.max_dateien(),
-            "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024)}
+            "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024),
+            "konto": bool(funktionen.AGENT_KONTO and INKLUAGENT_ENABLED)}
 
 
 @app.delete("/api/projects/{project_id}/chat")

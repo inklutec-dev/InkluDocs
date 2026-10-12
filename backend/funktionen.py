@@ -84,6 +84,11 @@ AGENT_ANSICHT = _umgebung_an("INKLUAGENT_ANSICHT")
 # Runde 2, Schritt 1 — Hochladefeld im InkluAgent (inkluagent/hochladen.py): Dateien und Webadresse direkt im Agenten, der
 # Server ordnet zu und legt Projekte an, der Agent schlaegt mit Preisen vor. INKLUAGENT_HOCHLADEN=an.
 AGENT_HOCHLADEN = _umgebung_an("INKLUAGENT_HOCHLADEN")
+# Runde 2, Schritt 2 — EIN Gespraech je Konto (inkluagent/storage.py, Tabellen agent_nachrichten und agent_fokus): der Agent
+# fuehrt ein durchgehendes Gespraech ueber alle Projekte, mit Projektmarken („Ab hier: Projekt …“); alte Projektgespraeche
+# bleiben im Projekt lesbar, beim Loeschen eines Projekts bleibt das Gespraech (Projektbezug als geloescht markiert).
+# Steves Entscheidung 09.10.2026 (Konzept, Abschnitt 6, Fragen 1 und 2). INKLUAGENT_KONTO=an.
+AGENT_KONTO = _umgebung_an("INKLUAGENT_KONTO")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

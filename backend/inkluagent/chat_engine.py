@@ -62,17 +62,17 @@ _HISTORY_TURNS = 30  # letzte 30 Nachrichten als Kontext mitgeben (05.05.2026 vo
 
 
 def process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None,
-                    nur_mit_karte: bool = False) -> dict:
+                    nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None) -> dict:
     """KI-Kosten (05.10.2026): alle KI-Aufrufe dieser Nachricht zaehlen fuer diesen Kunden und dieses Projekt — als
     „chatbot“, ausser eine Fachfunktion (z. B. Alt-Text-Pipeline) setzt ihren eigenen Zweck."""
     import ki_kosten
     with ki_kosten.kontext(user_id=user_id, project_id=project_id, document_id=None, image_id=None, zweck="chatbot"):
         return _process_message(project_id, user_message, user_id, system_suffix=system_suffix, on_tool=on_tool,
-                                nur_mit_karte=nur_mit_karte)
+                                nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht)
 
 
 def _process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None,
-                     nur_mit_karte: bool = False) -> dict:
+                     nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None) -> dict:
     """Hauptfunktion. Returns:
     {"reply": str, "intent": str, "image_refs": list[int]|None,
      "actions": list[dict]}.
@@ -98,8 +98,10 @@ def _process_message(project_id: int, user_message: str, user_id: int, system_su
     if _AGENTIC_ENABLED and _PROVIDER_NAME in _WERKZEUG_PROVIDER:
         from .agent_loop import run_agent
         try:
+            # konto (Ausbau Runde 2, Schritt 2): Gedaechtnis aus dem Gespraech des Kontos; der klassische Rueckfallweg unten
+            # kennt nur das Projektgespraech
             return run_agent(project_id, user_id, user_message, project, _provider, system_suffix=system_suffix, on_tool=on_tool,
-                             nur_mit_karte=nur_mit_karte)
+                             nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht)
         except Exception as e:
             log.exception("agentic run_agent crashte — Fallback auf klassischen Dispatcher")
             # Formular-Projekte (Review 28.08.2026): der klassische Pfad kennt nur Bilder —

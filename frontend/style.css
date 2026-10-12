@@ -1177,6 +1177,20 @@ ul.inkluagent-kurzhilfe {
 .inkluagent-hochgeladen { margin: 0.2rem 0 0; padding-left: 1.2rem; font-size: 0.95rem; }
 .inkluagent-hochgeladen li { margin: 0.15rem 0; }
 .inkluagent-hochgeladen li[data-ok="0"] { color: var(--error); }
+/* Gespraech je Konto (Ausbau Runde 2, Schritt 2): Projektmarke im Verlauf, frueheres Gespraech des Projekts */
+.inkluagent-marke {
+    margin: 0.8rem 0 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+.inkluagent-marke:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
+.inkluagent-frueher { margin: 0 0 0.75rem; }
+.inkluagent-frueher summary { cursor: pointer; font-weight: 600; }
+.inkluagent-frueher summary:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
+.inkluagent-frueher-liste { margin-top: 0.5rem; }
 .inkluagent-controls {
     display: flex;
     align-items: center;
