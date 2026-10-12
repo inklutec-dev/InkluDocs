@@ -467,8 +467,8 @@ def werkzeugsatz(user_id: int, _=None):
     if funktionen.an("AGENT_HOCHLADEN"):
         from . import hochladen
         system = system + "\n\n" + hochladen.PROMPT_ZUSATZ
-    system = system + "\n\n" + (_MIT_HOCHLADEFELD if funktionen.an("AGENT_HOCHLADEN") and funktionen.an("AGENT_HOCHLADEFELD")
-                                 else _OHNE_HOCHLADEFELD)
+    from . import hochladen as _hl
+    system = system + "\n\n" + _hl.prompt_hochladen_hier(user_id)   # Feld, Knopf „Dateien anhängen“ oder gar nicht
     defs = (TOOL_DEFINITIONS_KONTO + (TOOL_DEFINITIONS_KONTO_AENDERN if aendern_an() else [])
             + ([TOOL_DEFINITION_GESPRAECHE] if funktionen.an("AGENT_GESPRAECHE") else []))
     if funktionen.an("AGENT_GESPRAECHE"):
@@ -516,16 +516,6 @@ Bei mehreren Projekten mit ähnlichem Namen fragst du nach, welches gemeint ist,
 
 _NICHT_AENDERN = ("* Projekte anlegen, umbenennen oder löschen und Läufe abbrechen: das geht über die Oberfläche. Neue Projekte "
                   "entstehen über „Neues Projekt“.\n")
-
-# Hochladen hier im Agenten — je nach Schalter AGENT_HOCHLADEFELD (Michael Karbe, Feedback 20261012 - 1, Punkt 3: das Feld ist
-# vorerst aus). Ohne Feld sagt der Prompt es ausdruecklich: sonst bot das Modell „lade die Dateien einfach hier hoch“ an (Staging-
-# Stichprobe 12.10.2026).
-_MIT_HOCHLADEFELD = ("Hochladen hier im InkluAgent\nUnter dem Eingabefeld gibt es das Feld „Dateien mitschicken“: Dateien, die der "
-                     "Nutzer dort auswählt, lädt der Server hoch und ordnet sie seinen Projekten zu.")
-_OHNE_HOCHLADEFELD = ("Hochladen\nHier im InkluAgent gibt es kein Feld zum Hochladen von Dateien. Dateien lädt der Nutzer im Projekt "
-                      "hoch oder legt über „Neues Projekt“ ein Projekt an; biete nie an, dass er Dateien hier hochlädt. Eine Webadresse "
-                      "kann er in seine Nachricht schreiben.")
-
 
 _GESPRAECHE = """Frühere Gespräche
 Spricht der Nutzer über ein Projekt oder ein Thema, über das ihr schon früher gesprochen habt, findest du mit fruehere_gespraeche die passenden Gespräche und sagst in einem Satz, dass unter deiner Antwort Links stehen; dort kann er mit „Hier weitermachen“ fortsetzen. Das laufende Gespräch ist nicht dabei. Neue Gespräche beginnt der Nutzer selbst mit dem Knopf „Neues Gespräch“."""

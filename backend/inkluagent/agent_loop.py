@@ -91,6 +91,10 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int):
         if not sicherheit.an():
             eindeutig = sicherheit.werkzeuge_anpassen(eindeutig, immer=True)
         system = system + "\n\n" + hochladen.PROMPT_ZUSATZ
+        # Dateien im Agenten (Feld oder Knopf „Dateien anhängen“ in der Agentenansicht, 12.10.2026)
+        _hier = hochladen.prompt_hochladen_hier(user_id, im_projekt=True)
+        if _hier:
+            system = system + "\n\n" + _hier
     return eindeutig, executor, system
 
 

@@ -11958,6 +11958,8 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
            "bloecke": bool(funktionen.AGENT_BLOECKE), "gespraeche": bool(konto and funktionen.AGENT_GESPRAECHE),
            # Agentenansicht wie ChatGPT mit Arbeitsfenster und „Gespräche“ in der Seitenleiste (Michael Karbe, Punkt 6)
            "arbeitsfenster": bool(ueberall and funktionen.AGENT_ANSICHT and funktionen.AGENT_ARBEITSFENSTER)}
+    # Knopf „Dateien anhängen“ in der Agentenansicht (Steve 12.10.2026): derselbe Weg wie das Feld (POST /api/agent/hochladen)
+    out["anhaengen"] = bool(out["arbeitsfenster"] and funktionen.AGENT_HOCHLADEN)
     if ueberall:
         from inkluagent.tools import namen as _werkzeug_namen
         out["werkzeug_namen"] = _werkzeug_namen.fuer_oberflaeche(get_gettext(lang or "de"))

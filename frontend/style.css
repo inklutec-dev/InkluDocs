@@ -1499,15 +1499,38 @@ html.agentenansicht-chatstil .inkluagent-bereich { max-width: 84rem; }
 .inkluagent-chatstil .inkluagent-form textarea { border: 2px solid #6b7a90; border-radius: 1.25rem; padding: 0.85rem 1.1rem; min-height: 3.5rem;
     background: #fff; box-shadow: 0 2px 10px rgba(27, 42, 74, 0.08); }
 .inkluagent-gross.inkluagent-chatstil #inkluagentInput { min-height: 3.5rem; }
-/* Unter dem Feld eine Zeile: Hinweis links, „Senden“ rechts; die Statuszeile darunter. Die Reihenfolge im Quelltext bleibt
-   (Feld, Hinweis, Senden, Status) — nur die Anordnung ist ein Raster. */
-.inkluagent-chatstil .inkluagent-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1rem; row-gap: 0.4rem; align-items: center; }
+/* Unter dem Feld eine Zeile: Hinweis links, „Dateien anhängen“ und „Senden“ rechts; darunter die angehaengten Dateien, Meldung,
+   Ergebnis des Hochladens und die Statuszeile. Die Reihenfolge im Quelltext bleibt (Feld, Hinweis, Knoepfe, Liste, Status) —
+   nur die Anordnung ist ein Raster. */
+.inkluagent-chatstil .inkluagent-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 0.75rem; row-gap: 0.4rem;
+    align-items: center; }
 .inkluagent-chatstil .inkluagent-form > textarea { grid-column: 1 / -1; grid-row: 1; }
 .inkluagent-chatstil .inkluagent-form > .inkluagent-hint { grid-column: 1; grid-row: 2; }
 .inkluagent-chatstil .inkluagent-form > .inkluagent-hochladen { grid-column: 1 / -1; grid-row: 3; }
 .inkluagent-chatstil .inkluagent-controls { display: contents; }
-.inkluagent-chatstil #inkluagentSendBtn { grid-column: 2; grid-row: 2; justify-self: end; }
-.inkluagent-chatstil #inkluagentStatus { grid-column: 1 / -1; grid-row: 4; }
+.inkluagent-chatstil #inkluagentAnhaengenBtn { grid-column: 2; grid-row: 2; }
+.inkluagent-chatstil #inkluagentSendBtn { grid-column: 3; grid-row: 2; justify-self: end; }
+.inkluagent-chatstil #inkluagentAnhaenge { grid-column: 1 / -1; grid-row: 4; }
+.inkluagent-chatstil #inkluagentAnhangMeldung { grid-column: 1 / -1; grid-row: 5; }
+.inkluagent-chatstil #inkluagentHochgeladen { grid-column: 1 / -1; grid-row: 6; }
+.inkluagent-chatstil #inkluagentStatus { grid-column: 1 / -1; grid-row: 7; }
+@media (max-width: 600px) {
+    .inkluagent-chatstil .inkluagent-form { grid-template-columns: minmax(0, 1fr) auto; }
+    .inkluagent-chatstil .inkluagent-form > .inkluagent-hint { grid-column: 1 / -1; }
+    .inkluagent-chatstil #inkluagentAnhaengenBtn { grid-column: 1; grid-row: 3; justify-self: start; }
+    .inkluagent-chatstil #inkluagentSendBtn { grid-column: 2; grid-row: 3; }
+}
+/* Angehaengte Dateien als Kaertchen mit „Entfernen“ */
+.inkluagent-anhaenge { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.inkluagent-anhaenge[hidden] { display: none; }
+.inkluagent-anhaenge li { display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%; background: #fff;
+    border: 1px solid #6b7a90; border-radius: 999px; padding: 0.2rem 0.25rem 0.2rem 0.85rem; font-size: 0.9rem; }
+.inkluagent-anhang-name { overflow-wrap: anywhere; }
+.inkluagent-anhaenge .inkluagent-anhang-weg { padding: 0.2rem 0.65rem; font-size: 0.85rem; border-radius: 999px; }
+.inkluagent-anhang-meldung { margin: 0; }
+.inkluagent-anhang-meldung[data-state="error"] { color: var(--error); font-weight: 600; }
+/* Hineinziehen: deutlicher Rahmen um das ganze Gespraech */
+.inkluagent-gespraech.inkluagent-ablage-aktiv { outline: 3px dashed var(--accent); outline-offset: 6px; border-radius: 12px; }
 .inkluagent-chatstil #inkluagentStatus:empty { display: none; }
 /* Die Gespraeche stehen in der Seitenleiste; ohne sie (schmale Seitenleiste ohne Abschnitt) bleibt die Leiste im Agenten */
 html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leiste { display: none; }

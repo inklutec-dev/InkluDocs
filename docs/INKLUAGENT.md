@@ -780,3 +780,30 @@ Reihenfolge, axe ohne Verstöße leer/mit Verlauf/Seitenleiste, Schritt und Ende
 eine Ansage zum Start, „Stand vorlesen“, 390 und 320 Pixel ohne waagerechtes Scrollen, Gespräch aus der Seitenleiste fortsetzen,
 „Neues Gespräch“, nur diese Seite manuell, manuelle Ansicht unverändert); Probe Schritt 3 mit Schalter 34/34, Probe Ansicht
 (Runde 1) 25/25.
+
+### Dateien anhängen in der Agentenansicht (Steve 12.10.2026; mit `AGENT_ARBEITSFENSTER` und `AGENT_HOCHLADEN`)
+
+Steve: „Im Agentenmodus muss der Agent Dateien empfangen können.“ Michael wollte das Feld „Dateien mitschicken“ aus dem Agenten
+der manuellen Ansicht heraus (Punkt 3) — darum gibt es den Weg nur im Chatstil der Agentenansicht.
+- **Oberfläche** (`inkluagentAnhangBauen`, beim Umstellen auf den Chatstil; zurück baut `inkluagentAnhangEntfernenAlles` ab): Knopf
+  „Dateien anhängen“ vor „Senden“ (öffnet die normale Dateiauswahl, Grenzen als Beschreibung des Knopfs), Dateien lassen sich auch
+  ins Gespräch ziehen (gestrichelter Rahmen) oder ins Eingabefeld einfügen. Die Auswahl steht als Liste „Angehängte Dateien“ mit
+  Name, Größe und „Entfernen“ („„Name“ entfernen“; danach Fokus aufs nächste „Entfernen“, zuletzt zurück auf den Knopf). Meldungen
+  („2 Dateien angehängt.“, „Zu groß …“, „Höchstens … Dateien …“) stehen sichtbar unter der Liste und werden einmal angesagt — nie
+  über die Statuszeile, die gehört dem laufenden Auftrag. Doppelte Dateien zählen einmal.
+- **Senden** nimmt die angehängten Dateien denselben Weg wie das Feld (`inkluagentHochladen` → `POST /api/agent/hochladen`:
+  Zuordnung, Bremsen, Preise; ohne Projekt neues oder ähnliches Projekt mit Seitenwechsel). Das Arbeitsfenster zeigt „Lädt 2
+  Dateien hoch …“; danach ist die Liste leer, das Ergebnis steht darunter. Klappt das Hochladen nicht, bleiben die Dateien
+  angehängt.
+- **Schalter:** `window.INKLUAGENT.anhaengen` = Arbeitsfenster-Schalter und `AGENT_HOCHLADEN`; der Knopf erscheint nur, wenn das
+  Feld selbst (`AGENT_HOCHLADEFELD`) aus ist. Der Hinweis der Agentenansicht nennt dann nur noch „die Knöpfe des Projekts“.
+- **Prompt** (`hochladen.prompt_hochladen_hier`, für Konto- und Projektgespräche): Feld → „Dateien mitschicken“; Agentenansicht des
+  Kontos (`ansicht.fuer_konto`) → Knopf „Dateien anhängen“ (auch ziehen oder einfügen); sonst ohne Projekt „kein Feld zum
+  Hochladen“, im Projekt nichts (dort gibt es den Knopf „Hochladen“ des Projekts).
+- 10 neue Texte in sechs Sprachen.
+
+Tests: `tests/test_agent_arbeitsfenster.py`, Klasse `Anhaengen` (4: Prompt je nach Weg, Schalter für die Seite, Projekt-Prompt,
+Oberfläche am Quelltext). Klickprobe lokal 24 von 24 (Knopf statt Feld, Tab-Reihenfolge, Dateiauswahl mit zwei Dateien, Meldung
+sichtbar und angesagt, axe ohne Verstöße, Entfernen mit Fokus, Hineinziehen und Einfügen, zu groß, Senden lädt ins Projekt mit
+Ergebnis und Antwort, ohne Projekt neues Projekt mit Seitenwechsel, 320 Pixel, nur diese Seite manuell und manuelle Ansicht ohne
+Knopf).

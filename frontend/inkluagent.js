@@ -184,6 +184,175 @@ function inkluagentHochladenSatz(ergebnisse) {
         + (schlecht ? ' ' + t('Die Gründe stehen unter dem Feld.') : '');
 }
 
+// ─── Dateien anhängen in der Agentenansicht (Steve 12.10.2026) ───────────────────────────────────────────────────────────────
+// Wie die Büroklammer bei ChatGPT: Knopf „Dateien anhängen“ vor „Senden“ (öffnet die normale Dateiauswahl); Dateien lassen sich
+// auch ins Gespräch ziehen oder ins Eingabefeld einfügen. Die Auswahl steht als Liste mit „Entfernen“ unter den Knöpfen und geht
+// mit der nächsten Nachricht denselben Weg wie das Feld „Dateien mitschicken“ (POST /api/agent/hochladen: Zuordnung, Bremsen,
+// Preise). Nur im Chatstil und nur, wenn das Feld selbst aus ist (Michael Karbe, Punkt 3: in der manuellen Ansicht kein Hochladen
+// im Agenten). Meldungen: sichtbar unter der Liste und einmal angesagt — nie über die Statuszeile, die gehört dem laufenden Auftrag.
+function inkluagentAnhaengenAn() {
+    return !!(window.INKLUAGENT && window.INKLUAGENT.anhaengen) && inkluagentArbeitsfensterAn() && !inkluagentHochladenAn();
+}
+function inkluagentAnhangAktiv() {
+    return !!document.getElementById('inkluagentAnhaengenBtn');
+}
+function inkluagentAnhangBauen(form, gespraech) {
+    if (!inkluagentAnhaengenAn() || !form || inkluagentAnhangAktiv()) return;
+    const k = window.INKLUAGENT || {};
+    if (!Array.isArray(window._inkluagentAnhaenge)) window._inkluagentAnhaenge = [];
+    const datei = document.createElement('input');
+    datei.type = 'file';
+    datei.id = 'inkluagentAnhangDatei';
+    datei.multiple = true;
+    datei.hidden = true;
+    datei.tabIndex = -1;
+    datei.accept = '.pdf,.docx,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif,.bmp,.tif,.tiff,.svg';
+    datei.addEventListener('change', () => { inkluagentAnhaengeHinzu(Array.from(datei.files || [])); datei.value = ''; });
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.id = 'inkluagentAnhaengenBtn';
+    knopf.className = 'btn btn-secondary';
+    knopf.textContent = t('Dateien anhängen');
+    knopf.setAttribute('aria-describedby', 'inkluagentAnhangHinweis');
+    knopf.addEventListener('click', () => datei.click());
+    const hinweis = document.createElement('span');
+    hinweis.id = 'inkluagentAnhangHinweis';
+    hinweis.className = 'visually-hidden';
+    hinweis.textContent = t('PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Du kannst Dateien auch ins Gespräch ziehen oder einfügen.',
+                            { n: k.max_dateien || 10, mb: k.max_mb || 50 });
+    const liste = document.createElement('ul');
+    liste.id = 'inkluagentAnhaenge';
+    liste.className = 'inkluagent-anhaenge';
+    liste.setAttribute('aria-label', t('Angehängte Dateien'));
+    liste.hidden = true;
+    const meldung = document.createElement('p');
+    meldung.id = 'inkluagentAnhangMeldung';
+    meldung.className = 'inkluagent-hint inkluagent-anhang-meldung';
+    meldung.hidden = true;
+    // Ergebnis des Hochladens wie beim Feld (inkluagentHochgeladenZeigen fuellt es)
+    const ergebnis = document.createElement('ul');
+    ergebnis.id = 'inkluagentHochgeladen';
+    ergebnis.className = 'inkluagent-hochgeladen';
+    ergebnis.setAttribute('aria-label', t('Ergebnis des Hochladens'));
+    ergebnis.hidden = true;
+    const send = document.getElementById('inkluagentSendBtn');
+    if (send && send.parentNode) send.parentNode.insertBefore(knopf, send);   // erst „Dateien anhängen“, dann „Senden“
+    else form.appendChild(knopf);
+    [datei, hinweis, liste, meldung, ergebnis].forEach(el => form.appendChild(el));
+    // Hineinziehen (Maus): das ganze Gespraech nimmt Dateien an
+    if (gespraech && !gespraech.dataset.ablage) {
+        gespraech.dataset.ablage = '1';
+        const mitDateien = e => Array.from((e.dataTransfer && e.dataTransfer.types) || []).indexOf('Files') >= 0;
+        gespraech.addEventListener('dragover', e => {
+            if (!inkluagentAnhangAktiv() || !mitDateien(e)) return;
+            e.preventDefault();
+            gespraech.classList.add('inkluagent-ablage-aktiv');
+        });
+        gespraech.addEventListener('dragleave', e => {
+            if (!gespraech.contains(e.relatedTarget)) gespraech.classList.remove('inkluagent-ablage-aktiv');
+        });
+        gespraech.addEventListener('drop', e => {
+            gespraech.classList.remove('inkluagent-ablage-aktiv');
+            if (!inkluagentAnhangAktiv() || !mitDateien(e)) return;
+            e.preventDefault();
+            inkluagentAnhaengeHinzu(Array.from(e.dataTransfer.files || []));
+        });
+    }
+    // Einfuegen (Befehl-V) im Eingabefeld: Dateien aus der Zwischenablage anhaengen, Text bleibt Text
+    const input = document.getElementById('inkluagentInput');
+    if (input && !input.dataset.einfuegen) {
+        input.dataset.einfuegen = '1';
+        input.addEventListener('paste', e => {
+            if (!inkluagentAnhangAktiv()) return;
+            const f = Array.from((e.clipboardData && e.clipboardData.files) || []);
+            if (!f.length) return;
+            e.preventDefault();
+            inkluagentAnhaengeHinzu(f);
+        });
+    }
+    inkluagentAnhaengeZeigen();
+}
+function inkluagentAnhangEntfernenAlles() {
+    ['inkluagentAnhaengenBtn', 'inkluagentAnhangDatei', 'inkluagentAnhangHinweis', 'inkluagentAnhaenge', 'inkluagentAnhangMeldung']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
+    const erg = document.getElementById('inkluagentHochgeladen');
+    if (erg && !erg.closest('.inkluagent-hochladen')) erg.remove();
+}
+function inkluagentGroesse(bytes) {
+    const lang = document.documentElement.lang || 'de';
+    if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)).toLocaleString(lang) + ' KB';
+    return (bytes / (1024 * 1024)).toLocaleString(lang, { maximumFractionDigits: 1 }) + ' MB';
+}
+function inkluagentAnhangZahl(n) {
+    return n === 0 ? t('Keine Datei angehängt.') : (n === 1 ? t('1 Datei angehängt.') : t('{n} Dateien angehängt.', { n: n }));
+}
+function inkluagentAnhangMelden(text, fehler) {
+    const p = document.getElementById('inkluagentAnhangMeldung');
+    if (p) {
+        p.textContent = text || '';
+        p.hidden = !text;
+        if (fehler) p.setAttribute('data-state', 'error'); else p.removeAttribute('data-state');
+    }
+    if (text) announce(text);
+}
+function inkluagentAnhaengeHinzu(dateien) {
+    if (!dateien || !dateien.length || !inkluagentAnhangAktiv()) return;
+    const k = window.INKLUAGENT || {};
+    const max = k.max_dateien || 10;
+    const maxMb = k.max_mb || 50;
+    const liste = window._inkluagentAnhaenge;
+    const zuGross = [];
+    let zuViele = 0;
+    dateien.forEach(f => {
+        if (f.size > maxMb * 1024 * 1024) { zuGross.push(f.name); return; }
+        if (liste.some(x => x.name === f.name && x.size === f.size && x.lastModified === f.lastModified)) return;   // schon dabei
+        if (liste.length >= max) { zuViele++; return; }
+        liste.push(f);
+    });
+    inkluagentAnhaengeZeigen();
+    const teile = [];
+    if (zuGross.length) teile.push(t('Zu groß, höchstens {mb} MB je Datei: {namen}.', { mb: maxMb, namen: zuGross.join(', ') }));
+    if (zuViele) teile.push(t('Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf.', { n: max }));
+    inkluagentAnhangMelden(teile.concat([inkluagentAnhangZahl(liste.length)]).join(' '), teile.length > 0);
+}
+function inkluagentAnhaengeZeigen() {
+    const ul = document.getElementById('inkluagentAnhaenge');
+    if (!ul) return;
+    const liste = window._inkluagentAnhaenge || [];
+    ul.textContent = '';
+    liste.forEach((f, i) => {
+        const li = document.createElement('li');
+        const name = document.createElement('span');
+        name.className = 'inkluagent-anhang-name';
+        name.textContent = f.name + ' (' + inkluagentGroesse(f.size) + ')';
+        const weg = document.createElement('button');
+        weg.type = 'button';
+        weg.className = 'btn btn-secondary inkluagent-anhang-weg';
+        weg.textContent = t('Entfernen');
+        weg.setAttribute('aria-label', t('„{name}“ entfernen', { name: f.name }));
+        weg.addEventListener('click', () => inkluagentAnhangEntfernen(i));
+        li.appendChild(name);
+        li.appendChild(weg);
+        ul.appendChild(li);
+    });
+    ul.hidden = !liste.length;
+}
+function inkluagentAnhangEntfernen(i) {
+    const liste = window._inkluagentAnhaenge || [];
+    const weg = liste.splice(i, 1)[0];
+    inkluagentAnhaengeZeigen();
+    // Fokus auf das naechste „Entfernen“, sonst zurueck auf „Dateien anhängen“
+    const knoepfe = document.querySelectorAll('#inkluagentAnhaenge .inkluagent-anhang-weg');
+    const ziel = knoepfe[Math.min(i, knoepfe.length - 1)] || document.getElementById('inkluagentAnhaengenBtn');
+    if (ziel) ziel.focus();
+    inkluagentAnhangMelden(t('„{name}“ entfernt.', { name: weg ? weg.name : '' }) + ' ' + inkluagentAnhangZahl(liste.length), false);
+}
+function inkluagentAnhaengeLeeren() {
+    window._inkluagentAnhaenge = [];
+    inkluagentAnhaengeZeigen();
+    inkluagentAnhangMelden('', false);
+}
+
 // Schritt 3 (InkluAgent-Ausbau Runde 1): Kurzhilfe vor dem Chat — nur mit Schalter (window.FUNKTIONEN aus funktionen.py)
 function inkluagentKurzhilfe() {
     return !!((window.FUNKTIONEN && window.FUNKTIONEN.agent_hilfe) || (window.INKLUAGENT && window.INKLUAGENT.hilfe));
@@ -246,7 +415,7 @@ function inkluagentAgentenansicht() {
         // Mit dem Hochladefeld (Runde 2, Schritt 1) geht Hochladen auch hier — dann nennt der Hinweis nur noch die Knoepfe
         const ohneProjekt = window._inkluagentProjectId == null;
         p.appendChild(document.createTextNode((ohneProjekt ? t('Den Inhalt dieser Seite findest du in der manuellen Ansicht.')
-            : (inkluagentHochladenAn() ? t('Die Knöpfe des Projekts findest du in der manuellen Ansicht.')
+            : ((inkluagentHochladenAn() || inkluagentAnhaengenAn()) ? t('Die Knöpfe des Projekts findest du in der manuellen Ansicht.')
                                        : t('Hochladen und die Knöpfe des Projekts findest du in der manuellen Ansicht.'))) + ' '));
         const b = document.createElement('button');
         b.type = 'button';
@@ -307,7 +476,9 @@ function inkluagentChatstil(an) {
         spalten.appendChild(gespraech);
         spalten.appendChild(inkluagentArbeitsfensterBauen());
         panel.appendChild(spalten);
+        inkluagentAnhangBauen(form, gespraech);   // „Dateien anhängen“ (nur ohne das Feld „Dateien mitschicken“)
     } else {
+        inkluagentAnhangEntfernenAlles();
         [form, log, leiste, frueher, trenner, beschreibung].forEach(el => { if (el) panel.appendChild(el); });
         const spalten = panel.querySelector('.inkluagent-spalten');
         if (spalten) spalten.remove();
@@ -1218,10 +1389,11 @@ async function inkluagentSend() {
     const message = input.value.trim();
     // Hochladefeld (Runde 2, Schritt 1): Dateien duerfen ohne eigenen Text gesendet werden (Webadressen stehen in der Nachricht)
     const dateienEl = document.getElementById('inkluagentDateien');
-    const dateien = (inkluagentHochladenAn() && dateienEl && dateienEl.files) ? Array.from(dateienEl.files) : [];
+    const dateien = inkluagentAnhangAktiv() ? (window._inkluagentAnhaenge || []).slice()   // „Dateien anhängen“ (Agentenansicht)
+        : ((inkluagentHochladenAn() && dateienEl && dateienEl.files) ? Array.from(dateienEl.files) : []);
     const webadresse = '';
     if (!message && !dateien.length) {
-        inkluagentSetStatus(inkluagentHochladenAn() ? t('Bitte eine Nachricht eingeben oder eine Datei auswählen.') : t('Bitte eine Nachricht eingeben.'), true);
+        inkluagentSetStatus((inkluagentHochladenAn() || inkluagentAnhangAktiv()) ? t('Bitte eine Nachricht eingeben oder eine Datei auswählen.') : t('Bitte eine Nachricht eingeben.'), true);
         input.focus();
         return;
     }
@@ -1236,11 +1408,15 @@ async function inkluagentSend() {
     let nachgezogen = false;
     let satz = '';
     if (dateien.length || webadresse) {
+        if (inkluagentChatstilAktiv()) {
+            inkluagentArbeitsStart(dateien.length === 1 ? t('Lädt 1 Datei hoch …') : t('Lädt {n} Dateien hoch …', { n: dateien.length }));
+        }
         const erg = await inkluagentHochladen(projectId, dateien, webadresse);
         if (!erg) { sendBtn.disabled = false; return; }
         const ergebnisse = erg.ergebnisse || [];
         inkluagentHochgeladenZeigen(projectId, ergebnisse);
         if (dateienEl) dateienEl.value = '';
+        if (inkluagentAnhangAktiv()) inkluagentAnhaengeLeeren();
         satz = inkluagentHochladenSatz(ergebnisse);
         nachziehenHochladen = !ohneProjekt && ergebnisse.some(e => e.ok && String(e.project_id) === String(projectId));
         // Nichts angekommen und kein eigener Text: keine Nachricht an den Agenten (die Gruende stehen schon am Feld)

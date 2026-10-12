@@ -11765,3 +11765,39 @@ msgstr "Arbetar fortfarande med det senaste svaret …"
 
 msgid "InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster."
 msgstr "InkluAgent arbetar. Vad den gör just nu visas i arbetsfönstret."
+
+# Dateien anhängen in der Agentenansicht (Steve 12.10.2026)
+msgid "Dateien anhängen"
+msgstr "Bifoga filer"
+
+#, python-brace-format
+msgid "PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Du kannst Dateien auch ins Gespräch ziehen oder einfügen."
+msgstr "PDF, Word (.docx) och bilder, högst {n} filer, var och en upp till {mb} MB. Du kan också dra filer in i samtalet eller klistra in dem."
+
+msgid "Angehängte Dateien"
+msgstr "Bifogade filer"
+
+msgid "Keine Datei angehängt."
+msgstr "Ingen fil bifogad."
+
+msgid "1 Datei angehängt."
+msgstr "1 fil bifogad."
+
+#, python-brace-format
+msgid "{n} Dateien angehängt."
+msgstr "{n} filer bifogade."
+
+#, python-brace-format
+msgid "Zu groß, höchstens {mb} MB je Datei: {namen}."
+msgstr "För stor, högst {mb} MB per fil: {namen}."
+
+#, python-brace-format
+msgid "„{name}“ entfernen"
+msgstr "Ta bort ”{name}”"
+
+msgid "Lädt 1 Datei hoch …"
+msgstr "Laddar upp 1 fil …"
+
+#, python-brace-format
+msgid "Lädt {n} Dateien hoch …"
+msgstr "Laddar upp {n} filer …"

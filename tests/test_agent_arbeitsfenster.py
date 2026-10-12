@@ -241,5 +241,80 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leiste { display: none; }", css)
 
 
+
+class Anhaengen(unittest.TestCase):
+    """Knopf „Dateien anhängen“ in der Agentenansicht (Steve 12.10.2026): derselbe Weg wie das Feld, nur im Chatstil."""
+
+    def setUp(self):
+        self.u = nutzer()
+        from inkluagent import ansicht, hochladen
+        self.ansicht, self.hochladen = ansicht, hochladen
+        for name in ("AGENT_HOCHLADEN", "AGENT_ARBEITSFENSTER", "AGENT_ANSICHT", "AGENT_UEBERALL", "AGENT_KONTO"):
+            mock.patch.object(funktionen, name, True).start()
+
+    def tearDown(self):
+        mock.patch.stopall()
+
+    def test_prompt_je_nach_weg(self):
+        hier = self.hochladen.prompt_hochladen_hier
+        self.assertIn("kein Feld zum Hochladen", hier(self.u["id"]), "manuelle Ansicht: kein Weg im Agenten")
+        self.assertEqual(hier(self.u["id"], im_projekt=True), "", "im Projekt gibt es den Knopf des Projekts")
+        self.ansicht.setzen(self.u["id"], "agent")
+        self.assertIn("„Dateien anhängen“", hier(self.u["id"]))
+        self.assertIn("„Dateien anhängen“", hier(self.u["id"], im_projekt=True))
+        with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", False):
+            self.assertIn("kein Feld zum Hochladen", hier(self.u["id"]))
+        with mock.patch.object(funktionen, "AGENT_HOCHLADEN", False):
+            self.assertNotIn("Dateien anhängen", hier(self.u["id"]), "ohne Server-Teil kein Knopf")
+        with mock.patch.object(funktionen, "AGENT_HOCHLADEFELD", True):
+            self.assertIn("„Dateien mitschicken“", hier(self.u["id"]), "das Feld geht vor")
+        from inkluagent import konto
+        self.assertIn("„Dateien anhängen“", konto.werkzeugsatz(self.u["id"])[2])
+
+    def test_schalter_fuer_die_seite(self):
+        try:
+            import main
+        except Exception as e:  # noqa: BLE001
+            raise unittest.SkipTest(f"main nicht ladbar: {e}")
+        with mock.patch.object(main, "INKLUAGENT_ENABLED", True):
+            self.assertTrue(main._inkluagent_schalter()["anhaengen"])
+            self.assertFalse(main._inkluagent_schalter()["hochladen"], "das Feld bleibt aus (Michael, Punkt 3)")
+            with mock.patch.object(funktionen, "AGENT_HOCHLADEN", False):
+                self.assertFalse(main._inkluagent_schalter()["anhaengen"])
+            with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", False):
+                self.assertFalse(main._inkluagent_schalter()["anhaengen"])
+
+    def test_projekt_prompt_nimmt_den_absatz(self):
+        quelle = lies(BACKEND, "inkluagent", "agent_loop.py")
+        self.assertIn("hochladen.prompt_hochladen_hier(user_id, im_projekt=True)", quelle)
+
+    def test_oberflaeche(self):
+        js = lies(FRONTEND, "inkluagent.js")
+
+        def funktion(name):
+            f = js[js.index("function " + name + "("):]
+            return f[:f.index("\n}\n")]
+        an = funktion("inkluagentAnhaengenAn")
+        self.assertIn("window.INKLUAGENT.anhaengen", an)
+        self.assertIn("inkluagentArbeitsfensterAn()", an)
+        self.assertIn("!inkluagentHochladenAn()", an, "nur ohne das Feld")
+        bau = funktion("inkluagentAnhangBauen")
+        for teil in ("knopf.type = 'button'", "t('Dateien anhängen')", "datei.type = 'file'", "datei.multiple = true",
+                     "liste.setAttribute('aria-label', t('Angehängte Dateien'))", "'dragover'", "'drop'", "'paste'",
+                     "send.parentNode.insertBefore(knopf, send)"):
+            self.assertIn(teil, bau)
+        zeigen = funktion("inkluagentAnhaengeZeigen")
+        self.assertNotIn("innerHTML", zeigen)
+        self.assertIn("weg.setAttribute('aria-label', t('„{name}“ entfernen'", zeigen)
+        self.assertIn("ziel.focus()", funktion("inkluagentAnhangEntfernen"))
+        send = funktion("inkluagentSend")
+        self.assertIn("inkluagentAnhangAktiv() ? (window._inkluagentAnhaenge || []).slice()", send)
+        self.assertIn("if (inkluagentAnhangAktiv()) inkluagentAnhaengeLeeren();", send)
+        stil = funktion("inkluagentChatstil")
+        self.assertIn("inkluagentAnhangBauen(form, gespraech);", stil)
+        self.assertIn("inkluagentAnhangEntfernenAlles();", stil)
+        self.assertNotIn("inkluagentSetStatus", funktion("inkluagentAnhaengeHinzu"), "Meldungen nie ueber die Statuszeile des Auftrags")
+
+
 if __name__ == "__main__":
     unittest.main()

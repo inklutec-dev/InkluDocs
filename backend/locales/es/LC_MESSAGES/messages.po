@@ -12193,3 +12193,39 @@ msgstr "Sigue trabajando en la última respuesta …"
 
 msgid "InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster."
 msgstr "El InkluAgent está trabajando. Lo que hace ahora aparece en la ventana de trabajo."
+
+# Dateien anhängen in der Agentenansicht (Steve 12.10.2026)
+msgid "Dateien anhängen"
+msgstr "Adjuntar archivos"
+
+#, python-brace-format
+msgid "PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Du kannst Dateien auch ins Gespräch ziehen oder einfügen."
+msgstr "PDF, Word (.docx) e imágenes, como máximo {n} archivos, de hasta {mb} MB cada uno. También puedes arrastrar archivos a la conversación o pegarlos."
+
+msgid "Angehängte Dateien"
+msgstr "Archivos adjuntos"
+
+msgid "Keine Datei angehängt."
+msgstr "Ningún archivo adjunto."
+
+msgid "1 Datei angehängt."
+msgstr "1 archivo adjunto."
+
+#, python-brace-format
+msgid "{n} Dateien angehängt."
+msgstr "{n} archivos adjuntos."
+
+#, python-brace-format
+msgid "Zu groß, höchstens {mb} MB je Datei: {namen}."
+msgstr "Demasiado grande, como máximo {mb} MB por archivo: {namen}."
+
+#, python-brace-format
+msgid "„{name}“ entfernen"
+msgstr "Quitar «{name}»"
+
+msgid "Lädt 1 Datei hoch …"
+msgstr "Subiendo 1 archivo …"
+
+#, python-brace-format
+msgid "Lädt {n} Dateien hoch …"
+msgstr "Subiendo {n} archivos …"
