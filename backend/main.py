@@ -11510,10 +11510,12 @@ async def agent_gespraech_neu(user: dict = Depends(get_current_user)):
 
 
 @app.get("/api/agent/gespraeche")
-async def agent_gespraeche(projekt: Optional[int] = None, suche: str = "", user: dict = Depends(get_current_user)):
+async def agent_gespraeche(projekt: Optional[int] = None, suche: str = "", anzahl: int = 100,
+                           user: dict = Depends(get_current_user)):
     _gespraeche_frei()
     from inkluagent import storage
-    liste = storage.gespraeche_liste(user["id"], projekt, (suche or "")[:100])
+    # anzahl: die Seitenleiste der Agentenansicht holt nur die neuesten (Arbeitsfenster, 12.10.2026)
+    liste = storage.gespraeche_liste(user["id"], projekt, (suche or "")[:100], limit=max(1, min(int(anzahl or 100), 100)))
     for g in liste:
         g["datum"] = _gespraech_datum(g["zuletzt_am"])
     return {"gespraeche": liste}
@@ -11869,7 +11871,14 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
     queue: asyncio.Queue = asyncio.Queue()
 
     def on_tool(name, args):
-        loop.call_soon_threadsafe(queue.put_nowait, {"type": "tool", "name": name})
+        ev = {"type": "tool", "name": name}
+        # Arbeitsfenster (Agentenansicht wie ChatGPT, 12.10.2026): woran der Agent arbeitet — aus der Datenbank, nur eigene Kennungen
+        if funktionen.AGENT_ARBEITSFENSTER:
+            from inkluagent import arbeitsfenster as _af
+            _z = _af.ziel(user["id"], project_id, args)
+            if _z:
+                ev["ziel"] = _z
+        loop.call_soon_threadsafe(queue.put_nowait, ev)
 
     async def lauf():
         # Review 28.08.2026: Speichern gehoert in den Lauf, nicht in den Stream — bricht der
@@ -11946,7 +11955,9 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
     out = {"hochladen": bool(funktionen.AGENT_HOCHLADEN and funktionen.AGENT_HOCHLADEFELD and INKLUAGENT_ENABLED),
            "max_dateien": _hl.max_dateien(),
            "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024), "konto": konto, "ueberall": ueberall,
-           "bloecke": bool(funktionen.AGENT_BLOECKE), "gespraeche": bool(konto and funktionen.AGENT_GESPRAECHE)}
+           "bloecke": bool(funktionen.AGENT_BLOECKE), "gespraeche": bool(konto and funktionen.AGENT_GESPRAECHE),
+           # Agentenansicht wie ChatGPT mit Arbeitsfenster und „Gespräche“ in der Seitenleiste (Michael Karbe, Punkt 6)
+           "arbeitsfenster": bool(ueberall and funktionen.AGENT_ANSICHT and funktionen.AGENT_ARBEITSFENSTER)}
     if ueberall:
         from inkluagent.tools import namen as _werkzeug_namen
         out["werkzeug_namen"] = _werkzeug_namen.fuer_oberflaeche(get_gettext(lang or "de"))

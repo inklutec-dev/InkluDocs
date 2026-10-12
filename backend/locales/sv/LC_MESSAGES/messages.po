@@ -11703,3 +11703,65 @@ msgstr "Vad ska InkluAgent göra åt dig?"
 #, python-brace-format
 msgid "Alle anzeigen ({n})"
 msgstr "Visa alla ({n})"
+
+# Agentenansicht wie ChatGPT mit Arbeitsfenster (Michael Karbe, Feedback 20261012 - 1, Punkt 6)
+msgid "Arbeitsfenster"
+msgstr "Arbetsfönster"
+
+msgid "Stand vorlesen"
+msgstr "Läs upp status"
+
+msgid "Schritte"
+msgstr "Steg"
+
+msgid "Ort"
+msgstr "Plats"
+
+msgid "Seite"
+msgstr "Sida"
+
+#, python-brace-format
+msgid "Feld {n}"
+msgstr "Fält {n}"
+
+msgid "erledigt"
+msgstr "klart"
+
+msgid "läuft"
+msgstr "pågår"
+
+#, python-brace-format
+msgid "Fehler: {text}"
+msgstr "Fel: {text}"
+
+msgid "Gespräche"
+msgstr "Samtal"
+
+msgid "Alle Gespräche"
+msgstr "Alla samtal"
+
+#, python-brace-format
+msgid "Gespräch vom {datum}"
+msgstr "Samtal från {datum}"
+
+msgid "Bereit. Schreib dem InkluAgent, was er erledigen soll."
+msgstr "Redo. Skriv till InkluAgent vad den ska göra."
+
+msgid "Arbeitet: liest deine Nachricht und plant die Schritte."
+msgstr "Arbetar: läser ditt meddelande och planerar stegen."
+
+#, python-brace-format
+msgid "Arbeitet an: {schritt}"
+msgstr "Arbetar med: {schritt}"
+
+msgid "Fertig. Die Antwort steht im Gespräch."
+msgstr "Klart. Svaret finns i samtalet."
+
+msgid "Wartet auf dich: Bitte entscheide unter der Antwort."
+msgstr "Väntar på dig: Bestäm under svaret."
+
+msgid "Arbeitet noch an der letzten Antwort …"
+msgstr "Arbetar fortfarande med det senaste svaret …"
+
+msgid "InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster."
+msgstr "InkluAgent arbetar. Vad den gör just nu visas i arbetsfönstret."

@@ -111,6 +111,11 @@ AGENT_BLOECKE = _umgebung_an("INKLUAGENT_BLOECKE")
 # Liste (neueste zuerst) und Lese-Seite mit „Hier weitermachen“; auf Seiten ohne Projekt findet der Agent fruehere Gespraeche
 # zu einem Projekt und verlinkt sie. Braucht AGENT_KONTO. INKLUAGENT_GESPRAECHE=an.
 AGENT_GESPRAECHE = _umgebung_an("INKLUAGENT_GESPRAECHE")
+# Agentenansicht wie ChatGPT/Claude mit Arbeitsfenster (Michael Karbe, Feedback 20261012 - 1, Punkt 6; Steves Vision vom
+# 12.10.2026): in der Agentenansicht Gespraech in der Mitte (Eingabe unten), rechts das Arbeitsfenster (Stand zum Nachlesen,
+# Schritte, Vorschau des Bildes, an dem der Agent arbeitet), in der Seitenleiste der Abschnitt „Gespräche“. Die manuelle Ansicht
+# bleibt, wie sie ist. Braucht AGENT_ANSICHT und AGENT_UEBERALL. INKLUAGENT_ARBEITSFENSTER=an.
+AGENT_ARBEITSFENSTER = _umgebung_an("INKLUAGENT_ARBEITSFENSTER")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

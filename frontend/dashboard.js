@@ -420,11 +420,113 @@ function renderSidebar() {
   unter.appendChild(liOut);
   konto.appendChild(unter);
   liKonto.appendChild(konto);
+  // Agentenansicht wie ChatGPT (Michael Karbe, Feedback 20261012 - 1, Punkt 6): „Gespräche“ in DIESER Seitenleiste, keine zweite
+  const liGespraeche = seitenleisteGespraecheBauen(path);
+  if (liGespraeche) ul.appendChild(liGespraeche);
   ul.appendChild(liKonto);
 
   nav.appendChild(ul);
   host.appendChild(nav);
   ansichtUmschalter(host);
+}
+
+// ─── Gespräche in der Seitenleiste (Agentenansicht wie ChatGPT/Claude, Schalter AGENT_ARBEITSFENSTER) ───
+// Nur in der Agentenansicht: Überschrift „Gespräche“, Knopf „Neues Gespräch“, die acht neuesten Gespräche (das laufende mit
+// aria-current) und „Alle Gespräche“ (Seite /gespraeche). Ein Gespräch anklicken setzt es fort — wie „Hier weitermachen“: weiter
+// im letzten Projekt des Gesprächs, der InkluAgent offen, Fokus auf der letzten Nachricht. Ohne Skript oder mit Strg/Cmd führt der
+// Link auf die Lese-Seite. In der manuellen Ansicht bleibt alles beim InkluAgent unten auf der Seite.
+function seitenleisteGespraecheAn() {
+  return !!(currentUser && currentUser.oberflaeche === 'agent' && window.INKLUAGENT && window.INKLUAGENT.arbeitsfenster
+            && window.INKLUAGENT.gespraeche);
+}
+function seitenleisteGespraecheBauen(path) {
+  if (!seitenleisteGespraecheAn()) return null;
+  document.documentElement.classList.add('mit-seitenleiste-gespraeche');
+  const li = document.createElement('li');
+  li.className = 'app-nav-gespraeche';
+  const h = document.createElement('h2');
+  h.id = 'navGespraecheTitel';
+  h.className = 'app-nav-titel';
+  h.textContent = t('Gespräche');
+  const neu = document.createElement('button');
+  neu.type = 'button';
+  neu.id = 'navNeuesGespraech';
+  neu.textContent = t('Neues Gespräch');
+  neu.addEventListener('click', seitenleisteNeuesGespraech);
+  const liste = document.createElement('ul');
+  liste.id = 'navGespraecheListe';
+  liste.className = 'app-nav-gespraeche-liste';
+  liste.setAttribute('aria-labelledby', 'navGespraecheTitel');
+  const alle = document.createElement('a');
+  alle.href = '/gespraeche';
+  alle.className = 'app-nav-alle';
+  alle.textContent = t('Alle Gespräche');
+  if (path === '/gespraeche') alle.setAttribute('aria-current', 'page');
+  li.appendChild(h);
+  li.appendChild(neu);
+  li.appendChild(liste);
+  li.appendChild(alle);
+  seitenleisteGespraecheLaden();
+  return li;
+}
+async function seitenleisteGespraecheLaden() {
+  if (!seitenleisteGespraecheAn()) return;
+  let daten;
+  try {
+    const r = await fetch('/api/agent/gespraeche?anzahl=8');
+    if (!r.ok) return;
+    daten = await r.json();
+  } catch (e) { return; }
+  const liste = byId('navGespraecheListe');
+  if (!liste) return;
+  liste.textContent = '';
+  (daten.gespraeche || []).forEach((g) => {
+    const id = Number(g.id);
+    if (!id) return;
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '/gespraeche/' + id;
+    a.textContent = g.titel || t('Gespräch vom {datum}', { datum: g.datum || '' });
+    if (g.aktuell) a.setAttribute('aria-current', 'true');
+    a.addEventListener('click', (e) => seitenleisteGespraechFortsetzen(e, id, a));
+    li.appendChild(a);
+    liste.appendChild(li);
+  });
+}
+window.seitenleisteGespraecheLaden = seitenleisteGespraecheLaden;
+async function seitenleisteGespraechFortsetzen(e, id, a) {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  if (typeof window.alleAusstehendenSpeichern === 'function') {
+    const fehler = await window.alleAusstehendenSpeichern();
+    if (fehler && typeof window.speicherFehlerMelden === 'function') { window.speicherFehlerMelden(fehler); return; }
+  }
+  try {
+    const r = await fetch('/api/agent/gespraeche/' + id + '/fortsetzen', { method: 'POST' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const ziel = String(d.weiter || '');
+    window.location.href = /^\/(app|dashboard)\?/.test(ziel) ? ziel : a.href;
+  } catch (err) {
+    window.location.href = a.href;
+  }
+}
+async function seitenleisteNeuesGespraech() {
+  // Mit dem InkluAgent auf der Seite: dessen „Neues Gespräch“ (leert den Verlauf, Fokus ins Eingabefeld)
+  const imAgenten = byId('inkluagentNeuesGespraech');
+  if (imAgenten && typeof window.inkluagentNeuesGespraech === 'function') {
+    const panel = byId('inkluagentPanel');
+    if (panel && panel.hidden && typeof window.inkluagentOpen === 'function') await window.inkluagentOpen(window._inkluagentProjectId, false, true);
+    await window.inkluagentNeuesGespraech();
+    return;
+  }
+  try {
+    const r = await fetch('/api/agent/gespraech/neu', { method: 'POST' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    window.location.href = '/dashboard?agent=offen';
+  } catch (e) {
+    announce(t('Das ging nicht. Bitte erneut versuchen.'));
+  }
 }
 
 // ─── Ansicht je Konto: schneller Umschalter (InkluAgent-Ausbau Runde 1, Schritt 5) ───

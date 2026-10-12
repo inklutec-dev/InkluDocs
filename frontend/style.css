@@ -1456,3 +1456,82 @@ input[type="checkbox"][aria-invalid="true"], input[type="radio"][aria-invalid="t
     }
     input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border: 3px dashed CanvasText !important; }
 }
+
+/* ─── Agentenansicht wie ChatGPT/Claude mit Arbeitsfenster (Michael Karbe, Feedback 20261012 - 1, Punkt 6; Steve 12.10.2026) ───
+   Nur mit Schalter AGENT_ARBEITSFENSTER in der Agentenansicht (inkluagent.js, inkluagentChatstil). Mitte das Gespraech (Verlauf
+   oben, Eingabe am unteren Rand angeheftet), rechts das Arbeitsfenster; schmal untereinander. */
+/* 2.4.11: die angeheftete Eingabe verdeckt nie, was den Fokus bekommt — der Browser laesst unten so viel Platz */
+html.agentenansicht-chatstil { scroll-padding-bottom: 13rem; }
+html.agentenansicht-chatstil .inkluagent-bereich { max-width: 84rem; }
+.inkluagent-section.inkluagent-chatstil { background: transparent; border: 0; box-shadow: none; padding: 0; max-width: none; }
+/* Der Auf/Zu-Knopf bleibt (Ueberschrift 2), aber schlicht statt als dunkler Balken */
+.inkluagent-chatstil .inkluagent-toggle { background: transparent; color: var(--primary); border: 0; border-radius: 4px; padding: 0.25rem 0.1rem;
+    font-size: 1.15rem; width: auto; }
+.inkluagent-chatstil .inkluagent-toggle:hover { background: transparent; text-decoration: underline; }
+.inkluagent-chatstil #inkluagentHeading { border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+.inkluagent-spalten { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+@media (min-width: 1100px) {
+    .inkluagent-spalten { grid-template-columns: minmax(0, 1fr) 20rem; gap: 2rem; }
+    .arbeitsfenster { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
+}
+.inkluagent-gespraech { display: flex; flex-direction: column; width: 100%; max-width: 46rem; margin: 0 auto; }
+/* Leeres Gespraech: Eingabe in der Mitte der Flaeche wie bei ChatGPT */
+.inkluagent-gespraech:has(> .inkluagent-log:empty) { min-height: 50vh; justify-content: center; }
+.inkluagent-chatstil .inkluagent-log { border: 0; background: transparent; max-height: none; min-height: 0; padding: 0; overflow: visible; margin: 0 0 0.5rem; }
+.inkluagent-chatstil .inkluagent-message { margin: 0 0 1.25rem; border-left: 0; }
+.inkluagent-chatstil .inkluagent-message.user { background: #e6ecf5; border-radius: 1.25rem; padding: 0.7rem 1rem; margin-left: auto;
+    margin-right: 0; width: fit-content; max-width: 85%; }
+/* Absender bleibt Ueberschrift 3 (Navigation per Ueberschriften); sichtbar nur beim InkluAgent, die eigene Nachricht erkennt man an
+   der Blase rechts */
+.inkluagent-chatstil .inkluagent-message.user .inkluagent-message-role { position: absolute; width: 1px; height: 1px; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; padding: 0; }
+.inkluagent-chatstil .inkluagent-message.assistant { background: transparent; padding: 0 0.25rem; margin-right: 0; }
+.inkluagent-chatstil .inkluagent-message.assistant .inkluagent-message-role { text-transform: none; letter-spacing: 0; color: var(--primary); font-size: 0.95rem; }
+.inkluagent-chatstil .inkluagent-message-content { font-size: 1rem; line-height: 1.6; }
+.inkluagent-chatstil .inkluagent-marke { text-align: center; }
+/* Eingabe: am unteren Rand angeheftet, runder Kasten mit gut sichtbarem Rand (1.4.11) */
+.inkluagent-chatstil .inkluagent-form { position: sticky; bottom: 0; z-index: 2; background: var(--bg); padding: 0.5rem 0 0.75rem; }
+/* 1.4.10: bei wenig Hoehe (Vergroesserung, Handy quer) klebt die Eingabe nicht — sie wuerde sonst den halben Bildschirm verdecken */
+@media (max-height: 560px) {
+    .inkluagent-chatstil .inkluagent-form { position: static; }
+    html.agentenansicht-chatstil { scroll-padding-bottom: 0; }
+}
+.inkluagent-chatstil .inkluagent-form textarea { border: 2px solid #6b7a90; border-radius: 1.25rem; padding: 0.85rem 1.1rem; min-height: 3.5rem;
+    background: #fff; box-shadow: 0 2px 10px rgba(27, 42, 74, 0.08); }
+.inkluagent-gross.inkluagent-chatstil #inkluagentInput { min-height: 3.5rem; }
+/* Unter dem Feld eine Zeile: Hinweis links, „Senden“ rechts; die Statuszeile darunter. Die Reihenfolge im Quelltext bleibt
+   (Feld, Hinweis, Senden, Status) — nur die Anordnung ist ein Raster. */
+.inkluagent-chatstil .inkluagent-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1rem; row-gap: 0.4rem; align-items: center; }
+.inkluagent-chatstil .inkluagent-form > textarea { grid-column: 1 / -1; grid-row: 1; }
+.inkluagent-chatstil .inkluagent-form > .inkluagent-hint { grid-column: 1; grid-row: 2; }
+.inkluagent-chatstil .inkluagent-form > .inkluagent-hochladen { grid-column: 1 / -1; grid-row: 3; }
+.inkluagent-chatstil .inkluagent-controls { display: contents; }
+.inkluagent-chatstil #inkluagentSendBtn { grid-column: 2; grid-row: 2; justify-self: end; }
+.inkluagent-chatstil #inkluagentStatus { grid-column: 1 / -1; grid-row: 4; }
+.inkluagent-chatstil #inkluagentStatus:empty { display: none; }
+/* Die Gespraeche stehen in der Seitenleiste; ohne sie (schmale Seitenleiste ohne Abschnitt) bleibt die Leiste im Agenten */
+html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leiste { display: none; }
+.inkluagent-chatstil .inkluagent-trenner { display: none; }
+.inkluagent-chatstil .inkluagent-beschreibung { font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem; }
+.inkluagent-chatstil .inkluagent-beschreibung .inkluagent-intro { font-size: 0.875rem; }
+/* Arbeitsfenster */
+.arbeitsfenster { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+.arbeitsfenster h2 { font-size: 1.1rem; margin: 0 0 0.5rem; color: var(--primary); }
+.arbeitsfenster h3 { font-size: 1rem; margin: 1rem 0 0.35rem; }
+.arbeitsfenster-stand { margin: 0 0 0.6rem; font-weight: 600; }
+.arbeitsfenster-fortschritt { display: block; width: 100%; height: 0.5rem; margin: 0 0 0.75rem; accent-color: var(--accent); }
+.arbeitsfenster-fortschritt[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .arbeitsfenster-fortschritt { display: none; } }
+.arbeitsfenster-angaben { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.25rem 0.75rem; margin: 0.9rem 0 0; font-size: 0.95rem; }
+.arbeitsfenster-angaben[hidden] { display: none; }
+.arbeitsfenster-angaben dt { font-weight: 600; color: var(--text-muted); }
+.arbeitsfenster-angaben dd { margin: 0; overflow-wrap: anywhere; }
+.arbeitsfenster-bild { margin: 0.9rem 0 0; }
+.arbeitsfenster-bild img { display: block; max-width: 100%; max-height: 22rem; margin: 0 auto; border: 1px solid var(--border);
+    border-radius: 6px; background: #fff; }
+.arbeitsfenster-bild figcaption { font-size: 0.875rem; color: var(--text-muted); margin-top: 0.35rem; text-align: center; }
+.arbeitsfenster-schritte { margin: 0; padding-left: 1.4rem; font-size: 0.95rem; }
+.arbeitsfenster-schritte li { margin: 0.2rem 0; }
+.arbeitsfenster-schritte li[data-zustand="laeuft"] { font-weight: 600; }
+.arbeitsfenster-schritte .schritt-zustand { color: var(--text-muted); font-weight: 400; }

@@ -12132,3 +12132,65 @@ msgstr "Was soll der InkluAgent für dich erledigen?"
 #, python-brace-format
 msgid "Alle anzeigen ({n})"
 msgstr "Alle anzeigen ({n})"
+
+# Agentenansicht wie ChatGPT mit Arbeitsfenster (Michael Karbe, Feedback 20261012 - 1, Punkt 6)
+msgid "Arbeitsfenster"
+msgstr "Arbeitsfenster"
+
+msgid "Stand vorlesen"
+msgstr "Stand vorlesen"
+
+msgid "Schritte"
+msgstr "Schritte"
+
+msgid "Ort"
+msgstr "Ort"
+
+msgid "Seite"
+msgstr "Seite"
+
+#, python-brace-format
+msgid "Feld {n}"
+msgstr "Feld {n}"
+
+msgid "erledigt"
+msgstr "erledigt"
+
+msgid "läuft"
+msgstr "läuft"
+
+#, python-brace-format
+msgid "Fehler: {text}"
+msgstr "Fehler: {text}"
+
+msgid "Gespräche"
+msgstr "Gespräche"
+
+msgid "Alle Gespräche"
+msgstr "Alle Gespräche"
+
+#, python-brace-format
+msgid "Gespräch vom {datum}"
+msgstr "Gespräch vom {datum}"
+
+msgid "Bereit. Schreib dem InkluAgent, was er erledigen soll."
+msgstr "Bereit. Schreib dem InkluAgent, was er erledigen soll."
+
+msgid "Arbeitet: liest deine Nachricht und plant die Schritte."
+msgstr "Arbeitet: liest deine Nachricht und plant die Schritte."
+
+#, python-brace-format
+msgid "Arbeitet an: {schritt}"
+msgstr "Arbeitet an: {schritt}"
+
+msgid "Fertig. Die Antwort steht im Gespräch."
+msgstr "Fertig. Die Antwort steht im Gespräch."
+
+msgid "Wartet auf dich: Bitte entscheide unter der Antwort."
+msgstr "Wartet auf dich: Bitte entscheide unter der Antwort."
+
+msgid "Arbeitet noch an der letzten Antwort …"
+msgstr "Arbeitet noch an der letzten Antwort …"
+
+msgid "InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster."
+msgstr "InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster."

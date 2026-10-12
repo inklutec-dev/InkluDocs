@@ -739,3 +739,44 @@ neues Projekt mit Wechsel); ältere Proben auf den Wechsel angepasst (Schritt 3:
 Tests: `tests/test_michael_feedback_1012.py` (8). Klickprobe lokal 11 von 11 (drei Projekte auf der Startseite, Reihenfolge im
 Agenten, Platzhalter, kein Dateifeld, kein grauer Kasten, axe ohne Verstöße, fünf plus „Alle anzeigen (11)“ mit Fokus).
 Punkt 6 (eigene Agentenansicht wie bei ChatGPT) folgt als eigener Schritt.
+
+### Agentenansicht wie ChatGPT/Claude mit Arbeitsfenster (Michael Karbe Punkt 6, Steves Vision 12.10.2026; Schalter `AGENT_ARBEITSFENSTER`, Umgebung `INKLUAGENT_ARBEITSFENSTER=an`, braucht `AGENT_ANSICHT` und `AGENT_UEBERALL`)
+
+Steve: „Auf der einen Seite das Eingabefeld, auf der anderen sieht man, was der Agent gerade macht — welche Seite, welches
+Dokument —, und für den Screenreader nachlesbar.“ Keine zweite Seitenleiste: die vorhandene bekommt den Abschnitt „Gespräche“.
+Nur in der Agentenansicht; die manuelle Ansicht (und „Dieses Projekt in der manuellen Ansicht zeigen“) bleibt, wie sie ist.
+- **Aufbau** (`inkluagentChatstil`, im festen Bereich): Mitte das Gespräch — Verlauf oben, darunter die Eingabe (am unteren Rand
+  angeheftet, runder Kasten; darunter Hinweis links, „Senden“ rechts, Statuszeile), darunter klein die Beschreibung mit dem
+  KI-Hinweis. Eigene Nachrichten als Blase rechts (Absender bleibt Überschrift 3, nur unsichtbar), Antworten links mit
+  „InkluAgent“. Leeres Gespräch: Eingabe mittig. Rechts das Arbeitsfenster; unter 1100 Pixel untereinander. Die Teile werden
+  verschoben, nicht neu gebaut (Verlauf, Entwurf, Ereignisse bleiben); zurück stellt die Reihenfolge der manuellen Ansicht her.
+  `scroll-padding-bottom` hält fokussierte Teile über der angehefteten Eingabe (2.4.11); bei wenig Höhe klebt sie nicht (1.4.10).
+- **Arbeitsfenster** (`section#arbeitsfenster`, Überschrift 2 „Arbeitsfenster“, nach dem Gespräch im Quelltext): Stand als
+  Absatz („Bereit …“, „Arbeitet an: Bild ansehen – Bild 3“, „Fertig. Die Antwort steht im Gespräch.“, „Wartet auf dich: Bitte
+  entscheide unter der Antwort.“, „Fehler: …“), Fortschrittsbalken während des Laufs, Knopf „Stand vorlesen“ (sagt Stand, Ort,
+  Dokument und Seite einmal an), Angaben Ort (im Projekt die Hauptüberschrift, sonst der aktuelle Navigationseintrag) /
+  Dokument / Seite, Vorschau (Seitenansicht des Bildes, sonst das Bild; Unterschrift „Bild 3 · Seite 2“, Bild selbst `alt=""`)
+  und die Schritte des letzten Auftrags (Überschrift 3, nummerierte Liste mit „läuft“/„erledigt“ als Text). Zustand je Tab in
+  `sessionStorage` (30 Minuten) — übersteht den Seitenwechsel ins Projekt.
+- **Ansagen** nur bei Start (Statuszeile: „InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster.“), Ende (Fokus auf die
+  Antwort), Rückfrage (Karte in der Antwort) und Fehler. Die einzelnen Schritte („Ruft gerade auf: …“) landen still im
+  Arbeitsfenster; ohne Chatstil bleibt die Live-Zeile wie bisher.
+- **Server** (`inkluagent/arbeitsfenster.py`): der Stream meldet je Werkzeug zusätzlich `ziel`, wenn es ein Bild, Feld oder
+  Dokument DIESES Projekts nennt — Art, Nummer wie in der Oberfläche (je Dokument), Seite, Dokumentname und -nummer (nur bei
+  mehreren), Bild- und Seitenadresse. Aus den Argumenten zählen nur ganze Zahlen, Herkunft immer die Datenbank mit Prüfung auf
+  Projekt und Konto; Fehler ergeben kein Ziel, nie einen Abbruch. Die Seite nimmt nur Adressen `/api/images/<Zahl>/file|page-view`
+  und setzt alles mit `textContent`.
+- **Seitenleiste** (`dashboard.js`, `seitenleisteGespraecheBauen`): in der Navigation vor „Konto“ Überschrift 2 „Gespräche“,
+  Knopf „Neues Gespräch“ (der des Agenten: leert, Fokus ins Feld, Arbeitsfenster bereit), die acht neuesten Gespräche
+  (`GET /api/agent/gespraeche?anzahl=8`, das laufende mit `aria-current`) und „Alle Gespräche“. Ein Gespräch anklicken setzt es
+  fort wie „Hier weitermachen“ (letztes Projekt, Agent offen, Fokus auf der letzten Nachricht); mit Strg/Cmd die Lese-Seite.
+  Unter 768 Pixel nur Knopf und „Alle Gespräche“. Die Leiste „Neues Gespräch / Frühere Gespräche“ im Agenten ist dann aus.
+- 19 neue Texte in sechs Sprachen.
+
+Tests: `tests/test_agent_arbeitsfenster.py` (15: Ziel mit Nummer je Dokument, Seite, Adressen; ein Dokument ohne Nummer; Feld und
+Dokument; nur eigene Daten dieses Projekts; nur ganze Zahlen; nie eine Ausnahme; Stream nennt das Ziel nur mit Schalter; Schalter
+für die Seite; begrenzte Gesprächsliste; Oberfläche am Quelltext). Klickprobe lokal 35 von 35 (Chatstil, Seitenleiste,
+Reihenfolge, axe ohne Verstöße leer/mit Verlauf/Seitenleiste, Schritt und Ende, Lauf mit drei Schritten am Bild mit Vorschau,
+eine Ansage zum Start, „Stand vorlesen“, 390 und 320 Pixel ohne waagerechtes Scrollen, Gespräch aus der Seitenleiste fortsetzen,
+„Neues Gespräch“, nur diese Seite manuell, manuelle Ansicht unverändert); Probe Schritt 3 mit Schalter 34/34, Probe Ansicht
+(Runde 1) 25/25.
