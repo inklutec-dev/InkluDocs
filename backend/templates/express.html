@@ -614,6 +614,8 @@
     // aufklappbar erkennbar ist. Offen bleiben zuvor geöffnete und der Auftrag, auf den gesprungen wird.
     const ziel_id = sprungZiel();
     auftraege.forEach((a) => ziel.appendChild(auftragKarte(a, offen.has('exa_karte_' + a.id) || String(a.id) === ziel_id)));
+    // fuenf neueste + „Alle anzeigen“ (Michael Karbe, Feedback 20261012 - 1, Punkt 7); offene und das Sprungziel bleiben sichtbar
+    listeKuerzen(ziel, { schluessel: 'auftraege', behalten: (e) => e.id === 'exa_karte_' + ziel_id || !!e.querySelector('details[open]') });
   }
 
   // Sprungziel: ?neu=<id> (nach dem Bestellen), ?auftrag=<id> (Startseite) oder #exa_karte_<id>; '' = keins.

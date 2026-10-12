@@ -12121,3 +12121,11 @@ msgstr "“{datei}” has been uploaded."
 
 msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
 msgstr "The file is no longer available (deleted after 30 minutes). Please upload it again."
+
+# Michael Karbe, Feedback 20261012 - 1 (12.10.2026)
+msgid "Was soll der InkluAgent für dich erledigen?"
+msgstr "What should the InkluAgent do for you?"
+
+#, python-brace-format
+msgid "Alle anzeigen ({n})"
+msgstr "Show all ({n})"

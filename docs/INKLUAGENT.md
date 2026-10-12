@@ -716,3 +716,26 @@ er wechselt dann auf die jeweilige Projektseite.“
 Tests: `tests/test_agent_zuordnung.py` (10). Klickprobe lokal 10 von 10 (Öffnen wechselt mit Fokus auf der Antwort, Datei mit
 ähnlichem Projekt wartet mit Karten, axe ohne Verstöße, Knopf legt ins vorhandene Projekt und wechselt, ohne ähnliches sofort
 neues Projekt mit Wechsel); ältere Proben auf den Wechsel angepasst (Schritt 3: 34/34, Konto-Werkzeuge 14/14, Webadressen 10/10).
+
+### Michael Karbe, Feedback 20261012 - 1 (Mail 12.10.2026, Steves Go)
+
+- **Aufbau des InkluAgent** (`inkluagentInhaltHtml`): zugeklappt nur die Überschrift (Knopf). Aufgeklappt zuerst das Eingabefeld
+  mit Hinweis und Knöpfen, darunter der Verlauf, die Gespräche-Leiste, eine Linie (`hr.inkluagent-trenner`) und darunter die
+  Beschreibung (`div.inkluagent-beschreibung`: Kurzhilfe bzw. Einleitung). Leerer Verlauf ist unsichtbar
+  (`.inkluagent-log:empty { display: none; }`), der graue Kasten „Noch keine Nachrichten …“ ist weg. Platzhalter überall
+  „Was soll der InkluAgent für dich erledigen?“.
+- **Feld „Dateien mitschicken“** hat einen eigenen Schalter `AGENT_HOCHLADEFELD` (Umgebung `INKLUAGENT_HOCHLADEFELD=an`, Standard
+  aus, auch auf Staging aus). Der Server-Teil (`POST /api/agent/hochladen`, Karten, Eingang) bleibt an `AGENT_HOCHLADEN`;
+  `_inkluagent_schalter()["hochladen"]` braucht beide. Webadressen in der Nachricht gehen weiter.
+- **Startseite** (`dashboard.html`): „Geteilte Projekte“ als zweiter Knopf neben „Neues Projekt anlegen“; je drei Einträge
+  (`STARTSEITE_ANZAHL`) für zuletzt bearbeitete Projekte (nach `updated_at`), Aufträge und Ablage, in dieser Reihenfolge; die
+  Links „Alle Projekte anzeigen“, „Alle Aufträge“, „Ablage öffnen“ sind weg (Seitenleiste reicht).
+- **Lange Listen** (`listeKuerzen` in `dashboard.js`): Meine Projekte, Meine Ablage, Aufträge und die Dokumentliste im Projekt
+  zeigen fünf Einträge, darunter „Alle anzeigen (n)“. Klick zeigt alle und setzt den Fokus auf den ersten neuen Eintrag; die
+  Wahl gilt bis zum Neuladen der Seite (`window._listenAlle`).
+- **Alt-Texte und Quickinfos**: in Projekten mit Dokumentansicht nur Dokumente mit Bildern bzw. mit Feldern; die Nummerierung
+  der Dokumente bleibt (Gastansicht unverändert).
+
+Tests: `tests/test_michael_feedback_1012.py` (8). Klickprobe lokal 11 von 11 (drei Projekte auf der Startseite, Reihenfolge im
+Agenten, Platzhalter, kein Dateifeld, kein grauer Kasten, axe ohne Verstöße, fünf plus „Alle anzeigen (11)“ mit Fokus).
+Punkt 6 (eigene Agentenansicht wie bei ChatGPT) folgt als eigener Schritt.

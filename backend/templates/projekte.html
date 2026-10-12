@@ -83,6 +83,7 @@
       ul.appendChild(li);
     });
     cont.appendChild(ul);
+    listeKuerzen(ul, { schluessel: 'projekte' });   // fuenf neueste + „Alle anzeigen“ (Michael Karbe, Feedback 20261012 - 1, Punkt 7)
     announce(t('{n} Projekte geladen.', { n: projects.length }));
   }
 

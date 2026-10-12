@@ -12124,3 +12124,11 @@ msgstr "„{datei}“ ist hochgeladen."
 
 msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
 msgstr "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
+
+# Michael Karbe, Feedback 20261012 - 1 (12.10.2026)
+msgid "Was soll der InkluAgent für dich erledigen?"
+msgstr "Was soll der InkluAgent für dich erledigen?"
+
+#, python-brace-format
+msgid "Alle anzeigen ({n})"
+msgstr "Alle anzeigen ({n})"

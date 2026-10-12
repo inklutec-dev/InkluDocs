@@ -403,7 +403,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 /* ── Runde 10 (08.10.2026): Navigation aufgeräumt ── */
 /* „Neues Projekt anlegen“ als Primärknopf oben auf der Startseite und auf „Meine Projekte“ */
-.dash-neu-projekt { margin:0 0 1.5rem; }
+.dash-neu-projekt { margin:0 0 1.5rem; display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }   /* + „Geteilte Projekte“ (12.10.2026) */
 .dash-main a.btn-primary { color:#fff; }
 /* „Meine Vorlagen“: zwei Bereiche als Karten; Zahl der gespeicherten Einträge ruhig darunter */
 .vorlagen-bereich > h2 { margin-bottom:.4rem; }

@@ -1109,6 +1109,12 @@
             + alleKnopf
             + '<div id="dokListe">' + docs.map((d, i) => karteHtml(project, d, i + 1, docs.length)).join('') + '</div>'
             + (typeof inkluagentSectionHtml === 'function' ? inkluagentSectionHtml(projectId) : '');
+        // Fuenf neueste Dokumente + „Alle anzeigen“ (Michael Karbe, Feedback 20261012 - 1, Punkt 7). Die Dokumente stehen aelteste
+        // zuerst: die letzten fuenf bleiben sichtbar, offene ebenfalls; einmal „Alle anzeigen“ gilt fuer dieses Projekt.
+        if (typeof listeKuerzen === 'function') {
+            listeKuerzen(document.getElementById('dokListe'), { schluessel: 'dokumente-' + projectId, vonHinten: true,
+                                                               behalten: (e) => !!e.querySelector('details.dok-klappe[open]') });
+        }
         // Nur echte Bedienung merken: Chrome feuert fuer jede offen gezeichnete Klappe einmal „toggle“ ohne
         // Zustandswechsel — das ist keine Nutzerentscheidung und darf eine Karte nicht dauerhaft offen halten.
         document.querySelectorAll('details.dok-klappe').forEach(el => {

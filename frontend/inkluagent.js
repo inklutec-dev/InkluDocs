@@ -36,14 +36,15 @@ function inkluagentEinleitung(variante) {
     if (variante === 'konto') return t('Der InkluAgent ist ein KI-Assistent. Frag ihn nach deinen Projekten, deinem Guthaben oder dem, was gerade läuft. In einem Projekt hilft er bei Alt-Texten, Tagging, Prüfung und mehr.');
     return t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.');
 }
-function inkluagentPlatzhalter(variante) {
-    if (variante === 'formular') return t("z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'");
-    if (variante === 'konto') return t("z.B. 'Welche Projekte habe ich?' oder 'Wie viele Credits habe ich noch?'");
-    return t("z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'");
+function inkluagentPlatzhalter(variante) {   // Michael Karbe, Feedback 20261012 - 1, Punkt 5: ueberall derselbe Satz
+    return t('Was soll der InkluAgent für dich erledigen?');
 }
 // alsBereich (Schritt 3): Inhalt des festen Bereichs — ein div statt section, denn das aside ist schon der Bereich (Landmark)
 function inkluagentInhaltHtml(projectId, variante, alsBereich) {
     const formular = variante === 'formular';
+    // Aufbau seit Michael Karbe, Feedback 20261012 - 1: aufgeklappt steht direkt unter dem Knopf das Eingabefeld (Punkt 1), darunter
+    // der Verlauf, dann „Neues Gespräch“/„Frühere Gespräche“, eine Linie und die Beschreibung (Punkt 4). Zugeklappt sieht man nur
+    // die Ueberschrift mit dem Knopf. Der KI-Hinweis (KI-VO Art. 50) steht in der Beschreibung, also immer, wenn man ihn benutzt.
     return ''
         + (alsBereich
             ? '<div class="inkluagent-section" data-variante="' + (variante || 'bilder') + '">'
@@ -57,30 +58,7 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         +       t('InkluAgent')
         +     '</button>'
         +   '</h2>'
-        // InkluAgent-Ausbau Runde 1, Schritt 3 (Schalter funktionen.AGENT_HILFE, window.FUNKTIONEN.agent_hilfe): drei kurze
-        // Stichpunkte statt der langen Einleitung, der erste ist der KI-Hinweis nach KI-VO Art. 50; darunter der Weg zur
-        // Hilfe-Seite. Echte Liste (VoiceOver: „Liste, 3 Objekte“). Schalter aus = die Einleitung wie bisher.
-        + (inkluagentKurzhilfe() ? inkluagentKurzhilfeHtml(variante) : (''
-        +   '<p class="inkluagent-intro">'
-        // KI-VO Art. 50 Abs. 1 (gilt seit 02.08.2026): Menschen muessen
-        // erkennen, dass sie mit einem KI-System sprechen. Der Name
-        // „InkluAgent“ sagt das allein nicht — der ausdrueckliche Satz
-        // „… ist ein KI-Assistent“ direkt unter dem Knopf sagt es.
-        // (25.08.2026: stand als Jinja-Kommentar INNERHALB des raw-Blocks,
-        // blieb woertlich im JavaScript stehen und brach das ganze
-        // App-Skript mit einem SyntaxError ab. Im raw-Block nur
-        // JS-Kommentare verwenden.)
-        +   inkluagentEinleitung(variante)
-        +   '</p>'))
         +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
-        +     (inkluagentGespraecheAn() ? inkluagentGespraechLeisteHtml() : '')
-        // tabindex=0 (11.09.2026, axe scrollable-region-focusable): der Verlauf wird bei vielen
-        // Nachrichten scrollbar und muss dann per Tastatur erreichbar sein (WCAG 2.1.1).
-        // aria-live="off" (Pruefung 3 Barrierefreiheit, H1/N1): role=log ist sonst von selbst „polite“ — beim Neuzeichnen
-        // (Ansichtswechsel, Neuladen, Auf/Zu) wurde der ganze Verlauf erneut angesagt, jede neue Antwort doppelt (Live-Region
-        // UND Fokus) und die eigene Nachricht als Echo. Jetzt sagt nichts im Verlauf von selbst etwas an: die neue Antwort
-        // bekommt den Fokus (der Screenreader liest sie vollständig), Warten und Fehler meldet die Statuszeile.
-        +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="off" aria-label="' + t('Chat-Verlauf') + '" tabindex="0"></div>'
         // novalidate (Runde 2, Schritt 1): Meldungen kommen aus inkluagentSend in die Statuszeile — nie die Blase des Browsers, die
         // ohne Ansage verschwindet und das Senden still verhindert
         +     '<form id="inkluagentForm" class="inkluagent-form" novalidate>'
@@ -95,6 +73,22 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         +         '<span id="inkluagentStatus" class="inkluagent-status" role="status" aria-live="polite"></span>'
         +       '</div>'
         +     '</form>'
+        // tabindex=0 (11.09.2026, axe scrollable-region-focusable): der Verlauf wird bei vielen
+        // Nachrichten scrollbar und muss dann per Tastatur erreichbar sein (WCAG 2.1.1).
+        // aria-live="off" (Pruefung 3 Barrierefreiheit, H1/N1): role=log ist sonst von selbst „polite“ — beim Neuzeichnen
+        // (Ansichtswechsel, Neuladen, Auf/Zu) wurde der ganze Verlauf erneut angesagt, jede neue Antwort doppelt (Live-Region
+        // UND Fokus) und die eigene Nachricht als Echo. Jetzt sagt nichts im Verlauf von selbst etwas an: die neue Antwort
+        // bekommt den Fokus (der Screenreader liest sie vollständig), Warten und Fehler meldet die Statuszeile.
+        +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="off" aria-label="' + t('Chat-Verlauf') + '" tabindex="0"></div>'
+        +     (inkluagentGespraecheAn() ? inkluagentGespraechLeisteHtml() : '')
+        +     '<hr class="inkluagent-trenner">'
+        +     '<div class="inkluagent-beschreibung">'
+        // InkluAgent-Ausbau Runde 1, Schritt 3 (Schalter funktionen.AGENT_HILFE): KI-Hinweis, Beispiele und Weg zur Hilfe-Seite;
+        // Schalter aus = die Einleitung wie bisher. KI-VO Art. 50 Abs. 1 (gilt seit 02.08.2026): der ausdrueckliche Satz „… ist
+        // ein KI-Assistent“ bzw. „… ist eine KI“ steht in beiden. (25.08.2026: Jinja-Kommentare im raw-Block brachen das ganze
+        // App-Skript — hier nur JS-Kommentare.)
+        +       (inkluagentKurzhilfe() ? inkluagentKurzhilfeHtml(variante) : ('<p class="inkluagent-intro">' + inkluagentEinleitung(variante) + '</p>'))
+        +     '</div>'
         +   '</div>'
         + (alsBereich ? '</div>' : '</section>');
 }
@@ -574,8 +568,8 @@ function inkluagentFrueherZeigen(projectId, anzahl) {
             delete box.dataset.geladen;
         }
     });
-    const log = document.getElementById('inkluagentLog');
-    panel.insertBefore(d, (log && log.parentNode === panel) ? log : panel.firstChild);   // unter „Neues Gespräch“, über dem Verlauf
+    const trenner = panel.querySelector('.inkluagent-trenner');
+    panel.insertBefore(d, (trenner && trenner.parentNode === panel) ? trenner : null);   // unter Verlauf und Leiste, über der Linie
 }
 
 async function inkluagentLoadHistory(projectId) {

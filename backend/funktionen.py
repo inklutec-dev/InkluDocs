@@ -84,6 +84,10 @@ AGENT_ANSICHT = _umgebung_an("INKLUAGENT_ANSICHT")
 # Runde 2, Schritt 1 — Hochladefeld im InkluAgent (inkluagent/hochladen.py): Dateien und Webadresse direkt im Agenten, der
 # Server ordnet zu und legt Projekte an, der Agent schlaegt mit Preisen vor. INKLUAGENT_HOCHLADEN=an.
 AGENT_HOCHLADEN = _umgebung_an("INKLUAGENT_HOCHLADEN")
+# Das FELD „Dateien mitschicken“ im InkluAgent (Michael Karbe, Feedback 20261012 - 1, Punkt 3: „erst einmal weglassen, das verwirrt
+# die Anwender derzeit noch“): eigener Schalter fuer die Oberflaeche, Vorgabe aus. Der Server-Teil (AGENT_HOCHLADEN: Endpunkt,
+# Webadressen in der Nachricht, Zuordnung) bleibt davon unberuehrt. INKLUAGENT_HOCHLADEFELD=an zeigt das Feld wieder.
+AGENT_HOCHLADEFELD = _umgebung_an("INKLUAGENT_HOCHLADEFELD")
 # Runde 2, Schritt 2 — EIN Gespraech je Konto (inkluagent/storage.py, Tabellen agent_nachrichten und agent_fokus): der Agent
 # fuehrt ein durchgehendes Gespraech ueber alle Projekte, mit Projektmarken („Ab hier: Projekt …“); alte Projektgespraeche
 # bleiben im Projekt lesbar, beim Loeschen eines Projekts bleibt das Gespraech (Projektbezug als geloescht markiert).

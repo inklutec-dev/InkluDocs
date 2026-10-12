@@ -11695,3 +11695,11 @@ msgstr "”{datei}” är uppladdad."
 
 msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
 msgstr "Filen finns inte längre (raderad efter 30 minuter). Ladda upp den igen."
+
+# Michael Karbe, Feedback 20261012 - 1 (12.10.2026)
+msgid "Was soll der InkluAgent für dich erledigen?"
+msgstr "Vad ska InkluAgent göra åt dig?"
+
+#, python-brace-format
+msgid "Alle anzeigen ({n})"
+msgstr "Visa alla ({n})"

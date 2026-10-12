@@ -238,6 +238,7 @@
     const ul = el('ul', 'dash-list');
     liste.forEach((a) => ul.appendChild(eintrag(a, !!data.projekt)));
     cont.appendChild(ul);
+    listeKuerzen(ul, { schluessel: 'ablage' });   // fuenf neueste + „Alle anzeigen“ (Michael Karbe, Feedback 20261012 - 1, Punkt 7)
   }
 
   async function laden() {

@@ -12123,3 +12123,11 @@ msgstr "« {datei} » est téléversé."
 
 msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
 msgstr "Le fichier n’est plus disponible (supprimé après 30 minutes). Veuillez le téléverser à nouveau."
+
+# Michael Karbe, Feedback 20261012 - 1 (12.10.2026)
+msgid "Was soll der InkluAgent für dich erledigen?"
+msgstr "Que doit faire l’InkluAgent pour vous ?"
+
+#, python-brace-format
+msgid "Alle anzeigen ({n})"
+msgstr "Tout afficher ({n})"

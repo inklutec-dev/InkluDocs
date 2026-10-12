@@ -12123,3 +12123,11 @@ msgstr "«{datei}» se ha subido."
 
 msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
 msgstr "El archivo ya no está disponible (se elimina a los 30 minutos). Súbelo de nuevo."
+
+# Michael Karbe, Feedback 20261012 - 1 (12.10.2026)
+msgid "Was soll der InkluAgent für dich erledigen?"
+msgstr "¿Qué debe hacer el InkluAgent por ti?"
+
+#, python-brace-format
+msgid "Alle anzeigen ({n})"
+msgstr "Mostrar todo ({n})"

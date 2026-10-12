@@ -1103,14 +1103,12 @@ ul.inkluagent-kurzhilfe {
 }
 /* Fokusring, wenn der scrollbare Verlauf per Tab erreicht wird (11.09.2026) */
 .inkluagent-log:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
-.inkluagent-log:empty::before {
-    content: 'Noch keine Nachrichten in diesem Projekt. Schreib eine Nachricht ins Eingabefeld unten.';
-    display: block;
-    color: var(--text-muted);
-    padding: 1rem;
-    text-align: center;
-    font-style: italic;
-}
+/* Michael Karbe, Feedback 20261012 - 1, Punkt 2: kein grauer Kasten „Noch keine Nachrichten …“ — ein leerer Verlauf ist einfach
+   nicht da (auch nicht als leerer Rahmen) */
+.inkluagent-log:empty { display: none; }
+/* Punkt 4: die Beschreibung steht unter dem Gespraech, durch eine Linie abgetrennt */
+.inkluagent-trenner { border: 0; border-top: 1px solid var(--border); margin: 1rem 0 0.75rem; }
+.inkluagent-beschreibung .inkluagent-intro { margin-top: 0; }
 .inkluagent-message {
     margin-bottom: 0.75rem;
     padding: 0.6rem 0.85rem;

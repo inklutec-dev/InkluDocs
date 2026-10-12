@@ -3352,8 +3352,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         let html;
         if ((isPdfProject || isWebProject) && orderedDocs.length > 0) {
             // PDF- oder Web-Projekt mit Dokument-Ebene. pos = Anzeige-Position (1..N).
+            // Michael Karbe, Feedback 20261012 - 1, Punkt 8: in der Ansicht „Alt-Texte“ eines PDF- oder Word-Projekts nur Dokumente,
+            // die Bilder haben (die Dokumentverwaltung steht in „Dokument“). Die Nummer bleibt die aus „Dokument“ (Position in allen).
+            const nurMitBildern = !window.GUEST_MODE && mitDokumentAnsicht(project);
             html = orderedDocs.map((doc, i) => {
                 const pageMap = groupsByDoc.get(doc.id) || new Map();
+                if (nurMitBildern && !pageMap.size) return '';
                 return renderDocBlock(doc, pageMap, i + 1);
             }).join('');
             // Reste (Bilder ohne document_id, sollte nach Migration nicht vorkommen) -> ans Ende

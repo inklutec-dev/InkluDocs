@@ -5,12 +5,12 @@
       <p class="dash-sub">{{ _('Schön, dass du da bist. Lege ein neues Projekt an oder öffne eines deiner Projekte.') }}</p>
       {# Runde 10 (08.10.2026): „Neues Projekt anlegen“ steht nicht mehr in der Navigation, sondern als Primärknopf hier
          und oben auf „Meine Projekte“ #}
-      <p class="dash-neu-projekt"><a class="btn btn-primary" href="/projekt-neu">{{ _('Neues Projekt anlegen') }}</a></p>
+      {# Michael Karbe, Feedback 20261012 - 1, Punkt 9: „Geteilte Projekte“ direkt neben „Neues Projekt anlegen“ #}
+      <p class="dash-neu-projekt"><a class="btn btn-primary" href="/projekt-neu">{{ _('Neues Projekt anlegen') }}</a>
+        <a id="sharedBtn" class="btn btn-secondary" href="/geteilte-projekte" hidden>{{ _('Geteilte Projekte') }}</a></p>
       <p id="dailyLimitInfo" class="dash-limit"></p>
 
       <p><button type="button" id="newsBtn" class="dash-news-btn" aria-haspopup="dialog" hidden>{{ _('Neuigkeiten') }}</button></p>
-
-      <p><a id="sharedBtn" class="dash-news-btn" href="/geteilte-projekte" hidden style="text-decoration:none;">{{ _('Geteilte Projekte') }}</a></p>
 
       <section class="dash-section" aria-labelledby="recent-h">
         <h2 id="recent-h">{{ _('Zuletzt bearbeitete Projekte') }}</h2>
@@ -19,18 +19,20 @@
         </div>
       </section>
 
+      {# Reihenfolge und Laenge (Michael Karbe, Feedback 20261012 - 1, Punkt 6): Projekte, dann Auftraege, dann Ablage — je die
+         letzten drei; wer alles sehen will, geht ueber die Navigation (kein Knopf „Alle … anzeigen“ hier).
+         EXPRESS-SERVICE (05.10.2026): die letzten Aufträge mit Stand; verborgen, solange es keine gibt.
+         Runde 7 (Michael Karbe 06.10.2026): „Meine Aufträge“ wie der Navigationseintrag. #}
+      <section class="dash-section" aria-labelledby="express-h" id="expressSection" hidden>
+        <h2 id="express-h">{{ _('Meine Aufträge') }}</h2>
+        <div id="expressContainer"></div>
+      </section>
+
       {# Meine Ausgaben (11.09.2026): die letzten fertigen Umwandlungen; der Abschnitt
          bleibt verborgen, solange es keine gibt (kein leerer Kasten fuer Neue). #}
       <section class="dash-section" aria-labelledby="ausgaben-h" id="ausgabenSection" hidden>
         <h2 id="ausgaben-h">{{ _('Neu in der Ablage') }}</h2>
         <div id="ausgabenContainer"></div>
-      </section>
-
-      {# EXPRESS-SERVICE (05.10.2026): die letzten Aufträge mit Stand; verborgen, solange es keine gibt.
-         Runde 7 (Michael Karbe 06.10.2026): „Meine Aufträge“ wie der Navigationseintrag. #}
-      <section class="dash-section" aria-labelledby="express-h" id="expressSection" hidden>
-        <h2 id="express-h">{{ _('Meine Aufträge') }}</h2>
-        <div id="expressContainer"></div>
       </section>
 
       {# API (17.09.2026, Steve): Verbrauch ueber die Schluessel des Kontos; verborgen, solange
@@ -63,6 +65,8 @@
     (data.tools || []).forEach((tool) => { toolMap[tool.key] = tool.name; });
   }
 
+  const STARTSEITE_ANZAHL = 3;   // je Abschnitt die letzten drei (Michael Karbe, Feedback 20261012 - 1, Punkt 6)
+
   async function loadRecent() {
     const cont = byId('recentContainer');
     let data;
@@ -79,7 +83,9 @@
       cont.appendChild(p);
       return;
     }
-    const projects = (data.projects || []).slice(0, 5);  // neueste zuerst (created_at DESC)
+    // Die drei zuletzt BEARBEITETEN (Michael Karbe, Feedback 20261012 - 1, Punkt 6): nach updated_at, sonst created_at
+    const zuletzt = (pr) => String(pr.updated_at || pr.created_at || '');
+    const projects = (data.projects || []).slice().sort((a, b) => zuletzt(b).localeCompare(zuletzt(a))).slice(0, STARTSEITE_ANZAHL);
     cont.setAttribute('aria-busy', 'false');
     cont.innerHTML = '';
 
@@ -111,18 +117,7 @@
       ul.appendChild(li);
     });
     cont.appendChild(ul);
-
-    const all = document.createElement('p');
-    all.style.marginTop = '1rem';
-    const allLink = document.createElement('a');
-    allLink.href = '/projekte';
-    allLink.textContent = t('Alle Projekte anzeigen');
-    // Knopf-Optik (Michael, 26.08.2026): bleibt ein LINK, sieht aus wie der
-    // Sekundaer-Knopf. Der fruehere Orange-Sonderfall (#b34700, axe 31.07.)
-    // entfaellt, weil .btn-secondary Textfarbe auf Hintergrund nutzt.
-    allLink.className = 'btn btn-secondary';
-    all.appendChild(allLink);
-    cont.appendChild(all);
+    // Kein Knopf „Alle Projekte anzeigen“ mehr (Michael Karbe, Feedback 20261012 - 1, Punkt 6): „Meine Projekte“ in der Navigation
     announce(t('{n} aktuelle Projekte geladen.', { n: projects.length }));
   }
 
@@ -310,7 +305,7 @@
       if (!res.ok) return;
       data = await res.json();
     } catch (e) { return; }
-    const liste = (data.ausgaben || []).slice(0, 5);
+    const liste = (data.ausgaben || []).slice(0, STARTSEITE_ANZAHL);
     if (liste.length === 0) return;
     const cont = byId('ausgabenContainer');
     const ul = document.createElement('ul');
@@ -336,15 +331,7 @@
       li.appendChild(h3); li.appendChild(meta); li.appendChild(summe);
       ul.appendChild(li);
     });
-    cont.appendChild(ul);
-    const all = document.createElement('p');
-    all.style.marginTop = '1rem';
-    const allLink = document.createElement('a');
-    allLink.href = '/ablage';
-    allLink.textContent = t('Ablage öffnen');
-    allLink.className = 'btn btn-secondary';
-    all.appendChild(allLink);
-    cont.appendChild(all);
+    cont.appendChild(ul);   // kein „Ablage öffnen“ (Michael Karbe, Feedback 20261012 - 1, Punkt 6: Navigation „Meine Ablage“)
     byId('ausgabenSection').hidden = false;
   }
   // ─── Meine Aufträge (Express, 05.10.2026; Name seit Runde 7): die letzten fünf mit Stand ───
@@ -356,7 +343,7 @@
       if (!res.ok) return;
       data = await res.json();
     } catch (e) { return; }
-    const liste = (data.auftraege || []).slice(0, 5);
+    const liste = (data.auftraege || []).slice(0, STARTSEITE_ANZAHL);
     if (!liste.length) return;
     const stand = { neu: t('Eingegangen'), in_arbeit: t('In Bearbeitung'), rueckfrage: t('Rückfrage an dich'),
                     geliefert: t('Geliefert'), storniert: t('Storniert') };
@@ -382,15 +369,7 @@
       li.appendChild(meta);
       ul.appendChild(li);
     });
-    cont.appendChild(ul);
-    const all = document.createElement('p');
-    all.style.marginTop = '1rem';
-    const allLink = document.createElement('a');
-    allLink.href = '/express';
-    allLink.textContent = t('Alle Aufträge');
-    allLink.className = 'btn btn-secondary';
-    all.appendChild(allLink);
-    cont.appendChild(all);
+    cont.appendChild(ul);   // kein „Alle Aufträge“ (Michael Karbe, Feedback 20261012 - 1, Punkt 6: Navigation „Meine Aufträge“)
     byId('expressSection').hidden = false;
   }
   // DB-Zeitstempel (UTC) -> Datum in der Sprache der Oberflaeche + lokale Uhrzeit.

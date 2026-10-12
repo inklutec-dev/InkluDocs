@@ -1007,7 +1007,10 @@
         // currentDocProjectId (Umbenennen/Loeschen-Dialoge) setzt app.html.showProject vor der Weiche.
         const felderJeDoc = new Map();
         data.felder.forEach(f => { if (!felderJeDoc.has(f.document_id)) felderJeDoc.set(f.document_id, []); felderJeDoc.get(f.document_id).push(f); });
-        const docsHtml = data.documents.map((d, i) => dokumentHtml(d, i + 1, felderJeDoc.get(d.id) || [], data.stammdaten_treffer || {})).join('');
+        // Michael Karbe, Feedback 20261012 - 1, Punkt 8: in der Ansicht „Quickinfos“ eines PDF-Projekts nur Dokumente mit Formularfeldern
+        // (Dateiverwaltung in „Dokument“); im eigenen Formular-Werkzeug bleiben alle, dort wird auch hochgeladen und geloescht.
+        const docsHtml = data.documents.map((d, i) => ((imPdfProjekt && !gast() && !(felderJeDoc.get(d.id) || []).length) ? ''
+            : dokumentHtml(d, i + 1, felderJeDoc.get(d.id) || [], data.stammdaten_treffer || {}))).join('');
         main.innerHTML = kopfHtml(project, data)
             + (gast() ? '' : uploadBlockHtml(project))
             + fortschrittKarteHtml(project, data)

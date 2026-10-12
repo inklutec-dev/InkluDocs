@@ -11942,7 +11942,9 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
     from inkluagent import hochladen as _hl
     konto = bool(funktionen.AGENT_KONTO and INKLUAGENT_ENABLED)
     ueberall = bool(konto and funktionen.AGENT_UEBERALL)
-    out = {"hochladen": bool(funktionen.AGENT_HOCHLADEN and INKLUAGENT_ENABLED), "max_dateien": _hl.max_dateien(),
+    # „hochladen“ = das Feld im Agenten: nur mit AGENT_HOCHLADEFELD (Michael Karbe, Feedback 20261012 - 1, Punkt 3)
+    out = {"hochladen": bool(funktionen.AGENT_HOCHLADEN and funktionen.AGENT_HOCHLADEFELD and INKLUAGENT_ENABLED),
+           "max_dateien": _hl.max_dateien(),
            "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024), "konto": konto, "ueberall": ueberall,
            "bloecke": bool(funktionen.AGENT_BLOECKE), "gespraeche": bool(konto and funktionen.AGENT_GESPRAECHE)}
     if ueberall:

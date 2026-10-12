@@ -30,6 +30,44 @@ function t(s, params) {
   return out;
 }
 
+// Lange Listen kuerzen (Michael Karbe, Feedback 20261012 - 1, Punkt 7): Meine Projekte, Meine Auftraege, Meine Ablage und die
+// Dokumente im Projekt zeigen je die fuenf neuesten; der Rest ist verborgen (hidden, auch fuer Screenreader weg). Darunter der Knopf
+// „Alle anzeigen (n)“: zeigt alle, setzt den Fokus auf den ersten bisher verborgenen Eintrag und merkt sich das fuer diese Liste,
+// solange die Seite offen ist (Neuzeichnen kuerzt nicht wieder). vonHinten: die LETZTEN fuenf bleiben sichtbar (Dokumente stehen
+// aelteste zuerst). behalten(el): Eintraege, die sichtbar bleiben muessen (offen, Sprungziel, laeuft gerade).
+window._listenAlle = window._listenAlle || {};
+function listeKuerzen(container, opts) {
+  opts = opts || {};
+  const anzahl = opts.anzahl || 5;
+  if (!container || (opts.schluessel && window._listenAlle[opts.schluessel])) return;
+  const alt = container.nextElementSibling;
+  if (alt && alt.classList.contains('liste-alle')) alt.remove();
+  const eintraege = Array.from(container.children).filter((e) => !/^(SCRIPT|TEMPLATE)$/.test(e.tagName));
+  if (eintraege.length <= anzahl) return;
+  const sichtbar = opts.vonHinten ? eintraege.slice(-anzahl) : eintraege.slice(0, anzahl);
+  const versteckt = eintraege.filter((e) => sichtbar.indexOf(e) < 0 && !(opts.behalten && opts.behalten(e)));
+  if (!versteckt.length) return;
+  versteckt.forEach((e) => { e.hidden = true; });
+  const p = document.createElement('p');
+  p.className = 'liste-alle';
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'btn btn-secondary';
+  b.textContent = t('Alle anzeigen ({n})', { n: eintraege.length });
+  b.addEventListener('click', () => {
+    if (opts.schluessel) window._listenAlle[opts.schluessel] = true;
+    versteckt.forEach((e) => { e.hidden = false; });
+    p.remove();
+    const erstes = versteckt[0];
+    const ziel = erstes.querySelector('a[href], button, summary, [tabindex]');
+    if (ziel) ziel.focus();
+    else { erstes.setAttribute('tabindex', '-1'); erstes.focus(); }
+  });
+  p.appendChild(b);
+  container.insertAdjacentElement('afterend', p);
+}
+window.listeKuerzen = listeKuerzen;
+
 function announce(msg) {
   const el = byId('liveRegion');
   if (el) el.textContent = msg;
