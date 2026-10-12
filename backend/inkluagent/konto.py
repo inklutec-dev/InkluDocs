@@ -59,7 +59,7 @@ TOOL_DEFINITIONS_KONTO_AENDERN: list[dict] = [
         "name": "projekt_anlegen",
         "description": ("Ein neues, leeres Projekt anlegen. Kostenlos. art: pdf (PDF barrierefrei machen), word (Word-Dokumente), "
                         "formular (PDF-Formulare, Quickinfos), grafik (einzelne Bilder) oder web (Webseiten). Unter deiner Antwort "
-                        "steht danach ein Link zum Projekt; Dateien lädt der Nutzer dort oder hier im Hochladefeld hoch."),
+                        "steht danach ein Link zum Projekt; Dateien lädt der Nutzer dort hoch."),
         "input_schema": {"type": "object", "properties": {
             "name": {"type": "string", "description": "Projektname, höchstens 120 Zeichen"},
             "art": {"type": "string", "enum": ["pdf", "word", "formular", "grafik", "web"]},
@@ -467,6 +467,8 @@ def werkzeugsatz(user_id: int, _=None):
     if funktionen.an("AGENT_HOCHLADEN"):
         from . import hochladen
         system = system + "\n\n" + hochladen.PROMPT_ZUSATZ
+    system = system + "\n\n" + (_MIT_HOCHLADEFELD if funktionen.an("AGENT_HOCHLADEN") and funktionen.an("AGENT_HOCHLADEFELD")
+                                 else _OHNE_HOCHLADEFELD)
     defs = (TOOL_DEFINITIONS_KONTO + (TOOL_DEFINITIONS_KONTO_AENDERN if aendern_an() else [])
             + ([TOOL_DEFINITION_GESPRAECHE] if funktionen.an("AGENT_GESPRAECHE") else []))
     if funktionen.an("AGENT_GESPRAECHE"):
@@ -513,7 +515,16 @@ Bei mehreren Projekten mit ähnlichem Namen fragst du nach, welches gemeint ist,
 """
 
 _NICHT_AENDERN = ("* Projekte anlegen, umbenennen oder löschen und Läufe abbrechen: das geht über die Oberfläche. Neue Projekte "
-                  "entstehen über „Neues Projekt“ oder — wenn das Hochladefeld da ist — durch Hochladen hier im Agenten.\n")
+                  "entstehen über „Neues Projekt“.\n")
+
+# Hochladen hier im Agenten — je nach Schalter AGENT_HOCHLADEFELD (Michael Karbe, Feedback 20261012 - 1, Punkt 3: das Feld ist
+# vorerst aus). Ohne Feld sagt der Prompt es ausdruecklich: sonst bot das Modell „lade die Dateien einfach hier hoch“ an (Staging-
+# Stichprobe 12.10.2026).
+_MIT_HOCHLADEFELD = ("Hochladen hier im InkluAgent\nUnter dem Eingabefeld gibt es das Feld „Dateien mitschicken“: Dateien, die der "
+                     "Nutzer dort auswählt, lädt der Server hoch und ordnet sie seinen Projekten zu.")
+_OHNE_HOCHLADEFELD = ("Hochladen\nHier im InkluAgent gibt es kein Feld zum Hochladen von Dateien. Dateien lädt der Nutzer im Projekt "
+                      "hoch oder legt über „Neues Projekt“ ein Projekt an; biete nie an, dass er Dateien hier hochlädt. Eine Webadresse "
+                      "kann er in seine Nachricht schreiben.")
 
 
 _GESPRAECHE = """Frühere Gespräche

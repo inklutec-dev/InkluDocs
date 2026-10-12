@@ -64,6 +64,20 @@ class Agent(unittest.TestCase):
             with mock.patch.object(funktionen, "AGENT_HOCHLADEFELD", True):
                 self.assertTrue(main._inkluagent_schalter()["hochladen"])
 
+    def test_agent_bietet_ohne_feld_kein_hochladen_hier_an(self):
+        """Staging-Stichprobe 12.10.2026: der Agent sagte „oder Dateien direkt hochladen“, obwohl das Feld aus war."""
+        from inkluagent import konto
+        beschreibung = next(d["description"] for d in konto.TOOL_DEFINITIONS_KONTO_AENDERN if d["name"] == "projekt_anlegen")
+        self.assertNotIn("Hochladefeld", beschreibung)
+        with mock.patch.object(funktionen, "AGENT_HOCHLADEN", True):
+            system = konto.werkzeugsatz(1)[2]
+            self.assertIn("gibt es kein Feld zum Hochladen", system)
+            self.assertNotIn("Dateien mitschicken", system)
+            with mock.patch.object(funktionen, "AGENT_HOCHLADEFELD", True):
+                system = konto.werkzeugsatz(1)[2]
+                self.assertIn("„Dateien mitschicken“", system)
+                self.assertNotIn("kein Feld zum Hochladen", system)
+
 
 class Startseite(unittest.TestCase):
     def setUp(self):
