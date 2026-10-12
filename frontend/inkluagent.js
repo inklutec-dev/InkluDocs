@@ -134,6 +134,9 @@ function inkluagentHochgeladenZeigen(projectId, ergebnisse) {
         const name = e.name || '';
         if (!e.ok) {
             li.textContent = t('{name}: nicht hochgeladen. {grund}', { name: name, grund: e.fehler || '' });
+        } else if (e.wartet) {
+            // Zuordnung (Steve 12.10.2026): es gibt schon ein aehnliches Projekt — die Datei wartet auf den Knopf unter der Antwort
+            li.textContent = t('{name}: wartet auf deine Entscheidung. Die Knöpfe stehen unter der Antwort des InkluAgent.', { name: name });
         } else if (!e.neues_projekt) {
             li.textContent = t('{name}: hochgeladen in dieses Projekt.', { name: name });
         } else {
@@ -179,8 +182,12 @@ async function inkluagentHochladen(projectId, dateien, webadresse) {
 // Eine gebuendelte Ansage nach dem Hochladen (Zahlen; die Gruende stehen in der Liste)
 function inkluagentHochladenSatz(ergebnisse) {
     const alle = (ergebnisse || []).length;
-    const gut = (ergebnisse || []).filter(e => e.ok).length;
-    return t('{gut} von {alle} hochgeladen.', { gut: gut, alle: alle }) + (gut < alle ? ' ' + t('Die Gründe stehen unter dem Feld.') : '');
+    const gut = (ergebnisse || []).filter(e => e.ok && !e.wartet).length;
+    const wartend = (ergebnisse || []).filter(e => e.wartet).length;
+    const schlecht = alle - gut - wartend;
+    return t('{gut} von {alle} hochgeladen.', { gut: gut, alle: alle })
+        + (wartend ? ' ' + (wartend === 1 ? t('1 wartet auf deine Entscheidung.') : t('{n} warten auf deine Entscheidung.', { n: wartend })) : '')
+        + (schlecht ? ' ' + t('Die Gründe stehen unter dem Feld.') : '');
 }
 
 // Schritt 3 (InkluAgent-Ausbau Runde 1): Kurzhilfe vor dem Chat — nur mit Schalter (window.FUNKTIONEN aus funktionen.py)
@@ -706,6 +713,18 @@ function inkluagentAktionenKarten(actions) {
     return nachziehen;
 }
 
+// Seitenwechsel (Steve 12.10.2026): geht es nach einer Antwort um GENAU ein Projekt (oeffnen, anlegen, Datei oder Webseite als
+// Projekt), schickt der Server {"type": "seite_wechseln", "url": "/app?projekt=…"}. Die Seite wechselt dorthin; mit agent=offen ist
+// der InkluAgent dort offen und der Fokus steht auf dieser Antwort (inkluagentBinden). Nur Projektseiten dieser Anwendung.
+function inkluagentSeiteWechseln(actions) {
+    const a = (actions || []).find(x => x && x.type === 'seite_wechseln' && typeof x.url === 'string' && /^\/app\?projekt=\d+$/.test(x.url));
+    if (!a) return false;
+    if (window._inkluagentProjectId != null && String(window._inkluagentProjectId) === String(a.project_id)
+        && /^\/app\/?$/.test(window.location.pathname)) return false;   // schon dort
+    window.location.href = a.url + '&agent=offen';
+    return true;
+}
+
 // Schritt 4: der Agent hat das Projekt geloescht, auf dessen Seite man ist — der Hauptbereich sagt das und verlinkt die Uebersicht.
 // Kein automatischer Seitenwechsel (der Fokus bleibt auf dem Knopf der Karte, die Antwort ist noch zu hoeren); der Agent bleibt.
 function inkluagentProjektWeg(projectId) {
@@ -766,6 +785,7 @@ async function inkluagentBestaetigen(angebotId, btn, statusEl, konto) {
         if (statusEl) statusEl.textContent = '';
         const fokussieren = inkluagentFokusImChat();
         const el = inkluagentAppendMessage('assistant', data.reply || '', data.werkzeuge || [], data.anhang || []);
+        if (inkluagentSeiteWechseln(data.actions)) return;
         if (data.karte) inkluagentKarteSetzen(angebotId, data.karte);
         const nachziehen = inkluagentAktionenKarten(data.actions);
         const log = document.getElementById('inkluagentLog');
@@ -1042,6 +1062,7 @@ async function inkluagentSend() {
         const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'), Array.isArray(data.werkzeuge) ? data.werkzeuge : genutzt, data.anhang);
         log.scrollTop = log.scrollHeight;
         inkluagentSetStatus('', false);
+        if (inkluagentSeiteWechseln(data.actions)) { window._inkluagentFokusAntwort = true; return; }
         let nachziehen = inkluagentAktionenKarten(data.actions);
         // Fokus auf die Antwort statt zurueck ins Eingabefeld: der Screenreader liest sie
         // vollstaendig und von vorn; Tab fuehrt danach zum Eingabefeld.

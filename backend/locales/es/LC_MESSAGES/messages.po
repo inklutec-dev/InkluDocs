@@ -12078,3 +12078,48 @@ msgstr "Con «Nueva conversación» empiezas de cero; las anteriores están en �
 
 msgid "Jedes Projekt hat sein eigenes Gespräch."
 msgstr "Cada proyecto tiene su propia conversación."
+
+# InkluAgent: Zuordnung zu vorhandenen Projekten (12.10.2026)
+#, python-brace-format
+msgid "{name}: wartet auf deine Entscheidung. Die Knöpfe stehen unter der Antwort des InkluAgent."
+msgstr "{name}: espera tu decisión. Los botones están debajo de la respuesta del InkluAgent."
+
+msgid "1 wartet auf deine Entscheidung."
+msgstr "1 espera tu decisión."
+
+#, python-brace-format
+msgid "{n} warten auf deine Entscheidung."
+msgstr "{n} esperan tu decisión."
+
+#, python-brace-format
+msgid "Wartet auf deine Entscheidung: {namen}"
+msgstr "Espera tu decisión: {namen}"
+
+msgid "Wohin soll die Datei?"
+msgstr "¿Dónde va el archivo?"
+
+#, python-brace-format
+msgid "„{datei}“ in das Projekt „{projekt}“ hochladen, kostenlos."
+msgstr "Subir «{datei}» al proyecto «{projekt}», gratis."
+
+#, python-brace-format
+msgid "In das Projekt „{projekt}“ hochladen"
+msgstr "Subir al proyecto «{projekt}»"
+
+#, python-brace-format
+msgid "In „{projekt}“ hochladen"
+msgstr "Subir a «{projekt}»"
+
+#, python-brace-format
+msgid "„{datei}“ als neues Projekt hochladen, kostenlos."
+msgstr "Subir «{datei}» como proyecto nuevo, gratis."
+
+msgid "Als neues Projekt hochladen"
+msgstr "Subir como proyecto nuevo"
+
+#, python-brace-format
+msgid "„{datei}“ ist hochgeladen."
+msgstr "«{datei}» se ha subido."
+
+msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
+msgstr "El archivo ya no está disponible (se elimina a los 30 minutos). Súbelo de nuevo."

@@ -12078,3 +12078,48 @@ msgstr "« Nouvelle conversation » repart de zéro ; vous trouverez les convers
 
 msgid "Jedes Projekt hat sein eigenes Gespräch."
 msgstr "Chaque projet a sa propre conversation."
+
+# InkluAgent: Zuordnung zu vorhandenen Projekten (12.10.2026)
+#, python-brace-format
+msgid "{name}: wartet auf deine Entscheidung. Die Knöpfe stehen unter der Antwort des InkluAgent."
+msgstr "{name} : attend votre décision. Les boutons se trouvent sous la réponse de l’InkluAgent."
+
+msgid "1 wartet auf deine Entscheidung."
+msgstr "1 attend votre décision."
+
+#, python-brace-format
+msgid "{n} warten auf deine Entscheidung."
+msgstr "{n} attendent votre décision."
+
+#, python-brace-format
+msgid "Wartet auf deine Entscheidung: {namen}"
+msgstr "En attente de votre décision : {namen}"
+
+msgid "Wohin soll die Datei?"
+msgstr "Où mettre le fichier ?"
+
+#, python-brace-format
+msgid "„{datei}“ in das Projekt „{projekt}“ hochladen, kostenlos."
+msgstr "Téléverser « {datei} » dans le projet « {projekt} », gratuitement."
+
+#, python-brace-format
+msgid "In das Projekt „{projekt}“ hochladen"
+msgstr "Téléverser dans le projet « {projekt} »"
+
+#, python-brace-format
+msgid "In „{projekt}“ hochladen"
+msgstr "Téléverser dans « {projekt} »"
+
+#, python-brace-format
+msgid "„{datei}“ als neues Projekt hochladen, kostenlos."
+msgstr "Téléverser « {datei} » comme nouveau projet, gratuitement."
+
+msgid "Als neues Projekt hochladen"
+msgstr "Téléverser comme nouveau projet"
+
+#, python-brace-format
+msgid "„{datei}“ ist hochgeladen."
+msgstr "« {datei} » est téléversé."
+
+msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
+msgstr "Le fichier n’est plus disponible (supprimé après 30 minutes). Veuillez le téléverser à nouveau."

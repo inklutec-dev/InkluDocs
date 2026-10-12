@@ -12079,3 +12079,48 @@ msgstr "Mit „Neues Gespräch“ beginnst du frisch; frühere Gespräche findes
 
 msgid "Jedes Projekt hat sein eigenes Gespräch."
 msgstr "Jedes Projekt hat sein eigenes Gespräch."
+
+# InkluAgent: Zuordnung zu vorhandenen Projekten (12.10.2026)
+#, python-brace-format
+msgid "{name}: wartet auf deine Entscheidung. Die Knöpfe stehen unter der Antwort des InkluAgent."
+msgstr "{name}: wartet auf deine Entscheidung. Die Knöpfe stehen unter der Antwort des InkluAgent."
+
+msgid "1 wartet auf deine Entscheidung."
+msgstr "1 wartet auf deine Entscheidung."
+
+#, python-brace-format
+msgid "{n} warten auf deine Entscheidung."
+msgstr "{n} warten auf deine Entscheidung."
+
+#, python-brace-format
+msgid "Wartet auf deine Entscheidung: {namen}"
+msgstr "Wartet auf deine Entscheidung: {namen}"
+
+msgid "Wohin soll die Datei?"
+msgstr "Wohin soll die Datei?"
+
+#, python-brace-format
+msgid "„{datei}“ in das Projekt „{projekt}“ hochladen, kostenlos."
+msgstr "„{datei}“ in das Projekt „{projekt}“ hochladen, kostenlos."
+
+#, python-brace-format
+msgid "In das Projekt „{projekt}“ hochladen"
+msgstr "In das Projekt „{projekt}“ hochladen"
+
+#, python-brace-format
+msgid "In „{projekt}“ hochladen"
+msgstr "In „{projekt}“ hochladen"
+
+#, python-brace-format
+msgid "„{datei}“ als neues Projekt hochladen, kostenlos."
+msgstr "„{datei}“ als neues Projekt hochladen, kostenlos."
+
+msgid "Als neues Projekt hochladen"
+msgstr "Als neues Projekt hochladen"
+
+#, python-brace-format
+msgid "„{datei}“ ist hochgeladen."
+msgstr "„{datei}“ ist hochgeladen."
+
+msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
+msgstr "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."

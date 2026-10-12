@@ -11631,7 +11631,7 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
         if project_id is None:   # Konto-Werkzeuge (Schritt 4)
             from inkluagent import konto as _konto
             defs, executor, _system = _konto.werkzeugsatz(user["id"], _)
-            erlaubt = {d["name"] for d in defs} | ({"webseite_laden"} if funktionen.AGENT_HOCHLADEN else set())
+            erlaubt = {d["name"] for d in defs} | ({"webseite_laden", "datei_ablegen"} if funktionen.AGENT_HOCHLADEN else set())
             if angebot["werkzeug"] not in erlaubt:
                 return {"ok": False, "error": _("Diese Funktion gibt es hier nicht.")}
             _ag._LETZTES[(user["id"], 0)] = angebot_id
@@ -11760,10 +11760,16 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
     # Hochladefeld: die Notiz des Servers kommt fuer das Modell an die Nachricht; im Verlauf steht nur die Kurzzeile fuer
     # Menschen. In dieser Nachricht startet nichts Kostenpflichtiges ohne Karte (agent_loop: nur_mit_karte).
     message_modell, nur_mit_karte = message, False
+    eingang_karten, extra_aktionen = [], []
     if hochgeladen:
         from inkluagent import hochladen as _hl
         _notiz = _hl.notiz_holen(user["id"], hochgeladen)
         if _notiz:
+            eingang_karten = list(_notiz.get("karten") or [])   # Zuordnung: „In … hochladen“ / „Als neues Projekt hochladen“
+            if project_id is None and len(_notiz.get("projekte") or []) == 1 and not eingang_karten:
+                # Seite ohne Projekt, alles in GENAU ein Projekt: nach der Antwort dorthin wechseln (Steve 12.10.2026)
+                from inkluagent.konto import seite_wechseln as _seite_wechseln
+                extra_aktionen.append(_seite_wechseln(_notiz["projekte"][0]))
             # Das Modell bekommt die Dateinamen nur in der Notiz (als Daten gekennzeichnet), nicht noch einmal ungekennzeichnet
             # in der Kurzzeile — die steht nur im Verlauf.
             message_modell = (message + "\n\n" + _notiz["notiz"]) if message else _notiz["notiz"]
@@ -11789,6 +11795,7 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             webkarten, _web_notiz = _hl.webadressen_karten(user["id"], _urls, _projekt, get_gettext(resolve_ui_language(request)))
             message_modell = message_modell + "\n\n" + _web_notiz
             nur_mit_karte = True
+    webkarten = eingang_karten + webkarten
 
     from inkluagent import storage
     from inkluagent.chat_engine import process_konto_message, process_message
@@ -11833,7 +11840,7 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             "reply": result["reply"],
             "intent": result.get("intent"),
             "image_refs": result.get("image_refs"),
-            "actions": result.get("actions", []),
+            "actions": list(result.get("actions", [])) + (extra_aktionen if result.get("intent") != "error" else []),
             "werkzeuge": result.get("werkzeuge", []),
             "anhang": result.get("anhang") or [],
         }
@@ -11919,7 +11926,9 @@ async def agent_hochladen(request: Request, dateien: Optional[list[UploadFile]] 
         raise HTTPException(status_code=400, detail=_("Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf.").format(n=_hl.max_dateien()))
     # Je Datei hoechstens ein Byte mehr als erlaubt lesen: zu Grosses erkennt hochladen() so, ohne alles in den Speicher zu holen
     inhalte = [((d.filename or ""), await d.read(MAX_UPLOAD_SIZE + 1)) for d in dateien]
-    erg = await _hl.hochladen(user, inhalte, webadresse or "", project_id, request=request, _=_)
+    # Zuordnung (Steve 12.10.2026): auf einer Seite ohne Projekt warten Dateien mit aehnlichem vorhandenem Projekt auf die Wahl
+    erg = await _hl.hochladen(user, inhalte, webadresse or "", project_id, request=request, _=_,
+                              zuordnen=bool(project_id is None and funktionen.AGENT_KONTO))
     if not erg.get("ok"):
         raise HTTPException(status_code=400, detail=erg.get("fehler_text") or _("Hochladen nicht möglich."))
     erg.pop("notiz", None)   # die Notiz geht nur an das Modell (ueber notiz_id), nicht an die Seite

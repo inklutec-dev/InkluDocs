@@ -423,6 +423,10 @@ def run_agent(
                     actions_log.append(dict({"type": "karte"}, **k))
                 if result.pop("aktualisieren", False):
                     actions_log.append({"type": "ansicht_aktualisieren"})
+                # Konto-Werkzeuge (12.10.2026): weitere Aktionen fuer die Oberflaeche, z. B. {"type": "seite_wechseln"}
+                weitere = result.pop("aktionen", None) or []
+                if result.get("ok"):
+                    actions_log.extend(a for a in weitere if isinstance(a, dict))
 
             # anhang-Sonderfall (konvertiere_zu_pdfua / exportiere_word, 11.09.2026): Download-Knopf fuer die
             # Oberflaeche — aus dem tool_result nehmen (das Modell braucht ihn nicht), an die Antwort haengen.

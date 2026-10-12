@@ -11650,3 +11650,48 @@ msgstr "Med ”Ny konversation” börjar du om; tidigare konversationer hittar 
 
 msgid "Jedes Projekt hat sein eigenes Gespräch."
 msgstr "Varje projekt har sin egen konversation."
+
+# InkluAgent: Zuordnung zu vorhandenen Projekten (12.10.2026)
+#, python-brace-format
+msgid "{name}: wartet auf deine Entscheidung. Die Knöpfe stehen unter der Antwort des InkluAgent."
+msgstr "{name}: väntar på ditt beslut. Knapparna finns under InkluAgents svar."
+
+msgid "1 wartet auf deine Entscheidung."
+msgstr "1 väntar på ditt beslut."
+
+#, python-brace-format
+msgid "{n} warten auf deine Entscheidung."
+msgstr "{n} väntar på ditt beslut."
+
+#, python-brace-format
+msgid "Wartet auf deine Entscheidung: {namen}"
+msgstr "Väntar på ditt beslut: {namen}"
+
+msgid "Wohin soll die Datei?"
+msgstr "Vart ska filen?"
+
+#, python-brace-format
+msgid "„{datei}“ in das Projekt „{projekt}“ hochladen, kostenlos."
+msgstr "Ladda upp ”{datei}” till projektet ”{projekt}”, kostnadsfritt."
+
+#, python-brace-format
+msgid "In das Projekt „{projekt}“ hochladen"
+msgstr "Ladda upp till projektet ”{projekt}”"
+
+#, python-brace-format
+msgid "In „{projekt}“ hochladen"
+msgstr "Ladda upp till ”{projekt}”"
+
+#, python-brace-format
+msgid "„{datei}“ als neues Projekt hochladen, kostenlos."
+msgstr "Ladda upp ”{datei}” som nytt projekt, kostnadsfritt."
+
+msgid "Als neues Projekt hochladen"
+msgstr "Ladda upp som nytt projekt"
+
+#, python-brace-format
+msgid "„{datei}“ ist hochgeladen."
+msgstr "”{datei}” är uppladdad."
+
+msgid "Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). Bitte noch einmal hochladen."
+msgstr "Filen finns inte längre (raderad efter 30 minuter). Ladda upp den igen."

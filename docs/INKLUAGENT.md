@@ -690,3 +690,29 @@ alter Code sie nicht (`DROP TABLE agent_gespraeche`, Spalten bleiben unbenutzt).
 Tests: `tests/test_agent_gespraeche.py` (14). Klickprobe lokal 15 von 15 (Leiste, neues Gespräch, Agent verlinkt das frühere,
 Liste neueste zuerst mit „läuft gerade“ und Projekten, Lese-Seite mit Marke, axe ohne Verstöße auf beiden Seiten, „Hier
 weitermachen“ ins Projekt mit offenem Agenten und Fokus). Probe Gespräch je Konto 13 von 13. Unit gesamt 885 grün.
+
+### Zuordnung zu vorhandenen Projekten und Seitenwechsel (Steve 12.10.2026; mit `AGENT_KONTO`, `AGENT_UEBERALL`, `AGENT_HOCHLADEN`)
+
+„Wenn ich ein neues Projekt aus dem Dashboard machen möchte, könnte er das ja auch Projekten zuordnen, die schon da sind — und
+er wechselt dann auf die jeweilige Projektseite.“
+- **Ähnliche Projekte** (`inkluagent/zuordnung.py`): gleiche Art (PDF ↔ PDF/Formular, Word ↔ Word/Übersetzen, Bild ↔ Grafik,
+  Webseite ↔ Webseite), Name nach Normalisieren gleich, enthalten (ab 4 Zeichen), zu 80 % gleiche Zeichenfolge oder zu 60 %
+  gleiche Wörter; eigene Projekte, neueste zuerst, höchstens drei.
+- **Projekt anlegen** (`konto.projekt_anlegen`): gibt es ähnliche, legt das Werkzeug nichts an und gibt sie dem Modell (Namen als
+  Daten) — der Agent fragt: eines öffnen oder trotzdem neu (`trotzdem: true`, nur auf ausdrücklichen Wunsch).
+- **Datei auf einer Seite ohne Projekt** (`hochladen.hochladen(zuordnen=True)`, `POST /api/agent/hochladen` ohne Projekt): gibt
+  es ein ähnliches Projekt, wartet die Datei im Eingang (`results/<Konto>/_agent_eingang/`, zufälliger Name, 30 Minuten, nur
+  eigene, gültige Namen) statt sofort abgelegt zu werden. Unter der Antwort Karten „Wohin soll die Datei?“: „In „…“ hochladen“
+  (bis zu zwei ähnliche) und „Als neues Projekt hochladen“; Knopf über `POST /api/agent/bestaetigen` (`konto` „datei_ablegen“,
+  kein Werkzeug des Modells) legt über `hochladen.hochladen` ab, räumt den Eingang, die anderen Karten verfallen. Liste am Feld:
+  „wartet auf deine Entscheidung“; Kurzzeile „Wartet auf deine Entscheidung: …“; Ansage „1 wartet auf deine Entscheidung.“
+- **Seitenwechsel**: Geht es nach einer Antwort um genau ein Projekt — `projekt_oeffnen`, `projekt_anlegen`, Datei (Karte oder
+  Hochladen ohne Projekt in genau ein Projekt), Webseite als neues Projekt — schickt der Server die Aktion
+  `{"type": "seite_wechseln", "url": "/app?projekt=…"}` (Werkzeuge: Feld `aktionen`, `run_agent` reicht sie durch). Die Seite
+  (`inkluagentSeiteWechseln`, nur `/app?projekt=<Zahl>`) wechselt mit `agent=offen`; dort ist der Agent offen und der Fokus
+  steht auf der letzten Nachricht — man hört die Antwort auf der neuen Seite. Mehrere Projekte: kein Wechsel, Links. Im
+  Prompt: „Ich öffne das Projekt …“ statt „folge dem Link“; bei mehreren passenden erst nachfragen. 12 neue Texte.
+
+Tests: `tests/test_agent_zuordnung.py` (10). Klickprobe lokal 10 von 10 (Öffnen wechselt mit Fokus auf der Antwort, Datei mit
+ähnlichem Projekt wartet mit Karten, axe ohne Verstöße, Knopf legt ins vorhandene Projekt und wechselt, ohne ähnliches sofort
+neues Projekt mit Wechsel); ältere Proben auf den Wechsel angepasst (Schritt 3: 34/34, Konto-Werkzeuge 14/14, Webadressen 10/10).

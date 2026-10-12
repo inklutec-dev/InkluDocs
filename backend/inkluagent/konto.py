@@ -13,6 +13,7 @@ der Oberflaeche (inkluagent/kern.py). Den Besitz prueft jedes Werkzeug selbst (u
 """
 from __future__ import annotations
 
+import os
 import uuid
 from typing import Any, Optional
 
@@ -61,7 +62,9 @@ TOOL_DEFINITIONS_KONTO_AENDERN: list[dict] = [
                         "steht danach ein Link zum Projekt; Dateien lädt der Nutzer dort oder hier im Hochladefeld hoch."),
         "input_schema": {"type": "object", "properties": {
             "name": {"type": "string", "description": "Projektname, höchstens 120 Zeichen"},
-            "art": {"type": "string", "enum": ["pdf", "word", "formular", "grafik", "web"]}}, "required": ["name", "art"]},
+            "art": {"type": "string", "enum": ["pdf", "word", "formular", "grafik", "web"]},
+            "trotzdem": {"type": "boolean", "description": ("true nur, wenn der Nutzer nach dem Hinweis auf ähnliche Projekte "
+                                                            "ausdrücklich ein NEUES will")}}, "required": ["name", "art"]},
     },
     {
         "name": "projekt_umbenennen",
@@ -106,6 +109,21 @@ ART = {"pdf": "PDF", "word": "Word", "uebersetzen": "Word", "formular": "Formula
 
 def aendern_an() -> bool:
     return funktionen.an("AGENT_KONTO_WERKZEUGE")
+
+
+# Seitenwechsel (Steve 12.10.2026): geht es um GENAU ein Projekt (oeffnen, anlegen, Datei oder Webseite als Projekt), wechselt die
+# Seite nach der Antwort dorthin; auf der neuen Seite ist der Agent offen und der Fokus steht auf dieser Antwort.
+SEITE_WECHSELT = ("Nach deiner Antwort wechselt die Seite in dieses Projekt; dort ist der InkluAgent offen. Sag in einem Satz, "
+                  "dass du es öffnest.")
+
+
+def seite_wechseln(project_id: int) -> dict:
+    return {"type": "seite_wechseln", "url": f"/app?projekt={int(project_id)}", "project_id": int(project_id)}
+
+
+def storage_fokus(user_id: int, project_id: int) -> None:
+    from . import storage
+    storage.fokus_setzen(user_id, project_id)
 
 
 def _projekte(user_id: int, suche: str = "") -> tuple[int, list[dict]]:
@@ -177,6 +195,8 @@ class KontoExecutor:
                 return getattr(self, "_" + name)(args)
             if name == "webseite_laden" and funktionen.an("AGENT_HOCHLADEN"):
                 return self._webseite_laden(args)
+            if name == "datei_ablegen" and funktionen.an("AGENT_HOCHLADEN"):
+                return self._datei_ablegen(args)
             if name == "fruehere_gespraeche" and funktionen.an("AGENT_GESPRAECHE"):
                 return self._fruehere_gespraeche(args)
             if name == "laufende_arbeit":
@@ -224,6 +244,17 @@ class KontoExecutor:
         art = str(args.get("art") or "").strip().lower()
         if not name or art not in ("pdf", "word", "formular", "grafik", "web"):
             return {"ok": False, "error": "name und art (pdf, word, formular, grafik, web) angeben"}
+        # Zuordnung (Steve 12.10.2026): gibt es schon ein aehnliches Projekt derselben Art, erst fragen
+        if not args.get("trotzdem"):
+            from .zuordnung import aehnliche_projekte
+            aehnliche = aehnliche_projekte(self.user_id, name, art)
+            if aehnliche:
+                return {"ok": True, "result": {"rueckfrage_noetig": True, "nichts_angelegt": True,
+                                               "aehnliche_projekte": [{"project_id": a["project_id"], "name_daten": daten(a["name"])}
+                                                                      for a in aehnliche],
+                                               "hinweis": ("Es gibt schon ähnliche Projekte. Nenne sie und frag: eines davon öffnen "
+                                                           "(projekt_oeffnen) oder trotzdem ein neues anlegen (projekt_anlegen mit "
+                                                           "trotzdem=true).")}}
         if hochladen._zaehler(self.user_id, hochladen._tag()) >= hochladen.max_neue_projekte_tag():
             return {"ok": False, "error": f"Heute wurden schon {hochladen.max_neue_projekte_tag()} neue Projekte über den InkluAgent "
                                           "angelegt. Morgen geht es weiter, oder über „Neues Projekt“ in der Oberfläche."}
@@ -233,8 +264,10 @@ class KontoExecutor:
             return {"ok": False, "error": self._fehler(e)}
         hochladen._zaehlen(self.user_id, hochladen._tag())
         pid = int(r["project_id"])
-        return {"ok": True, "result": {"project_id": pid, "name_daten": daten(name), "art": ART.get(art, art)},
-                "anhang": {"art": "link", "url": f"/app?projekt={pid}", "text": self._("Projekt „{projekt}“ öffnen").format(projekt=name)}}
+        storage_fokus(self.user_id, pid)
+        return {"ok": True, "result": {"project_id": pid, "name_daten": daten(name), "art": ART.get(art, art), "hinweis": SEITE_WECHSELT},
+                "anhang": {"art": "link", "url": f"/app?projekt={pid}", "text": self._("Projekt „{projekt}“ öffnen").format(projekt=name)},
+                "aktionen": [seite_wechseln(pid)]}
 
     def _projekt_umbenennen(self, args: dict) -> dict:
         from .kern import Anfrage
@@ -358,7 +391,54 @@ class KontoExecutor:
                         "text": self._("Projekt „{projekt}“ öffnen").format(projekt=e.get("projekt") or "")}}
         if ziel:
             r["aktualisieren"] = True   # die offene Ansicht des Webseiten-Projekts zeigt die neue Seite
+        else:
+            r["aktionen"] = [seite_wechseln(pid)]   # neues Projekt: dorthin wechseln (Steve 12.10.2026)
         return ausgaben.nachbereiten(r, "webseite_laden", args, self.user_id, 0, vorher)
+
+    def _datei_ablegen(self, args: dict) -> dict:
+        """Nur ueber den Knopf einer Karte aus hochladen.eingang_karten: die wartende Datei ins gewaehlte Projekt oder als neues
+        Projekt hochladen (hochladen.hochladen, ohne erneutes Zuordnen); die anderen Karten derselben Datei verfallen, danach
+        wechselt die Seite ins Projekt."""
+        from . import hochladen
+        from .kern import warten
+        from .tools import ausgaben
+        datei = str(args.get("datei") or "")
+        name = str(args.get("name") or "")
+        ziel = int(args["project_id"]) if args.get("project_id") else None
+        schluessel = (self.user_id, 0, "datei_ablegen", datei, ziel or 0)
+        vorher = ausgaben._LETZTES.get((self.user_id, 0))
+        if getattr(ausgaben._KARTE, "id", None) is None:
+            return {"ok": False, "error": "Wartende Dateien legt nur der Knopf einer Karte ab."}
+        grund = ausgaben._angebot_einloesen(schluessel, 0, self.turn_id)
+        if grund:
+            return ausgaben.nachbereiten({"ok": True, "result": {"rueckfrage_noetig": True, "hinweis": grund}}, "datei_ablegen",
+                                         args, self.user_id, 0, vorher)
+        with ausgaben._SPERRE:   # die anderen Karten derselben Datei gelten nicht mehr
+            for k in [k for k in ausgaben._ANGEBOTE if len(k) == 5 and k[:4] == (self.user_id, 0, "datei_ablegen", datei)]:
+                alt = ausgaben._ANGEBOTE.pop(k)
+                ausgaben._NACH_ID.pop(alt.get("id"), None)
+                ausgaben._VERBRAUCHT.setdefault((self.user_id, 0), []).append((alt.get("id"), alt, False))
+        pfad = hochladen.eingang_pfad(self.user_id, datei)
+        if not pfad:
+            return ausgaben.nachbereiten({"ok": False, "error": self._("Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). "
+                                                                       "Bitte noch einmal hochladen.")}, "datei_ablegen", args, self.user_id, 0, vorher)
+        with open(pfad, "rb") as f:
+            inhalt = f.read()
+        erg = warten(hochladen.hochladen({"id": self.user_id}, [(name, inhalt)], "", ziel, request=None, _=self._))
+        try:
+            os.remove(pfad)
+        except OSError:
+            pass
+        e = (erg.get("ergebnisse") or [{}])[0] if erg.get("ok") else {"ok": False, "fehler": erg.get("fehler_text")}
+        if not e.get("ok") or not e.get("project_id"):
+            return ausgaben.nachbereiten({"ok": False, "error": e.get("fehler") or "Die Datei ließ sich nicht ablegen."}, "datei_ablegen",
+                                         args, self.user_id, 0, vorher)
+        pid = int(e["project_id"])
+        r = {"ok": True, "result": {"project_id": pid, "neues_projekt": bool(e.get("neues_projekt")), "name_daten": daten(e.get("projekt") or "")},
+             "anhang": {"art": "link", "url": f"/app?projekt={pid}",
+                        "text": self._("Projekt „{projekt}“ öffnen").format(projekt=e.get("projekt") or "")},
+             "aktionen": [seite_wechseln(pid)]}
+        return ausgaben.nachbereiten(r, "datei_ablegen", args, self.user_id, 0, vorher)
 
     def _oeffnen(self, project_id) -> dict:
         from database import get_db
@@ -376,9 +456,9 @@ class KontoExecutor:
             return {"ok": False, "error": "Projekt nicht gefunden (nur eigene Projekte)"}
         name = r["name"] or r["filename"] or ""
         storage.fokus_setzen(self.user_id, pid)
-        return {"ok": True, "result": {"project_id": pid, "name_daten": daten(name),
-                                       "hinweis": "Unter deiner Antwort steht ein Link zum Projekt. Sag das in einem Satz."},
-                "anhang": {"art": "link", "url": f"/app?projekt={pid}", "text": self._("Projekt „{projekt}“ öffnen").format(projekt=name)}}
+        return {"ok": True, "result": {"project_id": pid, "name_daten": daten(name), "hinweis": SEITE_WECHSELT},
+                "anhang": {"art": "link", "url": f"/app?projekt={pid}", "text": self._("Projekt „{projekt}“ öffnen").format(projekt=name)},
+                "aktionen": [seite_wechseln(pid)]}
 
 
 def werkzeugsatz(user_id: int, _=None):
@@ -413,14 +493,14 @@ _ROLLE = """Du bist der InkluAgent von InkluDocs — hier auf einer Seite OHNE P
 
 Was du hier kannst
 * projekte_auflisten — Projekte des Kontos, auf Wunsch nach Namen gefiltert.
-* projekt_oeffnen — ein Projekt zum Weiterarbeiten öffnen: unter deiner Antwort steht dann ein Link, den der Nutzer klickt. Im Projekt hast du die Werkzeuge des Projekts (Alt-Texte, Tagging, Prüfung, Übersetzen …). Die Arbeit selbst machst du dort, nicht hier.
+* projekt_oeffnen — ein Projekt zum Weiterarbeiten öffnen: nach deiner Antwort wechselt die Seite dorthin, der InkluAgent ist dort offen. Im Projekt hast du die Werkzeuge des Projekts (Alt-Texte, Tagging, Prüfung, Übersetzen …). Die Arbeit selbst machst du dort, nicht hier.
 * guthaben_lesen — verfügbare Credits.
 * laufende_arbeit — was gerade läuft.
 
 {aendern}Was du hier NICHT kannst
 {nicht_aendern}* Abo und Zahlung, Konto löschen, Passwort und E-Mail, API-Schlüssel, Team und Gäste einladen: das bleibt bewusst in der Oberfläche. Du erklärst kurz, wo es geht („Abo & Verbrauch“, „Einstellungen“, „Team“), und tust es nicht selbst.
 
-Nenne Projekte mit ihrem Namen, nie nur mit der Kennung. Nenne nie interne Werkzeugnamen; sag, was du tust („Ich sehe in deinen Projekten nach“). Wenn der Nutzer etwas in einem Projekt erledigen will, finde das Projekt, öffne es mit projekt_oeffnen und sag, dass er dem Link folgen kann."""
+Nenne Projekte mit ihrem Namen, nie nur mit der Kennung. Nenne nie interne Werkzeugnamen; sag, was du tust („Ich sehe in deinen Projekten nach“). Wenn der Nutzer etwas in einem Projekt erledigen will, finde das Projekt und öffne es mit projekt_oeffnen; sag in einem Satz, dass du es öffnest. Gibt es mehrere passende, frag erst, welches gemeint ist."""
 
 
 _AENDERN = """Was du hier außerdem ändern kannst
