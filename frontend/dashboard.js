@@ -444,7 +444,11 @@ function seitenleisteGespraecheBauen(path) {
   document.documentElement.classList.add('mit-seitenleiste-gespraeche');
   const li = document.createElement('li');
   li.className = 'app-nav-gespraeche';
-  const h = document.createElement('h2');
+  // Benannter Bereich statt Ueberschrift (Steve 12.10.2026): eine Ueberschrift 2 in der Seitenleiste stand vor der Ueberschrift 1
+  // der Seite — wer per Ueberschriften navigiert, landete zuerst hier. Erreichbar ueber die Landmarken („Gespräche“).
+  const bereich = document.createElement('section');
+  bereich.setAttribute('aria-labelledby', 'navGespraecheTitel');
+  const h = document.createElement('p');
   h.id = 'navGespraecheTitel';
   h.className = 'app-nav-titel';
   h.textContent = t('Gespräche');
@@ -462,10 +466,11 @@ function seitenleisteGespraecheBauen(path) {
   alle.className = 'app-nav-alle';
   alle.textContent = t('Alle Gespräche');
   if (path === '/gespraeche') alle.setAttribute('aria-current', 'page');
-  li.appendChild(h);
-  li.appendChild(neu);
-  li.appendChild(liste);
-  li.appendChild(alle);
+  bereich.appendChild(h);
+  bereich.appendChild(neu);
+  bereich.appendChild(liste);
+  bereich.appendChild(alle);
+  li.appendChild(bereich);
   seitenleisteGespraecheLaden();
   return li;
 }

@@ -843,3 +843,25 @@ Ergebnis, Provider ohne Stream), `GeminiStrom` (Text stückweise mit Kosten, Fun
 `AnsichtTexte`, Endpunkt-Test für alle Zeilen und das Austragen des Laufs. Klickprobe lokal 19 von 19 (Entwurf wächst und wird
 ersetzt, Fokus, Zwischenstand, Ansagen an/aus, „Zuletzt fertig“ und „Stand vorlesen“, Fehler eines Werkzeugs, axe, manuelle
 Ansicht ohne Entwurf); Proben Arbeitsfenster 35/35 und Anhängen 24/24 mit allen Staging-Schaltern.
+
+### Seiten- und Ansichtswechsel während der Arbeit, Korrekturen der Agentenansicht (Steve 12.10.2026, Staging-Rundgang)
+
+- **Fortschritt über den Wechsel** (Schalter `AGENT_ARBEITSFENSTER`): der Server merkt sich je Konto den jüngsten Lauf
+  (`_AGENT_FORTSCHRITT`: Projekt, Schritte mit Ziel/fertig/ok, „schreibt“), gefüllt aus denselben Meldungen wie der Stream, geleert
+  mit `_fertig()`. `GET /api/agent/status` liefert ihn mit. Die neue Seite (`inkluagentLaufVerfolgen`, jetzt alle 2 Sekunden) zeigt
+  die Schritte weiter — im Chatstil im Arbeitsfenster (neue Schritte mit „Jeden Schritt ansagen“), in der manuellen Ansicht in der
+  Statuszeile („Der InkluAgent arbeitet noch … Ruft gerade auf: Bild ansehen – Bild 1“). Hat der Lauf in DIESEM Projekt gearbeitet,
+  zieht die Projektansicht am Ende nach (`inkluagentAnsichtNachziehen`) — Änderungen erscheinen ohne Neuladen.
+- **Später eingeblendete Teile** blieben in der Agentenansicht sichtbar (Startseite: „Zuletzt bearbeitete Projekte“, auf Staging
+  wegen längerer Ladezeit): beim Umstellen schon versteckte Teile bekommen `data-agentenansicht="war-versteckt"`, die CSS-Regel gilt
+  jetzt für jede Markierung; ein `MutationObserver` auf `main` blendet neu Eingefügtes aus. „Nur diese Seite manuell“ hebt „aus“
+  auf und lässt „war-versteckt“ so, wie die Seite es inzwischen will.
+- **Kein Auf/Zu in der Agentenansicht:** im Chatstil ist „InkluAgent“ eine schlichte Überschrift 2 (`span.inkluagent-titel`), der
+  Knopf hat `hidden` (CSS `.inkluagent-toggle[hidden]`, sonst gewinnt `display: block`), der Bereich ist immer offen.
+- **„Gespräche“ in der Seitenleiste** ist keine Überschrift 2 mehr (stand vor der Überschrift 1 der Seite), sondern ein benannter
+  Bereich (`section` mit `aria-labelledby`), erreichbar über die Landmarken.
+
+Tests: `tests/test_agent_arbeitsfenster.py` (Fortschritt im Status mit und ohne Schalter, alter Lauf ändert nichts, Stream füllt und
+räumt ab, Klasse `AgentenansichtKorrekturen`); `test_agent_ansicht` prüft die neue CSS-Regel. Klickproben lokal: Seitenwechsel
+10/10 (Schritte auf der neuen Seite und angesagt, Statuszeile manuell, Projektansicht frisch ohne Neuladen, erste Überschrift H1),
+Agentenansicht-Korrekturen 7/7; alle älteren Proben mit den Staging-Schaltern grün.

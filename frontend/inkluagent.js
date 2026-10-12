@@ -399,11 +399,25 @@ function inkluagentAgentenansicht() {
         Array.from(el.children).forEach(k => {
             if (behalten.indexOf(k) >= 0) return;
             if (behalten.some(b => k.contains(b))) { lauf(k); return; }
-            if (k.hidden || /^(SCRIPT|STYLE|TEMPLATE|DIALOG)$/.test(k.tagName)) return;
+            if (/^(SCRIPT|STYLE|TEMPLATE|DIALOG)$/.test(k.tagName) || k.hasAttribute('data-agentenansicht')) return;
+            // Steve 12.10.2026 (Staging): Teile, die beim Laden noch versteckt waren und die die Seite erst danach fuellt und
+            // einblendet (letzte Projekte auf der Startseite), rutschten durch. Sie werden jetzt auch markiert — die Markierung
+            // haelt sie per CSS versteckt, auch wenn die Seite hidden spaeter aufhebt.
+            if (k.hidden) { k.setAttribute('data-agentenansicht', 'war-versteckt'); return; }
             k.hidden = true;
             k.setAttribute('data-agentenansicht', 'aus');
         });
     })(main);
+    // Was die Seite spaeter neu in den Hauptbereich setzt, kommt ebenso weg (einmal je Seite beobachten, gebuendelt)
+    if (!window._agentenansichtBeobachter && typeof MutationObserver !== 'undefined') {
+        let wartet = false;
+        window._agentenansichtBeobachter = new MutationObserver(() => {
+            if (wartet || window._agentenansichtHierAus) return;
+            wartet = true;
+            setTimeout(() => { wartet = false; inkluagentAgentenansicht(); }, 50);
+        });
+        window._agentenansichtBeobachter.observe(main, { childList: true, subtree: true });
+    }
     sec.classList.add('inkluagent-gross');
     // Wie ChatGPT/Claude mit Arbeitsfenster (Michael Karbe, Feedback 20261012 - 1, Punkt 6; Schalter AGENT_ARBEITSFENSTER)
     if (inkluagentArbeitsfensterAn()) { inkluagentChatstil(true); inkluagentArbeitsZeigen(); }
@@ -433,7 +447,10 @@ function inkluagentAgentenansicht() {
 function inkluagentAgentenansichtAufheben() {
     window._agentenansichtHierAus = true;
     inkluagentChatstil(false);
-    document.querySelectorAll('[data-agentenansicht="aus"]').forEach(el => { el.hidden = false; el.removeAttribute('data-agentenansicht'); });
+    document.querySelectorAll('[data-agentenansicht]').forEach(el => {
+        if (el.getAttribute('data-agentenansicht') === 'aus') el.hidden = false;   // „war-versteckt“: so, wie die Seite es jetzt will
+        el.removeAttribute('data-agentenansicht');
+    });
     document.querySelectorAll('.inkluagent-gross').forEach(el => el.classList.remove('inkluagent-gross'));
     document.querySelectorAll('.inkluagent-agentenansicht-hinweis').forEach(el => el.remove());
     const h = document.querySelector('#main h1');
@@ -467,6 +484,26 @@ function inkluagentChatstil(an) {
     const beschreibung = panel.querySelector('.inkluagent-beschreibung');
     sec.classList.toggle('inkluagent-chatstil', an);
     document.documentElement.classList.toggle('agentenansicht-chatstil', an);
+    // Steve 12.10.2026: in der Agentenansicht laesst sich der Agent nicht auf- und zuklappen — die Ueberschrift 2 „InkluAgent“
+    // ist dann schlicht (der Knopf ist weg, der Bereich immer offen); zurueck in der manuellen Ansicht ist der Knopf wieder da
+    const toggle = document.getElementById('inkluagentToggle');
+    const kopf = document.getElementById('inkluagentHeading');
+    if (toggle && kopf) {
+        let titel = kopf.querySelector('.inkluagent-titel');
+        if (an) {
+            if (!titel) {
+                titel = document.createElement('span');
+                titel.className = 'inkluagent-titel';
+                titel.textContent = t('InkluAgent');
+                kopf.appendChild(titel);
+            }
+            toggle.hidden = true;
+            panel.hidden = false;
+        } else {
+            if (titel) titel.remove();
+            toggle.hidden = false;
+        }
+    }
     if (an) {
         const spalten = document.createElement('div');
         spalten.className = 'inkluagent-spalten';
@@ -866,17 +903,22 @@ async function inkluagentLaufVerfolgen() {
     if (!inkluagentUeberall() || _inkluagentVerfolgt) return;
     const sendBtn = document.getElementById('inkluagentSendBtn');
     if (sendBtn && sendBtn.disabled) return;   // diese Seite sendet gerade selbst
-    let laeuft = false;
-    try { laeuft = !!(await (await fetch('/api/agent/status')).json()).laeuft; } catch (e) { return; }
-    if (!laeuft) return;
+    let st = null;
+    try { st = await (await fetch('/api/agent/status')).json(); } catch (e) { return; }
+    if (!st || !st.laeuft) return;
     _inkluagentVerfolgt = true;
+    // Fortschritt nach einem Seitenwechsel (Steve 12.10.2026, Schalter AGENT_ARBEITSFENSTER): der Server nennt Projekt und Schritte
+    let projekt = st.projekt != null ? String(st.projekt) : null;
     inkluagentSetStatus(t('Der InkluAgent arbeitet noch an seiner letzten Antwort …'), false);
     inkluagentArbeitsStart(t('Arbeitet noch an der letzten Antwort …'), true);
+    let gesehen = inkluagentFortschrittZeigen(st, 0, true);
     const ende = Date.now() + 10 * 60 * 1000;
     while (Date.now() < ende) {
-        await new Promise(r => setTimeout(r, 2500));
-        try { laeuft = !!(await (await fetch('/api/agent/status')).json()).laeuft; } catch (e) { laeuft = true; }
-        if (!laeuft) break;
+        await new Promise(r => setTimeout(r, 2000));
+        try { st = await (await fetch('/api/agent/status')).json(); } catch (e) { st = { laeuft: true }; }
+        if (!st.laeuft) break;
+        if (st.projekt != null) projekt = String(st.projekt);
+        gesehen = inkluagentFortschrittZeigen(st, gesehen, false);
     }
     _inkluagentVerfolgt = false;
     inkluagentSetStatus('', false);
@@ -884,12 +926,39 @@ async function inkluagentLaufVerfolgen() {
     if (typeof window.seitenleisteGespraecheLaden === 'function') window.seitenleisteGespraecheLaden();
     const panel = document.getElementById('inkluagentPanel');
     const fokussieren = inkluagentFokusImChat();
+    // Hat der Lauf in DIESEM Projekt gearbeitet, zeigt die Ansicht seine Aenderungen (z. B. neue Alt-Texte) ohne Neuladen
+    const hier = window._inkluagentProjectId == null ? null : String(window._inkluagentProjectId);
+    if (projekt && hier === projekt) await inkluagentAnsichtNachziehen(window._inkluagentProjectId);
     if (panel && !panel.hidden) {
         await inkluagentLoadHistory(window._inkluagentProjectId);
         inkluagentAntwortMelden(inkluagentLetzteAntwort(), fokussieren);
     } else {
         inkluagentAntwortMelden(null, false);
     }
+}
+// Schritte des laufenden Auftrags vom Server zeigen (nach einem Seitenwechsel): im Chatstil im Arbeitsfenster (neue Schritte mit
+// „Jeden Schritt ansagen“), sonst in der Statuszeile wie „Ruft gerade auf: …“. Ergebnis: die Zahl der schon gezeigten Schritte.
+function inkluagentFortschrittZeigen(st, gesehen, erstesMal) {
+    const schritte = Array.isArray(st && st.schritte) ? st.schritte : [];
+    const text = x => { const zt = inkluagentZielText(x.ziel); return inkluagentWerkzeugLabel(x.name) + (zt ? ' – ' + zt : ''); };
+    if (inkluagentChatstilAktiv()) {
+        if (!schritte.length && !st.schreibt) return gesehen;
+        const z = inkluagentArbeitsZustand();
+        z.laeuft = true;
+        z.schritte = schritte.map(x => ({ text: text(x), fertig: !!x.fertig, fehler: !!x.fertig && x.ok === false }));
+        const ziel = schritte.map(x => x.ziel).filter(x => x && typeof x === 'object').pop();
+        if (ziel) { z.ziel = ziel; z.projekt = st.projekt != null ? String(st.projekt) : null; }
+        const laufend = schritte.filter(x => !x.fertig).pop();
+        z.stand = st.schreibt ? t('Schreibt die Antwort …')
+            : (laufend ? t('Arbeitet an: {schritt}', { schritt: text(laufend) }) : t('Arbeitet noch an der letzten Antwort …'));
+        inkluagentArbeitsMerken();
+        const neu = schritte.slice(gesehen).map(text);
+        if (!erstesMal && neu.length && inkluagentSchritteAnsagen()) announce(neu.join('. '));
+    } else if (schritte.length && (erstesMal || schritte.length > gesehen)) {
+        inkluagentSetStatus(t('Der InkluAgent arbeitet noch an seiner letzten Antwort …') + ' '
+            + t('Ruft gerade auf: {w}', { w: text(schritte[schritte.length - 1]) }), false);
+    }
+    return schritte.length;
 }
 async function inkluagentInitLaden(projectId) {
     window._inkluagentProjectId = projectId;

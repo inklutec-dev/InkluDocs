@@ -11704,12 +11704,60 @@ def _agent_laeuft(user_id: int) -> bool:
     return any(jetzt - t < _AGENT_LAEUFT_HOECHSTENS for t in _AGENT_LAEUFT.get(user_id, []))
 
 
+# Fortschritt je Konto (Steve 12.10.2026: „arbeitet er weiter, wenn ich die Ansicht wechsle?“ — ja, und die neue Seite soll die
+# Schritte weiter zeigen; Schalter AGENT_ARBEITSFENSTER): die Schritte des laufenden Auftrags, das Projekt und ob er gerade die
+# Antwort schreibt. Gefuellt aus denselben Meldungen wie der Stream (on_tool und seine Attribute), geleert, wenn der Lauf endet.
+# Nur im Prozess, wie _AGENT_LAEUFT. Ein Konto, ein Eintrag: der juengste Lauf.
+_AGENT_FORTSCHRITT: dict[int, dict] = {}
+_AGENT_FORTSCHRITT_SPERRE = threading.Lock()
+_FORTSCHRITT_MAX_SCHRITTE = 30
+
+
+def _fortschritt_neu(user_id: int, start: float, project_id: Optional[int]) -> None:
+    with _AGENT_FORTSCHRITT_SPERRE:
+        _AGENT_FORTSCHRITT[user_id] = {"start": start, "projekt": project_id, "schritte": [], "schreibt": False}
+
+
+def _fortschritt_aendern(user_id: int, start: float, wie) -> None:
+    """wie(eintrag) aendert den Eintrag dieses Laufs — nur, wenn er noch der aktuelle ist."""
+    with _AGENT_FORTSCHRITT_SPERRE:
+        f = _AGENT_FORTSCHRITT.get(user_id)
+        if f and f["start"] == start:
+            wie(f)
+
+
+def _fortschritt_schritt(f: dict, name: str, ziel: Optional[dict]) -> None:
+    f["schritte"].append({"name": name, "ziel": ziel, "fertig": False, "ok": None})
+    del f["schritte"][:-_FORTSCHRITT_MAX_SCHRITTE]
+    f["schreibt"] = False
+
+
+def _fortschritt_fertig(f: dict, ok: bool) -> None:
+    offen = next((x for x in reversed(f["schritte"]) if not x["fertig"]), None)
+    if offen:
+        offen["fertig"], offen["ok"] = True, bool(ok)
+
+
+def _fortschritt_ende(user_id: int, start: float) -> None:
+    with _AGENT_FORTSCHRITT_SPERRE:
+        f = _AGENT_FORTSCHRITT.get(user_id)
+        if f and f["start"] == start:
+            _AGENT_FORTSCHRITT.pop(user_id, None)
+
+
 @app.get("/api/agent/status")
 async def agent_status(user: dict = Depends(get_current_user)):
-    """Arbeitet der InkluAgent gerade an einer Antwort fuer dieses Konto? (Schritt 3, Schalter AGENT_UEBERALL)"""
+    """Arbeitet der InkluAgent gerade an einer Antwort fuer dieses Konto? (Schritt 3, Schalter AGENT_UEBERALL). Mit Schalter
+    AGENT_ARBEITSFENSTER zusaetzlich der Fortschritt: projekt, schritte [{name, ziel, fertig, ok}], schreibt."""
     _require_inkluagent()
     funktionen.endpunkt_frei("AGENT_UEBERALL")
-    return {"laeuft": _agent_laeuft(user["id"])}
+    out: dict = {"laeuft": _agent_laeuft(user["id"])}
+    if out["laeuft"] and funktionen.AGENT_ARBEITSFENSTER:
+        with _AGENT_FORTSCHRITT_SPERRE:
+            f = _AGENT_FORTSCHRITT.get(user["id"])
+            if f:
+                out.update({"projekt": f["projekt"], "schritte": [dict(x) for x in f["schritte"]], "schreibt": f["schreibt"]})
+    return out
 
 
 @app.post("/api/agent/nachricht")
@@ -11860,6 +11908,7 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             laeuft.remove(start)
         if not laeuft:
             _AGENT_LAEUFT.pop(user["id"], None)
+        _fortschritt_ende(user["id"], start)
 
     if "application/x-ndjson" not in (request.headers.get("accept") or ""):
         try:
@@ -11869,6 +11918,8 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             _fertig()
 
     queue: asyncio.Queue = asyncio.Queue()
+    if funktionen.AGENT_ARBEITSFENSTER:   # Fortschritt fuer eine neue Seite (GET /api/agent/status)
+        _fortschritt_neu(user["id"], start, project_id)
 
     def _senden(ev):
         loop.call_soon_threadsafe(queue.put_nowait, ev)
@@ -11881,6 +11932,7 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             _z = _af.ziel(user["id"], project_id, args)
             if _z:
                 ev["ziel"] = _z
+            _fortschritt_aendern(user["id"], start, lambda f: _fortschritt_schritt(f, name, ev.get("ziel")))
         _senden(ev)
 
     # Livestream (Arbeitsfenster, 12.10.2026): Ergebnis je Werkzeug („werkzeug_fertig“), die Antwort Wort fuer Wort („text“,
@@ -11893,12 +11945,16 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
         def _werkzeug_fertig(name, args, result, neue_aktionen):
             ev = {"type": "werkzeug_fertig", "name": name}
             ev.update(_af_strom.ergebnis(name, result, neue_aktionen))
+            _fortschritt_aendern(user["id"], start, lambda f: _fortschritt_fertig(f, ev.get("ok")))
             _senden(ev)
 
         def _text(stueck):
+            if stueck is not None:
+                _fortschritt_aendern(user["id"], start, lambda f: f.update(schreibt=True))
             _senden({"type": "text_neu"} if stueck is None else {"type": "text", "text": str(stueck)})
 
         def _zwischen():
+            _fortschritt_aendern(user["id"], start, lambda f: f.update(schreibt=False))
             _senden({"type": "zwischen"})
         on_tool.fertig, on_tool.text, on_tool.zwischen = _werkzeug_fertig, _text, _zwischen
 

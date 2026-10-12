@@ -182,6 +182,46 @@ class MitServer(unittest.TestCase):
                          else self.main._AGENT_LAEUFT.get(self.u["id"]), "der Lauf ist ausgetragen")
         self.assertNotIn("def _fertig(name", lies(BACKEND, "main.py"))
 
+    def test_fortschritt_fuer_eine_neue_seite(self):
+        """Steve 12.10.2026: nach einem Seiten- oder Ansichtswechsel zeigt die neue Seite die Schritte weiter (GET /api/agent/status)."""
+        m = self.main
+        start = 12345.0
+        m._AGENT_LAEUFT[self.u["id"]] = [__import__("time").time()]
+        try:
+            m._fortschritt_neu(self.u["id"], start, self.p)
+            m._fortschritt_aendern(self.u["id"], start, lambda f: m._fortschritt_schritt(f, "view_image", {"art": "bild", "nummer": 1}))
+            m._fortschritt_aendern(self.u["id"], start, lambda f: m._fortschritt_fertig(f, False))
+            m._fortschritt_aendern(self.u["id"], start, lambda f: m._fortschritt_schritt(f, "list_project_images", None))
+            m._fortschritt_aendern(self.u["id"], 1.0, lambda f: m._fortschritt_schritt(f, "fremder_lauf", None))   # alter Lauf: nichts
+            with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True):
+                st = self.c.get("/api/agent/status").json()
+            self.assertEqual(st["projekt"], self.p)
+            self.assertEqual([(x["name"], x["fertig"], x["ok"]) for x in st["schritte"]],
+                             [("view_image", True, False), ("list_project_images", False, None)])
+            self.assertFalse(st["schreibt"])
+            self.assertEqual(self.c.get("/api/agent/status").json(), {"laeuft": True}, "ohne Schalter wie bisher")
+            m._fortschritt_ende(self.u["id"], start)
+            self.assertNotIn(self.u["id"], m._AGENT_FORTSCHRITT)
+        finally:
+            m._AGENT_LAEUFT.pop(self.u["id"], None)
+            m._AGENT_FORTSCHRITT.pop(self.u["id"], None)
+
+    def test_stream_fuellt_den_fortschritt_und_raeumt_ihn_ab(self):
+        gesehen = {}
+
+        def antwort(*a, on_tool=None, **kw):
+            on_tool("view_image", {"image_id": self.b})
+            gesehen["waehrend"] = self.c.get("/api/agent/status").json()
+            return {"reply": "Fertig (fiktiv).", "intent": "agentic", "werkzeuge": ["view_image"]}
+        with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True), \
+                mock.patch.object(self.chat_engine, "process_message", side_effect=antwort):
+            self.c.post(f"/api/projects/{self.p}/chat", json={"message": "Schau dir Bild 1 an."}, headers={"Accept": "application/x-ndjson"})
+        w = gesehen["waehrend"]
+        self.assertTrue(w["laeuft"])
+        self.assertEqual(w["schritte"][0]["name"], "view_image")
+        self.assertEqual(w["schritte"][0]["ziel"]["nummer"], 1)
+        self.assertNotIn(self.u["id"], self.main._AGENT_FORTSCHRITT, "nach dem Lauf weg")
+
     def test_schalter_fuer_die_seite(self):
         s = self.main._inkluagent_schalter
         self.assertFalse(funktionen.AGENT_ARBEITSFENSTER, "Vorgabe aus")
@@ -488,6 +528,49 @@ class GeminiStrom(unittest.TestCase):
             r = self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=stuecke.append)
         self.assertEqual(stuecke, [None], "angefangener Entwurf wird verworfen")
         self.assertEqual(r["content"][0]["text"], "Ohne Stream (fiktiv).")
+
+
+
+class AgentenansichtKorrekturen(unittest.TestCase):
+    """Steve 12.10.2026 auf Staging: spaeter eingeblendete Teile rutschten durch, der Agent liess sich auf- und zuklappen,
+    „Gespräche“ stand als Ueberschrift 2 vor der Ueberschrift 1, die neue Seite zeigte nach einem Wechsel keine Schritte."""
+
+    def setUp(self):
+        self.js = lies(FRONTEND, "inkluagent.js")
+
+    def funktion(self, name):
+        f = self.js[self.js.index("function " + name + "("):]
+        return f[:f.index("\n}\n")]
+
+    def test_spaeter_eingeblendetes_bleibt_versteckt(self):
+        f = self.funktion("inkluagentAgentenansicht")
+        self.assertIn("if (k.hidden) { k.setAttribute('data-agentenansicht', 'war-versteckt'); return; }", f)
+        self.assertIn("window._agentenansichtBeobachter.observe(main, { childList: true, subtree: true });", f)
+        self.assertIn("[data-agentenansicht] {\n    display: none !important;", lies(FRONTEND, "style.css"))
+        auf = self.funktion("inkluagentAgentenansichtAufheben")
+        self.assertIn("if (el.getAttribute('data-agentenansicht') === 'aus') el.hidden = false;", auf)
+
+    def test_kein_auf_und_zu_in_der_agentenansicht(self):
+        f = self.funktion("inkluagentChatstil")
+        self.assertIn("toggle.hidden = true;", f)
+        self.assertIn("panel.hidden = false;", f)
+        self.assertIn("toggle.hidden = false;", f)
+        self.assertIn(".inkluagent-toggle[hidden] { display: none; }", lies(FRONTEND, "style.css"))
+
+    def test_gespraeche_ohne_ueberschrift_als_benannter_bereich(self):
+        dash = lies(FRONTEND, "dashboard.js")
+        f = dash[dash.index("function seitenleisteGespraecheBauen("):]
+        f = f[:f.index("\n}\n")]
+        self.assertNotIn("createElement('h2')", f)
+        self.assertIn("bereich.setAttribute('aria-labelledby', 'navGespraecheTitel')", f)
+
+    def test_neue_seite_zeigt_die_schritte_weiter(self):
+        f = self.funktion("inkluagentLaufVerfolgen")
+        self.assertIn("inkluagentFortschrittZeigen(st, gesehen, false)", f)
+        self.assertIn("if (projekt && hier === projekt) await inkluagentAnsichtNachziehen(window._inkluagentProjectId);", f)
+        z = self.funktion("inkluagentFortschrittZeigen")
+        self.assertIn("inkluagentSchritteAnsagen()", z)
+        self.assertIn("t('Ruft gerade auf: {w}'", z)
 
 
 if __name__ == "__main__":

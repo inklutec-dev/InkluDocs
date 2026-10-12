@@ -68,7 +68,9 @@ class Werkzeug(unittest.TestCase):
 
     def test_knopf_heisst_inkluagent(self):
         """Beschriftung beim Aufbau, beim Oeffnen und beim Schliessen: „InkluAgent“; Auf/Zu meldet aria-expanded."""
-        self.assertEqual(self.app.count("t('InkluAgent')"), 3)
+        # vier: Knopf beim Aufbau, Oeffnen, Schliessen — und seit 12.10.2026 die schlichte Ueberschrift der Agentenansicht (ohne Auf/Zu)
+        self.assertEqual(self.app.count("t('InkluAgent')"), 4)
+        self.assertIn("titel.textContent = t('InkluAgent');", self.app)
         self.assertIn('<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel"',
                       self.app)
         self.assertRegex(self.app, r"<h2 id=\"inkluagentHeading\"[^>]*>'\s*\+\s*'<button id=\"inkluagentToggle\"")

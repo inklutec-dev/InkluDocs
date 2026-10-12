@@ -993,7 +993,8 @@ header h1 { font-size: 1.3rem; color: white; }
 }
 /* Schritt 5 (InkluAgent-Ausbau): Agentenansicht — der InkluAgent gross, ohne waagerechtes Scrollen bei 320 px (1.4.10) */
 /* hidden allein reicht nicht, wo ein Bereich selbst display setzt (Karten mit flex/grid) */
-[data-agentenansicht="aus"] {
+/* auch „war-versteckt“: beim Umstellen schon versteckt, die Seite darf es spaeter nicht wieder einblenden (Steve 12.10.2026) */
+[data-agentenansicht] {
     display: none !important;
 }
 .inkluagent-section.inkluagent-gross {
@@ -1567,3 +1568,6 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leis
 .arbeitsfenster-ergebnis p { margin: 0; overflow-wrap: anywhere; font-size: 0.95rem; }
 .arbeitsfenster-schritte li[data-zustand="fehler"] .schritt-zustand { color: var(--error); font-weight: 600; }
 .inkluagent-entwurf .inkluagent-message-content { white-space: pre-line; }
+/* Agentenansicht: „InkluAgent“ als schlichte Ueberschrift ohne Auf/Zu (Steve 12.10.2026) */
+.inkluagent-chatstil .inkluagent-titel { font-size: 1.15rem; color: var(--primary); }
+.inkluagent-toggle[hidden] { display: none; }   /* die Knopf-Regel setzt display: block — sonst bliebe er sichtbar */
