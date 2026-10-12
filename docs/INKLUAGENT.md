@@ -613,3 +613,21 @@ Hilfe-Seite. Der Seitenleisten-Eintrag „Hilfe“ ist wieder weg (`dashboard.js
 Sichtbar heißt es überall „InkluAgent“ bzw. „Agent“, nirgends „Chatbot“ (geprüft: Vorlagen, Skripte, Kataloge). 11 neue Texte.
 Tests: `test_agent_hilfe.py` angepasst (Beispiele und Link im Agenten, kein Seitenleisten-Link). Klickprobe lokal 11 von 11
 (Übersicht und Projektseite im festen Bereich, eingebettet ohne festen Bereich, axe ohne Verstöße).
+
+### Schritt 6: Antworten als Blöcke (Schalter `AGENT_BLOECKE`, Umgebung `INKLUAGENT_BLOECKE=an`)
+
+Konzept Abschnitt 6, Frage 13: Absätze und einfache Listen statt eines Textblocks, kein Markdown, kein `innerHTML` — gerade
+Projektlisten werden so für VoiceOver navigierbar („Liste, 3 Objekte“). Bisher löschte der Filter die Aufzählungszeichen des
+Modells, und die Oberfläche zeigte jede Antwort als einen Block (Zeilenumbrüche fielen sichtbar weg).
+- **Server** (`inkluagent/sanitize.py`, `sanitize_markdown(text, listen=True)`, aufgerufen in `agent_loop.run_agent`):
+  Aufzählungs-Präfixe `-`, `*`, `+` werden zu „• “ statt gelöscht; Fettdruck, Code, Überschriften und Trennlinien fallen weiter
+  weg; nummerierte Zeilen bleiben. So steht die Struktur auch im gespeicherten Verlauf.
+- **Seite** (`frontend/inkluagent.js`, `inkluagentBloeckeBauen`, nur für Antworten des Agenten): Leerzeile = neuer Absatz
+  (`p`, Zeilenumbrüche darin sichtbar), Zeilen mit „• “ = `ul`, mindestens zwei Zeilen „1. “, „2. “ = `ol` (Startnummer bleibt);
+  eine einzelne „1. …“-Zeile bleibt Absatz (Datum, Satzanfang). Nur `createElement`/`textContent`. Ältere Antworten ohne
+  Zeichen werden zu Absätzen. `window.INKLUAGENT.bloecke` sagt der Seite, ob der Schalter an ist.
+
+Tests: `tests/test_agent_bloecke.py` (5: Filter mit und ohne Schalter, idempotent, Agent mit Schalter, Oberfläche ohne
+`innerHTML`, Seite erfährt den Schalter). Klickprobe lokal 10 von 10 (Liste mit drei Punkten ohne Zeichen, nummerierte Liste,
+Absätze, „1. Oktober …“ bleibt Absatz, sichtbar als Aufzählung, axe ohne Verstöße, nach dem Neuladen gleich, ohne Schalter wie
+bisher).

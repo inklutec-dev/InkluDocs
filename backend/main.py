@@ -11803,7 +11803,8 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
     konto = bool(funktionen.AGENT_KONTO and INKLUAGENT_ENABLED)
     ueberall = bool(konto and funktionen.AGENT_UEBERALL)
     out = {"hochladen": bool(funktionen.AGENT_HOCHLADEN and INKLUAGENT_ENABLED), "max_dateien": _hl.max_dateien(),
-           "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024), "konto": konto, "ueberall": ueberall}
+           "max_mb": MAX_UPLOAD_SIZE // (1024 * 1024), "konto": konto, "ueberall": ueberall,
+           "bloecke": bool(funktionen.AGENT_BLOECKE)}
     if ueberall:
         from inkluagent.tools import namen as _werkzeug_namen
         out["werkzeug_namen"] = _werkzeug_namen.fuer_oberflaeche(get_gettext(lang or "de"))

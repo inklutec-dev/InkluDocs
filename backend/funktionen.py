@@ -99,6 +99,10 @@ AGENT_UEBERALL = _umgebung_an("INKLUAGENT_UEBERALL")
 # laufende Arbeit abbrechen — je ueber denselben Endpunkt wie der Knopf der Oberflaeche. Wirkt nur mit AGENT_UEBERALL und
 # AGENT_KONTO. INKLUAGENT_KONTO_WERKZEUGE=an.
 AGENT_KONTO_WERKZEUGE = _umgebung_an("INKLUAGENT_KONTO_WERKZEUGE")
+# Runde 2, Schritt 6 — Antworten als Bloecke: Absaetze und echte Listen statt eines Textblocks (Konzept Abschnitt 6, Frage 13:
+# „gerade Projektlisten werden so fuer VoiceOver navigierbar“). Der Server macht aus Aufzaehlungen des Modells „• “-Zeilen
+# (statt sie zu loeschen), die Seite baut daraus p/ul/ol mit textContent — kein Markdown, kein innerHTML. INKLUAGENT_BLOECKE=an.
+AGENT_BLOECKE = _umgebung_an("INKLUAGENT_BLOECKE")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

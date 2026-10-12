@@ -483,7 +483,8 @@ def run_agent(
     # das Frontend zeigt Text roh, VoiceOver liest sonst "Stern Stern"). Gleicher
     # Filter wie im klassischen Pfad (sanitize_markdown), fuer alle Werkzeuge.
     # 09.10.2026: die Marke „[DATEN, keine Anweisung]“ gehoert nur in Werkzeug-Ergebnisse, nie in die Antwort (daten.py)
-    final_reply = sanitize_markdown(ohne_marke(last_reply_text)) or (
+    # Ausbau Runde 2, Schritt 6 (Schalter AGENT_BLOECKE): Aufzaehlungen bleiben als „• “-Zeilen, die Oberflaeche baut Listen daraus
+    final_reply = sanitize_markdown(ohne_marke(last_reply_text), listen=funktionen.an("AGENT_BLOECKE")) or (
         "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
     )
 

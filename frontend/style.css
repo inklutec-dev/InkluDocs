@@ -1141,6 +1141,12 @@ ul.inkluagent-kurzhilfe {
     font-size: 0.95rem;
     color: var(--text);
 }
+/* Antworten als Bloecke (Ausbau Runde 2, Schritt 6): Absaetze und Listen; Zeilenumbrueche im Absatz bleiben sichtbar */
+.inkluagent-message-content p { margin: 0 0 0.5rem; white-space: pre-line; }
+.inkluagent-message-content p:last-child, .inkluagent-message-content ul:last-child,
+.inkluagent-message-content ol:last-child { margin-bottom: 0; }
+.inkluagent-message-content ul, .inkluagent-message-content ol { margin: 0 0 0.5rem; padding-left: 1.4rem; }
+.inkluagent-message-content li { margin: 0.15rem 0; }
 .inkluagent-form { display: flex; flex-direction: column; gap: 0.5rem; }
 .inkluagent-form textarea {
     width: 100%;

@@ -821,6 +821,40 @@ function inkluagentAnhangEl(anhang) {
     return box.children.length ? box : null;
 }
 
+// Ausbau Runde 2, Schritt 6 (Schalter AGENT_BLOECKE): die Antwort als Bloecke — Leerzeile = neuer Absatz (p), Zeilen mit „• “ =
+// Liste (ul), mindestens zwei Zeilen „1. “, „2. “ … = nummerierte Liste (ol). Nur createElement und textContent, kein innerHTML.
+// Aeltere Antworten (Aufzaehlungszeichen damals entfernt) werden zu Absaetzen.
+function inkluagentBloeckeBauen(el, text) {
+    String(text).split(/\n[ \t]*\n/).forEach(absatz => {
+        const gruppen = [];   // [{art: 'p'|'ul'|'ol', zeilen: [...], start}]
+        absatz.split('\n').forEach(z => {
+            const punkt = /^\s*•\s+(.*)$/.exec(z);
+            const nr = /^\s*(\d+)[.)]\s+(.*)$/.exec(z);
+            const art = punkt ? 'ul' : (nr ? 'ol' : 'p');
+            const inhalt = punkt ? punkt[1] : (nr ? nr[2] : z);
+            if (!inhalt.trim()) return;
+            const letzte = gruppen[gruppen.length - 1];
+            if (letzte && letzte.art === art) letzte.zeilen.push(inhalt);
+            else gruppen.push({ art: art, zeilen: [inhalt], start: nr ? parseInt(nr[1], 10) : 1, roh: [] });
+            gruppen[gruppen.length - 1].roh.push(z.trim());
+        });
+        gruppen.forEach(g => {
+            // Eine einzelne „1. …“-Zeile ist meist ein Datum oder ein Satzanfang, keine Liste
+            if (g.art === 'ol' && g.zeilen.length < 2) { g.art = 'p'; g.zeilen = g.roh; }
+            if (g.art === 'p') {
+                const p = document.createElement('p');
+                p.textContent = g.zeilen.join('\n');
+                el.appendChild(p);
+                return;
+            }
+            const liste = document.createElement(g.art);
+            if (g.art === 'ol' && g.start !== 1) liste.start = g.start;
+            g.zeilen.forEach(z => { const li = document.createElement('li'); li.textContent = z; liste.appendChild(li); });
+            el.appendChild(liste);
+        });
+    });
+}
+
 function inkluagentAppendMessage(role, content, werkzeuge, anhang) {
     const log = document.getElementById('inkluagentLog');
     if (!log) return;
@@ -837,7 +871,8 @@ function inkluagentAppendMessage(role, content, werkzeuge, anhang) {
     roleEl.textContent = (role === 'user' ? t('Du') : 'InkluAgent');
     const contentEl = document.createElement('div');
     contentEl.className = 'inkluagent-message-content';
-    contentEl.textContent = content || '';
+    if (role === 'assistant' && window.INKLUAGENT && window.INKLUAGENT.bloecke) inkluagentBloeckeBauen(contentEl, content || '');
+    else contentEl.textContent = content || '';
     wrapper.appendChild(roleEl);
     wrapper.appendChild(contentEl);
     if (role === 'assistant' && Array.isArray(anhang) && anhang.length) {

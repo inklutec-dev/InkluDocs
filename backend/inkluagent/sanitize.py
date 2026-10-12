@@ -35,8 +35,13 @@ _RE_CODE_FENCE = re.compile(r"```[a-zA-Z0-9]*\n?")
 _RE_INLINE_CODE = re.compile(r"`([^`\n]+)`")
 
 
-def sanitize_markdown(text: str) -> str:
-    """Entfernt Markdown-Markup aus einem Text. Idempotent."""
+LISTENPUNKT = "• "   # Aufzaehlungszeile fuer die Bloecke der Oberflaeche (Ausbau Runde 2, Schritt 6)
+
+
+def sanitize_markdown(text: str, listen: bool = False) -> str:
+    """Entfernt Markdown-Markup aus einem Text. Idempotent.
+    listen (Schalter AGENT_BLOECKE): Aufzaehlungs-Praefixe werden zu „• “ statt geloescht — die Oberflaeche macht daraus eine
+    echte Liste (VoiceOver: „Liste, 3 Objekte“); ohne Schalter wie bisher entfernt."""
     if not text:
         return text
     s = text
@@ -48,7 +53,7 @@ def sanitize_markdown(text: str) -> str:
     s = _RE_ITALIC_UNDER.sub(r"\1", s)
     s = _RE_HEADING.sub("", s)
     s = _RE_HRULE.sub("", s)
-    s = _RE_BULLET.sub("", s)
+    s = _RE_BULLET.sub(LISTENPUNKT if listen else "", s)
     # Mehrere leere Zeilen auf max. eine reduzieren
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s.strip()
