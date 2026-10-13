@@ -48,7 +48,7 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
     return ''
         + (alsBereich
             ? '<div class="inkluagent-section" data-variante="' + (variante || 'bilder') + '">'
-            : '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">')
+            : '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + escHtmlAgent(projectId) + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">')
         // Akkordeon-Muster (WAI-ARIA, Steve 28.08.2026): der Auf/Zu-Knopf steht IN der Ueberschrift
         // Ebene 2 — per Ueberschriften-Navigation anspringen und sofort druecken; die Nachrichten
         // sind Ebene 3 darunter. Ein Wort fuer beides: „InkluAgent“ (09.10.2026, vorher „Chatbot“) — derselbe

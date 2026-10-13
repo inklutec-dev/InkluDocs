@@ -443,9 +443,23 @@ async def lifespan(app: FastAPI):
 # Swagger UI (/docs), ReDoc und /openapi.json sind AUS (17.09.2026): sie zeigten oeffentlich alle 173 Routen
 # inklusive Admin- und App-Endpunkte. Die oeffentliche API ist unter /api/v1/docs von Hand dokumentiert.
 app = FastAPI(title="InkluDocs", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+
+
+def _herkunft(url: str) -> str:
+    """Schema und Host einer Adresse ohne Pfad, also die Herkunft (Origin) im Sinne von CORS; '' wenn keine Adresse."""
+    teile = urlparse(url or "")
+    return f"{teile.scheme}://{teile.netloc}" if teile.scheme in ("http", "https") and teile.netloc else ""
+
+
+# CORS nur fuer die eigenen Herkuenfte DIESER Umgebung (Sicherheitspruefung 13.10.2026, S5). Vorher stand die
+# Staging-Adresse fest in der Liste: Prod beantwortete Anfragen mit Anmeldedaten von Staging und liess Staging die
+# Antworten lesen. Beide liegen unter *.inklutec.de (gleiche Site), das Lax-Cookie geht also mit, und Staging zeigt
+# den neuesten, noch ungeprueften Stand. Die Seiten der App rufen nur die eigene Herkunft auf (dafuer braucht es kein
+# CORS); BASE_URL und API_BASE_URL bleiben drin, weil Prod unter beiden Adressen erreichbar ist.
+CORS_HERKUENFTE = sorted({h for h in (_herkunft(BASE_URL), _herkunft(API_BASE_URL)) if h})
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://inkludocs.inklutec.de", "https://staging.inkludocs.inklutec.de"],
+    allow_origins=CORS_HERKUENFTE,
     allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "X-API-Key"],
     allow_credentials=True,
