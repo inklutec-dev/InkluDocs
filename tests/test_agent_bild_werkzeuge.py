@@ -129,9 +129,12 @@ class BildLoeschenUndUmbenennen(unittest.TestCase):
         self.assertIn("nicht rückgängig", karte.get("text", ""))
         r2 = ex.execute("bild_loeschen", {"image_id": self.bilder[1], "bestaetigt": True})
         self.assertTrue(r2["result"]["rueckfrage_noetig"], "nicht in derselben Nachricht")
+        # ein getipptes Ja loescht nie (Pruefung 13.10.2026, S2) — nur der Knopf der Karte
         ex2 = self._ex()
         sicherheit.nachricht_merken(ex2.turn_id, "Ja")
         r3 = ex2.execute("bild_loeschen", {"image_id": self.bilder[1], "bestaetigt": True})
+        self.assertEqual(r3["result"]["hinweis"], ausgaben._G_KNOPF)
+        r3 = ausgaben.karte_ausfuehren(karte["angebot_id"], "bild_loeschen", {"image_id": self.bilder[1]}, self._ex())
         self.assertTrue(r3["ok"] and r3["result"].get("geloescht"), r3)
         c = database.get_db()
         self.assertEqual(c.execute("SELECT COUNT(*) FROM images WHERE id = ?", (self.bilder[1],)).fetchone()[0], 0)

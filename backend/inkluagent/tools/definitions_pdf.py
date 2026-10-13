@@ -129,8 +129,8 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
         "name": "dokument_loeschen",
         "description": (
             "Dokument samt Bildern, Alt-Texten, Feldern, Quickinfos und Dateien aus dem Projekt löschen — unumkehrbar. "
-            "ZWEI SCHRITTE wie bei kostenpflichtigen Werkzeugen: erst OHNE bestaetigt (sagt, was gelöscht würde; frage den "
-            "Nutzer), erst nach seinem klaren Ja in einer eigenen Nachricht mit bestaetigt=true."
+            "Rufe es OHNE bestaetigt auf (sagt, was gelöscht würde): der Server legt eine Karte vor, und NUR ihr Knopf löscht (ein getipptes Ja nicht). Sag dem Nutzer, was "
+            "weg wäre und dass er dafür den Knopf drückt."
         ),
         "input_schema": {"type": "object", "properties": {
             "document_id": {"type": "integer", "description": "Optional bei einem Dokument; Pflicht bei mehreren."},

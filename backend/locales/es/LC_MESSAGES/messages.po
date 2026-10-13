@@ -12324,3 +12324,31 @@ msgstr "Abierto en la ventana de trabajo: {name}"
 
 msgid "Seite im Arbeitsfenster geschlossen."
 msgstr "Página de la ventana de trabajo cerrada."
+
+# Pruefung 13.10.2026: Saetze des Servers (InkluAgent)
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort."
+msgstr "El InkluAgent todavía está trabajando en tu último mensaje. Espera su respuesta, por favor."
+
+msgid "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte versuch es gleich noch einmal."
+msgstr "Lo siento, se ha producido un error. Vuelve a intentarlo en un momento."
+
+msgid "Es wird gerade schon hochgeladen. Warte bitte, bis das fertig ist."
+msgstr "Ya se está subiendo algo. Espera a que termine, por favor."
+
+msgid "Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist gespeichert. Schreib mir, wie es weitergehen soll."
+msgstr "Esto tarda más de lo que puede durar un mensaje. Lo que he hecho hasta ahora está guardado. Dime cómo quieres continuar."
+
+msgid "Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal."
+msgstr "Lo siento, la conexión con la IA está interrumpida en este momento. Vuelve a intentarlo en un momento."
+
+msgid "Ich habe mehrere Werkzeuge benutzt, komme aber zu keinem klaren Ergebnis. Kannst du deine Frage etwas eingrenzen?"
+msgstr "He usado varias herramientas, pero no llego a un resultado claro. ¿Puedes concretar un poco tu pregunta?"
+
+msgid "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
+msgstr "Ahora mismo no tengo una respuesta concreta. ¿Me lo preguntas de otra manera?"
+
+msgid "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt."
+msgstr "Ahora mismo no puedo ayudar sin un proyecto. Abre un proyecto, por favor."
+
+msgid "Das hat nicht geklappt. Bitte versuch es noch einmal."
+msgstr "No ha funcionado. Vuelve a intentarlo, por favor."

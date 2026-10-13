@@ -93,25 +93,48 @@ class Ziele(unittest.TestCase):
         self.assertFalse(begleiter.ausfuehren("hinfuehren", {"ziel": "verwaltung"}, self.u["id"])["ok"])
         self.assertFalse(begleiter.ausfuehren("hinfuehren", {"ziel": "warenkorb"}, self.u["id"])["ok"], "ohne Express kein Ziel")
 
+    def test_sicherheit_geld_recht_nur_ueber_den_knopf(self):
+        """Pruefung 13.10.2026, S8: zu Konto, E-Mail, Passwort, Abo, Team, API, Kuendigen und Widerruf nie von selbst."""
+        for ziel in ("konto", "email", "passwort", "abo", "team", "api", "api_neu", "kuendigen", "widerrufen"):
+            r = begleiter.ausfuehren("hinfuehren", {"ziel": ziel, "sofort": True}, self.u["id"])
+            self.assertTrue(r["ok"], ziel)
+            self.assertNotIn("aktionen", r, ziel)
+            self.assertEqual(r["anhang"][0]["art"], "link", ziel)
+
     def test_sprache_mit_rueckweg_in_der_alten_sprache(self):
-        begleiter.kontext_setzen("en", lambda s: {"Zurück zu {sprache}": "Back to {sprache}"}.get(s, s))
-        try:
-            r = begleiter.ausfuehren("einstellung_aendern", {"einstellung": "sprache", "wert": "DE"}, self.u["id"])
-        finally:
-            begleiter.kontext_setzen(None, None)
+        lauf = begleiter.Lauf(ui_sprache="en", uebersetzen=lambda s: {"Zurück zu {sprache}": "Back to {sprache}"}.get(s, s),
+                              nutzer_text="Please switch the language back to German")
+        r = begleiter.ausfuehren("einstellung_aendern", {"einstellung": "sprache", "wert": "DE"}, self.u["id"], lauf)
         self.assertEqual(r["aktionen"], [{"type": "sprache_wechseln", "sprache": "de"}])
-        self.assertEqual(r["anhang"], [{"art": "link", "url": "/set-language/en", "text": "Back to English"}])
-        self.assertFalse(begleiter.ausfuehren("einstellung_aendern", {"einstellung": "sprache", "wert": "xx"}, self.u["id"])["ok"])
+        self.assertEqual(r["anhang"], [{"art": "link", "url": "/set-language/en", "lang": "en", "text": "Back to English"}])
+        self.assertFalse(begleiter.ausfuehren("einstellung_aendern", {"einstellung": "sprache", "wert": "xx"}, self.u["id"], lauf)["ok"])
+
+    def test_sprache_nur_wenn_der_nutzer_sie_nennt(self):
+        """Pruefung 13.10.2026, S8: steht der Wunsch nur in einer Datei oder einem Seitentitel, aendert sich nichts."""
+        for text, wert, ok in (("Stell bitte auf Schwedisch um", "sv", True), ("auf englisch bitte", "en", True),
+                               ("Mets la langue en français", "fr", True), ("Cambia a español", "es", True),
+                               ("Skift til dansk", "da", True), ("Byt till svenska", "sv", True),
+                               ("Fasse die Datei zusammen", "sv", False), ("Stell auf Englisch um", "sv", False), ("", "de", False)):
+            with self.subTest(text=text, wert=wert):
+                r = begleiter.ausfuehren("einstellung_aendern", {"einstellung": "sprache", "wert": wert}, self.u["id"],
+                                         begleiter.Lauf(ui_sprache="de", nutzer_text=text))
+                self.assertEqual(r["ok"], ok, r)
+                if not ok:
+                    self.assertEqual(r["error"], begleiter.G_NICHT_GENANNT)
 
     def test_ansicht_nur_mit_ansichtswahl(self):
         from inkluagent import ansicht
-        r = begleiter.ausfuehren("einstellung_aendern", {"einstellung": "ansicht", "wert": "agent"}, self.u["id"])
+        lauf = begleiter.Lauf(nutzer_text="Schalte bitte die Agentenansicht ein")
+        r = begleiter.ausfuehren("einstellung_aendern", {"einstellung": "ansicht", "wert": "agent"}, self.u["id"], lauf)
         self.assertFalse(r["ok"])
         with mock.patch.object(funktionen, "AGENT_ANSICHT", True):
-            r = begleiter.ausfuehren("einstellung_aendern", {"einstellung": "ansicht", "wert": "agent"}, self.u["id"])
+            r = begleiter.ausfuehren("einstellung_aendern", {"einstellung": "ansicht", "wert": "agent"}, self.u["id"],
+                                     begleiter.Lauf(nutzer_text="Mach das hier kürzer"))
+            self.assertEqual(r["error"], begleiter.G_NICHT_GENANNT, "Ansicht nicht genannt")
+            r = begleiter.ausfuehren("einstellung_aendern", {"einstellung": "ansicht", "wert": "agent"}, self.u["id"], lauf)
             self.assertEqual(r["aktionen"], [{"type": "neu_laden"}])
             self.assertEqual(ansicht.fuer_konto(self.u["id"]), "agent")
-            self.assertFalse(begleiter.ausfuehren("einstellung_aendern", {"einstellung": "ansicht", "wert": "bunt"}, self.u["id"])["ok"])
+            self.assertFalse(begleiter.ausfuehren("einstellung_aendern", {"einstellung": "ansicht", "wert": "bunt"}, self.u["id"], lauf)["ok"])
 
     def test_heikles_nie_selbst(self):
         for e in ("passwort", "email", "api", "abo", "konto_loeschen"):
@@ -142,21 +165,25 @@ class InDerSchleife(unittest.TestCase):
                 gesehen.append(([t["name"] for t in tools], system))
                 Modell.n += 1
                 if Modell.n == 1 and "hinfuehren" in gesehen[-1][0]:
-                    return {"content": [{"type": "tool_use", "id": "t1", "name": "hinfuehren", "input": {"ziel": "api_neu", "sofort": True}}],
+                    return {"content": [{"type": "tool_use", "id": "t1", "name": "hinfuehren", "input": {"ziel": "ablage", "sofort": True}}],
                             "stop_reason": "tool_use"}
                 return {"content": [{"type": "text", "text": "Ich bringe dich hin (fiktiv)."}], "stop_reason": "end_turn"}
+        lauf = begleiter.Lauf(ui_sprache="de", nutzer_text="Bring mich zur Ablage")
         with mock.patch.object(funktionen, "AGENT_KONTO", True), mock.patch.object(funktionen, "AGENT_UEBERALL", True), \
                 mock.patch.object(funktionen, "AGENT_BEGLEITER", True):
-            r = agent_loop.run_agent(None, u["id"], "Bring mich zum API-Schlüssel", None, Modell())
+            r = agent_loop.run_agent(None, u["id"], "Bring mich zur Ablage", None, Modell(), begleiter_lauf=lauf)
         self.assertIn("hinfuehren", gesehen[0][0])
         self.assertIn("Begleiter durch InkluDocs", gesehen[0][1])
-        self.assertIn({"type": "hinfuehren", "url": "/api-schluessel?hin=newKeyName", "name": "Neuen Schluessel erstellen"}, r["actions"])
-        gesehen.clear()
-        Modell.n = 0
-        with mock.patch.object(funktionen, "AGENT_KONTO", True), mock.patch.object(funktionen, "AGENT_UEBERALL", True):
-            agent_loop.run_agent(None, u["id"], "Hallo", None, Modell())
-        self.assertNotIn("hinfuehren", gesehen[0][0])
-        self.assertNotIn("Begleiter durch InkluDocs", gesehen[0][1])
+        self.assertIn({"type": "hinfuehren", "url": "/ablage?hin=ueberschrift", "name": "Meine Ablage"}, r["actions"])
+        # ohne Lauf vom Chat-Endpunkt des Kontos (Demo, K9): kein Begleiter, auch mit Schalter
+        for schalter_an in (True, False):
+            gesehen.clear()
+            Modell.n = 0
+            with mock.patch.object(funktionen, "AGENT_KONTO", True), mock.patch.object(funktionen, "AGENT_UEBERALL", True), \
+                    mock.patch.object(funktionen, "AGENT_BEGLEITER", schalter_an):
+                agent_loop.run_agent(None, u["id"], "Hallo", None, Modell())
+            self.assertNotIn("hinfuehren", gesehen[0][0])
+            self.assertNotIn("Begleiter durch InkluDocs", gesehen[0][1])
 
 
 class MitServer(unittest.TestCase):

@@ -12325,3 +12325,31 @@ msgstr "Im Arbeitsfenster geöffnet: {name}"
 
 msgid "Seite im Arbeitsfenster geschlossen."
 msgstr "Seite im Arbeitsfenster geschlossen."
+
+# Pruefung 13.10.2026: Saetze des Servers (InkluAgent)
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort."
+msgstr "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort."
+
+msgid "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte versuch es gleich noch einmal."
+msgstr "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte versuch es gleich noch einmal."
+
+msgid "Es wird gerade schon hochgeladen. Warte bitte, bis das fertig ist."
+msgstr "Es wird gerade schon hochgeladen. Warte bitte, bis das fertig ist."
+
+msgid "Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist gespeichert. Schreib mir, wie es weitergehen soll."
+msgstr "Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist gespeichert. Schreib mir, wie es weitergehen soll."
+
+msgid "Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal."
+msgstr "Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal."
+
+msgid "Ich habe mehrere Werkzeuge benutzt, komme aber zu keinem klaren Ergebnis. Kannst du deine Frage etwas eingrenzen?"
+msgstr "Ich habe mehrere Werkzeuge benutzt, komme aber zu keinem klaren Ergebnis. Kannst du deine Frage etwas eingrenzen?"
+
+msgid "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
+msgstr "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
+
+msgid "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt."
+msgstr "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt."
+
+msgid "Das hat nicht geklappt. Bitte versuch es noch einmal."
+msgstr "Das hat nicht geklappt. Bitte versuch es noch einmal."

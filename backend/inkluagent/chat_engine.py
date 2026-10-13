@@ -61,37 +61,52 @@ if _AGENTIC_ENABLED:
 _HISTORY_TURNS = 30  # letzte 30 Nachrichten als Kontext mitgeben (05.05.2026 von 8 erhoeht)
 
 
+_FEHLER = "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte versuch es gleich noch einmal."
+
+
+def _uebersetzt(_, text: str) -> str:
+    """Feste Saetze an den Nutzer in der Sprache der Oberflaeche (Pruefung 13.10.2026, H3), sonst deutsch."""
+    return _(text) if _ else text
+
+
 def process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None,
-                    nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None) -> dict:
+                    nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None, _=None,
+                    nutzer_text: Optional[str] = None, begleiter_lauf=None) -> dict:
     """KI-Kosten (05.10.2026): alle KI-Aufrufe dieser Nachricht zaehlen fuer diesen Kunden und dieses Projekt — als
-    „chatbot“, ausser eine Fachfunktion (z. B. Alt-Text-Pipeline) setzt ihren eigenen Zweck."""
+    „chatbot“, ausser eine Fachfunktion (z. B. Alt-Text-Pipeline) setzt ihren eigenen Zweck.
+    _, nutzer_text, begleiter_lauf (Pruefung 13.10.2026): Uebersetzung der festen Saetze, der getippte Text fuer die Ja-Pruefung
+    und der Begleiter-Lauf — nur vom Chat-Endpunkt des Kontos (agent_loop.run_agent)."""
     import ki_kosten
     with ki_kosten.kontext(user_id=user_id, project_id=project_id, document_id=None, image_id=None, zweck="chatbot"):
         return _process_message(project_id, user_message, user_id, system_suffix=system_suffix, on_tool=on_tool,
-                                nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht)
+                                nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht, _=_,
+                                nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf)
 
 
 def process_konto_message(user_id: int, user_message: str, on_tool=None, nur_mit_karte: bool = False,
-                          ohne_nachricht: Optional[int] = None, _=None) -> dict:
+                          ohne_nachricht: Optional[int] = None, _=None, nutzer_text: Optional[str] = None,
+                          begleiter_lauf=None) -> dict:
     """Seite OHNE Projekt (InkluAgent-Ausbau Runde 2, Schritt 3): Konto-Werkzeuge und das Gespraech des Kontos
     (inkluagent/konto.py). Nur im Werkzeug-Modus; KI-Kosten zaehlen fuer das Konto ohne Projekt."""
     import ki_kosten
     with ki_kosten.kontext(user_id=user_id, project_id=None, document_id=None, image_id=None, zweck="chatbot"):
         if not (_AGENTIC_ENABLED and _PROVIDER_NAME in _WERKZEUG_PROVIDER):
-            return {"reply": "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt.", "intent": "error",
+            return {"reply": _uebersetzt(_, "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt."), "intent": "error",
                     "image_refs": None, "actions": [], "werkzeuge": []}
         from .agent_loop import run_agent
         try:
             return run_agent(None, user_id, user_message, None, _provider, on_tool=on_tool, nur_mit_karte=nur_mit_karte,
-                             konto=True, ohne_nachricht=ohne_nachricht, uebersetzen=_)
+                             konto=True, ohne_nachricht=ohne_nachricht, uebersetzen=_, nutzer_text=nutzer_text,
+                             begleiter_lauf=begleiter_lauf)
         except Exception:
             log.exception("agentic run_agent ohne Projekt crashte")
-            return {"reply": "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte erneut versuchen.", "intent": "error",
+            return {"reply": _uebersetzt(_, _FEHLER), "intent": "error",
                     "image_refs": None, "actions": [], "werkzeuge": []}
 
 
 def _process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None,
-                     nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None) -> dict:
+                     nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None, _=None,
+                     nutzer_text: Optional[str] = None, begleiter_lauf=None) -> dict:
     """Hauptfunktion. Returns:
     {"reply": str, "intent": str, "image_refs": list[int]|None,
      "actions": list[dict]}.
@@ -110,7 +125,9 @@ def _process_message(project_id: int, user_message: str, user_id: int, system_su
 
     # Werkzeug-Modus: das Modell entscheidet selbst, welche Werkzeuge es nutzt (Bedrock/Claude seit
     # 12.05.2026, Gemini seit 10.09.2026 — beide Provider liefern invoke_with_tools).
-    # Klassischer 4-Pfad-Dispatcher bleibt unten als Absturz-Fallback des Werkzeug-Modus.
+    # Der klassische 4-Pfad-Dispatcher unten laeuft nur noch OHNE Werkzeug-Modus (Pruefung 13.10.2026, S9): als Rueckfall nach
+    # einem Absturz wertete er die Nachricht samt Server-Notizen aus und konnte bezahlte Neugenerierungen starten — ohne
+    # Karte, Einzel-Deckel und Ja-Pruefung.
     if (project or {}).get("tool") == "formular" and not (_AGENTIC_ENABLED and _PROVIDER_NAME in _WERKZEUG_PROVIDER):
         return {"reply": "Für Formular-Projekte braucht der InkluAgent den Werkzeug-Modus. Bitte an den Betreiber wenden.",
                 "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
@@ -120,15 +137,11 @@ def _process_message(project_id: int, user_message: str, user_id: int, system_su
             # konto (Ausbau Runde 2, Schritt 2): Gedaechtnis aus dem Gespraech des Kontos; der klassische Rueckfallweg unten
             # kennt nur das Projektgespraech
             return run_agent(project_id, user_id, user_message, project, _provider, system_suffix=system_suffix, on_tool=on_tool,
-                             nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht)
-        except Exception as e:
-            log.exception("agentic run_agent crashte — Fallback auf klassischen Dispatcher")
-            # Formular-Projekte (Review 28.08.2026): der klassische Pfad kennt nur Bilder —
-            # klare Fehlermeldung statt „Welche Bilder soll ich neu generieren?“.
-            if (project or {}).get("tool") == "formular":
-                return {"reply": "Entschuldigung, der InkluAgent ist gerade nicht erreichbar. Bitte in einem Moment erneut versuchen.",
-                        "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
-            # Fallthrough zum klassischen Pfad statt User-Fehler
+                             nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht, uebersetzen=_,
+                             nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf)
+        except Exception:
+            log.exception("agentic run_agent crashte")
+            return {"reply": _uebersetzt(_, _FEHLER), "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
 
     intent = classify_intent(user_message, _provider)
     log.info("InkluAgent intent=%s project=%s user=%s", intent, project_id, user_id)

@@ -7,9 +7,11 @@ Vier Sperren auf dem SERVER, nicht nur im Prompt:
    Alt-Text generieren oder aendern, Quickinfo generieren oder aendern (EINZEL_BEZAHLT). Je Nutzer-Nachricht laeuft hoechstens
    EINE davon ohne Rueckfrage; jede weitere legt der Server als Angebot mit Karte vor (dieselbe Zwei-Schritt-Freigabe wie die
    grossen Aktionen, tools/ausgaben.py). Vorher konnten sechs Werkzeug-Runden mit parallelen Aufrufen viele Einzelbuchungen ausloesen.
-2. Ja-Pruefung: bestaetigt=true vom MODELL gilt nur, wenn die gespeicherte Nachricht des Nutzers in dieser Runde ein kurzes,
-   eindeutiges Ja ist (ist_klares_ja, sechs Oberflaechensprachen, ohne Verneinung, ohne Frage). Sonst bleibt nur der Knopf der
-   Karte. Eingeschleuster Text kann keine Nutzer-Nachricht schreiben.
+2. Ja-Pruefung: bestaetigt=true vom MODELL gilt nur, wenn die Nachricht, die der Nutzer in dieser Runde GETIPPT hat, ein kurzes,
+   eindeutiges Ja ist (ist_klares_ja, sechs Oberflaechensprachen, ohne Verneinung, ohne Frage) und direkt auf das Angebot folgt.
+   Sonst bleibt nur der Knopf der Karte. Eingeschleuster Text kann keine Nutzer-Nachricht schreiben. Seit der Pruefung
+   13.10.2026 (S2) unabhaengig vom Schalter: ohne sie genuegte irgendeine spaetere Nachricht, und das Modell bestimmte mit seinem
+   Antworttext, worauf der Nutzer „Ja“ sagt. Unumkehrbares (Loeschen) geht nur ueber den Knopf (tools/ausgaben.py).
 3. Robuste Tagesgrenze: eigener Zaehler je Konto und Tag (Tabelle agent_tageszaehler). Vorher zaehlte die Grenze ueber
    chat_messages: Projekt loeschen oder Verlauf leeren senkte den Zaehler.
 4. Tages-Kostendeckel je Konto aus ki_aufrufe (Zweck „chatbot“, also die Kosten des Gespraechs selbst; Alt-Texte und
@@ -95,19 +97,24 @@ def ist_klares_ja(text: Optional[str]) -> bool:
     return all(w in JA_ERLAUBT for w in woerter) and any(w in JA_KERN for w in woerter)
 
 
-# Die Nachricht des Nutzers je Werkzeug-Runde (turn_id des ToolExecutors) — agent_loop merkt sie sich, die Freigabe in
-# tools/ausgaben._angebot_einloesen liest sie. Im Prozess gehalten; eine Zustimmung muss ohnehin binnen Minuten kommen.
-_NACHRICHT: dict[str, tuple[str, float]] = {}
+# Die getippte Nachricht des Nutzers je Werkzeug-Runde (turn_id des ToolExecutors) und die Runde davor desselben Kontos —
+# agent_loop merkt sie sich, die Freigabe in tools/ausgaben._angebot_einloesen liest sie. Im Prozess gehalten; eine Zustimmung
+# muss ohnehin binnen Minuten kommen.
+_NACHRICHT: dict[str, tuple[str, float, Optional[str]]] = {}   # turn_id -> (Text, Zeit, vorige turn_id des Kontos)
+_LETZTE_RUNDE: dict[int, str] = {}                             # user_id -> juengste turn_id
 _NACHRICHT_SPERRE = threading.Lock()
 _NACHRICHT_BEHALTEN_S = 30 * 60
 
 
-def nachricht_merken(turn_id: str, text: str) -> None:
+def nachricht_merken(turn_id: str, text: str, user_id: Optional[int] = None) -> None:
     jetzt = time.time()
     with _NACHRICHT_SPERRE:
-        for k in [k for k, (_t, z) in _NACHRICHT.items() if jetzt - z > _NACHRICHT_BEHALTEN_S]:
+        for k in [k for k, e in _NACHRICHT.items() if jetzt - e[1] > _NACHRICHT_BEHALTEN_S]:
             _NACHRICHT.pop(k, None)
-        _NACHRICHT[turn_id] = (text or "", jetzt)
+        vorige = _LETZTE_RUNDE.get(int(user_id)) if user_id is not None else None
+        _NACHRICHT[turn_id] = (text or "", jetzt, vorige)
+        if user_id is not None:
+            _LETZTE_RUNDE[int(user_id)] = turn_id
 
 
 def nachricht(turn_id: Optional[str]) -> Optional[str]:
@@ -116,16 +123,27 @@ def nachricht(turn_id: Optional[str]) -> Optional[str]:
     return e[0] if e else None
 
 
+def vorige_runde(turn_id: Optional[str]) -> Optional[str]:
+    with _NACHRICHT_SPERRE:
+        e = _NACHRICHT.get(turn_id or "")
+    return e[2] if e else None
+
+
 G_JA = ("Die Nachricht des Nutzers ist kein eindeutiges Ja. Als Zustimmung zählt nur eine kurze, eindeutige Antwort wie „Ja“, "
         "„Ja, mach das“ oder „OK“, ohne Verneinung und ohne Rückfrage. Führe nichts aus: frag noch einmal mit Preis und Ziel, "
         "oder sag dem Nutzer, dass er die Karte unter deiner Antwort bestätigen kann.")
+G_DIREKT = ("Ein getipptes Ja gilt nur in der Nachricht direkt nach dem Angebot. Führe nichts aus: frag für diese Aktion neu "
+            "(ohne bestaetigt), oder sag dem Nutzer, dass er die Karte unter deiner Antwort bestätigen kann.")
 
 
-def ja_grund(turn_id: Optional[str]) -> Optional[str]:
-    """None = das getippte Ja zaehlt (oder die Sperre ist aus); sonst der Grund fuer das Modell."""
-    if not an():
-        return None
-    return None if ist_klares_ja(nachricht(turn_id)) else G_JA
+def ja_grund(turn_id: Optional[str], angebot_turn: Optional[str] = None) -> Optional[str]:
+    """None = das getippte Ja zaehlt; sonst der Grund fuer das Modell. angebot_turn: die Runde, in der das Angebot entstand —
+    das Ja muss in der Runde direkt danach stehen (S2)."""
+    if not ist_klares_ja(nachricht(turn_id)):
+        return G_JA
+    if angebot_turn is not None and vorige_runde(turn_id) != angebot_turn:
+        return G_DIREKT
+    return None
 
 
 # ─── 1. Deckel fuer bezahlte Einzelaktionen ────────────────────────────────────────────────────────────────────────────────

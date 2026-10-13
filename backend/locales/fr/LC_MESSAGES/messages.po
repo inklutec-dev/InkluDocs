@@ -12324,3 +12324,31 @@ msgstr "Ouvert dans la fenêtre de travail : {name}"
 
 msgid "Seite im Arbeitsfenster geschlossen."
 msgstr "Page de la fenêtre de travail fermée."
+
+# Pruefung 13.10.2026: Saetze des Servers (InkluAgent)
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort."
+msgstr "L’InkluAgent travaille encore sur ton dernier message. Attends sa réponse, s’il te plaît."
+
+msgid "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte versuch es gleich noch einmal."
+msgstr "Désolé, une erreur s’est produite. Réessaie dans un instant."
+
+msgid "Es wird gerade schon hochgeladen. Warte bitte, bis das fertig ist."
+msgstr "Un envoi est déjà en cours. Attends qu’il soit terminé, s’il te plaît."
+
+msgid "Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist gespeichert. Schreib mir, wie es weitergehen soll."
+msgstr "Cela prend plus de temps qu’un message ne peut durer. Ce que j’ai fait jusqu’ici est enregistré. Dis-moi comment continuer."
+
+msgid "Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal."
+msgstr "Désolé, la connexion à l’IA est interrompue pour le moment. Réessaie dans un instant."
+
+msgid "Ich habe mehrere Werkzeuge benutzt, komme aber zu keinem klaren Ergebnis. Kannst du deine Frage etwas eingrenzen?"
+msgstr "J’ai utilisé plusieurs outils, mais je n’arrive pas à un résultat clair. Peux-tu préciser un peu ta question ?"
+
+msgid "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
+msgstr "Je n’ai pas de réponse concrète pour l’instant. Peux-tu me poser la question autrement ?"
+
+msgid "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt."
+msgstr "Je ne peux pas aider sans projet pour le moment. Ouvre un projet, s’il te plaît."
+
+msgid "Das hat nicht geklappt. Bitte versuch es noch einmal."
+msgstr "Cela n’a pas fonctionné. Réessaie, s’il te plaît."

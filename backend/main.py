@@ -11668,7 +11668,7 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
         return _ag.karte_ausfuehren(angebot_id, angebot["werkzeug"], angebot.get("args") or {}, executor)
 
     try:
-        r = await asyncio.get_running_loop().run_in_executor(None, _ausfuehren)
+        r = await asyncio.get_running_loop().run_in_executor(_AGENT_EXECUTOR, _ausfuehren)   # wie Agent-Laeufe (S4)
     finally:
         _ag.angebot_loslassen(angebot_id)
     r = r if isinstance(r, dict) else {}
@@ -11720,6 +11720,58 @@ _AGENT_LAEUFT_HOECHSTENS = 600   # Sekunden; aeltere Eintraege gelten als haenge
 def _agent_laeuft(user_id: int) -> bool:
     jetzt = time.time()
     return any(jetzt - t < _AGENT_LAEUFT_HOECHSTENS for t in _AGENT_LAEUFT.get(user_id, []))
+
+
+# Ein Lauf je Konto in einem eigenen, begrenzten Arbeitsbereich (Pruefung 13.10.2026, K2/S4/H6). Vorher startete jede Nachricht
+# einen Lauf, auch wenn fuer das Konto schon einer lief (doppelte Arbeit und Kosten, Antworten doppelt im Verlauf), und alle
+# Laeufe belegten minutenlang den gemeinsamen Thread-Pool, den Hochladen, Exporte und Speichern brauchen. Werkzeuge, die aus
+# einem Agent-Thread auf die Ereignisschleife warten (inkluagent/kern.warten), finden den gemeinsamen Pool so immer frei.
+def _agent_parallel() -> int:
+    try:
+        return max(1, min(int(os.environ.get("INKLUAGENT_PARALLEL") or 4), 16))
+    except ValueError:
+        return 4
+
+
+import concurrent.futures as _cf_agent   # noqa: E402
+_AGENT_EXECUTOR = _cf_agent.ThreadPoolExecutor(max_workers=_agent_parallel(), thread_name_prefix="inkluagent")
+_STROM_LEBENSZEICHEN_S = 15   # Zeile {"type": "ping"}, solange der Lauf still ist (K5)
+_AGENT_HOCHLADEN_LAEUFT: set = set()   # Konten, deren Hochladen im Agenten gerade laeuft (agent_hochladen, S7)
+
+
+def _lauf_anmelden(user_id: int) -> Optional[float]:
+    """Startzeit (= Kennung) des neuen Laufs, oder None, wenn fuer das Konto schon einer laeuft. Aus der Ereignisschleife ohne
+    await aufgerufen: Pruefen und Eintragen sind ein Schritt (ein uvicorn-Worker, siehe _AGENT_LAEUFT)."""
+    if _agent_laeuft(user_id):
+        return None
+    start = time.time()
+    _AGENT_LAEUFT[user_id] = [start]   # haengengebliebene Eintraege (aelter als _AGENT_LAEUFT_HOECHSTENS) fallen dabei weg
+    return start
+
+
+def _lauf_abmelden(user_id: int, start: float) -> None:
+    laeuft = _AGENT_LAEUFT.get(user_id, [])
+    if start in laeuft:
+        laeuft.remove(start)
+    if not laeuft:
+        _AGENT_LAEUFT.pop(user_id, None)
+    _fortschritt_ende(user_id, start)
+
+
+def _agent_bremse(user: dict, _) -> None:
+    """Chat-Bremse vor jeder Arbeit des InkluAgent (Nachricht und Hochladen, K4): Tagesgrenze je Konto (Admins ausgenommen).
+    Ausbau Runde 1, Schritt 2 (funktionen.AGENT_SICHERHEIT): eigener Tageszaehler statt chat_messages und Tages-Kostendeckel
+    je Konto aus ki_aufrufe (inkluagent/sicherheit.py). Schalter aus = wie bisher. Prueft nur, zaehlt nicht."""
+    if user.get("is_admin"):
+        return
+    if funktionen.AGENT_SICHERHEIT:
+        from inkluagent import sicherheit as _sicherheit
+        sperre = _sicherheit.chat_sperre(user["id"], DAILY_CHAT_LIMIT, _)
+        if sperre:
+            raise HTTPException(status_code=429, detail=sperre)
+    elif get_daily_chat_count(user["id"]) >= DAILY_CHAT_LIMIT:
+        text = _('Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter.')
+        raise HTTPException(status_code=429, detail=text.format(n=DAILY_CHAT_LIMIT))
 
 
 # Fortschritt je Konto (Steve 12.10.2026: „arbeitet er weiter, wenn ich die Ansicht wechsle?“ — ja, und die neue Seite soll die
@@ -11830,231 +11882,224 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
 
 
 async def _agent_nachricht(request: Request, user: dict, project_id: Optional[int], data: dict):
-    """Eine Nachricht an den InkluAgent — im Projekt (project_id) oder auf einer Seite ohne Projekt (None, Schritt 3)."""
-    message = (data.get("message") or "").strip()
-    # Runde 2, Schritt 1 (funktionen.AGENT_HOCHLADEN): nach dem Hochladefeld darf der eigene Text fehlen — dann steht nur die
-    # Kurzzeile im Verlauf. Die Notiz wird erst NACH der Chat-Bremse abgeholt (einmalig), damit eine abgewiesene Nachricht sie
-    # nicht verbraucht.
-    hochgeladen = str(data.get("hochgeladen") or "") if funktionen.AGENT_HOCHLADEN else ""
-    if not message and not hochgeladen:
-        raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
-    if len(message) > 5000:
-        raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 5000 Zeichen)")
-    # Chat-Bremse: Tagesgrenze je Konto (Admins ausgenommen), Pruefung VOR dem Speichern
-    # der Nachricht, damit abgewiesene Versuche nicht mitzaehlen.
-    # Ausbau Runde 1, Schritt 2 (funktionen.AGENT_SICHERHEIT): eigener Tageszaehler statt chat_messages und Tages-
-    # Kostendeckel je Konto aus ki_aufrufe (inkluagent/sicherheit.py). Schalter aus = wie bisher.
-    if not user.get("is_admin"):
-        if funktionen.AGENT_SICHERHEIT:
-            from inkluagent import sicherheit as _sicherheit
-            _sperre = _sicherheit.chat_sperre(user["id"], DAILY_CHAT_LIMIT, get_gettext(resolve_ui_language(request)))
-            if _sperre:
-                raise HTTPException(status_code=429, detail=_sperre)
-        else:
-            _heute = get_daily_chat_count(user["id"])
-            if _heute >= DAILY_CHAT_LIMIT:
-                _ = get_gettext(resolve_ui_language(request))
-                raise HTTPException(status_code=429, detail=_('Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter.').format(n=DAILY_CHAT_LIMIT))
+    """Eine Nachricht an den InkluAgent — im Projekt (project_id) oder auf einer Seite ohne Projekt (None, Schritt 3).
 
-    # Hochladefeld: die Notiz des Servers kommt fuer das Modell an die Nachricht; im Verlauf steht nur die Kurzzeile fuer
-    # Menschen. In dieser Nachricht startet nichts Kostenpflichtiges ohne Karte (agent_loop: nur_mit_karte).
-    message_modell, nur_mit_karte = message, False
-    eingang_karten, extra_aktionen = [], []
-    if hochgeladen:
-        from inkluagent import hochladen as _hl
-        _notiz = _hl.notiz_holen(user["id"], hochgeladen)
-        if _notiz:
-            eingang_karten = list(_notiz.get("karten") or [])   # Zuordnung: „In … hochladen“ / „Als neues Projekt hochladen“
-            if project_id is None and len(_notiz.get("projekte") or []) == 1 and not eingang_karten:
-                # Seite ohne Projekt, alles in GENAU ein Projekt: nach der Antwort dorthin wechseln (Steve 12.10.2026)
-                from inkluagent.konto import seite_wechseln as _seite_wechseln
-                extra_aktionen.append(_seite_wechseln(_notiz["projekte"][0]))
-            # Das Modell bekommt die Dateinamen nur in der Notiz (als Daten gekennzeichnet), nicht noch einmal ungekennzeichnet
-            # in der Kurzzeile — die steht nur im Verlauf.
-            message_modell = (message + "\n\n" + _notiz["notiz"]) if message else _notiz["notiz"]
-            message = _hl.nachricht_fuer_verlauf(message, _notiz.get("kurz") or "")
-            nur_mit_karte = True
-    if not message:
-        raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
-    # Webadressen in der EIGENEN Nachricht (Steve 12.10.2026: kein eigenes Feld): Karten „als neues Projekt laden“ / „zum
-    # Projekt hinzufügen“ unter der Antwort, eine Notiz fuer das Modell; geladen wird nur ueber den Knopf (konto.webseite_laden).
-    webkarten = []
-    if funktionen.AGENT_HOCHLADEN and funktionen.AGENT_KONTO:
-        from inkluagent import hochladen as _hl
-        _urls = _hl.finde_webadressen(data.get("message") or "")
-        if _urls:
-            _projekt = None
-            if project_id:
-                conn = get_db()
-                try:
-                    _r = conn.execute("SELECT id, name, filename, tool FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
-                finally:
-                    conn.close()
-                _projekt = dict(_r) if _r else None
-            webkarten, _web_notiz = _hl.webadressen_karten(user["id"], _urls, _projekt, get_gettext(resolve_ui_language(request)))
-            message_modell = message_modell + "\n\n" + _web_notiz
-            nur_mit_karte = True
-    webkarten = eingang_karten + webkarten
-    # Begleiter (Steve 12.10.2026, „Frag die Seite“): auf welcher Seite der Nutzer gerade ist — Pfad geprueft, Titel als Daten
-    if funktionen.AGENT_BEGLEITER:
-        from inkluagent import begleiter as _begleiter_seite
-        if _begleiter_seite.an():
-            _seite = _begleiter_seite.seite_notiz(data.get("seite"), user["id"])
-            if _seite:
-                message_modell = message_modell + "\n\n" + _seite
-
-    from inkluagent import storage
-    from inkluagent.chat_engine import process_konto_message, process_message
-
-    # Gespraech je Konto (Ausbau Runde 2, Schritt 2): die Nachricht kommt ins Gespraech des Kontos, mit diesem Projekt als Marke
-    # und Fokus (ohne Projekt — Schritt 3 — bleibt der Fokus). nid: das Modell bekommt sie als neue Nachricht, nicht noch
-    # einmal aus dem Verlauf.
-    konto = funktionen.AGENT_KONTO or project_id is None
-    if konto:
-        nid = storage.konto_anhaengen(user["id"], project_id, "user", message)
-        if project_id:
-            storage.fokus_setzen(user["id"], project_id)
-    else:
-        nid = storage.append_message(project_id, "user", message)
+    Ablauf (Pruefung 13.10.2026, Befunde K1–K5, K9, K13, S3, S4): pruefen und bremsen; den Lauf des Kontos anmelden (hoechstens
+    einer je Konto, sonst 409); die Frage speichern (getippter Text und Zeile des Servers getrennt); den Lauf im eigenen
+    Arbeitsbereich des Agenten starten, BEVOR die Antwort an den Browser geht; die Antwort im Gespraech der Frage speichern."""
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Ungültige Anfrage")
     _ui_sprache = resolve_ui_language(request)
     _ui = get_gettext(_ui_sprache)
+    # Was der Nutzer getippt hat — fuer Verlauf und Ja-Pruefung; das Modell bekommt daneben Notizen des Servers (message_modell)
+    nutzer_text = (data.get("message") or "").strip()
+    # Runde 2, Schritt 1 (funktionen.AGENT_HOCHLADEN): nach dem Hochladefeld darf der eigene Text fehlen — dann steht nur die
+    # Zeile des Servers im Verlauf. Die Notiz wird erst NACH der Chat-Bremse abgeholt (einmalig), damit eine abgewiesene
+    # Nachricht sie nicht verbraucht.
+    hochgeladen = str(data.get("hochgeladen") or "") if funktionen.AGENT_HOCHLADEN else ""
+    if not nutzer_text and not hochgeladen:
+        raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
+    if len(nutzer_text) > 5000:
+        raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 5000 Zeichen)")
+    _agent_bremse(user, _ui)
+    start = _lauf_anmelden(user["id"])
+    if start is None:
+        besetzt = _ui("Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort.")
+        raise HTTPException(status_code=409, detail=besetzt)
+    uebergeben = False   # ab hier traegt der Lauf sich selbst aus; bis dahin tut es das finally unten
+    try:
+        # Hochladefeld: die Notiz des Servers kommt fuer das Modell an die Nachricht; im Verlauf steht die Zeile des Servers
+        # getrennt vom getippten Text (zusatz). In dieser Nachricht startet nichts Kostenpflichtiges ohne Karte (nur_mit_karte).
+        message_modell, nur_mit_karte, zusatz = nutzer_text, False, ""
+        eingang_karten, extra_aktionen = [], []
+        if hochgeladen:
+            from inkluagent import hochladen as _hl
+            _notiz = _hl.notiz_holen(user["id"], hochgeladen)
+            if _notiz:
+                eingang_karten = list(_notiz.get("karten") or [])   # Zuordnung: „In … hochladen“ / „Als neues Projekt hochladen“
+                if project_id is None and len(_notiz.get("projekte") or []) == 1 and not eingang_karten:
+                    # Seite ohne Projekt, alles in GENAU ein Projekt: nach der Antwort dorthin wechseln (Steve 12.10.2026)
+                    from inkluagent.konto import seite_wechseln as _seite_wechseln
+                    extra_aktionen.append(_seite_wechseln(_notiz["projekte"][0]))
+                # Das Modell bekommt die Dateinamen nur in der Notiz (als Daten gekennzeichnet)
+                message_modell = (nutzer_text + "\n\n" + _notiz["notiz"]) if nutzer_text else _notiz["notiz"]
+                zusatz = _notiz.get("kurz") or ""
+                nur_mit_karte = True
+        if not nutzer_text and not zusatz:
+            raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
+        # Webadressen in der EIGENEN Nachricht (Steve 12.10.2026: kein eigenes Feld): Karten „als neues Projekt laden“ / „zum
+        # Projekt hinzufügen“ unter der Antwort, eine Notiz fuer das Modell; geladen wird nur ueber den Knopf (konto.webseite_laden).
+        webkarten = []
+        if funktionen.AGENT_HOCHLADEN and funktionen.AGENT_KONTO:
+            from inkluagent import hochladen as _hl
+            _urls = _hl.finde_webadressen(nutzer_text)
+            if _urls:
+                _projekt = None
+                if project_id:
+                    conn = get_db()
+                    try:
+                        _r = conn.execute("SELECT id, name, filename, tool FROM projects WHERE id = ? AND user_id = ?",
+                                          (project_id, user["id"])).fetchone()
+                    finally:
+                        conn.close()
+                    _projekt = dict(_r) if _r else None
+                webkarten, _web_notiz = _hl.webadressen_karten(user["id"], _urls, _projekt, _ui)
+                message_modell = message_modell + "\n\n" + _web_notiz
+                nur_mit_karte = True
+        webkarten = eingang_karten + webkarten
+        # Begleiter (Steve 12.10.2026, „Frag die Seite“): nur fuer den InkluAgent des Kontos, als Lauf mit Sprache, Uebersetzung
+        # und getipptem Text (K9); die Seite, auf der der Nutzer gerade ist — Pfad geprueft, Titel als Daten
+        begleiter_lauf = None
+        if funktionen.AGENT_BEGLEITER:
+            from inkluagent import begleiter as _begleiter
+            if _begleiter.an():
+                begleiter_lauf = _begleiter.Lauf(ui_sprache=_ui_sprache, uebersetzen=_ui, nutzer_text=nutzer_text)
+                _seite = _begleiter.seite_notiz(data.get("seite"), user["id"])
+                if _seite:
+                    message_modell = message_modell + "\n\n" + _seite
 
-    def verarbeiten(on_tool=None) -> dict:
-        if funktionen.AGENT_BEGLEITER:   # Begleiter: Sprache der Oberflaeche und Uebersetzung fuer Links (Arbeits-Thread)
-            from inkluagent import begleiter as _begleiter_lauf
-            _begleiter_lauf.kontext_setzen(_ui_sprache, _ui)
-        if project_id is None:
-            return process_konto_message(user["id"], message_modell, on_tool=on_tool, nur_mit_karte=nur_mit_karte,
-                                         ohne_nachricht=nid, _=_ui)
-        return process_message(project_id, message_modell, user["id"], on_tool=on_tool, nur_mit_karte=nur_mit_karte,
-                               konto=konto, ohne_nachricht=nid)
-    if funktionen.AGENT_SICHERHEIT:   # angenommene Nachricht zaehlen (unabhaengig von Projekten und Verlauf)
-        from inkluagent import sicherheit as _sicherheit
-        _sicherheit.tageszaehler_erhoehen(user["id"])
-    loop = asyncio.get_running_loop()
+        from inkluagent import storage
+        from inkluagent.chat_engine import process_konto_message, process_message
 
-    def _antwort(result: dict) -> dict:
-        # anhang (11.09.2026, Meine Ausgaben): Download-Knoepfe unter der Antwort (Umwandlung/Word-Export
-        # durch den Bot) — wird mitgespeichert, damit der Verlauf sie nach einem Neuladen noch zeigt.
-        if webkarten and result.get("intent") != "error":   # Karten zu Webadressen aus der Nachricht (siehe oben)
-            result = dict(result, anhang=(list(result.get("anhang") or []) + webkarten))
-        speichern = (lambda *a, **k: storage.konto_anhaengen(user["id"], *a, **k)) if konto else storage.append_message
-        speichern(
-            project_id, "assistant", result["reply"],
-            image_refs=result.get("image_refs"),
-            intent=result.get("intent"),
-            werkzeuge=result.get("werkzeuge"),
-            anhang=result.get("anhang") or None,
-        )
-        return {
-            "reply": result["reply"],
-            "intent": result.get("intent"),
-            "image_refs": result.get("image_refs"),
-            "actions": list(result.get("actions", [])) + (extra_aktionen if result.get("intent") != "error" else []),
-            "werkzeuge": result.get("werkzeuge", []),
-            "anhang": result.get("anhang") or [],
-        }
+        # Gespraech je Konto (Ausbau Runde 2, Schritt 2): die Nachricht kommt ins Gespraech des Kontos, mit diesem Projekt als
+        # Marke und Fokus (ohne Projekt — Schritt 3 — bleibt der Fokus). nid: das Modell bekommt sie als neue Nachricht, nicht
+        # noch einmal aus dem Verlauf. gid (K3): die Antwort kommt in DIESES Gespraech, auch wenn der Nutzer waehrend des Laufs
+        # ein neues beginnt oder ein frueheres fortsetzt.
+        konto = funktionen.AGENT_KONTO or project_id is None
+        if konto:
+            nid = storage.konto_anhaengen(user["id"], project_id, "user", nutzer_text, zusatz=zusatz)
+            gid = storage.gespraech_der_nachricht(user["id"], nid)
+            if project_id:
+                storage.fokus_setzen(user["id"], project_id)
+        else:
+            nid, gid = storage.append_message(project_id, "user", nutzer_text, zusatz=zusatz), None
 
-    # Werkzeug-Transparenz (Steve 28.08.2026): mit Accept: application/x-ndjson streamt der
-    # Endpunkt je Werkzeugaufruf eine Zeile {"type":"tool","name":...} und am Ende
-    # {"type":"reply", ...} — die Oberflaeche zeigt live „Ruft gerade auf: …“. Ohne den
-    # Header bleibt die bisherige JSON-Antwort (API-Kunden, Demo, Tests).
-    start = time.time()
-    _AGENT_LAEUFT.setdefault(user["id"], []).append(start)
+        def verarbeiten(on_tool=None) -> dict:
+            if project_id is None:
+                return process_konto_message(user["id"], message_modell, on_tool=on_tool, nur_mit_karte=nur_mit_karte,
+                                             ohne_nachricht=nid, _=_ui, nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf)
+            return process_message(project_id, message_modell, user["id"], on_tool=on_tool, nur_mit_karte=nur_mit_karte,
+                                   konto=konto, ohne_nachricht=nid, _=_ui, nutzer_text=nutzer_text,
+                                   begleiter_lauf=begleiter_lauf)
+        if funktionen.AGENT_SICHERHEIT:   # angenommene Nachricht zaehlen (unabhaengig von Projekten und Verlauf)
+            from inkluagent import sicherheit as _sicherheit
+            _sicherheit.tageszaehler_erhoehen(user["id"])
+        loop = asyncio.get_running_loop()
 
-    def _fertig():
-        laeuft = _AGENT_LAEUFT.get(user["id"], [])
-        if start in laeuft:
-            laeuft.remove(start)
-        if not laeuft:
-            _AGENT_LAEUFT.pop(user["id"], None)
-        _fortschritt_ende(user["id"], start)
+        def _antwort(result: dict) -> dict:
+            # anhang (11.09.2026, Meine Ausgaben): Download-Knoepfe unter der Antwort (Umwandlung/Word-Export
+            # durch den Bot) — wird mitgespeichert, damit der Verlauf sie nach einem Neuladen noch zeigt.
+            if webkarten and result.get("intent") != "error":   # Karten zu Webadressen aus der Nachricht (siehe oben)
+                result = dict(result, anhang=(list(result.get("anhang") or []) + webkarten))
+            felder = dict(image_refs=result.get("image_refs"), intent=result.get("intent"), werkzeuge=result.get("werkzeuge"),
+                          anhang=result.get("anhang") or None)
+            if konto:
+                storage.konto_anhaengen(user["id"], project_id, "assistant", result["reply"], gespraech_id=gid, **felder)
+            else:
+                storage.append_message(project_id, "assistant", result["reply"], **felder)
+            return {
+                "reply": result["reply"],
+                "intent": result.get("intent"),
+                "image_refs": result.get("image_refs"),
+                "actions": list(result.get("actions", [])) + (extra_aktionen if result.get("intent") != "error" else []),
+                "werkzeuge": result.get("werkzeuge", []),
+                "anhang": result.get("anhang") or [],
+            }
 
-    if "application/x-ndjson" not in (request.headers.get("accept") or ""):
-        try:
-            result = await loop.run_in_executor(None, verarbeiten)
-            return _antwort(result)
-        finally:
-            _fertig()
+        # Werkzeug-Transparenz (Steve 28.08.2026): mit Accept: application/x-ndjson streamt der Endpunkt je Werkzeugaufruf eine
+        # Zeile {"type":"tool","name":...} und am Ende {"type":"reply", ...}. Ohne den Header bleibt die bisherige JSON-Antwort
+        # (API-Kunden, Demo, Tests).
+        if "application/x-ndjson" not in (request.headers.get("accept") or ""):
+            uebergeben = True
+            try:
+                result = await loop.run_in_executor(_AGENT_EXECUTOR, verarbeiten)
+                return await loop.run_in_executor(None, _antwort, result)
+            finally:
+                _lauf_abmelden(user["id"], start)
 
-    queue: asyncio.Queue = asyncio.Queue()
-    if funktionen.AGENT_ARBEITSFENSTER:   # Fortschritt fuer eine neue Seite (GET /api/agent/status)
-        _fortschritt_neu(user["id"], start, project_id)
+        queue: asyncio.Queue = asyncio.Queue()
+        if funktionen.AGENT_ARBEITSFENSTER:   # Fortschritt fuer eine neue Seite (GET /api/agent/status)
+            _fortschritt_neu(user["id"], start, project_id)
 
-    def _senden(ev):
-        loop.call_soon_threadsafe(queue.put_nowait, ev)
+        def _senden(ev):
+            loop.call_soon_threadsafe(queue.put_nowait, ev)
 
-    def on_tool(name, args):
-        ev = {"type": "tool", "name": name}
-        # Arbeitsfenster (Agentenansicht wie ChatGPT, 12.10.2026): woran der Agent arbeitet — aus der Datenbank, nur eigene Kennungen
-        if funktionen.AGENT_ARBEITSFENSTER:
-            from inkluagent import arbeitsfenster as _af
-            _z = _af.ziel(user["id"], project_id, args)
-            if _z:
-                ev["ziel"] = _z
-            _fortschritt_aendern(user["id"], start, lambda f: _fortschritt_schritt(f, name, ev.get("ziel")))
-        _senden(ev)
-
-    # Livestream (Arbeitsfenster, 12.10.2026): Ergebnis je Werkzeug („werkzeug_fertig“), die Antwort Wort fuer Wort („text“,
-    # „text_neu“ = Entwurf verwerfen) und „zwischen“ (gestreamter Text war nur ein Zwischenstand vor Werkzeugen). agent_loop liest
-    # die Attribute an on_tool; ohne Schalter fehlen sie und alles bleibt wie bisher. Die Antwort selbst bleibt die „reply“-Zeile.
-    if funktionen.AGENT_ARBEITSFENSTER:
-        from inkluagent import arbeitsfenster as _af_strom
-
-        # Name mit Bedacht: „_fertig“ gibt es oben schon (traegt den Lauf aus _AGENT_LAEUFT aus) — nicht ueberdecken
-        def _werkzeug_fertig(name, args, result, neue_aktionen):
-            ev = {"type": "werkzeug_fertig", "name": name}
-            ev.update(_af_strom.ergebnis(name, result, neue_aktionen))
-            _fortschritt_aendern(user["id"], start, lambda f: _fortschritt_fertig(f, ev.get("ok")))
+        def on_tool(name, args):
+            ev = {"type": "tool", "name": name}
+            # Arbeitsfenster (Agentenansicht wie ChatGPT, 12.10.2026): woran der Agent arbeitet — aus der Datenbank, nur eigene
+            # Kennungen
+            if funktionen.AGENT_ARBEITSFENSTER:
+                from inkluagent import arbeitsfenster as _af
+                _z = _af.ziel(user["id"], project_id, args)
+                if _z:
+                    ev["ziel"] = _z
+                _fortschritt_aendern(user["id"], start, lambda f: _fortschritt_schritt(f, name, ev.get("ziel")))
             _senden(ev)
 
-        def _text(stueck):
-            if stueck is not None:
-                _fortschritt_aendern(user["id"], start, lambda f: f.update(schreibt=True))
-            _senden({"type": "text_neu"} if stueck is None else {"type": "text", "text": str(stueck)})
+        # Livestream (Arbeitsfenster, 12.10.2026): Ergebnis je Werkzeug („werkzeug_fertig“), die Antwort Wort fuer Wort („text“,
+        # „text_neu“ = Entwurf verwerfen) und „zwischen“ (gestreamter Text war nur ein Zwischenstand vor Werkzeugen). agent_loop
+        # liest die Attribute an on_tool; ohne Schalter fehlen sie und alles bleibt wie bisher. Die Antwort bleibt die „reply“-Zeile.
+        if funktionen.AGENT_ARBEITSFENSTER:
+            from inkluagent import arbeitsfenster as _af_strom
 
-        def _zwischen():
-            _fortschritt_aendern(user["id"], start, lambda f: f.update(schreibt=False))
-            _senden({"type": "zwischen"})
-        on_tool.fertig, on_tool.text, on_tool.zwischen = _werkzeug_fertig, _text, _zwischen
+            def _werkzeug_fertig(name, args, result, neue_aktionen):
+                ev = {"type": "werkzeug_fertig", "name": name}
+                ev.update(_af_strom.ergebnis(name, result, neue_aktionen))
+                _fortschritt_aendern(user["id"], start, lambda f: _fortschritt_fertig(f, ev.get("ok")))
+                _senden(ev)
 
-    async def lauf():
-        # Review 28.08.2026: Speichern gehoert in den Lauf, nicht in den Stream — bricht der
-        # Client ab, bleibt die Antwort trotzdem im Verlauf; Fehlerantworten werden NICHT
-        # persistiert (sonst landen sie im Kontext des naechsten Turns). DB-Zugriff im Executor.
-        try:
-            r = await loop.run_in_executor(None, lambda: verarbeiten(on_tool))
-            out = await loop.run_in_executor(None, _antwort, r)
-        except Exception:
-            logger.exception("Chat-Stream: process_message crashte")
-            out = {"reply": "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte erneut versuchen.",
-                   "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
-        finally:
-            _fertig()
-        await queue.put({"type": "done", "result": out})
+            def _text(stueck):
+                if stueck is not None:
+                    _fortschritt_aendern(user["id"], start, lambda f: f.update(schreibt=True))
+                _senden({"type": "text_neu"} if stueck is None else {"type": "text", "text": str(stueck)})
 
-    async def strom():
+            def _zwischen():
+                _fortschritt_aendern(user["id"], start, lambda f: f.update(schreibt=False))
+                _senden({"type": "zwischen"})
+            on_tool.fertig, on_tool.text, on_tool.zwischen = _werkzeug_fertig, _text, _zwischen
+
+        async def lauf():
+            # Speichern gehoert in den Lauf, nicht in den Stream (Review 28.08.2026): bricht der Browser ab, bleibt die Antwort
+            # trotzdem im Verlauf; Fehlerantworten werden NICHT gespeichert (sonst landen sie im Gedaechtnis der naechsten Runde).
+            try:
+                r = await loop.run_in_executor(_AGENT_EXECUTOR, lambda: verarbeiten(on_tool))
+                out = await loop.run_in_executor(None, _antwort, r)
+            except Exception:
+                logger.exception("Agent-Lauf: Verarbeitung fehlgeschlagen")
+                out = {"reply": _ui("Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte versuch es gleich noch einmal."),
+                       "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
+            finally:
+                _lauf_abmelden(user["id"], start)
+            await queue.put({"type": "done", "result": out})
+
+        # Der Lauf beginnt JETZT, nicht erst, wenn der Browser den Stream liest (K13), und lebt unabhaengig vom Stream: bricht
+        # der Browser ab (Seitenwechsel), endet nur der Stream; die neue Seite holt die Antwort (GET /api/agent/status).
         aufgabe = asyncio.ensure_future(lauf())
         _AGENT_HINTERGRUND.add(aufgabe)   # starke Referenz, sonst kann ein abgekoppelter Lauf eingesammelt werden
         aufgabe.add_done_callback(_AGENT_HINTERGRUND.discard)
-        try:
+        uebergeben = True
+
+        async def strom():
             while True:
-                ev = await queue.get()
+                try:
+                    ev = await asyncio.wait_for(queue.get(), timeout=_STROM_LEBENSZEICHEN_S)
+                except asyncio.TimeoutError:
+                    # Lebenszeichen (K5): ein Werkzeug kann minutenlang still sein (testweise taggen bis 150 s); ohne Zeile
+                    # schliesst ein Proxy die Verbindung, und die Seite meldete „Verbindungsfehler“, obwohl der Lauf weiterging
+                    yield json.dumps({"type": "ping"}) + "\n"
+                    continue
                 if ev["type"] == "done":
                     out = dict(ev["result"])
                     out["type"] = "reply"
                     yield json.dumps(out, ensure_ascii=False) + "\n"
-                    break
+                    return
                 yield json.dumps(ev, ensure_ascii=False) + "\n"
-        finally:
-            if not aufgabe.done():
-                # Bricht der Browser ab (Seitenwechsel), bricht der Server den Stream ab — und ohne shield mit ihm den Lauf:
-                # die Antwort ging verloren, obwohl das Modell weiterlief (gefunden 12.10.2026, Ausbau Runde 2, Schritt 3). Mit
-                # shield laeuft der Lauf zu Ende und speichert die Antwort; die neue Seite holt sie (GET /api/agent/status).
-                await asyncio.shield(aufgabe)
 
-    return StreamingResponse(strom(), media_type="application/x-ndjson",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+        return StreamingResponse(strom(), media_type="application/x-ndjson",
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    finally:
+        if not uebergeben:
+            _lauf_abmelden(user["id"], start)
 
 
 @app.post("/api/agent/hochladen")
@@ -12071,11 +12116,20 @@ async def agent_hochladen(request: Request, dateien: Optional[list[UploadFile]] 
     dateien = dateien or []
     if len(dateien) > _hl.max_dateien():
         raise HTTPException(status_code=400, detail=_("Höchstens {n} Dateien auf einmal. Bitte teile die Auswahl auf.").format(n=_hl.max_dateien()))
-    # Je Datei hoechstens ein Byte mehr als erlaubt lesen: zu Grosses erkennt hochladen() so, ohne alles in den Speicher zu holen
-    inhalte = [((d.filename or ""), await d.read(MAX_UPLOAD_SIZE + 1)) for d in dateien]
-    # Zuordnung (Steve 12.10.2026): auf einer Seite ohne Projekt warten Dateien mit aehnlichem vorhandenem Projekt auf die Wahl
-    erg = await _hl.hochladen(user, inhalte, webadresse or "", project_id, request=request, _=_,
-                              zuordnen=bool(project_id is None and funktionen.AGENT_KONTO))
+    # Dieselbe Bremse wie die Nachricht, VOR dem Hochladen (Pruefung 13.10.2026, K4): vorher gelang das Hochladen, die Nachricht
+    # danach bekam 429 — ohne Antwort keine Karten, und wartende Dateien liessen sich nicht mehr zuordnen.
+    _agent_bremse(user, _)
+    # Hoechstens ein Hochladen je Konto gleichzeitig (S7): jede Anfrage haelt eine Datei im Speicher und wartet aufs Auslesen
+    if user["id"] in _AGENT_HOCHLADEN_LAEUFT:
+        raise HTTPException(status_code=409, detail=_("Es wird gerade schon hochgeladen. Warte bitte, bis das fertig ist."))
+    _AGENT_HOCHLADEN_LAEUFT.add(user["id"])
+    try:
+        # Die Dateien liest hochladen() eine nach der anderen (S7/K12), nicht alle vorher in den Speicher. Zuordnung (Steve
+        # 12.10.2026): auf einer Seite ohne Projekt warten Dateien mit aehnlichem vorhandenem Projekt auf die Wahl.
+        erg = await _hl.hochladen(user, [((d.filename or ""), d) for d in dateien], webadresse or "", project_id,
+                                  request=request, _=_, zuordnen=bool(project_id is None and funktionen.AGENT_KONTO))
+    finally:
+        _AGENT_HOCHLADEN_LAEUFT.discard(user["id"])
     if not erg.get("ok"):
         raise HTTPException(status_code=400, detail=erg.get("fehler_text") or _("Hochladen nicht möglich."))
     erg.pop("notiz", None)   # die Notiz geht nur an das Modell (ueber notiz_id), nicht an die Seite

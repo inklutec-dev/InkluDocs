@@ -16,14 +16,19 @@ for kandidat in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app"):
         sys.path.insert(0, kandidat)
 
 import database  # noqa: E402
+from inkluagent import sicherheit  # noqa: E402
 from inkluagent.tools import ausgaben  # noqa: E402
 
 
 class _Turn:
-    def __init__(self):
+    """Eine Nachricht des Nutzers (Konto 3). Seit der Pruefung 13.10.2026 (S2) gilt ein getipptes Ja nur, wenn die Nachricht ein
+    klares Ja ist und direkt auf die Nachricht mit dem Angebot folgt — die Reihenfolge der _Turn-Objekte ist die Reihenfolge der
+    Nachrichten."""
+    def __init__(self, text="Ja"):
         import uuid
         self.turn_id = uuid.uuid4().hex
         self.kostenpflichtig = 0
+        sicherheit.nachricht_merken(self.turn_id, text, 3)
 
 
 class TestFreigabe(unittest.TestCase):

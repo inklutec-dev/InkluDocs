@@ -425,8 +425,8 @@ def bild_umbenennen(project_id: int, user_id: int, image_id: int, name: str) -> 
 
 
 def bild_loeschen(project_id: int, user_id: int, image_id: int, bestaetigt: bool = False, turn=None) -> dict[str, Any]:
-    """Wie „Löschen“ an einem Bild (Grafik- und Webseiten-Projekte): unumkehrbar, deshalb erst Rueckfrage, Ja in eigener
-    Nachricht (oder Knopf der Karte), dann bestaetigt=true."""
+    """Wie „Löschen“ an einem Bild (Grafik- und Webseiten-Projekte): unumkehrbar, deshalb erst Rueckfrage mit Karte; loeschen
+    kann nur deren Knopf (tools/ausgaben._UNUMKEHRBAR_ARTEN, Pruefung 13.10.2026)."""
     try:
         _row, ziel = _bild_ziel(project_id, user_id, image_id)
     except HTTPException as e:
@@ -436,8 +436,7 @@ def bild_loeschen(project_id: int, user_id: int, image_id: int, bestaetigt: bool
     if grund == "rueckfrage":
         return {"ok": True, "result": dict(vorschau, rueckfrage_noetig=True, hinweis=(
             "Löschen ist unumkehrbar: das Bild und sein Alt-Text sind danach weg. Sag dem Nutzer, welches Bild gelöscht würde, und "
-            "frage. Unter deiner Antwort steht eine Karte mit genau diesem Angebot; ein getipptes Ja gilt nur für dieses letzte "
-            "Angebot (dann erneut mit bestaetigt=true)."))}
+            "ob er das will. Unter deiner Antwort steht eine Karte mit genau diesem Angebot; NUR ihr Knopf löscht, ein getipptes Ja nicht. Sag dem Nutzer das in einem Satz."))}
     if grund:
         return {"ok": True, "result": dict(vorschau, rueckfrage_noetig=True, hinweis=grund)}
     try:
@@ -449,8 +448,8 @@ def bild_loeschen(project_id: int, user_id: int, image_id: int, bestaetigt: bool
 
 
 def ausgabe_loeschen(project_id: int, user_id: int, ausgabe_id: int, bestaetigt: bool = False, turn=None) -> dict[str, Any]:
-    """Wie „Löschen“ in der Ablage: Eintrag samt Datei loeschen — unumkehrbar, deshalb erst Rueckfrage, Ja in eigener
-    Nachricht, dann bestaetigt=true. Nur Eintraege dieses Projekts."""
+    """Wie „Löschen“ in der Ablage: Eintrag samt Datei loeschen — unumkehrbar, deshalb erst Rueckfrage mit Karte; loeschen kann
+    nur deren Knopf. Nur Eintraege dieses Projekts."""
     m = _main()
     row = m._ausgabe_row(user_id, int(ausgabe_id))
     if not row or row["project_id"] != project_id:
@@ -461,9 +460,8 @@ def ausgabe_loeschen(project_id: int, user_id: int, ausgabe_id: int, bestaetigt:
     grund = _pdf._freigabe(user_id, project_id, "ablage_loeschen", int(ausgabe_id), 0, True, bestaetigt, turn)
     if grund == "rueckfrage":
         return {"ok": True, "result": dict(vorschau, rueckfrage_noetig=True, hinweis=(
-            "Löschen ist unumkehrbar: Datei, Prüfbericht und Hörprobe dieses Eintrags sind danach weg. Sag das und frage. "
-            "Unter deiner Antwort steht eine Karte mit genau diesem Angebot und einem Knopf zum Bestätigen; ein getipptes Ja "
-            "gilt nur für dieses letzte Angebot (dann erneut mit bestaetigt=true aufrufen)."))}
+            "Löschen ist unumkehrbar: Datei, Prüfbericht und Hörprobe dieses Eintrags sind danach weg. Sag das. "
+            "Unter deiner Antwort steht eine Karte mit genau diesem Angebot; NUR ihr Knopf löscht, ein getipptes Ja nicht. Sag dem Nutzer das in einem Satz."))}
     if grund:
         return {"ok": True, "result": dict(vorschau, rueckfrage_noetig=True, hinweis=grund)}
     m._ablage_eintrag_weg(user_id, row)

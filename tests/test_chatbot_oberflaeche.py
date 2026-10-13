@@ -158,6 +158,10 @@ class Freigabe(unittest.TestCase):
             m.return_value._tabellen_export_bauen.assert_not_called()
             t2 = Turn()
             t2.turn_id = "t2"
+            # getippte Nachrichten in dieser Reihenfolge: Bitte (Angebot in t1), dann ein klares Ja (Pruefung 13.10.2026, S2)
+            from inkluagent import sicherheit
+            sicherheit.nachricht_merken("t1", "Exportiere die Alt-Texte als CSV.", 1)
+            sicherheit.nachricht_merken("t2", "Ja", 1)
             m.return_value._tabellen_export_bauen.return_value = {"daten": b"x", "dateiname": "a.csv", "media": "text/csv",
                                                                   "preis": 10, "aktion": "csv_export"}
             m.return_value.sofort_download_ablegen.return_value = "/api/projects/1/export/pdfua/" + "a" * 24
@@ -225,7 +229,8 @@ class _KartenBasis(unittest.TestCase):
         m.get_gettext.return_value = (lambda s: s)
         self.patches = [mock.patch.object(oberflaeche, "_main", return_value=m), mock.patch.object(ausgaben, "_main", return_value=m),
                         mock.patch.object(ausgaben, "_ui_lang", return_value="de"),
-                        mock.patch.object(ausgaben, "_karte_speichern", side_effect=lambda pid, aid, f: self.gespeichert.append((aid, dict(f))))]
+                        mock.patch.object(ausgaben, "_karte_speichern",
+                                          side_effect=lambda pid, aid, f, uid: self.gespeichert.append((aid, dict(f))))]
         for p in self.patches:
             p.start()
 
@@ -273,14 +278,18 @@ class BestaetigungGebunden(_KartenBasis):
         # Karte (wie POST /chat/bestaetigen): genau das gespeicherte Angebot, mit seinen Argumenten
         k, a = self.ausgaben.angebot_nach_id(a11)
         self.ausgaben._LETZTES[(7, 1)] = a11
-        r = self.ex().execute(a["werkzeug"], dict(a["args"], bestaetigt=True))
+        r = self.ausgaben.karte_ausfuehren(a11, a["werkzeug"], a["args"], self.ex())
         self.assertTrue(r["ok"] and r["result"].get("geloescht"))
         self.assertEqual(self.geloescht, [11])
         # verbraucht: dieselbe Karte ein zweites Mal geht nicht
         self.assertIsNone(self.ausgaben.angebot_nach_id(a11))
-        # ein Ja zum (letzten) Angebot 12 in einer spaeteren Nachricht geht weiter
-        self.ausgaben._LETZTES[(7, 1)] = self.ausgaben._ANGEBOTE[(7, 1, "ablage_loeschen", 12)]["id"]
+        # das (letzte) Angebot 12: ein getipptes Ja loescht nie (Pruefung 13.10.2026, S2), der Knopf schon
+        a12 = self.ausgaben._ANGEBOTE[(7, 1, "ablage_loeschen", 12)]["id"]
+        self.ausgaben._LETZTES[(7, 1)] = a12
         r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 12, "bestaetigt": True})
+        self.assertEqual(r["result"]["hinweis"], self.ausgaben._G_KNOPF)
+        self.assertEqual(self.geloescht, [11])
+        self.ausgaben.karte_ausfuehren(a12, "ausgabe_loeschen", {"ausgabe_id": 12}, self.ex())
         self.assertEqual(self.geloescht, [11, 12])
 
 
@@ -288,9 +297,22 @@ class KarteZustand(_KartenBasis):
     """Pruefung 4 (30.09.2026): Karte nach der Ausfuehrung „Erledigt“ (gespeichert + Aktion), veraltete Karten „Nicht mehr
     gültig“, Doppelklick belegt das Angebot nur einmal, Einloesen unter einer Sperre, Knopf nennt Format/Ziel/Preis."""
 
-    def test_ja_verbraucht_karte_wird_erledigt_und_ansicht_nachgezogen(self):
+    def test_getipptes_ja_loescht_nie(self):
+        from inkluagent import sicherheit
+        ex1 = self.ex()
+        sicherheit.nachricht_merken(ex1.turn_id, "Lösch bitte den Eintrag 11.", 7)
+        aid = ex1.execute("ausgabe_loeschen", {"ausgabe_id": 11})["anhang"]["angebot_id"]
+        ex2 = self.ex()
+        sicherheit.nachricht_merken(ex2.turn_id, "Ja", 7)
+        r = ex2.execute("ausgabe_loeschen", {"ausgabe_id": 11, "bestaetigt": True})
+        self.assertTrue(r["result"]["rueckfrage_noetig"])
+        self.assertEqual(r["result"]["hinweis"], self.ausgaben._G_KNOPF)
+        self.assertEqual(self.geloescht, [])
+        self.assertIsNotNone(self.ausgaben.angebot_nach_id(aid), "das Angebot bleibt fuer den Knopf")
+
+    def test_knopf_verbraucht_karte_wird_erledigt_und_ansicht_nachgezogen(self):
         aid = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})["anhang"]["angebot_id"]
-        r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11, "bestaetigt": True})
+        r = self.ausgaben.karte_ausfuehren(aid, "ausgabe_loeschen", {"ausgabe_id": 11}, self.ex())
         self.assertEqual(self.geloescht, [11])
         self.assertEqual(r.get("karten"), [{"zustand": "erledigt", "titel": "Erledigt", "text": "„eintrag_11.pdf“ ist gelöscht.", "angebot_id": aid}])
         self.assertTrue(r.get("aktualisieren"))
@@ -323,8 +345,11 @@ class KarteZustand(_KartenBasis):
 
     def test_einloesen_unter_sperre_genau_einmal(self):
         import threading
+        from inkluagent import sicherheit
         schluessel = (7, 1, "pdfua", None)
+        sicherheit.nachricht_merken("turn-a", "Mach eine barrierefreie PDF.", 7)
         self.ausgaben._angebot_merken(schluessel, 10, "turn-a")
+        sicherheit.nachricht_merken("turn-b", "Ja", 7)
         ergebnisse = []
         start = threading.Barrier(8)
 

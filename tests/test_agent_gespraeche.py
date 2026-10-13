@@ -90,8 +90,13 @@ class Speicher(unittest.TestCase):
                   (u["id"],))
         c.commit()
         c.close()
-        self.assertEqual([m["content"] for m in storage.konto_verlauf(u["id"])], ["Alte Frage"])
+        self.assertEqual([m["content"] for m in storage.konto_verlauf(u["id"])], ["Alte Frage"], "lesbar schon vor der Uebernahme")
+        self.assertEqual(storage.gespraeche_liste(u["id"]), [], "Lesen legt nichts an (Pruefung 13.10.2026, K15)")
+        database.init_db()   # die Uebernahme laeuft beim Start
         self.assertEqual(storage.gespraeche_liste(u["id"])[0]["titel"], "Alte Frage")
+        self.assertEqual([m["content"] for m in storage.konto_verlauf(u["id"])], ["Alte Frage"])
+        self.assertEqual(storage.gespraech_der_nachricht(u["id"], storage.konto_verlauf(u["id"])[0]["id"]),
+                         storage.aktuelles_gespraech(u["id"]))
 
     def test_gedaechtnis_nur_aus_dem_laufenden_gespraech(self):
         u = nutzer()

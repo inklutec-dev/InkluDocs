@@ -599,8 +599,7 @@ def dokument_umbenennen(project_id: int, user_id: int, document_id: Optional[int
 
 def dokument_loeschen(project_id: int, user_id: int, document_id: Optional[int], bestaetigt: bool = False, turn=None) -> dict[str, Any]:
     """Dokument samt Bildern, Feldern und Dateien loeschen (main._dokument_loeschen_sync, wie der Knopf).
-    Unumkehrbar — deshalb dieselbe Zwei-Schritt-Freigabe wie bei kostenpflichtigen Aktionen: erst ohne
-    bestaetigt (Rueckfrage), Ja in eigener Nachricht, dann bestaetigt=true."""
+    Unumkehrbar — deshalb erst Rueckfrage mit Karte; loeschen kann nur deren Knopf (Pruefung 13.10.2026, S2)."""
     conn = _get_db()
     try:
         _projekt(conn, project_id, user_id, jede_art=True)
@@ -616,9 +615,7 @@ def dokument_loeschen(project_id: int, user_id: int, document_id: Optional[int],
     if grund == "rueckfrage":
         vorschau.update({"rueckfrage_noetig": True, "hinweis": (
             "Löschen ist unumkehrbar: Dokument, Bilder mit Alt-Texten, Felder mit Quickinfos und Dateien sind danach weg "
-            "(Einträge in der Ablage bleiben). Sag dem Nutzer, was gelöscht würde, und frage. Unter deiner Antwort steht eine "
-            "Karte mit genau diesem Angebot und einem Knopf zum Bestätigen; ein getipptes Ja gilt nur für dieses letzte Angebot "
-            "(dann erneut mit bestaetigt=true aufrufen).")})
+            "(Einträge in der Ablage bleiben). Sag dem Nutzer, was gelöscht würde. Unter deiner Antwort steht eine Karte mit genau diesem Angebot; NUR ihr Knopf löscht, ein getipptes Ja nicht. Sag dem Nutzer das in einem Satz.")})
         return {"ok": True, "result": vorschau}
     if grund:
         vorschau.update({"rueckfrage_noetig": True, "hinweis": grund})

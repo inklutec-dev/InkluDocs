@@ -83,8 +83,8 @@ _EIGENER_PROMPT = {
 }
 _ABLAGE_LOESCHEN = {
     "name": "ausgabe_loeschen",
-    "description": ("Wie „Löschen“ in der Ablage: einen Eintrag dieses Projekts samt Datei löschen. Unumkehrbar — ZWEI SCHRITTE: erst "
-                    "ohne bestaetigt (sagen, was weg wäre, fragen), Ja in einer eigenen Nachricht, dann bestaetigt=true. Kostenlos."),
+    "description": ("Wie „Löschen“ in der Ablage: einen Eintrag dieses Projekts samt Datei löschen. Unumkehrbar — rufe es ohne "
+                    "bestaetigt auf (sagt, was weg wäre): der Server legt eine Karte vor, und NUR ihr Knopf löscht (ein getipptes Ja nicht). Kostenlos."),
     "input_schema": {"type": "object", "properties": {
         "ausgabe_id": {"type": "integer", "description": "Aus liste_ausgaben."}, "bestaetigt": _BESTAETIGT,
     }, "required": ["ausgabe_id"]},
@@ -102,8 +102,8 @@ _BILD_UMBENENNEN = {
 _BILD_LOESCHEN = {
     "name": "bild_loeschen",
     "description": ("Wie „Löschen“ an einem Bild in Grafik- und Webseiten-Projekten: das Bild samt Alt-Text aus dem Projekt entfernen. "
-                    "Unumkehrbar — ZWEI SCHRITTE: erst ohne bestaetigt (sagen, welches Bild weg wäre, fragen), Ja in einer eigenen "
-                    "Nachricht, dann bestaetigt=true. Kostenlos."),
+                    "Unumkehrbar — rufe es ohne bestaetigt auf (sagt, welches Bild weg wäre): der Server legt eine Karte vor, und NUR ihr Knopf löscht (ein getipptes Ja nicht). "
+                    "Kostenlos."),
     "input_schema": {"type": "object", "properties": {
         "image_id": {"type": "integer", "description": "Die echte image_id aus list_project_images."}, "bestaetigt": _BESTAETIGT,
     }, "required": ["image_id"]},

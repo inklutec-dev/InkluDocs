@@ -35,6 +35,8 @@ def _leeren():
     ausgaben._NACH_ID.clear()
     ausgaben._ERLEDIGT.clear()
     ausgaben._VERBRAUCHT.clear()
+    sicherheit._NACHRICHT.clear()
+    sicherheit._LETZTE_RUNDE.clear()
 
 
 class Schalter(unittest.TestCase):
@@ -82,28 +84,50 @@ class KlaresJa(unittest.TestCase):
 
 
 class JaPruefung(unittest.TestCase):
+    """Seit der Pruefung 13.10.2026 (S2) unabhaengig vom Schalter: ein getipptes Ja zaehlt nur als klares Ja in der Nachricht
+    direkt nach dem Angebot; Loeschen nur ueber den Knopf."""
     def setUp(self):
         _leeren()
 
-    def _angebot(self):
-        s = (1, 7, "pdfua", None)
+    def _angebot(self, art="pdfua"):
+        s = (1, 7, art, None)
+        sicherheit.nachricht_merken("runde-1", "Mach mir bitte eine barrierefreie PDF.", 1)
         ausgaben._angebot_merken(s, 10, "runde-1")
         return s
 
-    def test_schalter_aus_wie_bisher(self):
+    def test_gilt_auch_ohne_schalter(self):
         s = self._angebot()
-        sicherheit.nachricht_merken("runde-2", "Kannst du das machen?")
-        self.assertIsNone(ausgaben._angebot_einloesen(s, 10, "runde-2"))
+        sicherheit.nachricht_merken("runde-2", "Kannst du das machen?", 1)
+        self.assertEqual(ausgaben._angebot_einloesen(s, 10, "runde-2"), sicherheit.G_JA)
 
-    def test_nur_klares_ja_loest_ein(self):
-        with AN:
-            s = self._angebot()
-            sicherheit.nachricht_merken("runde-2", "Kannst du das machen?")
-            self.assertEqual(ausgaben._angebot_einloesen(s, 10, "runde-2"), sicherheit.G_JA)
-            self.assertIn(s, ausgaben._ANGEBOTE, "abgelehnte Zustimmung verbraucht das Angebot nicht")
-            sicherheit.nachricht_merken("runde-3", "Ja, mach das.")
-            self.assertIsNone(ausgaben._angebot_einloesen(s, 10, "runde-3"))
-            self.assertNotIn(s, ausgaben._ANGEBOTE)
+    def test_nur_klares_ja_direkt_nach_dem_angebot(self):
+        for schalter in (AN, mock.patch.object(funktionen, "AGENT_SICHERHEIT", False)):
+            _leeren()
+            with schalter:
+                s = self._angebot()
+                sicherheit.nachricht_merken("runde-2", "Kannst du das machen?", 1)
+                self.assertEqual(ausgaben._angebot_einloesen(s, 10, "runde-2"), sicherheit.G_JA)
+                self.assertIn(s, ausgaben._ANGEBOTE, "abgelehnte Zustimmung verbraucht das Angebot nicht")
+                sicherheit.nachricht_merken("runde-3", "Ja, mach das.", 1)
+                self.assertEqual(ausgaben._angebot_einloesen(s, 10, "runde-3"), sicherheit.G_DIREKT,
+                                 "dazwischen lag eine andere Nachricht: das Ja gilt nicht mehr diesem Angebot")
+                ausgaben._angebot_merken(s, 10, "runde-3")   # das Modell fragt neu
+                sicherheit.nachricht_merken("runde-4", "Ja, mach das.", 1)
+                self.assertIsNone(ausgaben._angebot_einloesen(s, 10, "runde-4"))
+                self.assertNotIn(s, ausgaben._ANGEBOTE)
+
+    def test_loeschen_nur_ueber_den_knopf(self):
+        for art in ("loeschen", "bild_loeschen", "ablage_loeschen", "projekt_loeschen"):
+            _leeren()
+            s = self._angebot(art)
+            sicherheit.nachricht_merken("runde-2", "Ja", 1)
+            self.assertEqual(ausgaben._angebot_einloesen(s, 10, "runde-2"), ausgaben._G_KNOPF, art)
+            self.assertIn(s, ausgaben._ANGEBOTE, "das Angebot bleibt fuer den Knopf")
+            ausgaben._KARTE.id = ausgaben._LETZTES[(1, 7)]
+            try:
+                self.assertIsNone(ausgaben._angebot_einloesen(s, 10, "knopf"), art)
+            finally:
+                ausgaben._KARTE.id = None
 
     def test_unbekannte_runde_gilt_nicht(self):
         with AN:
@@ -122,6 +146,8 @@ class JaPruefung(unittest.TestCase):
 
     def test_kennwort_fuer_die_karte(self):
         self.assertEqual(ausgaben._GRUND_KENNWORT.get(sicherheit.G_JA), "ja")
+        self.assertEqual(ausgaben._GRUND_KENNWORT.get(sicherheit.G_DIREKT), "ja")
+        self.assertEqual(ausgaben._GRUND_KENNWORT.get(ausgaben._G_KNOPF), "knopf")
 
 
 class _Basis(unittest.TestCase):
@@ -147,8 +173,9 @@ class _Basis(unittest.TestCase):
         return {"ok": True, "result": {"image_id": image_id, "saved_alt_text": text}}
 
     def _ex(self, nachricht):
+        """Eine neue Nachricht des Nutzers (Konto 1), in der Reihenfolge der Aufrufe."""
         ex = defs.ToolExecutor(project_id=self.pid, user_id=1, word=True)
-        sicherheit.nachricht_merken(ex.turn_id, nachricht)
+        sicherheit.nachricht_merken(ex.turn_id, nachricht, 1)
         return ex
 
 
@@ -189,14 +216,26 @@ class EinzelDeckel(_Basis):
             self.assertEqual(r4["result"]["hinweis"], sicherheit.G_JA)
             self.assertEqual(len(self.aufrufe), 1)
 
-            # klares Ja -> genau dieses Angebot, und es zaehlt nicht zum Deckel der neuen Nachricht
+            # ein Ja erst in der uebernaechsten Nachricht gilt nicht mehr (S2)
             ex3 = self._ex("Ja")
             r5 = ex3.execute("update_alt_text", {"image_id": self.bilder[1], "new_alt_text": "Zweiter Text (fiktiv)", "bestaetigt": True})
-            self.assertTrue(r5["ok"] and not (r5.get("result") or {}).get("rueckfrage_noetig"), r5)
+            self.assertEqual(r5["result"]["hinweis"], sicherheit.G_DIREKT)
+            self.assertEqual(len(self.aufrufe), 1)
+
+            # neue Nachricht: eine ohne Karte, die zweite als Angebot; das klare Ja direkt danach fuehrt genau dieses aus und
+            # zaehlt nicht zum Deckel der neuen Nachricht
+            ex4 = self._ex("Formulier die beiden Alt-Texte kürzer.")
+            ex4.execute("update_alt_text", {"image_id": self.bilder[0], "new_alt_text": "Erster Text neu (fiktiv)"})
+            self.assertTrue(ex4.execute("update_alt_text", {"image_id": self.bilder[1], "new_alt_text": "Zweiter Text (fiktiv)"})
+                            ["result"]["rueckfrage_noetig"])
+            self.assertEqual(len(self.aufrufe), 2)
+            ex5 = self._ex("Ja")
+            r6 = ex5.execute("update_alt_text", {"image_id": self.bilder[1], "new_alt_text": "Zweiter Text (fiktiv)", "bestaetigt": True})
+            self.assertTrue(r6["ok"] and not (r6.get("result") or {}).get("rueckfrage_noetig"), r6)
             self.assertEqual(self.aufrufe[-1], (self.bilder[1], "Zweiter Text (fiktiv)"))
-            r6 = ex3.execute("update_alt_text", {"image_id": self.bilder[2], "new_alt_text": "Dritter Text (fiktiv)"})
-            self.assertFalse((r6.get("result") or {}).get("rueckfrage_noetig"), "nach einer bestaetigten bleibt eine ohne Karte frei")
-            self.assertEqual(len(self.aufrufe), 3)
+            r7 = ex5.execute("update_alt_text", {"image_id": self.bilder[2], "new_alt_text": "Dritter Text (fiktiv)"})
+            self.assertFalse((r7.get("result") or {}).get("rueckfrage_noetig"), "nach einer bestaetigten bleibt eine ohne Karte frei")
+            self.assertEqual(len(self.aufrufe), 4)
 
     def test_knopf_der_karte_fuehrt_das_angebot_aus(self):
         with AN, mock.patch.object(defs.altext_tools, "update_alt_text", side_effect=self._speichern), \
@@ -259,11 +298,16 @@ class Tagesgrenze(_Basis):
     def test_endpunkt_nutzt_den_schalter(self):
         with open(os.path.join(os.path.dirname(database.__file__), "main.py"), encoding="utf-8") as f:
             quelle = f.read()
-        teil = quelle[quelle.index("async def chat_send_message"):quelle.index("def _antwort(result: dict)")]
-        self.assertIn("if funktionen.AGENT_SICHERHEIT:", teil)
-        self.assertIn("_sicherheit.chat_sperre(user[\"id\"], DAILY_CHAT_LIMIT", teil)
-        self.assertIn("_sicherheit.tageszaehler_erhoehen(user[\"id\"])", teil)
-        self.assertIn("get_daily_chat_count(user[\"id\"])", teil, "Schalter aus: alte Zaehlung bleibt")
+        bremse = quelle[quelle.index("def _agent_bremse("):quelle.index("async def agent_nachricht(")]
+        self.assertIn("if funktionen.AGENT_SICHERHEIT:", bremse)
+        self.assertIn("_sicherheit.chat_sperre(user[\"id\"], DAILY_CHAT_LIMIT", bremse)
+        self.assertIn("get_daily_chat_count(user[\"id\"])", bremse, "Schalter aus: alte Zaehlung bleibt")
+        nachricht = quelle[quelle.index("async def _agent_nachricht("):quelle.index("def _antwort(result: dict)")]
+        self.assertLess(nachricht.index("_agent_bremse(user, _ui)"), nachricht.index("_lauf_anmelden(user[\"id\"])"))
+        self.assertIn("_sicherheit.tageszaehler_erhoehen(user[\"id\"])", nachricht)
+        hochladen = quelle[quelle.index("async def agent_hochladen("):quelle.index("def _inkluagent_schalter(")]
+        self.assertLess(hochladen.index("_agent_bremse(user, _)"), hochladen.index("await _hl.hochladen("),
+                        "Hochladen bremst vor der Arbeit (K4)")
 
 
 if __name__ == "__main__":

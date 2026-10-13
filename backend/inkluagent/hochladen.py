@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 import io
+import logging
 import os
 import re
 import threading
@@ -31,6 +32,11 @@ from typing import Any, Optional
 import funktionen
 
 from .daten import DATEN_MARKE
+
+log = logging.getLogger(__name__)
+# Gemeinsame Frist fuer das Warten aufs Auslesen aller Dateien einer Anfrage (Pruefung 13.10.2026, K12: vorher bis 120 s JE
+# Datei, nacheinander — bei zehn PDFs Minuten). Was danach noch ausgelesen wird, nennt die Notiz „wird noch ausgelesen“.
+_AUSLESEN_GESAMT_S = 60.0
 
 
 def an() -> bool:
@@ -164,12 +170,6 @@ def kurzzeile(ergebnisse: list[dict], _=None) -> str:
     return ". ".join(teile)
 
 
-def nachricht_fuer_verlauf(text: str, kurz: str) -> str:
-    """Was im Verlauf steht (und die Seite sofort zeigt): der eigene Text, darunter die Kurzzeile."""
-    text, kurz = (text or "").strip(), (kurz or "").strip()
-    return (text + "\n" + kurz) if (text and kurz) else (text or kurz)
-
-
 def notiz_holen(user_id: int, nid: Optional[str]) -> Optional[dict]:
     """Einmal abholen (danach weg): nur der eigene Nutzer."""
     if not nid:
@@ -194,11 +194,26 @@ class _Datei:
         return self._daten
 
 
-def _fehlertext(e: Exception) -> str:
-    d = getattr(e, "detail", None)
-    if isinstance(d, dict):
-        d = d.get("text") or d.get("detail") or str(d)
-    return str(d or e)
+def _fehlertext(e: Exception, _=None) -> str:
+    """Text fuer Menschen: der Grund einer HTTPException (Passwort, beschaedigt, Groesse — dieselben Saetze wie beim Knopf);
+    alles andere nur allgemein, Einzelheiten ins Log (Pruefung 13.10.2026, S10: vorher kamen Pfade und Datenbankfehler in die
+    Ergebnisliste und an das Modell)."""
+    from fastapi import HTTPException
+    if isinstance(e, HTTPException):
+        d = (e.detail.get("text") or e.detail.get("detail")) if isinstance(e.detail, dict) else e.detail
+        if d:
+            return str(d)
+    log.warning("Hochladen im InkluAgent fehlgeschlagen: %r", e)
+    return (_ or (lambda text: text))("Das hat nicht geklappt. Bitte versuch es noch einmal.")
+
+
+async def _lesen(quelle: Any, grenze: int) -> bytes:
+    """Inhalt einer Datei: Bytes (Konto-Werkzeuge, Tests) oder eine hochgeladene Datei (UploadFile), die erst hier gelesen wird —
+    eine nach der anderen statt alle vorher in den Speicher (Pruefung 13.10.2026, S7/K12: bis 10 × 50 MB je Anfrage). Je Datei
+    hoechstens ein Byte mehr als erlaubt: zu Grosses erkennt hochladen() so, ohne alles zu lesen."""
+    if isinstance(quelle, (bytes, bytearray)):
+        return bytes(quelle)
+    return await quelle.read(grenze)
 
 
 async def _warten_auf_auslesen(project_id: int, timeout: float = 120.0) -> str:
@@ -264,9 +279,10 @@ def preise(f: dict) -> dict:
     return out
 
 
-async def hochladen(user: dict, dateien: list[tuple[str, bytes]], webadresse: str = "", project_id: Optional[int] = None,
+async def hochladen(user: dict, dateien: list[tuple[str, Any]], webadresse: str = "", project_id: Optional[int] = None,
                     request=None, _=None, zuordnen: bool = False) -> dict:
     """Ergebnis: {"ok", "ergebnisse": [...], "projekte": [ids], "fehler": n, "notiz_id", "kurz"} — oder {"ok": False, "fehler_text"}.
+    dateien: (Name, Inhalt) mit Inhalt als Bytes oder als hochgeladene Datei (wird erst beim Verarbeiten gelesen, _lesen).
     `_` uebersetzt die eigenen Meldungen (Sprache der Oberflaeche); Meldungen von upload_file kommen wie beim Knopf.
     zuordnen (Seite ohne Projekt, Steve 12.10.2026): gibt es fuer eine Datei schon ein aehnliches Projekt derselben Art, wird sie
     NICHT sofort abgelegt, sondern wartet (Eingang, 30 Minuten) — Karten „In … hochladen“ / „Als neues Projekt hochladen“."""
@@ -293,9 +309,11 @@ async def hochladen(user: dict, dateien: list[tuple[str, bytes]], webadresse: st
     ergebnisse: list[dict] = []
     neu_je_art: dict[str, int] = {}
     karten: list[dict] = []
-    for name, daten in dateien:
+    auslesen_bis = time.time() + _AUSLESEN_GESAMT_S
+    for name, quelle in dateien:
         e: dict[str, Any] = {"name": name, "ok": False}
         ergebnisse.append(e)
+        daten = await _lesen(quelle, m.MAX_UPLOAD_SIZE + 1)
         art = art_aus_inhalt(daten)
         endung = art_aus_endung(name)
         e["art"] = art or endung or ""
@@ -333,14 +351,15 @@ async def hochladen(user: dict, dateien: list[tuple[str, bytes]], webadresse: st
         try:
             r = await m.upload_file(file=_Datei(name, daten), project_id=ziel, user=user, request=request)
         except Exception as fehler:  # noqa: BLE001 — HTTPException mit Text fuer Menschen (Passwort, beschaedigt, Groesse)
-            e["fehler"] = _fehlertext(fehler)
+            e["fehler"] = _fehlertext(fehler, _)
             continue
         pid = int(r.get("project_id"))
         if neu:
             neu_je_art[art] = pid
             _zaehlen(uid, _tag())
             _namen_setzen(pid, uid, name)
-        status = await _warten_auf_auslesen(pid) if r.get("status") == "extracting" else (r.get("status") or "extracted")
+        status = (await _warten_auf_auslesen(pid, max(0.0, auslesen_bis - time.time())) if r.get("status") == "extracting"
+                  else (r.get("status") or "extracted"))
         fakten = _fakten(pid, r.get("document_id"))
         e.update({"ok": status != "error", "project_id": pid, "neues_projekt": neu, "status": status, **fakten})
         if status == "error":
@@ -370,7 +389,7 @@ async def hochladen(user: dict, dateien: list[tuple[str, bytes]], webadresse: st
                 e.update({"ok": True, "project_id": pid, "neues_projekt": ziel is None, **fakten})
                 e["preise"] = preise(fakten)
             except Exception as fehler:  # noqa: BLE001
-                e["fehler"] = _fehlertext(fehler)
+                e["fehler"] = _fehlertext(fehler, _)
 
     projekte = sorted({x["project_id"] for x in ergebnisse if x.get("project_id")})
     notiz = notiz_text(ergebnisse)

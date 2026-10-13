@@ -1128,6 +1128,11 @@ def _migrate_columns(conn):
         # Gespraeche des InkluAgent (12.10.2026): zu welchem Gespraech eine Nachricht gehoert, welches gerade laeuft
         ("agent_nachrichten", "gespraech_id", "ALTER TABLE agent_nachrichten ADD COLUMN gespraech_id INTEGER"),
         ("agent_fokus", "gespraech_id", "ALTER TABLE agent_fokus ADD COLUMN gespraech_id INTEGER"),
+        # Zusatzzeile des Servers zu einer Nutzer-Nachricht (Pruefung 13.10.2026, S3): „Hochgeladen: …“ und „Bestätigt über
+        # den Knopf: …“ stehen nicht mehr in content (= was der Nutzer getippt hat), sondern hier. Die Anzeige setzt beides
+        # zusammen; das Gedaechtnis des Agenten bekommt die Zeile als Daten gekennzeichnet (inkluagent/storage.fuer_modell).
+        ("chat_messages", "zusatz", "ALTER TABLE chat_messages ADD COLUMN zusatz TEXT"),
+        ("agent_nachrichten", "zusatz", "ALTER TABLE agent_nachrichten ADD COLUMN zusatz TEXT"),
         # KI-FACH (28.08.2026, Steve: wie alt_text/alt_text_edited bei Bildern): der letzte
         # KI-Vorschlag bleibt erhalten, auch wenn von Hand darueber geschrieben wird —
         # Knopf „KI-Vorschlag uebernehmen“ holt ihn zurueck.
@@ -1168,6 +1173,27 @@ def _migrate_columns(conn):
                 print(f"Migration: Added {table}.{column}")
             except Exception as e:
                 print(f"Migration warning ({table}.{column}): {e}")
+    # Indizes auf migrierten Spalten (erst nach den Spalten): Gespraeche lesen ihre Nachrichten ueber gespraech_id
+    # (Pruefung 13.10.2026, K15 — vorher je Gespraech ein Lauf ueber die ganze Tabelle).
+    try:
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_nachrichten_gespraech ON agent_nachrichten(gespraech_id, id)")
+    except Exception as e:
+        print(f"Migration warning (idx_agent_nachrichten_gespraech): {e}")
+    # Nachrichten von vor den Gespraechen (gespraech_id leer, nur Staging seit 12.10.2026) einmalig je Konto in ein Gespraech
+    # uebernehmen; die erste Frage wird sein Titel (wie inkluagent/storage._titel). Vorher tat das die erste Anfrage, auch eine
+    # LESENDE (Pruefung 13.10.2026, K15). Idempotent: danach gibt es keine Zeilen ohne Gespraech mehr.
+    try:
+        for (uid,) in conn.execute("SELECT DISTINCT user_id FROM agent_nachrichten WHERE gespraech_id IS NULL").fetchall():
+            erste = conn.execute("SELECT content FROM agent_nachrichten WHERE user_id = ? AND gespraech_id IS NULL AND role = 'user' "
+                                 "ORDER BY id LIMIT 1", (uid,)).fetchone()
+            zeile = next((z.strip() for z in ((erste[0] if erste else "") or "").splitlines() if z.strip()), "")
+            titel = zeile if len(zeile) <= 80 else zeile[:79].rstrip() + "…"
+            gid = conn.execute("INSERT INTO agent_gespraeche (user_id, titel) VALUES (?, ?)", (uid, titel)).lastrowid
+            conn.execute("UPDATE agent_nachrichten SET gespraech_id = ? WHERE user_id = ? AND gespraech_id IS NULL", (gid, uid))
+            conn.execute("INSERT INTO agent_fokus (user_id, gespraech_id) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET "
+                         "gespraech_id = COALESCE(agent_fokus.gespraech_id, excluded.gespraech_id)", (uid, gid))
+    except Exception as e:
+        print(f"Migration warning (agent_nachrichten ohne Gespraech): {e}")
 
     # Neues Abomodell (06.08.2026): Alt-Daten einmalig ueberfuehren.
     # (a) users.abo_owner_id -> team_mitgliedschaften + aktiver_topf; danach

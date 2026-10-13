@@ -55,9 +55,9 @@ _ENDE_WERKZEUGE = """* exportiere_fertige_pdf
 * exportiere_alt_texte, alt_texte_generieren, ki_kontext_setzen, eigener_prompt
     Wie in der Ansicht „Alt-Texte“: Alt-Texte als Tabelle herunterladen (csv, xlsx, json; fester Preis, zwei Schritte), Alt-Texte für alle Bilder generieren (Preis je Bild, überschreibt vorhandene Texte, zwei Schritte), KI-Kontext an/aus, gespeicherten Prompt wählen (beides kostenlos).
 * liste_ausgaben, lies_ausgabe, ausgabe_loeschen
-    Die Ablage dieses Projekts (fertige PDFs mit Prüfbericht) auflisten, einen Eintrag lesen, einen löschen (unumkehrbar, zwei Schritte). Kostenlos.
+    Die Ablage dieses Projekts (fertige PDFs mit Prüfbericht) auflisten, einen Eintrag lesen, einen löschen (unumkehrbar, nur über den Knopf der Karte). Kostenlos.
 * dokument_umbenennen, dokument_loeschen, alt_sprache_setzen
-    Anzeigename setzen; Dokument löschen (unumkehrbar — zwei Schritte: erst ohne bestaetigt sagen, was weg wäre, Ja in eigener Nachricht, dann bestaetigt=true); Sprache der Alt-Texte und Quickinfos für künftige Texte. Kostenlos.
+    Anzeigename setzen; Dokument löschen (unumkehrbar — ohne bestaetigt aufrufen und sagen, was weg wäre; löschen kann nur der Knopf der Karte, kein getipptes Ja); Sprache der Alt-Texte und Quickinfos für künftige Texte. Kostenlos.
 
 Was es hier nicht gibt, bietest du nicht an und erfindest du nicht: nur die Werkzeuge oben, genau wie die Oberfläche.
 

@@ -12021,3 +12021,31 @@ msgstr "Åbnet i arbejdsvinduet: {name}"
 
 msgid "Seite im Arbeitsfenster geschlossen."
 msgstr "Siden i arbejdsvinduet er lukket."
+
+# Pruefung 13.10.2026: Saetze des Servers (InkluAgent)
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort."
+msgstr "InkluAgent arbejder stadig på din seneste besked. Vent venligst på svaret."
+
+msgid "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte versuch es gleich noch einmal."
+msgstr "Beklager, der opstod en fejl. Prøv igen om et øjeblik."
+
+msgid "Es wird gerade schon hochgeladen. Warte bitte, bis das fertig ist."
+msgstr "Der uploades allerede. Vent venligst, til det er færdigt."
+
+msgid "Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist gespeichert. Schreib mir, wie es weitergehen soll."
+msgstr "Det tager længere tid, end en besked må tage. Det, jeg har nået indtil nu, er gemt. Skriv, hvordan du vil fortsætte."
+
+msgid "Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal."
+msgstr "Beklager, forbindelsen til AI’en er afbrudt lige nu. Prøv igen om et øjeblik."
+
+msgid "Ich habe mehrere Werkzeuge benutzt, komme aber zu keinem klaren Ergebnis. Kannst du deine Frage etwas eingrenzen?"
+msgstr "Jeg har brugt flere værktøjer, men når ikke frem til et klart resultat. Kan du indsnævre dit spørgsmål lidt?"
+
+msgid "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
+msgstr "Jeg har ikke et konkret svar på det lige nu. Kan du spørge mig på en anden måde?"
+
+msgid "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt."
+msgstr "Jeg kan ikke hjælpe uden et projekt lige nu. Åbn venligst et projekt."
+
+msgid "Das hat nicht geklappt. Bitte versuch es noch einmal."
+msgstr "Det lykkedes ikke. Prøv igen."

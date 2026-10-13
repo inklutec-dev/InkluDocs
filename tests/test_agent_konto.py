@@ -110,7 +110,9 @@ class Speicher(unittest.TestCase):
         u = konto()
         p = projekt(u["id"], "Karte (fiktiv)")
         storage.konto_anhaengen(u["id"], p, "assistant", "Angebot", anhang=[{"art": "bestaetigung", "angebot_id": "abc123"}])
-        self.assertEqual(storage.karte_aktualisieren(p, "abc123", {"zustand": "erledigt"}), 1)
+        self.assertEqual(storage.karte_aktualisieren(p, "abc123", {"zustand": "erledigt"}, user_id=konto()["id"]), 0,
+                         "nur im eigenen Konto (Pruefung 13.10.2026, K15)")
+        self.assertEqual(storage.karte_aktualisieren(p, "abc123", {"zustand": "erledigt"}, user_id=u["id"]), 1)
         self.assertEqual(storage.konto_verlauf(u["id"])[-1]["anhang"][0]["zustand"], "erledigt")
 
     def test_tagesgrenze_zaehlt_das_gespraech_des_kontos(self):

@@ -3,11 +3,16 @@
 - chat_messages: das Gespraech je Projekt (bisher; mit dem Projekt geloescht).
 - agent_nachrichten (Ausbau Runde 2, Schritt 2, Schalter funktionen.AGENT_KONTO): EIN Gespraech je Konto, das Projekt nur als
   Marke (Momentaufnahme des Namens, beim Loeschen des Projekts als geloescht markiert). agent_fokus: woran es gerade arbeitet.
+- content ist, was der Nutzer bzw. der Agent geschrieben hat; zusatz (Pruefung 13.10.2026, S3) eine Zeile des SERVERS zu einer
+  Nutzer-Nachricht („Hochgeladen: …“, „Bestätigt über den Knopf: …“) mit Datei- und Projektnamen. Gelesene Zeilen tragen beides
+  getrennt (text, zusatz) und zusammengesetzt fuer die Anzeige (content); das Gedaechtnis des Agenten nimmt fuer_modell().
 """
 import json
 from typing import Optional
 
 from database import get_db
+
+from .daten import daten
 
 
 _VALID_ROLES = ("user", "assistant", "system")
@@ -21,21 +26,24 @@ def append_message(
     intent: Optional[str] = None,
     werkzeuge: Optional[list[str]] = None,
     anhang: Optional[list[dict]] = None,
+    zusatz: Optional[str] = None,
 ) -> int:
     """werkzeuge (28.08.2026): Namen der aufgerufenen Werkzeuge in Reihenfolge — None = unbekannt
     (Altbestand), [] = ausdruecklich ohne Werkzeug geantwortet.
-    anhang (11.09.2026): Download-Knoepfe unter der Antwort (Meine Ausgaben), None = keine."""
+    anhang (11.09.2026): Download-Knoepfe unter der Antwort (Meine Ausgaben), None = keine.
+    zusatz (13.10.2026, S3): Zeile des Servers zur Nachricht, getrennt vom getippten Text (siehe Modulkopf)."""
     if role not in _VALID_ROLES:
         raise ValueError(f"Ungueltige Rolle: {role!r}")
     conn = get_db()
     try:
         cursor = conn.execute(
-            "INSERT INTO chat_messages (project_id, role, content, image_refs, intent, werkzeuge, anhang) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO chat_messages (project_id, role, content, zusatz, image_refs, intent, werkzeuge, anhang) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 project_id,
                 role,
-                content,
+                content or "",
+                (zusatz or "").strip() or None,
                 json.dumps(image_refs) if image_refs else None,
                 intent,
                 json.dumps(werkzeuge) if werkzeuge is not None else None,
@@ -52,8 +60,7 @@ def get_history(project_id: int, limit: int = 200) -> list[dict]:
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, role, content, image_refs, intent, created_at, werkzeuge, anhang "
-            "FROM chat_messages WHERE project_id = ? "
+            "SELECT " + _SPALTEN + " FROM chat_messages WHERE project_id = ? "
             "ORDER BY created_at ASC, id ASC LIMIT ?",
             (project_id, limit),
         ).fetchall()
@@ -62,11 +69,32 @@ def get_history(project_id: int, limit: int = 200) -> list[dict]:
     return [_zeile(r) for r in rows]
 
 
+_SPALTEN = "id, role, content, zusatz, image_refs, intent, created_at, werkzeuge, anhang"
+
+
+def anzeige(text: Optional[str], zusatz: Optional[str]) -> str:
+    """Was Menschen im Verlauf lesen: der getippte Text, darunter die Zeile des Servers."""
+    text, zusatz = (text or "").strip(), (zusatz or "").strip()
+    return (text + "\n" + zusatz) if (text and zusatz) else (text or zusatz)
+
+
+def fuer_modell(h: dict) -> str:
+    """Was das Gedaechtnis des Agenten aus einer gespeicherten Nachricht liest (Pruefung 13.10.2026, S3): den getippten Text
+    unveraendert, die Zeile des Servers als Daten gekennzeichnet. Sonst stuende „Hochgeladen: <fremder Dateiname>“ ab der
+    naechsten Runde als eigene Bitte des Nutzers im Gedaechtnis."""
+    if "text" not in h:   # Eintrag ohne getrennte Felder (eigene Dicts von Aufrufern)
+        return h.get("content") or ""
+    zusatz = daten(h.get("zusatz"))
+    return "\n".join(t for t in ((h.get("text") or "").strip(), zusatz) if t)
+
+
 def _zeile(r) -> dict:
     return {
         "id": r["id"],
         "role": r["role"],
-        "content": r["content"],
+        "content": anzeige(r["content"], r["zusatz"]),
+        "text": r["content"] or "",
+        "zusatz": r["zusatz"] or "",
         "image_refs": json.loads(r["image_refs"]) if r["image_refs"] else None,
         "intent": r["intent"],
         "created_at": r["created_at"],
@@ -81,7 +109,7 @@ def get_recent(project_id: int, limit: int = 20) -> list[dict]:
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, role, content, image_refs, intent, created_at, werkzeuge, anhang FROM chat_messages "
+            "SELECT " + _SPALTEN + " FROM chat_messages "
             "WHERE project_id = ? ORDER BY created_at DESC, id DESC LIMIT ?", (project_id, limit)).fetchall()
     finally:
         conn.close()
@@ -106,8 +134,12 @@ def konto_anhaengen(
     intent: Optional[str] = None,
     werkzeuge: Optional[list[str]] = None,
     anhang: Optional[list[dict]] = None,
+    zusatz: Optional[str] = None,
+    gespraech_id: Optional[int] = None,
 ) -> int:
-    """Wie append_message, aber ins Gespraech des Kontos; der Projektname wird als Marke festgehalten."""
+    """Wie append_message, aber ins Gespraech des Kontos; der Projektname wird als Marke festgehalten.
+    gespraech_id (Pruefung 13.10.2026, K3): die Antwort gehoert in das Gespraech ihrer Frage — auch wenn der Nutzer waehrend des
+    Laufs ein neues Gespraech begonnen oder ein frueheres fortgesetzt hat. Ohne (oder fremd): das laufende Gespraech."""
     if role not in _VALID_ROLES:
         raise ValueError(f"Ungueltige Rolle: {role!r}")
     conn = get_db()
@@ -116,12 +148,18 @@ def konto_anhaengen(
         if project_id:
             p = conn.execute("SELECT name, filename FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
             name = ((p["name"] or p["filename"]) if p else "") or ""
-        gid = _aktuelles_gespraech(conn, user_id)
+        gid = None
+        if gespraech_id and conn.execute("SELECT 1 FROM agent_gespraeche WHERE id = ? AND user_id = ?",
+                                         (int(gespraech_id), user_id)).fetchone():
+            gid = int(gespraech_id)
+        if gid is None:
+            gid = _aktuelles_gespraech(conn, user_id)
         cursor = conn.execute(
-            "INSERT INTO agent_nachrichten (user_id, project_id, projekt_name, role, content, image_refs, intent, werkzeuge, anhang, "
-            "gespraech_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO agent_nachrichten (user_id, project_id, projekt_name, role, content, zusatz, image_refs, intent, werkzeuge, "
+            "anhang, gespraech_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                user_id, project_id, name, role, content,
+                user_id, project_id, name, role, content or "",
+                (zusatz or "").strip() or None,
                 json.dumps(image_refs) if image_refs else None,
                 intent,
                 json.dumps(werkzeuge) if werkzeuge is not None else None,
@@ -129,9 +167,9 @@ def konto_anhaengen(
                 gid,
             ),
         )
-        # Titel = die erste Frage (eine Zeile, gekuerzt); zuletzt = jetzt
+        # Titel = die erste Frage (eine Zeile, gekuerzt; ohne getippten Text die Zeile des Servers, z. B. „Hochgeladen: a.pdf“)
         conn.execute("UPDATE agent_gespraeche SET zuletzt_am = datetime('now'), titel = CASE WHEN titel = '' AND ? = 'user' "
-                     "THEN ? ELSE titel END WHERE id = ?", (role, _titel(content), gid))
+                     "THEN ? ELSE titel END WHERE id = ?", (role, _titel(content or zusatz or ""), gid))
         conn.commit()
         return cursor.lastrowid
     finally:
@@ -143,20 +181,35 @@ TITEL_LAENGE = 80
 
 
 def _titel(text: str) -> str:
-    """Die erste Frage als Titel: erste Zeile, ohne die Kurzzeile des Hochladefelds, hoechstens 80 Zeichen."""
+    """Die erste Frage als Titel: erste Zeile, hoechstens 80 Zeichen."""
     zeile = next((z.strip() for z in (text or "").splitlines() if z.strip()), "")
     return zeile if len(zeile) <= TITEL_LAENGE else zeile[:TITEL_LAENGE - 1].rstrip() + "…"
 
 
-def _aktuelles_gespraech(conn, user_id: int) -> int:
-    """Das laufende Gespraech des Kontos (agent_fokus.gespraech_id). Gibt es keins, wird eins angelegt; Nachrichten von vor den
-    Gespraechen (gespraech_id leer) gehoeren dann dazu, und die erste Frage wird sein Titel."""
+def _gespraech_im_fokus(conn, user_id: int) -> Optional[int]:
     r = conn.execute("SELECT f.gespraech_id FROM agent_fokus f JOIN agent_gespraeche g ON g.id = f.gespraech_id "
                      "WHERE f.user_id = ? AND g.user_id = ?", (user_id, user_id)).fetchone()
-    if r and r["gespraech_id"]:
-        return int(r["gespraech_id"])
-    neu = conn.execute("SELECT id FROM agent_gespraeche WHERE user_id = ? ORDER BY zuletzt_am DESC, id DESC LIMIT 1", (user_id,)).fetchone()
-    gid = int(neu["id"]) if neu else int(conn.execute("INSERT INTO agent_gespraeche (user_id) VALUES (?)", (user_id,)).lastrowid)
+    return int(r["gespraech_id"]) if r and r["gespraech_id"] else None
+
+
+def _juengstes_gespraech(conn, user_id: int) -> Optional[int]:
+    r = conn.execute("SELECT id FROM agent_gespraeche WHERE user_id = ? ORDER BY zuletzt_am DESC, id DESC LIMIT 1", (user_id,)).fetchone()
+    return int(r["id"]) if r else None
+
+
+def _laufendes_gespraech(conn, user_id: int) -> Optional[int]:
+    """Nur lesen (Pruefung 13.10.2026, K15: lesende Anfragen legen nichts an): das laufende Gespraech (agent_fokus), sonst das
+    juengste; None, solange das Konto keins hat."""
+    return _gespraech_im_fokus(conn, user_id) or _juengstes_gespraech(conn, user_id)
+
+
+def _aktuelles_gespraech(conn, user_id: int) -> int:
+    """Zum Schreiben: das laufende Gespraech des Kontos. Gibt es keins, wird eins angelegt; Nachrichten von vor den Gespraechen
+    (gespraech_id leer) gehoeren dann dazu, und die erste Frage wird sein Titel."""
+    gid = _gespraech_im_fokus(conn, user_id)
+    if gid:
+        return gid
+    gid = _juengstes_gespraech(conn, user_id) or int(conn.execute("INSERT INTO agent_gespraeche (user_id) VALUES (?)", (user_id,)).lastrowid)
     alt = conn.execute("SELECT content FROM agent_nachrichten WHERE user_id = ? AND gespraech_id IS NULL AND role = 'user' "
                        "ORDER BY id LIMIT 1", (user_id,)).fetchone()
     conn.execute("UPDATE agent_nachrichten SET gespraech_id = ? WHERE user_id = ? AND gespraech_id IS NULL", (gid, user_id))
@@ -212,34 +265,42 @@ def gespraech_fortsetzen(user_id: int, gid: int) -> bool:
 def gespraeche_liste(user_id: int, project_id: Optional[int] = None, suche: str = "", limit: int = 100) -> list[dict]:
     """Gespraeche mit Nachrichten, neueste zuerst: Titel, Datum, Zahl der Nachrichten, beteiligte Projekte, laufendes. Mit
     project_id nur Gespraeche, in denen es um dieses Projekt ging; mit suche nur solche, deren Titel, Projektname oder Text sie
-    enthaelt."""
+    enthaelt. Nur lesen, und die Projekte aller Gespraeche in EINER Abfrage (Pruefung 13.10.2026, K15: vorher legte die Liste
+    ein Gespraech an und fragte je Gespraech zweimal ueber die ganze Tabelle)."""
     conn = get_db()
     try:
-        aktuell = _aktuelles_gespraech(conn, user_id)
-        conn.commit()
-        sql = ("SELECT g.id, g.titel, g.angelegt_am, g.zuletzt_am, COUNT(n.id) AS anzahl, MAX(n.project_id) AS irgendein_projekt "
+        aktuell = _laufendes_gespraech(conn, user_id)
+        sql = ("SELECT g.id, g.titel, g.angelegt_am, g.zuletzt_am, COUNT(n.id) AS anzahl "
                "FROM agent_gespraeche g JOIN agent_nachrichten n ON n.gespraech_id = g.id WHERE g.user_id = ?")
         werte: list = [user_id]
         if project_id:
             sql += " AND g.id IN (SELECT gespraech_id FROM agent_nachrichten WHERE user_id = ? AND project_id = ?)"
             werte += [user_id, project_id]
         if suche:
-            sql += (" AND g.id IN (SELECT gespraech_id FROM agent_nachrichten WHERE user_id = ? AND (content LIKE ? OR projekt_name LIKE ?)"
-                    " UNION SELECT id FROM agent_gespraeche WHERE user_id = ? AND titel LIKE ?)")
-            werte += [user_id, f"%{suche}%", f"%{suche}%", user_id, f"%{suche}%"]
+            muster = "%" + suche.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            sql += (" AND g.id IN (SELECT gespraech_id FROM agent_nachrichten WHERE user_id = ? AND (content LIKE ? ESCAPE '\\' "
+                    "OR zusatz LIKE ? ESCAPE '\\' OR projekt_name LIKE ? ESCAPE '\\') "
+                    "UNION SELECT id FROM agent_gespraeche WHERE user_id = ? AND titel LIKE ? ESCAPE '\\')")
+            werte += [user_id, muster, muster, muster, user_id, muster]
         rows = conn.execute(sql + " GROUP BY g.id ORDER BY g.zuletzt_am DESC, g.id DESC LIMIT ?", (*werte, limit)).fetchall()
+        projekte: dict[int, list] = {}
+        if rows:
+            ids = [r["id"] for r in rows]
+            for p in conn.execute(
+                    "SELECT gespraech_id, project_id, projekt_name, MAX(projekt_geloescht) AS geloescht, MIN(id) AS erste, "
+                    "MAX(CASE WHEN projekt_geloescht = 0 THEN id END) AS letzte_offen FROM agent_nachrichten "
+                    "WHERE user_id = ? AND project_id IS NOT NULL AND gespraech_id IN (" + ",".join("?" * len(ids)) + ") "
+                    "GROUP BY gespraech_id, project_id", (user_id, *ids)).fetchall():
+                projekte.setdefault(p["gespraech_id"], []).append(p)
         out = []
         for r in rows:
-            projekte = conn.execute(
-                "SELECT project_id, projekt_name, MAX(projekt_geloescht) AS geloescht FROM agent_nachrichten WHERE gespraech_id = ? "
-                "AND project_id IS NOT NULL GROUP BY project_id ORDER BY MIN(id)", (r["id"],)).fetchall()
-            letzte = conn.execute("SELECT project_id FROM agent_nachrichten WHERE gespraech_id = ? AND project_id IS NOT NULL "
-                                  "AND projekt_geloescht = 0 ORDER BY id DESC LIMIT 1", (r["id"],)).fetchone()
+            beteiligt = sorted(projekte.get(r["id"], []), key=lambda p: p["erste"])
+            offen = [p for p in beteiligt if p["letzte_offen"] is not None]
             out.append({"id": r["id"], "titel": r["titel"] or "", "angelegt_am": r["angelegt_am"], "zuletzt_am": r["zuletzt_am"],
                         "anzahl": r["anzahl"], "aktuell": r["id"] == aktuell,
                         "projekte": [{"project_id": p["project_id"], "name": p["projekt_name"] or "", "geloescht": bool(p["geloescht"])}
-                                     for p in projekte],
-                        "letztes_projekt": letzte["project_id"] if letzte else None})
+                                     for p in beteiligt],
+                        "letztes_projekt": max(offen, key=lambda p: p["letzte_offen"])["project_id"] if offen else None})
         return out
     finally:
         conn.close()
@@ -258,14 +319,14 @@ def gespraech_lesen(user_id: int, gid: int) -> Optional[list[dict]]:
 
 def konto_verlauf(user_id: int, limit: int = 200, gespraech_id: Optional[int] = None) -> list[dict]:
     """Die juengsten `limit` Nachrichten des LAUFENDEN Gespraechs (oder von gespraech_id), aelteste zuerst, je mit Projektmarke
-    (project_id, projekt_name, projekt_geloescht)."""
+    (project_id, projekt_name, projekt_geloescht). Nur lesen: ohne Gespraech die Nachrichten von vor den Gespraechen."""
     conn = get_db()
     try:
-        gid = gespraech_id or _aktuelles_gespraech(conn, user_id)
-        conn.commit()
+        gid = gespraech_id or _laufendes_gespraech(conn, user_id)
+        bedingung, wert = ("gespraech_id = ?", (gid,)) if gid else ("gespraech_id IS NULL", ())
         rows = conn.execute(
-            "SELECT id, role, content, image_refs, intent, created_at, werkzeuge, anhang, project_id, projekt_name, projekt_geloescht "
-            "FROM agent_nachrichten WHERE user_id = ? AND gespraech_id = ? ORDER BY id DESC LIMIT ?", (user_id, gid, limit)).fetchall()
+            "SELECT " + _SPALTEN + ", project_id, projekt_name, projekt_geloescht FROM agent_nachrichten "
+            "WHERE user_id = ? AND " + bedingung + " ORDER BY id DESC LIMIT ?", (user_id, *wert, limit)).fetchall()
     finally:
         conn.close()
     out = []
@@ -315,7 +376,19 @@ def clear_history(project_id: int) -> int:
         conn.close()
 
 
-def karte_aktualisieren(project_id: int, angebot_id: str, felder: dict) -> int:
+def gespraech_der_nachricht(user_id: int, nachricht_id: Optional[int]) -> Optional[int]:
+    """In welches Gespraech eine gespeicherte Nachricht des Kontos kam (K3: die Antwort folgt ihrer Frage)."""
+    if not nachricht_id:
+        return None
+    conn = get_db()
+    try:
+        r = conn.execute("SELECT gespraech_id FROM agent_nachrichten WHERE id = ? AND user_id = ?", (int(nachricht_id), user_id)).fetchone()
+        return int(r["gespraech_id"]) if r and r["gespraech_id"] else None
+    finally:
+        conn.close()
+
+
+def karte_aktualisieren(project_id: int, angebot_id: str, felder: dict, user_id: Optional[int] = None) -> int:
     """Bestaetigungs-Karte im gespeicherten Verlauf auf ihren neuen Zustand stellen (Pruefung 4, M3: „Erledigt“ oder „Nicht
     mehr gültig“), damit sie nach dem Neuladen nicht wieder als offene Frage mit Knopf erscheint. Rueckgabe: geaenderte Zeilen."""
     if not angebot_id:
@@ -339,8 +412,13 @@ def karte_aktualisieren(project_id: int, angebot_id: str, felder: dict) -> int:
                 conn.execute("UPDATE chat_messages SET anhang = ? WHERE id = ?", (json.dumps(liste, ensure_ascii=False), r["id"]))
                 n += 1
         # Gespraech je Konto (Runde 2, Schritt 2): dieselbe Karte steht dort, wenn der Schalter an war. Ohne Projekt-Filter: auch
-        # Karten aus Seiten ohne Projekt (Schritt 4, Projekt 0 im Angebot, NULL im Gespraech); Angebots-Kennungen sind eindeutig.
-        for r in conn.execute("SELECT id, anhang FROM agent_nachrichten WHERE anhang LIKE ?", (f"%{angebot_id}%",)).fetchall():
+        # Karten aus Seiten ohne Projekt (Schritt 4, Projekt 0 im Angebot, NULL im Gespraech). Nur im eigenen Konto (Pruefung
+        # 13.10.2026, K15: vorher ein LIKE ueber die Nachrichten aller Konten).
+        if user_id is None:
+            conn.commit()
+            return n
+        for r in conn.execute("SELECT id, anhang FROM agent_nachrichten WHERE user_id = ? AND anhang LIKE ?",
+                              (int(user_id), f"%{angebot_id}%")).fetchall():
             try:
                 liste = json.loads(r["anhang"]) or []
             except ValueError:

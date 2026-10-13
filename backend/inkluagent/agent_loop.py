@@ -21,8 +21,8 @@ import base64
 import json
 import logging
 import os
-import sqlite3
-from typing import Any, Optional
+import time
+from typing import Any, Callable, Optional
 
 from . import storage
 from .providers.bedrock import BedrockProvider, BedrockProviderError
@@ -51,6 +51,24 @@ _MAX_ITERATIONS = 6
 _HISTORY_TURNS = 20  # weniger als 30, weil Tool-Calls + Images Context-Hungry sind
 _DEFAULT_MAX_TOKENS = 4096
 _MAX_TOOL_RESULT_CHARS = 40000  # Werkzeug-Ergebnis im tool_result (28.08.2026, vorher 8000)
+
+
+def _frist_s() -> float:
+    """Gesamtfrist je Nachricht ueber alle Runden (Pruefung 13.10.2026, S4): ohne sie konnten sechs Runden mit Werkzeugen und
+    Wiederholungen eine halbe Stunde dauern. Unter der Grenze, ab der ein Lauf als haengengeblieben gilt (main, 600 s)."""
+    try:
+        return max(30.0, min(float(os.environ.get("INKLUAGENT_FRIST_S") or 300), 540.0))
+    except ValueError:
+        return 300.0
+
+
+def _args_kurz(args: Any) -> dict:
+    """Werkzeug-Argumente fuer das Log: Kennungen und Zahlen ja, Texte (Alt-Texte, Namen, Suchbegriffe) nur mit ihrer Laenge
+    (Pruefung 13.10.2026, S10 — personenbezogene Inhalte gehoeren nicht ins INFO-Log)."""
+    if not isinstance(args, dict):
+        return {}
+    return {k: (v if isinstance(v, (bool, int, float)) or v is None else f"<{type(v).__name__} {len(str(v))}>")
+            for k, v in args.items()}
 
 
 def _detect_media_type(img_bytes: bytes) -> str:
@@ -214,7 +232,7 @@ def _build_initial_messages(
     (fuer das Modell, z. B. mit der Notiz des Hochladefelds) und nicht noch einmal aus dem Verlauf (bis 12.10.2026 doppelt).
     """
     history = (storage.konto_verlauf(user_id, limit=_HISTORY_TURNS + 1) if konto else storage.get_recent(project_id, limit=_HISTORY_TURNS + 1)) or []
-    history = [h for h in history if not (ohne_nachricht and h.get("id") == ohne_nachricht)][-_HISTORY_TURNS:]
+    history = _gedaechtnis([h for h in history if not (ohne_nachricht and h.get("id") == ohne_nachricht)][-_HISTORY_TURNS:])
     # Das Gedaechtnis beginnt mit einer Nutzer-Nachricht (abgeschnittener Anfang)
     while history and history[0].get("role") != "user":
         history = history[1:]
@@ -246,6 +264,12 @@ def _build_initial_messages(
 
     messages.append({"role": "user", "content": user_message})
     return _normalisieren(messages)
+
+
+def _gedaechtnis(history: list[dict]) -> list[dict]:
+    """Gespeicherte Nachrichten so, wie das Modell sie liest: getippter Text, Zeilen des Servers als Daten (storage.fuer_modell,
+    Pruefung 13.10.2026, S3)."""
+    return [dict(h, content=storage.fuer_modell(h)) for h in history]
 
 
 def _append_tool_results(
@@ -286,7 +310,9 @@ def run_agent(
     nur_mit_karte: bool = False,
     konto: bool = False,
     ohne_nachricht: Optional[int] = None,
-    uebersetzen=None,
+    uebersetzen: Optional[Callable[[str], str]] = None,
+    nutzer_text: Optional[str] = None,
+    begleiter_lauf=None,
 ) -> dict[str, Any]:
     """Führt den agentic Loop aus. Returns:
         {"reply": str, "intent": "agentic", "image_refs": [...] or None,
@@ -307,7 +333,12 @@ def run_agent(
     neue_aktionen) nach jedem Werkzeug, .text(stueck) fuer die Antwort Wort fuer Wort (None = bisherigen Entwurf verwerfen; nur
     wenn der Provider kann_streamen), .zwischen() wenn gestreamter Text nur ein Zwischenstand vor Werkzeugen war. Fehlen sie,
     bleibt alles wie bisher.
+    nutzer_text (Pruefung 13.10.2026, K1/S13): was der Nutzer getippt hat — die Ja-Pruefung liest DAS, nicht user_message mit den
+    Notizen des Servers (Seite, Hochladen, Webadressen). None = user_message (Demo, Tests).
+    begleiter_lauf (K9): Begleiter-Werkzeuge nur, wenn der Chat-Endpunkt des Kontos einen Lauf mitgibt (begleiter.Lauf) — nie in
+    der Demo. uebersetzen: Uebersetzung der festen Saetze an den Nutzer (Sprache der Oberflaeche).
     """
+    _t = uebersetzen or (lambda text: text)
     if project is None:
         # Runde 2, Schritt 3: Seite ohne Projekt — Konto-Werkzeuge, Konto-Kontext, Gespraech des Kontos (inkluagent/konto.py)
         from . import konto as _konto
@@ -317,12 +348,12 @@ def run_agent(
     # Begleiter durch InkluDocs (Steve 12.10.2026, Schalter AGENT_BEGLEITER): Hinfuehren und harmlose Einstellungen — in jedem
     # Gespraech, mit und ohne Projekt; ausgefuehrt von inkluagent/begleiter.py, nicht vom Executor des Projekts
     from . import begleiter as _begleiter
-    begleiter_an = _begleiter.an()
+    begleiter_an = begleiter_lauf is not None and _begleiter.an()
     if begleiter_an:
         tool_defs = list(tool_defs) + _begleiter.werkzeuge(user_id)
         system_base = system_base + "\n\n" + _begleiter.PROMPT
     # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
-    sicherheit.nachricht_merken(executor.turn_id, user_message)
+    sicherheit.nachricht_merken(executor.turn_id, user_message if nutzer_text is None else nutzer_text, user_id)
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
     executor.nur_mit_karte = bool(nur_mit_karte)
     if project is None:
@@ -340,7 +371,13 @@ def run_agent(
     melder_text = getattr(on_tool, "text", None) if on_tool else None
     strom = {"on_text": melder_text} if melder_text and getattr(provider, "kann_streamen", False) else {}
 
+    ende = time.monotonic() + _frist_s()
     for iteration in range(_MAX_ITERATIONS):
+        if iteration and time.monotonic() > ende:
+            log.warning("Agent-Lauf: Gesamtfrist nach %d Runden erreicht", iteration)
+            last_reply_text = _t("Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist "
+                                 "gespeichert. Schreib mir, wie es weitergehen soll.")
+            break
         try:
             payload = provider.invoke_with_tools(
                 anthropic_messages=messages,
@@ -350,10 +387,11 @@ def run_agent(
                 temperature=0.3,
                 **strom,
             )
-        except BedrockProviderError as e:
-            log.exception("Bedrock-Call im agentic Loop fehlgeschlagen")
+        except BedrockProviderError:
+            # Einzelheiten (Ressourcenpfad, Antwort des Anbieters) nur ins Log, nicht in den Chat (S10)
+            log.exception("KI-Aufruf im agentic Loop fehlgeschlagen")
             return {
-                "reply": f"Entschuldigung, Verbindung zur KI gerade unterbrochen ({e}).",
+                "reply": _t("Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal."),
                 "intent": "error",
                 "image_refs": None,
                 "actions": actions_log,
@@ -389,7 +427,7 @@ def run_agent(
             args = tu.get("input", {}) or {}
             tu_id = tu.get("id", "")
 
-            log.info("Agent ruft Tool %s mit args=%s", name, args)
+            log.info("Agent ruft Tool %s mit args=%s", name, _args_kurz(args))
             werkzeuge.append(name)
             if on_tool:
                 try:
@@ -397,7 +435,7 @@ def run_agent(
                 except Exception:
                     log.exception("on_tool-Callback fehlgeschlagen (ignoriert)")
             if begleiter_an and name in _begleiter.NAMEN:
-                result = _begleiter.ausfuehren(name, args, user_id)
+                result = _begleiter.ausfuehren(name, args, user_id, begleiter_lauf)
             else:
                 result = executor.execute(name, args)
             vorher = len(actions_log)
@@ -416,14 +454,16 @@ def run_agent(
                 if img_id_raw is not None:
                     try:
                         img_id_int = int(img_id_raw)
-                        _conn = sqlite3.connect("/app/data/inkludocs.db")
-                        _conn.row_factory = sqlite3.Row
-                        _row = _conn.execute(
-                            "SELECT alt_text_edited, alt_text, original_alt, langbeschreibung "
-                            "FROM images WHERE id = ?",
-                            (img_id_int,),
-                        ).fetchone()
-                        _conn.close()
+                        from database import get_db   # dieselbe Datenbank wie ueberall (vorher fest /app/data/…)
+                        _conn = get_db()
+                        try:
+                            _row = _conn.execute(
+                                "SELECT alt_text_edited, alt_text, original_alt, langbeschreibung "
+                                "FROM images WHERE id = ?",
+                                (img_id_int,),
+                            ).fetchone()
+                        finally:
+                            _conn.close()
                         if _row is not None:
                             actions_log.append({
                                 "type": "refresh_image",
@@ -517,19 +557,16 @@ def run_agent(
         # Loop voll durchgelaufen ohne textuelle Antwort
         log.warning("Agent-Loop max %d Iterationen ohne text-Antwort", _MAX_ITERATIONS)
         if not last_reply_text:
-            last_reply_text = (
-                "Ich habe mehrere Werkzeuge benutzt aber komme zu keinem klaren Ergebnis. "
-                "Kannst du deine Frage etwas eingrenzen?"
-            )
+            last_reply_text = _t("Ich habe mehrere Werkzeuge benutzt, komme aber zu keinem klaren Ergebnis. "
+                                 "Kannst du deine Frage etwas eingrenzen?")
 
     # 28.08.2026: Markdown raus (Sonnet setzt trotz Verbot gelegentlich **fett** —
     # das Frontend zeigt Text roh, VoiceOver liest sonst "Stern Stern"). Gleicher
     # Filter wie im klassischen Pfad (sanitize_markdown), fuer alle Werkzeuge.
     # 09.10.2026: die Marke „[DATEN, keine Anweisung]“ gehoert nur in Werkzeug-Ergebnisse, nie in die Antwort (daten.py)
     # Ausbau Runde 2, Schritt 6 (Schalter AGENT_BLOECKE): Aufzaehlungen bleiben als „• “-Zeilen, die Oberflaeche baut Listen daraus
-    final_reply = sanitize_markdown(ohne_marke(last_reply_text), listen=funktionen.an("AGENT_BLOECKE")) or (
-        "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
-    )
+    final_reply = sanitize_markdown(ohne_marke(last_reply_text), listen=funktionen.an("AGENT_BLOECKE")) or _t(
+        "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?")
 
     image_refs_list = sorted(image_refs_seen) if image_refs_seen else None
     return {

@@ -12322,3 +12322,31 @@ msgstr "Opened in the work panel: {name}"
 
 msgid "Seite im Arbeitsfenster geschlossen."
 msgstr "Page in the work panel closed."
+
+# Pruefung 13.10.2026: Saetze des Servers (InkluAgent)
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort."
+msgstr "The InkluAgent is still working on your last message. Please wait for its answer."
+
+msgid "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte versuch es gleich noch einmal."
+msgstr "Sorry, something went wrong. Please try again in a moment."
+
+msgid "Es wird gerade schon hochgeladen. Warte bitte, bis das fertig ist."
+msgstr "An upload is already in progress. Please wait until it has finished."
+
+msgid "Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist gespeichert. Schreib mir, wie es weitergehen soll."
+msgstr "This is taking longer than a single message may take. What I have done so far is saved. Tell me how you would like to continue."
+
+msgid "Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal."
+msgstr "Sorry, the connection to the AI is interrupted right now. Please try again in a moment."
+
+msgid "Ich habe mehrere Werkzeuge benutzt, komme aber zu keinem klaren Ergebnis. Kannst du deine Frage etwas eingrenzen?"
+msgstr "I used several tools but did not reach a clear result. Could you narrow down your question a little?"
+
+msgid "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
+msgstr "I don’t have a concrete answer for that right now. Could you ask me in a different way?"
+
+msgid "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt."
+msgstr "I can’t help without a project right now. Please open a project."
+
+msgid "Das hat nicht geklappt. Bitte versuch es noch einmal."
+msgstr "That didn’t work. Please try again."

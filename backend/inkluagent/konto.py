@@ -550,7 +550,7 @@ def nachrichten(user_id: int, user_message: str, ohne_nachricht: Optional[int] =
     Nachricht — mit Marke „ohne Projekt“, wenn zuletzt ein Projekt dran war."""
     from . import agent_loop, storage
     history = storage.konto_verlauf(user_id, limit=verlauf_laenge + 1) or []
-    history = [h for h in history if not (ohne_nachricht and h.get("id") == ohne_nachricht)][-verlauf_laenge:]
+    history = agent_loop._gedaechtnis([h for h in history if not (ohne_nachricht and h.get("id") == ohne_nachricht)][-verlauf_laenge:])
     while history and history[0].get("role") != "user":
         history = history[1:]
     letztes = history[-1].get("project_id") if history else None

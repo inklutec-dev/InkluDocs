@@ -74,11 +74,18 @@ _G_LETZTES = ("Das ist nicht das zuletzt genannte Angebot. Ein Ja gilt nur für 
 _G_TURN = ("Die Zustimmung muss vom Nutzer in einer eigenen, spaeteren Nachricht kommen — nicht in derselben "
            "Nachricht wie die Preisauskunft. Nenne den Preis und warte auf sein Ja.")
 _G_PREIS = "Der Preis hat sich seit der Auskunft geaendert. Nenne dem Nutzer den neuen Preis und frage erneut."
-_GRUND_KENNWORT = {_G_KEIN: "angebot", _G_LETZTES: "letztes", _G_TURN: "nachricht", _G_PREIS: "preis"}
-# Ja-Pruefung auf dem Server (Ausbau Runde 1, Schritt 2, Schalter funktionen.AGENT_SICHERHEIT): ein getipptes Ja zaehlt nur,
-# wenn die Nachricht des Nutzers ein kurzes, eindeutiges Ja ist; der Knopf der Karte gilt immer.
-from ..sicherheit import G_JA as _G_JA, ja_grund as _ja_grund  # noqa: E402
+_G_KNOPF = ("Löschen ist unumkehrbar und geht nur über den Knopf der Karte unter deiner Antwort, nicht über ein getipptes Ja. "
+            "Sag dem Nutzer in einem Satz, dass er den Knopf drücken kann.")
+_GRUND_KENNWORT = {_G_KEIN: "angebot", _G_LETZTES: "letztes", _G_TURN: "nachricht", _G_PREIS: "preis", _G_KNOPF: "knopf"}
+# Ja-Pruefung auf dem Server (Ausbau Runde 1, Schritt 2; seit der Pruefung 13.10.2026 immer, S2): ein getipptes Ja zaehlt nur,
+# wenn die getippte Nachricht ein kurzes, eindeutiges Ja ist und direkt auf das Angebot folgt; der Knopf der Karte gilt immer.
+from ..sicherheit import G_DIREKT as _G_DIREKT, G_JA as _G_JA, ja_grund as _ja_grund  # noqa: E402
 _GRUND_KENNWORT[_G_JA] = "ja"
+_GRUND_KENNWORT[_G_DIREKT] = "ja"
+# Unumkehrbar (Art im Angebots-Schluessel): nur der Knopf der Karte loest aus, nie bestaetigt=true vom Modell (S2: vorher genuegte
+# ein Ja auf eine Frage, deren Text das Modell bestimmt — eine eingeschleuste Anweisung konnte so ueber zwei Runden loeschen).
+# loeschen = dokument_loeschen (tools/pdf.py), ablage_loeschen = ausgabe_loeschen; projekt_loeschen (konto.py) schon vorher so.
+_UNUMKEHRBAR_ARTEN = frozenset({"loeschen", "bild_loeschen", "ablage_loeschen", "projekt_loeschen"})
 
 
 def _angebot_merken(schluessel: tuple, preis: int, turn_id: str) -> str:
@@ -128,8 +135,10 @@ def _angebot_einloesen(schluessel: tuple, preis: int, turn_id: str) -> Optional[
             return _G_LETZTES
         if a["turn"] == turn_id:
             return _G_TURN
-        if getattr(_KARTE, "id", None) != a.get("id"):
-            g = _ja_grund(turn_id)          # None, solange der Schalter aus ist
+        if getattr(_KARTE, "id", None) != a.get("id"):   # getipptes Ja (bestaetigt=true vom Modell), nicht der Knopf
+            if schluessel[2] in _UNUMKEHRBAR_ARTEN:
+                return _G_KNOPF
+            g = _ja_grund(turn_id, a["turn"])
             if g:
                 return g
         if a["preis"] != int(preis or 0):
@@ -252,11 +261,11 @@ def _kartenfelder(a: dict, zustand: str) -> dict:
     return {"zustand": "abgelaufen", "titel": a.get("titel_abgelaufen") or "Nicht mehr gültig", "text": a.get("text") or ""}
 
 
-def _karte_speichern(project_id: int, angebot_id: str, felder: dict) -> None:
+def _karte_speichern(project_id: int, angebot_id: str, felder: dict, user_id: int) -> None:
     """Zustand der Karte im gespeicherten Verlauf festhalten (ueberlebt Neuladen und Neustart)."""
     try:
         from inkluagent import storage
-        storage.karte_aktualisieren(int(project_id), angebot_id, felder)
+        storage.karte_aktualisieren(int(project_id), angebot_id, felder, user_id=int(user_id))
     except Exception:  # noqa: BLE001 — ohne Datenbank (Unit-Tests) bleibt es beim Zustand im Speicher
         log.debug("Karte %s: Zustand nicht gespeichert", angebot_id, exc_info=True)
 
@@ -290,7 +299,7 @@ def nachbereiten(result: dict, werkzeug: str, args: dict, user_id: int, project_
         if zustand == "erledigt":
             with _SPERRE:
                 _ERLEDIGT[aid] = (int(user_id), int(project_id), time.time(), felder)
-        _karte_speichern(project_id, aid, felder)
+        _karte_speichern(project_id, aid, felder, user_id)
         karten.append(dict(felder, angebot_id=aid))
     if karten:
         result["karten"] = karten
