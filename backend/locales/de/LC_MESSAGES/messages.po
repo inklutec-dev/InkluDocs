@@ -12457,3 +12457,43 @@ msgstr "Die Töne sind aus. Schalte sie oben ein, um die Probe zu hören."
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Dein Browser spielt hier gerade keinen Ton ab."
+
+# Pruefung 13.10.2026, Runde 2: Oberflaeche des InkluAgent (A-N2, A-N4, A-N6, K-N1)
+msgid "Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück."
+msgstr "Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück."
+
+#, python-brace-format
+msgid "„{name}“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "„{name}“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+
+msgid "Diese Seite lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "Diese Seite lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+
+#, python-brace-format
+msgid "Nicht gesendet: {grund}"
+msgstr "Nicht gesendet: {grund}"
+
+msgid "Dein Text steht noch im Eingabefeld."
+msgstr "Dein Text steht noch im Eingabefeld."
+
+#, python-brace-format
+msgid "Der Server hat die Nachricht nicht angenommen (Fehler {n})."
+msgstr "Der Server hat die Nachricht nicht angenommen (Fehler {n})."
+
+msgid "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt."
+msgstr "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt."
+
+msgid "Diese Seiten öffnen als ganze Seite, ohne Arbeitsfenster:"
+msgstr "Diese Seiten öffnen als ganze Seite, ohne Arbeitsfenster:"
+
+msgid "deine Projekte und die Startseite (dort ist der InkluAgent selbst)"
+msgstr "deine Projekte und die Startseite (dort ist der InkluAgent selbst)"
+
+msgid "der Wechsel der Sprache, Anmelden und Abmelden"
+msgstr "der Wechsel der Sprache, Anmelden und Abmelden"
+
+msgid "die Rechtstexte: Impressum, Datenschutz, Datensicherheit, Nutzungsbedingungen, Widerrufsbelehrung und Auftragsverarbeitung"
+msgstr "die Rechtstexte: Impressum, Datenschutz, Datensicherheit, Nutzungsbedingungen, Widerrufsbelehrung und Auftragsverarbeitung"
+
+msgid "die API-Dokumentation"
+msgstr "die API-Dokumentation"

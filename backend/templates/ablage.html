@@ -137,7 +137,7 @@
           const rest = document.querySelectorAll('#ausgabenContainer li.dash-item').length;
           if (rest === 0) { laden(); return; }
           const ziel = next ? next.querySelector('h2') : byId('ausgabenTitel');
-          if (ziel) { ziel.setAttribute('tabindex', '-1'); ziel.focus(); }
+          if (ziel) fokusAuf(ziel);   // Runde 2 (A-N9, B19): ohne dauerhaftes tabindex an der Ueberschrift
         } catch (e) {
           announce(t('Löschen fehlgeschlagen.'));
           wrap.innerHTML = ''; wrap.appendChild(btn);
@@ -238,7 +238,9 @@
     const ul = el('ul', 'dash-list');
     liste.forEach((a) => ul.appendChild(eintrag(a, !!data.projekt)));
     cont.appendChild(ul);
-    listeKuerzen(ul, { schluessel: 'ablage' });   // fuenf neueste + „Alle anzeigen“ (Michael Karbe, Feedback 20261012 - 1, Punkt 7)
+    // fuenf neueste + „Alle anzeigen“ (Michael Karbe, Feedback 20261012 - 1, Punkt 7); das Ziel einer Sprungmarke (#ausgabe-…) bleibt
+    // sichtbar, sonst ginge der Fokus unten ins Leere (Pruefung 13.10.2026, Runde 2, A-N9)
+    listeKuerzen(ul, { schluessel: 'ablage', behalten: (e) => !!e.id && '#' + e.id === window.location.hash });
   }
 
   async function laden() {
@@ -257,10 +259,13 @@
     }
     render(data);
     announce(t('{n} Einträge geladen.', { n: (data.ausgaben || []).length }));
-    // Sprungmarke aus dem Export-Bereich (#ausgabe-<id>): Fokus auf die H2 des Eintrags.
+    // Sprungmarke aus dem Export-Bereich (#ausgabe-<id>): Fokus auf die H2 des Eintrags. Pruefung 13.10.2026, Runde 2 (A-N9): ueber
+    // fokusAuf (dashboard.js) — tabindex nur, solange die Ueberschrift den Fokus hat (ein dauerhaftes liess VoiceOver „klickbar“ sagen,
+    // B19). Im Arbeitsfenster setzt NUR diese Seite den Fokus (die Sprungmarke zaehlt dort wie ?hin=, inkluagent.js) — vorher zuerst die
+    // Ueberschrift 1, gleich danach der Eintrag.
     if (window.location.hash && window.location.hash.startsWith('#ausgabe-')) {
       const ziel = document.querySelector(window.location.hash + ' h2');
-      if (ziel) { ziel.setAttribute('tabindex', '-1'); ziel.focus(); ziel.scrollIntoView({ block: 'start' }); }
+      if (ziel) { fokusAuf(ziel, { preventScroll: true }); ziel.scrollIntoView({ block: 'start' }); }
     }
   }
   byId('projektFilter').addEventListener('change', (e) => {

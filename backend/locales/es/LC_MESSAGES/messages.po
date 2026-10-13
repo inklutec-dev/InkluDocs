@@ -12456,3 +12456,43 @@ msgstr "Los sonidos están desactivados. Actívalos arriba para escuchar la mues
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Tu navegador no reproduce sonido aquí en este momento."
+
+# Pruefung 13.10.2026, Runde 2: Oberflaeche des InkluAgent (A-N2, A-N4, A-N6, K-N1)
+msgid "Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück."
+msgstr "La ventana de trabajo cubre ahora la conversación. Escape o «Volver a la conversación» te lleva de vuelta."
+
+#, python-brace-format
+msgid "„{name}“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "«{name}» no se puede abrir ahora mismo. Inténtalo de nuevo más tarde."
+
+msgid "Diese Seite lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "Esta página no se puede abrir ahora mismo. Inténtalo de nuevo más tarde."
+
+#, python-brace-format
+msgid "Nicht gesendet: {grund}"
+msgstr "No enviado: {grund}"
+
+msgid "Dein Text steht noch im Eingabefeld."
+msgstr "Tu texto sigue en el campo de entrada."
+
+#, python-brace-format
+msgid "Der Server hat die Nachricht nicht angenommen (Fehler {n})."
+msgstr "El servidor no aceptó el mensaje (error {n})."
+
+msgid "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt."
+msgstr "En la vista de agente, la conversación con el InkluAgent está siempre abierta; arriba en cada página, el enlace de salto «Ir al InkluAgent» lleva directamente allí. Las páginas de la navegación y los enlaces se abren en la ventana de trabajo sin que salgas de la conversación."
+
+msgid "Diese Seiten öffnen als ganze Seite, ohne Arbeitsfenster:"
+msgstr "Estas páginas se abren como página completa, sin ventana de trabajo:"
+
+msgid "deine Projekte und die Startseite (dort ist der InkluAgent selbst)"
+msgstr "tus proyectos y la página de inicio (allí está el propio InkluAgent)"
+
+msgid "der Wechsel der Sprache, Anmelden und Abmelden"
+msgstr "el cambio de idioma, iniciar sesión y cerrar sesión"
+
+msgid "die Rechtstexte: Impressum, Datenschutz, Datensicherheit, Nutzungsbedingungen, Widerrufsbelehrung und Auftragsverarbeitung"
+msgstr "los textos legales: aviso legal, privacidad, seguridad de datos, términos de uso, derecho de desistimiento y encargo del tratamiento"
+
+msgid "die API-Dokumentation"
+msgstr "la documentación de la API"

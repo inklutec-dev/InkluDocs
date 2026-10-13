@@ -12028,3 +12028,43 @@ msgstr "Ljuden är av. Slå på dem ovan för att höra provet."
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Din webbläsare spelar inte upp ljud här just nu."
+
+# Pruefung 13.10.2026, Runde 2: Oberflaeche des InkluAgent (A-N2, A-N4, A-N6, K-N1)
+msgid "Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück."
+msgstr "Arbetsfönstret ligger nu över samtalet. Escape eller ”Tillbaka till samtalet” tar dig tillbaka."
+
+#, python-brace-format
+msgid "„{name}“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "”{name}” kan inte öppnas just nu. Försök igen senare."
+
+msgid "Diese Seite lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "Den här sidan kan inte öppnas just nu. Försök igen senare."
+
+#, python-brace-format
+msgid "Nicht gesendet: {grund}"
+msgstr "Inte skickat: {grund}"
+
+msgid "Dein Text steht noch im Eingabefeld."
+msgstr "Din text finns kvar i inmatningsfältet."
+
+#, python-brace-format
+msgid "Der Server hat die Nachricht nicht angenommen (Fehler {n})."
+msgstr "Servern tog inte emot meddelandet (fel {n})."
+
+msgid "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt."
+msgstr "I agentvyn är samtalet med InkluAgent alltid öppet; högst upp på varje sida leder hopplänken ”Gå till InkluAgent” direkt dit. Sidor från navigeringen och länkar öppnas i arbetsfönstret utan att du lämnar samtalet."
+
+msgid "Diese Seiten öffnen als ganze Seite, ohne Arbeitsfenster:"
+msgstr "De här sidorna öppnas som hel sida, utan arbetsfönster:"
+
+msgid "deine Projekte und die Startseite (dort ist der InkluAgent selbst)"
+msgstr "dina projekt och startsidan (där finns InkluAgent själv)"
+
+msgid "der Wechsel der Sprache, Anmelden und Abmelden"
+msgstr "byte av språk, logga in och logga ut"
+
+msgid "die Rechtstexte: Impressum, Datenschutz, Datensicherheit, Nutzungsbedingungen, Widerrufsbelehrung und Auftragsverarbeitung"
+msgstr "de juridiska texterna: impressum, integritetspolicy, datasäkerhet, användarvillkor, ångerrätt och personuppgiftsbiträde"
+
+msgid "die API-Dokumentation"
+msgstr "API-dokumentationen"

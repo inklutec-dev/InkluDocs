@@ -122,7 +122,9 @@ class Listen(unittest.TestCase):
         self.assertIn("const anzahl = opts.anzahl || 5;", dash)
         self.assertIn("t('Alle anzeigen ({n})'", dash)
         self.assertIn("listeKuerzen(ul, { schluessel: 'projekte' })", lies(BACKEND, "templates", "projekte.html"))
-        self.assertIn("listeKuerzen(ul, { schluessel: 'ablage' })", lies(BACKEND, "templates", "ablage.html"))
+        # Pruefung 13.10.2026, Runde 2 (A-N9): das Ziel der Sprungmarke (#ausgabe-…) bleibt beim Kuerzen sichtbar
+        self.assertIn("listeKuerzen(ul, { schluessel: 'ablage', behalten: (e) => !!e.id && '#' + e.id === window.location.hash })",
+                      lies(BACKEND, "templates", "ablage.html"))
         self.assertIn("listeKuerzen(ziel, { schluessel: 'auftraege'", lies(BACKEND, "templates", "express.html"))
         self.assertIn("schluessel: 'dokumente-' + projectId, vonHinten: true", lies(FRONTEND, "dokument.js"))
 

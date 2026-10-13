@@ -12153,3 +12153,43 @@ msgstr "Lydene er slået fra. Slå dem til ovenfor for at høre prøven."
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Din browser afspiller ikke lyd her lige nu."
+
+# Pruefung 13.10.2026, Runde 2: Oberflaeche des InkluAgent (A-N2, A-N4, A-N6, K-N1)
+msgid "Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück."
+msgstr "Arbejdsvinduet ligger nu over samtalen. Escape eller „Tilbage til samtalen“ fører dig tilbage."
+
+#, python-brace-format
+msgid "„{name}“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "„{name}“ kan ikke åbnes lige nu. Prøv igen senere."
+
+msgid "Diese Seite lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "Denne side kan ikke åbnes lige nu. Prøv igen senere."
+
+#, python-brace-format
+msgid "Nicht gesendet: {grund}"
+msgstr "Ikke sendt: {grund}"
+
+msgid "Dein Text steht noch im Eingabefeld."
+msgstr "Din tekst står stadig i indtastningsfeltet."
+
+#, python-brace-format
+msgid "Der Server hat die Nachricht nicht angenommen (Fehler {n})."
+msgstr "Serveren tog ikke imod beskeden (fejl {n})."
+
+msgid "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt."
+msgstr "I agentvisningen er samtalen med InkluAgent altid åben; øverst på hver side fører springlinket „Gå til InkluAgent“ direkte derhen. Sider fra navigationen og links åbner i arbejdsvinduet, uden at du forlader samtalen."
+
+msgid "Diese Seiten öffnen als ganze Seite, ohne Arbeitsfenster:"
+msgstr "Disse sider åbner som hel side, uden arbejdsvindue:"
+
+msgid "deine Projekte und die Startseite (dort ist der InkluAgent selbst)"
+msgstr "dine projekter og startsiden (der er InkluAgent selv)"
+
+msgid "der Wechsel der Sprache, Anmelden und Abmelden"
+msgstr "skift af sprog, log ind og log ud"
+
+msgid "die Rechtstexte: Impressum, Datenschutz, Datensicherheit, Nutzungsbedingungen, Widerrufsbelehrung und Auftragsverarbeitung"
+msgstr "de juridiske tekster: kolofon, privatlivspolitik, datasikkerhed, brugsbetingelser, fortrydelsesret og databehandling"
+
+msgid "die API-Dokumentation"
+msgstr "API-dokumentationen"

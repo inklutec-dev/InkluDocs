@@ -46,6 +46,18 @@
    Neue öffentliche Seite anlegen = dieses Template erweitern, Route mit
    template_context(request, lang, is_staging=...) rendern, fertig.
    Doku: docs/SEITENGERUEST.md
+
+   EINGEBETTET (Prüfung 13.10.2026, Runde 2, A-N6): im Arbeitsfenster der
+   Agentenansicht (eingebettet aus template_context, i18n.eingebettet — wie
+   base_app.html) OHNE Seitenleiste und Fußzeile; oben statt „Zum
+   Hauptinhalt springen“ der Sprunglink „Zurück zum Gespräch“ (#zumGespraech,
+   dashboard.js eingebettetEinrichten). Vorher hatten diese Seiten keine
+   eingebettete Fassung: „Über uns und Kontakt“ verließ ohne Vorwarnung die
+   Agentenansicht. Welche davon im Arbeitsfenster öffnen, sagt die Liste des
+   Servers (window.INKLUAGENT.fensterSeiten: Über uns, Preise, Kündigen,
+   Widerrufen); die Rechtstexte bleiben ganze Seite.
+   window.EINGEBETTET steht immer da (true/false): der Rahmen erkennt daran
+   eine Seite der App, die sich nicht einbettet (inkluagentRahmenGeladen).
    ────────────────────────────────────────────────────────────────────────── #}
 {% extends "base.html" %}
 {% import "_fusszeile.html" as fusszeile with context %}
@@ -54,10 +66,16 @@
 <link rel="stylesheet" href="/static/dashboard.css?v={{ asset_version }}">
 {% endblock %}
 
+{% block body_attribute %}{% if eingebettet %} class="eingebettet"{% endif %}{% endblock %}
+
 {% block body %}
+{% if eingebettet %}
+<a href="#main" id="zumGespraech" class="dash-skip">{{ _('Zurück zum Gespräch') }}</a>
+{% else %}
 <a href="#main" class="dash-skip">{{ _('Zum Hauptinhalt springen') }}</a>
+{% endif %}
 <div class="app-shell">
-  <div class="app-sidebar" id="appSidebar"></div>
+  {% if not eingebettet %}<div class="app-sidebar" id="appSidebar"></div>{% endif %}
   <div class="app-content">
     <main id="main" class="dash-main" tabindex="-1">
       {# Bewusst KEIN Zurueck-Link unter der H1 (Steve 25.08.2026): Die
@@ -67,9 +85,11 @@
       <h1>{% block seitentitel %}{% endblock %}</h1>
 {% block main %}{% endblock %}
     </main>
+    {% if not eingebettet %}
     <footer class="dash-footer">
       {{ fusszeile.rechtslinks(' · ') }}
     </footer>
+    {% endif %}
   </div>
 </div>
 
@@ -81,6 +101,7 @@
 window.LANG = "{{ current_lang }}";
 window.I18N = {{ i18n_json|safe }};
 window.OEFFENTLICH = true;
+window.EINGEBETTET = {{ 'true' if eingebettet else 'false' }};   {# im Arbeitsfenster der Agentenansicht (Runde 2, A-N6) #}
 </script>
 <script src="/static/dashboard.js?v={{ asset_version }}"></script>
 {% block page_script %}{% endblock %}

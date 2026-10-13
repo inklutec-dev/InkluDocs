@@ -12454,3 +12454,43 @@ msgstr "Sounds are off. Turn them on above to hear the sample."
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Your browser is not playing sound here right now."
+
+# Pruefung 13.10.2026, Runde 2: Oberflaeche des InkluAgent (A-N2, A-N4, A-N6, K-N1)
+msgid "Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück."
+msgstr "The work panel now covers the conversation. Escape or “Back to the conversation” takes you back."
+
+#, python-brace-format
+msgid "„{name}“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "“{name}” can’t be opened right now. Please try again later."
+
+msgid "Diese Seite lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "This page can’t be opened right now. Please try again later."
+
+#, python-brace-format
+msgid "Nicht gesendet: {grund}"
+msgstr "Not sent: {grund}"
+
+msgid "Dein Text steht noch im Eingabefeld."
+msgstr "Your text is still in the input field."
+
+#, python-brace-format
+msgid "Der Server hat die Nachricht nicht angenommen (Fehler {n})."
+msgstr "The server did not accept the message (error {n})."
+
+msgid "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt."
+msgstr "In the agent view, the conversation with the InkluAgent is always open; at the top of every page the skip link “Skip to InkluAgent” takes you straight there. Pages from the navigation and links open in the work panel without you leaving the conversation."
+
+msgid "Diese Seiten öffnen als ganze Seite, ohne Arbeitsfenster:"
+msgstr "These pages open as a whole page, without the work panel:"
+
+msgid "deine Projekte und die Startseite (dort ist der InkluAgent selbst)"
+msgstr "your projects and the home page (the InkluAgent is right there)"
+
+msgid "der Wechsel der Sprache, Anmelden und Abmelden"
+msgstr "changing the language, signing in and signing out"
+
+msgid "die Rechtstexte: Impressum, Datenschutz, Datensicherheit, Nutzungsbedingungen, Widerrufsbelehrung und Auftragsverarbeitung"
+msgstr "the legal texts: imprint, privacy policy, data security, terms of use, right of withdrawal and data processing"
+
+msgid "die API-Dokumentation"
+msgstr "the API documentation"

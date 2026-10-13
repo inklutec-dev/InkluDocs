@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
     {% block head %}{% endblock %}
 </head>
-<body>
+{# body_attribute (Pruefung 13.10.2026, Runde 2, A-N6): Attribute am body, z. B. class="eingebettet" der oeffentlichen Seiten im
+   Arbeitsfenster (base_oeffentlich.html); leer wie bisher #}
+<body{% block body_attribute %}{% endblock %}>
     {% block body %}{% endblock %}
 
 </body>
