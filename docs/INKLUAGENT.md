@@ -1260,8 +1260,12 @@ A-N7 über den Barrierefreiheitsbaum), `probe_r2_senden` (A-N4, A-N5, K12), `pro
 `probe_r2_hin` (S-N9), `probe_r2_ansagen` (A-N8, B11/4, HN3, HN1). Gemeinsames in `r2_gemeinsam.py`: CDP-Knoten des
 Barrierefreiheitsbaums und Init-Skripte, die `fensterSeiten` und das Fehlen von `hinZiele` nachstellen. Messung mit dem Messrahmen
 der Prüfung und Chrome 155: `scratchpad/a11y-probe-r2/messung_r2.py`. Angepasst an das gewollte neue Verhalten (Sicherung
-`*.vor-runde2`): `probe_pr13_b2_breite`, `probe_pr13_b7_escape` (ohne `aria-modal`), `probe_pr13_b16_nicht_gesendet` („Nicht gesendet: …“).
-Unit-Tests: `tests/test_pruefung2_oberflaeche.py` (Node für die reinen Funktionen, Vorlagen am Server, Quelltext).
+`*.vor-runde2`): `probe_pr13_b2_breite`, `probe_pr13_b7_escape` (ohne `aria-modal`), `probe_pr13_b16_nicht_gesendet` („Nicht gesendet: …“),
+`probe_pr13_b3_ueberlagerung` und `probe_pr13_b12_senden` (warten 1500 statt 400 ms auf eine Ansage — Mindestabstand, A-N8).
+Unit-Tests: `tests/test_pruefung2_oberflaeche.py` (Node für die reinen Funktionen, Vorlagen am Server, Quelltext), angepasst
+`test_pruefung_1310_oberflaeche.py`, `test_agent_arbeitsfenster_seiten.py`, `test_agent_begleiter.py`, `test_michael_feedback_1012.py`.
+Stand der Läufe am 13.10.2026: `probe_r2_alle` 89 OK, `probe_pr13_alle` 149 OK, `probe_pr13_vorhandene` 176 OK, je 0 FEHLT; Unit-Suite
+1052 grün, 6 übersprungen, rot nur die drei Dateien, die außerhalb des Containers immer rot sind.
 
 ### Offen
 
