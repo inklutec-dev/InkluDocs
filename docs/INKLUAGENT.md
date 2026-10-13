@@ -1017,7 +1017,8 @@ bestehende Tests.
   ohne die Ereignisschleife zu blockieren; höchstens 300 Bilder und 300 MB je Seite.
 - S14 `/set-language` leitet nur auf eigene Pfade (kein `//host`, kein `/\host`) und ohne `eingebettet`; die Seite bekommt
   die erlaubten Sprungziele für `?hin=` (`window.INKLUAGENT.hinZiele`).
-- S15/K14 Selbst-Einrahmen nie für Anmelden, Registrieren, Passwort, Einladungen, Freigaben; HTML mit Schalter trägt
+- S15/K14 Selbst-Einrahmen nie für Registrieren, Passwort, Einladungen, Freigaben (die Anmeldung schon: läuft die Sitzung im
+  Arbeitsfenster ab, holt die Agentenansicht sie als ganze Seite nach vorn, K7); HTML mit Schalter trägt
   `Vary: Sec-Fetch-Dest` und `Cache-Control: private, no-cache`.
 - S16 `pdfua_export` liest XML mit dem sicheren Parser (`docx_processor._safe_parser`).
 - H5 Genau ein uvicorn-Worker (Dockerfile-Kommentar, Log-Fehler bei `WEB_CONCURRENCY > 1`).

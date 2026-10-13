@@ -426,9 +426,11 @@ class MitServer(unittest.TestCase):
     def test_rahmen_nie_fuer_anmelden_und_freigaben_und_getrennte_fassungen(self):
         with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True):
             c = self.client()
-            for pfad in ("/login", "/register", "/reset", "/freigabe/abc", "/team-einladung/abc", "/set-language/de"):
+            for pfad in ("/register", "/reset", "/freigabe/abc", "/team-einladung/abc", "/set-language/de"):
                 r = c.get(pfad, follow_redirects=False)
                 self.assertEqual(r.headers.get("x-frame-options"), "DENY", pfad)
+            # die Anmeldung darf die eigene Seite einrahmen: die Agentenansicht holt sie nach vorn (K7)
+            self.assertEqual(c.get("/login").headers.get("x-frame-options"), "SAMEORIGIN")
             r = c.get("/einstellungen")
             self.assertEqual(r.headers.get("x-frame-options"), "SAMEORIGIN")
             self.assertIn("Sec-Fetch-Dest", r.headers.get("vary", ""), "K14")

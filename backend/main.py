@@ -481,7 +481,10 @@ app.add_middleware(
 
 
 
-_NIE_EINRAHMEN = re.compile(r"^/(login|logout|register|reset|set-language|team-einladung|freigabe)(/|$)")
+# Nie im Rahmen (S15): Registrieren, Passwort, Einladungen und Gast-Freigaben (Einstiege aus Mails), Sprachwechsel. Die Anmeldung
+# darf die eigene Seite einrahmen: laeuft die Sitzung ab, waehrend eine Seite im Arbeitsfenster offen ist, landet der Rahmen dort,
+# und die Agentenansicht holt sie sofort als ganze Seite nach vorn (K7, inkluagent.js) — mit DENY saehe sie nur eine Fehlerseite.
+_NIE_EINRAHMEN = re.compile(r"^/(register|reset|set-language|team-einladung|freigabe)(/|$)")
 
 
 class _RahmenSchutz:
@@ -501,8 +504,8 @@ class _RahmenSchutz:
 
         # Arbeitsfenster der Agentenansicht (13.10.2026, Schalter AGENT_ARBEITSFENSTER): die App rahmt ihre eigenen Seiten ein —
         # dann SAMEORIGIN / 'self' (nur die eigene Seite darf einrahmen, fremde weiterhin nicht); ohne Schalter wie bisher.
-        # Anmelden, Registrieren, Passwort, Einladungen und Gast-Freigaben nie (Pruefung 13.10.2026, S15): die Agentenansicht
-        # oeffnet sie als ganze Seite, und eine kuenftige HTML-Einschleusung koennte sie sonst unsichtbar ueberlagern.
+        # Registrieren, Passwort, Einladungen und Gast-Freigaben nie (Pruefung 13.10.2026, S15, _NIE_EINRAHMEN): eine kuenftige
+        # HTML-Einschleusung koennte sie sonst unsichtbar ueberlagern.
         schalter = funktionen.an("AGENT_ARBEITSFENSTER")
         eigene = schalter and not _NIE_EINRAHMEN.match(scope.get("path") or "")
 
