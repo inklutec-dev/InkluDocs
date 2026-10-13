@@ -69,17 +69,37 @@ function listeKuerzen(container, opts) {
 window.listeKuerzen = listeKuerzen;
 
 // Die eine Ansage-Region aller Seiten (#liveRegion). Pruefung 13.10.2026, B9: erst leeren, dann nach 100 ms setzen — sonst spricht
-// VoiceOver denselben Text beim zweiten Mal oft nicht („Stand vorlesen“ zweimal). Was in diesen 100 ms noch dazukommt, wird an die
-// wartende Ansage angehaengt statt sie zu ersetzen (vorher ging die erste verloren). app.html hat seit diesem Tag keine eigene Kopie.
-function announce(msg) {
+// VoiceOver denselben Text beim zweiten Mal oft nicht („Stand vorlesen“ zweimal). Was bis zum Setzen dazukommt, wird an die wartende
+// Ansage angehaengt statt sie zu ersetzen. app.html hat seit diesem Tag keine eigene Kopie.
+// Pruefung 13.10.2026, Runde 2 (A-N8): Mindestabstand. Vorher leerte JEDER Aufruf die Region sofort — eine Ansage, die erst 30 ms
+// dastand, verschwand ungesprochen (gemessen: Schritt kurz vor „Antwort vom InkluAgent ist da.“, „1 Alt-Text aktualisiert.“ kurz
+// davor). Jetzt wird die Region fruehestens ABSTAND_MS nach der vorigen Ansage geleert und neu gesetzt; was bis dahin kommt, wartet
+// und wird angehaengt. opts.verwerfbar: ein Zwischenstand (ein Schritt des Agenten), den announce.verwerfen() streicht, solange er
+// noch wartet — ist die Antwort da, soll er ihr Vorlesen nicht unterbrechen (inkluagentSchrittAnsagenVerwerfen).
+function announce(msg, opts) {
   const el = byId('liveRegion');
   if (!el || !msg) return;
-  const warte = announce._warte || '';
-  announce._warte = !warte ? String(msg) : (warte.indexOf(msg) >= 0 ? warte : warte + ' ' + msg);
-  el.textContent = '';
-  clearTimeout(announce._plan);
-  announce._plan = setTimeout(() => { el.textContent = announce._warte; announce._warte = ''; }, 100);
+  const z = announce._z || (announce._z = { warte: [], plan: 0, zuletzt: 0 });
+  const text = String(msg);
+  if (!z.warte.some((x) => x.text === text)) z.warte.push({ text: text, verwerfbar: !!(opts && opts.verwerfbar) });
+  if (z.plan) return;   // schon geplant: kommt mit
+  const setzen = () => {
+    z.plan = 0;
+    if (!z.warte.length) return;   // inzwischen verworfen
+    el.textContent = z.warte.map((x) => x.text).join(' ');
+    z.warte = [];
+    z.zuletzt = Date.now();
+  };
+  const leeren = () => { el.textContent = ''; z.plan = setTimeout(setzen, 100); };
+  const warten = z.zuletzt + announce.ABSTAND_MS - 100 - Date.now();
+  if (warten > 0) z.plan = setTimeout(leeren, warten); else leeren();
 }
+announce.ABSTAND_MS = 1000;   // etwa so lange braucht ein Screenreader, um eine kurze Ansage aufzunehmen
+// Wartende Zwischenstaende streichen (nur die mit verwerfbar; Fehler und alles andere bleiben)
+announce.verwerfen = function () {
+  const z = announce._z;
+  if (z) z.warte = z.warte.filter((x) => !x.verwerfbar);
+};
 
 // Fokus auf ein Element, das sonst nicht fokussierbar ist (Ueberschrift, Meldung, Bereich). Pruefung 13.10.2026, B19 — Muster aus
 // express.html (09.10.2026): ein DAUERHAFTES tabindex="-1" laesst VoiceOver „klickbar“ sagen. Das Element traegt tabindex nur, solange
@@ -181,13 +201,33 @@ function ganzeSeite(url) {
   (imRahmen() ? window.top : window).location.href = url;
 }
 window.ganzeSeite = ganzeSeite;
-// Pfade, die nie im Rahmen erscheinen — EINE Liste fuer die Elternseite (inkluagentSeiteImFensterMoeglich) und die eingebettete Seite
-// (Klicks unten). Seit der Pruefung 13.10.2026 (K7, B1) auch alle Seiten, die nicht mit base_app.html gebaut sind und darum nicht
-// eingebettet erscheinen koennen: oeffentliche Seiten (base_oeffentlich.html, base_start.html) und die statischen Seiten aus frontend/
-// (Datensicherheit, Impressum, Widerruf, Nutzungsbedingungen). Im Rahmen zeigten sie die ganze Seite samt Seitenleiste ein zweites Mal.
-// Fehlt hier eine, faengt der load-Hoerer des Rahmens sie ab (inkluagentRahmenGeladen: Seite ohne window.EINGEBETTET).
+// ─── Welche Seiten im Arbeitsfenster erscheinen (Pruefung 13.10.2026, Runde 2, S-N6 und A-N6) ───
+// EINE Liste des Servers: window.INKLUAGENT.fensterSeiten, Pfad-Praefixe. Der Server rahmt genau diese Seiten ein (SAMEORIGIN), alles
+// andere bekommt DENY — Oberflaeche und Server koennen nicht mehr auseinanderlaufen (vorher zwei gegenlaeufige Listen: eine Sperrliste
+// im Server, eine eigene hier). Ein Pfad passt, wenn er gleich einem Praefix ist oder mit Praefix + „/“ beginnt; Abfrage und Anker
+// zaehlen nicht. Die eingebettete Seite nimmt die Liste ihres Hauptfensters, wenn sie selbst keine hat (oeffentliche Seiten aus
+// base_oeffentlich.html bekommen kein window.INKLUAGENT). Fuer die Elternseite (inkluagentSeiteImFensterMoeglich, der load-Hoerer des
+// Rahmens) und die eingebettete Seite (Klicks unten) dieselbe Funktion.
+function fensterSeitenListe() {
+  const liste = (w) => {
+    try { const k = w && w.INKLUAGENT; return (k && Array.isArray(k.fensterSeiten)) ? k.fensterSeiten : null; } catch (e) { return null; }
+  };
+  return liste(window) || (imRahmen() ? liste(window.parent) : null);
+}
+function fensterSeite(pfad) {
+  let p;
+  try { p = new URL(String(pfad), window.location.origin).pathname; } catch (e) { return false; }
+  const liste = fensterSeitenListe();
+  if (!liste) return !gehoertGanzeSeite(p);   // Server ohne Liste: die bisherige Regel
+  return liste.some((x) => typeof x === 'string' && x.charAt(0) === '/' && (p === x || p.indexOf(x + '/') === 0));
+}
+window.fensterSeite = fensterSeite;
+// Rueckfall, solange der Server keine Liste mitgibt: Pfade, die nie im Rahmen erscheinen. Projekte und Startseite (dort ist der Agent
+// selbst), Sprachwechsel, Anmeldung, die statischen Seiten aus frontend/ (Datensicherheit, Impressum, Widerruf, Nutzungsbedingungen)
+// und die Rechtstexte. Runde 2 (A-N6): Ueber uns und Kontakt, Preise, Kuendigen und Widerrufen sind nicht mehr dabei —
+// base_oeffentlich.html hat jetzt eine eingebettete Fassung wie base_app.html.
 function gehoertGanzeSeite(pfad) {
-  return pfad === '/' || /^\/(app|dashboard|set-language|login|logout|register|forgot|reset|datensicherheit|impressum-app|widerruf-app|nutzungsbedingungen-app|ueber-uns|kontakt|preise|kuendigen|widerrufen|widerruf|impressum|datenschutz|nutzungsbedingungen|avv|api)(\/|\?|#|$)/.test(pfad);
+  return pfad === '/' || /^\/(app|dashboard|set-language|login|logout|register|forgot|reset|datensicherheit|impressum-app|widerruf-app|nutzungsbedingungen-app|widerruf|impressum|datenschutz|nutzungsbedingungen|avv|api)(\/|\?|#|$)/.test(pfad);
 }
 window.gehoertGanzeSeite = gehoertGanzeSeite;
 function eingebettetEinrichten() {
@@ -221,16 +261,27 @@ function eingebettetEinrichten() {
     if (!a || a.hasAttribute('download') || a.target === '_blank' || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     let u;
     try { u = new URL(a.href, window.location.href); } catch (err) { return; }
-    if (u.origin !== window.location.origin || !gehoertGanzeSeite(u.pathname)) return;
+    // Runde 2: was nicht in der Liste der Fensterseiten steht, oeffnet die ganze Seite (der Server rahmt es nicht ein)
+    if (u.origin !== window.location.origin || fensterSeite(u.pathname)) return;
     e.preventDefault();
     ganzeSeite(u.pathname + u.search + u.hash);
   }, true);
 }
 // Ziel eines Hinfuehrens (Begleiter, 12.10.2026): ?hin=<id> bzw. ueberschrift — suchen (die Seite baut oft noch), aufklappen,
 // Fokus, sichtbar markieren; der Parameter verschwindet aus der Adresse. Auf jeder Seite, auch im Arbeitsfenster.
-// Pruefung 13.10.2026: nur ids aus der Liste des Servers (S14: window.INKLUAGENT.hinZiele, aus inkluagent/begleiter.py; fehlt die
-// Liste, gilt wie bisher nur die Form einer id — ein fremder Link konnte sonst den Fokus auf jedes Element setzen). Die Markierung
+// Pruefung 13.10.2026: nur ids aus der Liste des Servers (S14: window.INKLUAGENT.hinZiele, aus inkluagent/begleiter.py). Die Markierung
 // bleibt, bis der Fokus das Ziel verlaesst (HB1; vorher 6 Sekunden — mit Lupe oft zu kurz). Fokus ueber fokusAuf (B19).
+// Pruefung 13.10.2026, Runde 2 (S-N9): fail-closed. Fehlt die Liste oder ist sie kein Array, wird ?hin= gar nicht ausgewertet (vorher galt
+// dann jede id in der Form einer id — ein fremder Link wie „/konto?hin=<id>“ setzte den Fokus auf ein beliebiges Element, z. B. einen
+// Knopf); sonst zaehlen nur ids aus der Liste (auch „ueberschrift“ steht darin). Der Server gibt die Liste seit Runde 2 auf jeder Seite
+// mit window.INKLUAGENT mit, unabhaengig vom Begleiter (main._inkluagent_schalter). Oeffentliche Seiten (base_oeffentlich.html) haben kein
+// window.INKLUAGENT: eingebettet nehmen sie die Liste ihres Hauptfensters, als ganze Seite werten sie ?hin= nicht aus.
+function hinZieleListe() {
+  const liste = (w) => {
+    try { const k = w && w.INKLUAGENT; return (k && Array.isArray(k.hinZiele)) ? k.hinZiele : null; } catch (e) { return null; }
+  };
+  return liste(window) || (imRahmen() ? liste(window.parent) : null);
+}
 function hinfuehrenBeimLaden() {
   let ziel = null;
   try { ziel = new URLSearchParams(window.location.search).get('hin'); } catch (e) { return; }
@@ -241,8 +292,8 @@ function hinfuehrenBeimLaden() {
     history.replaceState(history.state, '', u);
   } catch (e) { /* Adresse bleibt */ }
   if (!/^[A-Za-z][\w-]{0,40}$/.test(ziel)) return;
-  const liste = window.INKLUAGENT && Array.isArray(window.INKLUAGENT.hinZiele) ? window.INKLUAGENT.hinZiele : null;
-  if (liste && ziel !== 'ueberschrift' && liste.indexOf(ziel) < 0) return;
+  const liste = hinZieleListe();
+  if (!liste || liste.indexOf(ziel) < 0) return;
   let n = 0;
   const suchen = () => {
     const el = ziel === 'ueberschrift' ? document.querySelector('#main h1') : document.getElementById(ziel);
@@ -589,10 +640,12 @@ function seitenleisteGespraecheBauen(path) {
   liste.className = 'app-nav-gespraeche-liste';
   liste.setAttribute('aria-labelledby', 'navGespraecheTitel');
   // Pruefung 13.10.2026 (B20): der Link zeigt auf die Lese-Seite, ein Klick setzt das Gespraech aber fort — das sagt jeder Eintrag
-  // als Beschreibung („Link, Wie mache ich …, setzt das Gespräch fort“); mit Strg/Cmd bleibt es die Lese-Seite
+  // als Beschreibung („Link, Wie mache ich …, setzt das Gespräch fort“); mit Strg/Cmd bleibt es die Lese-Seite.
+  // Runde 2 (A-N7): hidden statt visually-hidden — aria-describedby liest auch verborgene Elemente, aber mit den VoiceOver-Pfeilen
+  // stand der Satz sonst noch einmal lose nach der Liste (gemessen: im Barrierefreiheitsbaum, nicht ignoriert)
   const hinweis = document.createElement('span');
   hinweis.id = 'navGespraecheHinweis';
-  hinweis.className = 'visually-hidden';
+  hinweis.hidden = true;
   hinweis.textContent = t('Setzt das Gespräch fort.');
   const alle = document.createElement('a');
   alle.href = '/gespraeche';

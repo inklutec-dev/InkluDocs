@@ -1492,10 +1492,10 @@ html.agentenansicht-chatstart .inkluagent-gespraech:has(> .inkluagent-log:empty)
 .inkluagent-chatstil .inkluagent-form textarea { border: 2px solid #6b7a90; border-radius: 1.25rem; padding: 0.85rem 1.1rem; min-height: 3.5rem;
     background: #fff; box-shadow: 0 2px 10px rgba(27, 42, 74, 0.08); }
 .inkluagent-gross.inkluagent-chatstil #inkluagentInput { min-height: 3.5rem; }
-/* Unter dem Feld eine Zeile: Hinweis links, „Dateien anhängen“ und „Senden“ rechts; darunter die Grenzen der Anhaenge und die
-   angehaengten Dateien. Meldung, Ergebnis des Hochladens und Statuszeile stehen seit der Pruefung 13.10.2026 (B6) im Fluss ueber der
-   Eingabe (.inkluagent-meldungen) — angeheftet wuchsen sie auf bis zu 60 % des Bildschirms. Die Reihenfolge im Quelltext bleibt
-   (Feld, Hinweis, Knoepfe, Grenzen, Liste) — nur die Anordnung ist ein Raster. */
+/* Unter dem Feld eine Zeile: Hinweis links, „Dateien anhängen“ und „Senden“ rechts; darunter die angehaengten Dateien. Meldung,
+   Ergebnis des Hochladens und Statuszeile stehen seit der Pruefung 13.10.2026 (B6) im Fluss ueber der Eingabe (.inkluagent-meldungen) —
+   angeheftet wuchsen sie auf bis zu 60 % des Bildschirms. Die Grenzen der Anhaenge stehen seit Runde 2 (HN1) im Fluss in der
+   Beschreibung unter der Eingabe. Die Reihenfolge im Quelltext bleibt (Feld, Hinweis, Knoepfe, Liste) — nur die Anordnung ist ein Raster. */
 .inkluagent-chatstil .inkluagent-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 0.75rem; row-gap: 0.4rem;
     align-items: center; }
 .inkluagent-chatstil .inkluagent-form > textarea { grid-column: 1 / -1; grid-row: 1; }
@@ -1504,16 +1504,19 @@ html.agentenansicht-chatstart .inkluagent-gespraech:has(> .inkluagent-log:empty)
 .inkluagent-chatstil .inkluagent-controls { display: contents; }
 .inkluagent-chatstil #inkluagentAnhaengenBtn { grid-column: 2; grid-row: 2; }
 .inkluagent-chatstil #inkluagentSendBtn { grid-column: 3; grid-row: 2; justify-self: end; }
-.inkluagent-chatstil #inkluagentAnhangHinweis { grid-column: 1 / -1; grid-row: 4; margin: 0; }
-.inkluagent-chatstil #inkluagentAnhaenge { grid-column: 1 / -1; grid-row: 5; }
+.inkluagent-chatstil #inkluagentAnhaenge { grid-column: 1 / -1; grid-row: 4; }
+.inkluagent-chatstil .inkluagent-beschreibung > #inkluagentAnhangHinweis { margin: 0 0 0.35rem; }
 @media (max-width: 600px) {
     .inkluagent-chatstil .inkluagent-form { grid-template-columns: minmax(0, 1fr) auto; }
     .inkluagent-chatstil .inkluagent-form > .inkluagent-hint { grid-column: 1 / -1; }
     .inkluagent-chatstil #inkluagentAnhaengenBtn { grid-column: 1; grid-row: 3; justify-self: start; }
     .inkluagent-chatstil #inkluagentSendBtn { grid-column: 2; grid-row: 3; }
 }
-/* Meldungen im Fluss zwischen Verlauf und Eingabe (B6) */
-.inkluagent-meldungen { display: flex; flex-direction: column; gap: 0.35rem; margin: 0 0 0.5rem; }
+/* Meldungen im Fluss zwischen Verlauf und Eingabe (B6). Runde 2 (A-N3): Abstand ueber Raender statt gap — eine leere Meldung (die
+   Statuszeile ohne Text) steht ohne Hoehe und ohne Abstand da, bleibt aber im Barrierefreiheitsbaum (siehe #inkluagentStatus unten) */
+.inkluagent-meldungen { display: block; margin: 0 0 0.5rem; }
+.inkluagent-meldungen > :not([hidden]) { display: block; margin: 0 0 0.35rem; }
+.inkluagent-meldungen > :empty { margin: 0; }
 .inkluagent-meldungen > [hidden] { display: none; }
 /* Angehaengte Dateien als Kaertchen mit „Entfernen“ */
 .inkluagent-anhaenge { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -1526,10 +1529,13 @@ html.agentenansicht-chatstart .inkluagent-gespraech:has(> .inkluagent-log:empty)
 .inkluagent-anhang-meldung[data-state="error"] { color: var(--fehler-rand); font-weight: 600; }
 /* Hineinziehen: deutlicher Rahmen um das ganze Gespraech */
 .inkluagent-gespraech.inkluagent-ablage-aktiv { outline: 3px dashed var(--accent); outline-offset: 6px; border-radius: 12px; }
-.inkluagent-chatstil #inkluagentStatus:empty { display: none; }
+/* Pruefung 13.10.2026, Runde 2 (A-N3): die Statuszeile (role="status") ist NIE display: none. Leer hat sie keine Hoehe und keinen
+   Abstand (.inkluagent-meldungen > :empty), bleibt aber im Barrierefreiheitsbaum — eine Live-Region, die erst mit ihrem Text in den Baum
+   kommt, sagt VoiceOver mit Safari nicht zuverlaessig an (Tageslimit, Verbindungsfehler, „Neues Gespräch begonnen …“). Wie die
+   Statuszeilen der Karten. Vorher: .inkluagent-chatstil #inkluagentStatus:empty { display: none; } */
 /* Die Gespraeche stehen in der Seitenleiste; ohne sie (schmale Seitenleiste ohne Abschnitt) bleibt die Leiste im Agenten */
 html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoepfe { display: none; }
-.inkluagent-chatstil .inkluagent-gespraech-knoepfe { grid-column: 1 / -1; grid-row: 6; justify-self: end; }
+.inkluagent-chatstil .inkluagent-gespraech-knoepfe { grid-column: 1 / -1; grid-row: 5; justify-self: end; }
 .inkluagent-chatstil .inkluagent-trenner { display: none; }
 .inkluagent-chatstil .inkluagent-beschreibung { font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem; }
 .inkluagent-chatstil .inkluagent-beschreibung .inkluagent-intro { font-size: 0.875rem; }
@@ -1585,6 +1591,9 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoe
 .arbeitsfenster-seite-kopf { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0 0 0.4rem; }
 .arbeitsfenster-seite-kopf h3 { margin: 0; }
 .arbeitsfenster-seite iframe { display: block; width: 100%; height: 65vh; border: 1px solid #6b7a90; border-radius: 8px; background: #fff; }
+/* Runde 2 (K-N1): „… lässt sich gerade nicht öffnen.“ — wie eine Fehlermeldung im Agenten (Farbe 6,5:1 und fett, nicht nur Farbe) */
+.arbeitsfenster-seite-meldung { margin: 0.75rem 0; color: var(--fehler-rand); font-weight: 600; }
+.arbeitsfenster-seite-meldung[hidden] { display: none; }
 @media (min-width: 1100px) {
     /* mit offener Seite ein breiteres Fenster; vergroessert: Gespraech 2 Teile, Fenster 3 Teile */
     .inkluagent-spalten:has(#arbeitsSeite:not([hidden])) { grid-template-columns: minmax(0, 1fr) 30rem; }
@@ -1602,8 +1611,13 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoe
 body.eingebettet .dash-main { max-width: none; padding: 1rem 1rem 2rem; }
 
 /* ─── Pruefung 13.10.2026: Oberflaeche des InkluAgent (docs/INKLUAGENT.md, „Prüfung 13.10.2026: Oberfläche“) ─── */
-/* B12/K2/K3: gesperrte Knoepfe tragen aria-disabled statt disabled (der Fokus bleibt) — sichtbar gedaempft, der Mauszeiger sagt es auch */
-.btn[aria-disabled="true"], .app-nav-gespraeche button[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
+/* B12/K2/K3: gesperrte Knoepfe tragen aria-disabled statt disabled (der Fokus bleibt) — sichtbar gedaempft, der Mauszeiger sagt es auch.
+   Runde 2 (A-N5): gedaempfte FARBEN statt opacity — die Deckkraft galt auch fuer den Fokusring (#c75000 mit 60 % auf #f5f7fa: 2,36:1
+   statt 4,28:1), und der Fokus steht waehrend eines ganzen Laufs auf „Senden“. Jetzt bleibt der 3-px-Ring (.btn:focus-visible) voll.
+   Grund #e9edf2, Schrift #4a5568 (6,4:1, gut lesbar), Rand gestrichelt (gesperrt nicht nur an der Farbe erkennbar). Seitenleiste
+   (dunkler Grund): Schrift #b8c2d4 (7,9:1 auf #1b2a4a) statt Weiss, der weisse Fokusring bleibt. */
+.btn[aria-disabled="true"], .btn[aria-disabled="true"]:hover { background: #e9edf2; color: #4a5568; border: 2px dashed #767f8f; cursor: not-allowed; }
+.app-nav-gespraeche button[aria-disabled="true"], .app-nav-gespraeche button[aria-disabled="true"]:hover { color: #b8c2d4; background: transparent; cursor: not-allowed; }
 /* B16: nicht angekommene Nachricht — gestrichelter Rand UND ein Satz in Worten (nicht nur Farbe) */
 .inkluagent-message.inkluagent-nicht-gesendet { border: 2px dashed var(--fehler-rand); }
 .inkluagent-nicht-gesendet-hinweis { margin: 0.35rem 0 0; color: var(--fehler-rand); font-weight: 600; font-size: 0.9rem; white-space: normal; }

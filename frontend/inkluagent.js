@@ -154,7 +154,9 @@ function inkluagentHochgeladenZeigen(projectId, ergebnisse) {
 }
 // Dateien hochladen. Ergebnis: das Server-Ergebnis oder null (Fehler steht dann in der Statuszeile). Webadressen stehen seit 12.10.2026
 // in der Nachricht selbst — das Feld dafuer und sein Parameter sind weg (Pruefung 13.10.2026, HK2).
-async function inkluagentHochladen(projectId, dateien) {
+// kennung (Runde 2, K12): hochladen_id des Stapels (inkluagentHochladenKennung) — derselbe Stapel noch einmal liefert beim Server binnen
+// 15 Minuten das fruehere Ergebnis, statt doppelt hochzuladen. Ein Server ohne dieses Feld uebergeht es.
+async function inkluagentHochladen(projectId, dateien, kennung) {
     const k = window.INKLUAGENT || {};
     const max = k.max_dateien || 10;
     if (dateien.length > max) {
@@ -164,6 +166,7 @@ async function inkluagentHochladen(projectId, dateien) {
     const fd = new FormData();
     dateien.forEach(f => fd.append('dateien', f, f.name));
     if (projectId != null) fd.append('project_id', String(projectId));
+    if (kennung) fd.append('hochladen_id', kennung);
     inkluagentSetStatus(t('Wird hochgeladen …'), false);
     let res;
     try {
@@ -179,6 +182,23 @@ async function inkluagentHochladen(projectId, dateien) {
         return null;
     }
     return erg;
+}
+// Pruefung 13.10.2026, Runde 2 (K12): brach die Verbindung beim Hochladen ab (Proxy-Grenze bei grossen Dateien), sagte die Seite
+// „Hochladen nicht möglich“, die Anhaenge blieben — und erneutes Senden lud alles noch einmal hoch, obwohl der Server den ersten
+// Versuch oft schon fertig hatte. Jetzt bekommt jeder Stapel eine Kennung; dieselben Dateien (dieselben File-Objekte in derselben
+// Reihenfolge) behalten sie, bis die Nachricht angenommen ist (inkluagentSend). Ein anderer Stapel bekommt eine neue.
+function inkluagentHochladenKennung(dateien) {
+    const s = window._inkluagentStapel;
+    if (s && s.dateien.length === dateien.length && s.dateien.every((f, i) => f === dateien[i])) return s.id;
+    window._inkluagentStapel = { id: inkluagentNeueKennung(), dateien: dateien.slice() };
+    return window._inkluagentStapel.id;
+}
+// 32 Hex-Zeichen aus dem Zufall des Browsers (passt zu [A-Za-z0-9_-], hoechstens 64 Zeichen); getRandomValues gibt es auch ohne HTTPS
+function inkluagentNeueKennung() {
+    const b = new Uint8Array(16);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(b);
+    else for (let i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
+    return Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
 }
 // Abgelaufene Sitzung: zur Anmeldung mit Ruecksprung auf diese Seite (dashboard.js, K7); ohne die gemeinsame Datei wie bisher
 function inkluagentZurAnmeldung() {
@@ -226,8 +246,10 @@ function inkluagentAnhangBauen(form, meldungen) {
     knopf.textContent = t('Dateien anhängen');
     knopf.setAttribute('aria-describedby', 'inkluagentAnhangHinweis');
     knopf.addEventListener('click', () => datei.click());
-    // Pruefung 13.10.2026 (B21): Grenzen und „ziehen oder einfügen“ stehen sichtbar unter den Knoepfen — vorher nur fuer Screenreader,
-    // Sehende erfuhren sie erst aus einer Fehlermeldung
+    // Pruefung 13.10.2026 (B21): Grenzen und „ziehen oder einfügen“ stehen sichtbar da — vorher nur fuer Screenreader, Sehende erfuhren
+    // sie erst aus einer Fehlermeldung. Runde 2 (HN1): nicht mehr im angehefteten Teil unter den Knoepfen (er wurde dadurch dauerhaft
+    // 2 rem hoeher, bei 390 px Breite 27 % des Bildschirms), sondern im Fluss oben in der Beschreibung unter der Eingabe; der Knopf
+    // „Dateien anhängen“ verweist weiter per aria-describedby darauf.
     const hinweis = document.createElement('p');
     hinweis.id = 'inkluagentAnhangHinweis';
     hinweis.className = 'inkluagent-hint inkluagent-anhang-hinweis';
@@ -241,7 +263,9 @@ function inkluagentAnhangBauen(form, meldungen) {
     const send = document.getElementById('inkluagentSendBtn');
     if (send && send.parentNode) send.parentNode.insertBefore(knopf, send);   // erst „Dateien anhängen“, dann „Senden“
     else form.appendChild(knopf);
-    [datei, hinweis, liste].forEach(el => form.appendChild(el));
+    [datei, liste].forEach(el => form.appendChild(el));
+    const beschreibung = form.parentNode ? form.parentNode.querySelector(':scope > .inkluagent-beschreibung') : null;
+    if (beschreibung) beschreibung.insertBefore(hinweis, beschreibung.firstChild); else form.appendChild(hinweis);
     // Meldung und Ergebnis des Hochladens stehen im Fluss ueber der Eingabe, nicht im angehefteten Teil (Pruefung 13.10.2026, B6): dort
     // wuchsen sie auf bis zu 60 % des Bildschirms und verdeckten den Fokus
     const meldung = document.createElement('p');
@@ -606,6 +630,8 @@ function inkluagentArbeitsfensterBauen() {
         +     '<button type="button" id="arbeitsSeiteZu" class="btn btn-secondary">' + t('Seite schließen') + '</button></div>'
         +   '<iframe id="arbeitsSeiteRahmen" src="about:blank"></iframe>'
         + '</div>'
+        // Runde 2 (K-N1): kam eine Seite nicht (Fehlerantwort), steht hier, dass sie sich gerade nicht oeffnen laesst
+        + '<p id="arbeitsSeiteMeldung" class="arbeitsfenster-seite-meldung" hidden></p>'
         + '<p id="arbeitsNotiz" class="arbeitsfenster-notiz" hidden></p>'
         + '<button type="button" id="arbeitsVorlesen" class="btn btn-secondary">' + t('Stand vorlesen') + '</button>'
         // Livestream (Steve 12.10.2026): jeden Schritt ansagen — von Anfang an an, die Wahl bleibt in diesem Browser
@@ -638,15 +664,16 @@ function inkluagentArbeitsfensterBauen() {
 }
 // ─── Seiten im Arbeitsfenster (13.10.2026) ───
 // Die Agentenansicht zeigt nur Gespraech + Arbeitsfenster. Wohin der Nutzer will (Navigation, Links, Hinfuehren), oeffnet sich als echte
-// Seite im Rahmen des Arbeitsfensters (eingebettet: ohne Seitenleiste, Fusszeile, Agent — i18n.eingebettet, base_app.html) und ist
-// dort bedienbar. Projekte und die Startseite bleiben ganze Seiten (dort ist der Agent selbst), ebenso Sprachwechsel, Anmeldung und
-// Seiten ohne eingebettete Fassung (dashboard.js, gehoertGanzeSeite).
+// Seite im Rahmen des Arbeitsfensters (eingebettet: ohne Seitenleiste, Fusszeile, Agent — i18n.eingebettet, base_app.html und seit
+// Runde 2 auch base_oeffentlich.html) und ist dort bedienbar. Welche Seiten das sind, sagt EINE Liste des Servers
+// (window.INKLUAGENT.fensterSeiten, dashboard.js fensterSeite); alles andere — Projekte und Startseite (dort ist der Agent selbst),
+// Sprachwechsel, Anmeldung, Rechtstexte — oeffnet als ganze Seite.
 // Pruefung 13.10.2026: EIN Zustand window._arbeitsSeite ({offen, pfad, name, fokus, hin}); das geladene Dokument ist die Wahrheit
 // (K6/B14) — Titel, Name des Rahmens und gemerkte Seite folgen ihm bei jeder Navigation im Rahmen.
 function inkluagentSeiteImFensterMoeglich(pfad) {
     if (!inkluagentChatstilAktiv() || typeof pfad !== 'string' || !eigenerPfad(pfad)) return false;
     if (!/^\/[A-Za-z0-9\/_-]*(\?[A-Za-z0-9=&_%-]*)?(#[A-Za-z0-9_-]*)?$/.test(pfad)) return false;   // mit Anker („Zur Ablage“)
-    return !gehoertGanzeSeite(pfad);
+    return fensterSeite(pfad);   // Runde 2 (S-N6): Liste des Servers; ohne sie die bisherige Regel (dashboard.js)
 }
 // Pfad ohne die genannten Parameter (eingebettet, hin, agent) — so wird gemerkt und verglichen
 function inkluagentPfadOhne(pfad, namen) {
@@ -675,13 +702,17 @@ function inkluagentLinkImFenster(e) {
     inkluagentSeiteImFenster(href, a.textContent.trim());
 }
 // Seite im Fenster oeffnen. still: ohne Fokus (Neuladen, Seite selbst); sonst geht der Fokus in die Seite, sobald sie geladen ist — auf
-// ihre Ueberschrift 1 bzw. das Ziel von ?hin=. Keine eigene Ansage mehr (B15): Name des Rahmens und Ueberschrift sagen es.
+// ihre Ueberschrift 1 bzw. das Ziel von ?hin= oder einer Sprungmarke. Keine eigene Ansage mehr (B15): Name des Rahmens und Ueberschrift
+// sagen es. Runde 2 (A-N9): eine Sprungmarke („Zur Ablage“ → /ablage?projekt=1#ausgabe-3) zaehlt wie ?hin= — das Ziel bestimmt die
+// Seite, nicht vorher noch die Ueberschrift 1 (vorher zwei Fokusspruenge: erst „Meine Ablage“, gleich danach der Eintrag).
 function inkluagentSeiteImFenster(pfad, name, still) {
     const f = document.getElementById('arbeitsfenster');
     if (!f || !inkluagentSeiteImFensterMoeglich(pfad)) { if (eigenerPfad(pfad)) window.location.href = pfad; return; }
     // laedt: bis das Dokument da ist — ein spaetes load des leeren Startrahmens (about:blank) schliesst die Seite dann nicht
     window._arbeitsSeite = { offen: true, pfad: inkluagentPfadOhne(pfad, ['hin', 'eingebettet']),
-                             name: String(name || '').trim() || pfad.split(/[?#]/)[0], fokus: !still, hin: /[?&]hin=/.test(pfad), laedt: true };
+                             name: String(name || '').trim() || pfad.split(/[?#]/)[0], fokus: !still,
+                             hin: /[?&]hin=/.test(pfad) || /#./.test(pfad), laedt: true };
+    f.querySelector('#arbeitsSeiteMeldung').hidden = true;   // K-N1: eine fruehere „lässt sich nicht öffnen“-Meldung gilt nicht mehr
     inkluagentSeiteZeigen();
     const h = pfad.indexOf('#');
     const ohneAnker = h >= 0 ? pfad.slice(0, h) : pfad;
@@ -694,7 +725,7 @@ function inkluagentRahmenLaden(rahmen, url) {
     if (!rahmen) return;
     try { rahmen.contentWindow.location.replace(url); } catch (e) { rahmen.src = url; }
 }
-// Sichtbarer Stand aus window._arbeitsSeite: Ueberschrift, Name des Rahmens, Merker fuers Neuladen (mit der Seite, auf der man war: B1)
+// Sichtbarer Stand aus window._arbeitsSeite: Ueberschrift und Name des Rahmens
 function inkluagentSeiteZeigen() {
     const f = document.getElementById('arbeitsfenster');
     const s = window._arbeitsSeite;
@@ -704,19 +735,31 @@ function inkluagentSeiteZeigen() {
     if (titel.textContent !== neu) titel.textContent = neu;
     f.querySelector('#arbeitsSeiteRahmen').title = t('Arbeitsfenster: {name}', { name: s.name });
     f.querySelector('#arbeitsSeite').hidden = false;
+    inkluagentArbeitsZeigen();
+}
+// Merker fuers Neuladen (mit der Seite, auf der man war: B1). Runde 2 (K-N1): erst, wenn die Seite eingebettet GELADEN ist
+// (inkluagentRahmenGeladen) — vorher wurde sie schon beim Oeffnen gemerkt; kam dann eine Fehlerseite, oeffnete jede weitere Seite
+// sie wieder (und jeder Versuch erneuerte die Zeit, die 2-Stunden-Grenze lief nie ab).
+function inkluagentSeiteMerken() {
+    const s = window._arbeitsSeite;
+    if (!s) return;
     try {
         sessionStorage.setItem('inkluagent.fenster', JSON.stringify({ pfad: s.pfad, name: s.name, zeit: Date.now(),
             seite: inkluagentPfadOhne(window.location.pathname + window.location.search, ['agent', 'hin']) }));
     } catch (e) { /* nur diese Seite */ }
-    inkluagentArbeitsZeigen();
 }
-// Jedes Dokument, das der Rahmen laedt (geoeffnet, Link darin, Zurueck-Taste, Weiterleitung), kommt hier an (Pruefung 13.10.2026):
-// - K6/B14: Pfad und Ueberschrift 1 (sonst der Seitentitel) werden Ueberschrift, Name des Rahmens und gemerkte Seite.
-// - K7: was nicht in den Rahmen gehoert, oeffnet die ganze Seite — die Anmeldung nach abgelaufener Sitzung (mit Ruecksprung auf DIESE
-//   Seite; die Seite im Fenster bleibt gemerkt), Projekte, Startseite und jede Seite ohne eingebettete Fassung (window.EINGEBETTET).
-// - Der Fokus geht in die Seite, wenn sie mit Fokus geoeffnet wurde oder er schon im Rahmen stand (ein Link darin): dann wie beim
-//   Laden einer Seite auf ihre Ueberschrift 1.
-// - Leerer Rahmen (about:blank) = keine Seite offen; eine fremde Herkunft wird nie gezeigt.
+// Jedes Dokument, das der Rahmen laedt (geoeffnet, Link darin, Zurueck-Taste, Weiterleitung), kommt hier an (Pruefung 13.10.2026).
+// Runde 2 (K-N1): vier Faelle, sauber getrennt — vorher warf jede Fehlerantwort (404/403 als JSON, 500 als Text) im Rahmen den Nutzer
+// aus der Agentenansicht auf die rohe Fehlerseite, weil sie wie „Seite ohne eingebettete Fassung“ behandelt wurde.
+// 1. Erfolg: die eingebettete Fassung einer Fensterseite (window.EINGEBETTET === true). K6/B14: Pfad und Ueberschrift 1 (sonst der
+//    Seitentitel) werden Ueberschrift, Name des Rahmens und gemerkte Seite. Der Fokus geht in die Seite, wenn sie mit Fokus geoeffnet
+//    wurde oder er schon im Rahmen stand (ein Link darin).
+// 2. Anmeldung (Sitzung abgelaufen, K7): ganze Seite mit Ruecksprung auf DIESE Seite; die Seite im Fenster bleibt gemerkt.
+// 3. Ganze Seite: eine Seite der App, die nicht ins Fenster gehoert (nicht in der Liste: Projekt, Startseite, Rechtstexte) oder sich
+//    ausdruecklich nicht einbettet (window.EINGEBETTET === false aus base_app.html/base_oeffentlich.html). Merker weg, dann wechseln.
+// 4. Sonst — Fehlerantwort, kein HTML, vom Server nicht eingerahmt, fremde Herkunft: NICHT wegnavigieren. Die Seite im Fenster
+//    schliessen, den Merker loeschen und es im Fenster sagen (inkluagentSeiteNichtGeladen).
+// Leerer Rahmen (about:blank) = keine Seite offen.
 function inkluagentRahmenGeladen(rahmen) {
     const f = document.getElementById('arbeitsfenster');
     if (!f) return;
@@ -724,33 +767,71 @@ function inkluagentRahmenGeladen(rahmen) {
     let doc = null;
     try { win = rahmen.contentWindow; doc = rahmen.contentDocument; } catch (e) { doc = null; }
     const loc = doc && doc.location;
-    if (!doc || !loc) { inkluagentSeiteZustandZu(); inkluagentRahmenLaden(rahmen, 'about:blank'); return; }
+    if (!doc || !loc) { inkluagentSeiteNichtGeladen(rahmen); return; }   // fremd oder vom Server nicht eingerahmt (DENY)
     if (loc.href === 'about:blank') { if (window._arbeitsSeite && !window._arbeitsSeite.laedt) inkluagentSeiteZustandZu(); return; }
     const pfad = inkluagentPfadOhne(loc.pathname + loc.search, ['eingebettet', 'hin']);
-    if (loc.origin !== window.location.origin || gehoertGanzeSeite(loc.pathname) || !win || win.EINGEBETTET !== true) {
-        if (/^\/login(\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }
-        if (eigenerPfad(pfad)) { window.location.href = pfad; return; }
-        inkluagentSeiteZustandZu();
-        inkluagentRahmenLaden(rahmen, 'about:blank');
+    const eigene = loc.origin === window.location.origin;
+    const eingebettet = win ? win.EINGEBETTET : undefined;   // true, false (Seite der App ohne Einbettung) oder fehlt (keine Seite der App)
+    if (eigene && eingebettet === true && fensterSeite(loc.pathname)) {                    // 1. Erfolg
+        const h1 = doc.querySelector('#main h1');
+        const titel = (h1 && h1.textContent.trim()) || String(doc.title || '').split(' · ')[0].trim();
+        const vorher = window._arbeitsSeite || {};
+        const fokus = !!vorher.fokus || document.activeElement === rahmen;
+        window._arbeitsSeite = { offen: true, pfad: pfad, name: titel || vorher.name || loc.pathname, fokus: false, hin: false };
+        inkluagentSeiteZeigen();
+        inkluagentSeiteMerken();
+        if (fokus) inkluagentRahmenFokus(rahmen, !!(vorher.fokus && vorher.hin), loc.hash);
         return;
     }
-    const h1 = doc.querySelector('#main h1');
-    const titel = (h1 && h1.textContent.trim()) || String(doc.title || '').split(' · ')[0].trim();
-    const vorher = window._arbeitsSeite || {};
-    const fokus = !!vorher.fokus || document.activeElement === rahmen;
-    window._arbeitsSeite = { offen: true, pfad: pfad, name: titel || vorher.name || loc.pathname, fokus: false, hin: false };
-    inkluagentSeiteZeigen();
-    if (fokus) inkluagentRahmenFokus(rahmen, !!(vorher.fokus && vorher.hin));
+    if (eigene && /^\/login(\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }   // 2. Anmeldung
+    const hier = inkluagentPfadOhne(window.location.pathname + window.location.search, ['agent', 'hin']);
+    if (eigene && eigenerPfad(pfad) && pfad !== hier && (!fensterSeite(loc.pathname) || eingebettet === false)) {   // 3. ganze Seite
+        inkluagentSeiteZustandZu();
+        window.location.href = pfad + loc.hash;
+        return;
+    }
+    // 4. (auch: die ganze Seite waere die, auf der man schon ist — kein Neuladen im Kreis)
+    inkluagentSeiteNichtGeladen(rahmen);
 }
-// Fokus in die Seite im Fenster: Ueberschrift 1 (ohne dauerhaftes tabindex, B19); mit ?hin= setzt die Seite ihr Ziel selbst
-// (dashboard.js). Nur ohne Ueberschrift eine Ansage.
-function inkluagentRahmenFokus(rahmen, hin) {
+// Runde 2 (K-N1): die Seite im Fenster kam nicht. Sie wird geschlossen und vergessen; im Arbeitsfenster steht, dass sie sich gerade nicht
+// oeffnen laesst — mit ihrem Namen, wenn wir sie selbst geoeffnet haben (bei einem Link in der Seite kennen wir das Ziel nicht).
+// Hoeren: stand der Fokus im Rahmen (Link darin), kommt er auf den Satz (er wird vorgelesen, nichts faellt auf body); wurde die Seite
+// gerade mit Fokus geoeffnet (Navigation, Link im Gespraech), eine Ansage — der Fokus bleibt, wo er ist; beim stillen Wiederherstellen
+// nach dem Neuladen nur der sichtbare Satz.
+function inkluagentSeiteNichtGeladen(rahmen) {
+    const f = document.getElementById('arbeitsfenster');
+    if (!f) return;
+    const vorher = window._arbeitsSeite || {};
+    const imRahmen = document.activeElement === rahmen;
+    inkluagentSeiteZustandZu();
+    inkluagentRahmenLaden(rahmen, 'about:blank');
+    const text = (vorher.laedt && vorher.name) ? t('„{name}“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal.', { name: vorher.name })
+                                               : t('Diese Seite lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal.');
+    const m = f.querySelector('#arbeitsSeiteMeldung');
+    m.textContent = text;
+    m.hidden = false;
+    if (imRahmen) fokusAuf(m);
+    else if (vorher.fokus) announce(text);
+}
+// Fokus in die Seite im Fenster: Ueberschrift 1 (ohne dauerhaftes tabindex, B19). selbst: die Seite setzt ihr Ziel selbst (?hin= ueber
+// dashboard.js, Sprungmarke). Runde 2 (A-N9): bei einer Sprungmarke bekommt ihr Ziel den Fokus, wenn es beim Laden schon da ist (ein
+// Sprung); baut die Seite es erst (Ablage: #ausgabe-… nach dem Laden der Liste), setzt sie ihn selbst (fokusAuf). Nur ohne Ueberschrift
+// eine Ansage.
+function inkluagentRahmenFokus(rahmen, selbst, anker) {
     let doc = null;
     let win = null;
     try { win = rahmen.contentWindow; win.focus(); doc = rahmen.contentDocument; } catch (e) { return; }
-    if (hin || !doc) return;
+    if (!doc) return;
+    const auf = typeof win.fokusAuf === 'function' ? win.fokusAuf : fokusAuf;
+    if (anker && anker.length > 1) {
+        let ziel = null;
+        try { ziel = doc.getElementById(decodeURIComponent(anker.slice(1))); } catch (e) { ziel = null; }
+        if (ziel) auf(ziel);
+        return;
+    }
+    if (selbst) return;
     const h1 = doc.querySelector('#main h1');
-    if (h1) { (typeof win.fokusAuf === 'function' ? win.fokusAuf : fokusAuf)(h1); return; }
+    if (h1) { auf(h1); return; }
     announce(t('Im Arbeitsfenster geöffnet: {name}', { name: (window._arbeitsSeite || {}).name || '' }));
 }
 // Keine Seite mehr offen (nur der Zustand — laden tut der Aufrufer)
@@ -777,15 +858,16 @@ function inkluagentSeiteSchliessen() {
 // Nach einem Neuladen (Sprache, Ansicht, Seitenwechsel) wieder dieselbe Seite und Groesse — still, ohne Fokus und Ansage.
 // Pruefung 13.10.2026 (B1): wurde eine Seite, deren Inhalt die Agentenansicht ausblendet (Einstellungen, Hilfe, ein Gespraech …), direkt
 // geladen (Lesezeichen, Link — nicht dieselbe Seite wie beim Merken), oeffnet sie selbst im Arbeitsfenster: Ueberschrift 1 und Inhalt
-// passen dann zusammen. Mit ?hin= (Hinfuehren in einem neuen Tab) geht der Fokus wie beim Hinfuehren aufs Ziel.
+// passen dann zusammen. Mit ?hin= (Hinfuehren in einem neuen Tab) — seit Runde 2 (A-N9) auch mit einer Sprungmarke — geht der Fokus
+// wie beim Hinfuehren aufs Ziel. Laesst sich die gemerkte Seite nicht mehr laden, vergisst das Fenster sie (K-N1).
 function inkluagentFensterWiederherstellen() {
     let w = null;
     try { w = JSON.parse(sessionStorage.getItem('inkluagent.fenster') || 'null'); } catch (e) { w = null; }
     const frisch = !!(w && typeof w.pfad === 'string' && Date.now() - (Number(w.zeit) || 0) < 2 * 60 * 60 * 1000);
     const hier = inkluagentPfadOhne(window._inkluagentStartAdresse || (window.location.pathname + window.location.search), ['agent']);
-    if (inkluagentSeiteImFensterMoeglich(hier) && !(frisch && w.seite === inkluagentPfadOhne(hier, ['hin']))) {
+    if (inkluagentSeiteImFensterMoeglich(hier) && !(frisch && w.seite === inkluagentPfadOhne(hier.split('#')[0], ['hin']))) {
         const h1 = document.querySelector('#main h1');
-        inkluagentSeiteImFenster(hier, h1 ? h1.textContent.trim() : '', !/[?&]hin=/.test(hier));
+        inkluagentSeiteImFenster(hier, h1 ? h1.textContent.trim() : '', !(/[?&]hin=/.test(hier) || /#./.test(hier)));
     } else if (frisch) {
         inkluagentSeiteImFenster(w.pfad, w.name, true);
     }
@@ -802,7 +884,12 @@ function inkluagentFensterWiederherstellen() {
 // Warum kein natives <dialog> (Steve mag es, HTML vor ARIA): im Browser gemessen (lokal/probe_pr13_dialog_versuch.py, Chromium) laedt ein
 // Rahmen neu, wenn man ihn in einen Dialog verschiebt (die Seite im Fenster verloere ihre Eingaben); Escape im Rahmen erreicht den
 // Dialog nicht; und die Ansage-Region ausserhalb faellt bei showModal() aus dem Barrierefreiheitsbaum. Ein dauerhafter <dialog> waere
-// breit falsch benannt. Darum: der Abschnitt bleibt ein Abschnitt und bekommt nur als Ueberlagerung role="dialog" und aria-modal.
+// breit falsch benannt. Darum: der Abschnitt bleibt ein Abschnitt und bekommt nur als Ueberlagerung role="dialog" (benannt ueber seine
+// Ueberschrift „Arbeitsfenster“). Die Modalitaet macht inert (HTML).
+// Pruefung 13.10.2026, Runde 2 (A-N1, gemessen): KEIN aria-modal mehr. Es tat zusaetzlich zu inert dasselbe, aber ohne Ausnahme — sobald
+// sich der Fokus im Dialog bewegte, stand die Ansage-Region als „ignoriert, activeAriaModalDialog“ im Barrierefreiheitsbaum: fertige
+// Antwort, Fehler und Schritte blieben bei offener Ueberlagerung stumm (auf dem iPhone, wo das Fenster immer schmal ist, der Normalfall).
+// Ohne aria-modal bleibt die Region im Baum; Rolle, Name und inert bleiben (lokal/probe_r2_a11y_baum.py misst es).
 function inkluagentFensterSchmal() {
     return !!(window.matchMedia && window.matchMedia('(max-width: 1099px)').matches);
 }
@@ -819,16 +906,19 @@ function inkluagentFensterGross(an) {
     inkluagentUeberlagerungAnwenden();
 }
 // Leitet aus dem Zustand ab: inert auf allem ausser dem Fenster und der Ansage-Region (sonst hoerte man bei offener Ueberlagerung keine
-// Ansage, B3), Rolle Dialog. Inert wird auf den Geschwistern entlang des Wegs vom Fenster bis body gesetzt — so sind auch die Sprunglinks
-// und die Fusszeile erfasst (B7). Was schon vorher inert war, bleibt unberuehrt.
+// Ansage, B3), Rolle Dialog (ohne aria-modal, A-N1). Inert wird auf den Geschwistern entlang des Wegs vom Fenster bis body gesetzt — so
+// sind auch die Sprunglinks und die Fusszeile erfasst (B7). Was schon vorher inert war, bleibt unberuehrt.
+// Runde 2 (A-N2): beim Oeffnen eine kurze Ansage, was passiert ist und wie es zurueckgeht. Der Fokus bleibt auf dem Umschaltknopf — er
+// liegt schon im Dialog, darum sagten Screenreader „Dialog“ nicht von selbst (das tun sie nur, wenn der Fokus von aussen hineinkommt).
 function inkluagentUeberlagerungAnwenden() {
     const f = document.getElementById('arbeitsfenster');
     (window._arbeitsInert || []).forEach(el => { el.inert = false; });
     window._arbeitsInert = [];
     if (!f) return;
     const ueber = inkluagentUeberlagerungOffen();
-    if (ueber) { f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); }
-    else { f.removeAttribute('role'); f.removeAttribute('aria-modal'); }
+    const war = !!window._arbeitsUeberlagerungOffen;
+    window._arbeitsUeberlagerungOffen = ueber;
+    if (ueber) f.setAttribute('role', 'dialog'); else f.removeAttribute('role');
     if (!ueber) return;
     const ansage = document.getElementById('liveRegion');
     for (let el = f; el && el.parentElement && el !== document.body; el = el.parentElement) {
@@ -841,6 +931,7 @@ function inkluagentUeberlagerungAnwenden() {
     // Lag der Fokus jetzt hinter der Ueberlagerung (Breite geaendert), kommt er auf den Knopf — nie unsichtbar dahinter (2.4.11)
     const ae = document.activeElement;
     if (!ae || ae === document.body || !f.contains(ae)) { const k = f.querySelector('#arbeitsGross'); if (k) k.focus(); }
+    if (!war) announce(t('Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück.'));
 }
 function inkluagentUeberlagerungEinrichten() {
     if (window._arbeitsUeberlagerung) return;
@@ -1075,29 +1166,33 @@ function inkluagentSchritteAnsagen() {
 }
 // Schritt ansagen (nur mit „Jeden Schritt ansagen“). Pruefung 13.10.2026 (B9): Schritte, die in wenigen Millisekunden nacheinander kamen,
 // ersetzten sich in der Ansage-Region, bevor VoiceOver sie sprach. Jetzt gesammelt und hoechstens einmal je Sekunde gebuendelt gesagt;
-// ist die Antwort da, faellt Uebriges weg (es wuerde die Antwort unterbrechen). Die Vorgabe „an“ bleibt, bis Steve entscheidet.
+// ist die Antwort da, faellt Uebriges weg (es wuerde die Antwort unterbrechen). Die Vorgabe bleibt „an“ (Steve, Runde 2: B9 bleibt so).
+// Runde 2 (A-N8): an announce geht ein Schritt als verwerfbar — wartet er dort noch (Mindestabstand), streicht ihn das Ende ebenfalls;
+// vorher konnte er bis zu 100 ms NACH dem Fokus auf der Antwort in die Region kommen und deren Vorlesen unterbrechen.
 function inkluagentSchrittAnsagen(text, sofort) {
     if (!text || !inkluagentSchritteAnsagen()) return;
     const b = window._schrittAnsage || (window._schrittAnsage = { warte: [], zuletzt: 0, plan: 0 });
     b.warte.push(text);
-    const sagen = () => {
+    const sagen = (verwerfbar) => {
         b.plan = 0;
         b.zuletzt = Date.now();
         const satz = b.warte.join('. ');
         b.warte = [];
-        announce(satz);
+        announce(satz, { verwerfbar: verwerfbar });
     };
     // Ein Fehler (sofort) wartet nicht — er geht mit dem, was schon wartet, gleich hinaus und faellt beim Ende nicht weg
-    if (sofort) { clearTimeout(b.plan); sagen(); return; }
+    if (sofort) { clearTimeout(b.plan); sagen(false); return; }
     if (b.plan) return;
-    b.plan = setTimeout(sagen, Math.max(0, b.zuletzt + 1000 - Date.now()));
+    b.plan = setTimeout(() => sagen(true), Math.max(0, b.zuletzt + 1000 - Date.now()));
 }
 function inkluagentSchrittAnsagenVerwerfen() {
     const b = window._schrittAnsage;
-    if (!b) return;
-    clearTimeout(b.plan);
-    b.plan = 0;
-    b.warte = [];
+    if (b) {
+        clearTimeout(b.plan);
+        b.plan = 0;
+        b.warte = [];
+    }
+    if (typeof announce.verwerfen === 'function') announce.verwerfen();   // A-N8: auch was in announce noch wartet
 }
 // Livestream (Steve 12.10.2026): die Antwort waechst sichtbar als Entwurf (Wort fuer Wort aus dem Stream); die fertige, bereinigte
 // Antwort ersetzt ihn. Der Verlauf sagt nichts von selbst an (aria-live off) — VoiceOver bekommt die fertige Antwort mit dem Fokus.
@@ -1291,8 +1386,10 @@ function inkluagentBereichAufbauen() {
     const bereich = document.getElementById('inkluagentBereich');
     if (!bereich || !inkluagentUeberall() || bereich.dataset.gebaut) return;
     bereich.dataset.gebaut = '1';
-    // Adresse beim Laden, noch mit ?hin= und ?agent= (beide entfernen andere Teile gleich danach) — fuer das Arbeitsfenster (B1)
-    window._inkluagentStartAdresse = window.location.pathname + window.location.search;
+    // Adresse beim Laden, noch mit ?hin= und ?agent= (beide entfernen andere Teile gleich danach) — fuer das Arbeitsfenster (B1);
+    // seit Runde 2 (A-N9) mit Sprungmarke, die wie ?hin= zaehlt (nur in der Form einer id — andere Anker bleiben wie bisher weg)
+    const anker = /^#[A-Za-z0-9_-]+$/.test(window.location.hash) ? window.location.hash : '';
+    window._inkluagentStartAdresse = window.location.pathname + window.location.search + anker;
     const projektseite = /^\/app\/?$/.test(window.location.pathname);
     bereich.innerHTML = inkluagentInhaltHtml(null, projektseite ? 'bilder' : 'konto', true);
     inkluagentBedienungAnbinden();
@@ -1410,7 +1507,9 @@ async function inkluagentLaufVerfolgen(nachAbbruch) {
         await inkluagentLoadHistory(window._inkluagentProjectId);
         const alle = document.querySelectorAll('#inkluagentLog .inkluagent-message');
         const beantwortet = alle.length > 0 && alle[alle.length - 1].classList.contains('assistant');
-        if (nachAbbruch && !beantwortet) {   // Fehlerantworten speichert der Server nicht — dann kam wirklich nichts
+        // Fehlerantworten (intent „error“) speichert der Server nicht (seit Runde 2 auch nach einem Absturz im Lauf, Korrektheit N7) —
+        // steht keine Antwort im Verlauf, kam wirklich nichts
+        if (nachAbbruch && !beantwortet) {
             inkluagentSetStatus(t('Die Verbindung ist abgebrochen, und eine Antwort kam nicht an. Bitte frag noch einmal.'), true);
             return;
         }
@@ -1601,7 +1700,7 @@ async function inkluagentKontoVerlaufLaden(projectId, log) {
                 inkluagentMarkeAnhaengen(log, m.project_id, m.projekt_name, m.projekt_geloescht);
                 vorher = m.project_id;
             }
-            inkluagentAppendMessage(m.role, m.content, m.werkzeuge, m.anhang);
+            inkluagentAppendMessage(m.role, m.content, m.werkzeuge, m.anhang, m.sprache);
         }
         inkluagentFrueherZeigen(projectId, data.frueher || 0);
         log.scrollTop = log.scrollHeight;
@@ -1647,6 +1746,7 @@ function inkluagentFrueherZeigen(projectId, anzahl) {
                 h.textContent = m.role === 'user' ? t('Du') : 'InkluAgent';
                 const c = document.createElement('div');
                 c.className = 'inkluagent-message-content';
+                inkluagentSpracheSetzen(c, m.sprache);   // Runde 2 (B11, Punkt 4)
                 c.textContent = m.content || '';
                 w.appendChild(h);
                 w.appendChild(c);
@@ -1678,7 +1778,7 @@ async function inkluagentLoadHistory(projectId) {
         }
         const data = await res.json();
         for (const m of data.messages || []) {
-            inkluagentAppendMessage(m.role, m.content, m.werkzeuge, m.anhang);
+            inkluagentAppendMessage(m.role, m.content, m.werkzeuge, m.anhang, m.sprache);
         }
         log.scrollTop = log.scrollHeight;
     } catch (e) {
@@ -1884,9 +1984,14 @@ async function inkluagentWechseln(ziel, antwortEl, fokussieren) {
     return true;
 }
 function inkluagentWechselAusfuehren(ziel) {
-    if (ziel.antwortFokus) { try { sessionStorage.setItem('inkluagent.fokusAntwort', '1'); } catch (e) { /* ohne Speicher: kein Fokus-Sprung */ } }
+    if (ziel.antwortFokus) inkluagentFokusAntwortMerken();
     if (ziel.neuLaden) window.location.reload();
     else window.location.href = ziel.url;
+}
+// Merker fuer die naechste Seite: Fokus auf die letzte Antwort statt auf die Ueberschrift 1 (B11; inkluagentBinden liest ihn). EINE Stelle
+// fuer den Wechsel selbst, den angebotenen Link „Sprache wechseln: …“ und den Rueckweg „Zurück zu …“ (Runde 2, HN3).
+function inkluagentFokusAntwortMerken() {
+    try { sessionStorage.setItem('inkluagent.fokusAntwort', '1'); } catch (e) { /* ohne Speicher: kein Fokus-Sprung */ }
 }
 // Der Weg unter der Antwort, wenn nicht von selbst gewechselt wird — nur, wenn er nicht schon dasteht („Projekt … öffnen“, „Hinführen: …“)
 function inkluagentWechselAnbieten(antwortEl, ziel) {
@@ -1925,7 +2030,7 @@ function inkluagentWechselAnbieten(antwortEl, ziel) {
         sp.lang = ziel.sprache;
         sp.textContent = name;
         l.appendChild(sp);
-        l.addEventListener('click', () => { try { sessionStorage.setItem('inkluagent.fokusAntwort', '1'); } catch (e) { /* egal */ } });
+        l.addEventListener('click', inkluagentFokusAntwortMerken);
     } else {
         l.textContent = ziel.text || l.getAttribute('href');
     }
@@ -1994,7 +2099,7 @@ async function inkluagentBestaetigen(angebotId, btn, statusEl, konto) {
         }
         if (statusEl) statusEl.textContent = '';
         const fokussieren = inkluagentFokusImChat();
-        const el = inkluagentAppendMessage('assistant', data.reply || '', data.werkzeuge || [], data.anhang || []);
+        const el = inkluagentAppendMessage('assistant', data.reply || '', data.werkzeuge || [], data.anhang || [], data.sprache);
         const wechsel = inkluagentWechselZiel(data.actions);   // B10: derselbe Weg wie nach einer Nachricht
         if (wechsel && await inkluagentWechseln(wechsel, el, fokussieren)) return;
         if (data.karte) inkluagentKarteSetzen(angebotId, data.karte);
@@ -2048,13 +2153,16 @@ function inkluagentAnhangEl(anhang) {
         }
         // Link unter der Antwort (Schritt 3, projekt_oeffnen): nur Pfade dieser Anwendung (eigenerPfad, Pruefung 13.10.2026, S14 —
         // vorher liess die Pruefung „/\host“ durch). Ins Arbeitsfenster oeffnet ihn, wo passend, der Klick-Handler der Seite (B1).
-        // lang (B11): ein Link in einer anderen Sprache als die Seite („Zurück zu Deutsch“ nach einem Sprachwechsel) traegt sie
+        // lang (B11): ein Link in einer anderen Sprache als die Seite („Zurück zu Deutsch“ nach einem Sprachwechsel) traegt sie.
+        // Runde 2 (HN3): ein Sprachwechsel-Link („Zurück zu …“) setzt den Merker wie „Sprache wechseln: …“ — nach dem Neuladen steht
+        // der Fokus wieder auf der Antwort, nicht auf der Ueberschrift 1
         if (a && a.art === 'link' && eigenerPfad(a.url)) {
             const l = document.createElement('a');
             l.className = 'btn btn-secondary';
             l.href = a.url;
             l.textContent = a.text || a.url;
-            if (typeof a.lang === 'string' && /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/.test(a.lang)) l.lang = a.lang;
+            inkluagentSpracheSetzen(l, a.lang);
+            if (/^\/set-language\//.test(a.url)) l.addEventListener('click', inkluagentFokusAntwortMerken);
             box.appendChild(l);
             return;
         }
@@ -2132,7 +2240,14 @@ function inkluagentBloeckeBauen(el, text) {
     });
 }
 
-function inkluagentAppendMessage(role, content, werkzeuge, anhang) {
+// Pruefung 13.10.2026, Runde 2 (B11, Punkt 4; WCAG 3.1.2): die Sprache, in der eine Nachricht geschrieben wurde (der Server liefert sie
+// je Verlaufseintrag als „sprache“), steht als lang am Nachrichtentext. Sonst las VoiceOver nach einem Wechsel auf Englisch die deutsche
+// Antwort, auf der der Fokus steht, mit englischer Stimme. Nur am Text: Absender-Ueberschrift („Du“), „Genutzt: …“ und die Knoepfe
+// darunter baut die Seite in ihrer jetzigen Sprache. Ohne gueltige Angabe gilt die Sprache der Seite (neue Nachrichten).
+function inkluagentSpracheSetzen(el, sprache) {
+    if (el && typeof sprache === 'string' && /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/.test(sprache)) el.lang = sprache;
+}
+function inkluagentAppendMessage(role, content, werkzeuge, anhang, sprache) {
     const log = document.getElementById('inkluagentLog');
     if (!log) return;
     // VoiceOver (Steve 28.08.2026): jede Nachricht ist fokussierbar (tabindex -1) und
@@ -2148,6 +2263,7 @@ function inkluagentAppendMessage(role, content, werkzeuge, anhang) {
     roleEl.textContent = (role === 'user' ? t('Du') : 'InkluAgent');
     const contentEl = document.createElement('div');
     contentEl.className = 'inkluagent-message-content';
+    inkluagentSpracheSetzen(contentEl, sprache);
     if (role === 'assistant' && window.INKLUAGENT && window.INKLUAGENT.bloecke) inkluagentBloeckeBauen(contentEl, content || '');
     else contentEl.textContent = content || '';
     wrapper.appendChild(roleEl);
@@ -2195,13 +2311,19 @@ function inkluagentNachrichtDaten(message, hochgeladen) {
 // Pruefung 13.10.2026 (B16): eine Nachricht, die der Server nicht angenommen hat (Tagesgrenze, Kostendeckel, laufender Auftrag,
 // Verbindung), steht nicht mehr da, als waere sie angekommen — die Blase sagt es in Worten (nicht nur mit Farbe), und der Text steht
 // noch im Eingabefeld (er wird erst geleert, wenn der Server die Nachricht angenommen hat).
-function inkluagentNichtGesendet(el, mitText) {
-    if (!el || el.querySelector('.inkluagent-nicht-gesendet-hinweis')) return;
-    el.classList.add('inkluagent-nicht-gesendet');
-    const p = document.createElement('p');
-    p.className = 'inkluagent-nicht-gesendet-hinweis';
-    p.textContent = mitText ? t('Nicht gesendet. Dein Text steht noch im Eingabefeld.') : t('Nicht gesendet.');
-    el.appendChild(p);
+// Runde 2 (A-N4): auch die Statuszeile (die Ansage) beginnt mit „Nicht gesendet:“, nennt den Grund und endet mit „Dein Text steht noch im
+// Eingabefeld.“ — vorher stand das nur sichtbar in der Blase, die Ansage nannte nur den Grund. Der Fokus bleibt, wo er ist (inkluagentSend).
+function inkluagentNichtGesendet(el, mitText, grund) {
+    if (el && !el.querySelector('.inkluagent-nicht-gesendet-hinweis')) {
+        el.classList.add('inkluagent-nicht-gesendet');
+        const p = document.createElement('p');
+        p.className = 'inkluagent-nicht-gesendet-hinweis';
+        p.textContent = mitText ? t('Nicht gesendet. Dein Text steht noch im Eingabefeld.') : t('Nicht gesendet.');
+        el.appendChild(p);
+    }
+    let satz = String(grund || '').trim();
+    if (satz && !/[.!?…]$/.test(satz)) satz += '.';
+    inkluagentSetStatus(t('Nicht gesendet: {grund}', { grund: satz }) + (mitText ? ' ' + t('Dein Text steht noch im Eingabefeld.') : ''), true);
 }
 async function inkluagentSend() {
     const projectId = window._inkluagentProjectId;
@@ -2245,8 +2367,9 @@ async function inkluagentSend() {
     try {
         if (dateien.length) {
             if (chatstil) inkluagentArbeitsStart(dateien.length === 1 ? t('Lädt 1 Datei hoch …') : t('Lädt {n} Dateien hoch …', { n: dateien.length }));
-            const erg = await inkluagentHochladen(projectId, dateien);
-            if (!erg) return;   // der Grund steht in der Statuszeile, die Anhaenge bleiben
+            // K12 (Runde 2): Kennung des Stapels — dieselben Dateien nach einem Abbruch noch einmal = dieselbe Kennung
+            const erg = await inkluagentHochladen(projectId, dateien, inkluagentHochladenKennung(dateien));
+            if (!erg) return;   // der Grund steht in der Statuszeile, die Anhaenge (und ihre Kennung) bleiben
             const ergebnisse = erg.ergebnisse || [];
             inkluagentHochgeladenZeigen(projectId, ergebnisse);
             if (dateienEl) dateienEl.value = '';
@@ -2263,7 +2386,8 @@ async function inkluagentSend() {
             window._inkluagentNotiz = erg.notiz_id ? { id: erg.notiz_id, kurz: erg.kurz || '' } : null;
         }
         const notiz = window._inkluagentNotiz || null;
-        // Dieselbe Zeile, die der Server in den Verlauf schreibt (hochladen.nachricht_fuer_verlauf)
+        // So, wie der gespeicherte Verlauf die Nachricht zeigt: der getippte Text, darunter die Zeile des Servers (notiz.kurz, im Speicher
+        // die Spalte zusatz) — inkluagent/storage.anzeige (Runde 2, K-N9: der Verweis nannte die entfernte hochladen.nachricht_fuer_verlauf)
         if (notiz) verlaufText = (message && notiz.kurz) ? message + '\n' + notiz.kurz : (message || notiz.kurz || '');
         inkluagentMarkeVorNachricht(projectId);
         nutzerEl = inkluagentAppendMessage('user', verlaufText);
@@ -2282,18 +2406,20 @@ async function inkluagentSend() {
         });
         if (res.status === 401) { inkluagentZurAnmeldung(); return; }
         if (!res.ok) {
-            let detail = 'HTTP ' + res.status;
+            // Satz des Servers (Tagesgrenze, Kostendeckel, 409 …); ohne ihn ein Satz mit der Fehlernummer statt nur „HTTP 500“
+            let detail = t('Der Server hat die Nachricht nicht angenommen (Fehler {n}).', { n: res.status });
             try { const e = await res.json(); if (e && typeof e.detail === 'string') detail = e.detail; } catch (_) {}
-            inkluagentNichtGesendet(nutzerEl, !!message);
-            inkluagentSetStatus(detail, true);
+            inkluagentNichtGesendet(nutzerEl, !!message, detail);
             // K2: 409 = fuer dieses Konto arbeitet schon ein Auftrag (anderer Tab, vorige Seite) — der Satz kommt vom Server; dessen
             // Antwort verfolgt die Seite dann wie nach einem Seitenwechsel
             if (res.status === 409) verfolgen = 'lauf';
             return;
         }
-        // Angenommen (B16): erst jetzt das Feld leeren — und nur, wenn noch derselbe Text drinsteht; die Notiz ist verbraucht (K4)
+        // Angenommen (B16): erst jetzt das Feld leeren — und nur, wenn noch derselbe Text drinsteht; die Notiz ist verbraucht (K4), die
+        // Kennung des Stapels ebenso (K12)
         angenommen = true;
         window._inkluagentNotiz = null;
+        window._inkluagentStapel = null;
         if (input.value.trim() === message) input.value = '';
         let data = null;
         const genutzt = [];
@@ -2339,7 +2465,8 @@ async function inkluagentSend() {
         // Fokusregel (Pruefung 4, M1) VOR allem anderen bestimmen: liegt der Fokus noch im Chat?
         const fokussieren = inkluagentFokusImChat();
         inkluagentEntwurfVerwerfen();   // die fertige Antwort ersetzt den Entwurf aus dem Stream
-        const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'), Array.isArray(data.werkzeuge) ? data.werkzeuge : genutzt, data.anhang);
+        const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'), Array.isArray(data.werkzeuge) ? data.werkzeuge : genutzt,
+                                                  data.anhang, data.sprache);
         log.scrollTop = log.scrollHeight;
         inkluagentSetStatus('', false);
         if (data.intent === 'error') inkluagentArbeitsFehler(data.reply || '');
@@ -2396,8 +2523,9 @@ async function inkluagentSend() {
         // K5: riss die Verbindung NACH dem Annehmen ab, arbeitet der Server weiter — verfolgen; davor kam die Nachricht nicht an (B16)
         if (angenommen && inkluagentUeberall()) {
             verfolgen = 'abbruch';
+        } else if (!angenommen) {
+            inkluagentNichtGesendet(nutzerEl, !!message, t('Verbindungsfehler. Bitte erneut versuchen.'));
         } else {
-            if (!angenommen) inkluagentNichtGesendet(nutzerEl, !!message);
             inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
         }
     } finally {
@@ -2408,9 +2536,12 @@ async function inkluagentSend() {
         if (!verfolgen && window._arbeits && window._arbeits.laeuft) inkluagentArbeitsEnde(false);
         // In dieses Projekt hochgeladen, aber die Antwort kam nicht: die Ansicht trotzdem nachziehen (neue Dokumente, Bilder)
         if (nachziehenHochladen && !nachgezogen) inkluagentAnsichtNachziehen(projectId);
-        // Zurueck ins Eingabefeld nur, wenn der Fokus im Chat war (Fehlerfall) — nie aus einer anderen Stelle heraus
+        // Runde 2 (A-N4): zurueck ins Eingabefeld nur, wenn der Fokus verloren ging (auf body) und das Gespraech offen ist — sonst bleibt
+        // er, wo er ist: auf „Senden“ (aria-disabled haelt ihn, B12) bzw. im Feld (Enter). Vorher sprang er nach „Nicht gesendet“ vom
+        // Knopf ins Feld, und VoiceOver las den ganzen Nachrichtentext statt der Statuszeile (die Regel stammte aus der Zeit von disabled).
+        const ae = document.activeElement;
         if (window._inkluagentFokusAntwort) { window._inkluagentFokusAntwort = false; }
-        else if (inkluagentFokusImChat() && document.activeElement !== input) { input.focus(); }
+        else if ((!ae || ae === document.body || ae === document.documentElement) && inkluagentFokusImChat()) { input.focus(); }
         if (verfolgen) inkluagentLaufVerfolgen(verfolgen === 'abbruch');
     }
 }

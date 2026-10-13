@@ -133,15 +133,13 @@
       var r = await fetch('/api/me/oberflaeche', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({ oberflaeche: wahl.value }) });
       if (!r.ok) throw new Error(String(r.status));
-      // Im Arbeitsfenster der Agentenansicht (13.10.2026): die ganze Seite wechselt in die gewaehlte Ansicht
-      if (window.EINGEBETTET && window.top !== window) {
-        try { window.top.sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e2) { /* ohne Speicher */ }
-        window.top.location.reload();
-        return;
-      }
+      // Neu laden nur, wenn sich die Ansicht wirklich aendert. Im Arbeitsfenster der Agentenansicht (13.10.2026) wechselt die ganze Seite
+      // (Hauptfenster) in die gewaehlte Ansicht. Pruefung 13.10.2026, Runde 2 (HN2): erst vergleichen, dann neu laden — vorher lud das
+      // Hauptfenster auch bei unveraenderter Ansicht neu, und der Fokus stand danach auf seiner Ueberschrift 1 statt hier.
       if (wahl.value !== vorher) {
-        try { sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e2) { /* ohne Speicher: kein Fokus-Sprung */ }
-        window.location.reload();
+        var ziel = (window.EINGEBETTET && window.top !== window) ? window.top : window;
+        try { ziel.sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e2) { /* ohne Speicher: kein Fokus-Sprung */ }
+        ziel.location.reload();
         return;
       }
       var name = (form.querySelector('label[for="' + wahl.id + '"]') || {}).textContent || '';

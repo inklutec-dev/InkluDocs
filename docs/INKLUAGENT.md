@@ -1265,6 +1265,98 @@ müsste dafür seine Rückgabe an vielen Stellen ändern. Umbenennen und Laufabb
 **Offen (Steve):** Datenschutzerklärung Abschnitt 3 (Chat-Assistent): Gespräche überdauern das Löschen eines Projekts und
 bleiben bis zur Kontolöschung; „Gespräch löschen“ als Funktion (S17).
 
+## Prüfung 13.10.2026, Runde 2: Oberfläche
+
+Grundlage: die zweite Prüfrunde vom 13.10.2026 (Barrierefreiheit N1–N10 und HN1–HN3, hier „A-N…“; Korrektheit N1, K12, N9, hier
+„K-N…“; Sicherheit N9, hier „S-N9“). Geändert: `frontend/inkluagent.js`, `frontend/dashboard.js`, `frontend/style.css`, die Vorlagen
+`base.html`, `base_oeffentlich.html`, `ablage.html`, `einstellungen.html`, `gespraech.html`, `hilfe_inkluagent.html`, Texte in sechs
+Sprachen. Die Server-Teile (Liste der Fensterseiten, `sprache` je Verlaufseintrag, `hochladen_id`, `hinZiele` immer, Fehlerantworten
+nicht speichern, eigener Satz für gesperrte Gemini-Anfragen) baut Steve parallel; die Oberfläche funktioniert mit und ohne diese Felder.
+
+### Barrierefreiheit
+
+- **A-N1 Überlagerung ohne `aria-modal`:** `aria-modal` tat zusätzlich zu `inert` dasselbe, aber ohne Ausnahme: sobald sich der Fokus im
+  Dialog bewegte, stand die Ansage-Region als „ignoriert, activeAriaModalDialog“ im Barrierefreiheitsbaum — fertige Antwort, Fehler und
+  Schritte blieben bei offener Überlagerung stumm (auf dem iPhone der Normalfall). Jetzt `role="dialog"`, benannt über die Überschrift
+  „Arbeitsfenster“, die Modalität macht `inert` (HTML vor ARIA). Gemessen mit dem Messrahmen der Prüfung (Chrome 155) und in der Probe.
+- **A-N2 Ansage beim Öffnen:** „Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück.“ —
+  einmal, wenn die Überlagerung aufgeht (auch durch Zoomen). Der Fokus bleibt auf dem Umschaltknopf.
+- **A-N3 Statuszeile nie `display: none`:** leer ohne Höhe und Abstand, aber im Barrierefreiheitsbaum (`.inkluagent-meldungen` mit
+  Rändern statt `gap`, `> :empty { margin: 0 }`). Eine Live-Region, die erst mit ihrem Text in den Baum kommt, sagt VoiceOver mit Safari
+  nicht zuverlässig an.
+- **A-N4 Nicht gesendet:** Der Fokus bleibt auf „Senden“ (bzw. im Feld bei Enter); ins Feld nur, wenn er auf `body` gefallen ist. Die
+  Statuszeile sagt „Nicht gesendet: <Grund> Dein Text steht noch im Eingabefeld.“ (`inkluagentNichtGesendet(el, mitText, grund)`).
+  Ohne Satz des Servers „Der Server hat die Nachricht nicht angenommen (Fehler n).“ statt „HTTP n“.
+- **A-N5 Gesperrtes „Senden“:** gedämpfte Farben statt `opacity` (Grund #e9edf2, Schrift #4a5568 = 6,4:1, Rand gestrichelt — gesperrt
+  nicht nur an der Farbe erkennbar); der 3-px-Fokusring bleibt voll (4,28:1). In der Seitenleiste Schrift #b8c2d4 (7,9:1).
+- **A-N6 Öffentliche Seiten im Arbeitsfenster:** `base_oeffentlich.html` hat eine eingebettete Fassung wie `base_app.html` (Vorlage
+  erkennt `eingebettet` aus `template_context`): ohne Seitenleiste und Fußzeile, Sprunglink „Zurück zum Gespräch“, `body.eingebettet`,
+  `window.EINGEBETTET` immer gesetzt (true/false). `base.html` hat dafür den Block `body_attribute`. Über uns und Kontakt, Preise,
+  Kündigen und Widerrufen öffnen damit im Fenster; Rechtstexte bleiben ganze Seite. Die Hilfe nennt alle Ausnahmen als Liste.
+- **A-N7:** „Setzt das Gespräch fort.“ ist `hidden` (bleibt Beschreibung per `aria-describedby`, steht aber nicht mehr lose im Baum).
+- **A-N8 `announce` mit Mindestabstand und Verwerfen:** Die Region wird frühestens `announce.ABSTAND_MS` (1 s) nach der vorigen
+  Ansage geleert und neu gesetzt; was bis dahin kommt, hängt an (vorher stand eine Ansage manchmal nur 30 ms da). `announce(text,
+  { verwerfbar: true })` markiert Zwischenstände (Schritte); `announce.verwerfen()` streicht sie, solange sie warten —
+  `inkluagentSchrittAnsagenVerwerfen` ruft es am Ende eines Laufs auf. Ein Fehler-Schritt bleibt.
+- **A-N9 Sprungmarke wie `?hin=`:** Ein Anker im Pfad („Zur Ablage“ → `/ablage#ausgabe-3`) zählt beim Öffnen im Fenster wie `?hin=`:
+  steht das Ziel beim Laden schon da, bekommt es den Fokus (ein Sprung); baut die Seite es erst, setzt sie ihn selbst. Die Ablage nutzt
+  `fokusAuf` (auch nach dem Löschen) und lässt den Eintrag der Sprungmarke beim Kürzen der Liste sichtbar. Direkt geladene Seiten mit
+  Anker öffnen ebenso.
+- **A-N10 (Name = Platzhalter):** bewusst unverändert, klärt Steve im VoiceOver-Test (Prüfpunkt 2).
+- **HN1:** Die Grenzen der Anhänge stehen im Fluss oben in der Beschreibung unter der Eingabe, nicht mehr im angehefteten Teil; der
+  Knopf „Dateien anhängen“ verweist weiter per `aria-describedby` darauf.
+- **HN2:** Die Einstellungen im Fenster vergleichen erst und laden das Hauptfenster nur bei geänderter Ansicht neu.
+- **HN3:** Der Rückweg „Zurück zu …“ setzt den Merker `inkluagent.fokusAntwort` wie „Sprache wechseln: …“ (eine Funktion
+  `inkluagentFokusAntwortMerken`).
+- **B11, Punkt 4:** `lang` am Nachrichtentext aus `sprache` des Verlaufs (Konto-Verlauf, Projektverlauf, früheres Gespräch, neue Antwort,
+  Gesprächsseite) — nur am Text, nicht an Absender-Überschrift, „Genutzt: …“ und Knöpfen (die stehen in der jetzigen Sprache).
+- **B9:** Die Vorgabe „Jeden Schritt ansagen“ bleibt an.
+
+### Korrektheit und Sicherheit (Oberflächenteil)
+
+- **S-N6 Liste der Fensterseiten:** `fensterSeite(pfad)` in `dashboard.js` nimmt `window.INKLUAGENT.fensterSeiten` (Pfad-Präfixe; ein
+  Pfad passt, wenn er gleich ist oder mit Präfix + „/“ beginnt; Abfrage und Anker zählen nicht). Eine Stelle für die Elternseite
+  (`inkluagentSeiteImFensterMoeglich`, der `load`-Hörer) und die eingebettete Seite (Klicks); eine eingebettete Seite ohne eigenes
+  `window.INKLUAGENT` nimmt die Liste ihres Hauptfensters. Ohne Liste gilt `!gehoertGanzeSeite(pfad)` (ohne die öffentlichen Seiten,
+  die jetzt eingebettet erscheinen). Navigiert eine Fensterseite per Skript zu einer anderen Seite, nimmt sie `ganzeSeite()`
+  (so schon Projekt anlegen, Zahlung, Konto löschen, „Hier weitermachen“); ein Rahmen, den der Server nicht einrahmt, wird als
+  „lässt sich gerade nicht öffnen“ behandelt.
+- **K-N1 Fehlerseite im Arbeitsfenster:** Die Seite wird erst gemerkt, wenn sie eingebettet GELADEN ist (`inkluagentSeiteMerken`). Der
+  `load`-Hörer trennt vier Fälle: Erfolg; Anmeldung (ganze Seite, Merker bleibt); ganze Seite (nicht in der Liste oder
+  `EINGEBETTET === false`: Merker weg, dann wechseln — nie auf die Seite, auf der man schon ist); sonst (404/403 als JSON, 500 als Text,
+  nicht eingerahmt) `inkluagentSeiteNichtGeladen`: nicht wegnavigieren, Seite schließen, Merker weg, im Fenster
+  „„<Name>“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal.“ (`#arbeitsSeiteMeldung`). Stand der Fokus im Rahmen,
+  kommt er auf den Satz; wurde die Seite mit Fokus geöffnet, eine Ansage; beim stillen Wiederherstellen nur der Satz.
+- **K12 `hochladen_id`:** Je Stapel angehängter Dateien eine Kennung (32 Hex-Zeichen, `crypto.getRandomValues`); dieselben Dateien in
+  derselben Reihenfolge behalten sie, bis die Nachricht angenommen ist (`window._inkluagentStapel`); ein anderer Stapel bekommt eine neue.
+- **K-N9:** Der Kommentar zur Verlaufszeile nennt jetzt `storage.anzeige` (getippter Text, darunter `zusatz`).
+- **S-N9 `?hin=` fail-closed:** Ohne `window.INKLUAGENT.hinZiele` (oder kein Array) wird `?hin=` gar nicht ausgewertet; mit Liste nur ids
+  daraus (auch „ueberschrift“ steht darin). Der Server gibt die Liste seit Runde 2 immer mit; eingebettete öffentliche Seiten nehmen die
+  des Hauptfensters, als ganze Seite werten sie `?hin=` nicht aus.
+
+### Proben
+
+Lokal auf dem Server (`/home/claude/inkluagent-ausbau-1009/lokal/`), fiktive Daten, Ersatzmodell, je Probe eine frische App, voller
+Schaltersatz samt Klang: `bash probe_r2_alle.sh <worktree> [probe …]` (Ports 8850–8869) mit `probe_r2_a11y_baum` (A-N1, A-N2, A-N3,
+A-N7 über den Barrierefreiheitsbaum), `probe_r2_senden` (A-N4, A-N5, K12), `probe_r2_fensterseiten` (S-N6, A-N6, K-N1, A-N9, HN2),
+`probe_r2_hin` (S-N9), `probe_r2_ansagen` (A-N8, B11/4, HN3, HN1). Gemeinsames in `r2_gemeinsam.py`: CDP-Knoten des
+Barrierefreiheitsbaums und Init-Skripte, die `fensterSeiten` und das Fehlen von `hinZiele` nachstellen. Messung mit dem Messrahmen
+der Prüfung und Chrome 155: `scratchpad/a11y-probe-r2/messung_r2.py`. Angepasst an das gewollte neue Verhalten (Sicherung
+`*.vor-runde2`): `probe_pr13_b2_breite`, `probe_pr13_b7_escape` (ohne `aria-modal`), `probe_pr13_b16_nicht_gesendet` („Nicht gesendet: …“),
+`probe_pr13_b3_ueberlagerung` und `probe_pr13_b12_senden` (warten 1500 statt 400 ms auf eine Ansage — Mindestabstand, A-N8).
+Unit-Tests: `tests/test_pruefung2_oberflaeche.py` (Node für die reinen Funktionen, Vorlagen am Server, Quelltext), angepasst
+`test_pruefung_1310_oberflaeche.py`, `test_agent_arbeitsfenster_seiten.py`, `test_agent_begleiter.py`, `test_michael_feedback_1012.py`.
+Stand der Läufe am 13.10.2026: `probe_r2_alle` 89 OK, `probe_pr13_alle` 149 OK, `probe_pr13_vorhandene` 176 OK, je 0 FEHLT; Unit-Suite
+1052 grün, 6 übersprungen, rot nur die drei Dateien, die außerhalb des Containers immer rot sind.
+
+### Offen
+
+- A-N10 (Name = Platzhalter): VoiceOver-Test (Steve).
+- Server: `fensterSeiten` und `sprache` je Eintrag liefern (die Proben stellen sie nach); `/kontakt` (leitet auf `/ueber-uns#kontakt`)
+  könnte in die Liste; öffentliche Seiten als ganze Seite bekommen kein `hinZiele` — dort wird `?hin=` darum nicht ausgewertet
+  (Hinführen zu „Kontakt“ in der manuellen Ansicht landet oben auf der Seite).
+- Echter Screenreader und Safari: wie in Runde 1; dazu Prüfpunkt 13 (Ansage beim Öffnen, Antwort unter der Überlagerung).
+
 ## Vor dem nächsten Prod-Rollout: was sich ohne Schalter ändert (Korrektheit H4, Stand Runde 2)
 
 Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sich trotzdem:

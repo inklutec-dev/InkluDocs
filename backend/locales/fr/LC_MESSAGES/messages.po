@@ -12468,3 +12468,43 @@ msgstr "En cours"
 #, python-brace-format
 msgid "Läuft noch: {text}"
 msgstr "En cours : {text}"
+
+# Pruefung 13.10.2026, Runde 2: Oberflaeche
+msgid "Das Arbeitsfenster liegt jetzt über dem Gespräch. Escape oder „Zurück zum Gespräch“ führt zurück."
+msgstr "La fenêtre de travail recouvre maintenant la conversation. Échap ou « Retour à la conversation » te ramène."
+
+#, python-brace-format
+msgid "„{name}“ lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "« {name} » ne peut pas être ouvert pour le moment. Réessaie plus tard."
+
+msgid "Diese Seite lässt sich gerade nicht öffnen. Bitte versuch es später noch einmal."
+msgstr "Cette page ne peut pas être ouverte pour le moment. Réessaie plus tard."
+
+#, python-brace-format
+msgid "Nicht gesendet: {grund}"
+msgstr "Non envoyé : {grund}"
+
+msgid "Dein Text steht noch im Eingabefeld."
+msgstr "Ton texte est toujours dans le champ de saisie."
+
+#, python-brace-format
+msgid "Der Server hat die Nachricht nicht angenommen (Fehler {n})."
+msgstr "Le serveur n’a pas accepté le message (erreur {n})."
+
+msgid "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt."
+msgstr "Dans la vue agent, la conversation avec l’InkluAgent est toujours ouverte ; en haut de chaque page, le lien d’évitement « Aller à l’InkluAgent » y mène directement. Les pages de la navigation et les liens s’ouvrent dans la fenêtre de travail sans que tu quittes la conversation."
+
+msgid "Diese Seiten öffnen als ganze Seite, ohne Arbeitsfenster:"
+msgstr "Ces pages s’ouvrent en pleine page, sans fenêtre de travail :"
+
+msgid "deine Projekte und die Startseite (dort ist der InkluAgent selbst)"
+msgstr "tes projets et la page d’accueil (l’InkluAgent s’y trouve lui-même)"
+
+msgid "der Wechsel der Sprache, Anmelden und Abmelden"
+msgstr "le changement de langue, la connexion et la déconnexion"
+
+msgid "die Rechtstexte: Impressum, Datenschutz, Datensicherheit, Nutzungsbedingungen, Widerrufsbelehrung und Auftragsverarbeitung"
+msgstr "les textes juridiques : mentions légales, confidentialité, sécurité des données, conditions d’utilisation, droit de rétractation et sous-traitance"
+
+msgid "die API-Dokumentation"
+msgstr "la documentation de l’API"

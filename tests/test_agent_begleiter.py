@@ -297,8 +297,8 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn(r"/^[A-Za-z][\w-]{0,40}$/.test(ziel)", h)
         self.assertIn("fokusAuf(el, ", h)
         self.assertIn("u.searchParams.delete('hin')", h)
-        # S14: nur Ziele aus der Liste des Servers, wenn er sie mitgibt (window.INKLUAGENT.hinZiele)
-        self.assertIn("if (liste && ziel !== 'ueberschrift' && liste.indexOf(ziel) < 0) return;", h)
+        # S14: nur Ziele aus der Liste des Servers (window.INKLUAGENT.hinZiele). Runde 2 (S-N9): ohne Liste gar nicht (fail-closed)
+        self.assertIn("if (!liste || liste.indexOf(ziel) < 0) return;", h)
 
     def test_seite_mitschicken_und_ueberblick_als_text(self):
         self.assertIn("d.seite = { pfad: window.location.pathname", self.funktion("inkluagentNachrichtDaten"))

@@ -135,7 +135,7 @@ class Oberflaeche(unittest.TestCase):
         m = funktion(self.js, "inkluagentSeiteImFensterMoeglich")
         self.assertIn("if (!inkluagentChatstilAktiv() || typeof pfad !== 'string' || !eigenerPfad(pfad)) return false;", m)
         self.assertIn(r"/^\/[A-Za-z0-9\/_-]*(\?[A-Za-z0-9=&_%-]*)?(#[A-Za-z0-9_-]*)?$/.test(pfad)", m)
-        self.assertIn("return !gehoertGanzeSeite(pfad);", m, "eine Liste fuer Elternseite und Rahmen (dashboard.js)")
+        self.assertIn("return fensterSeite(pfad);", m, "eine Liste fuer Elternseite und Rahmen (dashboard.js, Runde 2: vom Server)")
         zeigen = funktion(self.js, "inkluagentSeiteZeigen")
         self.assertIn(".title = t('Arbeitsfenster: {name}'", zeigen, "der Rahmen hat einen Namen")
         f = funktion(self.js, "inkluagentSeiteImFenster")
@@ -153,8 +153,10 @@ class Oberflaeche(unittest.TestCase):
         self.assertNotIn("{ once: true }", bau)
         g = funktion(self.js, "inkluagentRahmenGeladen")
         self.assertIn("doc.querySelector('#main h1')", g)
-        self.assertIn("gehoertGanzeSeite(loc.pathname) || !win || win.EINGEBETTET !== true", g)
-        self.assertIn("if (/^\\/login(\\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }", g)
+        # Runde 2 (K-N1): vier Faelle — Erfolg, Anmeldung, ganze Seite, Fehlerantwort (bleibt im Fenster)
+        self.assertIn("if (eigene && eingebettet === true && fensterSeite(loc.pathname)) {", g)
+        self.assertIn("if (eigene && /^\\/login(\\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }", g)
+        self.assertIn("inkluagentSeiteNichtGeladen(rahmen);", g)
         self.assertIn("document.activeElement === rahmen", g, "Link im Rahmen: Fokus auf die neue Seite")
 
     def test_vergroessern_ein_zustand_alles_abgeleitet(self):
@@ -165,7 +167,8 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("inkluagentUeberlagerungAnwenden();", g)
         u = funktion(self.js, "inkluagentUeberlagerungAnwenden")
         self.assertIn("k === ansage", u, "die Ansage-Region bleibt hoerbar (B3)")
-        self.assertIn("f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true');", u)
+        self.assertIn("if (ueber) f.setAttribute('role', 'dialog'); else f.removeAttribute('role');", u)
+        self.assertNotIn("aria-modal", u, "Runde 2 (A-N1): aria-modal nahm die Ansage-Region aus dem Baum")
         e = funktion(self.js, "inkluagentUeberlagerungEinrichten")
         self.assertIn("mq.addEventListener('change', inkluagentUeberlagerungAnwenden)", e, "B2/K8: Breitenwechsel")
         self.assertIn("e.key === 'Escape'", e)
@@ -184,12 +187,15 @@ class Oberflaeche(unittest.TestCase):
 
     def test_im_rahmen_ganze_seite_fuer_projekte_sprache_anmeldung_zahlung(self):
         g = funktion(self.dash, "gehoertGanzeSeite")
-        for teil in ("app|dashboard|set-language|login|logout|register", "datensicherheit|impressum-app", "ueber-uns", "preise"):
+        for teil in ("app|dashboard|set-language|login|logout|register", "datensicherheit|impressum-app"):
             self.assertIn(teil, g)
+        for teil in ("ueber-uns", "preise", "kuendigen", "|widerrufen"):   # Runde 2 (A-N6): eingebettete Fassung
+            self.assertNotIn(teil, g)
         self.assertIn("ganzeSeite(data.weiter);", lies(BACKEND, "templates", "gespraech.html"))
         self.assertIn("ganzeSeite('/app?projekt='", lies(BACKEND, "templates", "projekt-neu.html"))
         self.assertEqual(lies(BACKEND, "templates", "abo.html").count("ganzeSeite(d.url);"), 3, "Zahlung nie im Rahmen")
-        self.assertIn("window.top.location.reload();", lies(BACKEND, "templates", "einstellungen.html"), "Ansicht im Fenster gewechselt")
+        self.assertIn("var ziel = (window.EINGEBETTET && window.top !== window) ? window.top : window;", lies(BACKEND, "templates", "einstellungen.html"),
+                      "Ansicht im Fenster gewechselt: das Hauptfenster laedt neu (Runde 2, HN2: nur bei geaenderter Ansicht)")
 
 
 if __name__ == "__main__":

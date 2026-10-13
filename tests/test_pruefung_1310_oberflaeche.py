@@ -62,11 +62,13 @@ class ReineFunktionen(unittest.TestCase):
         self.assertEqual(erg, list(faelle.values()) + [False, False])
 
     def test_ganze_seite(self):
-        """K7/B1: was nie im Rahmen erscheint — Projekte, Startseite, Anmeldung, Sprache und Seiten ohne eingebettete Fassung."""
+        """K7/B1: was nie im Rahmen erscheint — Projekte, Startseite, Anmeldung, Sprache und Seiten ohne eingebettete Fassung.
+        Runde 2 (A-N6): Über uns, Preise, Kündigen und Widerrufen haben jetzt eine eingebettete Fassung (base_oeffentlich.html). Das ist
+        der Rueckfall ohne window.INKLUAGENT.fensterSeiten; die Liste selbst prueft test_pruefung2_oberflaeche.py."""
         ganz = ["/", "/app?projekt=1", "/dashboard", "/login?weiter=%2Fablage", "/logout", "/set-language/en", "/register",
-                "/datensicherheit", "/impressum-app", "/ueber-uns#kontakt", "/preise", "/kuendigen", "/widerrufen", "/api/v1/docs"]
+                "/datensicherheit", "/impressum-app", "/impressum", "/datenschutz", "/widerruf", "/avv", "/api/v1/docs"]
         fenster = ["/ablage", "/einstellungen", "/api-schluessel?hin=newKeyName", "/gespraeche/3", "/hilfe/inkluagent",
-                   "/express/warenkorb", "/abo", "/projekte", "/apps"]
+                   "/express/warenkorb", "/abo", "/projekte", "/apps", "/ueber-uns#kontakt", "/preise", "/kuendigen", "/widerrufen"]
         erg = node(funktion(self.dash, "gehoertGanzeSeite") + "\nconsole.log(JSON.stringify(%s.map(gehoertGanzeSeite)));"
                    % json.dumps(ganz + fenster))
         self.assertEqual(erg, [True] * len(ganz) + [False] * len(fenster))
@@ -89,6 +91,7 @@ class ReineFunktionen(unittest.TestCase):
     def test_announce_leert_und_haengt_an(self):
         """B9: erst leeren, nach 100 ms setzen; was in der Zeit dazukommt, wird angehaengt (nicht ersetzt); gleicher Text zweimal."""
         skript = ("const el = { textContent: 'alt' }; const byId = () => el;\n" + funktion(self.dash, "announce") + """
+announce.ABSTAND_MS = 0;   // Runde 2 (A-N8): hier nur Leeren/Setzen/Anhaengen; den Mindestabstand prueft test_pruefung2_oberflaeche.py
 const spur = [];
 announce('Erster Satz.'); announce('Zweiter Satz.'); announce('Erster Satz.'); spur.push(el.textContent);
 setTimeout(() => { spur.push(el.textContent); announce('Zweiter Satz.'); spur.push(el.textContent);
@@ -150,7 +153,7 @@ class Quelltext(unittest.TestCase):
     def test_eine_ansage_region_fuer_alle_seiten(self):
         """B9: app.html hatte eine eigene announce, die die gemeinsame ueberdeckte."""
         self.assertNotIn("function announce(", lies(BACKEND, "templates", "app.html"))
-        self.assertIn("function announce(msg) {", self.dash)
+        self.assertIn("function announce(msg, opts) {", self.dash)   # Runde 2 (A-N8): mit opts.verwerfbar
 
     def test_statuszeile_global_nur_wenn_nicht_hoerbar(self):
         """B9/B3: Fehler global nur, wenn die Statuszeile verborgen oder inert ist (sonst doppelt bzw. gar nicht)."""
@@ -170,7 +173,7 @@ class Quelltext(unittest.TestCase):
         self.assertNotIn("sendBtn.disabled", send)
         self.assertIn("if (input.value.trim() === message) input.value = '';", send)
         self.assertLess(send.index("if (!res.ok) {"), send.index("angenommen = true;"))
-        self.assertIn("inkluagentNichtGesendet(nutzerEl, !!message);", send)
+        self.assertIn("inkluagentNichtGesendet(nutzerEl, !!message, detail);", send)   # Runde 2 (A-N4): mit Grund fuer die Statuszeile
         self.assertIn("if (res.status === 409) verfolgen = 'lauf';", send)
         self.assertIn("if (inkluagentUeberall()) verfolgen = 'abbruch';", send)
         self.assertIn("if (verfolgen) inkluagentLaufVerfolgen(verfolgen === 'abbruch');", send)
@@ -194,7 +197,8 @@ class Quelltext(unittest.TestCase):
         """K18: wie der Umschalter — sonst blieb die Seite gemischt."""
         e = lies(BACKEND, "templates", "einstellungen.html")
         self.assertIn("if (wahl.value !== vorher) {", e)
-        self.assertIn("window.location.reload();", e)
+        self.assertIn("ziel.location.reload();", e)   # Runde 2 (HN2): Hauptfenster bzw. diese Seite, nur bei geaenderter Ansicht
+        self.assertLess(e.index("if (wahl.value !== vorher) {"), e.index("ziel.location.reload();"), "erst vergleichen, dann neu laden")
         self.assertNotIn("renderSidebar()", e)
 
     def test_stylesheet(self):
@@ -231,7 +235,8 @@ class Quelltext(unittest.TestCase):
         z = funktion(self.js, "inkluagentWechselZiel")
         self.assertIn("sprache: a.sprache, antwortFokus: true", z)
         self.assertIn("sessionStorage.getItem('inkluagent.fokusAntwort') === '1'", funktion(self.js, "inkluagentBinden"))
-        self.assertIn("l.lang = a.lang", funktion(self.js, "inkluagentAnhangEl"))
+        self.assertIn("inkluagentSpracheSetzen(l, a.lang);", funktion(self.js, "inkluagentAnhangEl"))   # Runde 2: eine Hilfsfunktion
+        self.assertIn("el.lang = sprache", funktion(self.js, "inkluagentSpracheSetzen"))
 
 
 if __name__ == "__main__":

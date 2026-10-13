@@ -3,7 +3,10 @@
 {% block main %}
       {# EIN FRUEHERES GESPRAECH zum Nachlesen (Steve 12.10.2026): Ueberschrift 1 = erste Frage, „Hier weitermachen“ macht es
          wieder zum laufenden Gespraech und oeffnet das letzte Projekt mit offenem InkluAgent. Nachrichten wie im Agenten:
-         Absender als Ueberschrift 3, Antworten als Absaetze und Listen (inkluagent/bloecke.py), Projektmarken. Nur lesen. #}
+         Absender als Ueberschrift 3, Antworten als Absaetze und Listen (inkluagent/bloecke.py), Projektmarken. Nur lesen.
+         Pruefung 13.10.2026, Runde 2 (B11, Punkt 4; WCAG 3.1.2): der Text jeder Nachricht traegt die Sprache, in der sie geschrieben
+         wurde (n.sprache vom Server), wenn es eine Sprache der Oberflaeche ist — wie im Agenten (inkluagentSpracheSetzen) nur am
+         Text, nicht an der Absender-Ueberschrift (die steht in der jetzigen Sprache). #}
       <p><a href="/gespraeche">{{ _('Zurück zu „Frühere Gespräche“') }}</a></p>
       <h1>{{ gespraech.titel or _('Gespräch ohne Titel') }}</h1>
       <p class="gespraech-meta">{{ gespraech.datum }}{% if gespraech.aktuell %} · {{ _('läuft gerade') }}{% endif %}</p>
@@ -17,7 +20,7 @@
         {% if n.marke %}<p class="inkluagent-marke">{% if n.project_id is none %}{{ _('Ab hier: ohne Projekt') }}{% elif n.projekt_geloescht %}{{ _('Ab hier: Projekt „{name}“ (gelöscht)').format(name=n.projekt_name) }}{% else %}{{ _('Ab hier: Projekt „{name}“').format(name=n.projekt_name) }}{% endif %}</p>{% endif %}
         <div class="inkluagent-message {{ 'user' if n.role == 'user' else 'assistant' }}">
           <h3 class="inkluagent-message-role">{{ _('Du') if n.role == 'user' else 'InkluAgent' }}</h3>
-          <div class="inkluagent-message-content">
+          <div class="inkluagent-message-content"{% if n.sprache and n.sprache in supported_languages %} lang="{{ n.sprache }}"{% endif %}>
             {% for b in n.bloecke %}
             {% if b.art == 'p' %}<p>{{ b.zeilen[0] }}</p>
             {% elif b.art == 'ul' %}<ul>{% for z in b.zeilen %}<li>{{ z }}</li>{% endfor %}</ul>
