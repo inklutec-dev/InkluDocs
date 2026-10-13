@@ -8,6 +8,7 @@
   getrennt (text, zusatz) und zusammengesetzt fuer die Anzeige (content); das Gedaechtnis des Agenten nimmt fuer_modell().
 """
 import json
+import re
 from typing import Optional
 
 from database import get_db
@@ -27,23 +28,26 @@ def append_message(
     werkzeuge: Optional[list[str]] = None,
     anhang: Optional[list[dict]] = None,
     zusatz: Optional[str] = None,
+    sprache: Optional[str] = None,
 ) -> int:
     """werkzeuge (28.08.2026): Namen der aufgerufenen Werkzeuge in Reihenfolge — None = unbekannt
     (Altbestand), [] = ausdruecklich ohne Werkzeug geantwortet.
     anhang (11.09.2026): Download-Knoepfe unter der Antwort (Meine Ausgaben), None = keine.
-    zusatz (13.10.2026, S3): Zeile des Servers zur Nachricht, getrennt vom getippten Text (siehe Modulkopf)."""
+    zusatz (13.10.2026, S3): Zeile des Servers zur Nachricht, getrennt vom getippten Text (siehe Modulkopf).
+    sprache (13.10.2026, B11): Sprache der Oberflaeche beim Schreiben, z. B. "de" — die Seite setzt sie als lang."""
     if role not in _VALID_ROLES:
         raise ValueError(f"Ungueltige Rolle: {role!r}")
     conn = get_db()
     try:
         cursor = conn.execute(
-            "INSERT INTO chat_messages (project_id, role, content, zusatz, image_refs, intent, werkzeuge, anhang) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO chat_messages (project_id, role, content, zusatz, sprache, image_refs, intent, werkzeuge, anhang) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 project_id,
                 role,
                 content or "",
                 (zusatz or "").strip() or None,
+                _sprache(sprache),
                 json.dumps(image_refs) if image_refs else None,
                 intent,
                 json.dumps(werkzeuge) if werkzeuge is not None else None,
@@ -69,7 +73,13 @@ def get_history(project_id: int, limit: int = 200) -> list[dict]:
     return [_zeile(r) for r in rows]
 
 
-_SPALTEN = "id, role, content, zusatz, image_refs, intent, created_at, werkzeuge, anhang"
+_SPALTEN = "id, role, content, zusatz, sprache, image_refs, intent, created_at, werkzeuge, anhang"
+
+
+def _sprache(wert: Optional[str]) -> Optional[str]:
+    """Nur Sprachkuerzel wie „de“ oder „de-CH“ — die Seite setzt den Wert als lang-Attribut."""
+    w = (wert or "").strip()
+    return w if re.fullmatch(r"[a-z]{2}(-[A-Z]{2})?", w) else None
 
 
 def anzeige(text: Optional[str], zusatz: Optional[str]) -> str:
@@ -95,6 +105,7 @@ def _zeile(r) -> dict:
         "content": anzeige(r["content"], r["zusatz"]),
         "text": r["content"] or "",
         "zusatz": r["zusatz"] or "",
+        "sprache": r["sprache"] or "",
         "image_refs": json.loads(r["image_refs"]) if r["image_refs"] else None,
         "intent": r["intent"],
         "created_at": r["created_at"],
@@ -136,6 +147,7 @@ def konto_anhaengen(
     anhang: Optional[list[dict]] = None,
     zusatz: Optional[str] = None,
     gespraech_id: Optional[int] = None,
+    sprache: Optional[str] = None,
 ) -> int:
     """Wie append_message, aber ins Gespraech des Kontos; der Projektname wird als Marke festgehalten.
     gespraech_id (Pruefung 13.10.2026, K3): die Antwort gehoert in das Gespraech ihrer Frage — auch wenn der Nutzer waehrend des
@@ -155,11 +167,12 @@ def konto_anhaengen(
         if gid is None:
             gid = _aktuelles_gespraech(conn, user_id)
         cursor = conn.execute(
-            "INSERT INTO agent_nachrichten (user_id, project_id, projekt_name, role, content, zusatz, image_refs, intent, werkzeuge, "
-            "anhang, gespraech_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO agent_nachrichten (user_id, project_id, projekt_name, role, content, zusatz, sprache, image_refs, intent, "
+            "werkzeuge, anhang, gespraech_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 user_id, project_id, name, role, content or "",
                 (zusatz or "").strip() or None,
+                _sprache(sprache),
                 json.dumps(image_refs) if image_refs else None,
                 intent,
                 json.dumps(werkzeuge) if werkzeuge is not None else None,
@@ -204,17 +217,12 @@ def _laufendes_gespraech(conn, user_id: int) -> Optional[int]:
 
 
 def _aktuelles_gespraech(conn, user_id: int) -> int:
-    """Zum Schreiben: das laufende Gespraech des Kontos. Gibt es keins, wird eins angelegt; Nachrichten von vor den Gespraechen
-    (gespraech_id leer) gehoeren dann dazu, und die erste Frage wird sein Titel."""
+    """Zum Schreiben: das laufende Gespraech des Kontos; gibt es keins, das juengste oder ein neues. Nachrichten von vor den
+    Gespraechen uebernimmt die Start-Migration (database.init_db), nicht diese Funktion (Runde 2, K-N9: hier war es doppelt)."""
     gid = _gespraech_im_fokus(conn, user_id)
     if gid:
         return gid
     gid = _juengstes_gespraech(conn, user_id) or int(conn.execute("INSERT INTO agent_gespraeche (user_id) VALUES (?)", (user_id,)).lastrowid)
-    alt = conn.execute("SELECT content FROM agent_nachrichten WHERE user_id = ? AND gespraech_id IS NULL AND role = 'user' "
-                       "ORDER BY id LIMIT 1", (user_id,)).fetchone()
-    conn.execute("UPDATE agent_nachrichten SET gespraech_id = ? WHERE user_id = ? AND gespraech_id IS NULL", (gid, user_id))
-    if alt:
-        conn.execute("UPDATE agent_gespraeche SET titel = ? WHERE id = ? AND titel = ''", (_titel(alt["content"]), gid))
     _gespraech_merken(conn, user_id, gid)
     return gid
 
@@ -225,6 +233,7 @@ def _gespraech_merken(conn, user_id: int, gid: Optional[int]) -> None:
 
 
 def aktuelles_gespraech(user_id: int) -> int:
+    """Kennung des laufenden Gespraechs (legt eins an, wenn es keins gibt) — fuer Tests und Werkzeuge ausserhalb dieses Moduls."""
     conn = get_db()
     try:
         gid = _aktuelles_gespraech(conn, user_id)

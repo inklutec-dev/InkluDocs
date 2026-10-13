@@ -71,7 +71,7 @@ def _uebersetzt(_, text: str) -> str:
 
 def process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None,
                     nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None, _=None,
-                    nutzer_text: Optional[str] = None, begleiter_lauf=None) -> dict:
+                    nutzer_text: Optional[str] = None, begleiter_lauf=None, gespraech_id: Optional[int] = None) -> dict:
     """KI-Kosten (05.10.2026): alle KI-Aufrufe dieser Nachricht zaehlen fuer diesen Kunden und dieses Projekt — als
     „chatbot“, ausser eine Fachfunktion (z. B. Alt-Text-Pipeline) setzt ihren eigenen Zweck.
     _, nutzer_text, begleiter_lauf (Pruefung 13.10.2026): Uebersetzung der festen Saetze, der getippte Text fuer die Ja-Pruefung
@@ -80,12 +80,12 @@ def process_message(project_id: int, user_message: str, user_id: int, system_suf
     with ki_kosten.kontext(user_id=user_id, project_id=project_id, document_id=None, image_id=None, zweck="chatbot"):
         return _process_message(project_id, user_message, user_id, system_suffix=system_suffix, on_tool=on_tool,
                                 nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht, _=_,
-                                nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf)
+                                nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf, gespraech_id=gespraech_id)
 
 
 def process_konto_message(user_id: int, user_message: str, on_tool=None, nur_mit_karte: bool = False,
                           ohne_nachricht: Optional[int] = None, _=None, nutzer_text: Optional[str] = None,
-                          begleiter_lauf=None) -> dict:
+                          begleiter_lauf=None, gespraech_id: Optional[int] = None) -> dict:
     """Seite OHNE Projekt (InkluAgent-Ausbau Runde 2, Schritt 3): Konto-Werkzeuge und das Gespraech des Kontos
     (inkluagent/konto.py). Nur im Werkzeug-Modus; KI-Kosten zaehlen fuer das Konto ohne Projekt."""
     import ki_kosten
@@ -97,7 +97,7 @@ def process_konto_message(user_id: int, user_message: str, on_tool=None, nur_mit
         try:
             return run_agent(None, user_id, user_message, None, _provider, on_tool=on_tool, nur_mit_karte=nur_mit_karte,
                              konto=True, ohne_nachricht=ohne_nachricht, uebersetzen=_, nutzer_text=nutzer_text,
-                             begleiter_lauf=begleiter_lauf)
+                             begleiter_lauf=begleiter_lauf, gespraech_id=gespraech_id)
         except Exception:
             log.exception("agentic run_agent ohne Projekt crashte")
             return {"reply": _uebersetzt(_, _FEHLER), "intent": "error",
@@ -106,7 +106,7 @@ def process_konto_message(user_id: int, user_message: str, on_tool=None, nur_mit
 
 def _process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None,
                      nur_mit_karte: bool = False, konto: bool = False, ohne_nachricht: Optional[int] = None, _=None,
-                     nutzer_text: Optional[str] = None, begleiter_lauf=None) -> dict:
+                     nutzer_text: Optional[str] = None, begleiter_lauf=None, gespraech_id: Optional[int] = None) -> dict:
     """Hauptfunktion. Returns:
     {"reply": str, "intent": str, "image_refs": list[int]|None,
      "actions": list[dict]}.
@@ -138,7 +138,7 @@ def _process_message(project_id: int, user_message: str, user_id: int, system_su
             # kennt nur das Projektgespraech
             return run_agent(project_id, user_id, user_message, project, _provider, system_suffix=system_suffix, on_tool=on_tool,
                              nur_mit_karte=nur_mit_karte, konto=konto, ohne_nachricht=ohne_nachricht, uebersetzen=_,
-                             nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf)
+                             nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf, gespraech_id=gespraech_id)
         except Exception:
             log.exception("agentic run_agent crashte")
             return {"reply": _uebersetzt(_, _FEHLER), "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
@@ -182,7 +182,7 @@ def _resolve_refs_with_history_fallback(
         return refs, error
     history = storage.get_history(project["id"], limit=10)
     for msg in reversed(history):
-        prior_refs, _ = resolve_image_refs(msg["content"], project["images"])
+        prior_refs, _fehler = resolve_image_refs(msg["content"], project["images"])   # nicht `_` (gettext)
         if prior_refs:
             return prior_refs, None
     return [], None

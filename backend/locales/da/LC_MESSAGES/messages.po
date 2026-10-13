@@ -12153,3 +12153,15 @@ msgstr "Lydene er slået fra. Slå dem til ovenfor for at høre prøven."
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Din browser afspiller ikke lyd her lige nu."
+
+# Pruefung 13.10.2026, Runde 2: Server (gesperrte Anfrage, Karte laeuft noch)
+msgid "Auf diese Anfrage antwortet die KI nicht. Formuliere sie bitte anders."
+msgstr "AI'en svarer ikke på denne forespørgsel. Formulér den venligst anderledes."
+
+msgid "Läuft noch"
+msgstr "Kører stadig"
+
+# Pruefung 13.10.2026, Runde 2: Server (gesperrte Anfrage, Karte laeuft noch)
+#, python-brace-format
+msgid "Läuft noch: {text}"
+msgstr "Kører stadig: {text}"

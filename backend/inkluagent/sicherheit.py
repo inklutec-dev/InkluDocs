@@ -1,7 +1,8 @@
 """Sicherheitsfundament des InkluAgent (Ausbau Runde 1, Schritt 2, 09.10.2026; Konzept InkluAgent 3.3 und 3.4).
 
-Hinter EINEM Schalter: funktionen.AGENT_SICHERHEIT (Umgebung INKLUAGENT_SICHERHEIT=an, Vorgabe AUS). Aus = alles wie bisher.
-Vier Sperren auf dem SERVER, nicht nur im Prompt:
+Vier Sperren auf dem SERVER, nicht nur im Prompt. 1 und 2 gelten seit der Pruefung 13.10.2026 (Runde 2, S2) immer: sie sind
+Teil der Zustimmung selbst, ohne sie genuegte irgendeine spaetere Nachricht und es liefen beliebig viele bezahlte Einzelaktionen
+ohne Karte. 3 und 4 aendern Grenzen und haengen weiter am Schalter funktionen.AGENT_SICHERHEIT (INKLUAGENT_SICHERHEIT=an):
 
 1. Deckel fuer bezahlte Einzelaktionen ohne Karte (Steve: „höchstens eine je Nachricht, alles darüber mit Karte“):
    Alt-Text generieren oder aendern, Quickinfo generieren oder aendern (EINZEL_BEZAHLT). Je Nutzer-Nachricht laeuft hoechstens
@@ -199,10 +200,10 @@ def bild_label(project_id: int, image_id: int) -> str:
 def einzel_vorab(executor, name: str, args: dict) -> Optional[dict]:
     """VOR einer bezahlten Einzelaktion (ToolExecutor.execute). None = ausfuehren. Sonst ein Werkzeug-Ergebnis: Rueckfrage
     mit neuem Angebot (die Karte haengt ausgaben.nachbereiten an) oder der Grund, warum die Zustimmung nicht gilt."""
-    # Hochgeladene Dateien (Runde 2, Schritt 1): in dieser Nachricht nichts Kostenpflichtiges ohne Karte — auch ohne Schalter
-    nur_mit_karte = bool(getattr(executor, "nur_mit_karte", False))
-    if name not in EINZEL_BEZAHLT or not (an() or nur_mit_karte):
+    if name not in EINZEL_BEZAHLT:
         return None
+    # Hochgeladene Dateien (Runde 2, Schritt 1): in dieser Nachricht nichts Kostenpflichtiges ohne Karte
+    nur_mit_karte = bool(getattr(executor, "nur_mit_karte", False))
     from .tools import ausgaben
     import billing
     aktion = EINZEL_BEZAHLT[name]
@@ -232,7 +233,7 @@ def einzel_vorab(executor, name: str, args: dict) -> Optional[dict]:
 
 def einzel_nachher(executor, name: str, ergebnis: Any) -> None:
     """NACH der Ausfuehrung: eine erfolgreiche Einzelaktion ohne Karte zaehlt zum Deckel dieser Nachricht."""
-    if not an() or name not in EINZEL_BEZAHLT:
+    if name not in EINZEL_BEZAHLT:
         return
     if getattr(executor, "_einzel_bestaetigt", False):
         executor._einzel_bestaetigt = False
@@ -241,10 +242,8 @@ def einzel_nachher(executor, name: str, ergebnis: Any) -> None:
         executor.einzel_ohne_karte = getattr(executor, "einzel_ohne_karte", 0) + 1
 
 
-def werkzeuge_anpassen(defs: list, immer: bool = False) -> list:
-    """Schalter an (oder Hochladefeld, immer=True): die vier Einzelaktionen nehmen bestaetigt an (nach Karte oder klarem Ja)."""
-    if not (an() or immer):
-        return defs
+def werkzeuge_anpassen(defs: list) -> list:
+    """Die vier Einzelaktionen nehmen bestaetigt an (nach Karte oder klarem Ja) — immer (Runde 2, S2)."""
     out = []
     for d in defs:
         if d.get("name") in EINZEL_BEZAHLT and "bestaetigt" not in ((d.get("input_schema") or {}).get("properties") or {}):

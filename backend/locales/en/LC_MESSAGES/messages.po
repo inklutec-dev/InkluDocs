@@ -12454,3 +12454,15 @@ msgstr "Sounds are off. Turn them on above to hear the sample."
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Your browser is not playing sound here right now."
+
+# Pruefung 13.10.2026, Runde 2: Server (gesperrte Anfrage, Karte laeuft noch)
+msgid "Auf diese Anfrage antwortet die KI nicht. Formuliere sie bitte anders."
+msgstr "The AI won't answer this request. Please phrase it differently."
+
+msgid "Läuft noch"
+msgstr "Still running"
+
+# Pruefung 13.10.2026, Runde 2: Server (gesperrte Anfrage, Karte laeuft noch)
+#, python-brace-format
+msgid "Läuft noch: {text}"
+msgstr "Still running: {text}"

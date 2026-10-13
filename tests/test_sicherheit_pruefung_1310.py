@@ -321,8 +321,12 @@ class S11FremdeAdressenOhneWegInsInterneNetz(unittest.TestCase):
     def test_gestreamt_bis_zur_grenze(self):
         from fastapi import HTTPException
 
-        class Antwort:
-            async def aiter_bytes(self):
+        import httpx
+
+        class Antwort:   # gestreamt wie vom Netz: lesen_bis liest roh und entpackt selbst (Runde 2, S-N12)
+            headers = httpx.Headers()
+
+            async def aiter_raw(self):
                 for _ in range(10):
                     yield b"x" * 1000
         self.assertEqual(len(asyncio.run(self.ns.lesen_bis(Antwort(), None))), 10000)
@@ -343,8 +347,9 @@ class S11FremdeAdressenOhneWegInsInterneNetz(unittest.TestCase):
             if anfrage.url.path == "/start":
                 return httpx.Response(302, headers={"location": "/seite"})
             if anfrage.url.path == "/seite":
+                # stream= statt content=: wie vom Netz ungelesen (mit content= liest httpx sofort und entpackt selbst)
                 return httpx.Response(200, headers={"content-encoding": "gzip", "content-type": "text/html; charset=utf-8"},
-                                      content=gzip.compress("<p>Grüße (fiktiv)</p>".encode()))
+                                      stream=httpx.ByteStream(gzip.compress("<p>Grüße (fiktiv)</p>".encode())))
             return httpx.Response(302, headers={"location": "http://169.254.169.254/latest/meta-data/"})
 
         async def los(pfad):
@@ -448,13 +453,35 @@ class MitServer(unittest.TestCase):
             self.assertEqual(r.headers.get("location"), ziel, referer)
 
     def test_hin_ziele_fuer_die_seite(self):
+        """S14 und Runde 2 (S-N9): die Liste kommt immer, auch ohne Begleiter (Prod) — ohne sie nahm die Seite jede Kennung."""
         from inkluagent import begleiter
-        with mock.patch.object(funktionen, "AGENT_BEGLEITER", True):
-            ziele = self.main._inkluagent_schalter()["hinZiele"]
-        self.assertIn("ueberschrift", ziele)
-        self.assertIn("newKeyName", ziele)
-        self.assertEqual(ziele, begleiter.hin_ziele())
-        self.assertNotIn("hinZiele", self.main._inkluagent_schalter(), "ohne Begleiter keine Liste")
+        for begleiter_an in (True, False):
+            with mock.patch.object(funktionen, "AGENT_BEGLEITER", begleiter_an):
+                ziele = self.main._inkluagent_schalter()["hinZiele"]
+            self.assertIn("ueberschrift", ziele)
+            self.assertIn("newKeyName", ziele)
+            self.assertEqual(ziele, begleiter.hin_ziele())
+
+    def test_sprache_aus_fremdem_link_nicht_ans_konto(self):
+        """Runde 2 (S5): /set-language ist ein GET und laesst sich von jeder Seite ausloesen; ans Konto (das vor dem Cookie gilt)
+        nur von einer eigenen Seite oder vom Nutzer selbst."""
+        u = nutzer()
+        c = self.TestClient(self.main.app)
+        c.cookies.set("token", self.main.create_token(u["id"], u["email"], 0))
+        faelle = (({"Sec-Fetch-Site": "cross-site", "Referer": "https://fremd.example/"}, None),
+                  ({"Sec-Fetch-Site": "same-site", "Referer": "https://staging.example/"}, None),
+                  ({"Referer": "https://fremd.example/"}, None),          # Browser ohne Sec-Fetch-Site, fremder Referer
+                  ({}, None),                                              # ohne Sec-Fetch-Site und ohne Referer: nicht beweisbar
+                  ({"Sec-Fetch-Site": "same-origin", "Referer": "http://testserver/konto"}, "en"),
+                  ({"Sec-Fetch-Site": "none"}, "sv"),                     # Adresse selbst aufgerufen
+                  ({"Referer": "http://testserver/konto"}, "fr"))         # alter Browser, eigene Seite
+        for kopf, erwartet in faelle:
+            database.set_user_language(u["id"], "de")
+            ziel = erwartet or "da"
+            r = c.get(f"/set-language/{ziel}", headers=kopf, follow_redirects=False)
+            self.assertEqual(r.status_code, 303)
+            self.assertEqual(r.cookies.get("lang"), ziel, "der Cookie (fuer Gaeste) bleibt")
+            self.assertEqual(database.get_user_by_id(u["id"])["language"], erwartet or "de", kopf)
 
     def test_aendernde_anfragen_mit_cookie_nur_von_der_eigenen_herkunft(self):
         """S5: Sec-Fetch-Site bzw. Origin, mit und ohne Cookie; ohne Herkunftskoepfe (API-Schluessel, Webhook) keine Pruefung."""

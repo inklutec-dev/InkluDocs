@@ -22,10 +22,10 @@ import funktionen
 
 from .daten import DATEN_MARKE, daten
 from .kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
-
-log = logging.getLogger(__name__)
 from .prompts.system_gemeinsam import (GESPRAECHSSTIL, PRUEFEN, daten_keine_anweisung, gemeinsam_ehrlichkeit,
                                        gemeinsam_schreibstil)
+
+log = logging.getLogger(__name__)
 
 MAX_PROJEKTE = 50
 
@@ -79,9 +79,10 @@ TOOL_DEFINITIONS_KONTO_AENDERN: list[dict] = [
     },
     {
         "name": "projekt_loeschen",
-        "description": ("Ein Projekt mit allen Dateien und Alt-Texten löschen. Unumkehrbar. Nur aufrufen, wenn der Nutzer es "
-                        "ausdrücklich will. Der Server legt dann eine Karte mit Knopf vor — NUR dieser Knopf löscht, ein getipptes "
-                        "Ja reicht nicht. Nicht möglich, solange im Projekt etwas läuft."),
+        "description": ("Ein Projekt mit allen Dateien, Alt-Texten und dem Chat im Projekt löschen. Unumkehrbar. Gespräche mit "
+                        "dir außerhalb des Projekts bleiben, auch was darin über das Projekt steht. Nur aufrufen, wenn der Nutzer "
+                        "es ausdrücklich will. Der Server legt dann eine Karte mit Knopf vor — NUR dieser Knopf löscht, ein "
+                        "getipptes Ja reicht nicht. Nicht möglich, solange im Projekt etwas läuft."),
         "input_schema": {"type": "object", "properties": {"project_id": {"type": "integer"}}, "required": ["project_id"]},
     },
     {
@@ -297,7 +298,8 @@ class KontoExecutor:
             ausgaben._angebot_merken(schluessel, 0, self.turn_id)
             r = {"ok": True, "result": {"rueckfrage_noetig": True, "dokument": p["name"], "name_daten": daten(p["name"]),
                                         "hinweis": ("Unter deiner Antwort steht eine Karte „Projekt löschen bestätigen“. Nur ihr "
-                                                    "Knopf löscht — ein getipptes Ja reicht dafür nicht. Sag das in einem Satz.")}}
+                                                    "Knopf löscht — ein getipptes Ja reicht dafür nicht. Sag das in einem Satz, "
+                                                    "und sag dazu, dass unsere Gespräche bleiben (Pruefung 13.10.2026, S17).")}}
             r = ausgaben.nachbereiten(r, "projekt_loeschen", werkzeug_args, self.user_id, 0, vorher)
             if isinstance(r.get("anhang"), dict):
                 r["anhang"]["konto"] = True   # Knopf geht an POST /api/agent/bestaetigen, auf jeder Seite
@@ -410,7 +412,9 @@ class KontoExecutor:
             return None
 
     def _laeuft_noch(self) -> dict:
-        return {"ok": True, "result": {"laeuft_noch": True},
+        """Ergebnis „läuft noch“: das Modell sagt es so, die Karte zeigt „Läuft noch“ (tools/ausgaben.nachbereiten)."""
+        return {"ok": True, "result": {"laeuft_noch": True, "hinweis": "Das Hochladen läuft im Hintergrund noch. Sag dem Nutzer, "
+                                       "dass das Projekt gleich unter „Meine Projekte“ erscheint; fertig ist es noch nicht."},
                 "anhang": {"art": "link", "url": "/projekte",
                            "text": self._("Das dauert noch: Das Projekt erscheint gleich unter „Meine Projekte“.")}}
 
@@ -442,13 +446,15 @@ class KontoExecutor:
                                                                        "hochladen.")}, "datei_ablegen", args, self.user_id, 0, vorher)
         with open(pfad, "rb") as f:
             inhalt = f.read()
-        try:   # die Karte ist eingeloest: die Datei hat ihren Zweck erfuellt, auch wenn das Hochladen gleich scheitert (K16)
+        erg = self._hochladen_abwarten(hochladen.hochladen({"id": self.user_id}, [(name, inhalt)], "", ziel, request=None, _=self._))
+        if erg is None:
+            # Laeuft im Hintergrund weiter: die Datei bleibt bis dahin liegen (das Aufraeumen nimmt sie nach 15 Minuten), die Karte
+            # sagt „Läuft noch“ statt „Erledigt“ (Pruefung 13.10.2026, Runde 2, K-N6)
+            return ausgaben.nachbereiten(self._laeuft_noch(), "datei_ablegen", args, self.user_id, 0, vorher)
+        try:   # fertig (geklappt oder nicht): die wartende Datei hat ihren Zweck erfuellt
             os.remove(pfad)
         except OSError:
             pass
-        erg = self._hochladen_abwarten(hochladen.hochladen({"id": self.user_id}, [(name, inhalt)], "", ziel, request=None, _=self._))
-        if erg is None:
-            return ausgaben.nachbereiten(self._laeuft_noch(), "datei_ablegen", args, self.user_id, 0, vorher)
         e = (erg.get("ergebnisse") or [{}])[0] if erg.get("ok") else {"ok": False, "fehler": erg.get("fehler_text")}
         if not e.get("ok") or not e.get("project_id"):
             return ausgaben.nachbereiten({"ok": False, "error": e.get("fehler") or "Die Datei ließ sich nicht ablegen."}, "datei_ablegen",
@@ -554,11 +560,12 @@ def system_konto(aendern: bool = False) -> str:
     ])
 
 
-def nachrichten(user_id: int, user_message: str, ohne_nachricht: Optional[int] = None, verlauf_laenge: int = 20) -> list[dict]:
+def nachrichten(user_id: int, user_message: str, ohne_nachricht: Optional[int] = None, verlauf_laenge: int = 20,
+                gespraech_id: Optional[int] = None) -> list[dict]:
     """Gedaechtnis ohne Projekt: Konto-Kontext, dann das Gespraech des Kontos mit Projektmarken (wie im Projekt), dann die neue
     Nachricht — mit Marke „ohne Projekt“, wenn zuletzt ein Projekt dran war."""
     from . import agent_loop, storage
-    history = storage.konto_verlauf(user_id, limit=verlauf_laenge + 1) or []
+    history = storage.konto_verlauf(user_id, limit=verlauf_laenge + 1, gespraech_id=gespraech_id) or []   # Gespraech der Frage (K-N4)
     history = agent_loop._gedaechtnis([h for h in history if not (ohne_nachricht and h.get("id") == ohne_nachricht)][-verlauf_laenge:])
     while history and history[0].get("role") != "user":
         history = history[1:]

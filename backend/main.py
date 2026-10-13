@@ -481,12 +481,6 @@ app.add_middleware(
 
 
 
-# Nie im Rahmen (S15): Registrieren, Passwort, Einladungen und Gast-Freigaben (Einstiege aus Mails), Sprachwechsel. Die Anmeldung
-# darf die eigene Seite einrahmen: laeuft die Sitzung ab, waehrend eine Seite im Arbeitsfenster offen ist, landet der Rahmen dort,
-# und die Agentenansicht holt sie sofort als ganze Seite nach vorn (K7, inkluagent.js) — mit DENY saehe sie nur eine Fehlerseite.
-_NIE_EINRAHMEN = re.compile(r"^/(register|reset|set-language|team-einladung|freigabe)(/|$)")
-
-
 class _RahmenSchutz:
     """Kein Einrahmen der App in fremde Seiten (Nachpruefung Entwicklung 05.10.2026, N6, Clickjacking): jede Antwort
     bekommt X-Frame-Options DENY und CSP frame-ancestors 'none' — ausser sie setzt selbst etwas. Geprueft: die App bettet
@@ -504,10 +498,12 @@ class _RahmenSchutz:
 
         # Arbeitsfenster der Agentenansicht (13.10.2026, Schalter AGENT_ARBEITSFENSTER): die App rahmt ihre eigenen Seiten ein —
         # dann SAMEORIGIN / 'self' (nur die eigene Seite darf einrahmen, fremde weiterhin nicht); ohne Schalter wie bisher.
-        # Registrieren, Passwort, Einladungen und Gast-Freigaben nie (Pruefung 13.10.2026, S15, _NIE_EINRAHMEN): eine kuenftige
-        # HTML-Einschleusung koennte sie sonst unsichtbar ueberlagern.
+        # Nur die Seiten aus EINER Positivliste (inkluagent/fenster.py, Pruefung 13.10.2026, Runde 2, S-N6): neue Seiten sind erst
+        # einmal nicht einrahmbar, und Anmeldung, Passwort, Einladungen und Freigaben kann eine kuenftige HTML-Einschleusung nicht
+        # unsichtbar ueberlagern. Die Anmeldung steht darin, damit die Agentenansicht sie bei abgelaufener Sitzung nach vorn holt (K7).
+        from inkluagent import fenster as _fenster
         schalter = funktionen.an("AGENT_ARBEITSFENSTER")
-        eigene = schalter and not _NIE_EINRAHMEN.match(scope.get("path") or "")
+        eigene = schalter and _fenster.einrahmbar(scope.get("path") or "")
 
         async def senden(nachricht):
             if nachricht.get("type") == "http.response.start":
@@ -5266,7 +5262,9 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
         try:
             content = _svg_to_png_bytes(content)
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"SVG konnte nicht verarbeitet werden: {e}")
+            # Einzelheiten nur ins Log (Pruefung 13.10.2026, Runde 2, S-N8: der Text der Bibliothek erreichte sonst den Chat)
+            logger.warning("SVG nicht verarbeitet: %s", e)
+            raise HTTPException(status_code=400, detail="Die SVG-Datei konnte nicht verarbeitet werden. Bitte lade sie als PNG oder JPG hoch.") from e
         ext = ".png"
 
     # Create user directory
@@ -5659,7 +5657,8 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
             conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
             conn.commit()
             conn.close()
-            raise HTTPException(status_code=400, detail=f"Bildformat konnte nicht konvertiert werden: {str(e)}")
+            logger.warning("Bild nicht umgewandelt (%s): %s", ext, e)   # Einzelheiten nur ins Log (S-N8)
+            raise HTTPException(status_code=400, detail="Das Bildformat konnte nicht umgewandelt werden. Bitte lade das Bild als PNG oder JPG hoch.") from e
     else:
         img_path = os.path.join(img_dir, f"img_{next_idx}{ext}")
         shutil.copy2(file_path, img_path)
@@ -5890,17 +5889,27 @@ async def demo_chat(request: Request):
 
     from inkluagent import storage
     from inkluagent.chat_engine import process_message
-    nid = storage.append_message(project_id, "user", message)
-    # WICHTIG: system_suffix haengt die Demo-Leitplanke an — der Standard-Prompt
-    # des Agenten bleibt unveraendert (Default None im normalen, eingeloggten Pfad).
-    # ohne_nachricht (12.10.2026): die eben gespeicherte Nachricht nicht noch einmal aus dem Verlauf ans Modell
-    result = await asyncio.get_event_loop().run_in_executor(
-        None, lambda: process_message(project_id, message, uid, system_suffix=demo_mod.DEMO_GUARDRAIL, ohne_nachricht=nid)
-    )
-    storage.append_message(
-        project_id, "assistant", result["reply"],
-        image_refs=result.get("image_refs"), intent=result.get("intent"),
-    )
+    # Dieselbe Sperre und derselbe Arbeitsbereich wie im Konto (Pruefung 13.10.2026, Runde 2, S-N11): eine Demo-Sitzung startete
+    # sonst beliebig viele Laeufe gleichzeitig im gemeinsamen Thread-Pool. Schluessel ist das Wegwerf-Konto der Sitzung.
+    start = _lauf_anmelden(uid)
+    if start is None:
+        _ = get_gettext(detect_language(request))
+        raise HTTPException(status_code=409, detail=_("Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort."))
+    try:
+        nid = storage.append_message(project_id, "user", message)
+        # WICHTIG: system_suffix haengt die Demo-Leitplanke an — der Standard-Prompt
+        # des Agenten bleibt unveraendert (Default None im normalen, eingeloggten Pfad).
+        # ohne_nachricht (12.10.2026): die eben gespeicherte Nachricht nicht noch einmal aus dem Verlauf ans Modell
+        result = await asyncio.get_running_loop().run_in_executor(
+            _AGENT_EXECUTOR, lambda: process_message(project_id, message, uid, system_suffix=demo_mod.DEMO_GUARDRAIL, ohne_nachricht=nid)
+        )
+        if result.get("intent") != "error":   # Fehlerantworten nicht ins Gedaechtnis (wie im Konto, Runde 2 K-N7)
+            storage.append_message(
+                project_id, "assistant", result["reply"],
+                image_refs=result.get("image_refs"), intent=result.get("intent"),
+            )
+    finally:
+        _lauf_abmelden(uid, start)
     demo_mod.record_chat(request)
     return {
         "reply": result["reply"],
@@ -6056,8 +6065,13 @@ def _web_page_text(soup) -> str:
 # prueft Schema und Host frueh und mit verstaendlicher Meldung; der Client aus netz_sicher.client() verbindet nur mit Adressen,
 # die er im selben Schritt geprueft hat (vorher: DNS-Rebinding zwischen Pruefung und Abruf moeglich). _safe_fetch() folgt
 # Weiterleitungen MANUELL, prueft jeden Hop und liest gestreamt bis zur Grenze.
+# Grenzen je Seite (Runde 2, S-N12): Bilder, Bytes (auch die groesseren Fassungen kleiner Bilder) und Zeit. Der Lese-Timeout des
+# Clients gilt je Stueck; ein Server, der tröpfelt, hielt einen Abruf sonst beliebig lange — deshalb je Abruf eine Gesamtzeit.
 _SCAN_HOECHSTENS_BILDER = 300
 _SCAN_HOECHSTENS_BYTES = 300 * 1024 * 1024
+_SCAN_BILDER_FRIST_S = 300    # alle Bilder einer Seite zusammen; danach werden die restlichen uebersprungen
+_SCAN_ABRUF_SEITE_S = 60      # ein Abruf der Seite, mit Weiterleitungen
+_SCAN_ABRUF_BILD_S = 30       # ein Abruf eines Bildes
 
 
 async def _pruefe_url_sicher(url: str) -> None:
@@ -6073,9 +6087,17 @@ async def _pruefe_url_sicher(url: str) -> None:
         raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
 
 
-async def _safe_fetch(client, url, *, max_redirects: int = 5, max_bytes: int | None = None):
+async def _safe_fetch(client, url, *, max_redirects: int = 5, max_bytes: int | None = None, gesamt_s: float = 60.0):
     """SSRF-sicherer GET mit einem Client aus netz_sicher.client(): prueft jeden Weiterleitungs-Schritt, liest gestreamt und
-    bricht bei max_bytes ab (413). Die Antwort traegt den gelesenen Inhalt (content, text, headers, raise_for_status)."""
+    bricht bei max_bytes ab (413) und nach gesamt_s Sekunden fuer alles zusammen (httpx.ReadTimeout). Die Antwort traegt den
+    gelesenen Inhalt (content, text, headers, raise_for_status)."""
+    try:
+        return await asyncio.wait_for(_safe_fetch_schritte(client, url, max_redirects, max_bytes), timeout=gesamt_s)
+    except asyncio.TimeoutError as e:
+        raise httpx.ReadTimeout(f"Abruf dauerte laenger als {gesamt_s:.0f} s") from e
+
+
+async def _safe_fetch_schritte(client, url, max_redirects: int, max_bytes: int | None):
     current = url
     for _ in range(max_redirects + 1):
         await _pruefe_url_sicher(current)
@@ -6115,7 +6137,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
         }
         async with netz_sicher.client(timeout=30.0, headers=_seiten_headers) as client:
-            response = await _safe_fetch(client, url, max_bytes=15 * 1024 * 1024)
+            response = await _safe_fetch(client, url, max_bytes=15 * 1024 * 1024, gesamt_s=_SCAN_ABRUF_SEITE_S)
             response.raise_for_status()
     except HTTPException:
         raise
@@ -6205,7 +6227,8 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     os.makedirs(img_dir, exist_ok=True)
 
     downloaded = 0
-    geladen_bytes = 0   # Summe ueber alle Bilder dieser Seite (_SCAN_HOECHSTENS_BYTES)
+    geladen_bytes = 0   # Summe ueber alle Bilder dieser Seite (_SCAN_HOECHSTENS_BYTES), auch die groesseren Fassungen
+    bilder_bis = time.monotonic() + _SCAN_BILDER_FRIST_S
     # Browser-like headers for image downloads: many WordPress sites block requests
     # without Referer header (hotlink protection / bot detection). Fix for 403 errors
     # on sites like dc-tischlermeister.de. Reported by Stephan Raithel, 25.03.2026.
@@ -6351,11 +6374,12 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
             context_text = "\n".join(all_context) if all_context else ""
 
             # Download image
-            if geladen_bytes >= _SCAN_HOECHSTENS_BYTES:
-                logger.warning("scan_url: %d Bytes geladen, restliche Bilder uebersprungen", geladen_bytes)
+            if geladen_bytes >= _SCAN_HOECHSTENS_BYTES or time.monotonic() > bilder_bis:
+                logger.warning("scan_url: %d Bytes geladen, Zeit %s, restliche Bilder uebersprungen", geladen_bytes,
+                               "um" if time.monotonic() > bilder_bis else "reicht")
                 break
             try:
-                img_response = await _safe_fetch(client, img_url, max_bytes=20 * 1024 * 1024)
+                img_response = await _safe_fetch(client, img_url, max_bytes=20 * 1024 * 1024, gesamt_s=_SCAN_ABRUF_BILD_S)
                 img_response.raise_for_status()
                 img_content = img_response.content
                 geladen_bytes += len(img_content)
@@ -6406,9 +6430,13 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 if width > 0 and height > 0 and width < 250 and height < 250:
                     larger_urls = _try_larger_image_url(img_url)
                     for candidate_url in larger_urls:
+                        if geladen_bytes >= _SCAN_HOECHSTENS_BYTES or time.monotonic() > bilder_bis:
+                            break
                         try:
                             resolved_url = urljoin(url, candidate_url)
-                            larger_response = await _safe_fetch(client, resolved_url, max_bytes=20 * 1024 * 1024)
+                            larger_response = await _safe_fetch(client, resolved_url, max_bytes=20 * 1024 * 1024,
+                                                                gesamt_s=_SCAN_ABRUF_BILD_S)
+                            geladen_bytes += len(larger_response.content)
                             if larger_response.status_code == 200:
                                 larger_ct = larger_response.headers.get("content-type", "")
                                 if "image" in larger_ct:
@@ -8948,7 +8976,7 @@ def _alt_texte_einsetzen(doc: dict, images: list, pdf_in: str, pdf_out: str, wor
             info["tagged"] = count
             info["total"] = len(alt_texts_by_lfnr)
         except Exception as e:
-            raise AltTexteNichtGeschrieben("pdfix", str(e))
+            raise AltTexteNichtGeschrieben("pdfix", str(e)) from e
         return info, list(alt_texts_by_lfnr.values()), schonen
     leer_entfernen = leer_entfernen or _bewusst_geleert
     entfernen = set()
@@ -8962,7 +8990,7 @@ def _alt_texte_einsetzen(doc: dict, images: list, pdf_in: str, pdf_out: str, wor
         from pdf_export import write_alt_texts_to_pdf
         result = write_alt_texts_to_pdf(pdf_in, pdf_out, alt_texts, image_metadata, alt_entfernen=entfernen)
     except Exception as e:
-        raise AltTexteNichtGeschrieben("fitz", str(e))
+        raise AltTexteNichtGeschrieben("fitz", str(e)) from e
     if isinstance(result, dict):
         info["method"] = "fitz"
         info["tagged"] = result.get("tagged_count", 0)
@@ -8997,9 +9025,10 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     try:
         info, quelle_texte, schonen = _alt_texte_einsetzen(doc, images, doc["original_path"], output_path, output_dir)
     except AltTexteNichtGeschrieben as e:
-        if e.methode == "pdfix":
-            raise HTTPException(status_code=500, detail=f"PDFix-Export fehlgeschlagen: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
+        # Der Grund (Pfade, Text der Bibliothek) gehoert ins Log, nicht in die Antwort (Runde 2, S-N8)
+        logger.error("Export: Alt-Texte nicht geschrieben (%s): %s", e.methode, e)
+        raise HTTPException(status_code=500, detail="Der Export ist fehlgeschlagen: die Alt-Texte ließen sich nicht in die PDF "
+                                                    "schreiben. Bitte versuch es noch einmal.") from e
 
     # Quickinfos (22.09.2026, Station „Quickinfos“ im PDF-Projekt): Hat das Dokument Formularfelder mit
     # Quickinfo, kommen sie in DIESELBE Datei — eine fertige PDF mit Struktur, Alt-Texten und Quickinfos.
@@ -11687,7 +11716,8 @@ async def agent_bestaetigen(request: Request, user: dict = Depends(get_current_u
 
 
 async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[int], data: dict):
-    _ = get_gettext(resolve_ui_language(request))
+    sprache = resolve_ui_language(request)
+    _ = get_gettext(sprache)
     from inkluagent import storage
     from inkluagent.tools import ausgaben as _ag
     schluessel_projekt = project_id or 0   # Konto-Angebote (Schritt 4) liegen unter Projekt 0
@@ -11730,7 +11760,7 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
         return _ag.karte_ausfuehren(angebot_id, angebot["werkzeug"], angebot.get("args") or {}, executor)
 
     try:
-        r = await asyncio.get_running_loop().run_in_executor(_AGENT_EXECUTOR, _ausfuehren)   # wie Agent-Laeufe (S4)
+        r = await asyncio.get_running_loop().run_in_executor(_AGENT_KNOPF_EXECUTOR, _ausfuehren)   # nicht im Standard-Pool (S4)
     finally:
         _ag.angebot_loslassen(angebot_id)
         _lauf_abmelden(user["id"], start)
@@ -11756,7 +11786,10 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
         else:
             text = _("Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu.")
         return JSONResponse(status_code=409, content={"detail": text, "karte": karte, "actions": actions})
-    antwort = _("Erledigt: {text}").format(text=angebot.get("erledigt_text") or angebot.get("text") or "")
+    erledigt = angebot.get("erledigt_text") or angebot.get("text") or ""
+    # Angenommen, aber noch nicht fertig (Datei ablegen, Webseite laden laenger als 150 s): nicht „Erledigt“ — Karte und Antwort
+    # sagen „Läuft noch“ (Pruefung 13.10.2026, Runde 2, K-N6)
+    antwort = (_("Läuft noch: {text}") if res.get("laeuft_noch") else _("Erledigt: {text}")).format(text=erledigt)
     anhaenge = [anhang] if (anhang and anhang.get("art") != "bestaetigung") else []
 
     def _speichern():
@@ -11764,27 +11797,41 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
         # Dokumentnamen darin im Gedaechtnis als Daten gekennzeichnet sind, nicht als Bitte des Nutzers
         frage = _("Bestätigt über den Knopf: {text}").format(text=angebot.get("beschreibung") or angebot.get("text") or "")
         if funktionen.AGENT_KONTO or project_id is None:   # Gespraech je Konto (Ausbau Runde 2, Schritt 2)
-            storage.konto_anhaengen(user["id"], project_id, "user", "", zusatz=frage)
-            storage.konto_anhaengen(user["id"], project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
+            storage.konto_anhaengen(user["id"], project_id, "user", "", zusatz=frage, sprache=sprache)
+            storage.konto_anhaengen(user["id"], project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None,
+                                    sprache=sprache)
             return
-        storage.append_message(project_id, "user", "", zusatz=frage)
-        storage.append_message(project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
+        storage.append_message(project_id, "user", "", zusatz=frage, sprache=sprache)
+        storage.append_message(project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None,
+                               sprache=sprache)
     await asyncio.get_running_loop().run_in_executor(None, _speichern)
     return {"ok": True, "reply": antwort, "anhang": anhaenge, "werkzeuge": [angebot["werkzeug"]], "karte": karte,
             "actions": actions}
 
 
-# Laufende Antworten je Konto (InkluAgent-Ausbau Runde 2, Schritt 3): Startzeiten, solange der Agent an einer Antwort arbeitet.
-# GET /api/agent/status liest das — eine neue Seite sagt „antwortet noch“ und holt die Antwort, wenn sie da ist (die Antwort
-# speichert der Server auch, wenn der Browser die Seite inzwischen gewechselt hat). Nur im Prozess (ein uvicorn-Worker).
-_AGENT_LAEUFT: dict[int, list] = {}
+# Laufende Antworten je Konto (InkluAgent-Ausbau Runde 2, Schritt 3): die Startzeit (= Kennung) des Laufs, solange der Agent an
+# einer Antwort arbeitet. GET /api/agent/status liest das — eine neue Seite sagt „antwortet noch“ und holt die Antwort, wenn sie
+# da ist (die Antwort speichert der Server auch, wenn der Browser die Seite inzwischen gewechselt hat). Nur im Prozess (ein
+# uvicorn-Worker).
+# Ob ein Lauf laeuft, entscheidet der Lauf selbst: der Eintrag gilt bis _lauf_abmelden, das jeder Ausgang aufruft (Pruefung
+# 13.10.2026, Runde 2, K-N3/S-N5 — vorher galt er nach 600 s als haengengeblieben, obwohl ein Lauf mit langsamem Anbieter
+# laenger arbeiten konnte; dann liefen zwei Laeufe desselben Kontos parallel). _AGENT_LAEUFT_NETZ_S ist nur das Netz gegen einen
+# Faden, der wider Erwarten nie zurueckkehrt: ein Lauf endet spaetestens nach Frist (agent_loop._frist_s, hoechstens 540 s) +
+# einem Modellaufruf (providers.base.Uhr, 60 s ueber der Frist) + einem Werkzeug (kern.warten, 180 s), also nach 780 s.
+_AGENT_LAEUFT: dict[int, float] = {}
 _AGENT_HINTERGRUND: set = set()   # Laeufe, die nach einem Abbruch des Streams weiterlaufen (_agent_nachricht, strom)
-_AGENT_LAEUFT_HOECHSTENS = 600   # Sekunden; aeltere Eintraege gelten als haengengeblieben
+_AGENT_LAEUFT_NETZ_S = 1800
 
 
 def _agent_laeuft(user_id: int) -> bool:
-    jetzt = time.time()
-    return any(jetzt - t < _AGENT_LAEUFT_HOECHSTENS for t in _AGENT_LAEUFT.get(user_id, []))
+    start = _AGENT_LAEUFT.get(user_id)
+    if start is None:
+        return False
+    if time.time() - start < _AGENT_LAEUFT_NETZ_S:
+        return True
+    logger.error("InkluAgent: Lauf von Konto %s seit %d s nicht ausgetragen — gilt als haengengeblieben", user_id,
+                 int(time.time() - start))
+    return False
 
 
 # Ein Lauf je Konto in einem eigenen, begrenzten Arbeitsbereich (Pruefung 13.10.2026, K2/S4/H6). Vorher startete jede Nachricht
@@ -11792,14 +11839,21 @@ def _agent_laeuft(user_id: int) -> bool:
 # Laeufe belegten minutenlang den gemeinsamen Thread-Pool, den Hochladen, Exporte und Speichern brauchen. Werkzeuge, die aus
 # einem Agent-Thread auf die Ereignisschleife warten (inkluagent/kern.warten), finden den gemeinsamen Pool so immer frei.
 def _agent_parallel() -> int:
+    """Gleichzeitige Laeufe ueber alle Konten (INKLUAGENT_PARALLEL, Vorgabe 8). Je Konto laeuft hoechstens einer; Gemini
+    arbeitet die meiste Zeit im Netz, ein Lauf belegt also kaum Rechenzeit. Auf Prod eine Kapazitaetsgrenze, die vorher fehlte
+    (Runde 2, K-N5: in die Liste fuer den naechsten Prod-Rollout, docs/INKLUAGENT.md)."""
     try:
-        return max(1, min(int(os.environ.get("INKLUAGENT_PARALLEL") or 4), 16))
+        return max(1, min(int(os.environ.get("INKLUAGENT_PARALLEL") or 8), 32))
     except ValueError:
-        return 4
+        return 8
 
 
 import concurrent.futures as _cf_agent   # noqa: E402
 _AGENT_EXECUTOR = _cf_agent.ThreadPoolExecutor(max_workers=_agent_parallel(), thread_name_prefix="inkluagent")
+# Karten-Knoepfe in einem eigenen kleinen Bereich (Runde 2, K-N5): ein Klick fuehrt genau ein Werkzeug aus und soll nicht hinter
+# minutenlangen Laeufen anderer Konten warten (ohne Stream und Lebenszeichen brach sonst ein Proxy ab). Je Konto gilt dieselbe
+# Sperre wie fuer Nachrichten (_lauf_anmelden).
+_AGENT_KNOPF_EXECUTOR = _cf_agent.ThreadPoolExecutor(max_workers=4, thread_name_prefix="inkluagent-knopf")
 _STROM_LEBENSZEICHEN_S = 15   # Zeile {"type": "ping"}, solange der Lauf still ist (K5)
 _AGENT_HOCHLADEN_LAEUFT: set = set()   # Konten, deren Hochladen im Agenten gerade laeuft (agent_hochladen, S7)
 
@@ -11810,15 +11864,13 @@ def _lauf_anmelden(user_id: int) -> Optional[float]:
     if _agent_laeuft(user_id):
         return None
     start = time.time()
-    _AGENT_LAEUFT[user_id] = [start]   # haengengebliebene Eintraege (aelter als _AGENT_LAEUFT_HOECHSTENS) fallen dabei weg
+    _AGENT_LAEUFT[user_id] = start   # ersetzt nur einen Eintrag, den _agent_laeuft als haengengeblieben meldet
     return start
 
 
 def _lauf_abmelden(user_id: int, start: float) -> None:
-    laeuft = _AGENT_LAEUFT.get(user_id, [])
-    if start in laeuft:
-        laeuft.remove(start)
-    if not laeuft:
+    """Den Lauf `start` austragen — nur ihn: ein haengengebliebener alter Lauf, der doch noch endet, traegt keinen neueren aus."""
+    if _AGENT_LAEUFT.get(user_id) == start:
         _AGENT_LAEUFT.pop(user_id, None)
     _fortschritt_ende(user_id, start)
 
@@ -12032,20 +12084,21 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
         # ein neues beginnt oder ein frueheres fortsetzt.
         konto = funktionen.AGENT_KONTO or project_id is None
         if konto:
-            nid = storage.konto_anhaengen(user["id"], project_id, "user", nutzer_text, zusatz=zusatz)
+            nid = storage.konto_anhaengen(user["id"], project_id, "user", nutzer_text, zusatz=zusatz, sprache=_ui_sprache)
             gid = storage.gespraech_der_nachricht(user["id"], nid)
             if project_id:
                 storage.fokus_setzen(user["id"], project_id)
         else:
-            nid, gid = storage.append_message(project_id, "user", nutzer_text, zusatz=zusatz), None
+            nid, gid = storage.append_message(project_id, "user", nutzer_text, zusatz=zusatz, sprache=_ui_sprache), None
 
         def verarbeiten(on_tool=None) -> dict:
             if project_id is None:
                 return process_konto_message(user["id"], message_modell, on_tool=on_tool, nur_mit_karte=nur_mit_karte,
-                                             ohne_nachricht=nid, _=_ui, nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf)
+                                             ohne_nachricht=nid, _=_ui, nutzer_text=nutzer_text, begleiter_lauf=begleiter_lauf,
+                                             gespraech_id=gid)
             return process_message(project_id, message_modell, user["id"], on_tool=on_tool, nur_mit_karte=nur_mit_karte,
                                    konto=konto, ohne_nachricht=nid, _=_ui, nutzer_text=nutzer_text,
-                                   begleiter_lauf=begleiter_lauf)
+                                   begleiter_lauf=begleiter_lauf, gespraech_id=gid)
         if funktionen.AGENT_SICHERHEIT:   # angenommene Nachricht zaehlen (unabhaengig von Projekten und Verlauf)
             from inkluagent import sicherheit as _sicherheit
             _sicherheit.tageszaehler_erhoehen(user["id"])
@@ -12054,14 +12107,19 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
         def _antwort(result: dict) -> dict:
             # anhang (11.09.2026, Meine Ausgaben): Download-Knoepfe unter der Antwort (Umwandlung/Word-Export
             # durch den Bot) — wird mitgespeichert, damit der Verlauf sie nach einem Neuladen noch zeigt.
-            if webkarten and result.get("intent") != "error":   # Karten zu Webadressen aus der Nachricht (siehe oben)
+            fehler = result.get("intent") == "error"
+            if webkarten and not fehler:   # Karten zu Webadressen aus der Nachricht (siehe oben)
                 result = dict(result, anhang=(list(result.get("anhang") or []) + webkarten))
-            felder = dict(image_refs=result.get("image_refs"), intent=result.get("intent"), werkzeuge=result.get("werkzeuge"),
-                          anhang=result.get("anhang") or None)
-            if konto:
-                storage.konto_anhaengen(user["id"], project_id, "assistant", result["reply"], gespraech_id=gid, **felder)
-            else:
-                storage.append_message(project_id, "assistant", result["reply"], **felder)
+            # Fehlerantworten (Verbindung, gesperrte Anfrage, Absturz) speichert der Server NICHT: sonst lernt das Gedaechtnis der
+            # naechsten Runde „ich bin kaputt“, und der Verlauf zeigt nach dem Neuladen eine Fehlermeldung als Antwort (Pruefung
+            # 13.10.2026, Runde 2, K-N7 — die Kommentare sagten es schon, der Code tat es nur fuer Ausnahmen in lauf()).
+            if not fehler:
+                felder = dict(image_refs=result.get("image_refs"), intent=result.get("intent"), werkzeuge=result.get("werkzeuge"),
+                              anhang=result.get("anhang") or None, sprache=_ui_sprache)
+                if konto:
+                    storage.konto_anhaengen(user["id"], project_id, "assistant", result["reply"], gespraech_id=gid, **felder)
+                else:
+                    storage.append_message(project_id, "assistant", result["reply"], **felder)
             return {
                 "reply": result["reply"],
                 "intent": result.get("intent"),
@@ -12168,12 +12226,16 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
 
 
 @app.post("/api/agent/hochladen")
-async def agent_hochladen(request: Request, dateien: Optional[list[UploadFile]] = File(None), webadresse: str = Form(""),
-                          project_id: Optional[int] = Form(None), user: dict = Depends(get_current_user)):
-    """Hochladefeld im InkluAgent (Runde 2, Schritt 1, Schalter funktionen.AGENT_HOCHLADEN): Dateien und eine Webadresse, die
-    der Nutzer SELBST angegeben hat. Zuordnung, Projektanlage und Bremsen macht der Server (inkluagent/hochladen.py) ueber
-    dieselben Funktionen wie die Knoepfe (upload_file, scan_url). Antwort: Ergebnis je Datei und eine Notiz-Kennung, die der
-    Chat-Endpunkt mit der naechsten Nachricht an das Modell gibt."""
+async def agent_hochladen(request: Request, dateien: Optional[list[UploadFile]] = File(None),
+                          project_id: Optional[int] = Form(None), hochladen_id: str = Form(""),
+                          user: dict = Depends(get_current_user)):
+    """Dateien im InkluAgent (Runde 2, Schritt 1, Schalter funktionen.AGENT_HOCHLADEN), die der Nutzer SELBST angehaengt hat.
+    Zuordnung, Projektanlage und Bremsen macht der Server (inkluagent/hochladen.py) ueber dieselben Funktionen wie die Knoepfe
+    (upload_file). Antwort: Ergebnis je Datei und eine Notiz-Kennung, die der Chat-Endpunkt mit der naechsten Nachricht an das
+    Modell gibt. Webadressen kommen nur noch aus dem Text der Nachricht und laden ueber den Knopf einer Karte (Pruefung 13.10.2026,
+    Runde 2, K-N9: das Feld „webadresse“ lud ohne Karte und wurde von der Seite nicht mehr geschickt).
+    hochladen_id (K12): dieselbe Kennung binnen 15 Minuten liefert das fruehere Ergebnis, statt erneut hochzuladen — bricht ein
+    Proxy die Antwort ab, laedt das erneute Senden nicht doppelt hoch."""
     _require_inkluagent()
     funktionen.endpunkt_frei("AGENT_HOCHLADEN")
     from inkluagent import hochladen as _hl
@@ -12184,6 +12246,10 @@ async def agent_hochladen(request: Request, dateien: Optional[list[UploadFile]] 
     # Dieselbe Bremse wie die Nachricht, VOR dem Hochladen (Pruefung 13.10.2026, K4): vorher gelang das Hochladen, die Nachricht
     # danach bekam 429 — ohne Antwort keine Karten, und wartende Dateien liessen sich nicht mehr zuordnen.
     _agent_bremse(user, _)
+    kennung = hochladen_id if re.fullmatch(r"[A-Za-z0-9_-]{1,64}", hochladen_id or "") else ""
+    frueher = _hochladen_ergebnis(user["id"], kennung)
+    if frueher is not None:
+        return frueher
     # Hoechstens ein Hochladen je Konto gleichzeitig (S7): jede Anfrage haelt eine Datei im Speicher und wartet aufs Auslesen
     if user["id"] in _AGENT_HOCHLADEN_LAEUFT:
         raise HTTPException(status_code=409, detail=_("Es wird gerade schon hochgeladen. Warte bitte, bis das fertig ist."))
@@ -12191,14 +12257,31 @@ async def agent_hochladen(request: Request, dateien: Optional[list[UploadFile]] 
     try:
         # Die Dateien liest hochladen() eine nach der anderen (S7/K12), nicht alle vorher in den Speicher. Zuordnung (Steve
         # 12.10.2026): auf einer Seite ohne Projekt warten Dateien mit aehnlichem vorhandenem Projekt auf die Wahl.
-        erg = await _hl.hochladen(user, [((d.filename or ""), d) for d in dateien], webadresse or "", project_id,
+        erg = await _hl.hochladen(user, [((d.filename or ""), d) for d in dateien], "", project_id,
                                   request=request, _=_, zuordnen=bool(project_id is None and funktionen.AGENT_KONTO))
     finally:
         _AGENT_HOCHLADEN_LAEUFT.discard(user["id"])
     if not erg.get("ok"):
         raise HTTPException(status_code=400, detail=erg.get("fehler_text") or _("Hochladen nicht möglich."))
     erg.pop("notiz", None)   # die Notiz geht nur an das Modell (ueber notiz_id), nicht an die Seite
+    _hochladen_merken(user["id"], kennung, erg)
     return erg
+
+
+_AGENT_HOCHLADEN_ERGEBNISSE: dict[tuple, tuple] = {}   # (Konto, hochladen_id) -> (Zeit, Ergebnis), 15 Minuten (K12)
+
+
+def _hochladen_ergebnis(user_id: int, kennung: str) -> Optional[dict]:
+    jetzt = time.time()
+    for k in [k for k, (z, _e) in _AGENT_HOCHLADEN_ERGEBNISSE.items() if jetzt - z > 15 * 60]:
+        _AGENT_HOCHLADEN_ERGEBNISSE.pop(k, None)
+    treffer = _AGENT_HOCHLADEN_ERGEBNISSE.get((user_id, kennung)) if kennung else None
+    return dict(treffer[1]) if treffer else None
+
+
+def _hochladen_merken(user_id: int, kennung: str, erg: dict) -> None:
+    if kennung:
+        _AGENT_HOCHLADEN_ERGEBNISSE[(user_id, kennung)] = (time.time(), dict(erg))
 
 
 def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
@@ -12225,9 +12308,13 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
         from inkluagent.tools import namen as _werkzeug_namen
         out["werkzeug_namen"] = _werkzeug_namen.fuer_oberflaeche(get_gettext(lang or "de"))
         out["hilfe"] = bool(funktionen.AGENT_HILFE)
-    if out["begleiter"]:
-        from inkluagent import begleiter as _begleiter
-        out["hinZiele"] = _begleiter.hin_ziele()   # erlaubte Sprungziele fuer ?hin= (S14)
+    # Erlaubte Sprungziele fuer ?hin= (S14) — immer, nicht nur mit Begleiter (Runde 2, S-N9): ohne Liste wertet die Seite ?hin=
+    # nicht aus, statt jede Kennung zu nehmen, die ein fremder Link nennt
+    from inkluagent import begleiter as _begleiter
+    out["hinZiele"] = _begleiter.hin_ziele()
+    if out["arbeitsfenster"]:
+        from inkluagent import fenster as _fenster
+        out["fensterSeiten"] = list(_fenster.FENSTER_SEITEN)   # dieselbe Liste wie beim Einrahmen (Runde 2, S-N6)
     return out
 
 
@@ -12583,6 +12670,7 @@ async def set_language(lang: str, request: Request):
     # Weitergeleitet wird nur der Pfad, nie eine fremde absolute URL.
     from urllib.parse import parse_qsl, urlencode, urlsplit
     redirect_to = "/"
+    eigen = False
     try:
         parts = urlsplit(referer)
         req_host = (request.url.hostname or "").lower()
@@ -12607,10 +12695,22 @@ async def set_language(lang: str, request: Request):
         # Eingeloggte Nutzer: Wahl zusaetzlich dauerhaft am Konto speichern,
         # damit sie ueber Geraete und die Cookie-Lebensdauer hinaus gilt
         # (Stufe 1 der Sprach-Erkennung in i18n.detect_language).
+        # Nur, wenn der Wechsel von einer eigenen Seite kommt oder der Nutzer die Adresse selbst aufgerufen hat (Runde 2, S5): ein
+        # GET laesst sich von jeder fremden Seite ausloesen, und die Sprache am Konto gilt vor dem Cookie — ein fremder Link
+        # haette sie dauerhaft umgestellt (fuer Screenreader-Nutzer eine echte Stoerung). Der Cookie betrifft nur Gaeste.
         user = get_optional_user(request)
-        if user:
+        if user and _von_eigener_seite(request, eigen and bool(request.headers.get("referer"))):
             set_user_language(user["id"], lang)
     return response
+
+
+def _von_eigener_seite(request: Request, referer_eigen: bool) -> bool:
+    """Kam diese Anfrage von einer eigenen Seite (Sec-Fetch-Site same-origin) oder vom Nutzer selbst (none: Adresse getippt,
+    Lesezeichen)? Browser ohne den Kopf: ein Referer muss da sein und auf eine eigene Seite zeigen."""
+    seite = request.headers.get("sec-fetch-site")
+    if seite is not None:
+        return seite in ("same-origin", "none")
+    return referer_eigen
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
@@ -12726,7 +12826,6 @@ async def hilfe_inkluagent_page(request: Request):
     return _render_protected_template(request, "hilfe_inkluagent.html",
                                       hilfe=_hilfe.seite(get_gettext(resolve_ui_language(request))),
                                       tageslimit=DAILY_CHAT_LIMIT, max_zeichen=5000,
-                                      einzel_deckel=bool(funktionen.AGENT_SICHERHEIT),
                                       ansicht_waehlbar=bool(funktionen.AGENT_ANSICHT),
                                       gespraech_je_konto=bool(funktionen.AGENT_KONTO),
                                       ueberall=bool(funktionen.AGENT_KONTO and funktionen.AGENT_UEBERALL),

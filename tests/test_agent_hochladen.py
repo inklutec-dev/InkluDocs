@@ -176,6 +176,27 @@ class Zuordnung(unittest.TestCase):
         self.assertEqual(namen[e["a.pdf"]["project_id"]], "a.pdf", "neues Projekt heisst wie die Datei")
         self.assertEqual(namen[e["b.png"]["project_id"]], "b.png")
 
+    def test_eine_gemeinsame_auslese_frist_fuer_alle_dateien(self):
+        """K12: alle Dateien einer Nachricht warten zusammen hoechstens _AUSLESEN_GESAMT_S aufs Auslesen — vorher je Datei bis
+        120 s, bei zehn Dateien zwanzig Minuten ohne Antwort."""
+        wartezeiten = []
+
+        async def warten(pid, timeout=120.0):
+            wartezeiten.append(timeout)
+            await asyncio.sleep(timeout)   # das Auslesen dauert laenger als die Frist
+            return "extracting"
+
+        async def liest_noch(file, project_id, user, request=None):
+            r = await FalscherMain.upload_file(self.main, file, project_id, user, request)
+            return dict(r, status="extracting")
+        with mock.patch.object(hochladen, "_AUSLESEN_GESAMT_S", 0.3), mock.patch.object(hochladen, "_warten_auf_auslesen", warten), \
+                mock.patch.object(self.main, "upload_file", liest_noch):
+            erg = lauf(hochladen.hochladen(self.user, [("a.pdf", PDF), ("b.png", PNG), ("c.docx", docx())], "", None))
+        self.assertEqual(len(wartezeiten), 3)
+        self.assertAlmostEqual(wartezeiten[0], 0.3, delta=0.1)
+        self.assertLess(sum(wartezeiten), 0.45, wartezeiten)
+        self.assertEqual(len(erg["ergebnisse"]), 3)
+
     def test_fremdes_projekt_zaehlt_nicht(self):
         anderer = konto()
         fremd = projekt(anderer["id"], "pdf", "pdf")
@@ -375,6 +396,26 @@ class Endpunkte(unittest.TestCase):
         self.assertNotIn("notiz", r.json())
         self.assertEqual(r.json()["notiz_id"], "n1")
         self.assertEqual(r.json()["kurz"], "Hochgeladen: a.pdf")
+
+    def test_gleiche_hochladen_id_laedt_nicht_doppelt(self):
+        """Pruefung 13.10.2026, Runde 2 (K12): bricht ein Proxy die Antwort ab, liefert das erneute Senden mit derselben Kennung
+        das fruehere Ergebnis, statt die Dateien ein zweites Mal hochzuladen. Eine Webadresse im Formular laedt nichts mehr (K-N9)."""
+        aufrufe = []
+
+        async def zaehlen(user, dateien, webadresse, project_id, **kw):
+            aufrufe.append((len(dateien), webadresse))
+            return {"ok": True, "ergebnisse": [{"name": "a.pdf", "ok": True}], "projekte": [self.pid], "fehler": 0,
+                    "notiz_id": f"n{len(aufrufe)}", "notiz": "geheim", "kurz": "Hochgeladen: a.pdf"}
+        with mock.patch.object(funktionen, "AGENT_HOCHLADEN", True), mock.patch.object(hochladen, "hochladen", side_effect=zaehlen):
+            daten = {"project_id": str(self.pid), "hochladen_id": "stapel-1", "webadresse": "http://169.254.169.254/"}
+            r1 = self.c.post("/api/agent/hochladen", data=daten, files=[("dateien", ("a.pdf", PDF, "application/pdf"))])
+            r2 = self.c.post("/api/agent/hochladen", data=daten, files=[("dateien", ("a.pdf", PDF, "application/pdf"))])
+            r3 = self.c.post("/api/agent/hochladen", data=dict(daten, hochladen_id="stapel-2"),
+                             files=[("dateien", ("a.pdf", PDF, "application/pdf"))])
+        self.assertEqual([r.status_code for r in (r1, r2, r3)], [200, 200, 200])
+        self.assertEqual(r1.json()["notiz_id"], r2.json()["notiz_id"], "dasselbe Ergebnis")
+        self.assertEqual(r3.json()["notiz_id"], "n2", "eine neue Kennung laedt neu hoch")
+        self.assertEqual(aufrufe, [(1, ""), (1, "")], "zweimal hochgeladen (zwei Kennungen), die Webadresse nie")
 
     def test_chat_ohne_text_zeigt_die_kurzzeile_und_das_modell_bekommt_die_notiz(self):
         nid = hochladen.notiz_ablegen(self.user["id"], "[Notiz vom Server (fiktiv)]", [self.pid], "Hochgeladen: a.pdf")

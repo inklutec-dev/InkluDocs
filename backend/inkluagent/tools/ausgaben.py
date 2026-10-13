@@ -86,7 +86,11 @@ _GRUND_KENNWORT[_G_DIREKT] = "ja"
 # Unumkehrbar (Art im Angebots-Schluessel): nur der Knopf der Karte loest aus, nie bestaetigt=true vom Modell (S2: vorher genuegte
 # ein Ja auf eine Frage, deren Text das Modell bestimmt — eine eingeschleuste Anweisung konnte so ueber zwei Runden loeschen).
 # loeschen = dokument_loeschen (tools/pdf.py), ablage_loeschen = ausgabe_loeschen; projekt_loeschen (konto.py) schon vorher so.
-_UNUMKEHRBAR_ARTEN = frozenset({"loeschen", "bild_loeschen", "ablage_loeschen", "projekt_loeschen"})
+# EINE Liste (Pruefung 13.10.2026, Runde 2, S-N10): Werkzeug -> Art seines Angebots-Schluessels. Daraus _UNUMKEHRBAR (Werkzeuge,
+# Text der Karte) und _UNUMKEHRBAR_ARTEN (Einloesen); vorher zwei Listen, die auseinanderlaufen konnten.
+UNUMKEHRBAR: dict[str, str] = {"ausgabe_loeschen": "ablage_loeschen", "dokument_loeschen": "loeschen", "bild_loeschen": "bild_loeschen",
+                               "projekt_loeschen": "projekt_loeschen"}
+_UNUMKEHRBAR_ARTEN = frozenset(UNUMKEHRBAR.values())
 
 
 def _angebot_merken(schluessel: tuple, preis: int, turn_id: str) -> str:
@@ -192,7 +196,7 @@ def karte_ausfuehren(angebot_id: str, werkzeug: str, args: dict, executor) -> di
 
 
 # Karte unter der Antwort (Pruefung 3): Text und Knopf vom SERVER, nicht vom Modell
-_UNUMKEHRBAR = ("ausgabe_loeschen", "dokument_loeschen", "bild_loeschen", "projekt_loeschen")   # projekt_loeschen: Konto (Schritt 4)
+_UNUMKEHRBAR = tuple(UNUMKEHRBAR)   # projekt_loeschen: Konto (Schritt 4)
 
 
 def karte_anhaengen(result: dict, werkzeug: str, args: dict, user_id: int, project_id: int, vorher_id: Optional[str]) -> dict:
@@ -231,7 +235,7 @@ def karte_anhaengen(result: dict, werkzeug: str, args: dict, user_id: int, proje
     a["beschreibung"] = beschreibung
     a["erledigt_text"] = (_("„{ziel}“ ist gelöscht.").format(ziel=ziel) if (werkzeug in _UNUMKEHRBAR and ziel)
                           else beschreibung + ".")
-    a["titel_erledigt"], a["titel_abgelaufen"] = _("Erledigt"), _("Nicht mehr gültig")
+    a["titel_erledigt"], a["titel_abgelaufen"], a["titel_laeuft"] = _("Erledigt"), _("Nicht mehr gültig"), _("Läuft noch")
     # Knopf nennt, was genau passiert (Pruefung 4, NIEDRIG 2): „Alt-Texte als Excel herunterladen (10 Credits) bestätigen“
     karte = {"art": "bestaetigung", "angebot_id": angebot_id, "titel": _("Bestätigung nötig"), "text": text,
              "knopf": _("{aktion} bestätigen").format(aktion=beschreibung), "zustand": "offen"}
@@ -259,6 +263,8 @@ def _beschreibung(werkzeug: str, args: dict, aktion: str, ziel: str, preis: int,
 def _kartenfelder(a: dict, zustand: str) -> dict:
     if zustand == "erledigt":
         return {"zustand": "erledigt", "titel": a.get("titel_erledigt") or "Erledigt", "text": a.get("erledigt_text") or a.get("text") or ""}
+    if zustand == "laeuft":   # eingeloest, aber noch nicht fertig (Pruefung 13.10.2026, Runde 2, K-N6)
+        return {"zustand": "laeuft", "titel": a.get("titel_laeuft") or "Läuft noch", "text": a.get("laeuft_text") or a.get("text") or ""}
     return {"zustand": "abgelaufen", "titel": a.get("titel_abgelaufen") or "Nicht mehr gültig", "text": a.get("text") or ""}
 
 
@@ -294,8 +300,9 @@ def nachbereiten(result: dict, werkzeug: str, args: dict, user_id: int, project_
         return result
     erfolg = bool(result.get("ok")) and not (result.get("result") or {}).get("rueckfrage_noetig")
     karten = []
+    laeuft = isinstance(result.get("result"), dict) and bool(result["result"].get("laeuft_noch"))
     for aid, a, eingeloest in verbraucht:
-        zustand = "erledigt" if (eingeloest and erfolg) else "abgelaufen"
+        zustand = ("laeuft" if laeuft else "erledigt") if (eingeloest and erfolg) else "abgelaufen"
         felder = _kartenfelder(a, zustand)
         if zustand == "erledigt":
             with _SPERRE:

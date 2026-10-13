@@ -12456,3 +12456,15 @@ msgstr "Les sons sont désactivés. Active-les plus haut pour écouter l’essai
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Ton navigateur ne joue pas de son ici pour le moment."
+
+# Pruefung 13.10.2026, Runde 2: Server (gesperrte Anfrage, Karte laeuft noch)
+msgid "Auf diese Anfrage antwortet die KI nicht. Formuliere sie bitte anders."
+msgstr "L'IA ne répond pas à cette demande. Merci de la formuler autrement."
+
+msgid "Läuft noch"
+msgstr "En cours"
+
+# Pruefung 13.10.2026, Runde 2: Server (gesperrte Anfrage, Karte laeuft noch)
+#, python-brace-format
+msgid "Läuft noch: {text}"
+msgstr "En cours : {text}"

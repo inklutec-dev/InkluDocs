@@ -158,6 +158,15 @@ class MitServer(unittest.TestCase):
         c.cookies.set("token", self.main.create_token(self.u["id"], self.u["email"], 0))
         with mock.patch.object(self.main, "INKLUAGENT_ENABLED", True), mock.patch.object(funktionen, "AGENT_KONTO", True), \
                 mock.patch.object(funktionen, "AGENT_UEBERALL", True):
+            # Runde 2 (S-N3): arbeitet der Agent fuer das Konto, wartet der Knopf (409), und die Karte bleibt gueltig
+            start = self.main._lauf_anmelden(self.u["id"])
+            try:
+                besetzt = c.post("/api/agent/bestaetigen", json={"angebot_id": karte["angebot_id"]})
+            finally:
+                self.main._lauf_abmelden(self.u["id"], start)
+            self.assertEqual(besetzt.status_code, 409, besetzt.text)
+            self.assertIn("arbeitet noch", besetzt.json()["detail"])
+            self.assertTrue(gibt_es(pid))
             antwort = c.post("/api/agent/bestaetigen", json={"angebot_id": karte["angebot_id"]})
             self.assertEqual(antwort.status_code, 200, antwort.text)
             d = antwort.json()
@@ -170,6 +179,13 @@ class MitServer(unittest.TestCase):
         v = storage.konto_verlauf(self.u["id"])
         self.assertEqual(v[0]["anhang"][0]["zustand"], "erledigt", "die Karte im Verlauf zeigt „Erledigt“")
         self.assertEqual([(m["role"], m["project_id"]) for m in v[1:]], [("user", None), ("assistant", None)])
+        # Runde 2 (S-N1/K-N2): die Zeile „Bestätigt über den Knopf: …“ ist eine Zeile des SERVERS — nicht getippt, im Gedaechtnis
+        # als Daten gekennzeichnet (der Projektname darin ist Fremdtext)
+        frage = v[1]
+        self.assertEqual(frage["text"], "")
+        self.assertTrue(frage["zusatz"].startswith("Bestätigt über den Knopf:"), frage)
+        self.assertIn("Weg damit (fiktiv)", frage["zusatz"])
+        self.assertTrue(storage.fuer_modell(frage).startswith(DATEN_MARKE), storage.fuer_modell(frage))
 
     def test_nicht_waehrend_eines_laufs(self):
         pid = projekt(self.u["id"], "Läuft (fiktiv)", status="processing")

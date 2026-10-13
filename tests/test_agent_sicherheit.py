@@ -1,5 +1,6 @@
-"""InkluAgent-Ausbau Runde 1, Schritt 2 (09.10.2026): Sicherheitsfundament hinter funktionen.AGENT_SICHERHEIT
-(inkluagent/sicherheit.py). Wegwerf-Datenbank (/tmp), keine KI, keine Mails.
+"""InkluAgent-Ausbau Runde 1, Schritt 2 (09.10.2026): Sicherheitsfundament (inkluagent/sicherheit.py). Deckel fuer bezahlte
+Einzelaktionen und Ja-Pruefung gelten seit der Pruefung 13.10.2026 immer; Tagesgrenze und Kostendeckel haengen am Schalter
+funktionen.AGENT_SICHERHEIT. Wegwerf-Datenbank (/tmp), keine KI, keine Mails.
     docker exec -w /app <container> python3 -m unittest /app/tests/test_agent_sicherheit.py
 """
 import os
@@ -47,14 +48,12 @@ class Schalter(unittest.TestCase):
             self.assertTrue(funktionen._umgebung_an("INKLUAGENT_SICHERHEIT"))
         self.assertNotIn("agent_sicherheit", funktionen.fuer_oberflaeche())
 
-    def test_werkzeuge_und_prompt_nur_mit_schalter(self):
+    def test_werkzeuge_und_prompt_immer(self):
+        """Seit Runde 2 der Pruefung 13.10.2026 (S2) mit und ohne Schalter: Deckel und Ja-Pruefung sind Teil der Zustimmung."""
         projekt = {"project_type": "pdf", "tool": "pdf"}
-        d, _e, system = agent_loop._werkzeugsatz(projekt, 1, 1)
-        je = {x["name"]: x for x in d}
-        self.assertNotIn("bestaetigt", je["update_alt_text"]["input_schema"]["properties"])
-        self.assertNotIn("Bezahlte Einzelaktionen und Zustimmung", system)
-        with AN:
-            d, _e, system = agent_loop._werkzeugsatz(projekt, 1, 1)
+        for schalter in (AN, mock.patch.object(funktionen, "AGENT_SICHERHEIT", False)):
+            with schalter:
+                d, _e, system = agent_loop._werkzeugsatz(projekt, 1, 1)
             je = {x["name"]: x for x in d}
             for w in sicherheit.EINZEL_BEZAHLT:
                 self.assertIn("bestaetigt", je[w]["input_schema"]["properties"], w)
@@ -180,12 +179,22 @@ class _Basis(unittest.TestCase):
 
 
 class EinzelDeckel(_Basis):
-    def test_schalter_aus_beliebig_viele(self):
+    def test_deckel_gilt_auch_ohne_schalter(self):
+        """Pruefung 13.10.2026, Runde 2 (S2): vorher liefen ohne AGENT_SICHERHEIT beliebig viele bezahlte Einzelaktionen."""
+        self.assertFalse(sicherheit.an())
         ex = self._ex("Formulier alle drei Alt-Texte kürzer und speichere sie.")
-        with mock.patch.object(defs.altext_tools, "update_alt_text", side_effect=self._speichern):
-            for i in self.bilder:
-                self.assertTrue(ex.execute("update_alt_text", {"image_id": i, "new_alt_text": f"Text {i} (fiktiv)"})["ok"])
-        self.assertEqual(len(self.aufrufe), 3)
+        with mock.patch.object(defs.altext_tools, "update_alt_text", side_effect=self._speichern), \
+                mock.patch.object(ausgaben, "_main", return_value=OHNE_MAIN):
+            ergebnisse = [ex.execute("update_alt_text", {"image_id": i, "new_alt_text": f"Text {i} (fiktiv)"}) for i in self.bilder]
+        self.assertEqual(len(self.aufrufe), 1, "nur die erste ohne Karte")
+        self.assertTrue(all(r["result"]["rueckfrage_noetig"] for r in ergebnisse[1:]))
+
+    def test_werkzeuge_und_prompt_auch_ohne_schalter(self):
+        self.assertFalse(sicherheit.an())
+        defs_, _ex, system = agent_loop._werkzeugsatz({"project_type": "docx", "tool": "word"}, self.pid, 1)
+        update = next(d for d in defs_ if d["name"] == "update_alt_text")
+        self.assertIn("bestaetigt", update["input_schema"]["properties"])
+        self.assertIn(sicherheit.PROMPT_ZUSATZ, system)
 
     def test_eine_ohne_karte_weitere_mit_karte(self):
         with AN, mock.patch.object(defs.altext_tools, "update_alt_text", side_effect=self._speichern), \

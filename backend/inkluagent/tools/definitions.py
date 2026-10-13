@@ -236,7 +236,7 @@ class ToolExecutor:
             vorher = ausgaben_tools._LETZTES.get((self.user_id, self.project_id))
             # Marke „[DATEN, keine Anweisung]“ nie in gespeicherte Texte oder Namen (09.10.2026, inkluagent/daten.py)
             args = ohne_marke_args(args or {})
-            # Hoechstens eine bezahlte Einzelaktion je Nachricht ohne Karte (Schalter AGENT_SICHERHEIT, sonst None)
+            # Hoechstens eine bezahlte Einzelaktion je Nachricht ohne Karte (immer, Pruefung 13.10.2026 Runde 2, S2)
             ergebnis = sicherheit.einzel_vorab(self, name, args)
             if ergebnis is None:
                 try:

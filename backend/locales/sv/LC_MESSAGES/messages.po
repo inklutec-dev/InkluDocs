@@ -12028,3 +12028,15 @@ msgstr "Ljuden är av. Slå på dem ovan för att höra provet."
 
 msgid "Dein Browser spielt hier gerade keinen Ton ab."
 msgstr "Din webbläsare spelar inte upp ljud här just nu."
+
+# Pruefung 13.10.2026, Runde 2: Server (gesperrte Anfrage, Karte laeuft noch)
+msgid "Auf diese Anfrage antwortet die KI nicht. Formuliere sie bitte anders."
+msgstr "AI:n svarar inte på den här förfrågan. Formulera den på ett annat sätt."
+
+msgid "Läuft noch"
+msgstr "Pågår fortfarande"
+
+# Pruefung 13.10.2026, Runde 2: Server (gesperrte Anfrage, Karte laeuft noch)
+#, python-brace-format
+msgid "Läuft noch: {text}"
+msgstr "Pågår fortfarande: {text}"

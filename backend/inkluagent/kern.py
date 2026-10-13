@@ -20,7 +20,8 @@ log = logging.getLogger(__name__)
 
 def fehlertext(e: BaseException, satz: str) -> str:
     """Den Satz einer HTTPException (fuer Menschen geschrieben, derselbe wie beim Knopf), sonst nur `satz`. Pfade, Datenbank- und
-    Anbieterfehler gehen ins Log, nicht an das Modell, in den Chat oder in den Livestream (Pruefung 13.10.2026, S10)."""
+    Anbieterfehler gehen ins Log, nicht an das Modell, in den Chat oder in den Livestream (Pruefung 13.10.2026, S10). Dass
+    main.py keine Ausnahmetexte in eine HTTPException schreibt, prueft tests/test_sicherheit_pruefung_1310.py (Runde 2, S-N8)."""
     from fastapi import HTTPException
     if isinstance(e, HTTPException):
         d = (e.detail.get("text") or e.detail.get("detail")) if isinstance(e.detail, dict) else e.detail

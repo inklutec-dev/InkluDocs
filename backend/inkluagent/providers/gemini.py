@@ -25,7 +25,7 @@ from pipelines.v4.gemini_client import _schema_fuer_gemini
 
 import ki_kosten  # KI-Kosten je Aufruf (05.10.2026)
 
-from .base import LLMProvider
+from .base import FristErreicht, LLMProvider, Uhr
 from .bedrock import BedrockProviderError, _detect_media_type
 
 log = logging.getLogger(__name__)
@@ -87,12 +87,17 @@ def _gekuerzt(text: str) -> str:
 
 class GeminiAntwortGesperrt(GeminiProviderError):
     """Gemini hat die Anfrage beantwortet, aber ohne Kandidaten (promptFeedback.blockReason): endgueltig, kein zweiter Versuch
-    (Pruefung 13.10.2026, K10 — vorher wurde daraus im Stream eine leere, als normale Antwort gespeicherte Nachricht)."""
+    (Pruefung 13.10.2026, K10 — vorher wurde daraus im Stream eine leere, als normale Antwort gespeicherte Nachricht).
+    gesperrt: agent_loop sagt dem Nutzer dann ehrlich, dass die KI darauf nicht antwortet (Runde 2, K-N7), statt „Verbindung
+    unterbrochen“."""
+    gesperrt = True
 
 
 class GeminiProvider(LLMProvider):
     # Livestream (Arbeitsfenster, 12.10.2026): invoke_with_tools nimmt on_text und liefert den Antworttext Stueck fuer Stueck
     kann_streamen = True
+    # Frist der Nachricht (Pruefung 13.10.2026, Runde 2): invoke_with_tools nimmt frist (time.monotonic) und haelt sie ein (base.Uhr)
+    kennt_frist = True
 
     def __init__(self) -> None:
         from pipelines.v4 import gemini_auth
@@ -103,14 +108,16 @@ class GeminiProvider(LLMProvider):
         self._zaehler = 0
 
     # ---------------------------------------------------------------- HTTP
-    def _aufruf(self, model: str, body: dict) -> dict:
+    def _aufruf(self, model: str, body: dict, uhr: Optional[Uhr] = None) -> dict:
+        uhr = uhr or Uhr(None, _HTTP_TIMEOUT)
         daten = json.dumps(body).encode("utf-8")
         letzter: Optional[Exception] = None
         for versuch in range(_VERSUCHE):
             from pipelines.v4 import gemini_auth
             req = urllib.request.Request(_endpunkt(model), data=daten, headers=gemini_auth.kopfzeilen())
+            zeit = uhr.naechster()   # FristErreicht, wenn vor der Frist kein Versuch mehr beginnen darf
             try:
-                with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
+                with urllib.request.urlopen(req, timeout=zeit) as r:
                     antwort = json.load(r)
                 # KI-Kosten (05.10.2026): Chat-Aufrufe zaehlen als „chatbot“, sofern der Aufrufer nichts anderes setzt.
                 ki_kosten.erfasse_gemini(model, antwort, schritt="chat", standard_zweck="chatbot")
@@ -122,25 +129,27 @@ class GeminiProvider(LLMProvider):
                 except Exception:
                     pass
                 letzter = GeminiProviderError(f"Gemini HTTP {e.code} ({model}): {text}")
-                if e.code in (429, 500, 502, 503, 504) and versuch < _VERSUCHE - 1:
+                if e.code in (429, 500, 502, 503, 504) and versuch < _VERSUCHE - 1 and uhr.weiterer_erlaubt():
                     time.sleep(4 * (versuch + 1))
                     continue
                 raise letzter from e
             except Exception as e:
                 letzter = GeminiProviderError(f"Gemini-Aufruf fehlgeschlagen ({model}): {e}")
-                if versuch < _VERSUCHE - 1:
+                if versuch < _VERSUCHE - 1 and uhr.weiterer_erlaubt():
                     time.sleep(4 * (versuch + 1))
                     continue
                 raise letzter from e
         raise letzter or GeminiProviderError("Gemini-Aufruf fehlgeschlagen")
 
-    def _aufruf_strom(self, model: str, body: dict, on_text) -> dict:
+    def _aufruf_strom(self, model: str, body: dict, on_text, uhr: Optional[Uhr] = None) -> dict:
         """Wie _aufruf, aber ueber streamGenerateContent (SSE): Textteile gehen sofort an on_text. Ergebnis wie generateContent —
         zusammenhaengender Text als ein Teil, Funktionsaufrufe unveraendert (mit Gedankensignatur), finishReason, usageMetadata.
         Kosten werden auch fuer einen abgebrochenen Stream erfasst, soweit Gemini sie schon gemeldet hat (Pruefung 13.10.2026,
         S12: sonst zaehlte der Tages-Kostendeckel zu wenig). Ein Fehlerobjekt im Stream ist ein Fehler (der Aufrufer nimmt den
-        Weg ohne Stream); eine Antwort ganz ohne Kandidaten mit blockReason ist endgueltig (GeminiAntwortGesperrt)."""
+        Weg ohne Stream); eine Antwort ganz ohne Kandidaten mit blockReason ist endgueltig (GeminiAntwortGesperrt). Mit Uhr endet
+        der Stream spaetestens mit der Zeit seines Aufrufs (FristErreicht)."""
         from pipelines.v4 import gemini_auth
+        uhr = uhr or Uhr(None, _HTTP_TIMEOUT)
         url = _endpunkt(model).replace(":generateContent", ":streamGenerateContent")
         url += ("&" if "?" in url else "?") + "alt=sse"
         req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=gemini_auth.kopfzeilen())
@@ -151,8 +160,9 @@ class GeminiProvider(LLMProvider):
         kandidaten = False
         fertig = False
         try:
-            with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
+            with urllib.request.urlopen(req, timeout=uhr.naechster()) as r:
                 for roh in r:
+                    uhr.pruefen()
                     zeile = roh.decode("utf-8", "ignore").strip()
                     if not zeile.startswith("data:"):
                         continue
@@ -292,8 +302,10 @@ class GeminiProvider(LLMProvider):
 
     def invoke_with_tools(self, anthropic_messages: list[dict], tools: list[dict], system: Optional[str] = None,
                           model: Optional[str] = None, max_tokens: int = 4096, temperature: float = 0.3,
-                          on_text=None) -> dict[str, Any]:
+                          on_text=None, frist: Optional[float] = None) -> dict[str, Any]:
+        """frist: Ende der Nachricht (time.monotonic) — alle Aufrufe dieses Schritts halten sie ein (base.Uhr)."""
         chosen = model or _DEFAULT_MODEL_TEXT
+        uhr = Uhr(frist, _HTTP_TIMEOUT)
         body: dict = {"contents": self._contents(anthropic_messages),
                       "generationConfig": {"temperature": _TEMPERATUR, "maxOutputTokens": max_tokens + 2048}}
         if _THINKING_LEVEL in ("low", "medium", "high"):
@@ -308,8 +320,8 @@ class GeminiProvider(LLMProvider):
             antwort = None
             if on_text:
                 try:
-                    antwort = self._aufruf_strom(chosen, body, on_text)
-                except GeminiAntwortGesperrt:
+                    antwort = self._aufruf_strom(chosen, body, on_text, uhr)
+                except (GeminiAntwortGesperrt, FristErreicht):
                     on_text(None)
                     raise
                 except Exception as e:  # noqa: BLE001
@@ -320,7 +332,7 @@ class GeminiProvider(LLMProvider):
                     on_text(None)
                     antwort = None
             if antwort is None:
-                antwort = self._aufruf(chosen, body)
+                antwort = self._aufruf(chosen, body, uhr)
             try:
                 parts = antwort["candidates"][0]["content"].get("parts", [])
                 finish = antwort["candidates"][0].get("finishReason", "")
@@ -335,9 +347,10 @@ class GeminiProvider(LLMProvider):
             text_roh = "".join(p.get("text", "") for p in parts if p.get("text") and not p.get("thought"))
             hat_call = any("functionCall" in p for p in parts)
             if not hat_call and _entgleist(text_roh, finish):
+                nochmal = versuch == 0 and uhr.weiterer_erlaubt()   # ohne Zeit fuer einen zweiten Versuch: kuerzen
                 log.warning("Gemini-Antwort entgleist (Versuch %d, finish=%s, %d Zeichen) — %s", versuch + 1, finish, len(text_roh),
-                            "wiederhole" if versuch == 0 else "kuerze")
-                if versuch == 0:
+                            "wiederhole" if nochmal else "kuerze")
+                if nochmal:
                     if on_text:
                         on_text(None)   # der Entwurf war entgleist: verwerfen, der zweite Versuch streamt neu
                     continue

@@ -186,7 +186,7 @@ class MitServer(unittest.TestCase):
         """Steve 12.10.2026: nach einem Seiten- oder Ansichtswechsel zeigt die neue Seite die Schritte weiter (GET /api/agent/status)."""
         m = self.main
         start = 12345.0
-        m._AGENT_LAEUFT[self.u["id"]] = [__import__("time").time()]
+        m._AGENT_LAEUFT[self.u["id"]] = __import__("time").time()
         try:
             m._fortschritt_neu(self.u["id"], start, self.p)
             m._fortschritt_aendern(self.u["id"], start, lambda f: m._fortschritt_schritt(f, "view_image", {"art": "bild", "nummer": 1}))

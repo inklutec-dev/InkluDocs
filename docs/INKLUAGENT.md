@@ -974,8 +974,8 @@ bestehende Tests.
 
 **Nachrichtenweg des InkluAgent (`main._agent_nachricht`):**
 - K2/S4 Ein Lauf je Konto: `_lauf_anmelden` (409 „Der InkluAgent arbeitet noch …“), `_lauf_abmelden` in jedem Ausgang. Läufe im
-  eigenen, begrenzten Arbeitsbereich `_AGENT_EXECUTOR` (`INKLUAGENT_PARALLEL`, Vorgabe 4) statt im gemeinsamen Thread-Pool, den
-  Hochladen, Exporte und `kern.warten` brauchen; auch die Karten-Knöpfe laufen dort. Gesamtfrist je Nachricht über alle Runden
+  eigenen, begrenzten Arbeitsbereich `_AGENT_EXECUTOR` (`INKLUAGENT_PARALLEL`, Vorgabe 4, seit Runde 2: 8) statt im gemeinsamen
+  Thread-Pool, den Hochladen, Exporte und `kern.warten` brauchen; die Karten-Knöpfe seit Runde 2 in einem eigenen Bereich. Gesamtfrist je Nachricht über alle Runden
   (`INKLUAGENT_FRIST_S`, Vorgabe 300 s, `agent_loop._frist_s`).
 - K13 Der Lauf startet als Aufgabe, BEVOR die Antwort an den Browser geht; der Stream liest nur die Warteschlange.
 - K5 Lebenszeichen `{"type": "ping"}` alle 15 s, solange der Lauf still ist (ein Proxy schloss sonst die Verbindung).
@@ -1182,3 +1182,102 @@ angepassten Quelltext-Tests und `test_agent_arbeitsfenster_seiten.py` (K7 und B1
   Eingabefelds (B21: wird der Platzhalter doppelt gelesen?), Rolle Dialog der Überlagerung (B7) und Escape-Geste auf dem iPhone;
   NVDA/JAWS für `aria-busy` (HB3).
 - Nur Chromium geprüft; Safari und Firefox (Escape-Weitergabe, `location.replace` im Rahmen, `inert`) stehen aus.
+
+## Paket 1: Klangspur (Steve 13.10.2026; Schalter `AGENT_KLANG`, Umgebung `INKLUAGENT_KLANG=an`, braucht `AGENT_UEBERALL`)
+
+Zustände hörbar statt nur angesagt. Die Klänge ersetzen nie eine Ansage (die Information steht immer auch im Text), sie machen den
+Stand schneller erfassbar, besonders bei langen Läufen (Prüfung 13.10.2026, B9: zu viele Ansagen).
+
+- `frontend/klang.js`: Web Audio, ohne Dateien, leise (unter der Stimme des Screenreaders). `Klang.spielen(name)` mit `karte`
+  (Wusch, der von rechts in die Mitte wandert, wie die Karte auf dem Bildschirm fliegt, dann ein kurzer Abschluss), `schritt`
+  (Tick von rechts: ein Werkzeug ist fertig), `fertig` (Zweiklang aus der Mitte: Antwort da), `frage` (Zweiklang: eine Karte wartet;
+  für die Karten aus Paket 1 vorgesehen, noch nicht angeschlossen), `fehler` (tief). Derselbe Klang höchstens alle 120 ms.
+  Später ersetzen Steves eigene Klänge die Synthese; die Namen bleiben.
+- Je Konto ein- und ausschaltbar: Spalte `users.agent_toene` (Vorgabe 1 = an; Migration in `database.py`),
+  `inkluagent/klang.py` (`fuer_konto`, `setzen`, `seiten_wert`), `<body data-toene="an|aus">`, Einstellungen „Töne des InkluAgent“
+  mit „Probe hören“, `PUT /api/me/toene` (`{"toene": true|false}`; 404 ohne Schalter, 400 bei anderem Wert), `/api/me` liefert
+  `toene` (ohne Schalter `null`).
+- Angeschlossen in `inkluagent.js`: Antwort mit offener Karte → `karte`, sonst `fertig`; Werkzeug erfolgreich → `schritt`;
+  Fehlermeldung in der Statuszeile → `fehler`. Geladen wird `klang.js` nur mit Schalter und nicht im Arbeitsfenster.
+- Browser erlauben Ton erst nach einer Bedienung der Seite: der erste Klang nach dem Laden kann ausbleiben; die erste Taste oder
+  der erste Klick schaltet frei.
+- Tests: `tests/test_paket1_klang.py`.
+
+## Prüfung 13.10.2026, Runde 2: Server
+
+Zweite Prüfrunde (Sicherheit, Korrektheit, Barrierefreiheit) auf dem eingefrorenen Stand f23a1d6; Berichte `PRUEFUNG2-*.md`
+(Kopie auf dem Server unter `/home/claude/pruefung-1310/`). Dieser Abschnitt: die Server-Befunde. Regressionstests:
+`tests/test_pruefung2_server.py`, dazu ergänzte Tests in `test_sicherheit_pruefung_1310.py`, `test_agent_sicherheit.py`,
+`test_agent_konto_werkzeuge.py`, `test_agent_hochladen.py`, `test_agent_hilfe.py`.
+
+**Zustimmung und Kosten:**
+- S2 (Rest) Der Deckel für bezahlte Einzelaktionen (Alt-Text und Quickinfo generieren oder ändern: höchstens eine je Nachricht
+  ohne Karte) gilt jetzt immer, nicht nur mit `AGENT_SICHERHEIT`; Werkzeugschema (`bestaetigt`) und Prompt-Regel ebenso. Am
+  Schalter hängen nur noch Tagesgrenze über den eigenen Zähler und Kostendeckel. Die Hilfe-Seite nennt den Deckel immer.
+- S-N1/K-N2 Der Karten-Knopf speichert „Bestätigt über den Knopf: …“ als Zeile des Servers (`zusatz`), nicht als getippten Text.
+- S-N3 Auch ein Karten-Knopf ist ein Lauf des Kontos (`_lauf_anmelden`; arbeitet der Agent, 409 und die Karte bleibt gültig).
+- S-N10 Eine Liste für Unumkehrbares (`ausgaben.UNUMKEHRBAR`: Werkzeug → Angebotsart).
+
+**Läufe, Frist, Arbeitsbereiche:**
+- K-N3/S-N5 „Ein Lauf je Konto“ hängt am Lauf: der Eintrag in `_AGENT_LAEUFT` gilt bis `_lauf_abmelden` (vorher nach 600 s
+  abgelaufen, obwohl der Lauf noch arbeiten konnte; dann liefen zwei parallel). `_AGENT_LAEUFT_NETZ_S` (1800 s, mit Log-Fehler) ist
+  nur das Netz gegen einen Faden, der nie zurückkehrt.
+- Die Frist der Nachricht (`INKLUAGENT_FRIST_S`, Vorgabe 300 s) gilt auch innerhalb einer Runde: nach ihr beginnt kein Werkzeug
+  mehr, und Gemini hält sie ein (`providers.base.Uhr`, `kennt_frist`): der erste Aufruf eines Schritts bekommt mindestens 60 s,
+  Wiederholungen, der Rückfall ohne Stream und der zweite Versuch nach einer entgleisten Antwort beginnen nur, solange noch 60 s
+  bleiben, und ein Stream endet mit der Zeit seines Aufrufs. Endet die Frist, sagt der Agent, was erledigt ist
+  (`FristErreicht`, kein „Verbindung unterbrochen“). Ein Lauf endet damit spätestens nach Frist + 60 s + einem Werkzeug (180 s).
+- K-N5 Läufe aller Konten: `INKLUAGENT_PARALLEL`, Vorgabe jetzt 8 (höchstens 32). Karten-Knöpfe in einem eigenen kleinen Bereich
+  (`_AGENT_KNOPF_EXECUTOR`, 4 Fäden), damit ein Klick nicht hinter minutenlangen Läufen anderer Konten wartet.
+- S-N11 Der Demo-Chat nutzt dieselbe Sperre (Schlüssel: das Wegwerf-Konto der Sitzung) und denselben Arbeitsbereich; Fehlerantworten
+  speichert er nicht.
+- K-N4 Das Gedächtnis eines Laufs kommt aus dem Gespräch der Frage (`gespraech_id` bis `run_agent` und `konto.nachrichten`).
+- K-N7 Fehlerantworten (Verbindung, gesperrte Anfrage, Absturz) werden nicht gespeichert; eine von Gemini gesperrte Anfrage heißt
+  „Auf diese Anfrage antwortet die KI nicht. Formuliere sie bitte anders.“
+- K-N6 Datei ablegen über den Knopf: dauert es länger als 150 s, zeigt die Karte „Läuft noch“ (nicht „Erledigt“); die Datei im
+  Eingang wird erst nach dem Ende des Hochladens gelöscht.
+
+**Fremde Adressen (`netz_sicher.py`, Seitenscanner):**
+- S-N7 IPv6 nur aus `2000::/3`; IPv4-kompatible (`::/96`), -übersetzte (`::ffff:0:0:0/96`), -abgebildete, NAT64, 6to4 und Teredo
+  zählen als die IPv4-Adresse darin (`::7f00:1` = 127.0.0.1); `fec0::/10`, ULA, link-lokal gesperrt.
+- S-N12 `lesen_bis` entpackt selbst (gzip, deflate mit und ohne zlib-Rahmen) und je Stück nie mehr als ein Byte über die Grenze
+  (vorher konnte ein Stück von 64 KiB vor der Prüfung auf 64 MB anwachsen); mehrfach kodierte Inhalte werden nicht gelesen. Die
+  Verbindung versucht alle geprüften Adressen der Reihe nach (vorher nur die erste). Je Abruf eine Gesamtzeit (`_safe_fetch`,
+  `gesamt_s`: Seite 60 s, Bild 30 s — der Lese-Timeout gilt je Stück, ein tröpfelnder Server hielt sonst beliebig lange), alle
+  Bilder einer Seite zusammen höchstens 300 s, und die größeren Fassungen kleiner Bilder zählen zu den 300 MB.
+
+**Weitere Befunde:**
+- S-N2 `_HerkunftPruefen` prüft auch Anfragen ohne Cookie (Login-CSRF).
+- S5 (Rest) `/set-language` schreibt die Sprache nur ans Konto, wenn der Wechsel von einer eigenen Seite kommt
+  (`Sec-Fetch-Site: same-origin`) oder der Nutzer die Adresse selbst aufruft (`none`); ältere Browser brauchen einen eigenen
+  Referer. Die Sprache am Konto gilt vor dem Cookie — ein fremder Link stellte sie vorher dauerhaft um. Der Cookie (für Gäste)
+  bleibt.
+- S-N6 Einrahmen über EINE Positivliste (`inkluagent/fenster.py`: `FENSTER_SEITEN` und die Anmeldung); die Seite bekommt dieselbe
+  Liste als `window.INKLUAGENT.fensterSeiten`. `/forgot`, `/reset`, Einladungen, Freigaben und neue Seiten bleiben `DENY`.
+- S-N8 Keine Ausnahmetexte in HTTPException-Antworten (SVG, Bildformat, PDF-Export: Einzelheiten ins Log, ein fester Satz an den
+  Nutzer); ein Test prüft `main.py` auf `detail=f"…{e}"`.
+- S-N9 `window.INKLUAGENT.hinZiele` kommt immer, nicht nur mit Begleiter; ohne Liste wertet die Seite `?hin=` nicht aus.
+- S17 Projekt löschen (Konto-Werkzeug): Beschreibung und Hinweis an das Modell sagen, dass Gespräche mit dem Agenten bleiben.
+- K-N9 Die Übernahme von Nachrichten ohne Gespräch macht nur noch die Start-Migration (`storage._aktuelles_gespraech` doppelte sie).
+
+**Bewusst nicht geändert:** `storage.gespraech_der_nachricht` öffnet eine zweite Verbindung (K-N9, Stil); `konto_anhaengen`
+müsste dafür seine Rückgabe an vielen Stellen ändern. Umbenennen und Laufabbruch bleiben ohne Karte (Steves Wunsch, umkehrbar).
+**Offen (Steve):** Datenschutzerklärung Abschnitt 3 (Chat-Assistent): Gespräche überdauern das Löschen eines Projekts und
+bleiben bis zur Kontolöschung; „Gespräch löschen“ als Funktion (S17).
+
+## Vor dem nächsten Prod-Rollout: was sich ohne Schalter ändert (Korrektheit H4, Stand Runde 2)
+
+Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sich trotzdem:
+- Bestätigen: Löschen nur über den Knopf der Karte; ein getipptes Ja nur direkt nach dem Angebot; höchstens eine bezahlte
+  Einzelaktion je Nachricht ohne Karte (Hilfe-Seite und Prompt sagen es).
+- Kapazität: ein Lauf je Konto (409 „arbeitet noch“, auch im Projekt-Chat und in der Demo), alle Konten zusammen höchstens
+  `INKLUAGENT_PARALLEL` (8) gleichzeitige Läufe, Frist 300 s je Nachricht (`INKLUAGENT_FRIST_S`).
+- Fehlerantworten werden nicht mehr gespeichert; Lebenszeichen im Stream alle 15 s.
+- Ganze App: `_HerkunftPruefen` (ändernde Anfragen nur von der eigenen Herkunft, auch Anmeldung), `netz_sicher` im Seitenscanner
+  (Adressfilter, Entpacken mit Grenze, Gesamtzeiten), CORS aus `BASE_URL`/`API_BASE_URL`, `/set-language` (eigene Pfade, Konto
+  nur von eigener Seite), feste Fehlersätze statt Ausnahmetexten bei SVG, Bildformat und PDF-Export.
+- `TAGGING_PROFESSIONELL` setzen, sonst ist „Barrierefrei machen“ (Kette, Chatbot-Tagging) gesperrt.
+- Aus Runde 1 (H4): Michaels UI-Punkte, „Feld = Datei“ (Export und Tagging), Testfassungs-Download, Aufräum-Schleife des Eingangs;
+  Oberfläche siehe „Prüfung 13.10.2026: Oberfläche — Auch ohne Schalter (Production) geändert“.
+- Datenbank: neue Spalten (`zusatz`, `sprache` in `chat_messages` und `agent_nachrichten`, `users.agent_toene`) und Index; alle
+  Migrationen vorwärts idempotent, alter Code liest die Spalten nicht.

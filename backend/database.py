@@ -1136,6 +1136,10 @@ def _migrate_columns(conn):
         # zusammen; das Gedaechtnis des Agenten bekommt die Zeile als Daten gekennzeichnet (inkluagent/storage.fuer_modell).
         ("chat_messages", "zusatz", "ALTER TABLE chat_messages ADD COLUMN zusatz TEXT"),
         ("agent_nachrichten", "zusatz", "ALTER TABLE agent_nachrichten ADD COLUMN zusatz TEXT"),
+        # Sprache der Oberflaeche beim Schreiben (Pruefung 13.10.2026, B11 Punkt 4): die Seite setzt sie als lang an die Nachricht,
+        # damit ein Screenreader nach einem Sprachwechsel aeltere Nachrichten in ihrer Sprache liest. Leer = unbekannt (Altbestand).
+        ("chat_messages", "sprache", "ALTER TABLE chat_messages ADD COLUMN sprache TEXT"),
+        ("agent_nachrichten", "sprache", "ALTER TABLE agent_nachrichten ADD COLUMN sprache TEXT"),
         # KI-FACH (28.08.2026, Steve: wie alt_text/alt_text_edited bei Bildern): der letzte
         # KI-Vorschlag bleibt erhalten, auch wenn von Hand darueber geschrieben wird —
         # Knopf „KI-Vorschlag uebernehmen“ holt ihn zurueck.

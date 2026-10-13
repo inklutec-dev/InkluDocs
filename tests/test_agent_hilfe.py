@@ -68,9 +68,9 @@ class Seite(unittest.TestCase):
         with mock.patch.object(funktionen, "KETTE", True):
             pdf = hilfe.seite()["projektarten"][0]
         self.assertIn("Komplett barrierefrei machen", pdf["mit_rueckfrage"])
-        with mock.patch.object(funktionen, "AGENT_SICHERHEIT", True):
-            pdf = hilfe.seite()["projektarten"][0]
-        self.assertIn("Alt-Text speichern", pdf["mit_rueckfrage"], "mit Deckel fragt der Agent auch bei Einzelaktionen")
+        pdf = hilfe.seite()["projektarten"][0]
+        self.assertIn("Alt-Text speichern", pdf["mit_rueckfrage"],
+                      "der Deckel gilt immer (Pruefung 13.10.2026, S2): der Agent fragt auch bei Einzelaktionen")
 
     def test_seite_in_allen_sprachen(self):
         from i18n import get_gettext, get_templates

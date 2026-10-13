@@ -25,6 +25,7 @@ import time
 from typing import Any, Callable, Optional
 
 from . import storage
+from .providers.base import FristErreicht
 from .providers.bedrock import BedrockProvider, BedrockProviderError
 from .tools.definitions import TOOL_DEFINITIONS, ToolExecutor
 from .tools.definitions_formular import TOOL_DEFINITIONS_FORMULAR, ToolExecutorFormular
@@ -43,7 +44,7 @@ from .prompts.system_formular import SYSTEM_FORMULAR
 from .adapters.inkludocs import build_project_summary
 from .sanitize import sanitize_markdown
 from .daten import DATEN_MARKE, KONTEXT_KOPF, ohne_marke   # Fremdtext ist keine Anweisung (09.10.2026)
-from . import sicherheit   # Sicherheitsfundament (Ausbau Runde 1, Schritt 2, Schalter AGENT_SICHERHEIT)
+from . import sicherheit   # Sicherheitsfundament (Ausbau Runde 1, Schritt 2; Deckel und Ja-Pruefung immer, Grenzen am Schalter)
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +56,10 @@ _MAX_TOOL_RESULT_CHARS = 40000  # Werkzeug-Ergebnis im tool_result (28.08.2026, 
 
 def _frist_s() -> float:
     """Gesamtfrist je Nachricht ueber alle Runden (Pruefung 13.10.2026, S4): ohne sie konnten sechs Runden mit Werkzeugen und
-    Wiederholungen eine halbe Stunde dauern. Unter der Grenze, ab der ein Lauf als haengengeblieben gilt (main, 600 s)."""
+    Wiederholungen eine halbe Stunde dauern. Sie gilt auch innerhalb einer Runde (Runde 2, K-N3/S-N5): nach ihr beginnt kein
+    Werkzeug mehr, und der Anbieter haelt sie ein, wenn er sie kennt (providers.base.Uhr: ein Schritt ueberzieht hoechstens um
+    eine Minute). Ein Lauf endet damit spaetestens nach Frist + einem Modellaufruf + einem Werkzeug (kern.warten: 180 s) —
+    weit unter dem Netz gegen haengengebliebene Laeufe in main (_AGENT_LAEUFT_NETZ_S)."""
     try:
         return max(30.0, min(float(os.environ.get("INKLUAGENT_FRIST_S") or 300), 540.0))
     except ValueError:
@@ -101,13 +105,11 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int):
         if d["name"] not in namen:     # ein Werkzeug nur einmal (Word + Oberflaeche teilen sich Namen)
             namen.add(d["name"])
             eindeutig.append(d)
-    if sicherheit.an():   # Schritt 2: Einzelaktionen nehmen bestaetigt an, der Prompt nennt die Server-Regel
-        eindeutig = sicherheit.werkzeuge_anpassen(eindeutig)
-        system = system + "\n\n" + sicherheit.PROMPT_ZUSATZ
+    # Schritt 2 (seit Runde 2 der Pruefung 13.10.2026 immer): Einzelaktionen nehmen bestaetigt an, der Prompt nennt die Server-Regel
+    eindeutig = sicherheit.werkzeuge_anpassen(eindeutig)
+    system = system + "\n\n" + sicherheit.PROMPT_ZUSATZ
     if funktionen.an("AGENT_HOCHLADEN"):   # Runde 2, Schritt 1: Hochladefeld — Zuordnung macht der Server
         from . import hochladen
-        if not sicherheit.an():
-            eindeutig = sicherheit.werkzeuge_anpassen(eindeutig, immer=True)
         system = system + "\n\n" + hochladen.PROMPT_ZUSATZ
         # Dateien im Agenten (Feld oder Knopf „Dateien anhängen“ in der Agentenansicht, 12.10.2026)
         _hier = hochladen.prompt_hochladen_hier(user_id, im_projekt=True)
@@ -220,6 +222,7 @@ def _build_initial_messages(
     user_id: int = 0,
     konto: bool = False,
     ohne_nachricht: Optional[int] = None,
+    gespraech_id: Optional[int] = None,
 ) -> list[dict]:
     """Baut die Anthropic-Format messages-Liste aus storage-History + user_message.
 
@@ -231,7 +234,9 @@ def _build_initial_messages(
     ohne_nachricht: Kennung der Nachricht dieser Runde, die der Endpunkt schon gespeichert hat — sie kommt als user_message
     (fuer das Modell, z. B. mit der Notiz des Hochladefelds) und nicht noch einmal aus dem Verlauf (bis 12.10.2026 doppelt).
     """
-    history = (storage.konto_verlauf(user_id, limit=_HISTORY_TURNS + 1) if konto else storage.get_recent(project_id, limit=_HISTORY_TURNS + 1)) or []
+    # gespraech_id (Pruefung 13.10.2026, Runde 2, K-N4): das Gedaechtnis aus dem Gespraech der Frage — wie die Antwort (K3)
+    history = (storage.konto_verlauf(user_id, limit=_HISTORY_TURNS + 1, gespraech_id=gespraech_id) if konto
+               else storage.get_recent(project_id, limit=_HISTORY_TURNS + 1)) or []
     history = _gedaechtnis([h for h in history if not (ohne_nachricht and h.get("id") == ohne_nachricht)][-_HISTORY_TURNS:])
     # Das Gedaechtnis beginnt mit einer Nutzer-Nachricht (abgeschnittener Anfang)
     while history and history[0].get("role") != "user":
@@ -313,6 +318,7 @@ def run_agent(
     uebersetzen: Optional[Callable[[str], str]] = None,
     nutzer_text: Optional[str] = None,
     begleiter_lauf=None,
+    gespraech_id: Optional[int] = None,
 ) -> dict[str, Any]:
     """Führt den agentic Loop aus. Returns:
         {"reply": str, "intent": "agentic", "image_refs": [...] or None,
@@ -357,9 +363,11 @@ def run_agent(
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
     executor.nur_mit_karte = bool(nur_mit_karte)
     if project is None:
-        messages = _konto.nachrichten(user_id, user_message, ohne_nachricht=ohne_nachricht, verlauf_laenge=_HISTORY_TURNS)
+        messages = _konto.nachrichten(user_id, user_message, ohne_nachricht=ohne_nachricht, verlauf_laenge=_HISTORY_TURNS,
+                                      gespraech_id=gespraech_id)
     else:
-        messages = _build_initial_messages(project_id, user_message, project, user_id, konto=konto, ohne_nachricht=ohne_nachricht)
+        messages = _build_initial_messages(project_id, user_message, project, user_id, konto=konto, ohne_nachricht=ohne_nachricht,
+                                           gespraech_id=gespraech_id)
     system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
 
     actions_log: list[dict] = []
@@ -372,11 +380,11 @@ def run_agent(
     strom = {"on_text": melder_text} if melder_text and getattr(provider, "kann_streamen", False) else {}
 
     ende = time.monotonic() + _frist_s()
+    frist = {"frist": ende} if getattr(provider, "kennt_frist", False) else {}
+    frist_um = False
     for iteration in range(_MAX_ITERATIONS):
         if iteration and time.monotonic() > ende:
-            log.warning("Agent-Lauf: Gesamtfrist nach %d Runden erreicht", iteration)
-            last_reply_text = _t("Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist "
-                                 "gespeichert. Schreib mir, wie es weitergehen soll.")
+            frist_um = True
             break
         try:
             payload = provider.invoke_with_tools(
@@ -386,12 +394,18 @@ def run_agent(
                 max_tokens=_DEFAULT_MAX_TOKENS,
                 temperature=0.3,
                 **strom,
+                **frist,
             )
-        except BedrockProviderError:
-            # Einzelheiten (Ressourcenpfad, Antwort des Anbieters) nur ins Log, nicht in den Chat (S10)
+        except FristErreicht:
+            frist_um = True
+            break
+        except BedrockProviderError as e:
+            # Einzelheiten (Ressourcenpfad, Antwort des Anbieters) nur ins Log, nicht in den Chat (S10). Eine vom Anbieter gesperrte
+            # Anfrage ist keine Stoerung: dann ehrlich sagen, dass die KI darauf nicht antwortet (Runde 2, K-N7)
             log.exception("KI-Aufruf im agentic Loop fehlgeschlagen")
             return {
-                "reply": _t("Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal."),
+                "reply": (_t("Auf diese Anfrage antwortet die KI nicht. Formuliere sie bitte anders.") if getattr(e, "gesperrt", False)
+                          else _t("Entschuldigung, die Verbindung zur KI ist gerade unterbrochen. Bitte versuch es gleich noch einmal.")),
                 "intent": "error",
                 "image_refs": None,
                 "actions": actions_log,
@@ -423,6 +437,9 @@ def run_agent(
         tool_results: list[dict] = []
         pending_images: list[bytes] = []
         for tu in tool_use_blocks:
+            if time.monotonic() > ende:   # nach der Frist beginnt kein Werkzeug mehr, auch nicht in dieser Runde
+                frist_um = True
+                break
             name = tu.get("name", "")
             args = tu.get("input", {}) or {}
             tu_id = tu.get("id", "")
@@ -545,6 +562,8 @@ def run_agent(
                 "content": content_text,
             })
 
+        if frist_um:
+            break
         _append_tool_results(messages, content_blocks, tool_results, pending_images)
 
         # Wenn stop_reason explizit "end_turn" trotz Tool-Use: dann ist Claude
@@ -559,6 +578,11 @@ def run_agent(
         if not last_reply_text:
             last_reply_text = _t("Ich habe mehrere Werkzeuge benutzt, komme aber zu keinem klaren Ergebnis. "
                                  "Kannst du deine Frage etwas eingrenzen?")
+
+    if frist_um:
+        log.warning("Agent-Lauf: Gesamtfrist erreicht (Runde %d)", iteration + 1)
+        last_reply_text = _t("Das dauert länger, als eine Nachricht dauern darf. Was ich bis hierhin erledigt habe, ist "
+                             "gespeichert. Schreib mir, wie es weitergehen soll.")
 
     # 28.08.2026: Markdown raus (Sonnet setzt trotz Verbot gelegentlich **fett** —
     # das Frontend zeigt Text roh, VoiceOver liest sonst "Stern Stern"). Gleicher

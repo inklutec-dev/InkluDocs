@@ -63,8 +63,9 @@ def _umgebung_an(name: str) -> bool:
 
 # INKLUAGENT-AUSBAU Runde 1 (09.10.2026, Konzept „InkluAgent ausbauen“): je Schritt EIN Schalter, Vorgabe AUS, gesetzt ueber
 # die UMGEBUNG wie EXPRESS (derselbe Code kann auf Staging an und auf Prod aus sein). Doku: docs/INKLUAGENT.md, „Ausbau Runde 1“.
-# Schritt 2 — Sicherheitsfundament (inkluagent/sicherheit.py): hoechstens eine bezahlte Einzelaktion je Nachricht ohne Karte,
-# Ja-Pruefung auf dem Server, Tagesgrenze ueber eigenen Zaehler, Tages-Kostendeckel je Konto. INKLUAGENT_SICHERHEIT=an.
+# Schritt 2 — Sicherheitsfundament (inkluagent/sicherheit.py): Tagesgrenze ueber eigenen Zaehler, Tages-Kostendeckel je Konto.
+# INKLUAGENT_SICHERHEIT=an. Der Deckel fuer bezahlte Einzelaktionen und die Ja-Pruefung gelten seit der Pruefung 13.10.2026
+# immer (sie sind Teil der Zustimmung, nicht einer Grenze).
 AGENT_SICHERHEIT = _umgebung_an("INKLUAGENT_SICHERHEIT")
 # Schritt 3 — Erklaerung und Hilfe: drei kurze Stichpunkte vor dem Chat statt der langen Einleitung (der KI-Hinweis nach
 # KI-Verordnung Art. 50 bleibt der erste Punkt), Hilfe-Seite /hilfe/inkluagent (erzeugt aus Werkzeugsatz, Werkzeugnamen und

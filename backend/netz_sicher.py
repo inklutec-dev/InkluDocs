@@ -6,10 +6,15 @@ auf: eine eigene Domain konnte erst eine oeffentliche, dann eine interne Adresse
 wie 100.64.0.0/10 (Carrier-NAT, z. B. Tailscale) nicht als intern, die Groessengrenze griff erst nach dem vollstaendigen Laden,
 und die Aufloesung blockierte die Ereignisschleife. Jetzt:
 
-- adresse_erlaubt(ip): nur global erreichbare Unicast-Adressen (ipaddress.is_global), auch hinter IPv4-in-IPv6-Formen.
-- client(): ein httpx.AsyncClient, der nur mit einer Adresse verbindet, die die Pruefung IM SELBEN SCHRITT freigegeben hat
-  (_PruefendesNetz). TLS prueft weiter gegen den Namen aus der Adresse (SNI und Zertifikat), nicht gegen die IP.
-- lesen_bis(antwort, grenze): gestreamt lesen und bei Ueberschreitung abbrechen.
+- adresse_erlaubt(ip): nur global erreichbare Unicast-Adressen (ipaddress.is_global), auch hinter IPv4-in-IPv6-Formen. IPv6
+  nur aus 2000::/3 (globaler Unicast); IPv4-kompatible (::/96), -abgebildete (::ffff:0:0/96), -uebersetzte (::ffff:0:0:0/96),
+  NAT64 (64:ff9b::/96), 6to4 und Teredo zaehlen als die IPv4-Adresse darin (Runde 2, S-N7: ::7f00:1 = 127.0.0.1, fec0::/10
+  und andere galten je nach Python-Version als global).
+- client(): ein httpx.AsyncClient, der nur mit Adressen verbindet, die die Pruefung IM SELBEN SCHRITT freigegeben hat
+  (_PruefendesNetz), der Reihe nach, bis eine antwortet (Runde 2, S-N12: vorher nur die erste — war das IPv6 und nicht
+  erreichbar, scheiterte der Abruf). TLS prueft weiter gegen den Namen aus der Adresse (SNI und Zertifikat), nicht gegen die IP.
+- lesen_bis(antwort, grenze): gestreamt lesen, selbst entpacken und nie mehr als bis zur Grenze (Runde 2, S-N12: httpx entpackte
+  ein Stueck von 64 KiB vor jeder Pruefung auf bis zu 64 MB).
 Weiterleitungen folgt der Aufrufer selbst Schritt fuer Schritt (main._safe_fetch); jede neue Verbindung geht durch dieselbe
 Pruefung.
 """
@@ -19,13 +24,17 @@ import asyncio
 import ipaddress
 import os
 import socket
+import zlib
 from typing import Optional
 
 import httpcore
 import httpx
 from fastapi import HTTPException
 
-_NAT64 = ipaddress.ip_network("64:ff9b::/96")
+_IPV6_GLOBAL = ipaddress.ip_network("2000::/3")
+# Formen, deren untere 32 Bit eine IPv4-Adresse sind: NAT64 (RFC 6052), IPv4-uebersetzt (RFC 2765), IPv4-kompatibel (RFC 4291,
+# veraltet — dazu gehoeren auch :: und ::1, die so als 0.0.0.0 und 0.0.0.1 gesperrt bleiben)
+_IPV4_UNTEN = tuple(ipaddress.ip_network(n) for n in ("64:ff9b::/96", "::ffff:0:0:0/96", "::/96"))
 
 
 class AdresseNichtErlaubt(httpx.ConnectError):
@@ -39,10 +48,12 @@ def adresse_erlaubt(ip: str) -> bool:
         return False
     if isinstance(addr, ipaddress.IPv6Address):
         eingebettet = addr.ipv4_mapped or addr.sixtofour or (addr.teredo[1] if addr.teredo else None)
-        if eingebettet is None and addr in _NAT64:
+        if eingebettet is None and any(addr in netz for netz in _IPV4_UNTEN):
             eingebettet = ipaddress.IPv4Address(int(addr) & 0xFFFFFFFF)
         if eingebettet is not None:
             addr = eingebettet
+        elif addr not in _IPV6_GLOBAL:   # site-lokal (fec0::/10), ULA, link-lokal, Multicast und alles Kuenftige
+            return False
     # is_global allein laesst Multicast (224.0.0.0/4) durch
     return addr.is_global and not addr.is_multicast
 
@@ -52,19 +63,25 @@ def _loopback_erlaubt(host: str) -> bool:
     return os.environ.get("SCAN_ERLAUBE_LOOPBACK") == "1" and host in ("127.0.0.1", "localhost")
 
 
-async def erlaubte_adresse(host: str, port: int) -> str:
-    """Den Namen aufloesen (ohne die Ereignisschleife zu blockieren) und eine Adresse liefern, mit der verbunden werden darf. Fuehrt
-    auch nur EINE der Antworten ins interne Netz, gilt der Name als nicht erlaubt."""
+async def erlaubte_adressen(host: str, port: int) -> list[str]:
+    """Den Namen aufloesen (ohne die Ereignisschleife zu blockieren) und die Adressen liefern, mit denen verbunden werden darf, in
+    der Reihenfolge des Systems und ohne Doppelte. Fuehrt auch nur EINE der Antworten ins interne Netz, gilt der Name als nicht
+    erlaubt."""
     if _loopback_erlaubt(host):
-        return "127.0.0.1"
+        return ["127.0.0.1"]
     try:
         infos = await asyncio.get_running_loop().getaddrinfo(host, port, type=socket.SOCK_STREAM)
     except OSError as e:
         raise AdresseNichtErlaubt(f"Adresse nicht aufloesbar: {host}") from e
-    adressen = [info[4][0] for info in infos]
+    adressen = list(dict.fromkeys(info[4][0] for info in infos))
     if not adressen or not all(adresse_erlaubt(a) for a in adressen):
         raise AdresseNichtErlaubt(f"Adresse nicht erlaubt: {host}")
-    return adressen[0]
+    return adressen
+
+
+async def erlaubte_adresse(host: str, port: int) -> str:
+    """Die erste erlaubte Adresse (fuer eine fruehe Pruefung mit verstaendlicher Meldung, main._pruefe_url_sicher)."""
+    return (await erlaubte_adressen(host, port))[0]
 
 
 class _PruefendesNetz(httpcore.AsyncNetworkBackend):
@@ -75,8 +92,14 @@ class _PruefendesNetz(httpcore.AsyncNetworkBackend):
 
     async def connect_tcp(self, host: str, port: int, timeout: Optional[float] = None, local_address: Optional[str] = None,
                           socket_options=None) -> httpcore.AsyncNetworkStream:
-        ip = await erlaubte_adresse(host, port)
-        return await self._netz.connect_tcp(ip, port, timeout=timeout, local_address=local_address, socket_options=socket_options)
+        letzter: Optional[Exception] = None
+        for ip in await erlaubte_adressen(host, port):
+            try:
+                return await self._netz.connect_tcp(ip, port, timeout=timeout, local_address=local_address,
+                                                    socket_options=socket_options)
+            except (httpcore.ConnectError, httpcore.ConnectTimeout) as e:   # naechste gepruefte Adresse
+                letzter = e
+        raise letzter or AdresseNichtErlaubt(f"Keine Verbindung: {host}")
 
     async def connect_unix_socket(self, path: str, timeout: Optional[float] = None, socket_options=None):
         raise AdresseNichtErlaubt("Unix-Sockets sind nicht erlaubt")
@@ -107,13 +130,55 @@ def client(**kwargs) -> httpx.AsyncClient:
     return httpx.AsyncClient(transport=_Transport(), trust_env=False, follow_redirects=False, **kwargs)
 
 
+class _Entpacker:
+    """gzip und deflate Stueck fuer Stueck entpacken, je Stueck hoechstens bis zu einer Laenge (zlib max_length). deflate wie httpx:
+    erst mit zlib-Rahmen (RFC 9110), sonst roh."""
+
+    def __init__(self, art: str) -> None:
+        self.art = art
+        self._z = zlib.decompressobj(16 + zlib.MAX_WBITS if art in ("gzip", "x-gzip") else zlib.MAX_WBITS)
+        self._erstes = True
+
+    def stueck(self, daten: bytes, hoechstens: int) -> bytes:
+        try:
+            out = self._z.decompress(daten, hoechstens)
+        except zlib.error as e:
+            if not (self.art == "deflate" and self._erstes):
+                raise httpx.DecodingError(f"Inhalt nicht entpackbar ({self.art})") from e
+            self._z = zlib.decompressobj(-zlib.MAX_WBITS)
+            out = self._z.decompress(daten, hoechstens)
+        self._erstes = False
+        return out
+
+    def rest(self) -> bytes:
+        return self._z.flush()
+
+
+_ENTPACKBAR = ("gzip", "x-gzip", "deflate")
+
+
 async def lesen_bis(antwort: httpx.Response, grenze: Optional[int]) -> bytes:
-    """Den Inhalt einer gestreamten Antwort lesen und abbrechen, sobald er die Grenze ueberschreitet (413)."""
+    """Den Inhalt einer gestreamten Antwort lesen und abbrechen, sobald er ENTPACKT die Grenze ueberschreitet (413). Entpackt wird
+    hier, nicht von httpx: je Stueck nie mehr als ein Byte ueber die Grenze. Andere Kodierungen (identity, Unbekanntes) bleiben
+    wie bei httpx unveraendert; mehrere Kodierungen hintereinander werden nicht gelesen."""
+    arten = [k.strip().lower() for k in antwort.headers.get_list("content-encoding", split_commas=True)]
+    arten = [k for k in arten if k in _ENTPACKBAR]
+    if len(arten) > 1:
+        raise httpx.DecodingError("Mehrfach kodierter Inhalt wird nicht gelesen")
+    entpacker = _Entpacker(arten[0]) if arten else None
     teile: list[bytes] = []
     n = 0
-    async for stueck in antwort.aiter_bytes():
+
+    def aufnehmen(stueck: bytes) -> None:
+        nonlocal n
         n += len(stueck)
         if grenze is not None and n > grenze:
             raise HTTPException(status_code=413, detail="Datei zu gross")
         teile.append(stueck)
+
+    async for roh in antwort.aiter_raw():
+        # max_length 0 = unbegrenzt; mit Grenze genau ein Byte mehr als noch Platz ist, damit die Ueberschreitung auffaellt
+        aufnehmen(entpacker.stueck(roh, 0 if grenze is None else grenze - n + 1) if entpacker else roh)
+    if entpacker:
+        aufnehmen(entpacker.rest())
     return b"".join(teile)
