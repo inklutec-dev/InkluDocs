@@ -737,15 +737,16 @@ function ansichtFokusNachWechsel() {
   }, 100);
 }
 
-// Sprunglinks oben auf der Seite (Pruefung 13.10.2026, B19): das Ziel bekommt den Fokus ueber fokusAuf — vorher trug der Bereich des
-// InkluAgent dafuer dauerhaft tabindex="-1". Ziele mit eigenem tabindex (#main) bleiben, wie sie sind.
+// Sprunglinks oben auf der Seite (Pruefung 13.10.2026, B19): ein Ziel ohne eigenes tabindex (der Bereich des InkluAgent) bekommt den
+// Fokus ueber fokusAuf — vorher trug es dafuer dauerhaft tabindex="-1". Ziele mit eigenem tabindex (#main) behandelt der Browser wie
+// bisher.
 function sprunglinksEinrichten() {
   // „Zurück zum Gespräch“ im Rahmen (#zumGespraech) fuehrt ins Elternfenster — eingebettetEinrichten
   document.querySelectorAll('a.dash-skip[href^="#"]:not(#zumGespraech)').forEach((a) => {
     a.addEventListener('click', (e) => {
       if (e.defaultPrevented) return;
       const ziel = document.getElementById(a.getAttribute('href').slice(1));
-      if (!ziel) return;
+      if (!ziel || ziel.hasAttribute('tabindex')) return;
       e.preventDefault();
       fokusAuf(ziel);
     });

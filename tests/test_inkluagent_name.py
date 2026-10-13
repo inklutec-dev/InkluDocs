@@ -81,7 +81,10 @@ class Werkzeug(unittest.TestCase):
         self.assertEqual(self.app.count("t('Der InkluAgent ist ein KI-Assistent."), 3)
 
     def test_absender_und_ansagen(self):
-        for text in ("Nachricht an den InkluAgent", "Antwort vom InkluAgent ist da.", "InkluAgent denkt nach..."):
+        # Pruefung 13.10.2026 (B21): das Feld heisst wie sein sichtbarer Platzhalter „Was soll der InkluAgent für dich erledigen?“
+        # (vorher „Nachricht an den InkluAgent“, nur fuer Screenreader)
+        self.assertIn("class=\"visually-hidden\">' + inkluagentPlatzhalter(variante) + '</label>", self.app)
+        for text in ("Was soll der InkluAgent für dich erledigen?", "Antwort vom InkluAgent ist da.", "InkluAgent denkt nach..."):
             with self.subTest(text=text):
                 self.assertIn("t('" + text + "')", self.app)
         self.assertIn("(role === 'user' ? t('Du') : 'InkluAgent')", self.app)

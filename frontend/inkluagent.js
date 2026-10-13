@@ -678,8 +678,9 @@ function inkluagentLinkImFenster(e) {
 function inkluagentSeiteImFenster(pfad, name, still) {
     const f = document.getElementById('arbeitsfenster');
     if (!f || !inkluagentSeiteImFensterMoeglich(pfad)) { if (eigenerPfad(pfad)) window.location.href = pfad; return; }
+    // laedt: bis das Dokument da ist — ein spaetes load des leeren Startrahmens (about:blank) schliesst die Seite dann nicht
     window._arbeitsSeite = { offen: true, pfad: inkluagentPfadOhne(pfad, ['hin', 'eingebettet']),
-                             name: String(name || '').trim() || pfad.split(/[?#]/)[0], fokus: !still, hin: /[?&]hin=/.test(pfad) };
+                             name: String(name || '').trim() || pfad.split(/[?#]/)[0], fokus: !still, hin: /[?&]hin=/.test(pfad), laedt: true };
     inkluagentSeiteZeigen();
     const h = pfad.indexOf('#');
     const ohneAnker = h >= 0 ? pfad.slice(0, h) : pfad;
@@ -723,7 +724,7 @@ function inkluagentRahmenGeladen(rahmen) {
     try { win = rahmen.contentWindow; doc = rahmen.contentDocument; } catch (e) { doc = null; }
     const loc = doc && doc.location;
     if (!doc || !loc) { inkluagentSeiteZustandZu(); inkluagentRahmenLaden(rahmen, 'about:blank'); return; }
-    if (loc.href === 'about:blank') { if (window._arbeitsSeite) inkluagentSeiteZustandZu(); return; }
+    if (loc.href === 'about:blank') { if (window._arbeitsSeite && !window._arbeitsSeite.laedt) inkluagentSeiteZustandZu(); return; }
     const pfad = inkluagentPfadOhne(loc.pathname + loc.search, ['eingebettet', 'hin']);
     if (loc.origin !== window.location.origin || gehoertGanzeSeite(loc.pathname) || !win || win.EINGEBETTET !== true) {
         if (/^\/login(\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }
@@ -865,7 +866,7 @@ function inkluagentZumGespraech() {
     if (inkluagentUeberlagerungOffen()) inkluagentFensterGross(false);
     const neu = window._inkluagentUngelesen;
     window._inkluagentUngelesen = null;
-    if (neu && neu.isConnected) { neu.focus(); return; }
+    if (neu && neu.isConnected && neu === inkluagentLetzteAntwort()) { neu.focus(); return; }   // nur die neueste, nie eine alte
     const input = document.getElementById('inkluagentInput');
     if (input) input.focus();
 }
@@ -1820,8 +1821,8 @@ function inkluagentAktionenKarten(actions) {
 // Nach einer Antwort kann der Server die Seite wechseln lassen: seite_wechseln (genau ein Projekt: oeffnen, anlegen, Datei oder Webseite
 // als Projekt; dort mit agent=offen, Fokus auf dieser Antwort), und der Begleiter: hinfuehren (Zielseite, Fokus aufs Ziel),
 // sprache_wechseln (ueber /set-language: Konto und Cookie, zurueck auf diese Seite), neu_laden (Ansicht gewechselt). EIN Weg fuer alle:
-// 1. Liegt der Fokus nicht im Gespraech oder steht Text im Eingabefeld, wechselt nichts von selbst: unter der Antwort steht der Link bzw.
-//    Knopf dafuer, und die Ansage sagt es (vorher riss der Wechsel mitten aus dem Tippen, B10).
+// 1. Liegt der Fokus nicht im Gespraech, steht Text im Eingabefeld oder ist eine Datei angehaengt, wechselt nichts von selbst: unter der
+//    Antwort steht der Link bzw. Knopf dafuer, und die Ansage sagt es (vorher riss der Wechsel mitten aus dem Tippen, B10).
 // 2. Sonst erst offene Eingaben speichern (alleAusstehendenSpeichern, wie Seitenleiste und Abmelden), dann wechseln.
 // 3. Ein angefangener Chat-Text geht beim Verlassen jeder Seite mit (inkluagentEingabeMerken).
 // Sprache und Ansicht wechseln auf ausdrueckliche Bitte direkt, ohne Karte (Steve); nach dem Neuladen steht der Fokus auf der Antwort
@@ -1851,7 +1852,8 @@ function inkluagentWechselZiel(actions) {
 // angesagt. fokussieren: vorher mit inkluagentFokusImChat() bestimmt.
 async function inkluagentWechseln(ziel, antwortEl, fokussieren) {
     const input = document.getElementById('inkluagentInput');
-    const frei = !!fokussieren && !(input && input.value.trim());
+    // Angefangenes zaehlt: Text im Feld und angehaengte Dateien (die gingen beim Seitenwechsel verloren — Dateien lassen sich nicht merken)
+    const frei = !!fokussieren && !(input && input.value.trim()) && !(window._inkluagentAnhaenge || []).length;
     if (frei && ziel.fenster) { inkluagentSeiteImFenster(ziel.url, ziel.name); return true; }
     if (frei) {
         if (typeof window.alleAusstehendenSpeichern === 'function') {
