@@ -71,6 +71,14 @@
         {% endfor %}
       </section>
 
+      {% if hilfe.formulare %}
+      <section class="dash-card" aria-labelledby="hilfe-formulare-h">
+        <h2 id="hilfe-formulare-h">{{ _('Formulare im Gespräch') }}</h2>
+        <p>{{ _('Diese Formulare bringt dir der InkluAgent ins Gespräch, vorbelegt mit dem, was du gesagt hast. Abschicken kannst nur du, mit dem Knopf des Formulars.') }}</p>
+        <ul>{% for t in hilfe.formulare %}<li>{{ t }}</li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+
       <section class="dash-card" aria-labelledby="hilfe-nicht-h">
         <h2 id="hilfe-nicht-h">{{ _('Was der InkluAgent nicht macht') }}</h2>
         <p>{{ _('Das erledigst du selbst in den Einstellungen:') }}</p>

@@ -12506,3 +12506,95 @@ msgstr "the legal texts: imprint, privacy policy, data security, terms of use, r
 
 msgid "die API-Dokumentation"
 msgstr "the API documentation"
+
+# Paket 1: Formular-Karten des InkluAgent (13.10.2026)
+msgid "Bitte bestätige das."
+msgstr "Please confirm this."
+
+msgid "Bitte fülle dieses Feld aus."
+msgstr "Please fill in this field."
+
+#, python-brace-format
+msgid "Höchstens {n} Zeichen."
+msgstr "At most {n} characters."
+
+msgid "Bitte gib eine gültige E-Mail-Adresse an."
+msgstr "Please enter a valid email address."
+
+msgid "Bitte wähle einen Eintrag aus der Liste."
+msgstr "Please choose an entry from the list."
+
+#, python-brace-format
+msgid "Projekt „{name}“"
+msgstr "Project “{name}”"
+
+#, python-brace-format
+msgid "„{name}“: {seiten} Seiten, {leistung}, {credits} Credits"
+msgstr "“{name}”: {seiten} pages, {leistung}, {credits} credits"
+
+#, python-brace-format
+msgid "{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben: {g} Credits. Fertig in {h} Stunden."
+msgstr "{d} documents, {s} pages, {c} credits in total. Your balance: {g} credits. Ready within {h} hours."
+
+msgid "Schon abgeschickt."
+msgstr "Already sent."
+
+msgid "Diese Karte gilt nicht mehr. Bitte frag im Chat neu."
+msgstr "This card is no longer valid. Please ask again in the chat."
+
+msgid "Bitte prüfe die markierten Felder."
+msgstr "Please check the marked fields."
+
+msgid "Das Projekt gibt es nicht mehr."
+msgstr "This project no longer exists."
+
+#, python-brace-format
+msgid "Die Einladung an {email} ist verschickt."
+msgstr "The invitation to {email} has been sent."
+
+msgid "Die Freigabe ist angelegt, aber die E-Mail ging nicht raus. Den Link findest du im Projekt unter „Zur Prüfung freigeben“."
+msgstr "The share has been created, but the email did not go out. You'll find the link in the project under “Share for review”."
+
+msgid "Frag den InkluAgent nach einem neuen Bestellformular."
+msgstr "Ask the InkluAgent for a new order form."
+
+#, python-brace-format
+msgid "Bestellt: Express-Auftrag {nr}. Die Bestätigung kommt per E-Mail."
+msgstr "Ordered: express order {nr}. The confirmation will follow by email."
+
+msgid "Auftrag ansehen"
+msgstr "View order"
+
+msgid "Express-Auftrag bestellen"
+msgstr "Place express order"
+
+msgid "Einladung vorbereiten"
+msgstr "Prepare invitation"
+
+msgid "Bestellung vorbereiten"
+msgstr "Prepare order"
+
+msgid "Team einladen"
+msgstr "Invite your team"
+
+msgid "Formulare im Gespräch"
+msgstr "Forms in the conversation"
+
+msgid "Diese Formulare bringt dir der InkluAgent ins Gespräch, vorbelegt mit dem, was du gesagt hast. Abschicken kannst nur du, mit dem Knopf des Formulars."
+msgstr "The InkluAgent brings these forms into the conversation, pre-filled with what you said. Only you can send them, with the form's button."
+
+# Paket 1: Formular-Karten, Oberflaeche (13.10.2026)
+msgid "Formular"
+msgstr "Form"
+
+msgid "Abgeschickt."
+msgstr "Sent."
+
+msgid "Nicht mehr gültig."
+msgstr "No longer valid."
+
+msgid "Absenden"
+msgstr "Send"
+
+msgid "Wird gesendet …"
+msgstr "Sending …"

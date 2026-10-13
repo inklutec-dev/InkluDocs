@@ -12509,3 +12509,95 @@ msgstr "die Rechtstexte: Impressum, Datenschutz, Datensicherheit, Nutzungsbeding
 
 msgid "die API-Dokumentation"
 msgstr "die API-Dokumentation"
+
+# Paket 1: Formular-Karten des InkluAgent (13.10.2026)
+msgid "Bitte bestätige das."
+msgstr "Bitte bestätige das."
+
+msgid "Bitte fülle dieses Feld aus."
+msgstr "Bitte fülle dieses Feld aus."
+
+#, python-brace-format
+msgid "Höchstens {n} Zeichen."
+msgstr "Höchstens {n} Zeichen."
+
+msgid "Bitte gib eine gültige E-Mail-Adresse an."
+msgstr "Bitte gib eine gültige E-Mail-Adresse an."
+
+msgid "Bitte wähle einen Eintrag aus der Liste."
+msgstr "Bitte wähle einen Eintrag aus der Liste."
+
+#, python-brace-format
+msgid "Projekt „{name}“"
+msgstr "Projekt „{name}“"
+
+#, python-brace-format
+msgid "„{name}“: {seiten} Seiten, {leistung}, {credits} Credits"
+msgstr "„{name}“: {seiten} Seiten, {leistung}, {credits} Credits"
+
+#, python-brace-format
+msgid "{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben: {g} Credits. Fertig in {h} Stunden."
+msgstr "{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben: {g} Credits. Fertig in {h} Stunden."
+
+msgid "Schon abgeschickt."
+msgstr "Schon abgeschickt."
+
+msgid "Diese Karte gilt nicht mehr. Bitte frag im Chat neu."
+msgstr "Diese Karte gilt nicht mehr. Bitte frag im Chat neu."
+
+msgid "Bitte prüfe die markierten Felder."
+msgstr "Bitte prüfe die markierten Felder."
+
+msgid "Das Projekt gibt es nicht mehr."
+msgstr "Das Projekt gibt es nicht mehr."
+
+#, python-brace-format
+msgid "Die Einladung an {email} ist verschickt."
+msgstr "Die Einladung an {email} ist verschickt."
+
+msgid "Die Freigabe ist angelegt, aber die E-Mail ging nicht raus. Den Link findest du im Projekt unter „Zur Prüfung freigeben“."
+msgstr "Die Freigabe ist angelegt, aber die E-Mail ging nicht raus. Den Link findest du im Projekt unter „Zur Prüfung freigeben“."
+
+msgid "Frag den InkluAgent nach einem neuen Bestellformular."
+msgstr "Frag den InkluAgent nach einem neuen Bestellformular."
+
+#, python-brace-format
+msgid "Bestellt: Express-Auftrag {nr}. Die Bestätigung kommt per E-Mail."
+msgstr "Bestellt: Express-Auftrag {nr}. Die Bestätigung kommt per E-Mail."
+
+msgid "Auftrag ansehen"
+msgstr "Auftrag ansehen"
+
+msgid "Express-Auftrag bestellen"
+msgstr "Express-Auftrag bestellen"
+
+msgid "Einladung vorbereiten"
+msgstr "Einladung vorbereiten"
+
+msgid "Bestellung vorbereiten"
+msgstr "Bestellung vorbereiten"
+
+msgid "Team einladen"
+msgstr "Team einladen"
+
+msgid "Formulare im Gespräch"
+msgstr "Formulare im Gespräch"
+
+msgid "Diese Formulare bringt dir der InkluAgent ins Gespräch, vorbelegt mit dem, was du gesagt hast. Abschicken kannst nur du, mit dem Knopf des Formulars."
+msgstr "Diese Formulare bringt dir der InkluAgent ins Gespräch, vorbelegt mit dem, was du gesagt hast. Abschicken kannst nur du, mit dem Knopf des Formulars."
+
+# Paket 1: Formular-Karten, Oberflaeche (13.10.2026)
+msgid "Formular"
+msgstr "Formular"
+
+msgid "Abgeschickt."
+msgstr "Abgeschickt."
+
+msgid "Nicht mehr gültig."
+msgstr "Nicht mehr gültig."
+
+msgid "Absenden"
+msgstr "Absenden"
+
+msgid "Wird gesendet …"
+msgstr "Wird gesendet …"

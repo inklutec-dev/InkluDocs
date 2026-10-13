@@ -45,6 +45,8 @@ WERKZEUG_NAMEN: dict[str, str] = {
     "fruehere_gespraeche": "Frühere Gespräche",
     # Begleiter (12.10.2026, inkluagent/begleiter.py)
     "hinfuehren": "Hinführen", "einstellung_aendern": "Einstellung ändern",
+    # Formular-Karten (Paket 1, 13.10.2026, inkluagent/karten.py)
+    "einladen_vorbereiten": "Einladung vorbereiten", "express_bestellen_vorbereiten": "Bestellung vorbereiten",
 }
 
 

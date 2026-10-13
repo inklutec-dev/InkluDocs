@@ -341,8 +341,8 @@ def run_agent(
     bleibt alles wie bisher.
     nutzer_text (Pruefung 13.10.2026, K1/S13): was der Nutzer getippt hat — die Ja-Pruefung liest DAS, nicht user_message mit den
     Notizen des Servers (Seite, Hochladen, Webadressen). None = user_message (Demo, Tests).
-    begleiter_lauf (K9): Begleiter-Werkzeuge nur, wenn der Chat-Endpunkt des Kontos einen Lauf mitgibt (begleiter.Lauf) — nie in
-    der Demo. uebersetzen: Uebersetzung der festen Saetze an den Nutzer (Sprache der Oberflaeche).
+    begleiter_lauf (K9): der Lauf des Chat-Endpunkts im Konto (begleiter.Lauf). Nur damit gibt es Begleiter- und Karten-Werkzeuge
+    (je nach ihrem Schalter) — nie in der Demo. uebersetzen: Uebersetzung der festen Saetze an den Nutzer (Sprache der Oberflaeche).
     """
     _t = uebersetzen or (lambda text: text)
     if project is None:
@@ -358,6 +358,13 @@ def run_agent(
     if begleiter_an:
         tool_defs = list(tool_defs) + _begleiter.werkzeuge(user_id)
         system_base = system_base + "\n\n" + _begleiter.PROMPT
+    # Formular-Karten (Paket 1, Schalter AGENT_KARTEN): wie der Begleiter nur aus dem Chat-Endpunkt des Kontos (begleiter_lauf
+    # gesetzt), nie in der Demo — von dort liessen sich sonst Einladungen an beliebige Adressen vorbereiten
+    from . import karten as _karten
+    karten_an = begleiter_lauf is not None and _karten.an()
+    if karten_an:
+        tool_defs = list(tool_defs) + _karten.werkzeuge(project_id)
+        system_base = system_base + "\n\n" + _karten.PROMPT
     # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
     sicherheit.nachricht_merken(executor.turn_id, user_message if nutzer_text is None else nutzer_text, user_id)
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
@@ -453,6 +460,8 @@ def run_agent(
                     log.exception("on_tool-Callback fehlgeschlagen (ignoriert)")
             if begleiter_an and name in _begleiter.NAMEN:
                 result = _begleiter.ausfuehren(name, args, user_id, begleiter_lauf)
+            elif karten_an and name in _karten.NAMEN:
+                result = _karten.ausfuehren(name, args, user_id, project_id, _t)
             else:
                 result = executor.execute(name, args)
             vorher = len(actions_log)

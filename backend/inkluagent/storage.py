@@ -9,7 +9,7 @@
 """
 import json
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from database import get_db
 
@@ -409,9 +409,16 @@ def gespraech_der_nachricht(user_id: int, nachricht_id: Optional[int]) -> Option
         conn.close()
 
 
+def _ist_karte(a: Any, kennung: str) -> bool:
+    """Bestaetigungs-Karte (angebot_id) oder Formular-Karte (karten_id, Paket 1) mit dieser Kennung?"""
+    return isinstance(a, dict) and ((a.get("art") == "bestaetigung" and a.get("angebot_id") == kennung)
+                                    or (a.get("art") == "formular" and a.get("karten_id") == kennung))
+
+
 def karte_aktualisieren(project_id: int, angebot_id: str, felder: dict, user_id: Optional[int] = None) -> int:
-    """Bestaetigungs-Karte im gespeicherten Verlauf auf ihren neuen Zustand stellen (Pruefung 4, M3: „Erledigt“ oder „Nicht
-    mehr gültig“), damit sie nach dem Neuladen nicht wieder als offene Frage mit Knopf erscheint. Rueckgabe: geaenderte Zeilen."""
+    """Karte im gespeicherten Verlauf auf ihren neuen Zustand stellen (Pruefung 4, M3: „Erledigt“ oder „Nicht mehr gültig“),
+    damit sie nach dem Neuladen nicht wieder als offene Frage mit Knopf erscheint. angebot_id: Kennung einer Bestaetigungs-Karte
+    oder einer Formular-Karte (karten_id, Paket 1). Rueckgabe: geaenderte Zeilen."""
     if not angebot_id:
         return 0
     conn = get_db()
@@ -426,7 +433,7 @@ def karte_aktualisieren(project_id: int, angebot_id: str, felder: dict, user_id:
                 continue
             geaendert = False
             for a in liste:
-                if isinstance(a, dict) and a.get("art") == "bestaetigung" and a.get("angebot_id") == angebot_id:
+                if _ist_karte(a, angebot_id):
                     a.update(felder)
                     geaendert = True
             if geaendert:
@@ -444,7 +451,7 @@ def karte_aktualisieren(project_id: int, angebot_id: str, felder: dict, user_id:
                 liste = json.loads(r["anhang"]) or []
             except ValueError:
                 continue
-            treffer = [a for a in liste if isinstance(a, dict) and a.get("art") == "bestaetigung" and a.get("angebot_id") == angebot_id]
+            treffer = [a for a in liste if _ist_karte(a, angebot_id)]
             for a in treffer:
                 a.update(felder)
             if treffer:

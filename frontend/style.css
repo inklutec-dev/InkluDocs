@@ -1625,3 +1625,61 @@ body.eingebettet .dash-main { max-width: none; padding: 1rem 1rem 2rem; }
 .inkluagent-message-anhang { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.5rem; white-space: normal; }
 /* B21: die Grenzen der Anhaenge stehen sichtbar unter den Knoepfen */
 .inkluagent-anhang-hinweis { font-size: 0.85rem; }
+
+/* ─── Karten im Gespräch (Paket 1, Steve 13.10.2026; inkluagent.js inkluagentAnhangEl, inkluagent/karten.py) ───
+   Bestaetigungs-Karten (Angebot mit Preis) und Formular-Karten („Zur Prüfung einladen“, „Express-Auftrag bestellen“) sehen gleich aus:
+   weisse Flaeche, Akzentbalken links, solange sie auf dich warten (zusaetzlich zur Ueberschrift und zum Knopf, nicht nur Farbe). Vorher
+   standen die Regeln der Bestaetigungs-Karte nur in app.html — auf allen anderen Seiten mit dem InkluAgent war sie ungestaltet.
+   Gesperrte Knoepfe: die gemeinsame Regel .btn[aria-disabled] (Runde 2, A-N5; voller Fokusring). */
+.inkluagent-karte { flex-basis: 100%; box-sizing: border-box; max-width: 40rem; margin: 0.25rem 0; padding: 0.85rem 1rem 0.9rem;
+    background: #fff; color: var(--text, #1a202c); border: 1px solid #9ca3af; border-left: 5px solid var(--accent); border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(27, 42, 74, 0.10); }
+.inkluagent-karte h4 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+.inkluagent-karte p { margin: 0 0 0.6rem; }
+.inkluagent-karte-zeilen { margin: 0 0 0.6rem; padding-left: 1.25rem; }
+.inkluagent-karte-status:empty, .inkluagent-bestaetigung-status:empty { margin: 0; }
+.inkluagent-karte[data-zustand]:not([data-zustand="offen"]) { background: transparent; box-shadow: none; border-left-color: #6b7a90; }
+.inkluagent-karte-ergebnis { font-weight: 600; }
+/* Felder der Formular-Karte: Beschriftung ueber dem Feld (wie im Einladungs-Dialog), volle Breite, Rand mit 4,5:1 */
+.inkluagent-formular-feld { margin: 0 0 0.75rem; }
+.inkluagent-formular-feld > label { display: block; font-weight: 600; margin: 0 0 0.3rem; }
+.inkluagent-formular-feld input:not([type="checkbox"]), .inkluagent-formular-feld select, .inkluagent-formular-feld textarea {
+    box-sizing: border-box; width: 100%; padding: 0.5rem 0.6rem; border: 1px solid #6b7a90; border-radius: 6px; font: inherit;
+    background: #fff; color: inherit; }
+.inkluagent-formular-feld textarea { min-height: 4.5rem; resize: vertical; }
+.inkluagent-formular-haken { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; }
+.inkluagent-formular-haken > p { flex-basis: 100%; margin: 0; }
+.inkluagent-formular-haken > input { width: 1.25rem; height: 1.25rem; margin: 0.15rem 0 0; flex: none; }
+.inkluagent-formular-haken > label { flex: 1 1 0; min-width: 0; font-weight: 600; }
+.inkluagent-formular-haken > .inkluagent-formular-fehler { flex-basis: 100%; }
+.inkluagent-formular-fehler { margin: 0.3rem 0 0; color: var(--fehler-rand); font-weight: 600; }
+.inkluagent-formular-fehler:empty { margin: 0; }
+.inkluagent-formular-feld [aria-invalid="true"] { border: 2px solid var(--fehler-rand); }
+
+/* Die Karte fliegt herein (inkluagentKarteEinfliegen): von rechts — wo das Arbeitsfenster steht —, schnell, mit einem kleinen
+   Ueberschwingen und Unschaerfe in der Bewegung; der Schatten leuchtet kurz auf. Danach laeuft einmal ein Glanz ueber den Knopf.
+   Gleichzeitig der Wusch der Klangspur (frontend/klang.js, rechts -> Mitte). Waehrend des Flugs schneidet der Verlauf waagerecht ab
+   (keine Bildlaufleiste fuer einen Augenblick); danach nicht mehr, damit kein Fokusring abgeschnitten wird.
+   „Bewegung reduzieren“: die Karte steht sofort da, ohne Flug und Glanz — das macht die gemeinsame Regel oben („Reduced Motion“,
+   animation: none fuer alles); hier braucht es keine eigene. */
+@keyframes inkluagent-karte-kommt {
+    0%   { opacity: 0; transform: translateX(3.5rem) rotate(1.5deg) scale(0.94); filter: blur(5px);
+           box-shadow: 0 0 0 0 rgba(199, 80, 0, 0); }
+    55%  { opacity: 1; transform: translateX(-0.4rem) rotate(-0.3deg) scale(1.01); filter: blur(0);
+           box-shadow: 0 10px 32px rgba(199, 80, 0, 0.28); }
+    78%  { transform: translateX(0.15rem) rotate(0) scale(1); }
+    100% { opacity: 1; transform: none; filter: none; box-shadow: 0 6px 18px rgba(27, 42, 74, 0.10); }
+}
+@keyframes inkluagent-knopf-glanz {
+    from { background-position: -160% 0; }
+    to   { background-position: 260% 0; }
+}
+.inkluagent-log:has(.inkluagent-karte-kommt) { overflow-x: clip; }
+.inkluagent-karte-kommt { animation: inkluagent-karte-kommt 720ms cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+.inkluagent-karte-kommt .btn-primary:not([aria-disabled="true"]) {
+    background-image: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.5) 50%, transparent 70%);
+    background-size: 200% 100%; background-repeat: no-repeat;
+    animation: inkluagent-knopf-glanz 900ms ease-out 620ms 1 both; }
+@media (prefers-reduced-motion: reduce) {
+    .inkluagent-karte-kommt .btn-primary:not([aria-disabled="true"]) { background-image: none; }   /* kein stehengebliebener Glanz */
+}

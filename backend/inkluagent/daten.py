@@ -111,6 +111,10 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     # Notiz mit Daten-Marke an die Nachricht, inkluagent/begleiter.seite_notiz)
     "hinfuehren": (),
     "einstellung_aendern": (),
+    # Formular-Karten (Paket 1, inkluagent/karten.py): der Projektname kommt gekennzeichnet; die Karte selbst (Felder, Dokumentnamen
+    # des Warenkorbs) geht als anhang an die Oberflaeche, nicht ans Modell
+    "einladen_vorbereiten": ("projekt_daten",),
+    "express_bestellen_vorbereiten": (),
 }
 
 

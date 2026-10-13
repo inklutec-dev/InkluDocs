@@ -27,8 +27,23 @@ def fragt_vorher(definition: dict) -> bool:
     return "bestaetigt" in ((definition.get("input_schema") or {}).get("properties") or {})
 
 
+# Formular-Karten (Paket 1, Schalter AGENT_KARTEN): Gaeste zur Pruefung einladen geht dann im Gespraech — ueber den Knopf der Karte
+AUSSERHALB_MIT_KARTEN = tuple("Team einladen" if t == "Team und Gäste einladen" else t for t in AUSSERHALB)
+
+
+def formulare(_: Optional[Callable[[str], str]] = None) -> list[str]:
+    """Titel der Formular-Karten, die der InkluAgent gerade ins Gespraech bringen kann (inkluagent/karten.py) — aus denselben
+    Werkzeugen, die er bekommt, also mit denselben Schaltern."""
+    _ = _ or (lambda s: s)
+    from . import karten
+    if not karten.an():
+        return []
+    return [_(karten.WERKZEUG_KARTE[d["name"]].titel) for d in karten.werkzeuge(None)]
+
+
 def seite(_: Optional[Callable[[str], str]] = None) -> dict:
-    """{"projektarten": [{"schluessel", "titel", "ohne_rueckfrage": [Namen], "mit_rueckfrage": [Namen]}], "ausserhalb": [...]}"""
+    """{"projektarten": [{"schluessel", "titel", "ohne_rueckfrage": [Namen], "mit_rueckfrage": [Namen]}], "ausserhalb": [...],
+    "formulare": [...]}"""
     _ = _ or (lambda s: s)
     from .agent_loop import _werkzeugsatz
     from .tools.namen import werkzeug_name
@@ -42,4 +57,6 @@ def seite(_: Optional[Callable[[str], str]] = None) -> dict:
             if name not in ziel:
                 ziel.append(name)
         arten.append({"schluessel": schluessel, "titel": _(titel), "ohne_rueckfrage": ohne, "mit_rueckfrage": mit})
-    return {"projektarten": arten, "ausserhalb": [_(t) for t in AUSSERHALB]}
+    from . import karten
+    ausserhalb = AUSSERHALB_MIT_KARTEN if karten.an() else AUSSERHALB
+    return {"projektarten": arten, "ausserhalb": [_(t) for t in ausserhalb], "formulare": formulare(_)}

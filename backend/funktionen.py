@@ -126,6 +126,10 @@ AGENT_BEGLEITER = _umgebung_an("INKLUAGENT_BEGLEITER")
 # Erzeugt im Browser (frontend/klang.js), spaeter Steves eigene Klaenge. Abschaltbar je Konto („Töne“ in den Einstellungen,
 # inkluagent/klang.py). Braucht AGENT_UEBERALL. INKLUAGENT_KLANG=an.
 AGENT_KLANG = _umgebung_an("INKLUAGENT_KLANG")
+# Formular-Karten (Paket 1, Steve 13.10.2026: „der Agent bringt die Knöpfe zu einem“): statt auf eine Seite zu schicken, legt der
+# InkluAgent das Formular vorbelegt ins Gespraech — „Zur Prüfung einladen“, „Zahlungspflichtig bestellen“ (Express). Abschicken
+# nur ueber den Knopf der Karte, ueber DIESELBE Funktion wie die Seite (inkluagent/karten.py). INKLUAGENT_KARTEN=an.
+AGENT_KARTEN = _umgebung_an("INKLUAGENT_KARTEN")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

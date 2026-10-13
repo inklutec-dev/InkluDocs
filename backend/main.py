@@ -11725,6 +11725,24 @@ async def agent_bestaetigen(request: Request, user: dict = Depends(get_current_u
     return await _karte_bestaetigen(request, user, None, data)
 
 
+@app.post("/api/agent/karte")
+async def agent_karte_absenden(request: Request, user: dict = Depends(get_current_user)):
+    """Knopf einer Formular-Karte (Paket 1, Schalter funktionen.AGENT_KARTEN, inkluagent/karten.py): {karten_id, werte}. Die Karte
+    haelt der Server (Projekt, Warenkorb, Preis); der Browser schickt nur die Feldwerte. Antwort: {ok, text, karte, anhang?} oder
+    {detail, fehler?: {feld: text}, karte?}."""
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_KARTEN")
+    try:
+        data = await request.json()
+    except Exception:  # noqa: BLE001
+        data = {}
+    data = data if isinstance(data, dict) else {}
+    from inkluagent import karten as _karten
+    status, antwort = await _karten.absenden(str(data.get("karten_id") or ""), user, data.get("werte"),
+                                             resolve_ui_language(request), absender.limit_schluessel(request))
+    return JSONResponse(status_code=status, content=antwort)
+
+
 async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[int], data: dict):
     sprache = resolve_ui_language(request)
     _ = get_gettext(sprache)
@@ -12074,16 +12092,16 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
                 message_modell = message_modell + "\n\n" + _web_notiz
                 nur_mit_karte = True
         webkarten = eingang_karten + webkarten
-        # Begleiter (Steve 12.10.2026, „Frag die Seite“): nur fuer den InkluAgent des Kontos, als Lauf mit Sprache, Uebersetzung
-        # und getipptem Text (K9); die Seite, auf der der Nutzer gerade ist — Pfad geprueft, Titel als Daten
-        begleiter_lauf = None
-        if funktionen.AGENT_BEGLEITER:
-            from inkluagent import begleiter as _begleiter
-            if _begleiter.an():
-                begleiter_lauf = _begleiter.Lauf(ui_sprache=_ui_sprache, uebersetzen=_ui, nutzer_text=nutzer_text)
-                _seite = _begleiter.seite_notiz(data.get("seite"), user["id"])
-                if _seite:
-                    message_modell = message_modell + "\n\n" + _seite
+        # Lauf des Kontos (K9): Sprache, Uebersetzung und getippter Text als Argument. Nur dieser Endpunkt gibt ihn mit — daran
+        # erkennt run_agent die Werkzeuge, die es nur fuer den InkluAgent des Kontos gibt (Begleiter, Formular-Karten), nie in der
+        # Demo; ob sie da sind, entscheiden ihre Schalter in agent_loop.
+        from inkluagent import begleiter as _begleiter
+        begleiter_lauf = _begleiter.Lauf(ui_sprache=_ui_sprache, uebersetzen=_ui, nutzer_text=nutzer_text)
+        # Begleiter (Steve 12.10.2026, „Frag die Seite“): die Seite, auf der der Nutzer gerade ist — Pfad geprueft, Titel als Daten
+        if _begleiter.an():
+            _seite = _begleiter.seite_notiz(data.get("seite"), user["id"])
+            if _seite:
+                message_modell = message_modell + "\n\n" + _seite
 
         from inkluagent import storage
         from inkluagent.chat_engine import process_konto_message, process_message
@@ -12313,7 +12331,9 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
            # Begleiter durch InkluDocs (12.10.2026): Seite mitschicken, Hinfuehren, Sprache/Ansicht auf Wunsch
            "begleiter": bool(ueberall and funktionen.AGENT_BEGLEITER),
            # Klangspur (Paket 1): Seite laedt frontend/klang.js; ob es klingt, sagt <body data-toene> (je Konto)
-           "klang": bool(ueberall and funktionen.AGENT_KLANG)}
+           "klang": bool(ueberall and funktionen.AGENT_KLANG),
+           # Formular-Karten (Paket 1): ohne Schalter zeigt die Seite gespeicherte Karten nur noch an (ohne Knopf)
+           "karten": bool(funktionen.AGENT_KARTEN and INKLUAGENT_ENABLED)}
     # Knopf „Dateien anhängen“ in der Agentenansicht (Steve 12.10.2026): derselbe Weg wie das Feld (POST /api/agent/hochladen)
     out["anhaengen"] = bool(out["arbeitsfenster"] and funktionen.AGENT_HOCHLADEN)
     if ueberall:
@@ -13578,8 +13598,15 @@ async def create_project_share(project_id: int, request: Request, user: dict = D
     = Besitzer (Antworten gehen an ihn, NICHT an InkluTec). Bei notify=false wird NICHT versendet
     (Besitzer holt sich nur den Link und mailt selbst). Optionale persoenliche Nachricht ersetzt
     nur den Einleitungssatz; Link + Bestaetigungs-Hinweis bleiben fest."""
-    import html
     data = await request.json()
+    return _freigabe_anlegen(user, project_id, data if isinstance(data, dict) else {})
+
+
+def _freigabe_anlegen(user: dict, project_id: int, data: dict) -> dict:
+    """Freigabe anlegen und (notify) die Einladung senden — fuer den Dialog im Projekt (POST …/share) und die Karte „Zur Prüfung
+    einladen“ des InkluAgent (Paket 1, inkluagent/karten.py): EIN Weg, dieselben Pruefungen. HTTPException mit Saetzen fuer
+    Menschen."""
+    import html
     guest_email = (data.get("guest_email") or "").strip()
     guest_name = (data.get("guest_name") or "").strip()
     custom_message = (data.get("message") or "").strip()

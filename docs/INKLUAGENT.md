@@ -1203,6 +1203,54 @@ Stand schneller erfassbar, besonders bei langen Läufen (Prüfung 13.10.2026, B9
   der erste Klick schaltet frei.
 - Tests: `tests/test_paket1_klang.py`.
 
+## Paket 1: Formular-Karten — „der Agent bringt die Knöpfe zu einem“ (Steve 13.10.2026; Schalter `AGENT_KARTEN`, Umgebung `INKLUAGENT_KARTEN=an`)
+
+Statt den Nutzer auf eine Seite zu schicken, legt der InkluAgent das Formular als Karte ins Gespräch — vorbelegt mit dem, was
+der Nutzer gesagt hat. Der Nutzer prüft, ändert und schickt mit EINEM Knopf ab. Für Sehende fliegt die Karte von rechts (wo das
+Arbeitsfenster steht) ins Gespräch, mit kurzem Überschwingen, Unschärfe in der Bewegung und einem Glanz über dem Knopf; dazu der
+Wusch der Klangspur (rechts → Mitte). Mit „Bewegung reduzieren“ steht sie ohne Animation da (gemeinsame Regel in `style.css`).
+
+**Karten (`inkluagent/karten.py`, `KARTENTYPEN`):**
+- „Zur Prüfung einladen“ (`einladen_vorbereiten`): Name, E-Mail-Adresse (Pflicht), Rolle (Herausgeber oder Lektorat), Nachricht —
+  dieselben Beschriftungen wie der Einladungs-Dialog im Projekt, abgeschickt über dieselbe Funktion (`main._freigabe_anlegen`,
+  vorher der Rumpf von `POST /api/projects/{id}/share`).
+- „Express-Auftrag bestellen“ (`express_bestellen_vorbereiten`, nur mit `EXPRESS`): Aufstellung je Dokument, Preis in Credits,
+  Guthaben, Frist, Ansprechpartner (vorbelegt mit dem Anzeigenamen), Telefon, Hinweise, Haken „Ich akzeptiere die Bedingungen …“
+  mit Link; Knopf „Zahlungspflichtig bestellen“. Abgeschickt über dieselbe Funktion wie der Warenkorb (`express_api.bestellung`,
+  vorher der Rumpf von `POST /api/express/bestellen`) — mit Bremse, allen Prüfungen und den Mails danach. Leerer Korb oder zu
+  wenig Guthaben: keine Karte, der Agent sagt, was fehlt.
+
+**Sicherheit:**
+- Was zählt, hält der SERVER in der Karte: Projekt, Warenkorb, erwarteter Preis, Fassung der Bedingungen, Idempotenz. Der Browser
+  schickt nur die Feldwerte (`POST /api/agent/karte` mit `{karten_id, werte}`); untergeschobene Werte wie `korb_id` zählen nicht.
+- Das Modell schlägt nur Werte vor; ein Werkzeug zum Abschicken gibt es nicht. Vorschläge prüft der Server wie Eingaben (eine
+  E-Mail-Adresse, die keine ist, bleibt leer; unbekannte Rolle → Herausgeber). Nur eigene Projekte.
+- Eine Karte gehört einem Konto, gilt 30 Minuten (`GUELTIG_S`), höchstens 20 offene je Konto, und wird höchstens einmal
+  erfolgreich abgeschickt (zweiter Klick 409). Fehler am Feld lassen sie offen; ein veralteter Warenkorb macht sie ungültig.
+- Karten-Werkzeuge gibt es nur im Chat des Kontos (der Lauf des Konto-Endpunkts, `begleiter.Lauf`), nie in der Demo — von dort
+  ließen sich sonst Einladungen an beliebige Adressen vorbereiten. Der Konto-Endpunkt gibt diesen Lauf seit Paket 1 immer mit;
+  ob Begleiter- oder Karten-Werkzeuge da sind, entscheiden ihre Schalter in `agent_loop`.
+
+**Oberfläche (`inkluagent.js`, `inkluagentFormularKarte`):** echte Formularelemente (HTML vor ARIA): ein benanntes `<form>` (im
+Rotor unter „Formulare“), sichtbares `label` je Feld, `required`, Fehler am Feld mit `aria-invalid` und `aria-describedby` (Sätze
+vom Server in der Sprache der Oberfläche), der Fokus aufs erste fehlerhafte Feld. Nach dem Abschicken weicht das Formular dem
+Ergebnis („Die Einladung an … ist verschickt.“), der Fokus steht darauf; ein Link der Antwort („Auftrag ansehen“) steht darunter.
+Im gespeicherten Verlauf trägt die Karte Zustand, Ergebnis und Werte (`storage.karte_aktualisieren` kennt jetzt beide Kartenarten)
+— nach dem Neuladen steht sie nur noch zum Lesen da. Ohne Schalter (`window.INKLUAGENT.karten`) ebenso.
+Die Gestaltung aller Karten (Bestätigung und Formular) steht seit Paket 1 in `style.css` („Karten im Gespräch“) — vorher nur in
+`app.html`, auf den anderen Seiten mit dem InkluAgent war die Bestätigungs-Karte ungestaltet.
+
+**Hilfe:** Abschnitt „Formulare im Gespräch“ (aus denselben Werkzeugen, mit denselben Schaltern); „Was der InkluAgent nicht macht“
+nennt mit Karten „Team einladen“ statt „Team und Gäste einladen“.
+
+**Tests und Proben:** `tests/test_paket1_karten.py` (Schema, Werkzeuge nur mit Schalter und nie in der Demo, Einladen über den
+Endpunkt genau einmal und nur vom eigenen Konto, Bestellen mit Preis und Korb vom Server, Fehler am Feld, veralteter Korb, Hilfe,
+Quelltext der Oberfläche); Klickprobe `lokal/probe_p1_karten.py` (`probe_p1_alle.sh`, Ports 8870–8879; Ersatzmodell: „lade zum
+pruefen ein“): Einflug, Wusch, benanntes Formular, Vorbelegung, axe, Fehler am Feld, Abschicken, Neuladen, „Bewegung reduzieren“.
+
+**Offen:** eigene Klänge von Steve statt der Synthese; weitere Karten (z. B. Projekt anlegen mit Dateien, Abo wechseln); der
+Klang „frage“ ist für eine Karte vorgesehen, die länger auf eine Entscheidung wartet.
+
 ## Prüfung 13.10.2026, Runde 2: Server
 
 Zweite Prüfrunde (Sicherheit, Korrektheit, Barrierefreiheit) auf dem eingefrorenen Stand f23a1d6; Berichte `PRUEFUNG2-*.md`
@@ -1377,5 +1425,8 @@ Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sic
 - `TAGGING_PROFESSIONELL` setzen, sonst ist „Barrierefrei machen“ (Kette, Chatbot-Tagging) gesperrt.
 - Aus Runde 1 (H4): Michaels UI-Punkte, „Feld = Datei“ (Export und Tagging), Testfassungs-Download, Aufräum-Schleife des Eingangs;
   Oberfläche siehe „Prüfung 13.10.2026: Oberfläche — Auch ohne Schalter (Production) geändert“.
+- Paket 1 ohne Schalter: die Bestätigungs-Karte im Projekt sieht neu aus (Gestaltung aus `style.css` statt `app.html`: weiße
+  Fläche, Akzentbalken links); „Zur Prüfung freigeben“ und der Express-Warenkorb laufen über die herausgezogenen Funktionen
+  (`main._freigabe_anlegen`, `express_api.bestellung`) — gleiches Verhalten, dieselben Tests.
 - Datenbank: neue Spalten (`zusatz`, `sprache` in `chat_messages` und `agent_nachrichten`, `users.agent_toene`) und Index; alle
   Migrationen vorwärts idempotent, alter Code liest die Spalten nicht.

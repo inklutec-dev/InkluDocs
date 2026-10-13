@@ -329,6 +329,26 @@ def nach_kontoloeschung(info: dict) -> None:
     _hintergrund(senden)
 
 
+async def bestellung(user_id: int, daten: dict, sprache: str, absender: str) -> dict:
+    """Den Warenkorb zahlungspflichtig bestellen — fuer die Seite (POST /api/express/bestellen) und die Karte
+    „Zahlungspflichtig bestellen“ des InkluAgent (Paket 1, inkluagent/karten.py): EIN Weg mit Bremse, allen Pruefungen von
+    express.bestellen (Korb, erwarteter Preis, Fassung, Idempotenz) und den Mails danach. Wirft ExpressFehler (der Aufrufer
+    macht daraus die Antwort) und HTTPException 429 (Bremse). Rueckgabe {"auftrag_id", "neu"}."""
+    _neu_an()
+    _bremsen("bestellen", user_id)
+    _ = _d.get_gettext(sprache)
+    erg = await _im_thread(
+        express.bestellen, user_id, ansprechpartner=daten.get("ansprechpartner"), telefon=daten.get("telefon"),
+        hinweise=daten.get("hinweise"), bedingungen=daten.get("bedingungen"),
+        idempotenz=daten.get("idempotenz"), korb_id=daten.get("korb_id"),
+        erwartete_credits=daten.get("erwartete_credits"), fassung=daten.get("fassung"), sprache=sprache,
+        texte={"bedingungen": _(express.TEXT_BEDINGUNGEN)}, absender=absender)
+    if erg["neu"]:
+        log.info("Express-Auftrag %s bestellt (Konto %s)", erg["auftrag_id"], user_id)
+        _hintergrund(_mails_nach, "bestellt", "bestellt", erg["auftrag_id"])
+    return erg
+
+
 def build_router(deps: Deps) -> APIRouter:
     global _d
     _d = deps
@@ -481,22 +501,10 @@ def build_router(deps: Deps) -> APIRouter:
     @router.post("/api/express/bestellen")
     async def bestellen(request: Request, user: dict = Depends(_kunde_neu)):
         daten = await _json_dict(request)
-        _bremsen("bestellen", user["id"])
-        sprache = _d.resolve_ui_language(request)
-        _ = _d.get_gettext(sprache)
         try:
-            erg = await _im_thread(
-                express.bestellen, user["id"], ansprechpartner=daten.get("ansprechpartner"), telefon=daten.get("telefon"),
-                hinweise=daten.get("hinweise"), bedingungen=daten.get("bedingungen"),
-                idempotenz=daten.get("idempotenz"), korb_id=daten.get("korb_id"),
-                erwartete_credits=daten.get("erwartete_credits"), fassung=daten.get("fassung"), sprache=sprache,
-                texte={"bedingungen": _(express.TEXT_BEDINGUNGEN)},
-                absender=_d.absender_kennung(request))
+            erg = await bestellung(user["id"], daten, _d.resolve_ui_language(request), _d.absender_kennung(request))
         except express.ExpressFehler as e:
             raise _fehler(e)
-        if erg["neu"]:
-            log.info("Express-Auftrag %s bestellt (Konto %s)", erg["auftrag_id"], user["id"])
-            _hintergrund(_mails_nach, "bestellt", "bestellt", erg["auftrag_id"])
         return {"ok": True, "auftrag_id": erg["auftrag_id"], "schon_bestellt": not erg["neu"]}
 
     # ─── Kunde: Auftraege (auch bei ausgeschaltetem Schalter, siehe oben) ───
