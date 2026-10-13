@@ -16,14 +16,33 @@
       <section class="dash-card" aria-labelledby="hilfe-arbeiten-h">
         <h2 id="hilfe-arbeiten-h">{{ _('So arbeitest du mit dem InkluAgent') }}</h2>
         {# Seit 12.10.2026 je nach Schalter: Agent auf jeder Seite (AGENT_UEBERALL), ein Gespraech je Konto (AGENT_KONTO), Gespraeche #}
-        {% if ueberall %}<p>{{ _('Den InkluAgent findest du auf jeder Seite, nach dem Hauptinhalt; oben auf der Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Der Knopf „InkluAgent“ öffnet das Gespräch.') }}</p>
+        {# Pruefung 13.10.2026 (B13): in der Agentenansicht mit Arbeitsfenster gibt es den Knopf „InkluAgent“ nicht — das Gespraech ist
+           immer offen, und Seiten oeffnen sich im Arbeitsfenster (das stand nirgends). HB5: die Zurueck-Taste und Links im Fenster. #}
+        {% set chatstil = ueberall and oberflaeche == 'agent' and inkluagent_schalter and inkluagent_schalter.arbeitsfenster %}
+        {% if chatstil %}<p>{{ _('In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt. Projekte und die Startseite öffnen als ganze Seite.') }}</p>
+        <p>{{ _('Folgst du in einer Seite im Arbeitsfenster einem Link, bleibt sie dort. Die Zurück-Taste des Browsers geht dann zuerst im Arbeitsfenster zurück.') }}</p>
+        {% elif ueberall %}<p>{{ _('Den InkluAgent findest du auf jeder Seite, nach dem Hauptinhalt; oben auf der Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Der Knopf „InkluAgent“ öffnet das Gespräch.') }}</p>
         {% else %}<p>{{ _('Den InkluAgent findest du in jedem Projekt: Der Knopf „InkluAgent“ öffnet das Gespräch.') }}</p>{% endif %}
         {% if gespraech_je_konto %}<p>{{ _('Er führt ein durchgehendes Gespräch über alle deine Projekte; wo es um ein anderes Projekt geht, steht „Ab hier: Projekt …“.') }}{% if gespraeche %} {{ _('Mit „Neues Gespräch“ beginnst du frisch; frühere Gespräche findest du unter „Frühere Gespräche“ und setzt sie dort mit „Hier weitermachen“ fort.') }}{% endif %}</p>
         {% else %}<p>{{ _('Jedes Projekt hat sein eigenes Gespräch.') }}</p>{% endif %}
         <p>{{ _('Reden kostet nichts. Was er erzeugt oder ändert, kostet dieselben Credits wie der Knopf in der Oberfläche.') }}</p>
-        <p>{{ _('Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte oder mit einem kurzen „Ja“.') }}</p>
-        {# Seit dem Agenten auf jeder Seite (Runde 2, Schritt 3) gilt der zweite Satz (Steve 12.10.2026: der alte war veraltet) #}
-        {% if ansicht_waehlbar %}<p>{% if inkluagent_schalter and inkluagent_schalter.ueberall %}{{ _('In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt unten auf jeder Seite. In der Agentenansicht arbeitest du im Gespräch mit dem InkluAgent; den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück.') }}{% else %}{{ _('In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt in jedem Projekt. In der Agentenansicht siehst du in deinen Projekten nur den InkluAgent groß.') }}{% endif %} <a href="/einstellungen">{{ _('Zu den Einstellungen') }}</a></p>{% endif %}
+        {# Pruefung 13.10.2026 (S2, Server): Loeschen nur ueber den Knopf der Karte; ein getipptes kurzes „Ja“ gilt nur fuer
+           kostenpflichtige Aktionen und nur in der Nachricht direkt nach dem Angebot #}
+        <p>{{ _('Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte. Bei Aktionen, die Credits kosten, reicht auch ein kurzes „Ja“ als nächste Nachricht. Löschen geht nur mit dem Knopf.') }}</p>
+        {# Seit dem Agenten auf jeder Seite (Runde 2, Schritt 3) gilt der zweite Satz (Steve 12.10.2026: der alte war veraltet).
+           Pruefung 13.10.2026 (B13/K11): die Ansichten beschreibt EINE Quelle, inkluagent/ansicht.py — gibt main.py die Auswahl mit
+           (ansicht_auswahl, wie fuer die Einstellungen), steht sie hier; sonst mit Arbeitsfenster dieselben Saetze (gleiche msgids,
+           tests/test_pruefung_1310_oberflaeche.py vergleicht sie mit ansicht.py). Der Satz „… holst du jederzeit mit einem Knopf zurück“
+           gilt nur ohne Arbeitsfenster. #}
+        {% if ansicht_waehlbar and (ansicht_auswahl or (inkluagent_schalter and inkluagent_schalter.arbeitsfenster)) %}
+        <p>{{ _('In den Einstellungen wählst du deine Ansicht:') }}</p>
+        <ul>
+          {% if ansicht_auswahl %}{% for a in ansicht_auswahl %}<li>{{ a.name }}: {{ a.beschreibung }}</li>{% endfor %}
+          {% else %}<li>{{ _('Manuelle Ansicht') }}: {{ _('Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch.') }}</li>
+          <li>{{ _('Agentenansicht') }}: {{ _('Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Das Arbeitsfenster zeigt, woran er gerade arbeitet, und öffnet die Seiten der Navigation, ohne dass du das Gespräch verlässt. Zur manuellen Ansicht wechselst du mit dem Knopf unter der Navigation.') }}</li>{% endif %}
+        </ul>
+        <p><a href="/einstellungen">{{ _('Zu den Einstellungen') }}</a></p>
+        {% elif ansicht_waehlbar %}<p>{% if inkluagent_schalter and inkluagent_schalter.ueberall %}{{ _('In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt unten auf jeder Seite. In der Agentenansicht arbeitest du im Gespräch mit dem InkluAgent; den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück.') }}{% else %}{{ _('In den Einstellungen wählst du deine Ansicht: In der manuellen Ansicht arbeitest du wie gewohnt von Hand, der InkluAgent steht eingeklappt in jedem Projekt. In der Agentenansicht siehst du in deinen Projekten nur den InkluAgent groß.') }}{% endif %} <a href="/einstellungen">{{ _('Zu den Einstellungen') }}</a></p>{% endif %}
       </section>
 
       <section class="dash-card" aria-labelledby="hilfe-projekte-h">

@@ -213,9 +213,10 @@ class Oberflaeche(unittest.TestCase):
     def test_seitenwechsel_nur_auf_projektseiten(self):
         with open(os.path.join(FRONTEND, "inkluagent.js"), encoding="utf-8") as f:
             js = f.read()
-        self.assertIn("/^\\/app\\?projekt=\\d+$/.test(x.url)", js)
-        self.assertIn("window.location.href = a.url + '&agent=offen';", js)
-        self.assertIn("if (inkluagentSeiteWechseln(data.actions))", js)
+        # Seit der Pruefung 13.10.2026 (B10) ein Weg fuer alle Seitenwechsel durch den Agenten
+        self.assertIn("a.type === 'seite_wechseln' && typeof a.url === 'string' && /^\\/app\\?projekt=\\d+$/.test(a.url)", js)
+        self.assertIn("return { url: a.url + '&agent=offen', link: a.url, text: t('Projekt öffnen') };", js)
+        self.assertIn("if (wechsel && await inkluagentWechseln(wechsel, antwortEl, fokussieren)) return;", js)
 
 
 if __name__ == "__main__":

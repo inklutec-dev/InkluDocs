@@ -235,16 +235,19 @@ class Oberflaeche(unittest.TestCase):
                       self.funktion("inkluagentAgentenansicht"))
 
     def test_aktionen_nur_mit_geprueften_werten(self):
-        f = self.funktion("inkluagentBegleiterAktion")
-        self.assertIn(r"/^\/[A-Za-z0-9\/_-]*\?hin=[A-Za-z][\w-]{0,40}$/.test(a.url)", f)
+        # Seit der Pruefung 13.10.2026 (B10) ein Weg fuer alle Seitenwechsel durch den Agenten: inkluagentWechselZiel prueft die Werte
+        f = self.funktion("inkluagentWechselZiel")
+        self.assertIn(r"eigenerPfad(a.url) && /^\/[A-Za-z0-9\/_-]*\?hin=[A-Za-z][\w-]{0,40}$/.test(a.url)", f)
         self.assertIn("/^[a-z]{2}$/.test(a.sprache || '')", f)
-        self.assertIn("window.location.href = '/set-language/' + a.sprache;", f)
+        self.assertIn("url: '/set-language/' + a.sprache", f)
         dash = lies(FRONTEND, "dashboard.js")
         h = dash[dash.index("function hinfuehrenBeimLaden("):]
         h = h[:h.index("\n}\n")]
         self.assertIn(r"/^[A-Za-z][\w-]{0,40}$/.test(ziel)", h)
-        self.assertIn("el.focus(", h)
+        self.assertIn("fokusAuf(el, ", h)
         self.assertIn("u.searchParams.delete('hin')", h)
+        # S14: nur Ziele aus der Liste des Servers, wenn er sie mitgibt (window.INKLUAGENT.hinZiele)
+        self.assertIn("if (liste && ziel !== 'ueberschrift' && liste.indexOf(ziel) < 0) return;", h)
 
     def test_seite_mitschicken_und_ueberblick_als_text(self):
         self.assertIn("d.seite = { pfad: window.location.pathname", self.funktion("inkluagentNachrichtDaten"))

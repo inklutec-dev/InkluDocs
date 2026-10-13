@@ -12021,3 +12021,55 @@ msgstr "Åbnet i arbejdsvinduet: {name}"
 
 msgid "Seite im Arbeitsfenster geschlossen."
 msgstr "Siden i arbejdsvinduet er lukket."
+
+# Pruefung 13.10.2026: Oberflaeche des InkluAgent (B1–B23, K2–K19, S14, Hilfe-Satz S2)
+msgid "Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte. Bei Aktionen, die Credits kosten, reicht auch ein kurzes „Ja“ als nächste Nachricht. Löschen geht nur mit dem Knopf."
+msgstr "Ved handlinger, der koster credits eller ikke kan fortrydes, står der et kort med mål og pris under hans svar. Du bekræfter med knappen på kortet. Ved handlinger, der koster credits, er et kort „Ja“ som næste besked også nok. Sletning sker kun med knappen."
+
+msgid "Ansicht jetzt wechseln"
+msgstr "Skift visning nu"
+
+msgid "Antwort vom InkluAgent ist da. Weil du gerade woanders arbeitest, wechselt die Seite nicht von selbst — der Weg dorthin steht unter der Antwort."
+msgstr "InkluAgent har svaret. Fordi du arbejder et andet sted lige nu, skifter siden ikke af sig selv — vejen dertil står under svaret."
+
+msgid "Antwort vom InkluAgent ist da. „Zurück zum Gespräch“ führt zu ihr."
+msgstr "InkluAgent har svaret. „Tilbage til samtalen“ fører dig til svaret."
+
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Deine neue Nachricht bleibt im Feld, bis er fertig ist."
+msgstr "InkluAgent arbejder stadig på din seneste besked. Din nye besked bliver stående i feltet, indtil han er færdig."
+
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Ein anderes Gespräch geht, sobald seine Antwort da ist."
+msgstr "InkluAgent arbejder stadig på din seneste besked. Du kan skifte til en anden samtale, så snart hans svar er kommet."
+
+msgid "Die Verbindung ist abgebrochen, und eine Antwort kam nicht an. Bitte frag noch einmal."
+msgstr "Forbindelsen blev afbrudt, og der kom intet svar. Spørg venligst igen."
+
+msgid "Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Das Arbeitsfenster zeigt, woran er gerade arbeitet, und öffnet die Seiten der Navigation, ohne dass du das Gespräch verlässt. Zur manuellen Ansicht wechselst du mit dem Knopf unter der Navigation."
+msgstr "Du arbejder i samtale med InkluAgent, som i en chat. Arbejdsvinduet viser, hvad han arbejder på, og åbner siderne i navigationen, uden at du forlader samtalen. Du skifter til den manuelle visning med knappen under navigationen."
+
+msgid "Folgst du in einer Seite im Arbeitsfenster einem Link, bleibt sie dort. Die Zurück-Taste des Browsers geht dann zuerst im Arbeitsfenster zurück."
+msgstr "Følger du et link på en side i arbejdsvinduet, bliver den der. Browserens tilbageknap går så først tilbage i arbejdsvinduet."
+
+msgid "Im Arbeitsfenster"
+msgstr "I arbejdsvinduet"
+
+msgid "In den Einstellungen wählst du deine Ansicht:"
+msgstr "I indstillingerne vælger du din visning:"
+
+msgid "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt. Projekte und die Startseite öffnen als ganze Seite."
+msgstr "I agentvisningen er samtalen med InkluAgent altid åben; øverst på hver side fører springlinket „Gå til InkluAgent“ direkte derhen. Sider fra navigationen og links åbner i arbejdsvinduet, uden at du forlader samtalen. Projekter og startsiden åbner som hel side."
+
+msgid "Nicht gesendet."
+msgstr "Ikke sendt."
+
+msgid "Nicht gesendet. Dein Text steht noch im Eingabefeld."
+msgstr "Ikke sendt. Din tekst står stadig i indtastningsfeltet."
+
+msgid "Seite im Dokument"
+msgstr "Side i dokumentet"
+
+msgid "Setzt das Gespräch fort."
+msgstr "Fortsætter samtalen."
+
+msgid "Sprache wechseln:"
+msgstr "Skift sprog:"

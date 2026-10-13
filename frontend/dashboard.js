@@ -68,10 +68,40 @@ function listeKuerzen(container, opts) {
 }
 window.listeKuerzen = listeKuerzen;
 
+// Die eine Ansage-Region aller Seiten (#liveRegion). Pruefung 13.10.2026, B9: erst leeren, dann nach 100 ms setzen — sonst spricht
+// VoiceOver denselben Text beim zweiten Mal oft nicht („Stand vorlesen“ zweimal). Was in diesen 100 ms noch dazukommt, wird an die
+// wartende Ansage angehaengt statt sie zu ersetzen (vorher ging die erste verloren). app.html hat seit diesem Tag keine eigene Kopie.
 function announce(msg) {
   const el = byId('liveRegion');
-  if (el) el.textContent = msg;
+  if (!el || !msg) return;
+  const warte = announce._warte || '';
+  announce._warte = !warte ? String(msg) : (warte.indexOf(msg) >= 0 ? warte : warte + ' ' + msg);
+  el.textContent = '';
+  clearTimeout(announce._plan);
+  announce._plan = setTimeout(() => { el.textContent = announce._warte; announce._warte = ''; }, 100);
 }
+
+// Fokus auf ein Element, das sonst nicht fokussierbar ist (Ueberschrift, Meldung, Bereich). Pruefung 13.10.2026, B19 — Muster aus
+// express.html (09.10.2026): ein DAUERHAFTES tabindex="-1" laesst VoiceOver „klickbar“ sagen. Das Element traegt tabindex nur, solange
+// es den Fokus hat. Natuerlich fokussierbare Elemente und vorhandenes tabindex bleiben unangetastet.
+function fokusAuf(el, opts) {
+  if (!el) return;
+  if (!el.hasAttribute('tabindex') && !el.matches('a[href], button, input, select, textarea, summary, iframe, [contenteditable="true"]')) {
+    el.setAttribute('tabindex', '-1');
+    el.addEventListener('blur', () => el.removeAttribute('tabindex'), { once: true });
+  }
+  el.focus(opts);
+}
+window.fokusAuf = fokusAuf;
+
+// Ein Pfad DIESER Anwendung (Pruefung 13.10.2026, S14): beginnt mit genau einem „/“, ohne Backslash (Browser machen aus „/\host“
+// „//host“), und bleibt nach dem Aufloesen auf der eigenen Herkunft. Eine Stelle fuer alle Links, Downloads, Rahmen-Ziele und
+// „weiter“ im Frontend — heute kommen diese Werte vom eigenen Server; die Pruefung haelt, falls je Fremdes hineingeraet.
+function eigenerPfad(u) {
+  if (typeof u !== 'string' || !/^\/(?![\/\\])/.test(u) || u.indexOf('\\') >= 0) return false;
+  try { return new URL(u, window.location.origin).origin === window.location.origin; } catch (e) { return false; }
+}
+window.eigenerPfad = eigenerPfad;
 
 // Datum robust formatieren (kein Date()-Parsing des Rohstrings wegen
 // Safari-Eigenheiten bei SQLite-Zeitstempeln "YYYY-MM-DD HH:MM:SS").
@@ -151,15 +181,40 @@ function ganzeSeite(url) {
   (imRahmen() ? window.top : window).location.href = url;
 }
 window.ganzeSeite = ganzeSeite;
+// Pfade, die nie im Rahmen erscheinen — EINE Liste fuer die Elternseite (inkluagentSeiteImFensterMoeglich) und die eingebettete Seite
+// (Klicks unten). Seit der Pruefung 13.10.2026 (K7, B1) auch alle Seiten, die nicht mit base_app.html gebaut sind und darum nicht
+// eingebettet erscheinen koennen: oeffentliche Seiten (base_oeffentlich.html, base_start.html) und die statischen Seiten aus frontend/
+// (Datensicherheit, Impressum, Widerruf, Nutzungsbedingungen). Im Rahmen zeigten sie die ganze Seite samt Seitenleiste ein zweites Mal.
+// Fehlt hier eine, faengt der load-Hoerer des Rahmens sie ab (inkluagentRahmenGeladen: Seite ohne window.EINGEBETTET).
 function gehoertGanzeSeite(pfad) {
-  return /^\/(app|dashboard)(\/|\?|$)/.test(pfad) || /^\/(set-language|login|logout|register)(\/|\?|$)/.test(pfad);
+  return pfad === '/' || /^\/(app|dashboard|set-language|login|logout|register|forgot|reset|datensicherheit|impressum-app|widerruf-app|nutzungsbedingungen-app|ueber-uns|kontakt|preise|kuendigen|widerrufen|widerruf|impressum|datenschutz|nutzungsbedingungen|avv|api)(\/|\?|#|$)/.test(pfad);
 }
+window.gehoertGanzeSeite = gehoertGanzeSeite;
 function eingebettetEinrichten() {
   if (!imRahmen()) return;
   const zurueck = byId('zumGespraech');
   if (zurueck) zurueck.addEventListener('click', (e) => {
     e.preventDefault();
     try { window.parent.inkluagentZumGespraech(); } catch (err) { /* ohne Agent: nichts */ }
+  });
+  // Escape schliesst die Ueberlagerung des Arbeitsfensters auch, wenn der Fokus in dieser Seite steht (Pruefung 13.10.2026, B7): eine
+  // Taste im Rahmen erreicht die Elternseite nicht — auch nicht ein natives <dialog> dort (im Browser gemessen). Nicht, wenn die Seite
+  // Escape selbst braucht (eigener offener Dialog oder schon behandelt).
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('dialog[open]')) return;
+    try { if (typeof window.parent.inkluagentEscape === 'function' && window.parent.inkluagentEscape()) e.preventDefault(); } catch (err) { /* ohne Agent */ }
+  });
+  // Dateien, die diese Seite nicht selbst annimmt, gehen an „Dateien anhängen“ des InkluAgent — sonst oeffnete der Browser sie im Rahmen
+  // als Seite (Pruefung 13.10.2026, HK7). Eigene Ablagen der Seite (Hochladen) behandeln das Ereignis vorher und gehen vor.
+  const anhaengen = () => {
+    try { return typeof window.parent.inkluagentAnhangAktiv === 'function' && window.parent.inkluagentAnhangAktiv(); } catch (err) { return false; }
+  };
+  const mitDateien = (e) => Array.from((e.dataTransfer && e.dataTransfer.types) || []).indexOf('Files') >= 0;
+  document.addEventListener('dragover', (e) => { if (!e.defaultPrevented && mitDateien(e) && anhaengen()) e.preventDefault(); });
+  document.addEventListener('drop', (e) => {
+    if (e.defaultPrevented || !mitDateien(e) || !anhaengen()) return;
+    e.preventDefault();
+    window.parent.inkluagentAnhaengeHinzu(Array.from(e.dataTransfer.files || []));
   });
   document.addEventListener('click', (e) => {
     const a = e.target.closest && e.target.closest('a[href]');
@@ -172,17 +227,22 @@ function eingebettetEinrichten() {
   }, true);
 }
 // Ziel eines Hinfuehrens (Begleiter, 12.10.2026): ?hin=<id> bzw. ueberschrift — suchen (die Seite baut oft noch), aufklappen,
-// Fokus, einige Sekunden sichtbar markieren; der Parameter verschwindet aus der Adresse. Auf jeder Seite, auch im Arbeitsfenster.
-// Nur ids aus der festen Liste des Servers (inkluagent/begleiter.py).
+// Fokus, sichtbar markieren; der Parameter verschwindet aus der Adresse. Auf jeder Seite, auch im Arbeitsfenster.
+// Pruefung 13.10.2026: nur ids aus der Liste des Servers (S14: window.INKLUAGENT.hinZiele, aus inkluagent/begleiter.py; fehlt die
+// Liste, gilt wie bisher nur die Form einer id — ein fremder Link konnte sonst den Fokus auf jedes Element setzen). Die Markierung
+// bleibt, bis der Fokus das Ziel verlaesst (HB1; vorher 6 Sekunden — mit Lupe oft zu kurz). Fokus ueber fokusAuf (B19).
 function hinfuehrenBeimLaden() {
   let ziel = null;
   try { ziel = new URLSearchParams(window.location.search).get('hin'); } catch (e) { return; }
-  if (!ziel || !/^[A-Za-z][\w-]{0,40}$/.test(ziel)) return;
+  if (!ziel) return;
   try {
     const u = new URL(window.location.href);
     u.searchParams.delete('hin');
     history.replaceState(history.state, '', u);
   } catch (e) { /* Adresse bleibt */ }
+  if (!/^[A-Za-z][\w-]{0,40}$/.test(ziel)) return;
+  const liste = window.INKLUAGENT && Array.isArray(window.INKLUAGENT.hinZiele) ? window.INKLUAGENT.hinZiele : null;
+  if (liste && ziel !== 'ueberschrift' && liste.indexOf(ziel) < 0) return;
   let n = 0;
   const suchen = () => {
     const el = ziel === 'ueberschrift' ? document.querySelector('#main h1') : document.getElementById(ziel);
@@ -192,26 +252,24 @@ function hinfuehrenBeimLaden() {
       if (++n < 40) setTimeout(suchen, 100);
       return;
     }
-    if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) el.setAttribute('tabindex', '-1');
     el.classList.add('inkluagent-hin-ziel');
+    el.addEventListener('blur', () => el.classList.remove('inkluagent-hin-ziel'), { once: true });
     el.scrollIntoView({ block: 'center' });
-    el.focus({ preventScroll: true });
-    setTimeout(() => el.classList.remove('inkluagent-hin-ziel'), 6000);
+    fokusAuf(el, { preventScroll: true });
   };
   suchen();
 }
-// In der Agentenansicht oeffnen die Seiten der Navigation im Arbeitsfenster (inkluagent.js) — die Agentenansicht bleibt.
-function imArbeitsfensterOeffnen(e, a) {
-  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-  const pfad = a.getAttribute('href') || '';
-  if (typeof window.inkluagentSeiteImFensterMoeglich !== 'function' || !window.inkluagentSeiteImFensterMoeglich(pfad)) return;
-  e.preventDefault();
-  window.inkluagentSeiteImFenster(pfad, a.textContent.trim());
-}
 
+// Zur Anmeldung mit Ruecksprung. Im Rahmen des Arbeitsfensters (Pruefung 13.10.2026, K7) ist das Ziel die Seite des HAUPTFENSTERS —
+// sonst ging es nach der Anmeldung auf „/express?eingebettet=1“: eine eingebettete Seite ohne Seitenleiste und Agent.
 function zurAnmeldung(ziel) {
-  const hier = ziel || (window.location.pathname + window.location.search + window.location.hash);
-  ganzeSeite((!hier || hier.indexOf('/login') === 0) ? '/login' : '/login?weiter=' + encodeURIComponent(hier));
+  let hier = ziel;
+  if (!hier) {
+    let w = window;
+    try { if (imRahmen()) w = window.top; hier = w.location.pathname + w.location.search + w.location.hash; }
+    catch (e) { hier = ''; }
+  }
+  ganzeSeite((!hier || hier.indexOf('/login') === 0 || !eigenerPfad(hier)) ? '/login' : '/login?weiter=' + encodeURIComponent(hier));
 }
 window.zurAnmeldung = zurAnmeldung;
 
@@ -441,7 +499,6 @@ function renderSidebar() {
     a.textContent = it.korb ? expressKorbText() : it.label;
     if (it.korb) a.setAttribute('data-express-korb', '');
     if (navAktuell(it, path)) a.setAttribute('aria-current', 'page');
-    a.addEventListener('click', (e) => imArbeitsfensterOeffnen(e, a));
     li.appendChild(a);
     ul.appendChild(li);
   });
@@ -463,7 +520,6 @@ function renderSidebar() {
     a.href = it.href;
     a.textContent = it.label;
     if (navAktuell(it, path)) { a.setAttribute('aria-current', 'page'); konto.open = true; }
-    a.addEventListener('click', (e) => imArbeitsfensterOeffnen(e, a));
     li.appendChild(a);
     unter.appendChild(li);
   });
@@ -532,15 +588,21 @@ function seitenleisteGespraecheBauen(path) {
   liste.id = 'navGespraecheListe';
   liste.className = 'app-nav-gespraeche-liste';
   liste.setAttribute('aria-labelledby', 'navGespraecheTitel');
+  // Pruefung 13.10.2026 (B20): der Link zeigt auf die Lese-Seite, ein Klick setzt das Gespraech aber fort — das sagt jeder Eintrag
+  // als Beschreibung („Link, Wie mache ich …, setzt das Gespräch fort“); mit Strg/Cmd bleibt es die Lese-Seite
+  const hinweis = document.createElement('span');
+  hinweis.id = 'navGespraecheHinweis';
+  hinweis.className = 'visually-hidden';
+  hinweis.textContent = t('Setzt das Gespräch fort.');
   const alle = document.createElement('a');
   alle.href = '/gespraeche';
   alle.className = 'app-nav-alle';
   alle.textContent = t('Alle Gespräche');
   if (path === '/gespraeche') alle.setAttribute('aria-current', 'page');
-  alle.addEventListener('click', (e) => imArbeitsfensterOeffnen(e, alle));
   bereich.appendChild(h);
   bereich.appendChild(neu);
   bereich.appendChild(liste);
+  bereich.appendChild(hinweis);
   bereich.appendChild(alle);
   li.appendChild(bereich);
   seitenleisteGespraecheLaden();
@@ -556,24 +618,44 @@ async function seitenleisteGespraecheLaden() {
   } catch (e) { return; }
   const liste = byId('navGespraecheListe');
   if (!liste) return;
+  const eintraege = (daten.gespraeche || []).map((g) => ({ id: Number(g.id), aktuell: !!g.aktuell,
+    titel: g.titel || t('Gespräch vom {datum}', { datum: g.datum || '' }) })).filter((g) => g.id);
+  // Pruefung 13.10.2026 (B8): nur neu bauen, wenn sich die Liste geaendert hat — sie laedt nach jeder Antwort, und ein Neubau unter
+  // dem VoiceOver-Cursor oder dem Tastaturfokus liess beide an den Anfang springen. Wird doch neu gebaut, kommt der Fokus auf
+  // dasselbe Gespraech zurueck.
+  const stand = JSON.stringify(eintraege);
+  if (liste._stand === stand) return;
+  liste._stand = stand;
+  const ae = document.activeElement;
+  const fokusId = (ae && liste.contains(ae) && ae.dataset) ? ae.dataset.gespraech : null;
   liste.textContent = '';
-  (daten.gespraeche || []).forEach((g) => {
-    const id = Number(g.id);
-    if (!id) return;
+  eintraege.forEach((g) => {
     const li = document.createElement('li');
     const a = document.createElement('a');
-    a.href = '/gespraeche/' + id;
-    a.textContent = g.titel || t('Gespräch vom {datum}', { datum: g.datum || '' });
+    a.href = '/gespraeche/' + g.id;
+    a.dataset.gespraech = String(g.id);
+    a.textContent = g.titel;
+    a.setAttribute('aria-describedby', 'navGespraecheHinweis');
     if (g.aktuell) a.setAttribute('aria-current', 'true');
-    a.addEventListener('click', (e) => seitenleisteGespraechFortsetzen(e, id, a));
+    a.addEventListener('click', (e) => seitenleisteGespraechFortsetzen(e, g.id, a));
     li.appendChild(a);
     liste.appendChild(li);
   });
+  if (fokusId) {
+    const wieder = liste.querySelector('a[data-gespraech="' + fokusId + '"]') || byId('navNeuesGespraech');
+    if (wieder) wieder.focus();
+  }
 }
 window.seitenleisteGespraecheLaden = seitenleisteGespraecheLaden;
+// Waehrend der InkluAgent an einer Antwort arbeitet, wechselt kein Gespraech (Pruefung 13.10.2026, K3): die Antwort gehoert zum
+// Gespraech der Frage. inkluagentWechselErlaubt (inkluagent.js) sagt sonst, warum nicht.
+function gespraechWechselErlaubt() {
+  return typeof window.inkluagentWechselErlaubt !== 'function' || window.inkluagentWechselErlaubt();
+}
 async function seitenleisteGespraechFortsetzen(e, id, a) {
   if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   e.preventDefault();
+  if (!gespraechWechselErlaubt()) return;
   if (typeof window.alleAusstehendenSpeichern === 'function') {
     const fehler = await window.alleAusstehendenSpeichern();
     if (fehler && typeof window.speicherFehlerMelden === 'function') { window.speicherFehlerMelden(fehler); return; }
@@ -583,12 +665,13 @@ async function seitenleisteGespraechFortsetzen(e, id, a) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     const ziel = String(d.weiter || '');
-    window.location.href = /^\/(app|dashboard)\?/.test(ziel) ? ziel : a.href;
+    window.location.href = (eigenerPfad(ziel) && /^\/(app|dashboard)\?/.test(ziel)) ? ziel : a.href;
   } catch (err) {
     window.location.href = a.href;
   }
 }
 async function seitenleisteNeuesGespraech() {
+  if (!gespraechWechselErlaubt()) return;
   // Mit dem InkluAgent auf der Seite: dessen „Neues Gespräch“ (leert den Verlauf, Fokus ins Eingabefeld)
   const imAgenten = byId('inkluagentNeuesGespraech');
   if (imAgenten && typeof window.inkluagentNeuesGespraech === 'function') {
@@ -636,8 +719,11 @@ function ansichtUmschalter(host) {
   host.appendChild(p);
 }
 
-// Nach dem Wechsel: Fokus auf die Hauptueberschrift (die Projektseite baut sie erst nach dem Laden der Daten)
+// Nach dem Wechsel: Fokus auf die Hauptueberschrift (die Projektseite baut sie erst nach dem Laden der Daten). Nur im Hauptfenster
+// (Pruefung 13.10.2026, HK8/B19): die eingebettete Seite im Arbeitsfenster teilt sich sessionStorage mit ihm — lud sie schneller, nahm
+// sie den Merker und zog den Fokus in den Rahmen. Fokus ueber fokusAuf (kein dauerhaftes tabindex an der Ueberschrift).
 function ansichtFokusNachWechsel() {
+  if (imRahmen()) return;
   let gemerkt = false;
   try { gemerkt = sessionStorage.getItem('ansichtGewechselt') === '1'; sessionStorage.removeItem('ansichtGewechselt'); } catch (e) { /* egal */ }
   if (!gemerkt) return;
@@ -646,9 +732,24 @@ function ansichtFokusNachWechsel() {
     const h = document.querySelector('#main h1');
     if (h || ++n > 50) {
       clearInterval(t0);
-      if (h) { if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1'); h.focus(); }
+      if (h) fokusAuf(h);
     }
   }, 100);
+}
+
+// Sprunglinks oben auf der Seite (Pruefung 13.10.2026, B19): das Ziel bekommt den Fokus ueber fokusAuf — vorher trug der Bereich des
+// InkluAgent dafuer dauerhaft tabindex="-1". Ziele mit eigenem tabindex (#main) bleiben, wie sie sind.
+function sprunglinksEinrichten() {
+  // „Zurück zum Gespräch“ im Rahmen (#zumGespraech) fuehrt ins Elternfenster — eingebettetEinrichten
+  document.querySelectorAll('a.dash-skip[href^="#"]:not(#zumGespraech)').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      if (e.defaultPrevented) return;
+      const ziel = document.getElementById(a.getAttribute('href').slice(1));
+      if (!ziel) return;
+      e.preventDefault();
+      fokusAuf(ziel);
+    });
+  });
 }
 
 // Rechtliche Footer-Links (Impressum · Datenschutz · Nutzungsbedingungen) zentral
@@ -726,6 +827,7 @@ function renderLegalNote() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  sprunglinksEinrichten();
   eingebettetEinrichten();   // Arbeitsfenster der Agentenansicht (13.10.2026)
   hinfuehrenBeimLaden();     // Begleiter: Ziel auf dieser Seite
   await loadCurrentUser();   // setzt currentUser, Begrüßung, Tageslimit

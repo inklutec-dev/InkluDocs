@@ -1,13 +1,16 @@
-// InkluAgent: Chat-Bereich im Projekt (Aufbau, Verlauf, Senden, Bestaetigungs-Karten, Fokus- und Ansageregeln).
+// InkluAgent: Chat-Bereich (Aufbau, Verlauf, Senden, Bestaetigungs-Karten, Fokus- und Ansageregeln) und — in der Agentenansicht —
+// Chatstil mit Arbeitsfenster (Stand, Schritte, Seiten im Rahmen, Vergroessern).
 //
-// Ausgelagert aus backend/templates/app.html (09.10.2026, Konzept InkluAgent, Schritt 1) — der Code ist unveraendert,
-// nur 4 Leerzeichen weniger eingerueckt (Beleg im Commit: Pruefsumme des Blocks vor und nach dem Umzug gleich).
-// Geladen von app.html VOR dem Seitenskript; diese Datei definiert nur Funktionen (und Merker) und fuehrt beim Laden nichts
-// aus — ausser inkluagentBereichAufbauen() am Dateiende, das ohne festen Bereich sofort zurueckkehrt (Schritt 3). Sie nutzt die globalen Helfer der Seite: t() (Texte aus window.I18N, 6 Sprachen), announce(),
-// showProject(), window.WERKZEUG_NAMEN, window.Formular. Aufrufer: app.html (inkluagentSectionHtml/inkluagentInit),
-// dokument.js, formular.js, uebersetzen.js, abschluss.js.
+// Seit 09.10.2026 eine eigene Datei (vorher in backend/templates/app.html, Konzept InkluAgent, Schritt 1); seitdem stark ausgebaut
+// (Ausbau Runde 1 und 2, Stufe A, Pruefung 13.10.2026 — die Abschnitte nennen jeweils Datum und Grund).
+// Geladen VOR dem Seitenskript, nach dashboard.js; auf oberster Ebene stehen nur Funktionen und zwei Merker — einzige Ausfuehrung
+// beim Laden ist inkluagentBereichAufbauen() am Dateiende, das ohne festen Bereich sofort zurueckkehrt (Schritt 3). Globale Helfer
+// aus dashboard.js: t() (Texte aus window.I18N, 6 Sprachen), announce(), fokusAuf(), eigenerPfad(), gehoertGanzeSeite(),
+// zurAnmeldung(); aus den Projektansichten showProject(), window.WERKZEUG_NAMEN, window.Formular. Aufrufer: app.html
+// (inkluagentSectionHtml/inkluagentInit), dokument.js, formular.js, uebersetzen.js, abschluss.js, base_app.html (fester Bereich).
 // Ausbau Runde 2, Schritt 3 (Schalter AGENT_UEBERALL, window.INKLUAGENT.ueberall): base_app.html laedt die Datei auf JEDER
-// Seite und hat einen festen Bereich <aside id="inkluagentBereich"> nach dem Hauptinhalt. Dann baut inkluagentBereichAufbauen()
+// Seite und hat einen festen Bereich #inkluagentBereich nach dem Hauptinhalt (manuelle Ansicht: aside nach main; Agentenansicht seit
+// der Pruefung 13.10.2026, B17: section im Hauptbereich, neben div#main). Dann baut inkluagentBereichAufbauen()
 // den Agenten einmal dort auf; die Ansichten eines Projekts betten nichts mehr ein (inkluagentSectionHtml liefert '') und binden
 // den Bereich mit inkluagentInit an ihr Projekt. Seiten ohne Projekt nutzen das Gespraech des Kontos mit Konto-Werkzeugen.
 
@@ -62,7 +65,9 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         // novalidate (Runde 2, Schritt 1): Meldungen kommen aus inkluagentSend in die Statuszeile — nie die Blase des Browsers, die
         // ohne Ansage verschwindet und das Senden still verhindert
         +     '<form id="inkluagentForm" class="inkluagent-form" novalidate>'
-        +       '<label for="inkluagentInput" class="visually-hidden">' + t('Nachricht an den InkluAgent') + '</label>'
+        // Pruefung 13.10.2026 (B21, WCAG 2.5.3): sichtbar steht nur der Platzhalter — derselbe Satz ist jetzt der Name des Feldes
+        // (vorher „Nachricht an den InkluAgent“: Sprachsteuerung fand das Feld unter dem sichtbaren Text nicht)
+        +       '<label for="inkluagentInput" class="visually-hidden">' + inkluagentPlatzhalter(variante) + '</label>'
         +       '<textarea id="inkluagentInput" rows="2" maxlength="5000" '
         +         'placeholder="' + inkluagentPlatzhalter(variante) + '" '
         +         'aria-describedby="inkluagentHint"></textarea>'
@@ -145,8 +150,9 @@ function inkluagentHochgeladenZeigen(projectId, ergebnisse) {
     });
     ul.hidden = !ul.children.length;
 }
-// Dateien und Webadresse hochladen. Ergebnis: das Server-Ergebnis oder null (Fehler steht dann in der Statuszeile).
-async function inkluagentHochladen(projectId, dateien, webadresse) {
+// Dateien hochladen. Ergebnis: das Server-Ergebnis oder null (Fehler steht dann in der Statuszeile). Webadressen stehen seit 12.10.2026
+// in der Nachricht selbst — das Feld dafuer und sein Parameter sind weg (Pruefung 13.10.2026, HK2).
+async function inkluagentHochladen(projectId, dateien) {
     const k = window.INKLUAGENT || {};
     const max = k.max_dateien || 10;
     if (dateien.length > max) {
@@ -155,9 +161,8 @@ async function inkluagentHochladen(projectId, dateien, webadresse) {
     }
     const fd = new FormData();
     dateien.forEach(f => fd.append('dateien', f, f.name));
-    fd.append('webadresse', webadresse || '');
     if (projectId != null) fd.append('project_id', String(projectId));
-    inkluagentSetStatus(dateien.length ? t('Wird hochgeladen …') : t('Webadresse wird geladen …'), false);
+    inkluagentSetStatus(t('Wird hochgeladen …'), false);
     let res;
     try {
         res = await fetch('/api/agent/hochladen', { method: 'POST', body: fd });
@@ -165,13 +170,17 @@ async function inkluagentHochladen(projectId, dateien, webadresse) {
         inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
         return null;
     }
-    if (res.status === 401) { window.location.href = '/login'; return null; }
+    if (res.status === 401) { inkluagentZurAnmeldung(); return null; }
     const erg = await res.json().catch(() => ({}));
-    if (!res.ok) {
+    if (!res.ok) {   // 429 mit fertigem Satz: Tagesgrenze schon VOR dem Hochladen geprueft (Server, K4)
         inkluagentSetStatus((erg && typeof erg.detail === 'string') ? erg.detail : t('Hochladen nicht möglich.'), true);
         return null;
     }
     return erg;
+}
+// Abgelaufene Sitzung: zur Anmeldung mit Ruecksprung auf diese Seite (dashboard.js, K7); ohne die gemeinsame Datei wie bisher
+function inkluagentZurAnmeldung() {
+    if (typeof zurAnmeldung === 'function') zurAnmeldung(); else window.location.href = '/login';
 }
 // Eine gebuendelte Ansage nach dem Hochladen (Zahlen; die Gruende stehen in der Liste)
 function inkluagentHochladenSatz(ergebnisse) {
@@ -196,7 +205,7 @@ function inkluagentAnhaengenAn() {
 function inkluagentAnhangAktiv() {
     return !!document.getElementById('inkluagentAnhaengenBtn');
 }
-function inkluagentAnhangBauen(form, gespraech) {
+function inkluagentAnhangBauen(form, meldungen) {
     if (!inkluagentAnhaengenAn() || !form || inkluagentAnhangAktiv()) return;
     const k = window.INKLUAGENT || {};
     if (!Array.isArray(window._inkluagentAnhaenge)) window._inkluagentAnhaenge = [];
@@ -215,9 +224,11 @@ function inkluagentAnhangBauen(form, gespraech) {
     knopf.textContent = t('Dateien anhängen');
     knopf.setAttribute('aria-describedby', 'inkluagentAnhangHinweis');
     knopf.addEventListener('click', () => datei.click());
-    const hinweis = document.createElement('span');
+    // Pruefung 13.10.2026 (B21): Grenzen und „ziehen oder einfügen“ stehen sichtbar unter den Knoepfen — vorher nur fuer Screenreader,
+    // Sehende erfuhren sie erst aus einer Fehlermeldung
+    const hinweis = document.createElement('p');
     hinweis.id = 'inkluagentAnhangHinweis';
-    hinweis.className = 'visually-hidden';
+    hinweis.className = 'inkluagent-hint inkluagent-anhang-hinweis';
     hinweis.textContent = t('PDF, Word (.docx) und Bilder, höchstens {n} Dateien, je bis {mb} MB. Du kannst Dateien auch ins Gespräch ziehen oder einfügen.',
                             { n: k.max_dateien || 10, mb: k.max_mb || 50 });
     const liste = document.createElement('ul');
@@ -225,39 +236,29 @@ function inkluagentAnhangBauen(form, gespraech) {
     liste.className = 'inkluagent-anhaenge';
     liste.setAttribute('aria-label', t('Angehängte Dateien'));
     liste.hidden = true;
+    const send = document.getElementById('inkluagentSendBtn');
+    if (send && send.parentNode) send.parentNode.insertBefore(knopf, send);   // erst „Dateien anhängen“, dann „Senden“
+    else form.appendChild(knopf);
+    [datei, hinweis, liste].forEach(el => form.appendChild(el));
+    // Meldung und Ergebnis des Hochladens stehen im Fluss ueber der Eingabe, nicht im angehefteten Teil (Pruefung 13.10.2026, B6): dort
+    // wuchsen sie auf bis zu 60 % des Bildschirms und verdeckten den Fokus
     const meldung = document.createElement('p');
     meldung.id = 'inkluagentAnhangMeldung';
     meldung.className = 'inkluagent-hint inkluagent-anhang-meldung';
     meldung.hidden = true;
-    // Ergebnis des Hochladens wie beim Feld (inkluagentHochgeladenZeigen fuellt es)
-    const ergebnis = document.createElement('ul');
-    ergebnis.id = 'inkluagentHochgeladen';
-    ergebnis.className = 'inkluagent-hochgeladen';
-    ergebnis.setAttribute('aria-label', t('Ergebnis des Hochladens'));
-    ergebnis.hidden = true;
-    const send = document.getElementById('inkluagentSendBtn');
-    if (send && send.parentNode) send.parentNode.insertBefore(knopf, send);   // erst „Dateien anhängen“, dann „Senden“
-    else form.appendChild(knopf);
-    [datei, hinweis, liste, meldung, ergebnis].forEach(el => form.appendChild(el));
-    // Hineinziehen (Maus): das ganze Gespraech nimmt Dateien an
-    if (gespraech && !gespraech.dataset.ablage) {
-        gespraech.dataset.ablage = '1';
-        const mitDateien = e => Array.from((e.dataTransfer && e.dataTransfer.types) || []).indexOf('Files') >= 0;
-        gespraech.addEventListener('dragover', e => {
-            if (!inkluagentAnhangAktiv() || !mitDateien(e)) return;
-            e.preventDefault();
-            gespraech.classList.add('inkluagent-ablage-aktiv');
-        });
-        gespraech.addEventListener('dragleave', e => {
-            if (!gespraech.contains(e.relatedTarget)) gespraech.classList.remove('inkluagent-ablage-aktiv');
-        });
-        gespraech.addEventListener('drop', e => {
-            gespraech.classList.remove('inkluagent-ablage-aktiv');
-            if (!inkluagentAnhangAktiv() || !mitDateien(e)) return;
-            e.preventDefault();
-            inkluagentAnhaengeHinzu(Array.from(e.dataTransfer.files || []));
-        });
+    const ziel = meldungen || form;
+    const status = document.getElementById('inkluagentStatus');
+    const davor = (status && status.parentNode === ziel) ? status : null;
+    if (!document.getElementById('inkluagentHochgeladen')) {   // Ergebnis des Hochladens wie beim Feld (inkluagentHochgeladenZeigen)
+        const ergebnis = document.createElement('ul');
+        ergebnis.id = 'inkluagentHochgeladen';
+        ergebnis.className = 'inkluagent-hochgeladen';
+        ergebnis.setAttribute('aria-label', t('Ergebnis des Hochladens'));
+        ergebnis.hidden = true;
+        ziel.insertBefore(ergebnis, davor);
     }
+    ziel.insertBefore(meldung, davor);
+    inkluagentAblageEinrichten();
     // Einfuegen (Befehl-V) im Eingabefeld: Dateien aus der Zwischenablage anhaengen, Text bleibt Text
     const input = document.getElementById('inkluagentInput');
     if (input && !input.dataset.einfuegen) {
@@ -272,11 +273,31 @@ function inkluagentAnhangBauen(form, gespraech) {
     }
     inkluagentAnhaengeZeigen();
 }
-function inkluagentAnhangEntfernenAlles() {
-    ['inkluagentAnhaengenBtn', 'inkluagentAnhangDatei', 'inkluagentAnhangHinweis', 'inkluagentAnhaenge', 'inkluagentAnhangMeldung']
-        .forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
-    const erg = document.getElementById('inkluagentHochgeladen');
-    if (erg && !erg.closest('.inkluagent-hochladen')) erg.remove();
+// Hineinziehen (Maus): Dateien gehen an JEDER Stelle der Seite in die Anhaenge — vorher nur ueber dem Gespraech; daneben oeffnete der
+// Browser die Datei als Seite, und die Agentenansicht war weg (Pruefung 13.10.2026, HK7). Die eingebettete Seite im Arbeitsfenster gibt
+// Dateien hierher weiter (dashboard.js). Einmal je Seite; wirkt nur, solange es „Dateien anhängen“ gibt. Ablagen der Seite selbst
+// (die das Ereignis schon behandeln) gehen vor. Waehrend des Ziehens ist das Gespraech deutlich umrandet.
+function inkluagentAblageEinrichten() {
+    if (window._inkluagentAblage) return;
+    window._inkluagentAblage = true;
+    const mitDateien = e => Array.from((e.dataTransfer && e.dataTransfer.types) || []).indexOf('Files') >= 0;
+    const markieren = an => {
+        const g = document.querySelector('.inkluagent-gespraech');
+        if (g) g.classList.toggle('inkluagent-ablage-aktiv', an);
+    };
+    document.addEventListener('dragover', e => {
+        if (e.defaultPrevented || !inkluagentAnhangAktiv() || !mitDateien(e)) return;
+        e.preventDefault();
+        markieren(true);
+    });
+    document.addEventListener('dragleave', e => { if (!e.relatedTarget) markieren(false); });
+    document.addEventListener('dragend', () => markieren(false));
+    document.addEventListener('drop', e => {
+        markieren(false);
+        if (e.defaultPrevented || !inkluagentAnhangAktiv() || !mitDateien(e)) return;
+        e.preventDefault();
+        inkluagentAnhaengeHinzu(Array.from(e.dataTransfer.files || []));
+    });
 }
 function inkluagentGroesse(bytes) {
     const lang = document.documentElement.lang || 'de';
@@ -286,14 +307,14 @@ function inkluagentGroesse(bytes) {
 function inkluagentAnhangZahl(n) {
     return n === 0 ? t('Keine Datei angehängt.') : (n === 1 ? t('1 Datei angehängt.') : t('{n} Dateien angehängt.', { n: n }));
 }
-function inkluagentAnhangMelden(text, fehler) {
+function inkluagentAnhangMelden(text, fehler, still) {
     const p = document.getElementById('inkluagentAnhangMeldung');
     if (p) {
         p.textContent = text || '';
         p.hidden = !text;
         if (fehler) p.setAttribute('data-state', 'error'); else p.removeAttribute('data-state');
     }
-    if (text) announce(text);
+    if (text && !still) announce(text);
 }
 function inkluagentAnhaengeHinzu(dateien) {
     if (!dateien || !dateien.length || !inkluagentAnhangAktiv()) return;
@@ -347,10 +368,14 @@ function inkluagentAnhangEntfernen(i) {
     if (ziel) ziel.focus();
     inkluagentAnhangMelden(t('„{name}“ entfernt.', { name: weg ? weg.name : '' }) + ' ' + inkluagentAnhangZahl(liste.length), false);
 }
-function inkluagentAnhaengeLeeren() {
-    window._inkluagentAnhaenge = [];
+// Nach dem Hochladen: nur die Dateien weg, die gerade mitgingen (Pruefung 13.10.2026, B12) — was waehrend des Hochladens neu
+// angehaengt wurde, bleibt fuer die naechste Nachricht (vorher loeschte das Leeren es stumm mit). Ohne Liste: alle.
+function inkluagentAnhaengeLeeren(gesendet) {
+    const weg = Array.isArray(gesendet) ? gesendet : null;
+    window._inkluagentAnhaenge = weg ? (window._inkluagentAnhaenge || []).filter(f => weg.indexOf(f) < 0) : [];
     inkluagentAnhaengeZeigen();
-    inkluagentAnhangMelden('', false);
+    const rest = window._inkluagentAnhaenge.length;
+    inkluagentAnhangMelden(rest ? inkluagentAnhangZahl(rest) : '', false, true);
 }
 
 // Schritt 3 (InkluAgent-Ausbau Runde 1): Kurzhilfe vor dem Chat — nur mit Schalter (window.FUNKTIONEN aus funktionen.py)
@@ -393,34 +418,22 @@ function inkluagentAgentenansicht() {
     // Schritt 3: im festen Bereich steht der Agent nach main (dann bleibt in main nur die Hauptueberschrift)
     const sec = document.querySelector('.inkluagent-section');
     if (!main || !sec) return false;
-    const h1 = main.querySelector('h1');
-    const behalten = [sec, h1].filter(Boolean);
-    (function lauf(el) {
-        Array.from(el.children).forEach(k => {
-            if (behalten.indexOf(k) >= 0) return;
-            if (behalten.some(b => k.contains(b))) { lauf(k); return; }
-            if (/^(SCRIPT|STYLE|TEMPLATE|DIALOG)$/.test(k.tagName) || k.hasAttribute('data-agentenansicht')) return;
-            // Steve 12.10.2026 (Staging): Teile, die beim Laden noch versteckt waren und die die Seite erst danach fuellt und
-            // einblendet (letzte Projekte auf der Startseite), rutschten durch. Sie werden jetzt auch markiert — die Markierung
-            // haelt sie per CSS versteckt, auch wenn die Seite hidden spaeter aufhebt.
-            if (k.hidden) { k.setAttribute('data-agentenansicht', 'war-versteckt'); return; }
-            k.hidden = true;
-            k.setAttribute('data-agentenansicht', 'aus');
-        });
-    })(main);
-    // Was die Seite spaeter neu in den Hauptbereich setzt, kommt ebenso weg (einmal je Seite beobachten, gebuendelt)
+    inkluagentAgentenansichtAusblenden();
+    // Was die Seite spaeter neu in den Hauptbereich setzt, kommt ebenso weg (einmal je Seite beobachten, gebuendelt). Der Beobachter
+    // blendet NUR aus (Pruefung 13.10.2026, K19): vorher baute er bei jeder Aenderung im verborgenen Hauptbereich — Projektansichten
+    // fragen alle 2,5 s nach — auch das ganze Arbeitsfenster neu, und ein Fokus auf einem Link dort fiel auf body.
     if (!window._agentenansichtBeobachter && typeof MutationObserver !== 'undefined') {
         let wartet = false;
         window._agentenansichtBeobachter = new MutationObserver(() => {
             if (wartet || window._agentenansichtHierAus) return;
             wartet = true;
-            setTimeout(() => { wartet = false; inkluagentAgentenansicht(); }, 50);
+            setTimeout(() => { wartet = false; if (!window._agentenansichtHierAus) inkluagentAgentenansichtAusblenden(); }, 50);
         });
         window._agentenansichtBeobachter.observe(main, { childList: true, subtree: true });
     }
     sec.classList.add('inkluagent-gross');
     // Wie ChatGPT/Claude mit Arbeitsfenster (Michael Karbe, Feedback 20261012 - 1, Punkt 6; Schalter AGENT_ARBEITSFENSTER)
-    if (inkluagentArbeitsfensterAn()) { inkluagentChatstil(true); inkluagentArbeitsZeigen(); }
+    if (inkluagentArbeitsfensterAn()) { inkluagentChatstil(); inkluagentArbeitsZeigen(); }
     // Die Knoepfe des Projekts gibt es nur in der manuellen Ansicht (Hochladen ohne Hochladefeld ebenso): ein Knopf zeigt dieses
     // Projekt fuer diese Seite manuell, ohne die gespeicherte Einstellung zu aendern.
     // Im Chatstil (Arbeitsfenster) kein „nur diese Seite manuell“: Seiten oeffnen sich im Arbeitsfenster, die Ansicht wechselt nur
@@ -444,11 +457,31 @@ function inkluagentAgentenansicht() {
     }
     return true;
 }
+// Im Hauptbereich bleiben nur die Ueberschrift 1, der Agent (wo er eingebettet ist) und was ausdruecklich bleiben soll
+// (data-agentenansicht-bleibt, z. B. „Projekt gelöscht … Zur Übersicht“); alles andere bekommt hidden (auch fuer Screenreader weg).
+function inkluagentAgentenansichtAusblenden() {
+    const main = document.getElementById('main');
+    if (!main) return;
+    const h1 = main.querySelector('h1');
+    const behalten = [document.querySelector('.inkluagent-section'), h1].filter(Boolean);
+    (function lauf(el) {
+        Array.from(el.children).forEach(k => {
+            if (behalten.indexOf(k) >= 0 || k.hasAttribute('data-agentenansicht-bleibt')) return;
+            if (behalten.some(b => k.contains(b))) { lauf(k); return; }
+            if (/^(SCRIPT|STYLE|TEMPLATE|DIALOG)$/.test(k.tagName) || k.hasAttribute('data-agentenansicht')) return;
+            // Steve 12.10.2026 (Staging): Teile, die beim Laden noch versteckt waren und die die Seite erst danach fuellt und
+            // einblendet (letzte Projekte auf der Startseite), rutschten durch. Sie werden jetzt auch markiert — die Markierung
+            // haelt sie per CSS versteckt, auch wenn die Seite hidden spaeter aufhebt.
+            if (k.hidden) { k.setAttribute('data-agentenansicht', 'war-versteckt'); return; }
+            k.hidden = true;
+            k.setAttribute('data-agentenansicht', 'aus');
+        });
+    })(main);
+}
 
 // Nur fuer diese Seite zurueck zur manuellen Ansicht: alles wieder sichtbar, Fokus auf die Hauptueberschrift
 function inkluagentAgentenansichtAufheben() {
     window._agentenansichtHierAus = true;
-    inkluagentChatstil(false);
     document.querySelectorAll('[data-agentenansicht]').forEach(el => {
         if (el.getAttribute('data-agentenansicht') === 'aus') el.hidden = false;   // „war-versteckt“: so, wie die Seite es jetzt will
         el.removeAttribute('data-agentenansicht');
@@ -456,7 +489,7 @@ function inkluagentAgentenansichtAufheben() {
     document.querySelectorAll('.inkluagent-gross').forEach(el => el.classList.remove('inkluagent-gross'));
     document.querySelectorAll('.inkluagent-agentenansicht-hinweis').forEach(el => el.remove());
     const h = document.querySelector('#main h1');
-    if (h) { if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1'); h.focus(); }
+    if (h) fokusAuf(h);   // ohne dauerhaftes tabindex (Pruefung 13.10.2026, B19)
 }
 
 // ─── Agentenansicht wie ChatGPT/Claude mit Arbeitsfenster ─────────────────────────────────────────────────────────────────────
@@ -472,58 +505,64 @@ function inkluagentArbeitsfensterAn() {
 function inkluagentChatstilAktiv() {
     return !!document.querySelector('#inkluagentBereich .inkluagent-chatstil');
 }
-// Aufbau umstellen. Die Teile werden VERSCHOBEN, nicht neu gebaut — Verlauf, Entwurf und Ereignisse bleiben. an = false: zurueck
-// zur Reihenfolge der manuellen Ansicht (Eingabe zuerst, Michaels Punkt 1).
-function inkluagentChatstil(an) {
+// Aufbau umstellen. Die Teile werden VERSCHOBEN, nicht neu gebaut — Verlauf, Entwurf und Ereignisse bleiben. Einmal je Seite: einen Weg
+// zurueck gibt es nicht (die manuelle Ansicht kommt ueber den Umschalter der Seitenleiste, mit Neuladen); der fruehere Zweig „zurueck“
+// war nie erreichbar und ist weg (Pruefung 13.10.2026, HK2).
+function inkluagentChatstil() {
     const sec = document.querySelector('#inkluagentBereich .inkluagent-section');
     const panel = document.getElementById('inkluagentPanel');
-    if (!sec || !panel || an === sec.classList.contains('inkluagent-chatstil')) return;
+    if (!sec || !panel || sec.classList.contains('inkluagent-chatstil')) return;
     const form = document.getElementById('inkluagentForm');
     const log = document.getElementById('inkluagentLog');
     const leiste = panel.querySelector('.inkluagent-gespraech-leiste');
     const frueher = panel.querySelector('.inkluagent-frueher');
     const trenner = panel.querySelector('.inkluagent-trenner');
     const beschreibung = panel.querySelector('.inkluagent-beschreibung');
-    sec.classList.toggle('inkluagent-chatstil', an);
-    document.documentElement.classList.toggle('agentenansicht-chatstil', an);
+    sec.classList.add('inkluagent-chatstil');
+    document.documentElement.classList.add('agentenansicht-chatstil');
     // Chat-Start (leeres Gespraech mittig) nur dort, wo der Agent die Seite ersetzt — nicht unter dem Inhalt anderer Seiten
-    document.documentElement.classList.toggle('agentenansicht-chatstart', an);
+    document.documentElement.classList.add('agentenansicht-chatstart');
     // Steve 12.10.2026: in der Agentenansicht laesst sich der Agent nicht auf- und zuklappen — die Ueberschrift 2 „InkluAgent“
-    // ist dann schlicht (der Knopf ist weg, der Bereich immer offen); zurueck in der manuellen Ansicht ist der Knopf wieder da
+    // ist dann schlicht (der Knopf ist weg, der Bereich immer offen)
     const toggle = document.getElementById('inkluagentToggle');
     const kopf = document.getElementById('inkluagentHeading');
     if (toggle && kopf) {
-        let titel = kopf.querySelector('.inkluagent-titel');
-        if (an) {
-            if (!titel) {
-                titel = document.createElement('span');
-                titel.className = 'inkluagent-titel';
-                titel.textContent = t('InkluAgent');
-                kopf.appendChild(titel);
-            }
-            toggle.hidden = true;
-            panel.hidden = false;
-        } else {
-            if (titel) titel.remove();
-            toggle.hidden = false;
+        if (!kopf.querySelector('.inkluagent-titel')) {
+            const titel = document.createElement('span');
+            titel.className = 'inkluagent-titel';
+            titel.textContent = t('InkluAgent');
+            kopf.appendChild(titel);
         }
+        toggle.hidden = true;
+        panel.hidden = false;
     }
-    if (an) {
-        const spalten = document.createElement('div');
-        spalten.className = 'inkluagent-spalten';
-        const gespraech = document.createElement('div');
-        gespraech.className = 'inkluagent-gespraech';
-        [frueher, log, form, leiste, trenner, beschreibung].forEach(el => { if (el) gespraech.appendChild(el); });
-        spalten.appendChild(gespraech);
-        spalten.appendChild(inkluagentArbeitsfensterBauen());
-        panel.appendChild(spalten);
-        inkluagentAnhangBauen(form, gespraech);   // „Dateien anhängen“ (nur ohne das Feld „Dateien mitschicken“)
-    } else {
-        inkluagentAnhangEntfernenAlles();
-        [form, log, leiste, frueher, trenner, beschreibung].forEach(el => { if (el) panel.appendChild(el); });
-        const spalten = panel.querySelector('.inkluagent-spalten');
-        if (spalten) spalten.remove();
-    }
+    const spalten = document.createElement('div');
+    spalten.className = 'inkluagent-spalten';
+    const gespraech = document.createElement('div');
+    gespraech.className = 'inkluagent-gespraech';
+    // Meldungen (Ergebnis des Hochladens, Anhang-Meldung, Statuszeile) im Fluss zwischen Verlauf und Eingabe; angeheftet bleiben nur
+    // Feld und Knoepfe (Pruefung 13.10.2026, B6)
+    const meldungen = document.createElement('div');
+    meldungen.className = 'inkluagent-meldungen';
+    ['inkluagentHochgeladen', 'inkluagentStatus'].forEach(id => { const el = document.getElementById(id); if (el) meldungen.appendChild(el); });
+    [frueher, log, meldungen, form, leiste, trenner, beschreibung].forEach(el => { if (el) gespraech.appendChild(el); });
+    // Hier scrollt die Seite, nicht der Verlauf: kein leerer Tab-Stopp (B22; tabindex="0" braucht nur der scrollbare Kasten der
+    // manuellen Ansicht, axe scrollable-region-focusable)
+    if (log) log.removeAttribute('tabindex');
+    spalten.appendChild(gespraech);
+    spalten.appendChild(inkluagentArbeitsfensterBauen());
+    panel.appendChild(spalten);
+    inkluagentAnhangBauen(form, meldungen);   // „Dateien anhängen“ (nur ohne das Feld „Dateien mitschicken“)
+    inkluagentEingabeHoeheBeobachten(form);
+    document.addEventListener('click', inkluagentLinkImFenster);   // B1: interne Links oeffnen im Arbeitsfenster
+}
+// Wie hoch die angeheftete Eingabe gerade ist, steht in --agent-eingabe-hoehe; daraus folgt der Platz, den der Browser unter dem Fokus
+// freihaelt (scroll-padding-bottom, style.css). Vorher eine feste Zahl fuer eine wachsende Hoehe (Pruefung 13.10.2026, B6, WCAG 2.4.11).
+function inkluagentEingabeHoeheBeobachten(form) {
+    if (!form || typeof ResizeObserver === 'undefined') return;
+    new ResizeObserver(() => {
+        document.documentElement.style.setProperty('--agent-eingabe-hoehe', Math.ceil(form.getBoundingClientRect().height) + 'px');
+    }).observe(form);
 }
 // Ort nachziehen, wenn die Seite ihre Ueberschrift oder Navigation spaeter setzt (Startseite: „Hallo, …“ erst nach dem Laden)
 function inkluagentArbeitsOrtBeobachten() {
@@ -574,6 +613,7 @@ function inkluagentArbeitsfensterBauen() {
         + '<dl id="arbeitsAngaben" class="arbeitsfenster-angaben" hidden></dl>'
         // Ueberblick, solange er nichts tut (Steve 12.10.2026): Guthaben, was laeuft, Express, zuletzt bearbeitet
         + '<div id="arbeitsUeberblick" class="arbeitsfenster-ueberblick" hidden><h3>' + t('Überblick') + '</h3><dl></dl></div>'
+        // alt: der vorhandene Alt-Text des Bildes, wenn der Server ihn mitschickt (HB6), sonst leer — die Bildunterschrift nennt das Bild
         + '<figure id="arbeitsBild" class="arbeitsfenster-bild" hidden><img alt=""><figcaption></figcaption></figure>'
         + '<div id="arbeitsErgebnis" class="arbeitsfenster-ergebnis" hidden><h3>' + t('Zuletzt fertig') + '</h3><p></p></div>'
         + '<h3 id="arbeitsSchritteTitel" hidden>' + t('Schritte') + '</h3>'
@@ -583,22 +623,11 @@ function inkluagentArbeitsfensterBauen() {
     s.querySelector('#arbeitsGross').addEventListener('click', () => inkluagentFensterGross());
     s.querySelector('#arbeitsZurueck').addEventListener('click', inkluagentZumGespraech);
     s.querySelector('#arbeitsSeiteZu').addEventListener('click', inkluagentSeiteSchliessen);
-    s.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && document.documentElement.classList.contains('arbeitsfenster-gross') && inkluagentFensterSchmal()) {
-            e.preventDefault();
-            inkluagentFensterGross(false);
-            s.querySelector('#arbeitsGross').focus();
-        }
-    });
-    // Nach einem Neuladen (Sprache, Ansicht, Seitenwechsel) wieder dieselbe Seite und Groesse — still, ohne Fokus und Ansage
-    setTimeout(() => {
-        let w = null;
-        try { w = JSON.parse(sessionStorage.getItem('inkluagent.fenster') || 'null'); } catch (e) { w = null; }
-        if (w && w.pfad && Date.now() - (Number(w.zeit) || 0) < 2 * 60 * 60 * 1000) inkluagentSeiteImFenster(w.pfad, w.name, true);
-        let gross = '';
-        try { gross = sessionStorage.getItem('inkluagent.fenster.gross') || ''; } catch (e) { gross = ''; }
-        if (gross === '1' && !inkluagentFensterSchmal()) inkluagentFensterGross(true);
-    }, 0);
+    // Jedes Dokument, das der Rahmen laedt, meldet sich (Pruefung 13.10.2026, K6/K7/B14) — dauerhaft, nicht nur beim Oeffnen
+    const rahmen = s.querySelector('#arbeitsSeiteRahmen');
+    rahmen.addEventListener('load', () => inkluagentRahmenGeladen(rahmen));
+    inkluagentUeberlagerungEinrichten();
+    setTimeout(inkluagentFensterWiederherstellen, 0);
     const ansagen = s.querySelector('#arbeitsAnsagen');
     ansagen.checked = inkluagentSchritteAnsagen();
     ansagen.addEventListener('change', () => {
@@ -607,73 +636,236 @@ function inkluagentArbeitsfensterBauen() {
     return s;
 }
 // ─── Seiten im Arbeitsfenster (13.10.2026) ───
-// Die Agentenansicht zeigt nur Gespraech + Arbeitsfenster. Wohin der Nutzer will (Navigation, Hinfuehren), oeffnet sich als echte
+// Die Agentenansicht zeigt nur Gespraech + Arbeitsfenster. Wohin der Nutzer will (Navigation, Links, Hinfuehren), oeffnet sich als echte
 // Seite im Rahmen des Arbeitsfensters (eingebettet: ohne Seitenleiste, Fusszeile, Agent — i18n.eingebettet, base_app.html) und ist
-// dort bedienbar. Projekte und die Startseite bleiben ganze Seiten (dort ist der Agent selbst), ebenso Sprachwechsel und Anmeldung.
+// dort bedienbar. Projekte und die Startseite bleiben ganze Seiten (dort ist der Agent selbst), ebenso Sprachwechsel, Anmeldung und
+// Seiten ohne eingebettete Fassung (dashboard.js, gehoertGanzeSeite).
+// Pruefung 13.10.2026: EIN Zustand window._arbeitsSeite ({offen, pfad, name, fokus, hin}); das geladene Dokument ist die Wahrheit
+// (K6/B14) — Titel, Name des Rahmens und gemerkte Seite folgen ihm bei jeder Navigation im Rahmen.
 function inkluagentSeiteImFensterMoeglich(pfad) {
-    if (!inkluagentChatstilAktiv() || typeof pfad !== 'string') return false;
-    if (!/^\/[A-Za-z0-9\/_-]*(\?[A-Za-z0-9=&_%-]*)?$/.test(pfad)) return false;
-    return !/^\/(app|dashboard)(\/|\?|$)/.test(pfad) && !/^\/(set-language|login|logout|register)(\/|\?|$)/.test(pfad);
+    if (!inkluagentChatstilAktiv() || typeof pfad !== 'string' || !eigenerPfad(pfad)) return false;
+    if (!/^\/[A-Za-z0-9\/_-]*(\?[A-Za-z0-9=&_%-]*)?(#[A-Za-z0-9_-]*)?$/.test(pfad)) return false;   // mit Anker („Zur Ablage“)
+    return !gehoertGanzeSeite(pfad);
 }
+// Pfad ohne die genannten Parameter (eingebettet, hin, agent) — so wird gemerkt und verglichen
+function inkluagentPfadOhne(pfad, namen) {
+    const s = String(pfad);
+    const h = s.indexOf('#');
+    const anker = h >= 0 ? s.slice(h) : '';
+    const ohneAnker = h >= 0 ? s.slice(0, h) : s;
+    const i = ohneAnker.indexOf('?');
+    if (i < 0) return s;
+    const p = new URLSearchParams(ohneAnker.slice(i + 1));
+    namen.forEach(n => p.delete(n));
+    const q = p.toString();
+    return ohneAnker.slice(0, i) + (q ? '?' + q : '') + anker;
+}
+// Pruefung 13.10.2026 (B1): EINE Stelle entscheidet, wo eine interne Seite in der Agentenansicht erscheint — jeder Link dieser Seite
+// (Navigation, „Alles, was der InkluAgent kann“, „Zur Ablage“, „Gespräch … lesen“, Hinfuehren, Fusszeile …), der ins Arbeitsfenster
+// passt, oeffnet dort. Vorher taten das nur die Eintraege der Seitenleiste und Hinfuehren-Links; alle anderen luden die ganze Seite, deren
+// Inhalt die Agentenansicht dann ausblendete. Eigene Klick-Handler (Gespraech fortsetzen) und Strg/Cmd-Klick gehen vor.
+function inkluagentLinkImFenster(e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = (e.target && e.target.closest) ? e.target.closest('a[href]') : null;
+    if (!a || a.hasAttribute('download') || (a.target && a.target !== '_self')) return;
+    const href = a.getAttribute('href') || '';
+    if (!inkluagentSeiteImFensterMoeglich(href)) return;
+    e.preventDefault();
+    inkluagentSeiteImFenster(href, a.textContent.trim());
+}
+// Seite im Fenster oeffnen. still: ohne Fokus (Neuladen, Seite selbst); sonst geht der Fokus in die Seite, sobald sie geladen ist — auf
+// ihre Ueberschrift 1 bzw. das Ziel von ?hin=. Keine eigene Ansage mehr (B15): Name des Rahmens und Ueberschrift sagen es.
 function inkluagentSeiteImFenster(pfad, name, still) {
     const f = document.getElementById('arbeitsfenster');
-    if (!f || !inkluagentSeiteImFensterMoeglich(pfad)) { window.location.href = pfad; return; }
-    const bereich = f.querySelector('#arbeitsSeite');
-    const rahmen = f.querySelector('#arbeitsSeiteRahmen');
-    const titel = String(name || '').trim() || pfad.split('?')[0];
-    f.querySelector('#arbeitsSeiteTitel').textContent = t('Seite: {name}', { name: titel });
-    rahmen.title = t('Arbeitsfenster: {name}', { name: titel });
-    bereich.hidden = false;
-    // gemerkt OHNE Ziel (?hin): nach einem Neuladen oeffnet die Seite still wieder, ohne dem Nutzer den Fokus zu nehmen
-    const ohneZiel = pfad.split('?')[0] + (pfad.indexOf('?') >= 0 ? pfad.slice(pfad.indexOf('?')).replace(/([?&])hin=[^&]*&?/, '$1').replace(/[?&]$/, '') : '');
-    try { sessionStorage.setItem('inkluagent.fenster', JSON.stringify({ pfad: ohneZiel, name: titel, zeit: Date.now() })); } catch (e) { /* nur diese Seite */ }
+    if (!f || !inkluagentSeiteImFensterMoeglich(pfad)) { if (eigenerPfad(pfad)) window.location.href = pfad; return; }
+    window._arbeitsSeite = { offen: true, pfad: inkluagentPfadOhne(pfad, ['hin', 'eingebettet']),
+                             name: String(name || '').trim() || pfad.split(/[?#]/)[0], fokus: !still, hin: /[?&]hin=/.test(pfad) };
+    inkluagentSeiteZeigen();
+    const h = pfad.indexOf('#');
+    const ohneAnker = h >= 0 ? pfad.slice(0, h) : pfad;
+    inkluagentRahmenLaden(f.querySelector('#arbeitsSeiteRahmen'),
+                          ohneAnker + (ohneAnker.indexOf('?') >= 0 ? '&' : '?') + 'eingebettet=1' + (h >= 0 ? pfad.slice(h) : ''));
+}
+// K6: laden OHNE Eintrag im Verlauf des Tabs — vorher legte jedes src= einen an (und „Seite schließen“ noch einen); die Zurueck-Taste
+// bewegte dann erst den oft verborgenen Rahmen. ?eingebettet=1 nur fuer Browser ohne Fetch-Metadaten (i18n.eingebettet).
+function inkluagentRahmenLaden(rahmen, url) {
+    if (!rahmen) return;
+    try { rahmen.contentWindow.location.replace(url); } catch (e) { rahmen.src = url; }
+}
+// Sichtbarer Stand aus window._arbeitsSeite: Ueberschrift, Name des Rahmens, Merker fuers Neuladen (mit der Seite, auf der man war: B1)
+function inkluagentSeiteZeigen() {
+    const f = document.getElementById('arbeitsfenster');
+    const s = window._arbeitsSeite;
+    if (!f || !s) return;
+    const titel = f.querySelector('#arbeitsSeiteTitel');
+    const neu = t('Seite: {name}', { name: s.name });
+    if (titel.textContent !== neu) titel.textContent = neu;
+    f.querySelector('#arbeitsSeiteRahmen').title = t('Arbeitsfenster: {name}', { name: s.name });
+    f.querySelector('#arbeitsSeite').hidden = false;
+    try {
+        sessionStorage.setItem('inkluagent.fenster', JSON.stringify({ pfad: s.pfad, name: s.name, zeit: Date.now(),
+            seite: inkluagentPfadOhne(window.location.pathname + window.location.search, ['agent', 'hin']) }));
+    } catch (e) { /* nur diese Seite */ }
     inkluagentArbeitsZeigen();
-    if (!still) {
-        announce(t('Im Arbeitsfenster geöffnet: {name}', { name: titel }));
-        // Fokus in den Rahmen: das Ziel (?hin) setzt die Seite selbst (dashboard.js), sonst ihre Ueberschrift 1
-        rahmen.addEventListener('load', () => {
-            try {
-                rahmen.contentWindow.focus();
-                if (!/[?&]hin=/.test(pfad)) {
-                    const h1 = rahmen.contentDocument && rahmen.contentDocument.querySelector('#main h1');
-                    if (h1) { if (!h1.hasAttribute('tabindex')) h1.setAttribute('tabindex', '-1'); h1.focus(); }
-                }
-            } catch (e) { /* anderer Ursprung: nie — nur eigene Pfade */ }
-        }, { once: true });
+}
+// Jedes Dokument, das der Rahmen laedt (geoeffnet, Link darin, Zurueck-Taste, Weiterleitung), kommt hier an (Pruefung 13.10.2026):
+// - K6/B14: Pfad und Ueberschrift 1 (sonst der Seitentitel) werden Ueberschrift, Name des Rahmens und gemerkte Seite.
+// - K7: was nicht in den Rahmen gehoert, oeffnet die ganze Seite — die Anmeldung nach abgelaufener Sitzung (mit Ruecksprung auf DIESE
+//   Seite; die Seite im Fenster bleibt gemerkt), Projekte, Startseite und jede Seite ohne eingebettete Fassung (window.EINGEBETTET).
+// - Der Fokus geht in die Seite, wenn sie mit Fokus geoeffnet wurde oder er schon im Rahmen stand (ein Link darin): dann wie beim
+//   Laden einer Seite auf ihre Ueberschrift 1.
+// - Leerer Rahmen (about:blank) = keine Seite offen; eine fremde Herkunft wird nie gezeigt.
+function inkluagentRahmenGeladen(rahmen) {
+    const f = document.getElementById('arbeitsfenster');
+    if (!f) return;
+    let win = null;
+    let doc = null;
+    try { win = rahmen.contentWindow; doc = rahmen.contentDocument; } catch (e) { doc = null; }
+    const loc = doc && doc.location;
+    if (!doc || !loc) { inkluagentSeiteZustandZu(); inkluagentRahmenLaden(rahmen, 'about:blank'); return; }
+    if (loc.href === 'about:blank') { if (window._arbeitsSeite) inkluagentSeiteZustandZu(); return; }
+    const pfad = inkluagentPfadOhne(loc.pathname + loc.search, ['eingebettet', 'hin']);
+    if (loc.origin !== window.location.origin || gehoertGanzeSeite(loc.pathname) || !win || win.EINGEBETTET !== true) {
+        if (/^\/login(\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }
+        if (eigenerPfad(pfad)) { window.location.href = pfad; return; }
+        inkluagentSeiteZustandZu();
+        inkluagentRahmenLaden(rahmen, 'about:blank');
+        return;
     }
-    rahmen.src = pfad + (pfad.indexOf('?') >= 0 ? '&' : '?') + 'eingebettet=1';
+    const h1 = doc.querySelector('#main h1');
+    const titel = (h1 && h1.textContent.trim()) || String(doc.title || '').split(' · ')[0].trim();
+    const vorher = window._arbeitsSeite || {};
+    const fokus = !!vorher.fokus || document.activeElement === rahmen;
+    window._arbeitsSeite = { offen: true, pfad: pfad, name: titel || vorher.name || loc.pathname, fokus: false, hin: false };
+    inkluagentSeiteZeigen();
+    if (fokus) inkluagentRahmenFokus(rahmen, !!(vorher.fokus && vorher.hin));
+}
+// Fokus in die Seite im Fenster: Ueberschrift 1 (ohne dauerhaftes tabindex, B19); mit ?hin= setzt die Seite ihr Ziel selbst
+// (dashboard.js). Nur ohne Ueberschrift eine Ansage.
+function inkluagentRahmenFokus(rahmen, hin) {
+    let doc = null;
+    let win = null;
+    try { win = rahmen.contentWindow; win.focus(); doc = rahmen.contentDocument; } catch (e) { return; }
+    if (hin || !doc) return;
+    const h1 = doc.querySelector('#main h1');
+    if (h1) { (typeof win.fokusAuf === 'function' ? win.fokusAuf : fokusAuf)(h1); return; }
+    announce(t('Im Arbeitsfenster geöffnet: {name}', { name: (window._arbeitsSeite || {}).name || '' }));
+}
+// Keine Seite mehr offen (nur der Zustand — laden tut der Aufrufer)
+function inkluagentSeiteZustandZu() {
+    const f = document.getElementById('arbeitsfenster');
+    window._arbeitsSeite = null;
+    if (!f) return;
+    f.querySelector('#arbeitsSeite').hidden = true;
+    f.querySelector('#arbeitsSeiteRahmen').removeAttribute('title');
+    f.querySelector('#arbeitsSeiteTitel').textContent = '';
+    try { sessionStorage.removeItem('inkluagent.fenster'); } catch (e) { /* egal */ }
+    inkluagentArbeitsZeigen();
 }
 function inkluagentSeiteSchliessen() {
     const f = document.getElementById('arbeitsfenster');
     if (!f) return;
-    f.querySelector('#arbeitsSeite').hidden = true;
-    const rahmen = f.querySelector('#arbeitsSeiteRahmen');
-    rahmen.src = 'about:blank';
-    rahmen.removeAttribute('title');
-    try { sessionStorage.removeItem('inkluagent.fenster'); } catch (e) { /* egal */ }
+    inkluagentSeiteZustandZu();
+    inkluagentRahmenLaden(f.querySelector('#arbeitsSeiteRahmen'), 'about:blank');
     if (document.documentElement.classList.contains('arbeitsfenster-gross')) inkluagentFensterGross(false);
-    inkluagentArbeitsZeigen();
     announce(t('Seite im Arbeitsfenster geschlossen.'));
     const input = document.getElementById('inkluagentInput');
     if (input) input.focus();
 }
+// Nach einem Neuladen (Sprache, Ansicht, Seitenwechsel) wieder dieselbe Seite und Groesse — still, ohne Fokus und Ansage.
+// Pruefung 13.10.2026 (B1): wurde eine Seite, deren Inhalt die Agentenansicht ausblendet (Einstellungen, Hilfe, ein Gespraech …), direkt
+// geladen (Lesezeichen, Link — nicht dieselbe Seite wie beim Merken), oeffnet sie selbst im Arbeitsfenster: Ueberschrift 1 und Inhalt
+// passen dann zusammen. Mit ?hin= (Hinfuehren in einem neuen Tab) geht der Fokus wie beim Hinfuehren aufs Ziel.
+function inkluagentFensterWiederherstellen() {
+    let w = null;
+    try { w = JSON.parse(sessionStorage.getItem('inkluagent.fenster') || 'null'); } catch (e) { w = null; }
+    const frisch = !!(w && typeof w.pfad === 'string' && Date.now() - (Number(w.zeit) || 0) < 2 * 60 * 60 * 1000);
+    const hier = inkluagentPfadOhne(window._inkluagentStartAdresse || (window.location.pathname + window.location.search), ['agent']);
+    if (inkluagentSeiteImFensterMoeglich(hier) && !(frisch && w.seite === inkluagentPfadOhne(hier, ['hin']))) {
+        const h1 = document.querySelector('#main h1');
+        inkluagentSeiteImFenster(hier, h1 ? h1.textContent.trim() : '', !/[?&]hin=/.test(hier));
+    } else if (frisch) {
+        inkluagentSeiteImFenster(w.pfad, w.name, true);
+    }
+    let gross = '';
+    try { gross = sessionStorage.getItem('inkluagent.fenster.gross') || ''; } catch (e) { gross = ''; }
+    if (gross === '1' && !inkluagentFensterSchmal()) inkluagentFensterGross(true);
+}
+
+// ─── „Arbeitsfenster vergrößern“ und die Ueberlagerung (13.10.2026; Pruefung 13.10.2026, B2/K8, B3, B7) ───
+// EIN Zustand: die Klasse arbeitsfenster-gross am html (Knopf mit aria-pressed). Breit heisst das: Fenster gross, Gespraech schmal. Schmal
+// (unter 1100 px, dieselbe Grenze wie style.css) liegt das Fenster ueber allem — dann ist der Rest inert, das Fenster traegt die Rolle
+// Dialog, und Escape schliesst. Alles davon wird aus dem Zustand ABGELEITET (inkluagentUeberlagerungAnwenden), beim Umschalten und bei
+// jeder Breitenaenderung (Zoom, iPad drehen). Vorher wurde inert nur im Moment des Klicks gesetzt und lief der Darstellung davon.
+// Warum kein natives <dialog> (Steve mag es, HTML vor ARIA): im Browser gemessen (lokal/probe_pr13_dialog_versuch.py, Chromium) laedt ein
+// Rahmen neu, wenn man ihn in einen Dialog verschiebt (die Seite im Fenster verloere ihre Eingaben); Escape im Rahmen erreicht den
+// Dialog nicht; und die Ansage-Region ausserhalb faellt bei showModal() aus dem Barrierefreiheitsbaum. Ein dauerhafter <dialog> waere
+// breit falsch benannt. Darum: der Abschnitt bleibt ein Abschnitt und bekommt nur als Ueberlagerung role="dialog" und aria-modal.
 function inkluagentFensterSchmal() {
     return !!(window.matchMedia && window.matchMedia('(max-width: 1099px)').matches);
 }
-// Vergroessern: breit = Fenster gross, Gespraech schmal; schmal = Fenster ueber dem Gespraech (der Rest ist dann inert)
+function inkluagentUeberlagerungOffen() {
+    return document.documentElement.classList.contains('arbeitsfenster-gross') && inkluagentFensterSchmal();
+}
 function inkluagentFensterGross(an) {
     const knopf = document.getElementById('arbeitsGross');
     if (!knopf) return;
     if (typeof an !== 'boolean') an = knopf.getAttribute('aria-pressed') !== 'true';
     knopf.setAttribute('aria-pressed', an ? 'true' : 'false');
     document.documentElement.classList.toggle('arbeitsfenster-gross', an);
-    const ueber = an && inkluagentFensterSchmal();
-    ['appSidebar', 'main', 'inkluagentHeading'].forEach(id => { const el = document.getElementById(id); if (el) el.inert = ueber; });
-    document.querySelectorAll('.inkluagent-gespraech, .dash-footer').forEach(el => { el.inert = ueber; });
     try { sessionStorage.setItem('inkluagent.fenster.gross', an ? '1' : ''); } catch (e) { /* egal */ }
+    inkluagentUeberlagerungAnwenden();
 }
+// Leitet aus dem Zustand ab: inert auf allem ausser dem Fenster und der Ansage-Region (sonst hoerte man bei offener Ueberlagerung keine
+// Ansage, B3), Rolle Dialog. Inert wird auf den Geschwistern entlang des Wegs vom Fenster bis body gesetzt — so sind auch die Sprunglinks
+// und die Fusszeile erfasst (B7). Was schon vorher inert war, bleibt unberuehrt.
+function inkluagentUeberlagerungAnwenden() {
+    const f = document.getElementById('arbeitsfenster');
+    (window._arbeitsInert || []).forEach(el => { el.inert = false; });
+    window._arbeitsInert = [];
+    if (!f) return;
+    const ueber = inkluagentUeberlagerungOffen();
+    if (ueber) { f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); }
+    else { f.removeAttribute('role'); f.removeAttribute('aria-modal'); }
+    if (!ueber) return;
+    const ansage = document.getElementById('liveRegion');
+    for (let el = f; el && el.parentElement && el !== document.body; el = el.parentElement) {
+        Array.from(el.parentElement.children).forEach(k => {
+            if (k === el || k === ansage || k.inert || /^(SCRIPT|STYLE|TEMPLATE)$/.test(k.tagName)) return;
+            k.inert = true;
+            window._arbeitsInert.push(k);
+        });
+    }
+    // Lag der Fokus jetzt hinter der Ueberlagerung (Breite geaendert), kommt er auf den Knopf — nie unsichtbar dahinter (2.4.11)
+    const ae = document.activeElement;
+    if (!ae || ae === document.body || !f.contains(ae)) { const k = f.querySelector('#arbeitsGross'); if (k) k.focus(); }
+}
+function inkluagentUeberlagerungEinrichten() {
+    if (window._arbeitsUeberlagerung) return;
+    window._arbeitsUeberlagerung = true;
+    const mq = window.matchMedia ? window.matchMedia('(max-width: 1099px)') : null;
+    if (mq && mq.addEventListener) mq.addEventListener('change', inkluagentUeberlagerungAnwenden);
+    else if (mq && mq.addListener) mq.addListener(inkluagentUeberlagerungAnwenden);   // aeltere Safari
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !e.defaultPrevented && inkluagentEscape()) e.preventDefault();
+    });
+}
+// Escape schliesst die Ueberlagerung — aus dieser Seite und aus der Seite im Rahmen (dashboard.js gibt die Taste weiter, B7). Der Fokus
+// kommt auf den Knopf zurueck, der sie geoeffnet hat. true = geschlossen.
+function inkluagentEscape() {
+    if (!inkluagentUeberlagerungOffen()) return false;
+    inkluagentFensterGross(false);
+    const k = document.getElementById('arbeitsGross');
+    if (k) k.focus();
+    return true;
+}
+// „Zurück zum Gespräch“ (Knopf der Ueberlagerung, Sprunglink der Seite im Rahmen): kam inzwischen eine Antwort, die den Fokus nicht
+// nehmen durfte (B3/B4), steht er auf ihr, sonst im Eingabefeld
 function inkluagentZumGespraech() {
-    if (document.documentElement.classList.contains('arbeitsfenster-gross') && inkluagentFensterSchmal()) inkluagentFensterGross(false);
+    if (inkluagentUeberlagerungOffen()) inkluagentFensterGross(false);
+    const neu = window._inkluagentUngelesen;
+    window._inkluagentUngelesen = null;
+    if (neu && neu.isConnected) { neu.focus(); return; }
     const input = document.getElementById('inkluagentInput');
     if (input) input.focus();
 }
@@ -719,12 +911,15 @@ function inkluagentArbeitsAngaben(z) {
     const out = [];
     const ort = inkluagentArbeitsOrt();
     if (ort) out.push([t('Ort'), ort]);
+    // Pruefung 13.10.2026 (B23): die Seite im Rahmen heisst „Im Arbeitsfenster“, die Seitenzahl im PDF „Seite im Dokument“ — vorher
+    // stand zweimal „Seite“ fuer zwei verschiedene Dinge („Seite: 3. Seite: Meine Ablage“)
+    if (window._arbeitsSeite && window._arbeitsSeite.offen) out.push([t('Im Arbeitsfenster'), window._arbeitsSeite.name]);
     const hier = window._inkluagentProjectId == null ? null : String(window._inkluagentProjectId);
     const ziel = (z.ziel && z.projekt === hier) ? z.ziel : null;
     if (ziel && ziel.dokument) {
         out.push([t('Dokument'), ziel.dokument_nr ? t('Dokument {n}: {name}', { n: ziel.dokument_nr, name: String(ziel.dokument) }) : String(ziel.dokument)]);
     }
-    if (ziel && ziel.seite) out.push([t('Seite'), String(ziel.seite)]);
+    if (ziel && ziel.seite) out.push([t('Seite im Dokument'), String(ziel.seite)]);
     return out;
 }
 // Ueberblick laden (ohne KI, nur Datenbank) — beim Aufbau des Arbeitsfensters und nach jedem Auftrag
@@ -749,41 +944,80 @@ function inkluagentUeberblickZeilen() {
     if (projekte.length) out.push([t('Zuletzt bearbeitet'), projekte]);
     return out;
 }
+// Text nur setzen, wenn er sich aendert (ein gleicher Text ersetzt sonst den Textknoten, und der VoiceOver-Cursor verliert die Stelle)
+function inkluagentTextSetzen(el, text) {
+    if (el && el.textContent !== text) el.textContent = text;
+}
+// Einen Teil des Arbeitsfensters nur neu bauen, wenn sich seine Daten geaendert haben (Pruefung 13.10.2026, B8/K19); stand der Fokus
+// darin, kommt er auf denselben Link zurueck (sonst auf die Ueberschrift des Fensters). Ergebnis: true = neu gebaut.
+function inkluagentTeilBauen(el, daten, bauen) {
+    const stand = JSON.stringify(daten);
+    if (!el || el._stand === stand) return false;
+    el._stand = stand;
+    const ae = document.activeElement;
+    const fokus = (ae && el.contains(ae)) ? (ae.getAttribute('href') || '') : null;
+    el.textContent = '';
+    if (daten) bauen(el, daten);
+    if (fokus !== null) {
+        const wieder = Array.from(el.querySelectorAll('a[href]')).find(x => x.getAttribute('href') === fokus);
+        if (wieder) wieder.focus(); else fokusAuf(document.getElementById('arbeitsfensterTitel'));
+    }
+    return true;
+}
+// Schritte: neue anhaengen, beim fertigen nur den Zustand umschreiben — nie die ganze Liste unter dem VoiceOver-Cursor ersetzen (B8)
+function inkluagentSchritteZeigen(ol, schritte) {
+    schritte.forEach((x, i) => {
+        const text = String(x.text || '');
+        const zustand = x.fehler ? 'fehler' : (x.fertig ? 'erledigt' : 'laeuft');
+        let li = ol.children[i];
+        if (!li || li._text !== text) {
+            const neu = document.createElement('li');
+            neu._text = text;
+            neu.appendChild(document.createTextNode(text));
+            const sp = document.createElement('span');
+            sp.className = 'schritt-zustand';
+            neu.appendChild(sp);
+            if (li) ol.replaceChild(neu, li); else ol.appendChild(neu);
+            li = neu;
+        }
+        if (li.dataset.zustand !== zustand) {
+            li.dataset.zustand = zustand;
+            li.lastChild.textContent = ' – ' + (x.fehler ? t('hat nicht geklappt') : (x.fertig ? t('erledigt') : t('läuft')));
+        }
+    });
+    while (ol.children.length > schritte.length) ol.lastChild.remove();
+}
 function inkluagentArbeitsZeigen() {
     const f = document.getElementById('arbeitsfenster');
     if (!f) return;
     const z = inkluagentArbeitsZustand();
-    f.querySelector('#arbeitsStand').textContent = z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.');
+    inkluagentTextSetzen(f.querySelector('#arbeitsStand'), z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.'));
     f.querySelector('#arbeitsFortschritt').hidden = !z.laeuft;
     const notiz = f.querySelector('#arbeitsNotiz');
-    notiz.textContent = z.notiz ? t('Zwischenstand: {text}', { text: String(z.notiz) }) : '';
+    inkluagentTextSetzen(notiz, z.notiz ? t('Zwischenstand: {text}', { text: String(z.notiz) }) : '');
     notiz.hidden = !z.notiz;
     const erg = f.querySelector('#arbeitsErgebnis');
-    const p = erg.querySelector('p');
-    p.textContent = '';
-    if (z.ergebnis && z.ergebnis.text) {
+    const fertig = (z.ergebnis && z.ergebnis.text) ? [String(z.ergebnis.schritt || ''), String(z.ergebnis.text)] : null;
+    inkluagentTeilBauen(erg.querySelector('p'), fertig, (p, d) => {
         const b = document.createElement('strong');
-        b.textContent = String(z.ergebnis.schritt || '') + ': ';
+        b.textContent = d[0] + ': ';
         p.appendChild(b);
-        p.appendChild(document.createTextNode(String(z.ergebnis.text)));
-    }
-    erg.hidden = !(z.ergebnis && z.ergebnis.text);
+        p.appendChild(document.createTextNode(d[1]));
+    });
+    erg.hidden = !fertig;
     const dl = f.querySelector('#arbeitsAngaben');
-    dl.textContent = '';
     const angaben = inkluagentArbeitsAngaben(z);
-    angaben.forEach(([k, v]) => {
+    inkluagentTeilBauen(dl, angaben, (el, d) => d.forEach(([k, v]) => {
         const dt = document.createElement('dt'); dt.textContent = k;
         const dd = document.createElement('dd'); dd.textContent = v;
-        dl.appendChild(dt); dl.appendChild(dd);
-    });
+        el.appendChild(dt); el.appendChild(dd);
+    }));
     dl.hidden = !angaben.length;
-    // Ueberblick nur, solange kein Auftrag laeuft
+    // Ueberblick nur, solange kein Auftrag laeuft und keine Seite im Fenster offen ist
     const ub = f.querySelector('#arbeitsUeberblick');
-    const ubdl = ub.querySelector('dl');
-    ubdl.textContent = '';
-    const seiteOffen = !f.querySelector('#arbeitsSeite').hidden;
+    const seiteOffen = !!(window._arbeitsSeite && window._arbeitsSeite.offen);
     const zeilen = (z.laeuft || seiteOffen) ? [] : inkluagentUeberblickZeilen();
-    zeilen.forEach(([k, v]) => {
+    inkluagentTeilBauen(ub.querySelector('dl'), zeilen, (ubdl, d) => d.forEach(([k, v]) => {
         const dt = document.createElement('dt'); dt.textContent = k;
         const dd = document.createElement('dd');
         if (Array.isArray(v)) {
@@ -801,7 +1035,7 @@ function inkluagentArbeitsZeigen() {
             dd.textContent = v;
         }
         ubdl.appendChild(dt); ubdl.appendChild(dd);
-    });
+    }));
     ub.hidden = !zeilen.length;
     // Vorschau: die ganze Seite (Seitenansicht), sonst das Bild selbst — nur Adressen der eigenen Bild-Endpunkte
     const fig = f.querySelector('#arbeitsBild');
@@ -816,25 +1050,18 @@ function inkluagentArbeitsZeigen() {
             else fig.hidden = true;
         };
         if (img.getAttribute('src') !== url) img.src = url;
-        // Die Bildunterschrift sagt, was zu sehen ist; das Bild selbst ist dann Schmuck (alt="")
-        fig.querySelector('figcaption').textContent = [inkluagentZielText(ziel), ziel.seite ? t('Seite {n}', { n: ziel.seite }) : '']
-            .filter(Boolean).join(' · ');
+        // HB6: der vorhandene Alt-Text des Bildes, wenn der Server ihn mitschickt (ziel.alt); sonst ist das Bild Schmuck (alt="") und
+        // die Bildunterschrift sagt, was zu sehen ist
+        const alt = (typeof ziel.alt === 'string') ? ziel.alt.trim().slice(0, 500) : '';
+        if (img.getAttribute('alt') !== alt) img.setAttribute('alt', alt);
+        inkluagentTextSetzen(fig.querySelector('figcaption'), [inkluagentZielText(ziel), ziel.seite ? t('Seite {n}', { n: ziel.seite }) : '']
+            .filter(Boolean).join(' · '));
         fig.hidden = false;
     } else {
         fig.hidden = true;
     }
     const ol = f.querySelector('#arbeitsSchritte');
-    ol.textContent = '';
-    z.schritte.forEach(x => {
-        const li = document.createElement('li');
-        li.dataset.zustand = x.fehler ? 'fehler' : (x.fertig ? 'erledigt' : 'laeuft');
-        li.appendChild(document.createTextNode(String(x.text || '')));
-        const sp = document.createElement('span');
-        sp.className = 'schritt-zustand';
-        sp.textContent = ' – ' + (x.fehler ? t('hat nicht geklappt') : (x.fertig ? t('erledigt') : t('läuft')));
-        li.appendChild(sp);
-        ol.appendChild(li);
-    });
+    inkluagentSchritteZeigen(ol, z.schritte);
     ol.hidden = !z.schritte.length;
     f.querySelector('#arbeitsSchritteTitel').hidden = ol.hidden;
 }
@@ -843,6 +1070,32 @@ function inkluagentSchritteAnsagen() {
     const k = document.getElementById('arbeitsAnsagen');
     if (k) return k.checked;
     try { return localStorage.getItem('inkluagent.schritte_ansagen') !== 'aus'; } catch (e) { return true; }
+}
+// Schritt ansagen (nur mit „Jeden Schritt ansagen“). Pruefung 13.10.2026 (B9): Schritte, die in wenigen Millisekunden nacheinander kamen,
+// ersetzten sich in der Ansage-Region, bevor VoiceOver sie sprach. Jetzt gesammelt und hoechstens einmal je Sekunde gebuendelt gesagt;
+// ist die Antwort da, faellt Uebriges weg (es wuerde die Antwort unterbrechen). Die Vorgabe „an“ bleibt, bis Steve entscheidet.
+function inkluagentSchrittAnsagen(text, sofort) {
+    if (!text || !inkluagentSchritteAnsagen()) return;
+    const b = window._schrittAnsage || (window._schrittAnsage = { warte: [], zuletzt: 0, plan: 0 });
+    b.warte.push(text);
+    const sagen = () => {
+        b.plan = 0;
+        b.zuletzt = Date.now();
+        const satz = b.warte.join('. ');
+        b.warte = [];
+        announce(satz);
+    };
+    // Ein Fehler (sofort) wartet nicht — er geht mit dem, was schon wartet, gleich hinaus und faellt beim Ende nicht weg
+    if (sofort) { clearTimeout(b.plan); sagen(); return; }
+    if (b.plan) return;
+    b.plan = setTimeout(sagen, Math.max(0, b.zuletzt + 1000 - Date.now()));
+}
+function inkluagentSchrittAnsagenVerwerfen() {
+    const b = window._schrittAnsage;
+    if (!b) return;
+    clearTimeout(b.plan);
+    b.plan = 0;
+    b.warte = [];
 }
 // Livestream (Steve 12.10.2026): die Antwort waechst sichtbar als Entwurf (Wort fuer Wort aus dem Stream); die fertige, bereinigte
 // Antwort ersetzt ihn. Der Verlauf sagt nichts von selbst an (aria-live off) — VoiceOver bekommt die fertige Antwort mit dem Fokus.
@@ -872,24 +1125,49 @@ function inkluagentEntwurfText(stueck) {
     }
     window._inkluagentEntwurf = (window._inkluagentEntwurf || '') + stueck;
     if (window._inkluagentEntwurfPlan) return;
-    window._inkluagentEntwurfPlan = requestAnimationFrame(() => {
+    // Pruefung 13.10.2026 (HB2): bei „Bewegung reduzieren“ waechst der Entwurf nicht Wort fuer Wort, sondern alle zwei Sekunden, und die
+    // Seite laeuft nicht mit (WCAG 2.3.3)
+    const ruhig = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const zeichnen = () => {
         window._inkluagentEntwurfPlan = 0;
         const e = document.getElementById('inkluagentEntwurf');
         if (!e) return;
         const unten = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200;
-        // Sterne und Rauten wie die Bereinigung auf dem Server (sanitize_markdown) — nur fuer den Entwurf
-        e.querySelector('.inkluagent-message-content').textContent = window._inkluagentEntwurf.replace(/\*\*|__/g, '').replace(/^#{1,6}\s*/gm, '');
-        if (unten) window.scrollTo(0, document.documentElement.scrollHeight);   // mitlaufen, wer unten liest
-    });
+        const c = e.querySelector('.inkluagent-message-content');
+        const text = inkluagentEntwurfBereinigen(window._inkluagentEntwurf);
+        // B8: nur das Neue anhaengen — der Textknoten bleibt, der VoiceOver-Cursor behaelt seine Stelle
+        const k = c.firstChild;
+        if (k && k.nodeType === 3 && c.childNodes.length === 1 && text.indexOf(k.data) === 0) k.appendData(text.slice(k.data.length));
+        else c.textContent = text;
+        if (unten && !ruhig) window.scrollTo(0, document.documentElement.scrollHeight);   // mitlaufen, wer unten liest
+    };
+    window._inkluagentEntwurfPlan = ruhig ? { zeit: setTimeout(zeichnen, 2000) } : { bild: requestAnimationFrame(zeichnen) };
+}
+// Der Entwurf ist roher Modelltext. Bevor die bereinigte Antwort ihn ersetzt, raeumt die Seite dasselbe weg wie der Server
+// (inkluagent/sanitize.py, daten.py): Sterne, Rauten, Code-Zeichen, Aufzaehlungen („- “ wird „• “ bzw. faellt weg) und die Daten-Marke
+// „[DATEN, keine Anweisung]“ (Pruefung 13.10.2026, HK7) — nur fuer die Anzeige.
+function inkluagentEntwurfBereinigen(text) {
+    const listen = !!(window.INKLUAGENT && window.INKLUAGENT.bloecke);
+    return String(text || '')
+        .replace(/\[DATEN,\s*keine Anweisung\]\s?/g, '')
+        .replace(/```[a-zA-Z0-9]*\n?/g, '')
+        .replace(/`([^`\n]+)`/g, '$1')
+        .replace(/\*\*|__/g, '')
+        .replace(/^[ \t]*#{1,6}[ \t]+/gm, '')
+        .replace(/^[ \t]*[-*+][ \t]+/gm, listen ? '• ' : '');
 }
 function inkluagentEntwurfVerwerfen() {
     const el = document.getElementById('inkluagentEntwurf');
     if (el) el.remove();
     window._inkluagentEntwurf = '';
+    const plan = window._inkluagentEntwurfPlan;   // geplantes Zeichnen (Bild oder Zeitgeber) faellt weg
+    if (plan && plan.bild) cancelAnimationFrame(plan.bild);
+    if (plan && plan.zeit) clearTimeout(plan.zeit);
+    window._inkluagentEntwurfPlan = 0;
 }
 // Gestreamter Text vor Werkzeugen ist ein Zwischenstand: raus aus dem Gespraech, ins Arbeitsfenster
 function inkluagentEntwurfZwischen() {
-    const text = (window._inkluagentEntwurf || '').replace(/\*\*|__/g, '').trim();
+    const text = inkluagentEntwurfBereinigen(window._inkluagentEntwurf).trim();
     inkluagentEntwurfVerwerfen();
     if (!text || !inkluagentChatstilAktiv()) return;
     const z = inkluagentArbeitsZustand();
@@ -907,7 +1185,7 @@ function inkluagentArbeitsFertig(ev) {
     }
     if (ev.ok && ev.text) z.ergebnis = { schritt: schritt ? schritt.text : inkluagentWerkzeugLabel(ev.name), text: String(ev.text) };
     inkluagentArbeitsMerken();
-    if (!ev.ok && schritt && inkluagentSchritteAnsagen()) announce(schritt.text + ' – ' + t('hat nicht geklappt'));
+    if (!ev.ok && schritt) inkluagentSchrittAnsagen(schritt.text + ' – ' + t('hat nicht geklappt'), true);
 }
 // Lauf: Start (Schritte neu, ausser man verfolgt den Lauf einer vorigen Seite), je Werkzeug ein Schritt, Ende, Fehler
 function inkluagentArbeitsStart(text, behalten) {
@@ -932,9 +1210,10 @@ function inkluagentArbeitsSchritt(name, ziel) {
     }
     z.stand = t('Arbeitet an: {schritt}', { schritt: text });
     inkluagentArbeitsMerken();
-    if (inkluagentSchritteAnsagen()) announce(text);   // „Jeden Schritt ansagen“ (Steve 12.10.2026)
+    inkluagentSchrittAnsagen(text);   // „Jeden Schritt ansagen“ (Steve 12.10.2026), gebuendelt (B9)
 }
 function inkluagentArbeitsEnde(wartet) {
+    inkluagentSchrittAnsagenVerwerfen();
     if (!inkluagentChatstilAktiv()) return;
     const z = inkluagentArbeitsZustand();
     z.laeuft = false;
@@ -944,6 +1223,7 @@ function inkluagentArbeitsEnde(wartet) {
     inkluagentUeberblickLaden();   // Guthaben, Laeufe und Projekte koennen sich geaendert haben
 }
 function inkluagentArbeitsFehler(text) {
+    inkluagentSchrittAnsagenVerwerfen();
     if (!inkluagentChatstilAktiv()) return;
     const z = inkluagentArbeitsZustand();
     if (!z.laeuft) return;
@@ -959,11 +1239,10 @@ function inkluagentArbeitsZuruecksetzen() {
 function inkluagentStandVorlesen() {
     const z = inkluagentArbeitsZustand();
     const teile = [z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.')]
-        .concat(inkluagentArbeitsAngaben(z).map(([k, v]) => k + ': ' + v));
+        .concat(inkluagentArbeitsAngaben(z).map(([k, v]) => k + ': ' + v));   // mit „Im Arbeitsfenster: …“ (B23)
     if (z.ergebnis && z.ergebnis.text) teile.push(t('Zuletzt fertig') + ': ' + z.ergebnis.schritt + ': ' + z.ergebnis.text);
-    const seite = document.getElementById('arbeitsSeite');
-    if (seite && !seite.hidden) teile.push(document.getElementById('arbeitsSeiteTitel').textContent);
-    else if (!z.laeuft) inkluagentUeberblickZeilen().forEach(([k, v]) => teile.push(k + ': ' + (Array.isArray(v) ? v.map(x => x.name).join(', ') : v)));
+    const seiteOffen = !!(window._arbeitsSeite && window._arbeitsSeite.offen);
+    if (!seiteOffen && !z.laeuft) inkluagentUeberblickZeilen().forEach(([k, v]) => teile.push(k + ': ' + (Array.isArray(v) ? v.map(x => x.name).join(', ') : v)));
     announce(teile.map(x => x.replace(/[.\s]+$/, '')).join('. ') + '.');
 }
 // Wartet eine Antwort auf eine Entscheidung (offene Karte)?
@@ -1009,13 +1288,35 @@ function inkluagentBereichAufbauen() {
     const bereich = document.getElementById('inkluagentBereich');
     if (!bereich || !inkluagentUeberall() || bereich.dataset.gebaut) return;
     bereich.dataset.gebaut = '1';
+    // Adresse beim Laden, noch mit ?hin= und ?agent= (beide entfernen andere Teile gleich danach) — fuer das Arbeitsfenster (B1)
+    window._inkluagentStartAdresse = window.location.pathname + window.location.search;
     const projektseite = /^\/app\/?$/.test(window.location.pathname);
     bereich.innerHTML = inkluagentInhaltHtml(null, projektseite ? 'bilder' : 'konto', true);
     inkluagentBedienungAnbinden();
+    // Angefangener Chat-Text ueberlebt Seitenwechsel und Neuladen (Pruefung 13.10.2026, B10)
+    inkluagentEingabeHolen();
+    window.addEventListener('pagehide', inkluagentEingabeMerken);
     // Seiten ohne Projekt: binden, wenn die Seite steht (ihre Skripte bauen main oft erst noch auf — wichtig fuer die Agentenansicht)
     if (!projektseite) {
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => inkluagentInit(null), { once: true });
         else inkluagentInit(null);
+    }
+}
+// Beim Verlassen der Seite (Link, Seitenwechsel durch den Agenten, Neuladen) den angefangenen Chat-Text merken — 30 Minuten, nur in
+// diesem Tab; die naechste Seite setzt ihn wieder ins Feld (B10, Schritt 3 der Regel fuer Seitenwechsel)
+function inkluagentEingabeMerken() {
+    const input = document.getElementById('inkluagentInput');
+    try {
+        if (input && input.value.trim()) sessionStorage.setItem('inkluagent.eingabe', JSON.stringify({ text: input.value, zeit: Date.now() }));
+        else sessionStorage.removeItem('inkluagent.eingabe');
+    } catch (e) { /* ohne Speicher: nur diese Seite */ }
+}
+function inkluagentEingabeHolen() {
+    const input = document.getElementById('inkluagentInput');
+    let w = null;
+    try { w = JSON.parse(sessionStorage.getItem('inkluagent.eingabe') || 'null'); sessionStorage.removeItem('inkluagent.eingabe'); } catch (e) { w = null; }
+    if (input && !input.value && w && typeof w.text === 'string' && Date.now() - (Number(w.zeit) || 0) < 30 * 60 * 1000) {
+        input.value = w.text.slice(0, 5000);
     }
 }
 function inkluagentVarianteSetzen(variante) {
@@ -1045,13 +1346,18 @@ async function inkluagentBinden(projectId) {
     if (!neu) return;
     let wasOpen = false;
     try { wasOpen = localStorage.getItem(inkluagentMerkSchluessel(pid)) === 'open'; } catch (e) {}
-    // „Hier weitermachen“ (Seite „Frühere Gespräche“) fuehrt mit ?agent=offen hierher: Agent auf, Fokus auf die letzte Nachricht
+    // „Hier weitermachen“ (Seite „Frühere Gespräche“) fuehrt mit ?agent=offen hierher: Agent auf, Fokus auf die letzte Nachricht.
+    // Pruefung 13.10.2026 (B11): ebenso nach einem Neuladen, das der Agent ausgeloest hat (Sprache, Ansicht) — Fokus auf seine Antwort
+    // mit dem Rueckweg, nicht auf die Ueberschrift 1. K17: in der Agentenansicht oeffnen, ohne „offen“ fuer die manuelle Ansicht zu merken.
     const weiter = new URLSearchParams(window.location.search).get('agent') === 'offen';
-    if (weiter) {
-        try { const u = new URL(window.location.href); u.searchParams.delete('agent'); history.replaceState(history.state, '', u); } catch (e) {}
-        await inkluagentOpen(pid, false);
+    let antwortFokus = false;
+    try { antwortFokus = sessionStorage.getItem('inkluagent.fokusAntwort') === '1'; sessionStorage.removeItem('inkluagent.fokusAntwort'); } catch (e) {}
+    if (weiter || antwortFokus) {
+        if (weiter) { try { const u = new URL(window.location.href); u.searchParams.delete('agent'); history.replaceState(history.state, '', u); } catch (e) {} }
+        await inkluagentOpen(pid, false, gross);
         const alle = document.querySelectorAll('#inkluagentLog .inkluagent-message');
-        if (alle.length) alle[alle.length - 1].focus();
+        const ziel = antwortFokus ? inkluagentLetzteAntwort() : alle[alle.length - 1];
+        if (ziel) ziel.focus();
         else { const i = document.getElementById('inkluagentInput'); if (i) i.focus(); }
     } else if (gross) await inkluagentOpen(pid, false, true);
     else if (wasOpen) await inkluagentOpen(pid, false);
@@ -1059,31 +1365,38 @@ async function inkluagentBinden(projectId) {
 }
 // Laufende Antwort (Schritt 3): hat der Server fuer dieses Konto noch eine Antwort in Arbeit (z. B. weil man die Seite gewechselt
 // hat), sagt die Statuszeile es und die Seite fragt nach, bis sie da ist — dann neu laden und melden wie eine neue Antwort.
+// Pruefung 13.10.2026: solange verfolgt wird, ist Senden gesperrt (K2 — vorher liefen zwei Laeufe, und Poller und eigener Stream
+// schrieben gegeneinander). nachAbbruch (K5): der eigene Stream riss ab, der Server arbeitet aber weiter und speichert — dann wird
+// verfolgt statt „Verbindungsfehler“ gesagt; ist der Lauf schon fertig, kommt seine Antwort gleich aus dem Verlauf.
 let _inkluagentVerfolgt = false;
-async function inkluagentLaufVerfolgen() {
-    if (!inkluagentUeberall() || _inkluagentVerfolgt) return;
-    const sendBtn = document.getElementById('inkluagentSendBtn');
-    if (sendBtn && sendBtn.disabled) return;   // diese Seite sendet gerade selbst
+async function inkluagentLaufVerfolgen(nachAbbruch) {
+    if (!inkluagentUeberall() || _inkluagentVerfolgt || window._inkluagentSendet) return;   // diese Seite sendet gerade selbst
     let st = null;
-    try { st = await (await fetch('/api/agent/status')).json(); } catch (e) { return; }
-    if (!st || !st.laeuft) return;
+    try { st = await (await fetch('/api/agent/status')).json(); } catch (e) { st = null; }
+    if (!nachAbbruch && !(st && st.laeuft)) return;
     _inkluagentVerfolgt = true;
+    inkluagentSperreZeigen();
     // Fortschritt nach einem Seitenwechsel (Steve 12.10.2026, Schalter AGENT_ARBEITSFENSTER): der Server nennt Projekt und Schritte
-    let projekt = st.projekt != null ? String(st.projekt) : null;
-    inkluagentSetStatus(t('Der InkluAgent arbeitet noch an seiner letzten Antwort …'), false);
-    inkluagentArbeitsStart(t('Arbeitet noch an der letzten Antwort …'), true);
-    let gesehen = inkluagentFortschrittZeigen(st, 0, true);
-    const ende = Date.now() + 10 * 60 * 1000;
-    while (Date.now() < ende) {
-        await new Promise(r => setTimeout(r, 2000));
-        try { st = await (await fetch('/api/agent/status')).json(); } catch (e) { st = { laeuft: true }; }
-        if (!st.laeuft) break;
-        if (st.projekt != null) projekt = String(st.projekt);
-        gesehen = inkluagentFortschrittZeigen(st, gesehen, false);
+    let projekt = (st && st.projekt != null) ? String(st.projekt) : null;
+    try {
+        if (st && st.laeuft) {
+            inkluagentSetStatus(t('Der InkluAgent arbeitet noch an seiner letzten Antwort …'), false);
+            inkluagentArbeitsStart(t('Arbeitet noch an der letzten Antwort …'), true);
+            let gesehen = inkluagentFortschrittZeigen(st, 0, true);
+            const ende = Date.now() + 10 * 60 * 1000;
+            while (Date.now() < ende) {
+                await new Promise(r => setTimeout(r, 2000));
+                try { st = await (await fetch('/api/agent/status')).json(); } catch (e) { st = { laeuft: true }; }
+                if (!st.laeuft) break;
+                if (st.projekt != null) projekt = String(st.projekt);
+                gesehen = inkluagentFortschrittZeigen(st, gesehen, false);
+            }
+        }
+    } finally {
+        _inkluagentVerfolgt = false;
+        inkluagentSperreZeigen();
     }
-    _inkluagentVerfolgt = false;
     inkluagentSetStatus('', false);
-    inkluagentArbeitsEnde(false);
     if (typeof window.seitenleisteGespraecheLaden === 'function') window.seitenleisteGespraecheLaden();
     const panel = document.getElementById('inkluagentPanel');
     const fokussieren = inkluagentFokusImChat();
@@ -1092,10 +1405,39 @@ async function inkluagentLaufVerfolgen() {
     if (projekt && hier === projekt) await inkluagentAnsichtNachziehen(window._inkluagentProjectId);
     if (panel && !panel.hidden) {
         await inkluagentLoadHistory(window._inkluagentProjectId);
+        const alle = document.querySelectorAll('#inkluagentLog .inkluagent-message');
+        const beantwortet = alle.length > 0 && alle[alle.length - 1].classList.contains('assistant');
+        if (nachAbbruch && !beantwortet) {   // Fehlerantworten speichert der Server nicht — dann kam wirklich nichts
+            inkluagentSetStatus(t('Die Verbindung ist abgebrochen, und eine Antwort kam nicht an. Bitte frag noch einmal.'), true);
+            return;
+        }
+        inkluagentArbeitsEnde(false);
         inkluagentAntwortMelden(inkluagentLetzteAntwort(), fokussieren);
     } else {
+        inkluagentArbeitsEnde(false);
         inkluagentAntwortMelden(null, false);
     }
+}
+// ─── Gesperrt, solange diese Seite sendet oder einen Lauf verfolgt (Pruefung 13.10.2026, B12, K2, K3) ───
+// „Senden“, „Neues Gespräch“ (im Agenten und in der Seitenleiste) tragen dann aria-disabled statt disabled: der Fokus bleibt auf dem
+// Knopf (ein disabled-Knopf verliert ihn — gemessen, B12), ein Druck darauf sagt, warum es gerade nicht geht. Die Antwort gehoert zum
+// Gespraech der Frage; ein Gespraechswechsel waehrend des Laufs liess sie im falschen landen (K3).
+function inkluagentBeschaeftigt() {
+    return !!(window._inkluagentSendet || _inkluagentVerfolgt);
+}
+function inkluagentSperreZeigen() {
+    const an = inkluagentBeschaeftigt();
+    ['inkluagentSendBtn', 'inkluagentNeuesGespraech', 'navNeuesGespraech'].forEach(id => {
+        const b = document.getElementById(id);
+        if (!b) return;
+        if (an || b.dataset.laeuft) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
+    });
+}
+// Fuer Gespraechswechsel (Neues Gespräch, Fortsetzen in der Seitenleiste, „Hier weitermachen“): true = erlaubt, sonst sagt es warum
+function inkluagentWechselErlaubt() {
+    if (!inkluagentBeschaeftigt()) return true;
+    announce(t('Der InkluAgent arbeitet noch an deiner letzten Nachricht. Ein anderes Gespräch geht, sobald seine Antwort da ist.'));
+    return false;
 }
 // Schritte des laufenden Auftrags vom Server zeigen (nach einem Seitenwechsel): im Chatstil im Arbeitsfenster (neue Schritte mit
 // „Jeden Schritt ansagen“), sonst in der Statuszeile wie „Ruft gerade auf: …“. Ergebnis: die Zahl der schon gezeigten Schritte.
@@ -1114,7 +1456,7 @@ function inkluagentFortschrittZeigen(st, gesehen, erstesMal) {
             : (laufend ? t('Arbeitet an: {schritt}', { schritt: text(laufend) }) : t('Arbeitet noch an der letzten Antwort …'));
         inkluagentArbeitsMerken();
         const neu = schritte.slice(gesehen).map(text);
-        if (!erstesMal && neu.length && inkluagentSchritteAnsagen()) announce(neu.join('. '));
+        if (!erstesMal) neu.forEach(inkluagentSchrittAnsagen);
     } else if (schritte.length && (erstesMal || schritte.length > gesehen)) {
         inkluagentSetStatus(t('Der InkluAgent arbeitet noch an seiner letzten Antwort …') + ' '
             + t('Ruft gerade auf: {w}', { w: text(schritte[schritte.length - 1]) }), false);
@@ -1211,8 +1553,9 @@ function inkluagentGespraechLeisteHtml() {
 }
 async function inkluagentNeuesGespraech() {
     const btn = document.getElementById('inkluagentNeuesGespraech');
-    if (!btn || btn.getAttribute('aria-disabled') === 'true') return;
-    btn.setAttribute('aria-disabled', 'true');
+    if (!btn || btn.dataset.laeuft || !inkluagentWechselErlaubt()) return;
+    btn.dataset.laeuft = '1';
+    inkluagentSperreZeigen();
     try {
         const res = await fetch('/api/agent/gespraech/neu', { method: 'POST' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1227,7 +1570,8 @@ async function inkluagentNeuesGespraech() {
     } catch (e) {
         inkluagentSetStatus(t('Das ging nicht. Bitte erneut versuchen.'), true);
     } finally {
-        btn.removeAttribute('aria-disabled');
+        delete btn.dataset.laeuft;
+        inkluagentSperreZeigen();
     }
 }
 function inkluagentMarkeAnhaengen(log, projektId, name, geloescht) {
@@ -1241,7 +1585,7 @@ function inkluagentMarkeAnhaengen(log, projektId, name, geloescht) {
 async function inkluagentKontoVerlaufLaden(projectId, log) {
     try {
         const res = await fetch('/api/agent/verlauf' + (projectId == null ? '' : '?projekt=' + encodeURIComponent(projectId)));
-        if (res.status === 401) { window.location.href = '/login'; return; }
+        if (res.status === 401) { inkluagentZurAnmeldung(); return; }
         if (!res.ok) { inkluagentSetStatus(t('Verlauf konnte nicht geladen werden.'), true); return; }
         const data = await res.json();
         window._inkluagentProjektName = data.projekt_name || '';
@@ -1322,7 +1666,7 @@ async function inkluagentLoadHistory(projectId) {
     if (inkluagentKonto()) return inkluagentKontoVerlaufLaden(projectId, log);
     try {
         const res = await fetch('/api/projects/' + projectId + '/chat/history');
-        if (res.status === 401) { window.location.href = '/login'; return; }
+        if (res.status === 401) { inkluagentZurAnmeldung(); return; }
         if (!res.ok) {
             inkluagentSetStatus(t('Verlauf konnte nicht geladen werden.'), true);
             return;
@@ -1341,18 +1685,28 @@ async function inkluagentLoadHistory(projectId) {
 // wer inzwischen woanders liest oder tippt, bleibt dort und hoert nur „Antwort vom InkluAgent ist da.“ (allgemeine
 // Ansage-Region); bei zugeklapptem Chat traegt der Knopf „InkluAgent, neue Antwort“, bis man ihn oeffnet (dann Fokus auf die
 // Antwort). Wer im Eingabefeld des Chats schon weiterschreibt, behaelt es.
+// Pruefung 13.10.2026 (B4): „im Chat“ heisst im GESPRAECH — das Arbeitsfenster samt eingebetteter Seite zaehlt nicht dazu (vorher holte
+// die Antwort den Fokus mitten aus einem Feld der Seite im Rahmen). Eingaben im Rahmen erkennt inkluagentIstEingabe mit.
 function inkluagentIstEingabe(el) {
     if (!el) return false;
+    if (el.tagName === 'IFRAME') {   // B4: im Rahmen zaehlt das Element dort (nur eigene Herkunft lesbar)
+        try { return inkluagentIstEingabe(el.contentDocument && el.contentDocument.activeElement); } catch (e) { return false; }
+    }
     if (el.isContentEditable || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return true;
     return el.tagName === 'INPUT' && ['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'image'].indexOf((el.type || '').toLowerCase()) < 0;
 }
 function inkluagentFokusImChat() {
     const panel = document.getElementById('inkluagentPanel');
     if (!panel || panel.hidden) return false;
+    // B3: liegt das Gespraech unter der Ueberlagerung (inert), kann die Antwort den Fokus nicht nehmen
+    const gespraech = panel.querySelector('.inkluagent-gespraech');
+    if (gespraech && gespraech.closest('[inert]')) return false;
     const ae = document.activeElement;
     if (!ae || ae === document.body || ae === document.documentElement) return true;
+    const fenster = document.getElementById('arbeitsfenster');
+    if (fenster && fenster.contains(ae)) return false;   // B4: Arbeitsfenster und Seite im Rahmen
     const sec = panel.closest('.inkluagent-section') || panel;
-    if (!sec.contains(ae)) return false;
+    if (!sec.contains(ae) && ae !== document.getElementById('inkluagentBereich')) return false;
     return !(ae.id === 'inkluagentInput' && (ae.value || '').trim());
 }
 function inkluagentLetzteAntwort() {
@@ -1374,9 +1728,17 @@ function inkluagentNeuMarkieren(an) {
     }
 }
 // fokussieren: vorher (VOR dem Nachziehen) mit inkluagentFokusImChat() bestimmt
+// fokussieren: vorher (VOR dem Nachziehen) mit inkluagentFokusImChat() bestimmt. Pruefung 13.10.2026 (B3): ob der Fokus wirklich
+// angekommen ist, wird geprueft (in einem inerten Bereich tut focus() nichts) — sonst kommt die Ansage. Nimmt die Antwort den Fokus
+// nicht, merkt sich die Seite sie: „Zurück zum Gespräch“ fuehrt dann zu ihr; bei offener Ueberlagerung sagt die Ansage das.
 function inkluagentAntwortMelden(el, fokussieren) {
-    if (fokussieren && el) { el.focus(); return true; }
-    announce(t('Antwort vom InkluAgent ist da.'));
+    if (fokussieren && el) {
+        el.focus();
+        if (document.activeElement === el) return true;
+    }
+    window._inkluagentUngelesen = el || inkluagentLetzteAntwort();
+    announce(inkluagentUeberlagerungOffen() ? t('Antwort vom InkluAgent ist da. „Zurück zum Gespräch“ führt zu ihr.')
+                                            : t('Antwort vom InkluAgent ist da.'));
     const panel = document.getElementById('inkluagentPanel');
     if (!panel || panel.hidden) { window._inkluagentNeu = window._inkluagentProjectId; inkluagentNeuMarkieren(true); }
     return false;
@@ -1405,15 +1767,19 @@ async function inkluagentAnsichtNachziehen(projectId) {
     if (typeof showProject !== 'function' || !projectId) return false;
     const ae = document.activeElement;
     const sec = document.querySelector('.inkluagent-section');
+    const main = document.getElementById('main');
     const imChat = !!(sec && ae && sec.contains(ae));
-    if (ae && !imChat && inkluagentIstEingabe(ae)) {
+    // Pruefung 13.10.2026 (B4): nur, was das Neuzeichnen ersetzt (der Hauptbereich), braucht Schutz — eine Eingabe im Arbeitsfenster
+    // bleibt ohnehin stehen (vorher galt der Rahmen als „im Chat“)
+    const imHauptbereich = !!(main && ae && main.contains(ae)) && !imChat;
+    if (imHauptbereich && inkluagentIstEingabe(ae)) {
         if (!_inkluagentNachziehenWartet) {
             _inkluagentNachziehenWartet = true;
             ae.addEventListener('focusout', () => setTimeout(() => { _inkluagentNachziehenWartet = false; inkluagentAnsichtNachziehen(projectId); }, 900), { once: true });
         }
         return false;
     }
-    const warWo = (ae && ae !== document.body && !imChat) ? inkluagentFokusMerken(ae) : null;
+    const warWo = imHauptbereich ? inkluagentFokusMerken(ae) : null;
     const entwurfEl = document.getElementById('inkluagentInput');
     const entwurf = entwurfEl ? entwurfEl.value : '';
     await showProject(projectId, true);
@@ -1450,43 +1816,113 @@ function inkluagentAktionenKarten(actions) {
     return nachziehen;
 }
 
-// Seitenwechsel (Steve 12.10.2026): geht es nach einer Antwort um GENAU ein Projekt (oeffnen, anlegen, Datei oder Webseite als
-// Projekt), schickt der Server {"type": "seite_wechseln", "url": "/app?projekt=…"}. Die Seite wechselt dorthin; mit agent=offen ist
-// der InkluAgent dort offen und der Fokus steht auf dieser Antwort (inkluagentBinden). Nur Projektseiten dieser Anwendung.
-// Begleiter (Steve 12.10.2026): hinfuehren (Zielseite, dort Fokus aufs Ziel), sprache_wechseln (ueber /set-language, setzt Konto
-// und Cookie, zurueck auf diese Seite), neu_laden (Ansicht gewechselt). Danach steht der Fokus auf dem Ziel bzw. der Ueberschrift 1.
-function inkluagentBegleiterAktion(actions) {
-    const a = (actions || []).find(x => x && ['hinfuehren', 'sprache_wechseln', 'neu_laden'].indexOf(x.type) >= 0);
-    if (!a) return false;
-    if (a.type === 'hinfuehren' && typeof a.url === 'string' && /^\/[A-Za-z0-9\/_-]*\?hin=[A-Za-z][\w-]{0,40}$/.test(a.url)) {
-        // Agentenansicht: die Seite oeffnet im Arbeitsfenster, das Gespraech bleibt (13.10.2026); sonst wechselt die Seite
-        if (inkluagentSeiteImFensterMoeglich(a.url)) { inkluagentSeiteImFenster(a.url, a.name || ''); return false; }
-        window.location.href = a.url;
-        return true;
+// ─── Seitenwechsel durch den Agenten (Steve 12.10.2026; Pruefung 13.10.2026, B10, B11, B15) ───
+// Nach einer Antwort kann der Server die Seite wechseln lassen: seite_wechseln (genau ein Projekt: oeffnen, anlegen, Datei oder Webseite
+// als Projekt; dort mit agent=offen, Fokus auf dieser Antwort), und der Begleiter: hinfuehren (Zielseite, Fokus aufs Ziel),
+// sprache_wechseln (ueber /set-language: Konto und Cookie, zurueck auf diese Seite), neu_laden (Ansicht gewechselt). EIN Weg fuer alle:
+// 1. Liegt der Fokus nicht im Gespraech oder steht Text im Eingabefeld, wechselt nichts von selbst: unter der Antwort steht der Link bzw.
+//    Knopf dafuer, und die Ansage sagt es (vorher riss der Wechsel mitten aus dem Tippen, B10).
+// 2. Sonst erst offene Eingaben speichern (alleAusstehendenSpeichern, wie Seitenleiste und Abmelden), dann wechseln.
+// 3. Ein angefangener Chat-Text geht beim Verlassen jeder Seite mit (inkluagentEingabeMerken).
+// Sprache und Ansicht wechseln auf ausdrueckliche Bitte direkt, ohne Karte (Steve); nach dem Neuladen steht der Fokus auf der Antwort
+// mit dem Rueckweg, nicht auf der Ueberschrift 1 (B11). Hinfuehren in der Agentenansicht oeffnet das Ziel im Arbeitsfenster und setzt
+// den Fokus dort — nicht erst auf die Antwort und gleich danach in den Rahmen (B15). Nur eigene Pfade (S14).
+function inkluagentWechselZiel(actions) {
+    for (const a of (actions || [])) {
+        if (!a) continue;
+        if (a.type === 'seite_wechseln' && typeof a.url === 'string' && /^\/app\?projekt=\d+$/.test(a.url)) {
+            if (window._inkluagentProjectId != null && String(window._inkluagentProjectId) === String(a.project_id)
+                && /^\/app\/?$/.test(window.location.pathname)) continue;   // schon dort
+            return { url: a.url + '&agent=offen', link: a.url, text: t('Projekt öffnen') };
+        }
+        if (a.type === 'hinfuehren' && eigenerPfad(a.url) && /^\/[A-Za-z0-9\/_-]*\?hin=[A-Za-z][\w-]{0,40}$/.test(a.url)) {
+            const name = String(a.name || '');
+            return { url: a.url, link: a.url, name: name, text: t('Hinführen: {name}', { name: name }),
+                     fenster: inkluagentSeiteImFensterMoeglich(a.url) };
+        }
+        if (a.type === 'sprache_wechseln' && /^[a-z]{2}$/.test(a.sprache || '')) {
+            return { url: '/set-language/' + a.sprache, link: '/set-language/' + a.sprache, sprache: a.sprache, antwortFokus: true };
+        }
+        if (a.type === 'neu_laden') return { neuLaden: true, antwortFokus: true };
     }
-    if (a.type === 'sprache_wechseln' && /^[a-z]{2}$/.test(a.sprache || '')) {
-        try { sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e) { /* ohne Speicher: kein Fokus-Sprung */ }
-        window.location.href = '/set-language/' + a.sprache;
-        return true;
-    }
-    if (a.type === 'neu_laden') {
-        try { sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e) { /* ohne Speicher: kein Fokus-Sprung */ }
-        window.location.reload();
-        return true;
-    }
-    return false;
+    return null;
 }
-function inkluagentSeiteWechseln(actions) {
-    const a = (actions || []).find(x => x && x.type === 'seite_wechseln' && typeof x.url === 'string' && /^\/app\?projekt=\d+$/.test(x.url));
-    if (!a) return false;
-    if (window._inkluagentProjectId != null && String(window._inkluagentProjectId) === String(a.project_id)
-        && /^\/app\/?$/.test(window.location.pathname)) return false;   // schon dort
-    window.location.href = a.url + '&agent=offen';
+// Ergebnis: true = erledigt — die Seite wechselt, das Ziel ist im Arbeitsfenster offen, oder der Weg steht unter der Antwort und ist
+// angesagt. fokussieren: vorher mit inkluagentFokusImChat() bestimmt.
+async function inkluagentWechseln(ziel, antwortEl, fokussieren) {
+    const input = document.getElementById('inkluagentInput');
+    const frei = !!fokussieren && !(input && input.value.trim());
+    if (frei && ziel.fenster) { inkluagentSeiteImFenster(ziel.url, ziel.name); return true; }
+    if (frei) {
+        if (typeof window.alleAusstehendenSpeichern === 'function') {
+            const fehler = await window.alleAusstehendenSpeichern();
+            if (fehler) {
+                if (typeof window.speicherFehlerMelden === 'function') window.speicherFehlerMelden(fehler);
+                inkluagentWechselAnbieten(antwortEl, ziel);
+                return true;
+            }
+        }
+        inkluagentWechselAusfuehren(ziel);
+        return true;
+    }
+    inkluagentWechselAnbieten(antwortEl, ziel);
+    if (antwortEl) window._inkluagentUngelesen = antwortEl;
+    announce(t('Antwort vom InkluAgent ist da. Weil du gerade woanders arbeitest, wechselt die Seite nicht von selbst — der Weg dorthin steht unter der Antwort.'));
     return true;
+}
+function inkluagentWechselAusfuehren(ziel) {
+    if (ziel.antwortFokus) { try { sessionStorage.setItem('inkluagent.fokusAntwort', '1'); } catch (e) { /* ohne Speicher: kein Fokus-Sprung */ } }
+    if (ziel.neuLaden) window.location.reload();
+    else window.location.href = ziel.url;
+}
+// Der Weg unter der Antwort, wenn nicht von selbst gewechselt wird — nur, wenn er nicht schon dasteht („Projekt … öffnen“, „Hinführen: …“)
+function inkluagentWechselAnbieten(antwortEl, ziel) {
+    if (!antwortEl) return;
+    if (ziel.link && Array.from(antwortEl.querySelectorAll('a[href]')).some(x => x.getAttribute('href') === ziel.link)) return;
+    let box = antwortEl.querySelector('.inkluagent-message-anhang');
+    if (!box) {
+        box = document.createElement('div');
+        box.className = 'inkluagent-message-anhang';
+        antwortEl.insertBefore(box, antwortEl.querySelector('.inkluagent-message-tools'));
+    }
+    if (ziel.neuLaden) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-secondary';
+        b.textContent = t('Ansicht jetzt wechseln');
+        b.addEventListener('click', async () => {
+            if (typeof window.alleAusstehendenSpeichern === 'function') {
+                const fehler = await window.alleAusstehendenSpeichern();
+                if (fehler && typeof window.speicherFehlerMelden === 'function') { window.speicherFehlerMelden(fehler); return; }
+            }
+            inkluagentWechselAusfuehren(ziel);
+        });
+        box.appendChild(b);
+        return;
+    }
+    const l = document.createElement('a');
+    l.className = 'btn btn-secondary';
+    l.href = ziel.link || ziel.url;
+    if (ziel.sprache) {
+        // Der Name der Sprache in ihr selbst („English“, „français“), ausgezeichnet mit ihrer Sprache (WCAG 3.1.2)
+        let name = ziel.sprache;
+        try { name = new Intl.DisplayNames([ziel.sprache], { type: 'language' }).of(ziel.sprache) || name; } catch (e) { /* nur das Kuerzel */ }
+        l.appendChild(document.createTextNode(t('Sprache wechseln:') + ' '));
+        const sp = document.createElement('span');
+        sp.lang = ziel.sprache;
+        sp.textContent = name;
+        l.appendChild(sp);
+        l.addEventListener('click', () => { try { sessionStorage.setItem('inkluagent.fokusAntwort', '1'); } catch (e) { /* egal */ } });
+    } else {
+        l.textContent = ziel.text || l.getAttribute('href');
+    }
+    box.appendChild(l);
 }
 
 // Schritt 4: der Agent hat das Projekt geloescht, auf dessen Seite man ist — der Hauptbereich sagt das und verlinkt die Uebersicht.
 // Kein automatischer Seitenwechsel (der Fokus bleibt auf dem Knopf der Karte, die Antwort ist noch zu hoeren); der Agent bleibt.
+// Pruefung 13.10.2026 (B1): der Satz mit dem Link bleibt auch in der Agentenansicht sichtbar (data-agentenansicht-bleibt) — vorher
+// blendete der Beobachter ihn sofort wieder aus.
 function inkluagentProjektWeg(projectId) {
     if (window._inkluagentProjectId == null || String(projectId) !== String(window._inkluagentProjectId)) return;
     const main = document.getElementById('main');
@@ -1496,6 +1932,7 @@ function inkluagentProjektWeg(projectId) {
     h.textContent = t('Projekt gelöscht');
     const p = document.createElement('p');
     p.textContent = t('Das Projekt ist gelöscht.') + ' ';
+    p.setAttribute('data-agentenansicht-bleibt', '');
     const a = document.createElement('a');
     a.href = '/dashboard';
     a.textContent = t('Zur Übersicht');
@@ -1545,7 +1982,8 @@ async function inkluagentBestaetigen(angebotId, btn, statusEl, konto) {
         if (statusEl) statusEl.textContent = '';
         const fokussieren = inkluagentFokusImChat();
         const el = inkluagentAppendMessage('assistant', data.reply || '', data.werkzeuge || [], data.anhang || []);
-        if (inkluagentSeiteWechseln(data.actions)) return;
+        const wechsel = inkluagentWechselZiel(data.actions);   // B10: derselbe Weg wie nach einer Nachricht
+        if (wechsel && await inkluagentWechseln(wechsel, el, fokussieren)) return;
         if (data.karte) inkluagentKarteSetzen(angebotId, data.karte);
         const nachziehen = inkluagentAktionenKarten(data.actions);
         const log = document.getElementById('inkluagentLog');
@@ -1566,8 +2004,7 @@ async function inkluagentBestaetigen(angebotId, btn, statusEl, konto) {
 // umgewandelt oder exportiert hat (anhang aus dem Werkzeug-Ergebnis, im Verlauf mitgespeichert).
 function inkluagentAnhangEl(anhang) {
     const box = document.createElement('div');
-    box.className = 'inkluagent-message-anhang';
-    box.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-top:0.5rem;';
+    box.className = 'inkluagent-message-anhang';   // Anordnung in style.css (seit 13.10.2026; vorher als style-Attribut)
     (anhang || []).forEach(a => {
         if (a && a.art === 'bestaetigung' && a.angebot_id) {
             const offen = !a.zustand || a.zustand === 'offen';
@@ -1596,21 +2033,19 @@ function inkluagentAnhangEl(anhang) {
             box.appendChild(karte);
             return;
         }
-        // Link unter der Antwort (Schritt 3, projekt_oeffnen): nur Adressen dieser Seite (beginnen mit „/“)
-        if (a && a.art === 'link' && typeof a.url === 'string' && /^\/(?!\/)/.test(a.url)) {
+        // Link unter der Antwort (Schritt 3, projekt_oeffnen): nur Pfade dieser Anwendung (eigenerPfad, Pruefung 13.10.2026, S14 —
+        // vorher liess die Pruefung „/\host“ durch). Ins Arbeitsfenster oeffnet ihn, wo passend, der Klick-Handler der Seite (B1).
+        // lang (B11): ein Link in einer anderen Sprache als die Seite („Zurück zu Deutsch“ nach einem Sprachwechsel) traegt sie
+        if (a && a.art === 'link' && eigenerPfad(a.url)) {
             const l = document.createElement('a');
             l.className = 'btn btn-secondary';
             l.href = a.url;
             l.textContent = a.text || a.url;
-            if (/[?&]hin=/.test(a.url)) l.addEventListener('click', (e) => {
-                if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !inkluagentSeiteImFensterMoeglich(a.url)) return;
-                e.preventDefault();
-                inkluagentSeiteImFenster(a.url, String(a.text || '').replace(/^[^:]*:\s*/, ''));
-            });
+            if (typeof a.lang === 'string' && /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/.test(a.lang)) l.lang = a.lang;
             box.appendChild(l);
             return;
         }
-        if (!a || !a.download_url) return;
+        if (!a || !eigenerPfad(a.download_url)) return;
         if (a.gueltig_bis && Date.parse(a.gueltig_bis) < Date.now()) {
             const weg = document.createElement('p');
             weg.className = 'feld-hinweis';
@@ -1637,7 +2072,7 @@ function inkluagentAnhangEl(anhang) {
             dl.appendChild(name);
         }
         box.appendChild(dl);
-        if (a.ausgaben_url) {
+        if (eigenerPfad(a.ausgaben_url)) {
             const zu = document.createElement('a');
             zu.className = 'btn btn-secondary';
             zu.href = a.ausgaben_url;
@@ -1726,8 +2161,10 @@ function inkluagentSetStatus(text, isError) {
     status.textContent = text || '';
     if (isError) status.setAttribute('data-state', 'error');
     else status.removeAttribute('data-state');
-    // Pruefung 4 (M1): die Statuszeile liegt im Chat — ist er zu oder der Fokus woanders, hoert man sie nicht
-    if (isError && text && !inkluagentFokusImChat()) announce(text);
+    // Pruefung 4 (M1): die Statuszeile liegt im Chat. Pruefung 13.10.2026 (B9, B3): eine Live-Region spricht unabhaengig vom Fokus —
+    // global angesagt wird ein Fehler nur, wenn man die Statuszeile NICHT hoert: Chat zugeklappt (hidden) oder unter der Ueberlagerung
+    // (inert). Vorher kam er bei offenem Chat und Fokus woanders doppelt, unter der Ueberlagerung gar nicht.
+    if (isError && text && status.closest('[hidden], [inert]')) announce(text);
     if (isError && text && typeof inkluagentArbeitsFehler === 'function') inkluagentArbeitsFehler(text);
 }
 
@@ -1741,6 +2178,17 @@ function inkluagentNachrichtDaten(message, hochgeladen) {
     return d;
 }
 
+// Pruefung 13.10.2026 (B16): eine Nachricht, die der Server nicht angenommen hat (Tagesgrenze, Kostendeckel, laufender Auftrag,
+// Verbindung), steht nicht mehr da, als waere sie angekommen — die Blase sagt es in Worten (nicht nur mit Farbe), und der Text steht
+// noch im Eingabefeld (er wird erst geleert, wenn der Server die Nachricht angenommen hat).
+function inkluagentNichtGesendet(el, mitText) {
+    if (!el || el.querySelector('.inkluagent-nicht-gesendet-hinweis')) return;
+    el.classList.add('inkluagent-nicht-gesendet');
+    const p = document.createElement('p');
+    p.className = 'inkluagent-nicht-gesendet-hinweis';
+    p.textContent = mitText ? t('Nicht gesendet. Dein Text steht noch im Eingabefeld.') : t('Nicht gesendet.');
+    el.appendChild(p);
+}
 async function inkluagentSend() {
     const projectId = window._inkluagentProjectId;
     const input = document.getElementById('inkluagentInput');
@@ -1749,14 +2197,18 @@ async function inkluagentSend() {
     // Ohne Projekt nur im festen Bereich (Schritt 3): dann geht die Nachricht an /api/agent/nachricht
     const ohneProjekt = projectId == null;
     if ((ohneProjekt && !inkluagentUeberall()) || (!ohneProjekt && !projectId) || !input || !sendBtn || !log) return;
-    if (sendBtn.disabled) return;   // Enter waehrend des Hochladens oder Antwortens: nichts doppelt senden
+    // Pruefung 13.10.2026 (B12, K2): gesperrt, solange diese Seite sendet oder einen Lauf verfolgt — der Text bleibt im Feld, die Ansage
+    // sagt, warum (vorher still ignoriert; waehrend des Verfolgens nach einem Seitenwechsel startete sogar ein zweiter Lauf)
+    if (inkluagentBeschaeftigt()) {
+        announce(t('Der InkluAgent arbeitet noch an deiner letzten Nachricht. Deine neue Nachricht bleibt im Feld, bis er fertig ist.'));
+        return;
+    }
     const message = input.value.trim();
     // Hochladefeld (Runde 2, Schritt 1): Dateien duerfen ohne eigenen Text gesendet werden (Webadressen stehen in der Nachricht)
     const dateienEl = document.getElementById('inkluagentDateien');
     const dateien = inkluagentAnhangAktiv() ? (window._inkluagentAnhaenge || []).slice()   // „Dateien anhängen“ (Agentenansicht)
         : ((inkluagentHochladenAn() && dateienEl && dateienEl.files) ? Array.from(dateienEl.files) : []);
-    const webadresse = '';
-    if (!message && !dateien.length) {
+    if (!message && !dateien.length && !window._inkluagentNotiz) {
         inkluagentSetStatus((inkluagentHochladenAn() || inkluagentAnhangAktiv()) ? t('Bitte eine Nachricht eingeben oder eine Datei auswählen.') : t('Bitte eine Nachricht eingeben.'), true);
         input.focus();
         return;
@@ -1765,59 +2217,70 @@ async function inkluagentSend() {
         inkluagentSetStatus(t('Nachricht ist zu lang (max. 5000 Zeichen).'), true);
         return;
     }
-    sendBtn.disabled = true;
-    let hochgeladen = null;
+    // aria-disabled statt disabled (B12): der Fokus bleibt auf „Senden“
+    window._inkluagentSendet = true;
+    inkluagentSperreZeigen();
+    const chatstil = inkluagentChatstilAktiv();
     let verlaufText = message;
     let nachziehenHochladen = false;
     let nachgezogen = false;
     let satz = '';
-    if (dateien.length || webadresse) {
-        if (inkluagentChatstilAktiv()) {
-            inkluagentArbeitsStart(dateien.length === 1 ? t('Lädt 1 Datei hoch …') : t('Lädt {n} Dateien hoch …', { n: dateien.length }));
-        }
-        const erg = await inkluagentHochladen(projectId, dateien, webadresse);
-        if (!erg) { sendBtn.disabled = false; return; }
-        const ergebnisse = erg.ergebnisse || [];
-        inkluagentHochgeladenZeigen(projectId, ergebnisse);
-        if (dateienEl) dateienEl.value = '';
-        if (inkluagentAnhangAktiv()) inkluagentAnhaengeLeeren();
-        satz = inkluagentHochladenSatz(ergebnisse);
-        nachziehenHochladen = !ohneProjekt && ergebnisse.some(e => e.ok && String(e.project_id) === String(projectId));
-        // Nichts angekommen und kein eigener Text: keine Nachricht an den Agenten (die Gruende stehen schon am Feld)
-        if (!message && !ergebnisse.some(e => e.ok)) {
-            inkluagentSetStatus(satz, true);
-            sendBtn.disabled = false;
-            return;
-        }
-        hochgeladen = erg.notiz_id || null;
-        // Dieselbe Zeile, die der Server in den Verlauf schreibt (hochladen.nachricht_fuer_verlauf)
-        verlaufText = (message && erg.kurz) ? message + '\n' + erg.kurz : (message || erg.kurz || '');
-    }
-    inkluagentMarkeVorNachricht(projectId);
-    inkluagentAppendMessage('user', verlaufText);
-    log.scrollTop = log.scrollHeight;
-    input.value = '';
-    // Eine gebuendelte Ansage: Ergebnis des Hochladens und dass der Agent arbeitet
-    // Chatstil: EINE Ansage zum Start, die einzelnen Schritte stehen still im Arbeitsfenster (Steve 12.10.2026)
-    const chatstil = inkluagentChatstilAktiv();
-    inkluagentSetStatus((satz ? satz + ' ' : '') + (chatstil ? t('InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster.')
-                                                              : t('InkluAgent denkt nach...')), false);
-    inkluagentArbeitsStart();
+    let nutzerEl = null;
+    let angenommen = false;
+    let verfolgen = '';   // 'lauf' = einen laufenden Auftrag verfolgen (409), 'abbruch' = eigener Stream riss ab (K5)
     try {
+        if (dateien.length) {
+            if (chatstil) inkluagentArbeitsStart(dateien.length === 1 ? t('Lädt 1 Datei hoch …') : t('Lädt {n} Dateien hoch …', { n: dateien.length }));
+            const erg = await inkluagentHochladen(projectId, dateien);
+            if (!erg) return;   // der Grund steht in der Statuszeile, die Anhaenge bleiben
+            const ergebnisse = erg.ergebnisse || [];
+            inkluagentHochgeladenZeigen(projectId, ergebnisse);
+            if (dateienEl) dateienEl.value = '';
+            if (inkluagentAnhangAktiv()) inkluagentAnhaengeLeeren(dateien);
+            satz = inkluagentHochladenSatz(ergebnisse);
+            nachziehenHochladen = !ohneProjekt && ergebnisse.some(e => e.ok && String(e.project_id) === String(projectId));
+            // Nichts angekommen und kein eigener Text: keine Nachricht an den Agenten (die Gruende stehen schon am Feld)
+            if (!message && !ergebnisse.some(e => e.ok)) {
+                inkluagentSetStatus(satz, true);
+                return;
+            }
+            // K4: die Notiz zum Hochladen gilt, bis eine Nachricht angenommen ist — scheitert diese (Tagesgrenze, Verbindung), geht sie
+            // mit dem naechsten Senden noch mit; sonst fehlten die Karten zu den wartenden Dateien
+            window._inkluagentNotiz = erg.notiz_id ? { id: erg.notiz_id, kurz: erg.kurz || '' } : null;
+        }
+        const notiz = window._inkluagentNotiz || null;
+        // Dieselbe Zeile, die der Server in den Verlauf schreibt (hochladen.nachricht_fuer_verlauf)
+        if (notiz) verlaufText = (message && notiz.kurz) ? message + '\n' + notiz.kurz : (message || notiz.kurz || '');
+        inkluagentMarkeVorNachricht(projectId);
+        nutzerEl = inkluagentAppendMessage('user', verlaufText);
+        log.scrollTop = log.scrollHeight;
+        // Eine gebuendelte Ansage: Ergebnis des Hochladens und dass der Agent arbeitet
+        // Chatstil: EINE Ansage zum Start, die einzelnen Schritte stehen still im Arbeitsfenster (Steve 12.10.2026)
+        inkluagentSetStatus((satz ? satz + ' ' : '') + (chatstil ? t('InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster.')
+                                                                  : t('InkluAgent denkt nach...')), false);
+        inkluagentArbeitsStart();
         // Stream (NDJSON, 28.08.2026): je Werkzeugaufruf eine Zeile -> Live-Zeile im Status
         // (aria-live, VoiceOver sagt sie an), am Ende die Antwort mit Werkzeugliste.
         const res = await fetch(ohneProjekt ? '/api/agent/nachricht' : '/api/projects/' + projectId + '/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
-            body: JSON.stringify(inkluagentNachrichtDaten(message, hochgeladen))
+            body: JSON.stringify(inkluagentNachrichtDaten(message, notiz ? notiz.id : null))
         });
-        if (res.status === 401) { window.location.href = '/login'; return; }
+        if (res.status === 401) { inkluagentZurAnmeldung(); return; }
         if (!res.ok) {
             let detail = 'HTTP ' + res.status;
-            try { const e = await res.json(); detail = e.detail || detail; } catch (_) {}
+            try { const e = await res.json(); if (e && typeof e.detail === 'string') detail = e.detail; } catch (_) {}
+            inkluagentNichtGesendet(nutzerEl, !!message);
             inkluagentSetStatus(detail, true);
+            // K2: 409 = fuer dieses Konto arbeitet schon ein Auftrag (anderer Tab, vorige Seite) — der Satz kommt vom Server; dessen
+            // Antwort verfolgt die Seite dann wie nach einem Seitenwechsel
+            if (res.status === 409) verfolgen = 'lauf';
             return;
         }
+        // Angenommen (B16): erst jetzt das Feld leeren — und nur, wenn noch derselbe Text drinsteht; die Notiz ist verbraucht (K4)
+        angenommen = true;
+        window._inkluagentNotiz = null;
+        if (input.value.trim() === message) input.value = '';
         let data = null;
         const genutzt = [];
         if (res.body && res.body.getReader && (res.headers.get('Content-Type') || '').indexOf('x-ndjson') >= 0) {
@@ -1831,6 +2294,7 @@ async function inkluagentSend() {
                     const zeile = rest.slice(0, nl).trim(); rest = rest.slice(nl + 1);
                     if (!zeile) continue;
                     let ev; try { ev = JSON.parse(zeile); } catch (_) { continue; }
+                    // {"type": "ping"} alle 15 s bei Stille (Server, K5) haelt nur die Verbindung — wie jede unbekannte Zeile ignoriert
                     if (ev.type === 'tool') {
                         genutzt.push(ev.name);
                         if (chatstil) inkluagentArbeitsSchritt(ev.name, ev.ziel);
@@ -1850,7 +2314,14 @@ async function inkluagentSend() {
         } else {
             data = await res.json();
         }
-        if (!data) { inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true); return; }
+        // K5: der Stream endete ohne Antwort (Proxy-Grenze, Netz) — der Server arbeitet weiter und speichert sie; die Seite verfolgt den
+        // Lauf, statt „erneut versuchen“ zu sagen (ein zweites Senden haette einen zweiten Lauf gestartet). Ohne den Agenten auf jeder
+        // Seite (kein Status-Endpunkt) bleibt die Meldung.
+        if (!data) {
+            if (inkluagentUeberall()) verfolgen = 'abbruch';
+            else inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
+            return;
+        }
         // Fokusregel (Pruefung 4, M1) VOR allem anderen bestimmen: liegt der Fokus noch im Chat?
         const fokussieren = inkluagentFokusImChat();
         inkluagentEntwurfVerwerfen();   // die fertige Antwort ersetzt den Entwurf aus dem Stream
@@ -1864,11 +2335,13 @@ async function inkluagentSend() {
             // Die neue Antwort sichtbar machen (die Seite scrollt, nicht der Verlauf)
             if (antwortEl && antwortEl.scrollIntoView) antwortEl.scrollIntoView({ block: 'nearest' });
         }
-        if (inkluagentSeiteWechseln(data.actions) || inkluagentBegleiterAktion(data.actions)) { window._inkluagentFokusAntwort = true; return; }
-        let nachziehen = inkluagentAktionenKarten(data.actions);
         // Fokus auf die Antwort statt zurueck ins Eingabefeld: der Screenreader liest sie
         // vollstaendig und von vorn; Tab fuehrt danach zum Eingabefeld.
         window._inkluagentFokusAntwort = true;
+        // Seitenwechsel durch den Agenten: ein Weg mit Fokus- und Eingaberegel (B10, B11, B15)
+        const wechsel = inkluagentWechselZiel(data.actions);
+        if (wechsel && await inkluagentWechseln(wechsel, antwortEl, fokussieren)) return;
+        let nachziehen = inkluagentAktionenKarten(data.actions);
         // Refresh-Actions vom Chatbot: pro Bild Textarea-Wert live setzen.
         // Wenn Bild nicht im DOM (z.B. noch nicht gerendert), Fallback auf Full-Reload.
         const refreshActions = (data.actions || []).filter(a => a && a.type === 'refresh_image');
@@ -1906,17 +2379,25 @@ async function inkluagentSend() {
             inkluagentAntwortMelden(antwortEl, fokussieren);
         }
     } catch (e) {
-        inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
+        // K5: riss die Verbindung NACH dem Annehmen ab, arbeitet der Server weiter — verfolgen; davor kam die Nachricht nicht an (B16)
+        if (angenommen && inkluagentUeberall()) {
+            verfolgen = 'abbruch';
+        } else {
+            if (!angenommen) inkluagentNichtGesendet(nutzerEl, !!message);
+            inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
+        }
     } finally {
-        sendBtn.disabled = false;
+        window._inkluagentSendet = false;
+        inkluagentSperreZeigen();
         inkluagentEntwurfVerwerfen();   // abgebrochen: kein halber Entwurf bleibt stehen
-        // Sicherheitsnetz: kein Weg darf das Arbeitsfenster auf „arbeitet“ stehen lassen
-        if (window._arbeits && window._arbeits.laeuft) inkluagentArbeitsEnde(false);
+        // Sicherheitsnetz: kein Weg darf das Arbeitsfenster auf „arbeitet“ stehen lassen — ausser, der Lauf wird gleich verfolgt
+        if (!verfolgen && window._arbeits && window._arbeits.laeuft) inkluagentArbeitsEnde(false);
         // In dieses Projekt hochgeladen, aber die Antwort kam nicht: die Ansicht trotzdem nachziehen (neue Dokumente, Bilder)
         if (nachziehenHochladen && !nachgezogen) inkluagentAnsichtNachziehen(projectId);
         // Zurueck ins Eingabefeld nur, wenn der Fokus im Chat war (Fehlerfall) — nie aus einer anderen Stelle heraus
         if (window._inkluagentFokusAntwort) { window._inkluagentFokusAntwort = false; }
         else if (inkluagentFokusImChat() && document.activeElement !== input) { input.focus(); }
+        if (verfolgen) inkluagentLaufVerfolgen(verfolgen === 'abbruch');
     }
 }
 

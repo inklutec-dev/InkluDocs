@@ -252,17 +252,22 @@ class Oberflaeche(unittest.TestCase):
         f = self.js[self.js.index("function " + name + "("):]
         return f[:f.index("\n}\n")]
 
-    def test_nur_in_der_agentenansicht_und_umkehrbar(self):
-        self.assertIn("if (inkluagentArbeitsfensterAn()) { inkluagentChatstil(true);", self.funktion("inkluagentAgentenansicht"))
-        self.assertIn("inkluagentChatstil(false);", self.funktion("inkluagentAgentenansichtAufheben"))
+    def test_nur_in_der_agentenansicht(self):
+        # Pruefung 13.10.2026 (HK2): der Chatstil hat keinen Rueckweg mehr — der Zweig war nie erreichbar (die manuelle Ansicht kommt
+        # ueber den Umschalter mit Neuladen); inkluagentChatstil() schaltet nur ein
+        self.assertIn("if (inkluagentArbeitsfensterAn()) { inkluagentChatstil();", self.funktion("inkluagentAgentenansicht"))
+        self.assertNotIn("inkluagentChatstil(", self.funktion("inkluagentAgentenansichtAufheben"))
+        self.assertNotIn("function inkluagentAnhangEntfernenAlles(", self.js)
         an = self.funktion("inkluagentArbeitsfensterAn")
         self.assertIn("window.INKLUAGENT.arbeitsfenster", an)
         self.assertIn("inkluagentUeberall()", an)
 
     def test_aufbau_verlauf_eingabe_beschreibung_dann_arbeitsfenster(self):
         f = self.funktion("inkluagentChatstil")
-        self.assertIn("[frueher, log, form, leiste, trenner, beschreibung].forEach", f, "Chatstil: Verlauf vor der Eingabe")
-        self.assertIn("[form, log, leiste, frueher, trenner, beschreibung].forEach", f, "zurueck: Eingabe zuerst (Michael, Punkt 1)")
+        # Pruefung 13.10.2026 (B6): Meldungen (Ergebnis des Hochladens, Statuszeile) im Fluss zwischen Verlauf und angehefteter Eingabe
+        self.assertIn("[frueher, log, meldungen, form, leiste, trenner, beschreibung].forEach", f, "Chatstil: Verlauf vor der Eingabe")
+        self.assertIn("['inkluagentHochgeladen', 'inkluagentStatus'].forEach", f)
+        self.assertIn("log.removeAttribute('tabindex')", f, "B22: kein leerer Tab-Stopp im Chatstil")
         self.assertIn("spalten.appendChild(inkluagentArbeitsfensterBauen())", f)
         bau = self.funktion("inkluagentArbeitsfensterBauen")
         self.assertIn("document.createElement('section')", bau)
@@ -276,8 +281,12 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("t('InkluAgent arbeitet. Was er gerade tut, steht im Arbeitsfenster.')", send)
         self.assertIn("inkluagentArbeitsEnde(inkluagentWartetAufDich(data.anhang))", send)
         self.assertIn("inkluagentArbeitsFehler(text)", self.funktion("inkluagentSetStatus"))
-        # Steve 12.10.2026 (spaeter): Schritte nur mit dem Kaestchen „Jeden Schritt ansagen“ ansagen
-        self.assertIn("if (inkluagentSchritteAnsagen()) announce(text);", self.funktion("inkluagentArbeitsSchritt"))
+        # Steve 12.10.2026 (spaeter): Schritte nur mit dem Kaestchen „Jeden Schritt ansagen“ ansagen — seit der Pruefung 13.10.2026
+        # (B9) gebuendelt, hoechstens einmal je Sekunde
+        self.assertIn("inkluagentSchrittAnsagen(text);", self.funktion("inkluagentArbeitsSchritt"))
+        buendel = self.funktion("inkluagentSchrittAnsagen")
+        self.assertIn("if (!text || !inkluagentSchritteAnsagen()) return;", buendel)
+        self.assertIn("b.zuletzt + 1000 - Date.now()", buendel)
         self.assertIn("announce(", self.funktion("inkluagentStandVorlesen"))
 
     def test_daten_nur_als_text_und_nur_eigene_bildadressen(self):
@@ -298,7 +307,9 @@ class Oberflaeche(unittest.TestCase):
 
     def test_angeheftete_eingabe_verdeckt_nichts(self):
         css = lies(FRONTEND, "style.css")
-        self.assertIn("html.agentenansicht-chatstil { scroll-padding-bottom: 13rem; }", css)
+        # Pruefung 13.10.2026 (B6): der Platz folgt der gemessenen Hoehe (ResizeObserver in inkluagent.js); Verhalten: lokal/probe_pr13_*
+        self.assertIn("html.agentenansicht-chatstil { scroll-padding-bottom: calc(var(--agent-eingabe-hoehe, 13rem) + 1rem); }", css)
+        self.assertIn("--agent-eingabe-hoehe", self.funktion("inkluagentEingabeHoeheBeobachten"))
         self.assertIn("@media (max-height: 560px)", css)
         self.assertIn("html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leiste { display: none; }", css)
 
@@ -362,19 +373,23 @@ class Anhaengen(unittest.TestCase):
         self.assertIn("!inkluagentHochladenAn()", an, "nur ohne das Feld")
         bau = funktion("inkluagentAnhangBauen")
         for teil in ("knopf.type = 'button'", "t('Dateien anhängen')", "datei.type = 'file'", "datei.multiple = true",
-                     "liste.setAttribute('aria-label', t('Angehängte Dateien'))", "'dragover'", "'drop'", "'paste'",
+                     "liste.setAttribute('aria-label', t('Angehängte Dateien'))", "'paste'", "inkluagentAblageEinrichten();",
                      "send.parentNode.insertBefore(knopf, send)"):
             self.assertIn(teil, bau)
+        # Hineinziehen ueberall auf der Seite (Pruefung 13.10.2026, HK7) und sichtbare Grenzen (B21)
+        ablage = funktion("inkluagentAblageEinrichten")
+        for teil in ("'dragover'", "'drop'", "if (e.defaultPrevented || !inkluagentAnhangAktiv() || !mitDateien(e)) return;"):
+            self.assertIn(teil, ablage)
+        self.assertNotIn("'visually-hidden'", bau)
         zeigen = funktion("inkluagentAnhaengeZeigen")
         self.assertNotIn("innerHTML", zeigen)
         self.assertIn("weg.setAttribute('aria-label', t('„{name}“ entfernen'", zeigen)
         self.assertIn("ziel.focus()", funktion("inkluagentAnhangEntfernen"))
         send = funktion("inkluagentSend")
         self.assertIn("inkluagentAnhangAktiv() ? (window._inkluagentAnhaenge || []).slice()", send)
-        self.assertIn("if (inkluagentAnhangAktiv()) inkluagentAnhaengeLeeren();", send)
+        self.assertIn("if (inkluagentAnhangAktiv()) inkluagentAnhaengeLeeren(dateien);", send, "B12: nur die mitgeschickten")
         stil = funktion("inkluagentChatstil")
-        self.assertIn("inkluagentAnhangBauen(form, gespraech);", stil)
-        self.assertIn("inkluagentAnhangEntfernenAlles();", stil)
+        self.assertIn("inkluagentAnhangBauen(form, meldungen);", stil)
         self.assertNotIn("inkluagentSetStatus", funktion("inkluagentAnhaengeHinzu"), "Meldungen nie ueber die Statuszeile des Auftrags")
 
 
@@ -544,8 +559,13 @@ class AgentenansichtKorrekturen(unittest.TestCase):
 
     def test_spaeter_eingeblendetes_bleibt_versteckt(self):
         f = self.funktion("inkluagentAgentenansicht")
-        self.assertIn("if (k.hidden) { k.setAttribute('data-agentenansicht', 'war-versteckt'); return; }", f)
+        aus = self.funktion("inkluagentAgentenansichtAusblenden")
+        self.assertIn("if (k.hidden) { k.setAttribute('data-agentenansicht', 'war-versteckt'); return; }", aus)
         self.assertIn("window._agentenansichtBeobachter.observe(main, { childList: true, subtree: true });", f)
+        # Pruefung 13.10.2026 (K19): der Beobachter blendet nur aus, er baut das Arbeitsfenster nicht neu
+        beobachter = f[f.index("new MutationObserver("):f.index(".observe(main")]
+        self.assertIn("inkluagentAgentenansichtAusblenden()", beobachter)
+        self.assertNotIn("inkluagentArbeitsZeigen", beobachter)
         self.assertIn("[data-agentenansicht] {\n    display: none !important;", lies(FRONTEND, "style.css"))
         auf = self.funktion("inkluagentAgentenansichtAufheben")
         self.assertIn("if (el.getAttribute('data-agentenansicht') === 'aus') el.hidden = false;", auf)
@@ -554,7 +574,6 @@ class AgentenansichtKorrekturen(unittest.TestCase):
         f = self.funktion("inkluagentChatstil")
         self.assertIn("toggle.hidden = true;", f)
         self.assertIn("panel.hidden = false;", f)
-        self.assertIn("toggle.hidden = false;", f)
         self.assertIn(".inkluagent-toggle[hidden] { display: none; }", lies(FRONTEND, "style.css"))
 
     def test_gespraeche_ohne_ueberschrift_als_benannter_bereich(self):
@@ -569,7 +588,7 @@ class AgentenansichtKorrekturen(unittest.TestCase):
         self.assertIn("inkluagentFortschrittZeigen(st, gesehen, false)", f)
         self.assertIn("if (projekt && hier === projekt) await inkluagentAnsichtNachziehen(window._inkluagentProjectId);", f)
         z = self.funktion("inkluagentFortschrittZeigen")
-        self.assertIn("inkluagentSchritteAnsagen()", z)
+        self.assertIn("neu.forEach(inkluagentSchrittAnsagen)", z, "neue Schritte gebuendelt ansagen (B9)")
         self.assertIn("t('Ruft gerade auf: {w}'", z)
 
 

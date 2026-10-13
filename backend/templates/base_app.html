@@ -44,13 +44,25 @@
 <div class="app-shell">
   {% if not eingebettet %}<div class="app-sidebar" id="appSidebar"></div>{% endif %}
   <div class="app-content">
-    <main id="main" class="dash-main" tabindex="-1">
-{% block main %}{% endblock %}
-    </main>
     {# InkluAgent auf jeder Seite (Schritt 3): fester Bereich NACH dem Hauptinhalt, an derselben Stelle auf jeder Seite; den Inhalt
-       baut frontend/inkluagent.js (inkluagentBereichAufbauen). Projektseiten binden ihn an ihr Projekt (inkluagentInit). #}
-    {% if inkluagent_schalter and inkluagent_schalter.ueberall and not eingebettet %}
-    <aside id="inkluagentBereich" class="inkluagent-bereich" aria-labelledby="inkluagentHeading" tabindex="-1"></aside>
+       baut frontend/inkluagent.js (inkluagentBereichAufbauen). Projektseiten binden ihn an ihr Projekt (inkluagentInit).
+       Pruefung 13.10.2026 (B17): in der Agentenansicht IST der Agent der Hauptinhalt — dann umschliesst ein <main> die Seite (div#main)
+       und den Agenten als benannten Bereich (section); in der manuellen Ansicht bleibt er ein ergaenzender Bereich (aside) nach main.
+       #main bleibt ein eigenes Element, weil die Projektansichten seinen Inhalt komplett ersetzen (innerHTML) — der Agent darf nicht
+       darin stehen. Ohne tabindex (B19): den Fokus setzt der Sprunglink ueber fokusAuf (dashboard.js). #}
+    {% set mit_agent = inkluagent_schalter and inkluagent_schalter.ueberall and not eingebettet %}
+    {% set agent_haupt = mit_agent and oberflaeche == 'agent' %}
+    {% if agent_haupt %}<main class="agent-hauptbereich">
+    <div id="main" class="dash-main" tabindex="-1">
+{% else %}
+    <main id="main" class="dash-main" tabindex="-1">
+{% endif %}
+{% block main %}{% endblock %}
+    {% if agent_haupt %}</div>
+    <section id="inkluagentBereich" class="inkluagent-bereich" aria-labelledby="inkluagentHeading"></section>
+    </main>
+    {% else %}</main>
+    {% if mit_agent %}<aside id="inkluagentBereich" class="inkluagent-bereich" aria-labelledby="inkluagentHeading"></aside>{% endif %}
     {% endif %}
     {% if not eingebettet %}<footer class="dash-footer"></footer>{% endif %}
   </div>

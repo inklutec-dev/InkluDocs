@@ -446,9 +446,13 @@ class Oberflaeche(unittest.TestCase):
         f = self._funktion("inkluagentSend")
         self.assertLess(f.index("inkluagentHochladen(projectId"), f.index("'/api/projects/' + projectId + '/chat'"))
         # seit 12.10.2026 baut inkluagentNachrichtDaten den Inhalt (Begleiter schickt die Seite mit)
-        self.assertIn("JSON.stringify(inkluagentNachrichtDaten(message, hochgeladen))", f)
+        self.assertIn("JSON.stringify(inkluagentNachrichtDaten(message, notiz ? notiz.id : null))", f)
         self.assertIn("{ message, hochgeladen }", self._funktion("inkluagentNachrichtDaten"))
-        self.assertIn("if (sendBtn.disabled) return;", f, "Enter waehrend des Hochladens sendet nicht doppelt")
+        # Pruefung 13.10.2026: gesperrt waehrend des Sendens und Verfolgens (B12/K2, aria-disabled statt disabled); die Notiz gilt, bis
+        # eine Nachricht angenommen ist (K4)
+        self.assertIn("if (inkluagentBeschaeftigt()) {", f, "Enter waehrend des Hochladens sendet nicht doppelt")
+        self.assertNotIn("sendBtn.disabled", f)
+        self.assertLess(f.index("angenommen = true;"), f.index("window._inkluagentNotiz = null;"))
 
 
 if __name__ == "__main__":

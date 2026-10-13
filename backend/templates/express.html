@@ -160,14 +160,8 @@
 
   // Fokus auf Ueberschrift oder Meldung (09.10.2026, Steve: VoiceOver sagte nach dem Bestellen an H1 und Danke-Meldung
   // „klickbar“). Ursache: ein DAUERHAFTES tabindex="-1" — es machte die Elemente im Barrierefreiheitsbaum fokussierbar,
-  // Klick-Listener gibt es an keinem Vorfahren (CDP-Probe 09.10.2026). Jetzt traegt das Element tabindex nur, solange es den
-  // Fokus hat; danach ist es wieder reiner Text. Fokus und Ansage bleiben wie bisher.
-  function fokusAuf(e) {
-    if (!e) return;
-    e.setAttribute('tabindex', '-1');
-    e.addEventListener('blur', () => e.removeAttribute('tabindex'), { once: true });
-    e.focus();
-  }
+  // Klick-Listener gibt es an keinem Vorfahren (CDP-Probe 09.10.2026). fokusAuf() steht seit der Pruefung 13.10.2026 (B19) in
+  // dashboard.js und gilt fuer alle Seiten: tabindex nur, solange das Element den Fokus hat.
   function el(tag, klasse, text) {
     const e = document.createElement(tag);
     if (klasse) e.className = klasse;
