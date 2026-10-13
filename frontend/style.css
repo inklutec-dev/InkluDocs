@@ -1190,7 +1190,8 @@ ul.inkluagent-kurzhilfe {
 .inkluagent-frueher summary:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
 .inkluagent-frueher-liste { margin-top: 0.5rem; }
 /* Gespraeche (12.10.2026): „Neues Gespräch“ und „Frühere Gespräche“ oben im Agenten; Seite „Frühere Gespräche“ */
-.inkluagent-gespraech-leiste { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 0 0 0.75rem; }
+/* „Neues Gespräch“ und „Frühere Gespräche“ in der Reihe von „Senden“ (Michael Karbe, Feedback 20261012 - 2) */
+.inkluagent-gespraech-knoepfe { display: inline-flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
 .gespraeche-liste { list-style: none; padding: 0; margin: 1rem 0 0; }
 .gespraech-eintrag { border-bottom: 1px solid var(--border); padding: 0.75rem 0; }
 .gespraech-eintrag h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
@@ -1527,7 +1528,8 @@ html.agentenansicht-chatstart .inkluagent-gespraech:has(> .inkluagent-log:empty)
 .inkluagent-gespraech.inkluagent-ablage-aktiv { outline: 3px dashed var(--accent); outline-offset: 6px; border-radius: 12px; }
 .inkluagent-chatstil #inkluagentStatus:empty { display: none; }
 /* Die Gespraeche stehen in der Seitenleiste; ohne sie (schmale Seitenleiste ohne Abschnitt) bleibt die Leiste im Agenten */
-html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leiste { display: none; }
+html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoepfe { display: none; }
+.inkluagent-chatstil .inkluagent-gespraech-knoepfe { grid-column: 1 / -1; grid-row: 6; justify-self: end; }
 .inkluagent-chatstil .inkluagent-trenner { display: none; }
 .inkluagent-chatstil .inkluagent-beschreibung { font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem; }
 .inkluagent-chatstil .inkluagent-beschreibung .inkluagent-intro { font-size: 0.875rem; }

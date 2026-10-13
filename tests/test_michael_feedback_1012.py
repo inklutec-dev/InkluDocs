@@ -102,6 +102,18 @@ class Startseite(unittest.TestCase):
         self.assertIn("Neues Projekt anlegen", absatz)
         self.assertIn('id="sharedBtn"', absatz)
 
+    def test_neue_funktionen_neben_geteilten_projekten(self):
+        """Feedback 20261012 - 2, Punkte 1 und 2: der Knopf der Neuigkeiten steht in derselben Reihe und heisst „Neue Funktionen“."""
+        h = self.html
+        start = h.index('<p class="dash-neu-projekt">')
+        absatz = h[start:h.index("</p>", start)]
+        self.assertLess(absatz.index('id="sharedBtn"'), absatz.index('id="newsBtn"'))
+        self.assertEqual(h.count('id="newsBtn"'), 1, "keine zweite Zeile mehr")
+        self.assertNotIn("t('Du bist auf dem aktuellen Stand')", h)
+        self.assertIn("btn.textContent = t('Neue Funktionen');", h)
+        self.assertIn("btn.textContent = t('Neue Funktionen ({n} neu)', { n: unread });", h)
+        self.assertIn('<h2 id="newsPanelTitle">{{ _(\'Neue Funktionen\') }}</h2>', h)
+
 
 class Listen(unittest.TestCase):
     def test_fuenf_und_alle_anzeigen(self):

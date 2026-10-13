@@ -238,11 +238,16 @@ class Oberflaeche(unittest.TestCase):
         with open(os.path.join(FRONTEND, "inkluagent.js"), encoding="utf-8") as f:
             self.js = f.read()
 
-    def test_leiste_nur_mit_schalter(self):
-        self.assertIn("(inkluagentGespraecheAn() ? inkluagentGespraechLeisteHtml() : '')", self.js)
-        f = self.js[self.js.index("function inkluagentGespraechLeisteHtml("):]
+    def test_knoepfe_neben_senden_nur_mit_schalter(self):
+        """Michael Karbe, Feedback 20261012 - 2: Reihe „Senden“, „Neues Gespräch“, „Frühere Gespräche“."""
+        form = self.js[self.js.index("'<div class=\"inkluagent-controls\">'"):]
+        form = form[:form.index("'</form>'")]
+        self.assertLess(form.index("inkluagentSendBtn"), form.index("(inkluagentGespraecheAn() ? inkluagentGespraechKnoepfeHtml() : '')"))
+        self.assertNotIn("inkluagentGespraechLeisteHtml", self.js, "keine zweite Leiste unter dem Verlauf")
+        f = self.js[self.js.index("function inkluagentGespraechKnoepfeHtml("):]
         f = f[:f.index("\n}\n")]
-        self.assertIn('<a href="/gespraeche">', f, "die Liste steht auf einer eigenen Seite, nicht im Agenten")
+        self.assertLess(f.index('id="inkluagentNeuesGespraech"'), f.index('<a href="/gespraeche" class="btn btn-secondary">'),
+                        "die Liste steht auf einer eigenen Seite (Link wie ein Knopf), nicht im Agenten")
 
     def test_hier_weitermachen_oeffnet_den_agenten(self):
         self.assertIn("get('agent') === 'offen'", self.js)

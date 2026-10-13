@@ -75,6 +75,9 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         +       (inkluagentHochladenAn() ? inkluagentHochladeHtml() : '')
         +       '<div class="inkluagent-controls">'
         +         '<button type="submit" id="inkluagentSendBtn" class="btn btn-primary">' + t('Senden') + '</button>'
+        // Michael Karbe, Feedback 20261012 - 2, Punkte 3 und 4: „Neues Gespräch“ und „Frühere Gespräche“ in derselben Reihe wie
+        // „Senden“ (vorher eine eigene Leiste unter dem Verlauf)
+        +         (inkluagentGespraecheAn() ? inkluagentGespraechKnoepfeHtml() : '')
         +         '<span id="inkluagentStatus" class="inkluagent-status" role="status" aria-live="polite"></span>'
         +       '</div>'
         +     '</form>'
@@ -85,7 +88,6 @@ function inkluagentInhaltHtml(projectId, variante, alsBereich) {
         // UND Fokus) und die eigene Nachricht als Echo. Jetzt sagt nichts im Verlauf von selbst etwas an: die neue Antwort
         // bekommt den Fokus (der Screenreader liest sie vollständig), Warten und Fehler meldet die Statuszeile.
         +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="off" aria-label="' + t('Chat-Verlauf') + '" tabindex="0"></div>'
-        +     (inkluagentGespraecheAn() ? inkluagentGespraechLeisteHtml() : '')
         +     '<hr class="inkluagent-trenner">'
         +     '<div class="inkluagent-beschreibung">'
         // InkluAgent-Ausbau Runde 1, Schritt 3 (Schalter funktionen.AGENT_HILFE): KI-Hinweis, Beispiele und Weg zur Hilfe-Seite;
@@ -514,7 +516,6 @@ function inkluagentChatstil() {
     if (!sec || !panel || sec.classList.contains('inkluagent-chatstil')) return;
     const form = document.getElementById('inkluagentForm');
     const log = document.getElementById('inkluagentLog');
-    const leiste = panel.querySelector('.inkluagent-gespraech-leiste');
     const frueher = panel.querySelector('.inkluagent-frueher');
     const trenner = panel.querySelector('.inkluagent-trenner');
     const beschreibung = panel.querySelector('.inkluagent-beschreibung');
@@ -545,7 +546,7 @@ function inkluagentChatstil() {
     const meldungen = document.createElement('div');
     meldungen.className = 'inkluagent-meldungen';
     ['inkluagentHochgeladen', 'inkluagentStatus'].forEach(id => { const el = document.getElementById(id); if (el) meldungen.appendChild(el); });
-    [frueher, log, meldungen, form, leiste, trenner, beschreibung].forEach(el => { if (el) gespraech.appendChild(el); });
+    [frueher, log, meldungen, form, trenner, beschreibung].forEach(el => { if (el) gespraech.appendChild(el); });
     // Hier scrollt die Seite, nicht der Verlauf: kein leerer Tab-Stopp (B22; tabindex="0" braucht nur der scrollbare Kasten der
     // manuellen Ansicht, axe scrollable-region-focusable)
     if (log) log.removeAttribute('tabindex');
@@ -1541,16 +1542,18 @@ function inkluagentClose() {
 function inkluagentKonto() {
     return !!(window.INKLUAGENT && window.INKLUAGENT.konto);
 }
-// Gespraeche (Steve 12.10.2026, Schalter AGENT_GESPRAECHE): oben im Agenten nur zwei Dinge — „Neues Gespräch“ und der Link
-// „Frühere Gespräche“ auf eine eigene Seite (die Liste steht bewusst nicht im Agenten).
+// Gespraeche (Steve 12.10.2026, Schalter AGENT_GESPRAECHE): im Agenten nur zwei Dinge — „Neues Gespräch“ und „Frühere Gespräche“ auf
+// eine eigene Seite (die Liste steht bewusst nicht im Agenten). Seit Michael Karbe, Feedback 20261012 - 2, neben „Senden“; „Frühere
+// Gespräche“ sieht aus wie ein Knopf, bleibt aber ein Link (es fuehrt auf eine Seite — HTML vor ARIA; in der Agentenansicht oeffnet der
+// zentrale Link-Handler sie im Arbeitsfenster).
 function inkluagentGespraecheAn() {
     return !!(window.INKLUAGENT && window.INKLUAGENT.gespraeche);
 }
-function inkluagentGespraechLeisteHtml() {
-    return '<div class="inkluagent-gespraech-leiste">'
+function inkluagentGespraechKnoepfeHtml() {
+    return '<span class="inkluagent-gespraech-knoepfe">'
         + '<button type="button" id="inkluagentNeuesGespraech" class="btn btn-secondary">' + t('Neues Gespräch') + '</button>'
-        + '<a href="/gespraeche">' + t('Frühere Gespräche') + '</a>'
-        + '</div>';
+        + '<a href="/gespraeche" class="btn btn-secondary">' + t('Frühere Gespräche') + '</a>'
+        + '</span>';
 }
 async function inkluagentNeuesGespraech() {
     const btn = document.getElementById('inkluagentNeuesGespraech');

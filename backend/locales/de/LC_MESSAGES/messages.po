@@ -12415,3 +12415,17 @@ msgstr "Setzt das Gespräch fort."
 
 msgid "Sprache wechseln:"
 msgstr "Sprache wechseln:"
+
+# Michael Karbe, Feedback 20261012 - 2: Neue Funktionen
+msgid "Neue Funktionen"
+msgstr "Neue Funktionen"
+
+#, python-brace-format
+msgid "Neue Funktionen ({n} neu)"
+msgstr "Neue Funktionen ({n} neu)"
+
+msgid "Zurzeit keine neuen Funktionen."
+msgstr "Zurzeit keine neuen Funktionen."
+
+msgid "Frühere Einträge"
+msgstr "Frühere Einträge"

@@ -741,6 +741,18 @@ Tests: `tests/test_michael_feedback_1012.py` (8). Klickprobe lokal 11 von 11 (dr
 Agenten, Platzhalter, kein Dateifeld, kein grauer Kasten, axe ohne Verstöße, fünf plus „Alle anzeigen (11)“ mit Fokus).
 Punkt 6 (eigene Agentenansicht wie bei ChatGPT) folgt als eigener Schritt.
 
+
+### Michael Karbe, Feedback 20261012 - 2 (13.10.2026, Steves Go)
+
+- Punkte 1 und 2: Der Knopf der Neuigkeiten auf der Startseite steht in derselben Reihe wie „Neues Projekt anlegen“ und
+  „Geteilte Projekte“ und heißt „Neue Funktionen“ (mit ungelesenen: „Neue Funktionen (n neu)“); der Dialog heißt ebenso. Vorher eine
+  eigene Zeile darunter mit „Du bist auf dem aktuellen Stand“. Ohne Schalter.
+- Punkte 3 und 4: Im InkluAgent stehen „Neues Gespräch“ und „Frühere Gespräche“ in der Reihe von „Senden“ (`inkluagentGespraechKnoepfeHtml`,
+  vorher eine Leiste unter dem Verlauf). „Frühere Gespräche“ sieht aus wie ein Knopf, bleibt aber ein Link (es führt auf eine Seite;
+  in der Agentenansicht öffnet sie der zentrale Link-Handler im Arbeitsfenster). Mit dem Schalter `AGENT_GESPRAECHE`; in der
+  Agentenansicht mit Gesprächen in der Seitenleiste bleiben die beiden im Agenten ausgeblendet.
+- Tests: `test_michael_feedback_1012.test_neue_funktionen_neben_geteilten_projekten`, `test_agent_gespraeche.test_knoepfe_neben_senden_nur_mit_schalter`;
+  Proben `probe_gespraeche` (Reihe der drei Knöpfe), Rauchtest `rauch_michael`.
 ### Agentenansicht wie ChatGPT/Claude mit Arbeitsfenster (Michael Karbe Punkt 6, Steves Vision 12.10.2026; Schalter `AGENT_ARBEITSFENSTER`, Umgebung `INKLUAGENT_ARBEITSFENSTER=an`, braucht `AGENT_ANSICHT` und `AGENT_UEBERALL`)
 
 Steve: „Auf der einen Seite das Eingabefeld, auf der anderen sieht man, was der Agent gerade macht — welche Seite, welches

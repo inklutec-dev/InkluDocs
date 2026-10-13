@@ -5,12 +5,13 @@
       <p class="dash-sub">{{ _('Schön, dass du da bist. Lege ein neues Projekt an oder öffne eines deiner Projekte.') }}</p>
       {# Runde 10 (08.10.2026): „Neues Projekt anlegen“ steht nicht mehr in der Navigation, sondern als Primärknopf hier
          und oben auf „Meine Projekte“ #}
-      {# Michael Karbe, Feedback 20261012 - 1, Punkt 9: „Geteilte Projekte“ direkt neben „Neues Projekt anlegen“ #}
+      {# Michael Karbe, Feedback 20261012 - 1, Punkt 9: „Geteilte Projekte“ direkt neben „Neues Projekt anlegen“; Feedback
+         20261012 - 2, Punkte 1 und 2: daneben der Knopf der Neuigkeiten, jetzt „Neue Funktionen“ (vorher eine eigene Zeile darunter
+         mit „Du bist auf dem aktuellen Stand“) #}
       <p class="dash-neu-projekt"><a class="btn btn-primary" href="/projekt-neu">{{ _('Neues Projekt anlegen') }}</a>
-        <a id="sharedBtn" class="btn btn-secondary" href="/geteilte-projekte" hidden>{{ _('Geteilte Projekte') }}</a></p>
+        <a id="sharedBtn" class="btn btn-secondary" href="/geteilte-projekte" hidden>{{ _('Geteilte Projekte') }}</a>
+        <button type="button" id="newsBtn" class="dash-news-btn" aria-haspopup="dialog" hidden>{{ _('Neue Funktionen') }}</button></p>
       <p id="dailyLimitInfo" class="dash-limit"></p>
-
-      <p><button type="button" id="newsBtn" class="dash-news-btn" aria-haspopup="dialog" hidden>{{ _('Neuigkeiten') }}</button></p>
 
       <section class="dash-section" aria-labelledby="recent-h">
         <h2 id="recent-h">{{ _('Zuletzt bearbeitete Projekte') }}</h2>
@@ -46,7 +47,7 @@
 <div id="newsPanel" class="dash-news-panel" role="dialog" aria-modal="true" aria-labelledby="newsPanelTitle" hidden>
   <div class="dash-news-panel-content">
     <div class="dash-news-panel-header">
-      <h2 id="newsPanelTitle">{{ _('Neuigkeiten') }}</h2>
+      <h2 id="newsPanelTitle">{{ _('Neue Funktionen') }}</h2>
       <button type="button" id="newsClose" class="dash-news-close">{{ _('Schließen') }}</button>
     </div>
     <div id="newsList"></div>
@@ -159,7 +160,7 @@
     if (_newsItems.length === 0) {
       const p = document.createElement('p');
       p.className = 'dash-empty';
-      p.textContent = t('Zurzeit keine Neuigkeiten.');
+      p.textContent = t('Zurzeit keine neuen Funktionen.');
       list.appendChild(p);
       return;
     }
@@ -169,7 +170,7 @@
       const details = document.createElement('details');
       details.className = 'dash-news-more';
       const summary = document.createElement('summary');
-      summary.textContent = t('Frühere Neuigkeiten');
+      summary.textContent = t('Frühere Einträge');
       details.appendChild(summary);
       details.appendChild(newsBuildList(_newsItems.slice(RECENT)));
       list.appendChild(details);
@@ -181,10 +182,10 @@
     const seen = _newsSeenUntil || '';  // leer = alles ungelesen (Bestandsnutzer)
     const unread = _newsItems.filter((n) => newsDateKey(n.datum) > seen).length;
     if (unread > 0) {
-      btn.textContent = t('Neuigkeiten ({n})', { n: unread });
+      btn.textContent = t('Neue Funktionen ({n} neu)', { n: unread });
       btn.classList.add('has-unread');
     } else {
-      btn.textContent = t('Du bist auf dem aktuellen Stand');
+      btn.textContent = t('Neue Funktionen');
       btn.classList.remove('has-unread');
     }
     btn.hidden = false;

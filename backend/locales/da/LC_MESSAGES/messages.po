@@ -12111,3 +12111,17 @@ msgstr "Fortsætter samtalen."
 
 msgid "Sprache wechseln:"
 msgstr "Skift sprog:"
+
+# Michael Karbe, Feedback 20261012 - 2: Neue Funktionen
+msgid "Neue Funktionen"
+msgstr "Nye funktioner"
+
+#, python-brace-format
+msgid "Neue Funktionen ({n} neu)"
+msgstr "Nye funktioner ({n} nye)"
+
+msgid "Zurzeit keine neuen Funktionen."
+msgstr "Ingen nye funktioner lige nu."
+
+msgid "Frühere Einträge"
+msgstr "Tidligere indlæg"

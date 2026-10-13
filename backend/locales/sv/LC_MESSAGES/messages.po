@@ -11986,3 +11986,17 @@ msgstr "Fortsätter samtalet."
 
 msgid "Sprache wechseln:"
 msgstr "Byt språk:"
+
+# Michael Karbe, Feedback 20261012 - 2: Neue Funktionen
+msgid "Neue Funktionen"
+msgstr "Nya funktioner"
+
+#, python-brace-format
+msgid "Neue Funktionen ({n} neu)"
+msgstr "Nya funktioner ({n} nya)"
+
+msgid "Zurzeit keine neuen Funktionen."
+msgstr "Inga nya funktioner just nu."
+
+msgid "Frühere Einträge"
+msgstr "Tidigare inlägg"

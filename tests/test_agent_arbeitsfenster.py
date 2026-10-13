@@ -265,7 +265,7 @@ class Oberflaeche(unittest.TestCase):
     def test_aufbau_verlauf_eingabe_beschreibung_dann_arbeitsfenster(self):
         f = self.funktion("inkluagentChatstil")
         # Pruefung 13.10.2026 (B6): Meldungen (Ergebnis des Hochladens, Statuszeile) im Fluss zwischen Verlauf und angehefteter Eingabe
-        self.assertIn("[frueher, log, meldungen, form, leiste, trenner, beschreibung].forEach", f, "Chatstil: Verlauf vor der Eingabe")
+        self.assertIn("[frueher, log, meldungen, form, trenner, beschreibung].forEach", f, "Chatstil: Verlauf vor der Eingabe")
         self.assertIn("['inkluagentHochgeladen', 'inkluagentStatus'].forEach", f)
         self.assertIn("log.removeAttribute('tabindex')", f, "B22: kein leerer Tab-Stopp im Chatstil")
         self.assertIn("spalten.appendChild(inkluagentArbeitsfensterBauen())", f)
@@ -311,7 +311,7 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("html.agentenansicht-chatstil { scroll-padding-bottom: calc(var(--agent-eingabe-hoehe, 13rem) + 1rem); }", css)
         self.assertIn("--agent-eingabe-hoehe", self.funktion("inkluagentEingabeHoeheBeobachten"))
         self.assertIn("@media (max-height: 560px)", css)
-        self.assertIn("html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leiste { display: none; }", css)
+        self.assertIn("html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoepfe { display: none; }", css)
 
 
 
