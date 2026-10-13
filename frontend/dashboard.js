@@ -275,12 +275,13 @@ function eingebettetEinrichten() {
 // dann jede id in der Form einer id — ein fremder Link wie „/konto?hin=<id>“ setzte den Fokus auf ein beliebiges Element, z. B. einen
 // Knopf); sonst zaehlen nur ids aus der Liste (auch „ueberschrift“ steht darin). Der Server gibt die Liste seit Runde 2 auf jeder Seite
 // mit window.INKLUAGENT mit, unabhaengig vom Begleiter (main._inkluagent_schalter). Oeffentliche Seiten (base_oeffentlich.html) haben kein
-// window.INKLUAGENT: eingebettet nehmen sie die Liste ihres Hauptfensters, als ganze Seite werten sie ?hin= nicht aus.
+// window.INKLUAGENT: eingebettet nehmen sie die Liste ihres Hauptfensters, als ganze Seite dieselbe Liste als window.HIN_ZIELE (der
+// Begleiter fuehrt auch zu Preisen, Über uns, Kündigen und Widerrufen — ohne Liste fiele der Fokus dort ins Leere).
 function hinZieleListe() {
   const liste = (w) => {
     try { const k = w && w.INKLUAGENT; return (k && Array.isArray(k.hinZiele)) ? k.hinZiele : null; } catch (e) { return null; }
   };
-  return liste(window) || (imRahmen() ? liste(window.parent) : null);
+  return liste(window) || (imRahmen() ? liste(window.parent) : null) || (Array.isArray(window.HIN_ZIELE) ? window.HIN_ZIELE : null);
 }
 function hinfuehrenBeimLaden() {
   let ziel = null;

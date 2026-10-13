@@ -93,6 +93,8 @@ services:
       - INKLUAGENT_HOCHLADEFELD=${INKLUAGENT_HOCHLADEFELD:-aus}
       - INKLUAGENT_ARBEITSFENSTER=${INKLUAGENT_ARBEITSFENSTER:-an}
       - INKLUAGENT_BEGLEITER=${INKLUAGENT_BEGLEITER:-an}
+      # Paket 1 (13.10.2026): Klangspur des InkluAgent (Toene je Konto abschaltbar, frontend/klang.js)
+      - INKLUAGENT_KLANG=${INKLUAGENT_KLANG:-an}
       # AWS Bedrock (08.05.2026): Anthropic Claude über Frankfurt fuer v4
       - AWS_REGION=${AWS_REGION:-eu-central-1}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}

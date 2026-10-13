@@ -13,9 +13,12 @@ Agent weg) und die oeffentlichen Seiten auf base_oeffentlich.html, die die Agent
 """
 from __future__ import annotations
 
+# /kontakt leitet auf /ueber-uns#kontakt weiter (Runde 10) — steht hier, damit alte Kontakt-Links im Fenster bleiben (Wunsch der
+# Oberflaeche, Runde 2). Bewusst NICHT hier: /verwaltung (Verwaltung mit eigener Navigation und breiten Tabellen, nur fuer Admins —
+# sie braucht die ganze Seite).
 FENSTER_SEITEN: tuple[str, ...] = (
-    "/ablage", "/abo", "/api-schluessel", "/einstellungen", "/express", "/gespraeche", "/geteilte-projekte", "/hilfe", "/konto",
-    "/kuendigen", "/preise", "/projekt-neu", "/projekte", "/prompts", "/stammdaten", "/team", "/ueber-uns", "/vorlagen",
+    "/ablage", "/abo", "/api-schluessel", "/einstellungen", "/express", "/gespraeche", "/geteilte-projekte", "/hilfe", "/kontakt",
+    "/konto", "/kuendigen", "/preise", "/projekt-neu", "/projekte", "/prompts", "/stammdaten", "/team", "/ueber-uns", "/vorlagen",
     "/widerrufen",
 )
 # Einrahmen darf die eigene Seite zusaetzlich die Anmeldung: dort landet der Rahmen, wenn die Sitzung ablaeuft (K7)

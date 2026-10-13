@@ -101,6 +101,8 @@
 window.LANG = "{{ current_lang }}";
 window.I18N = {{ i18n_json|safe }};
 window.OEFFENTLICH = true;
+{# Erlaubte Sprungziele fuer ?hin= (Runde 2, S-N9): dieselbe Liste wie window.INKLUAGENT.hinZiele (main: Jinja-Global hin_ziele) #}
+{% if hin_ziele is defined %}window.HIN_ZIELE = {{ hin_ziele()|tojson }};{% endif %}
 window.EINGEBETTET = {{ 'true' if eingebettet else 'false' }};   {# im Arbeitsfenster der Agentenansicht (Runde 2, A-N6) #}
 </script>
 <script src="/static/dashboard.js?v={{ asset_version }}"></script>

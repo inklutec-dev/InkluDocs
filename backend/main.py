@@ -578,6 +578,16 @@ app.mount("/static", StaticFiles(directory="/app/frontend"), name="static")
 templates = get_templates()
 
 
+def _hin_ziele_global() -> list:
+    """Erlaubte Sprungziele fuer ?hin= auf oeffentlichen Seiten (base_oeffentlich.html, window.HIN_ZIELE) — dieselbe Liste wie
+    window.INKLUAGENT.hinZiele (Pruefung 13.10.2026, Runde 2, S-N9: fail-closed, auch dort, wohin der Begleiter fuehrt)."""
+    from inkluagent import begleiter as _begleiter
+    return _begleiter.hin_ziele()
+
+
+templates.env.globals["hin_ziele"] = _hin_ziele_global
+
+
 def create_token(user_id: int, email: str, is_admin: int = 0) -> str:
     expire = datetime.utcnow() + timedelta(hours=TOKEN_EXPIRE_HOURS)
     return jwt.encode(
@@ -11806,7 +11816,7 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
                                sprache=sprache)
     await asyncio.get_running_loop().run_in_executor(None, _speichern)
     return {"ok": True, "reply": antwort, "anhang": anhaenge, "werkzeuge": [angebot["werkzeug"]], "karte": karte,
-            "actions": actions}
+            "actions": actions, "sprache": sprache}
 
 
 # Laufende Antworten je Konto (InkluAgent-Ausbau Runde 2, Schritt 3): die Startzeit (= Kennung) des Laufs, solange der Agent an
@@ -12127,6 +12137,8 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
                 "actions": list(result.get("actions", [])) + (extra_aktionen if result.get("intent") != "error" else []),
                 "werkzeuge": result.get("werkzeuge", []),
                 "anhang": result.get("anhang") or [],
+                # Sprache, in der die Antwort geschrieben ist — wie im gespeicherten Verlauf (lang am Text, Runde 2, B11 Punkt 4)
+                "sprache": _ui_sprache,
             }
 
         # Werkzeug-Transparenz (Steve 28.08.2026): mit Accept: application/x-ndjson streamt der Endpunkt je Werkzeugaufruf eine

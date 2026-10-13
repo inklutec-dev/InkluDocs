@@ -275,6 +275,28 @@ class MitServer(unittest.TestCase):
         self.assertEqual(r.json()["reply"], "Läuft noch: „Brief.pdf“ in „Vereinspost“ hochladen (fiktiv)")
         self.assertEqual(r.json()["karte"]["zustand"], "laeuft")
 
+    def test_antwort_nennt_ihre_sprache(self):
+        """Wunsch der Oberflaeche (Runde 2): lang am Text auch fuer die gerade angekommene Antwort, nicht erst nach dem Neuladen."""
+        with mock.patch.object(funktionen, "AGENT_KONTO", True), mock.patch.object(funktionen, "AGENT_UEBERALL", True), \
+                mock.patch.object(self.chat_engine, "process_konto_message",
+                                  return_value={"reply": "Gern (fiktiv).", "intent": "agentic", "werkzeuge": []}):
+            database.set_user_language(self.u["id"], "sv")   # die Sprache am Konto gilt vor dem Cookie
+            r = self.client().post("/api/agent/nachricht", json={"message": "Hej (fiktiv)"})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["sprache"], "sv")
+
+    def test_oeffentliche_seite_bekommt_die_sprungziele(self):
+        from inkluagent import begleiter
+        html = self.TestClient(self.main.app).get("/preise").text
+        self.assertIn("window.HIN_ZIELE = ", html)
+        zeile = next(z for z in html.splitlines() if "window.HIN_ZIELE = " in z)
+        import json as _json
+        self.assertEqual(_json.loads(zeile.split("=", 1)[1].strip().rstrip(";")), begleiter.hin_ziele())
+        js = open(os.path.join(BACKEND, "..", "frontend", "dashboard.js"), encoding="utf-8").read() \
+            if os.path.isdir(os.path.join(BACKEND, "..", "frontend")) else open(os.path.join(BACKEND, "frontend", "dashboard.js"),
+                                                                                  encoding="utf-8").read()
+        self.assertIn("(Array.isArray(window.HIN_ZIELE) ? window.HIN_ZIELE : null)", js)
+
     def test_ohne_ueberall_im_projekt_409(self):
         """Prod-Stand (ohne AGENT_UEBERALL): auch der Chat im Projekt nimmt keine zweite Nachricht an, solange einer laeuft."""
         pid = projekt(self.u["id"])
@@ -340,8 +362,10 @@ class Positivliste(unittest.TestCase):
         self.assertTrue(fenster.einrahmbar("/hilfe?thema=x#anker"))
         self.assertTrue(fenster.einrahmbar("/login"))
         self.assertFalse(fenster.im_fenster("/login"), "die Anmeldung wird eingerahmt, aber nicht im Fenster geoeffnet")
-        for pfad in ("/forgot", "/reset", "/dashboard", "/einladung/abc", "/freigabe/abc", "/projektex", "", "einstellungen"):
+        for pfad in ("/forgot", "/reset", "/dashboard", "/einladung/abc", "/freigabe/abc", "/projektex", "", "einstellungen",
+                     "/verwaltung"):
             self.assertFalse(fenster.einrahmbar(pfad), pfad)
+        self.assertTrue(fenster.im_fenster("/kontakt"), "leitet auf Über uns und Kontakt (Wunsch der Oberflaeche, Runde 2)")
 
 
 # ─── Fremde Adressen ─────────────────────────────────────────────────────────────────────────────────────────────────────────

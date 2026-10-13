@@ -1260,6 +1260,12 @@ Zweite Prüfrunde (Sicherheit, Korrektheit, Barrierefreiheit) auf dem eingefrore
 - S17 Projekt löschen (Konto-Werkzeug): Beschreibung und Hinweis an das Modell sagen, dass Gespräche mit dem Agenten bleiben.
 - K-N9 Die Übernahme von Nachrichten ohne Gespräch macht nur noch die Start-Migration (`storage._aktuelles_gespraech` doppelte sie).
 
+**Schnittstellen für die Oberfläche (Wünsche aus dem Oberflächen-Teil, nach dem Zusammenführen):** `fensterSeiten` enthält
+`/kontakt` (leitet auf „Über uns und Kontakt“); `/verwaltung` bleibt bewusst ganze Seite. Die Antwortzeile des Streams, die
+JSON-Antwort und `/api/agent/bestaetigen` liefern `sprache` (lang am Text der neuen Antwort). `hochladen_id` merkt nur
+erfolgreiche Ergebnisse — Fehlerantworten (400, 409, 429) gehen vorher als Ausnahme hinaus und werden nicht gemerkt.
+Öffentliche Seiten als ganze Seite bekommen kein `hinZiele` und werten `?hin=` nicht aus (der Begleiter führt nicht dorthin).
+
 **Bewusst nicht geändert:** `storage.gespraech_der_nachricht` öffnet eine zweite Verbindung (K-N9, Stil); `konto_anhaengen`
 müsste dafür seine Rückgabe an vielen Stellen ändern. Umbenennen und Laufabbruch bleiben ohne Karte (Steves Wunsch, umkehrbar).
 **Offen (Steve):** Datenschutzerklärung Abschnitt 3 (Chat-Assistent): Gespräche überdauern das Löschen eines Projekts und
