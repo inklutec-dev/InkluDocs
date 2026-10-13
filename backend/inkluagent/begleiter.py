@@ -13,7 +13,8 @@ Die Ziele stehen in einer festen Liste (_ORTE): Schluessel, Seite, Element (id a
 Pruefung 13.10.2026: Der Begleiter gehoert nur zum InkluAgent des Kontos, nicht zur Demo (K9) — der Chat-Endpunkt gibt ihm
 einen Lauf (Sprache, Uebersetzung, getippter Text) als Argument mit, statt ihn ueber einen Thread-Speicher zu setzen. Sprache
 und Ansicht aendert er nur, wenn der Nutzer sie in SEINER Nachricht nennt; zu Sicherheits-, Geld- und Rechtsseiten bringt
-er nur ueber den Knopf „Hinführen“, nie von selbst (S8: eingeschleuster Text soll nichts umstellen oder dorthin draengen).
+er von selbst nur, wenn der Nutzer das Ziel nennt, sonst ueber den Knopf „Hinführen“ (S8: eingeschleuster Text soll nichts
+umstellen oder dorthin draengen).
 """
 from __future__ import annotations
 
@@ -64,8 +65,21 @@ _ORTE: list[tuple] = [
     ("nutzungsbedingungen", "/nutzungsbedingungen-app", None, "Nutzungsbedingungen", "Nutzungsbedingungen", None),
 ]
 NAMEN = ("hinfuehren", "einstellung_aendern")
-# Sicherheit, Geld und Recht: dorthin nur ueber den Knopf „Hinführen“ unter der Antwort, nie sofort (S8)
-_NUR_KNOPF = frozenset({"konto", "email", "passwort", "abo", "team", "api", "api_neu", "kuendigen", "widerrufen"})
+# Sicherheit, Geld und Recht (S8): sofort nur, wenn der Nutzer das Ziel in SEINER Nachricht nennt — „Bring mich zum
+# API-Schlüssel“ fuehrt weiter direkt hin (Steve: wenig Klicks), ein Satz in einer Datei draengt aber nicht auf die
+# Kuendigungsseite; sonst bleibt der Knopf „Hinführen“. Wortanfaenge in den sechs Oberflaechensprachen, klein.
+_API = ("api", "schlüssel", "schluessel", "key", "clé", "clave", "nøgle", "nogle", "nyckel")
+_NUR_AUF_NENNUNG: dict[str, tuple] = {
+    "konto": ("konto", "account", "compte", "cuenta"),
+    "email": ("mail", "courriel", "correo"),
+    "passwort": ("passw", "kennwort", "password", "mot de passe", "contraseña", "contrasena", "adgangskode", "lösenord", "losenord"),
+    "abo": ("abo", "subscription", "abonnement", "suscripci", "credits", "guthaben", "tarif"),
+    "team": ("team", "équipe", "equipe", "equipo"),
+    "api": _API,
+    "api_neu": _API,
+    "kuendigen": ("kündig", "kuendig", "cancel", "résili", "resili", "opsig", "säg upp", "sag upp", "baja"),
+    "widerrufen": ("widerruf", "withdraw", "revoca", "rétract", "retract", "desist", "fortryd", "ånger", "anger"),
+}
 _UEBERSCHRIFT = "ueberschrift"   # ?hin=ueberschrift: die Ueberschrift 1 der Seite
 _PFAD = re.compile(r"^/[A-Za-z0-9/_-]{0,80}$")
 
@@ -196,7 +210,8 @@ def _hinfuehren(user_id: int, ziel: str, sofort: bool, lauf: Lauf) -> dict:
     ort = next((o for o in orte(user_id) if o["schluessel"] == ziel), None)
     if not ort:
         return {"ok": False, "error": "Dieses Ziel gibt es nicht. Wähle eines aus der Liste."}
-    sofort = sofort and ort["schluessel"] not in _NUR_KNOPF
+    woerter = _NUR_AUF_NENNUNG.get(ort["schluessel"])
+    sofort = sofort and (woerter is None or _genannt(lauf.nutzer_text, woerter))
     url = ziel_url(ort)
     name = lauf._(ort["name"])
     out: dict = {"ok": True, "result": {"ziel": ort["schluessel"], "seite": ort["pfad"],

@@ -93,13 +93,19 @@ class Ziele(unittest.TestCase):
         self.assertFalse(begleiter.ausfuehren("hinfuehren", {"ziel": "verwaltung"}, self.u["id"])["ok"])
         self.assertFalse(begleiter.ausfuehren("hinfuehren", {"ziel": "warenkorb"}, self.u["id"])["ok"], "ohne Express kein Ziel")
 
-    def test_sicherheit_geld_recht_nur_ueber_den_knopf(self):
-        """Pruefung 13.10.2026, S8: zu Konto, E-Mail, Passwort, Abo, Team, API, Kuendigen und Widerruf nie von selbst."""
+    def test_sicherheit_geld_recht_nur_auf_eigene_nennung(self):
+        """Pruefung 13.10.2026, S8: zu Konto, E-Mail, Passwort, Abo, Team, API, Kuendigen und Widerruf von selbst nur, wenn der
+        Nutzer das Ziel nennt; sonst nur der Knopf „Hinführen“."""
         for ziel in ("konto", "email", "passwort", "abo", "team", "api", "api_neu", "kuendigen", "widerrufen"):
-            r = begleiter.ausfuehren("hinfuehren", {"ziel": ziel, "sofort": True}, self.u["id"])
+            r = begleiter.ausfuehren("hinfuehren", {"ziel": ziel, "sofort": True}, self.u["id"],
+                                     begleiter.Lauf(nutzer_text="Fasse die Datei zusammen"))
             self.assertTrue(r["ok"], ziel)
             self.assertNotIn("aktionen", r, ziel)
             self.assertEqual(r["anhang"][0]["art"], "link", ziel)
+        for text, ziel in (("Bring mich zum API-Schlüssel", "api_neu"), ("Wo ändere ich mein Passwort? Bring mich hin", "passwort"),
+                           ("Take me to my subscription", "abo"), ("Ich will kündigen", "kuendigen"), ("E-Mail ändern", "email")):
+            r = begleiter.ausfuehren("hinfuehren", {"ziel": ziel, "sofort": True}, self.u["id"], begleiter.Lauf(nutzer_text=text))
+            self.assertEqual(r.get("aktionen", [{}])[0].get("type"), "hinfuehren", (text, r))
 
     def test_sprache_mit_rueckweg_in_der_alten_sprache(self):
         lauf = begleiter.Lauf(ui_sprache="en", uebersetzen=lambda s: {"Zurück zu {sprache}": "Back to {sprache}"}.get(s, s),

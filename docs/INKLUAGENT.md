@@ -991,8 +991,9 @@ bestehende Tests.
 
 **Werkzeuge und Begleiter:**
 - S8 Sprache und Ansicht stellt der Begleiter nur um, wenn der Nutzer sie in seiner Nachricht nennt (`_SPRACHNAMEN`,
-  `_ANSICHT_WOERTER`, `G_NICHT_GENANNT`). Zu Konto, E-Mail, Passwort, Abo, Team, API, Kündigen, Widerruf nur über den Knopf
-  „Hinführen“ (`_NUR_KNOPF`). Der Rückweg-Link „Zurück zu …“ trägt `lang` (B11). Umbenennen und Laufabbruch bleiben ohne Karte
+  `_ANSICHT_WOERTER`, `G_NICHT_GENANNT`). Zu Konto, E-Mail, Passwort, Abo, Team, API, Kündigen, Widerruf führt er von selbst
+  nur, wenn der Nutzer das Ziel in seiner Nachricht nennt („Bring mich zum API-Schlüssel“), sonst bleibt der Knopf „Hinführen“
+  (`_NUR_AUF_NENNUNG`). Der Rückweg-Link „Zurück zu …“ trägt `lang` (B11). Umbenennen und Laufabbruch bleiben ohne Karte
   (umkehrbar, Steves Wunsch nach wenig Klicks); Dateinamen erreichen das Modell nur noch als Daten (S3).
 - S9 Kein Rückfall auf den alten Vier-Wege-Dispatcher nach einem Absturz im Werkzeug-Modus (er konnte bezahlte Neugenerierungen
   ohne Karte starten): Fehlermeldung in der Sprache der Oberfläche.
