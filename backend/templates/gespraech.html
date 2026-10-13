@@ -35,13 +35,20 @@
   const b = document.getElementById('gespraechWeiter');
   const st = document.getElementById('gespraechStatus');
   if (!b) return;
+  // Pruefung 13.10.2026: nicht, solange der InkluAgent an einer Antwort arbeitet (K3 — sie gehoert zum Gespraech der Frage; im
+  // Arbeitsfenster fragt die Seite das Hauptfenster); „weiter“ nur als Pfad dieser Anwendung (S14, eigenerPfad aus dashboard.js)
+  function wechselErlaubt() {
+    let w = window;
+    try { if (window.EINGEBETTET && window.top !== window) w = window.top; } catch (e) { w = window; }
+    try { return typeof w.inkluagentWechselErlaubt !== 'function' || w.inkluagentWechselErlaubt(); } catch (e) { return true; }
+  }
   b.addEventListener('click', async () => {
-    if (b.getAttribute('aria-disabled') === 'true') return;
+    if (b.getAttribute('aria-disabled') === 'true' || !wechselErlaubt()) return;
     b.setAttribute('aria-disabled', 'true');
     try {
       const res = await fetch('/api/agent/gespraeche/' + encodeURIComponent(b.dataset.id) + '/fortsetzen', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.weiter || data.weiter.charAt(0) !== '/') throw new Error();
+      if (!res.ok || !eigenerPfad(data.weiter)) throw new Error();
       st.textContent = t('Gespräch wird fortgesetzt …');
       ganzeSeite(data.weiter);   // im Arbeitsfenster: die ganze Seite wechselt
     } catch (e) {

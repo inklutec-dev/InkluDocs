@@ -1028,3 +1028,144 @@ bestehende Tests.
 **Vor dem nächsten Prod-Rollout beachten (Korrektheit H4):** `TAGGING_PROFESSIONELL` setzen, sonst ist „Barrierefrei machen“
 gesperrt; die Ja-Prüfung und „Löschen nur über den Knopf“ gelten dann auch auf Prod; CSRF-Schicht und `netz_sicher` wirken
 auf die ganze App.
+
+## Prüfung 13.10.2026: Oberfläche
+
+Grundlage: die drei Prüfberichte vom 13.10.2026 (Barrierefreiheit B1–B23 und Hinweise HB1–HB6, Korrektheit K…, Sicherheit S…).
+Hier steht der Oberflächenteil: `frontend/inkluagent.js`, `frontend/dashboard.js`, `frontend/style.css`, die Vorlagen
+`base_app.html`, `app.html`, `einstellungen.html`, `gespraech.html`, `hilfe_inkluagent.html`, `express.html`, dazu
+`backend/i18n.py` (K7) und die Texte in `backend/inkluagent/ansicht.py` (B13/K11). Die Server-Teile (409 bei laufendem Auftrag,
+Lebenszeichen im Stream, Tagesgrenze vor dem Hochladen, `hinZiele`, `lang` an Links) baut Steve parallel; die Oberfläche
+funktioniert mit und ohne diese Felder.
+
+### Barrierefreiheit
+
+- **B1 Links in der Agentenansicht:** Viele interne Links (Hilfe, „Zur Ablage“, „Gespräch … lesen“) luden die ganze Seite, deren
+  Inhalt die Agentenansicht dann ausblendete. Jetzt entscheidet EINE Stelle (`inkluagentLinkImFenster`, ein delegierter
+  Klick-Handler): jeder interne Link, der ins Arbeitsfenster passt, öffnet dort; die einzelnen Handler an der Navigation sind weg.
+  Wird eine solche Seite direkt geladen (Lesezeichen, Link), erscheint ihr Inhalt im Arbeitsfenster
+  (`inkluagentFensterWiederherstellen`); „Projekt gelöscht … Zur Übersicht“ bleibt sichtbar (`data-agentenansicht-bleibt`).
+- **B2/K8 Vergrößern und Fensterbreite:** `inert` wurde nur beim Klick gesetzt, die Darstellung hing an der Media Query — beim
+  Zoomen oder Drehen liefen beide auseinander. Jetzt gibt es einen Zustand (Klasse `arbeitsfenster-gross`), und
+  `inkluagentUeberlagerungAnwenden` leitet alles daraus ab, beim Umschalten und bei jedem `change` der Media Query (1099 px).
+  Kommt die Überlagerung durch eine Breitenänderung, wandert der Fokus aus dem verdeckten Teil auf den Knopf.
+- **B3 Antwort unter der Überlagerung:** Die Antwort lag im inerten Gespräch, `focus()` tat nichts, und die Ansage entfiel. Jetzt
+  prüft `inkluagentAntwortMelden`, ob der Fokus angekommen ist; sonst kommt „Antwort vom InkluAgent ist da. „Zurück zum Gespräch“
+  führt zu ihr.“ über die Ansage-Region, die nie inert ist. „Zurück zum Gespräch“ setzt den Fokus dann auf diese Antwort.
+- **B4 Fokus im Rahmen:** Das iframe galt als „im Chat“, die Antwort holte den Fokus mitten aus einem Feld der eingebetteten Seite.
+  Jetzt zählt nur das Gespräch (`inkluagentFokusImChat`), `inkluagentIstEingabe` schaut in den Rahmen hinein, und das Nachziehen der
+  Ansicht schützt nur Eingaben im Hauptbereich.
+- **B5 Fokusring am Eingabefeld:** Die Chatstil-Regel überschrieb Rand und Schatten, `outline: none` blieb — kein sichtbarer Fokus.
+  Jetzt der 3-px-Ring aus Runde 11 (`textarea:focus-visible`), auch in der manuellen Ansicht.
+- **B6 Angeheftete Eingabe:** Ergebnis des Hochladens, Anhang-Meldung und Statuszeile wuchsen im angehefteten Teil auf bis zu 60 %
+  des Bildschirms. Jetzt stehen sie im Fluss über der Eingabe (`.inkluagent-meldungen`); angeheftet bleiben Feld, Hinweise, Knöpfe
+  und angehängte Dateien. Ein `ResizeObserver` schreibt die Höhe in `--agent-eingabe-hoehe`, `scroll-padding-bottom` folgt ihr.
+- **B7 Escape und Dialog:** Escape im Rahmen kam nicht an, die Sprunglinks waren nicht inert, VoiceOver hörte keine modale Ebene.
+  Ein natives `<dialog>` wurde im Browser geprüft (`lokal/probe_pr13_dialog_versuch.py`, Chromium) und verworfen: ein Rahmen lädt
+  beim Verschieben in den Dialog neu (Eingaben weg), Escape im Rahmen erreicht den Dialog nicht, die Ansage-Region fällt bei
+  `showModal()` aus dem Barrierefreiheitsbaum, und ein dauerhafter Dialog wäre breit falsch benannt. Robust ist: der Abschnitt
+  bleibt ein Abschnitt und bekommt nur als Überlagerung `role="dialog"` und `aria-modal`; inert werden alle Geschwister auf dem Weg
+  bis `body` (auch Sprunglinks und Fußzeile), außer der Ansage-Region; `dashboard.js` gibt Escape aus dem Rahmen weiter, außer die
+  Seite hat selbst einen offenen Dialog.
+- **B8/K19 Neubau unter dem Cursor:** Arbeitsfenster und Gesprächsliste wurden bei jedem Ereignis komplett neu gebaut, auch durch
+  jede Änderung im verborgenen Hauptbereich. Jetzt werden Schritte angehängt (nur ihr Zustand ändert sich), Teile nur bei geänderten
+  Daten neu gebaut (`inkluagentTeilBauen`, Fokus kommt auf denselben Link zurück), der Entwurf hängt nur das Neue an, und der
+  Beobachter der Agentenansicht blendet nur aus.
+- **B9 Ansagen:** `announce` (dashboard.js, jetzt die einzige — app.html hatte eine eigene Kopie) leert und setzt nach 100 ms neu;
+  was in der Zeit dazukommt, wird angehängt. Schritte werden höchstens einmal je Sekunde gebündelt gesagt, Fehler eines Schritts
+  sofort; ist die Antwort da, fällt Übriges weg. `inkluagentSetStatus` sagt einen Fehler global nur an, wenn die Statuszeile
+  verborgen oder inert ist. **Offen:** Die Vorgabe „Jeden Schritt ansagen“ ist unverändert „an“ — das entscheidet Steve.
+- **B10 Seitenwechsel durch den Agenten:** EIN Weg (`inkluagentWechselZiel`, `inkluagentWechseln`) für Projekt öffnen, Hinführen,
+  Sprache und Ansicht: liegt der Fokus nicht im Gespräch, steht Text im Feld oder ist eine Datei angehängt, wechselt nichts von
+  selbst — der Weg steht unter der Antwort, die Ansage sagt es. Sonst erst `alleAusstehendenSpeichern()`, dann wechseln. Ein
+  angefangener Chat-Text geht über `sessionStorage` auf die nächste Seite mit (`inkluagentEingabeMerken`, 30 Minuten).
+- **B11 Sprachwechsel:** nach Steves Regel direkt, ohne Karte, mit Rückweg-Link. Nach dem Neuladen steht der Fokus auf der Antwort
+  (Merker `inkluagent.fokusAntwort`), nicht auf der Überschrift 1. Anhang-Links mit `lang` tragen es als Attribut; der angebotene
+  Link „Sprache wechseln:“ nennt die Sprache in ihr selbst mit `lang`. Offen (Server): Nachrichten mit ihrer Sprache speichern.
+- **B12 Senden:** ein `disabled` Knopf verlor den Fokus. Jetzt `aria-disabled` (`inkluagentSperreZeigen`), ein zweiter Druck sagt,
+  warum; nach dem Hochladen gehen nur die mitgeschickten Dateien weg, was währenddessen angehängt wurde, bleibt.
+- **B13/K11 Texte:** Einstellungen und Hilfe versprachen einen Knopf, den es im Chatstil nicht gibt, und „rechts“. Neue Beschreibung
+  ohne Lageangabe mit dem Weg zurück; die Hilfe nimmt mit Arbeitsfenster dieselben Sätze wie `ansicht.py` (bzw. `ansicht_auswahl`,
+  sobald `main.py` sie mitgibt) und erklärt die Agentenansicht ohne Knopf „InkluAgent“.
+- **B14/K6 Rahmen:** siehe K6.
+- **B15 Hinführen ins Fenster:** erst Fokus auf die Antwort, dann in den Rahmen, dazu der Name dreimal. Jetzt geht der Fokus einmal
+  in die Seite (Überschrift 1 bzw. Ziel), ohne zusätzliche Ansage.
+- **B16 Nicht gesendet:** Der Text bleibt im Feld, bis der Server die Nachricht annimmt; eine abgelehnte Nachricht trägt „Nicht
+  gesendet. Dein Text steht noch im Eingabefeld.“ (Text und gestrichelter Rand).
+- **B17 Landmarken:** In der Agentenansicht umschließt ein `<main class="agent-hauptbereich">` die Seite (`div#main`) und den Agenten
+  (`section`); in der manuellen Ansicht bleibt er ein `aside` nach `main`. `#main` bleibt ein eigenes Element, weil die
+  Projektansichten seinen Inhalt ersetzen.
+- **B18 Fehlerrot:** Fehlertexte im Agenten mit `--fehler-rand` (6,5:1) statt `--error` (4,4999:1 auf dem Grau).
+- **B19 Dauerhaftes tabindex:** `fokusAuf()` steht jetzt in `dashboard.js` (tabindex nur, solange das Element den Fokus hat) und gilt
+  für Hinführen-Ziel, Überschriften, Express; der Bereich des Agenten hat kein tabindex mehr (Sprunglink über `fokusAuf`).
+  `ansichtFokusNachWechsel` läuft nicht im Rahmen (HK8).
+- **B20 Gespräche in der Seitenleiste:** Jeder Eintrag beschreibt sich mit „Setzt das Gespräch fort.“ (`aria-describedby`).
+- **B21 Hinweise sichtbar:** Die Grenzen der Anhänge stehen sichtbar unter den Knöpfen; das Feld heißt wie sein sichtbarer
+  Platzhalter („Was soll der InkluAgent für dich erledigen?“).
+- **B22 Leerer Tab-Stopp:** Im Chatstil hat der Verlauf kein `tabindex` (nötig nur für den scrollbaren Kasten der manuellen Ansicht).
+- **B23 Doppeldeutig:** „Im Arbeitsfenster: <Seite>“ und „Seite im Dokument: 3“ statt zweimal „Seite“.
+- **HB1:** Die Markierung des Hinführens bleibt, bis der Fokus das Ziel verlässt (vorher 6 Sekunden).
+- **HB2:** Bei „Bewegung reduzieren“ wächst der Entwurf alle zwei Sekunden statt Wort für Wort, und die Seite läuft nicht mit.
+- **HB3 (`aria-busy` am Entwurf):** unverändert; nur mit NVDA/JAWS prüfbar (offen).
+- **HB4:** Linkstil und Hochkontrast-Rahmen aus Runde 11 gelten auch im Bereich des InkluAgent.
+- **HB5:** Die Hilfe erklärt, dass Links in einer Seite im Arbeitsfenster dort bleiben und die Zurück-Taste dann zuerst dort
+  zurückgeht. Öffnen, Wechseln und Schließen selbst legen keine Einträge mehr an (K6).
+- **HB6:** Das Vorschaubild nimmt den Alt-Text, wenn der Server ihn als `ziel.alt` mitschickt (offen: Server), sonst `alt=""`.
+
+### Korrektheit und Sicherheit (Oberflächenteil)
+
+- **K2:** Senden ist gesperrt, solange die Seite einen Lauf verfolgt; ein 409 des Servers markiert die Nachricht als nicht gesendet,
+  zeigt seinen Satz und verfolgt den laufenden Auftrag.
+- **K3:** „Neues Gespräch“, Fortsetzen in der Seitenleiste und „Hier weitermachen“ sind gesperrt, solange gesendet oder verfolgt
+  wird (`inkluagentWechselErlaubt`, mit Ansage).
+- **K4:** Die Notiz-Kennung des Hochladens (`window._inkluagentNotiz`) bleibt, bis eine Nachricht angenommen ist.
+- **K5:** Endet der Stream ohne Antwort oder reißt nach dem Annehmen ab, verfolgt die Seite den Lauf
+  (`inkluagentLaufVerfolgen(true)`) und holt die gespeicherte Antwort; nur wenn wirklich keine kam, steht ein Fehler da.
+  `{"type": "ping"}`-Zeilen werden wie jede unbekannte Zeile übergangen.
+- **K6 (B14):** Der Rahmen lädt per `location.replace` (kein Verlaufseintrag, auch nicht beim Schließen). Ein dauerhafter `load`-Hörer
+  (`inkluagentRahmenGeladen`) übernimmt Pfad und Überschrift 1 jedes geladenen Dokuments in Überschrift, Rahmen-Titel und
+  `sessionStorage`; nach einem Link im Rahmen geht der Fokus auf die neue Überschrift.
+- **K7:** `i18n.eingebettet` lässt `?eingebettet=1` bei `Sec-Fetch-Dest: document` nicht gelten. Der `load`-Hörer bricht zentral
+  aus dem Rahmen aus: Anmeldung (mit Rücksprung auf die Seite des Hauptfensters; die Seite im Fenster bleibt gemerkt), Projekte,
+  Startseite und jede Seite ohne eingebettete Fassung. `zurAnmeldung()` nimmt im Rahmen den Pfad des Hauptfensters.
+  `gehoertGanzeSeite` kennt jetzt auch die öffentlichen und statischen Seiten (Über uns, Preise, Datensicherheit, Impressum …),
+  die im Rahmen die ganze Seite samt Seitenleiste ein zweites Mal zeigten.
+- **K17:** `?agent=offen` merkt in der Agentenansicht nichts für die manuelle Ansicht. **K18:** Die Ansicht in den Einstellungen
+  zu speichern, lädt neu wie der Umschalter.
+- **HK1/HK2:** veralteter Kopf von `inkluagent.js`, tote Regeln des Auf/Zu-Knopfs im Chatstil, Rückweg aus dem Chatstil
+  (`inkluagentChatstil(false)`, `inkluagentAnhangEntfernenAlles`) und die Reste des Webadressen-Felds sind weg.
+- **HK7:** Dateien lassen sich überall auf der Seite (auch in der Seite im Rahmen) fallen lassen und werden angehängt; der Entwurf
+  zeigt keine Daten-Marke und keine Markdown-Zeichen mehr (`inkluagentEntwurfBereinigen`, wie `sanitize.py`).
+- **S14:** Eine Hilfsfunktion `eigenerPfad(u)` (gleiche Herkunft, genau ein „/“ am Anfang, kein Backslash) prüft Links, Downloads,
+  Rahmen-Ziele und `weiter`; `?hin=` nimmt nur ids aus `window.INKLUAGENT.hinZiele`, wenn der Server sie mitgibt.
+- **Hilfe (Server-Regel S2):** „Löschen geht nur mit dem Knopf“; ein kurzes „Ja“ nur für Kostenpflichtiges als nächste Nachricht.
+
+### Auch ohne Schalter (Production) geändert
+
+Fokusring am Eingabefeld (B5), „Senden“ mit `aria-disabled` und Sperre während des Sendens (B12), Text bleibt bis zum Annehmen und
+„Nicht gesendet“ (B16), Name des Eingabefelds (B21), Fehlerrot (B18), `announce` leert und setzt neu (B9), Linkstil im Bereich des
+Agenten (HB4), `fokusAuf`/Hinführen-Markierung (B19, HB1), Sprunglinks auf Ziele ohne tabindex. Seitenrahmen, Agent und Arbeitsfenster
+bleiben ohne Schalter unverändert (Probe `probe_pr13_ohne_schalter`).
+
+### Proben
+
+Lokal auf dem Server (`/home/claude/inkluagent-ausbau-1009/lokal/`), fiktive Daten, Ersatzmodell, je Probe eine frische App:
+- `bash probe_pr13_alle.sh [worktree] [probe …]` — die neuen Proben: `probe_pr13_b1_links`, `_b2_breite`, `_b3_ueberlagerung`,
+  `_b4_fokus_rahmen`, `_b5_fokusring`, `_b6_eingabe`, `_b7_escape`, `_b8_neubau`, `_b10_wechsel`, `_b12_senden`,
+  `_b16_nicht_gesendet` (mit K2, K5), `_k6_rahmen`, `_k7_sitzung`, `_rest` (B17, B19–B23, HB1, HK7, K17, K18) mit vollem Schaltersatz,
+  `probe_pr13_ohne_schalter` ohne Schalter. Gemeinsames in `pr13_gemeinsam.py`.
+- `bash probe_pr13_vorhandene.sh [worktree] [probe …]` — die älteren Proben der Agentenansicht mit vollem Schaltersatz
+  (`probe_ueberall` mit `INKLUAGENT_HOCHLADEFELD=an`); angepasst an `aria-disabled` (B12), B1, B11, B15 und B23.
+- `probe_pr13_dialog_versuch.py` — der Browser-Versuch zum nativen `<dialog>` (B7).
+Unit-Tests: `tests/test_pruefung_1310_oberflaeche.py` (Node für die reinen Funktionen, ohne Node übersprungen), dazu die
+angepassten Quelltext-Tests und `test_agent_arbeitsfenster_seiten.py` (K7 und B17 am Server).
+
+### Offen
+
+- B9: Vorgabe von „Jeden Schritt ansagen“ (Steve).
+- Server (Steve): `hinZiele`, `lang` an Links, `ziel.alt` (HB6), `ansicht_auswahl` für die Hilfe-Seite, Nachrichten mit ihrer
+  Sprache (B11, Punkt 4), Liste der einbettbaren Seiten (heute in `gehoertGanzeSeite`), 409/Ping/Tagesgrenze wie besprochen.
+- Echter Screenreader: VoiceOver (Mac, iPhone) mit den Prüfpunkten des Berichts, besonders Ansagen-Bündelung (B9), Name des
+  Eingabefelds (B21: wird der Platzhalter doppelt gelesen?), Rolle Dialog der Überlagerung (B7) und Escape-Geste auf dem iPhone;
+  NVDA/JAWS für `aria-busy` (HB3).
+- Nur Chromium geprüft; Safari und Firefox (Escape-Weitergabe, `location.replace` im Rahmen, `inert`) stehen aus.

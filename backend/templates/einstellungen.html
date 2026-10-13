@@ -75,8 +75,9 @@
 {% raw %}
 (function () {
   'use strict';
-  // Ansicht speichern (Schritt 5): eine Meldung in der Statuszeile, kein Neuladen; die Seitenleiste nennt danach den
-  // passenden Umschalter (currentUser aus dashboard.js).
+  // Ansicht speichern (Schritt 5). Pruefung 13.10.2026 (K18): wie der Umschalter der Seitenleiste — die Seite laedt neu und der
+  // Fokus steht danach auf der Ueberschrift 1 (ansichtGewechselt, dashboard.js). Vorher blieb sie ohne Neuladen gemischt: Seitenleiste
+  // schon in der neuen Ansicht, die Seite selbst noch in der alten. Unveraendert gespeichert: nur die Meldung.
   var form = document.getElementById('ansichtForm');
   var status = document.getElementById('ansichtStatus');
   if (!form) return;
@@ -84,6 +85,7 @@
     e.preventDefault();
     var wahl = form.querySelector('input[name="oberflaeche"]:checked');
     if (!wahl) return;
+    var vorher = document.body.getAttribute('data-oberflaeche') || 'klassisch';
     try {
       var r = await fetch('/api/me/oberflaeche', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({ oberflaeche: wahl.value }) });
@@ -94,10 +96,13 @@
         window.top.location.reload();
         return;
       }
+      if (wahl.value !== vorher) {
+        try { sessionStorage.setItem('ansichtGewechselt', '1'); } catch (e2) { /* ohne Speicher: kein Fokus-Sprung */ }
+        window.location.reload();
+        return;
+      }
       var name = (form.querySelector('label[for="' + wahl.id + '"]') || {}).textContent || '';
       status.textContent = t('Gespeichert: {ansicht}.', { ansicht: name });
-      document.body.setAttribute('data-oberflaeche', wahl.value);
-      if (typeof currentUser !== 'undefined' && currentUser) { currentUser.oberflaeche = wahl.value; if (typeof renderSidebar === 'function') renderSidebar(); }
     } catch (err) {
       status.textContent = t('Die Ansicht konnte nicht gespeichert werden. Bitte versuch es noch einmal.');
     }

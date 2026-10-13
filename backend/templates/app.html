@@ -213,7 +213,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 <script>
 {% raw %}
     const main = document.getElementById('main');
-    const liveRegion = document.getElementById('liveRegion');
     // currentUser wird gemeinsam in dashboard.js deklariert (eine Quelle)
     let pollInterval = null;
 
@@ -254,10 +253,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return img.alt_text || img.original_alt || '';
     }
 
-    function announce(msg) {
-        liveRegion.textContent = '';
-        setTimeout(() => { liveRegion.textContent = msg; }, 100);
-    }
+    // announce() kommt seit der Pruefung 13.10.2026 (B9) nur noch aus dashboard.js — dieselbe Regel (leeren, nach 100 ms setzen) fuer
+    // alle Seiten; hier stand eine eigene Kopie, die die gleichnamige Funktion der gemeinsamen Datei ueberdeckte.
 
     // Gast-Modus-Helfer (19.06.2026): im Gast-Modus kommen Daten/Bilder vom
     // token-basierten Freigabe-Endpunkt statt von den login-geschuetzten Routen.

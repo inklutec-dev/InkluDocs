@@ -162,12 +162,21 @@ def _catalog_json(lang: str) -> str:
 def eingebettet(request: Request) -> bool:
     """Laeuft die Seite im Arbeitsfenster der Agentenansicht (Steve 12./13.10.2026, Schalter AGENT_ARBEITSFENSTER)? Erkannt am
     Kopf „Sec-Fetch-Dest: iframe“, den der Browser bei jeder Navigation IM Rahmen schickt (so bleiben auch Links darin
-    eingebettet), oder am Parameter ?eingebettet=1. base_app.html laesst dann Seitenleiste, Fusszeile und den InkluAgent weg."""
+    eingebettet), oder am Parameter ?eingebettet=1. base_app.html laesst dann Seitenleiste, Fusszeile und den InkluAgent weg.
+
+    Pruefung 13.10.2026 (K7): der Parameter gilt NICHT bei „Sec-Fetch-Dest: document“ — dann laedt das Hauptfenster. Er wandert
+    sonst ueber Weiterleitungen mit (Anmeldung mit ?weiter=/express?eingebettet=1), und der Nutzer stand nach der Anmeldung auf
+    einer Seite ohne Seitenleiste und Agent. Der Parameter bleibt nur fuer Browser ohne Fetch-Metadaten."""
     try:
         import funktionen
         if not funktionen.an("AGENT_ARBEITSFENSTER"):
             return False
-        return (request.headers.get("sec-fetch-dest") == "iframe") or request.query_params.get("eingebettet") == "1"
+        ziel = request.headers.get("sec-fetch-dest")
+        if ziel == "iframe":
+            return True
+        if ziel == "document":
+            return False
+        return request.query_params.get("eingebettet") == "1"
     except Exception:  # noqa: BLE001
         return False
 

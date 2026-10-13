@@ -91,42 +91,101 @@ class MitServer(unittest.TestCase):
         ohne = self.c.get("/einstellungen", headers={"Sec-Fetch-Dest": "iframe"}).text
         self.assertNotIn('class="eingebettet"', ohne, "ohne Schalter nie eingebettet")
 
+    def test_parameter_gilt_nicht_im_hauptfenster(self):
+        """Pruefung 13.10.2026 (K7): ?eingebettet=1 wanderte ueber die Anmeldung ins Hauptfenster — dort gilt er nicht mehr."""
+        with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True):
+            haupt = self.c.get("/einstellungen?eingebettet=1", headers={"Sec-Fetch-Dest": "document"}).text
+            rahmen = self.c.get("/einstellungen?eingebettet=1", headers={"Sec-Fetch-Dest": "iframe"}).text
+            alt = self.c.get("/einstellungen?eingebettet=1").text   # Browser ohne Fetch-Metadaten
+        self.assertNotIn('class="eingebettet"', haupt)
+        self.assertIn('id="appSidebar"', haupt)
+        self.assertIn('class="eingebettet"', rahmen)
+        self.assertIn('class="eingebettet"', alt)
+
+    def test_agent_ist_in_der_agentenansicht_hauptinhalt(self):
+        """Pruefung 13.10.2026 (B17): Agentenansicht = <main> um Seite und Agent (section), manuell = aside nach main; #main bleibt."""
+        from inkluagent import ansicht
+        manuell = self.c.get("/einstellungen").text
+        self.assertIn('<main id="main" class="dash-main" tabindex="-1">', manuell)
+        self.assertIn('<aside id="inkluagentBereich" class="inkluagent-bereich" aria-labelledby="inkluagentHeading"></aside>', manuell)
+        self.assertNotIn('agent-hauptbereich', manuell)
+        ansicht.setzen(self.uid, "agent")
+        agent = self.c.get("/einstellungen").text
+        self.assertIn('<main class="agent-hauptbereich">', agent)
+        self.assertIn('<div id="main" class="dash-main" tabindex="-1">', agent)
+        self.assertIn('<section id="inkluagentBereich" class="inkluagent-bereich" aria-labelledby="inkluagentHeading"></section>', agent)
+        self.assertLess(agent.index('<div id="main"'), agent.index('<section id="inkluagentBereich"'))
+        self.assertLess(agent.index('<section id="inkluagentBereich"'), agent.index('</main>'))
+        self.assertEqual(agent.count("<main"), 1)
+        self.assertNotIn('tabindex="-1"></aside>', manuell, "B19: kein dauerhaftes tabindex am Bereich")
+        with mock.patch.object(funktionen, "AGENT_UEBERALL", False):
+            ohne = self.c.get("/einstellungen").text
+        self.assertIn('<main id="main" class="dash-main" tabindex="-1">', ohne, "ohne Agent auf jeder Seite wie bisher")
+        self.assertNotIn('id="inkluagentBereich"', ohne)
+
 
 class Oberflaeche(unittest.TestCase):
+    """Quelltext-Pruefungen; das Verhalten pruefen die Klickproben lokal/probe_pr13_*.py (docs/INKLUAGENT.md, Pruefung 13.10.2026)."""
+
     def setUp(self):
         self.js = lies(FRONTEND, "inkluagent.js")
         self.dash = lies(FRONTEND, "dashboard.js")
 
     def test_seite_im_fenster_nur_eigene_pfade_ohne_projekte(self):
         m = funktion(self.js, "inkluagentSeiteImFensterMoeglich")
-        self.assertIn("if (!inkluagentChatstilAktiv()", m)
-        self.assertIn(r"/^\/[A-Za-z0-9\/_-]*(\?[A-Za-z0-9=&_%-]*)?$/.test(pfad)", m)
-        self.assertIn(r"!/^\/(app|dashboard)(\/|\?|$)/.test(pfad)", m)
+        self.assertIn("if (!inkluagentChatstilAktiv() || typeof pfad !== 'string' || !eigenerPfad(pfad)) return false;", m)
+        self.assertIn(r"/^\/[A-Za-z0-9\/_-]*(\?[A-Za-z0-9=&_%-]*)?(#[A-Za-z0-9_-]*)?$/.test(pfad)", m)
+        self.assertIn("return !gehoertGanzeSeite(pfad);", m, "eine Liste fuer Elternseite und Rahmen (dashboard.js)")
+        zeigen = funktion(self.js, "inkluagentSeiteZeigen")
+        self.assertIn(".title = t('Arbeitsfenster: {name}'", zeigen, "der Rahmen hat einen Namen")
         f = funktion(self.js, "inkluagentSeiteImFenster")
-        self.assertIn("rahmen.title = t('Arbeitsfenster: {name}'", f, "der Rahmen hat einen Namen")
-        self.assertIn("announce(t('Im Arbeitsfenster geöffnet: {name}'", f)
-        self.assertIn("rahmen.contentWindow.focus();", f, "Fokus in die Seite")
         self.assertIn("'eingebettet=1'", f)
+        self.assertNotIn("announce(", f, "B15: keine eigene Ansage, wenn der Fokus ohnehin in die Seite geht")
         self.assertNotIn("innerHTML", f)
+        self.assertIn("rahmen.contentWindow.location.replace(url)", funktion(self.js, "inkluagentRahmenLaden"), "K6: ohne Verlaufseintrag")
+        fokus = funktion(self.js, "inkluagentRahmenFokus")
+        self.assertIn("win.focus();", fokus, "Fokus in die Seite")
 
-    def test_vergroessern_umschaltknopf_und_inert_ueber_dem_gespraech(self):
+    def test_rahmen_folgt_dem_geladenen_dokument(self):
+        """K6/K7/B14: ein dauerhafter load-Hoerer liest Pfad und Ueberschrift aus dem Dokument und bricht aus, wo noetig."""
+        bau = funktion(self.js, "inkluagentArbeitsfensterBauen")
+        self.assertIn("rahmen.addEventListener('load', () => inkluagentRahmenGeladen(rahmen));", bau)
+        self.assertNotIn("{ once: true }", bau)
+        g = funktion(self.js, "inkluagentRahmenGeladen")
+        self.assertIn("doc.querySelector('#main h1')", g)
+        self.assertIn("gehoertGanzeSeite(loc.pathname) || !win || win.EINGEBETTET !== true", g)
+        self.assertIn("if (/^\\/login(\\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }", g)
+        self.assertIn("document.activeElement === rahmen", g, "Link im Rahmen: Fokus auf die neue Seite")
+
+    def test_vergroessern_ein_zustand_alles_abgeleitet(self):
         bau = funktion(self.js, "inkluagentArbeitsfensterBauen")
         self.assertIn('id="arbeitsGross" class="btn btn-secondary" aria-pressed="false">\' + t(\'Arbeitsfenster vergrößern\')', bau)
-        self.assertIn("e.key === 'Escape'", bau)
         g = funktion(self.js, "inkluagentFensterGross")
         self.assertIn("knopf.setAttribute('aria-pressed', an ? 'true' : 'false');", g)
-        self.assertIn("el.inert = ueber;", g)
+        self.assertIn("inkluagentUeberlagerungAnwenden();", g)
+        u = funktion(self.js, "inkluagentUeberlagerungAnwenden")
+        self.assertIn("k === ansage", u, "die Ansage-Region bleibt hoerbar (B3)")
+        self.assertIn("f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true');", u)
+        e = funktion(self.js, "inkluagentUeberlagerungEinrichten")
+        self.assertIn("mq.addEventListener('change', inkluagentUeberlagerungAnwenden)", e, "B2/K8: Breitenwechsel")
+        self.assertIn("e.key === 'Escape'", e)
+        self.assertIn("window.parent.inkluagentEscape()", self.dash, "B7: Escape aus der Seite im Rahmen")
         self.assertIn("html.arbeitsfenster-gross .arbeitsfenster { position: fixed; inset: 0;", lies(FRONTEND, "style.css"))
 
-    def test_hinfuehren_und_navigation_oeffnen_im_fenster(self):
-        self.assertIn("if (inkluagentSeiteImFensterMoeglich(a.url)) { inkluagentSeiteImFenster(a.url, a.name || ''); return false; }",
-                      funktion(self.js, "inkluagentBegleiterAktion"))
-        self.assertIn("a.addEventListener('click', (e) => imArbeitsfensterOeffnen(e, a));", self.dash)
-        self.assertIn("window.inkluagentSeiteImFenster(pfad, a.textContent.trim());", funktion(self.dash, "imArbeitsfensterOeffnen"))
+    def test_hinfuehren_und_links_oeffnen_im_fenster(self):
+        # B1: EIN delegierter Klick-Handler fuer alle Links der Seite statt einzelner Handler an der Navigation
+        self.assertIn("document.addEventListener('click', inkluagentLinkImFenster);", funktion(self.js, "inkluagentChatstil"))
+        link = funktion(self.js, "inkluagentLinkImFenster")
+        self.assertIn("if (e.defaultPrevented || e.button !== 0", link)
+        self.assertIn("a.hasAttribute('download')", link)
+        self.assertNotIn("imArbeitsfensterOeffnen", self.dash)
+        w = funktion(self.js, "inkluagentWechseln")
+        self.assertIn("if (frei && ziel.fenster) { inkluagentSeiteImFenster(ziel.url, ziel.name); return true; }", w)
 
     def test_im_rahmen_ganze_seite_fuer_projekte_sprache_anmeldung_zahlung(self):
-        self.assertIn(r"/^\/(app|dashboard)(\/|\?|$)/.test(pfad) || /^\/(set-language|login|logout|register)(\/|\?|$)/.test(pfad)",
-                      funktion(self.dash, "gehoertGanzeSeite"))
+        g = funktion(self.dash, "gehoertGanzeSeite")
+        for teil in ("app|dashboard|set-language|login|logout|register", "datensicherheit|impressum-app", "ueber-uns", "preise"):
+            self.assertIn(teil, g)
         self.assertIn("ganzeSeite(data.weiter);", lies(BACKEND, "templates", "gespraech.html"))
         self.assertIn("ganzeSeite('/app?projekt='", lies(BACKEND, "templates", "projekt-neu.html"))
         self.assertEqual(lies(BACKEND, "templates", "abo.html").count("ganzeSeite(d.url);"), 3, "Zahlung nie im Rahmen")

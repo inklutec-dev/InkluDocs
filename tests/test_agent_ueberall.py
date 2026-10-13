@@ -277,7 +277,9 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("'<div class=\"inkluagent-section\"", f[:800])
 
     def test_link_nur_auf_dieser_seite(self):
-        self.assertIn("/^\\/(?!\\/)/.test(a.url)", self.js)
+        # Seit der Pruefung 13.10.2026 (S14) prueft EINE Hilfsfunktion (dashboard.js) Links, Downloads und Rahmen-Ziele
+        self.assertIn("if (a && a.art === 'link' && eigenerPfad(a.url)) {", self.js)
+        self.assertIn("if (!a || !eigenerPfad(a.download_url)) return;", self.js)
 
     def test_ohne_projekt_an_den_konto_endpunkt(self):
         f = self.js[self.js.index("async function inkluagentSend("):]

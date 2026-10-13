@@ -12362,3 +12362,55 @@ msgstr "Todavía tarda un poco: el proyecto aparecerá enseguida en «Mis proyec
 
 msgid "Es warten schon viele Dateien auf deine Entscheidung. Entscheide erst über diese, dann geht es weiter."
 msgstr "Ya hay muchos archivos esperando tu decisión. Decide primero sobre ellos y luego podrás continuar."
+
+# Pruefung 13.10.2026: Oberflaeche des InkluAgent
+msgid "Bei Aktionen, die Credits kosten oder sich nicht rückgängig machen lassen, steht unter seiner Antwort eine Karte mit Ziel und Preis. Du bestätigst mit dem Knopf der Karte. Bei Aktionen, die Credits kosten, reicht auch ein kurzes „Ja“ als nächste Nachricht. Löschen geht nur mit dem Knopf."
+msgstr "En las acciones que cuestan créditos o no se pueden deshacer, aparece debajo de su respuesta una tarjeta con el objetivo y el precio. Confirmas con el botón de la tarjeta. En las acciones que cuestan créditos también basta un breve «Sí» como siguiente mensaje. Para eliminar, solo sirve el botón."
+
+msgid "Ansicht jetzt wechseln"
+msgstr "Cambiar de vista ahora"
+
+msgid "Antwort vom InkluAgent ist da. Weil du gerade woanders arbeitest, wechselt die Seite nicht von selbst — der Weg dorthin steht unter der Antwort."
+msgstr "El InkluAgent ha respondido. Como ahora estás trabajando en otro sitio, la página no cambia sola: el camino está debajo de la respuesta."
+
+msgid "Antwort vom InkluAgent ist da. „Zurück zum Gespräch“ führt zu ihr."
+msgstr "El InkluAgent ha respondido. «Volver a la conversación» te lleva a la respuesta."
+
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Deine neue Nachricht bleibt im Feld, bis er fertig ist."
+msgstr "El InkluAgent todavía está trabajando en tu último mensaje. Tu nuevo mensaje se queda en el campo hasta que termine."
+
+msgid "Der InkluAgent arbeitet noch an deiner letzten Nachricht. Ein anderes Gespräch geht, sobald seine Antwort da ist."
+msgstr "El InkluAgent todavía está trabajando en tu último mensaje. Podrás cambiar a otra conversación en cuanto llegue su respuesta."
+
+msgid "Die Verbindung ist abgebrochen, und eine Antwort kam nicht an. Bitte frag noch einmal."
+msgstr "Se ha cortado la conexión y no ha llegado ninguna respuesta. Vuelve a preguntar, por favor."
+
+msgid "Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Das Arbeitsfenster zeigt, woran er gerade arbeitet, und öffnet die Seiten der Navigation, ohne dass du das Gespräch verlässt. Zur manuellen Ansicht wechselst du mit dem Knopf unter der Navigation."
+msgstr "Trabajas conversando con el InkluAgent, como en un chat. La ventana de trabajo muestra en qué está trabajando y abre las páginas de la navegación sin que salgas de la conversación. Cambias a la vista manual con el botón debajo de la navegación."
+
+msgid "Folgst du in einer Seite im Arbeitsfenster einem Link, bleibt sie dort. Die Zurück-Taste des Browsers geht dann zuerst im Arbeitsfenster zurück."
+msgstr "Si sigues un enlace en una página de la ventana de trabajo, se queda allí. El botón Atrás del navegador retrocede entonces primero en la ventana de trabajo."
+
+msgid "Im Arbeitsfenster"
+msgstr "En la ventana de trabajo"
+
+msgid "In den Einstellungen wählst du deine Ansicht:"
+msgstr "En la configuración eliges tu vista:"
+
+msgid "In der Agentenansicht ist das Gespräch mit dem InkluAgent immer offen; oben auf jeder Seite führt der Sprunglink „Zum InkluAgent“ direkt hin. Seiten aus der Navigation und Links öffnen sich im Arbeitsfenster, ohne dass du das Gespräch verlässt. Projekte und die Startseite öffnen als ganze Seite."
+msgstr "En la vista de agente, la conversación con el InkluAgent está siempre abierta; arriba en cada página, el enlace de salto «Ir al InkluAgent» lleva directamente allí. Las páginas de la navegación y los enlaces se abren en la ventana de trabajo sin que salgas de la conversación. Los proyectos y la página de inicio se abren como página completa."
+
+msgid "Nicht gesendet."
+msgstr "No enviado."
+
+msgid "Nicht gesendet. Dein Text steht noch im Eingabefeld."
+msgstr "No enviado. Tu texto sigue en el campo de entrada."
+
+msgid "Seite im Dokument"
+msgstr "Página del documento"
+
+msgid "Setzt das Gespräch fort."
+msgstr "Continúa la conversación."
+
+msgid "Sprache wechseln:"
+msgstr "Cambiar de idioma:"

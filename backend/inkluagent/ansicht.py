@@ -4,8 +4,9 @@ Steve (09.10.2026): EINE Einstellung „Ansicht“, Hauptort sind die Einstellun
 Seitenleiste.
 - „Manuelle Ansicht“ (intern „klassisch“, Vorgabe auch fuer neue Konten): die gewohnte Oberflaeche zum haendischen Arbeiten;
   der InkluAgent steht wie bisher eingeklappt in jedem Projekt und laesst sich fuer Fragen aufklappen.
-- „Agentenansicht“ (intern „agent“): in einem Projekt nur der InkluAgent gross, die Seitenleiste bleibt. Seiten ohne Projekt
-  bleiben vorerst, wie sie sind (der Agent fuer das ganze Konto kommt in Runde 2).
+- „Agentenansicht“ (intern „agent“): in einem Projekt nur der InkluAgent gross, die Seitenleiste bleibt. Mit dem Agenten auf jeder
+  Seite (Runde 2) gilt das fuer jede Seite; mit Arbeitsfenster (Stufe A, 13.10.2026) arbeitet man im Gespraech, und die Seiten oeffnen
+  sich im Arbeitsfenster. Welcher Satz gilt, entscheidet beschreibung() nach den Schaltern.
 
 Gespeichert in users.oberflaeche (bewusst nicht „ansicht“: projects.letzte_ansicht ist etwas anderes). Der Wert steht in
 /api/me und wird schon beim Seitenbau auf dem Server gesetzt (<body data-oberflaeche>), damit nichts springt.
@@ -31,8 +32,11 @@ BESCHREIBUNG_UEBERALL = {
     "klassisch": "Die gewohnte Oberfläche zum Arbeiten von Hand. Der InkluAgent steht eingeklappt unten auf jeder Seite und hilft dir auf Wunsch.",
     "agent": "Auf jeder Seite siehst du nur die Überschrift und den InkluAgent, groß und geöffnet; die Seitenleiste bleibt. Den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück.",
 }
-BESCHREIBUNG_ARBEITSFENSTER = ("Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Rechts zeigt das Arbeitsfenster, woran er "
-                               "gerade arbeitet. Die Seitenleiste bleibt, den Inhalt einer Seite holst du jederzeit mit einem Knopf zurück.")
+# Pruefung 13.10.2026 (B13/K11): den Knopf „… in der manuellen Ansicht zeigen“ gibt es im Chatstil nicht mehr (Stufe A), und „rechts“
+# stimmte unter 1100 px nicht (dort steht das Fenster unter dem Gespraech) — jetzt ohne Lageangabe, mit dem Weg zurueck.
+BESCHREIBUNG_ARBEITSFENSTER = ("Du arbeitest im Gespräch mit dem InkluAgent, wie in einem Chat. Das Arbeitsfenster zeigt, woran er gerade "
+                               "arbeitet, und öffnet die Seiten der Navigation, ohne dass du das Gespräch verlässt. Zur manuellen Ansicht "
+                               "wechselst du mit dem Knopf unter der Navigation.")
 
 
 def beschreibung(wert: str) -> str:

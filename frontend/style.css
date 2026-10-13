@@ -1159,31 +1159,22 @@ ul.inkluagent-kurzhilfe {
     resize: vertical;
 }
 .inkluagent-form textarea:focus {
-    outline: none;
     border-color: var(--focus);
     box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.25);
 }
+/* Pruefung 13.10.2026 (B5, gemessen): im Chatstil ueberschrieb die Regel des Feldes Rand und Schatten, und „outline: none“ blieb — das
+   wichtigste Feld der Agentenansicht zeigte den Fokus gar nicht. Jetzt derselbe 3-px-Ring wie ueberall (Runde 11). */
+.inkluagent-form textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .inkluagent-hint { font-size: 0.875rem; color: var(--text-muted); }
-/* Hochladefeld im InkluAgent (Ausbau Runde 2, Schritt 1): Dateien und Webadresse direkt im Agenten */
+/* Hochladefeld im InkluAgent (Ausbau Runde 2, Schritt 1): Dateien direkt im Agenten (Webadressen stehen seit 12.10.2026 in der Nachricht) */
 .inkluagent-hochladen { display: flex; flex-direction: column; gap: 0.35rem; }
 .inkluagent-hochladen label { font-weight: 600; }
-.inkluagent-hochladen input[type="url"] {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 1rem;
-}
-.inkluagent-hochladen input[type="url"]:focus {
-    outline: none;
-    border-color: var(--focus);
-    box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.25);
-}
 .inkluagent-hochladen input[type="file"]:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
 .inkluagent-hochgeladen { margin: 0.2rem 0 0; padding-left: 1.2rem; font-size: 0.95rem; }
 .inkluagent-hochgeladen li { margin: 0.15rem 0; }
-.inkluagent-hochgeladen li[data-ok="0"] { color: var(--error); }
+/* Fehlertexte im Agenten (Pruefung 13.10.2026, B18): --fehler-rand (#b91c1c, 6,5:1) — --error (#dc2626) hat auf dem Grau des
+   Chatstils (#f5f7fa) nur 4,4999:1, also knapp unter 4,5:1 */
+.inkluagent-hochgeladen li[data-ok="0"] { color: var(--fehler-rand); }
 /* Gespraech je Konto (Ausbau Runde 2, Schritt 2): Projektmarke im Verlauf, frueheres Gespraech des Projekts */
 .inkluagent-marke {
     margin: 0.8rem 0 0.4rem;
@@ -1220,7 +1211,7 @@ ul.inkluagent-kurzhilfe {
     flex-wrap: wrap;
 }
 .inkluagent-status { font-size: 0.9rem; color: var(--text-muted); }
-.inkluagent-status[data-state="error"] { color: var(--error); font-weight: 600; }
+.inkluagent-status[data-state="error"] { color: var(--fehler-rand); font-weight: 600; }
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -1410,8 +1401,10 @@ textarea { font-family: inherit; font-size: 1rem; }
 
 /* 4: Inhaltslinks ohne eigene Regel (vorher Browser-Blau, besucht Violett) in der Linkfarbe, unterstrichen. :where hält
    die Spezifität bei 0 — Navigation (liegt außerhalb von main/footer), Knopf-Links und eigene Regeln behalten Vorrang. */
-:where(main, footer, dialog, [role="dialog"], .auth-container, .legal-container) a:where(:not([class*="btn"])),
-:where(main, footer, dialog, [role="dialog"], .auth-container, .legal-container) a:where(:not([class*="btn"])):visited {
+/* Pruefung 13.10.2026 (HB4): auch im Bereich des InkluAgent — in der manuellen Ansicht ein aside ausserhalb von main, seine Links
+   hatten sonst die Browserfarben */
+:where(main, footer, dialog, [role="dialog"], .auth-container, .legal-container, .inkluagent-bereich) a:where(:not([class*="btn"])),
+:where(main, footer, dialog, [role="dialog"], .auth-container, .legal-container, .inkluagent-bereich) a:where(:not([class*="btn"])):visited {
     color: var(--link);
     text-decoration: underline;
     text-underline-offset: 0.15em;
@@ -1446,7 +1439,7 @@ input[type="checkbox"][aria-invalid="true"], input[type="radio"][aria-invalid="t
 /* 1, 2, 9: Hochkontrast (Windows-Kontrastdesigns, forced-colors). Der Modus entfernt Hintergrundfarben — Knöpfe brauchen
    einen sichtbaren Rahmen, die aktuelle Wahl ein Merkmal ohne Farbe, Fehlerfelder einen erkennbaren Rand. */
 @media (forced-colors: active) {
-    :where(main, footer, dialog, [role="dialog"], .auth-container, .start-header) :is(button, input[type="submit"], input[type="button"], a[class*="btn"], .btn, .btn-full, .lang-option) {
+    :where(main, footer, dialog, [role="dialog"], .auth-container, .start-header, .inkluagent-bereich) :is(button, input[type="submit"], input[type="button"], a[class*="btn"], .btn, .btn-full, .lang-option) {
         border: 2px solid ButtonText !important;
     }
     :is(.btn, a[class*="btn"], .lang-option)[aria-current="page"], :is(.btn, button)[aria-pressed="true"], .lang-option.is-current {
@@ -1461,14 +1454,12 @@ input[type="checkbox"][aria-invalid="true"], input[type="radio"][aria-invalid="t
 /* ─── Agentenansicht wie ChatGPT/Claude mit Arbeitsfenster (Michael Karbe, Feedback 20261012 - 1, Punkt 6; Steve 12.10.2026) ───
    Nur mit Schalter AGENT_ARBEITSFENSTER in der Agentenansicht (inkluagent.js, inkluagentChatstil). Mitte das Gespraech (Verlauf
    oben, Eingabe am unteren Rand angeheftet), rechts das Arbeitsfenster; schmal untereinander. */
-/* 2.4.11: die angeheftete Eingabe verdeckt nie, was den Fokus bekommt — der Browser laesst unten so viel Platz */
-html.agentenansicht-chatstil { scroll-padding-bottom: 13rem; }
+/* 2.4.11: die angeheftete Eingabe verdeckt nie, was den Fokus bekommt — der Browser laesst unten so viel Platz. Pruefung 13.10.2026
+   (B6): die Hoehe misst inkluagent.js (ResizeObserver, --agent-eingabe-hoehe); 13rem gilt nur, bis die erste Messung da ist. */
+html.agentenansicht-chatstil { scroll-padding-bottom: calc(var(--agent-eingabe-hoehe, 13rem) + 1rem); }
 html.agentenansicht-chatstil .inkluagent-bereich { max-width: 84rem; }
 .inkluagent-section.inkluagent-chatstil { background: transparent; border: 0; box-shadow: none; padding: 0; max-width: none; }
-/* Der Auf/Zu-Knopf bleibt (Ueberschrift 2), aber schlicht statt als dunkler Balken */
-.inkluagent-chatstil .inkluagent-toggle { background: transparent; color: var(--primary); border: 0; border-radius: 4px; padding: 0.25rem 0.1rem;
-    font-size: 1.15rem; width: auto; }
-.inkluagent-chatstil .inkluagent-toggle:hover { background: transparent; text-decoration: underline; }
+/* Im Chatstil ist die Ueberschrift 2 „InkluAgent“ schlicht, ohne Auf/Zu-Knopf (der ist hidden, siehe .inkluagent-titel unten) */
 .inkluagent-chatstil #inkluagentHeading { border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
 .inkluagent-spalten { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 @media (min-width: 1100px) {
@@ -1500,9 +1491,10 @@ html.agentenansicht-chatstart .inkluagent-gespraech:has(> .inkluagent-log:empty)
 .inkluagent-chatstil .inkluagent-form textarea { border: 2px solid #6b7a90; border-radius: 1.25rem; padding: 0.85rem 1.1rem; min-height: 3.5rem;
     background: #fff; box-shadow: 0 2px 10px rgba(27, 42, 74, 0.08); }
 .inkluagent-gross.inkluagent-chatstil #inkluagentInput { min-height: 3.5rem; }
-/* Unter dem Feld eine Zeile: Hinweis links, „Dateien anhängen“ und „Senden“ rechts; darunter die angehaengten Dateien, Meldung,
-   Ergebnis des Hochladens und die Statuszeile. Die Reihenfolge im Quelltext bleibt (Feld, Hinweis, Knoepfe, Liste, Status) —
-   nur die Anordnung ist ein Raster. */
+/* Unter dem Feld eine Zeile: Hinweis links, „Dateien anhängen“ und „Senden“ rechts; darunter die Grenzen der Anhaenge und die
+   angehaengten Dateien. Meldung, Ergebnis des Hochladens und Statuszeile stehen seit der Pruefung 13.10.2026 (B6) im Fluss ueber der
+   Eingabe (.inkluagent-meldungen) — angeheftet wuchsen sie auf bis zu 60 % des Bildschirms. Die Reihenfolge im Quelltext bleibt
+   (Feld, Hinweis, Knoepfe, Grenzen, Liste) — nur die Anordnung ist ein Raster. */
 .inkluagent-chatstil .inkluagent-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 0.75rem; row-gap: 0.4rem;
     align-items: center; }
 .inkluagent-chatstil .inkluagent-form > textarea { grid-column: 1 / -1; grid-row: 1; }
@@ -1511,16 +1503,17 @@ html.agentenansicht-chatstart .inkluagent-gespraech:has(> .inkluagent-log:empty)
 .inkluagent-chatstil .inkluagent-controls { display: contents; }
 .inkluagent-chatstil #inkluagentAnhaengenBtn { grid-column: 2; grid-row: 2; }
 .inkluagent-chatstil #inkluagentSendBtn { grid-column: 3; grid-row: 2; justify-self: end; }
-.inkluagent-chatstil #inkluagentAnhaenge { grid-column: 1 / -1; grid-row: 4; }
-.inkluagent-chatstil #inkluagentAnhangMeldung { grid-column: 1 / -1; grid-row: 5; }
-.inkluagent-chatstil #inkluagentHochgeladen { grid-column: 1 / -1; grid-row: 6; }
-.inkluagent-chatstil #inkluagentStatus { grid-column: 1 / -1; grid-row: 7; }
+.inkluagent-chatstil #inkluagentAnhangHinweis { grid-column: 1 / -1; grid-row: 4; margin: 0; }
+.inkluagent-chatstil #inkluagentAnhaenge { grid-column: 1 / -1; grid-row: 5; }
 @media (max-width: 600px) {
     .inkluagent-chatstil .inkluagent-form { grid-template-columns: minmax(0, 1fr) auto; }
     .inkluagent-chatstil .inkluagent-form > .inkluagent-hint { grid-column: 1 / -1; }
     .inkluagent-chatstil #inkluagentAnhaengenBtn { grid-column: 1; grid-row: 3; justify-self: start; }
     .inkluagent-chatstil #inkluagentSendBtn { grid-column: 2; grid-row: 3; }
 }
+/* Meldungen im Fluss zwischen Verlauf und Eingabe (B6) */
+.inkluagent-meldungen { display: flex; flex-direction: column; gap: 0.35rem; margin: 0 0 0.5rem; }
+.inkluagent-meldungen > [hidden] { display: none; }
 /* Angehaengte Dateien als Kaertchen mit „Entfernen“ */
 .inkluagent-anhaenge { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .inkluagent-anhaenge[hidden] { display: none; }
@@ -1529,7 +1522,7 @@ html.agentenansicht-chatstart .inkluagent-gespraech:has(> .inkluagent-log:empty)
 .inkluagent-anhang-name { overflow-wrap: anywhere; }
 .inkluagent-anhaenge .inkluagent-anhang-weg { padding: 0.2rem 0.65rem; font-size: 0.85rem; border-radius: 999px; }
 .inkluagent-anhang-meldung { margin: 0; }
-.inkluagent-anhang-meldung[data-state="error"] { color: var(--error); font-weight: 600; }
+.inkluagent-anhang-meldung[data-state="error"] { color: var(--fehler-rand); font-weight: 600; }
 /* Hineinziehen: deutlicher Rahmen um das ganze Gespraech */
 .inkluagent-gespraech.inkluagent-ablage-aktiv { outline: 3px dashed var(--accent); outline-offset: 6px; border-radius: 12px; }
 .inkluagent-chatstil #inkluagentStatus:empty { display: none; }
@@ -1566,7 +1559,7 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leis
 .arbeitsfenster-ergebnis { margin: 0.9rem 0 0; padding: 0.6rem 0.75rem; background: var(--bg); border-left: 4px solid var(--accent); border-radius: 6px; }
 .arbeitsfenster-ergebnis h3 { margin: 0 0 0.3rem; }
 .arbeitsfenster-ergebnis p { margin: 0; overflow-wrap: anywhere; font-size: 0.95rem; }
-.arbeitsfenster-schritte li[data-zustand="fehler"] .schritt-zustand { color: var(--error); font-weight: 600; }
+.arbeitsfenster-schritte li[data-zustand="fehler"] .schritt-zustand { color: var(--fehler-rand); font-weight: 600; }
 .inkluagent-entwurf .inkluagent-message-content { white-space: pre-line; }
 /* Agentenansicht: „InkluAgent“ als schlichte Ueberschrift ohne Auf/Zu (Steve 12.10.2026) */
 .inkluagent-chatstil .inkluagent-titel { font-size: 1.15rem; color: var(--primary); }
@@ -1605,3 +1598,14 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leis
 }
 /* Eingebettete Seite (im Rahmen des Arbeitsfensters): ohne Seitenleiste, volle Breite */
 body.eingebettet .dash-main { max-width: none; padding: 1rem 1rem 2rem; }
+
+/* ─── Pruefung 13.10.2026: Oberflaeche des InkluAgent (docs/INKLUAGENT.md, „Prüfung 13.10.2026: Oberfläche“) ─── */
+/* B12/K2/K3: gesperrte Knoepfe tragen aria-disabled statt disabled (der Fokus bleibt) — sichtbar gedaempft, der Mauszeiger sagt es auch */
+.btn[aria-disabled="true"], .app-nav-gespraeche button[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
+/* B16: nicht angekommene Nachricht — gestrichelter Rand UND ein Satz in Worten (nicht nur Farbe) */
+.inkluagent-message.inkluagent-nicht-gesendet { border: 2px dashed var(--fehler-rand); }
+.inkluagent-nicht-gesendet-hinweis { margin: 0.35rem 0 0; color: var(--fehler-rand); font-weight: 600; font-size: 0.9rem; white-space: normal; }
+/* Links und Knoepfe unter einer Antwort (vorher als style-Attribut in inkluagent.js) */
+.inkluagent-message-anhang { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.5rem; white-space: normal; }
+/* B21: die Grenzen der Anhaenge stehen sichtbar unter den Knoepfen */
+.inkluagent-anhang-hinweis { font-size: 0.85rem; }
