@@ -167,7 +167,8 @@ def _hinfuehren(user_id: int, ziel: str, sofort: bool) -> dict:
                                                      if sofort else "Unter deiner Antwort steht der Knopf „Hinführen“.")},
                  "anhang": [{"art": "link", "url": url, "text": _("Hinführen: {name}").format(name=name)}]}
     if sofort:
-        out["aktionen"] = [{"type": "hinfuehren", "url": url}]
+        # name: Ueberschrift des Arbeitsfensters, wenn die Agentenansicht die Seite dort oeffnet (13.10.2026)
+        out["aktionen"] = [{"type": "hinfuehren", "url": url, "name": name}]
     return out
 
 

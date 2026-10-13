@@ -11996,3 +11996,28 @@ msgstr "Før mig derhen"
 
 msgid "Einstellung ändern"
 msgstr "Skift indstilling"
+
+# Seiten im Arbeitsfenster (13.10.2026)
+msgid "Zurück zum Gespräch"
+msgstr "Tilbage til samtalen"
+
+msgid "Arbeitsfenster vergrößern"
+msgstr "Forstør arbejdsvinduet"
+
+msgid "Seite schließen"
+msgstr "Luk siden"
+
+#, python-brace-format
+msgid "Seite: {name}"
+msgstr "Side: {name}"
+
+#, python-brace-format
+msgid "Arbeitsfenster: {name}"
+msgstr "Arbejdsvindue: {name}"
+
+#, python-brace-format
+msgid "Im Arbeitsfenster geöffnet: {name}"
+msgstr "Åbnet i arbejdsvinduet: {name}"
+
+msgid "Seite im Arbeitsfenster geschlossen."
+msgstr "Siden i arbejdsvinduet er lukket."

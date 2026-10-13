@@ -12300,3 +12300,28 @@ msgstr "Hinführen"
 
 msgid "Einstellung ändern"
 msgstr "Einstellung ändern"
+
+# Seiten im Arbeitsfenster (13.10.2026)
+msgid "Zurück zum Gespräch"
+msgstr "Zurück zum Gespräch"
+
+msgid "Arbeitsfenster vergrößern"
+msgstr "Arbeitsfenster vergrößern"
+
+msgid "Seite schließen"
+msgstr "Seite schließen"
+
+#, python-brace-format
+msgid "Seite: {name}"
+msgstr "Seite: {name}"
+
+#, python-brace-format
+msgid "Arbeitsfenster: {name}"
+msgstr "Arbeitsfenster: {name}"
+
+#, python-brace-format
+msgid "Im Arbeitsfenster geöffnet: {name}"
+msgstr "Im Arbeitsfenster geöffnet: {name}"
+
+msgid "Seite im Arbeitsfenster geschlossen."
+msgstr "Seite im Arbeitsfenster geschlossen."

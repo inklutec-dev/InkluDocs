@@ -85,7 +85,7 @@ class Ziele(unittest.TestCase):
     def test_hinfuehren_sofort_und_anbieten(self):
         r = begleiter.ausfuehren("hinfuehren", {"ziel": "sprache", "sofort": True}, self.u["id"])
         self.assertTrue(r["ok"])
-        self.assertEqual(r["aktionen"], [{"type": "hinfuehren", "url": "/einstellungen?hin=lang-h"}])
+        self.assertEqual(r["aktionen"], [{"type": "hinfuehren", "url": "/einstellungen?hin=lang-h", "name": "Sprache der Oberflaeche"}])
         self.assertEqual(r["anhang"][0]["url"], "/einstellungen?hin=lang-h")
         r = begleiter.ausfuehren("hinfuehren", {"ziel": "projekte"}, self.u["id"])
         self.assertNotIn("aktionen", r, "nur fragen: Knopf, kein Wechsel")
@@ -150,7 +150,7 @@ class InDerSchleife(unittest.TestCase):
             r = agent_loop.run_agent(None, u["id"], "Bring mich zum API-Schlüssel", None, Modell())
         self.assertIn("hinfuehren", gesehen[0][0])
         self.assertIn("Begleiter durch InkluDocs", gesehen[0][1])
-        self.assertIn({"type": "hinfuehren", "url": "/api-schluessel?hin=newKeyName"}, r["actions"])
+        self.assertIn({"type": "hinfuehren", "url": "/api-schluessel?hin=newKeyName", "name": "Neuen Schluessel erstellen"}, r["actions"])
         gesehen.clear()
         Modell.n = 0
         with mock.patch.object(funktionen, "AGENT_KONTO", True), mock.patch.object(funktionen, "AGENT_UEBERALL", True):
@@ -227,16 +227,21 @@ class Oberflaeche(unittest.TestCase):
         f = self.js[self.js.index("function " + name + "("):]
         return f[:f.index("\n}\n")]
 
-    def test_inhalt_nur_auf_startseite_und_projektseiten_ausgeblendet(self):
-        self.assertIn("return p === '/dashboard' || /^\\/app\\/?$/.test(p);", self.funktion("inkluagentInhaltAusblenden"))
-        self.assertIn("if (inkluagentArbeitsfensterAn() && !inkluagentInhaltAusblenden()) {", self.funktion("inkluagentAgentenansicht"))
+    def test_agentenansicht_ueberall_nur_gespraech_und_arbeitsfenster(self):
+        """Steve 12.10.2026 abends: „sonst vermischen wir die Ansichten“ — keine Seite zeigt ihren Inhalt in der Agentenansicht,
+        kein „nur diese Seite manuell“ im Chatstil; Seiten oeffnen sich im Arbeitsfenster."""
+        self.assertNotIn("inkluagentInhaltAusblenden", self.js)
+        self.assertIn("if (!inkluagentArbeitsfensterAn() && !sec.querySelector('.inkluagent-agentenansicht-hinweis')) {",
+                      self.funktion("inkluagentAgentenansicht"))
 
     def test_aktionen_nur_mit_geprueften_werten(self):
         f = self.funktion("inkluagentBegleiterAktion")
         self.assertIn(r"/^\/[A-Za-z0-9\/_-]*\?hin=[A-Za-z][\w-]{0,40}$/.test(a.url)", f)
         self.assertIn("/^[a-z]{2}$/.test(a.sprache || '')", f)
         self.assertIn("window.location.href = '/set-language/' + a.sprache;", f)
-        h = self.funktion("inkluagentHinfuehrenBeimLaden")
+        dash = lies(FRONTEND, "dashboard.js")
+        h = dash[dash.index("function hinfuehrenBeimLaden("):]
+        h = h[:h.index("\n}\n")]
         self.assertIn(r"/^[A-Za-z][\w-]{0,40}$/.test(ziel)", h)
         self.assertIn("el.focus(", h)
         self.assertIn("u.searchParams.delete('hin')", h)

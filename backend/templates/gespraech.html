@@ -43,7 +43,7 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.weiter || data.weiter.charAt(0) !== '/') throw new Error();
       st.textContent = t('Gespräch wird fortgesetzt …');
-      window.location.href = data.weiter;
+      ganzeSeite(data.weiter);   // im Arbeitsfenster: die ganze Seite wechselt
     } catch (e) {
       st.textContent = t('Das ging nicht. Bitte erneut versuchen.');
       b.removeAttribute('aria-disabled');

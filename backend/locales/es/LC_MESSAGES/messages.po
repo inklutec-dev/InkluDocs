@@ -12299,3 +12299,28 @@ msgstr "Llévame allí"
 
 msgid "Einstellung ändern"
 msgstr "Cambiar un ajuste"
+
+# Seiten im Arbeitsfenster (13.10.2026)
+msgid "Zurück zum Gespräch"
+msgstr "Volver a la conversación"
+
+msgid "Arbeitsfenster vergrößern"
+msgstr "Ampliar la ventana de trabajo"
+
+msgid "Seite schließen"
+msgstr "Cerrar la página"
+
+#, python-brace-format
+msgid "Seite: {name}"
+msgstr "Página: {name}"
+
+#, python-brace-format
+msgid "Arbeitsfenster: {name}"
+msgstr "Ventana de trabajo: {name}"
+
+#, python-brace-format
+msgid "Im Arbeitsfenster geöffnet: {name}"
+msgstr "Abierto en la ventana de trabajo: {name}"
+
+msgid "Seite im Arbeitsfenster geschlossen."
+msgstr "Página de la ventana de trabajo cerrada."

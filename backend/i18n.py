@@ -159,8 +159,22 @@ def _catalog_json(lang: str) -> str:
     return json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
 
 
+def eingebettet(request: Request) -> bool:
+    """Laeuft die Seite im Arbeitsfenster der Agentenansicht (Steve 12./13.10.2026, Schalter AGENT_ARBEITSFENSTER)? Erkannt am
+    Kopf „Sec-Fetch-Dest: iframe“, den der Browser bei jeder Navigation IM Rahmen schickt (so bleiben auch Links darin
+    eingebettet), oder am Parameter ?eingebettet=1. base_app.html laesst dann Seitenleiste, Fusszeile und den InkluAgent weg."""
+    try:
+        import funktionen
+        if not funktionen.an("AGENT_ARBEITSFENSTER"):
+            return False
+        return (request.headers.get("sec-fetch-dest") == "iframe") or request.query_params.get("eingebettet") == "1"
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def template_context(request: Request, lang: str, **extra) -> dict:
     """Standard-Kontext fuer Jinja2-Templates (inkl. gettext und Sprach-Metadaten)."""
+    extra.setdefault("eingebettet", eingebettet(request))
     return {
         "request": request,
         "_": get_gettext(lang),

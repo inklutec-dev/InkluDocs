@@ -900,3 +900,43 @@ Notiz ans Modell und nicht in den Verlauf, Seiten-Schalter, Überblick, Oberflä
 Inhalt in der Agentenansicht, axe ganze Seite ohne Verstöße, Überblick, Startseite bleibt Chat-Start, „bring mich zu“ mit Fokus
 und Markierung, „Was kann ich hier machen?“, „wo finde ich“ mit Knopf, Sprache Englisch und zurück, Ansicht auf Wunsch); alle
 übrigen zehn Proben mit allen Staging-Schaltern grün.
+
+### Stufe A: Agentenansicht = Gespräch + Arbeitsfenster, Seiten im Arbeitsfenster, „Arbeitsfenster vergrößern“ (Steve 12./13.10.2026; mit `AGENT_ARBEITSFENSTER`)
+
+Steve (12.10. abends): „Wenn es eine Agentenansicht ist, … nur der Chatbot, und die Ansichten, wo ich hin möchte, im kleinen Feld,
+wo man tatsächlich interagieren kann — sonst vermischen wir die Ansichten.“ Die Regel „andere Seiten zeigen ihren Inhalt“ aus
+dem Begleiter-Paket ist damit zurückgenommen.
+- **Agentenansicht überall gleich:** auf jeder Seite nur die Überschrift 1, das Gespräch und das Arbeitsfenster. Kein Knopf „Diese
+  Seite/Dieses Projekt in der manuellen Ansicht zeigen“ mehr im Chatstil — die Ansicht wechselt nur über den Umschalter der
+  Seitenleiste (ohne Arbeitsfenster-Schalter bleibt der Knopf wie in Runde 1).
+- **Seiten im Arbeitsfenster** (`inkluagentSeiteImFenster`): die echte Seite in einem Rahmen (`iframe#arbeitsSeiteRahmen`, Titel
+  „Arbeitsfenster: <Seite>“), Überschrift 3 „Seite: <Seite>“, Knopf „Seite schließen“; Ansage „Im Arbeitsfenster geöffnet: …“,
+  der Fokus geht in die Seite (Ziel des Hinführens, sonst ihre Überschrift 1). Geöffnet von: Navigation der Seitenleiste
+  (`imArbeitsfensterOeffnen` in `dashboard.js`, außer Startseite und Projekte), Begleiter-Aktion `hinfuehren` (mit `name`), Knopf
+  „Hinführen: …“ unter einer Antwort. Nur eigene Pfade (`^/[A-Za-z0-9/_-]*(\?…)?$`), nie `/app`, `/dashboard`, Sprache, Anmeldung.
+  Offene Seite und Größe überstehen ein Neuladen (`sessionStorage`, gemerkt ohne `?hin`, still ohne Fokus). Solange eine Seite
+  offen ist, ruht der Überblick; „Stand vorlesen“ nennt die offene Seite.
+- **Eingebettete Darstellung** (`i18n.eingebettet`, `base_app.html`): erkannt am Kopf `Sec-Fetch-Dest: iframe` (jede Navigation im
+  Rahmen, Links bleiben so eingebettet) oder `?eingebettet=1`; nur mit Schalter. Dann ohne Seitenleiste, Fußzeile, InkluAgent; oben
+  der Sprunglink „Zurück zum Gespräch“ (ins Eingabefeld des Gesprächs). Ziele, die nicht in den Rahmen gehören, öffnen die ganze
+  Seite (`ganzeSeite`, `gehoertGanzeSeite`): Projekte, Startseite, Sprachwechsel, Anmeldung/Abmeldung, Zahlung (abo.html),
+  „Hier weitermachen“ (gespraech.html), neues Projekt (projekt-neu.html), Konto gelöscht (konto.html); Ansicht in den
+  Einstellungen gewechselt → die ganze Seite lädt neu.
+- **Ziel des Hinführens** sucht jetzt `dashboard.js` (`hinfuehrenBeimLaden`, auf jeder Seite, auch im Rahmen) statt
+  `inkluagent.js`.
+- **„Arbeitsfenster vergrößern“** (`inkluagentFensterGross`): Umschaltknopf mit `aria-pressed`, der Fokus bleibt. Breit: Gespräch
+  2 Teile, Fenster 3 Teile. Schmal (unter 1100 px): das Fenster liegt über allem, Seitenleiste, Hauptbereich, Gespräch und
+  Fußzeile sind `inert`, sichtbar „Zurück zum Gespräch“, Escape schließt (Fokus zurück auf den Knopf).
+- **Rahmen-Schutz** (`_RahmenSchutz`): mit Schalter `X-Frame-Options: SAMEORIGIN` und `frame-ancestors 'self'` (die eigene Seite
+  darf einrahmen, fremde weiterhin nicht), ohne Schalter wie bisher `DENY` / `'none'`. `tests/e2e/verify_express.py` akzeptiert
+  beides.
+- 7 neue Texte in sechs Sprachen.
+
+Tests: `tests/test_agent_arbeitsfenster_seiten.py` (6: Rahmen-Schutz mit/ohne Schalter, eingebettete Seite über Kopf und Parameter
+ohne Seitenleiste/Fußzeile/Agent mit Inhalt, nie ohne Schalter, Seite im Fenster nur eigene Pfade, Vergrößern mit `aria-pressed`
+und `inert`, Hinführen/Navigation ins Fenster, ganze Seite für Projekte/Sprache/Anmeldung/Zahlung); Begleiter-Tests angepasst.
+Klickprobe lokal 23 von 23 (Einstellungen nur Überschrift, „Meine Projekte“ aus der Seitenleiste im Fenster mit Name, Ansage und
+Fokus, eingebettet ohne Seitenleiste/Fußzeile/Agent, Vergrößern breit, Projekt im Fenster öffnet die ganze Seite, „bring mich zu“
+im Fenster mit Fokus aufs Feld, axe Agent und eingebettete Seite ohne Verstöße, „Zurück zum Gespräch“, Neuladen ohne Fokusraub,
+„Seite schließen“, schmal über allem mit `inert` und Escape, 320 px, Ansicht im Fenster gewechselt). Ältere Proben angepasst
+(kein „nur diese Seite manuell“) und mit allen Staging-Schaltern grün.

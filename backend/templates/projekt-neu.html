@@ -71,7 +71,7 @@
       if (res.ok && data.project_id) {
         status.style.color = 'var(--success)';
         status.textContent = t('Angelegt – wird geöffnet …');
-        window.location.href = '/app?projekt=' + encodeURIComponent(data.project_id);
+        ganzeSeite('/app?projekt=' + encodeURIComponent(data.project_id));   // im Arbeitsfenster: die ganze Seite wechselt
       } else {
         btn.disabled = false;
         status.style.color = 'var(--error)';

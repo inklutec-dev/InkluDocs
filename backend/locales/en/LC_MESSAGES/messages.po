@@ -12297,3 +12297,28 @@ msgstr "Take me there"
 
 msgid "Einstellung ändern"
 msgstr "Change setting"
+
+# Seiten im Arbeitsfenster (13.10.2026)
+msgid "Zurück zum Gespräch"
+msgstr "Back to the conversation"
+
+msgid "Arbeitsfenster vergrößern"
+msgstr "Enlarge work panel"
+
+msgid "Seite schließen"
+msgstr "Close page"
+
+#, python-brace-format
+msgid "Seite: {name}"
+msgstr "Page: {name}"
+
+#, python-brace-format
+msgid "Arbeitsfenster: {name}"
+msgstr "Work panel: {name}"
+
+#, python-brace-format
+msgid "Im Arbeitsfenster geöffnet: {name}"
+msgstr "Opened in the work panel: {name}"
+
+msgid "Seite im Arbeitsfenster geschlossen."
+msgstr "Page in the work panel closed."

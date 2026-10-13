@@ -12299,3 +12299,28 @@ msgstr "M'y emmener"
 
 msgid "Einstellung ändern"
 msgstr "Modifier un paramètre"
+
+# Seiten im Arbeitsfenster (13.10.2026)
+msgid "Zurück zum Gespräch"
+msgstr "Retour à la conversation"
+
+msgid "Arbeitsfenster vergrößern"
+msgstr "Agrandir la fenêtre de travail"
+
+msgid "Seite schließen"
+msgstr "Fermer la page"
+
+#, python-brace-format
+msgid "Seite: {name}"
+msgstr "Page : {name}"
+
+#, python-brace-format
+msgid "Arbeitsfenster: {name}"
+msgstr "Fenêtre de travail : {name}"
+
+#, python-brace-format
+msgid "Im Arbeitsfenster geöffnet: {name}"
+msgstr "Ouvert dans la fenêtre de travail : {name}"
+
+msgid "Seite im Arbeitsfenster geschlossen."
+msgstr "Page de la fenêtre de travail fermée."

@@ -628,7 +628,7 @@
     } catch (e) { msg.textContent = ''; err.textContent = t('Fehler'); return; }
     const d = await res.json().catch(() => ({}));
     if (!res.ok || !d.url) { msg.textContent = ''; err.textContent = d.detail || t('Fehler'); return; }
-    window.location.href = d.url;
+    ganzeSeite(d.url);   // Zahlung nie im Rahmen
   });
 
   byId('paketBtn').addEventListener('click', async () => {
@@ -643,7 +643,7 @@
     } catch (e) { err.textContent = t('Fehler'); return; }
     const d = await res.json().catch(() => ({}));
     if (!res.ok || !d.url) { err.textContent = d.detail || t('Fehler'); return; }
-    window.location.href = d.url;
+    ganzeSeite(d.url);   // Zahlung nie im Rahmen
   });
 
   byId('portalBtn').addEventListener('click', async () => {
@@ -655,7 +655,7 @@
     } catch (e) { err.textContent = t('Fehler'); return; }
     const d = await res.json().catch(() => ({}));
     if (!res.ok || !d.url) { err.textContent = d.detail || t('Fehler'); return; }
-    window.location.href = d.url;
+    ganzeSeite(d.url);   // Zahlung nie im Rahmen
   });
 
   function zahlungsRueckkehr() {

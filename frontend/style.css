@@ -1581,3 +1581,27 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-leis
 .arbeitsfenster-ueberblick dt { font-weight: 600; color: var(--text-muted); }
 .arbeitsfenster-ueberblick dd { margin: 0; overflow-wrap: anywhere; }
 .arbeitsfenster-ueberblick ul { margin: 0; padding-left: 1.1rem; }
+/* ─── Seiten im Arbeitsfenster und „Arbeitsfenster vergrößern“ (13.10.2026) ─── */
+.arbeitsfenster-werkzeuge { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0 0 0.6rem; }
+#arbeitsGross[aria-pressed="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+#arbeitsZurueck { display: none; }
+.arbeitsfenster-seite { margin: 0.75rem 0; }
+.arbeitsfenster-seite[hidden] { display: none; }
+.arbeitsfenster-seite-kopf { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0 0 0.4rem; }
+.arbeitsfenster-seite-kopf h3 { margin: 0; }
+.arbeitsfenster-seite iframe { display: block; width: 100%; height: 65vh; border: 1px solid #6b7a90; border-radius: 8px; background: #fff; }
+@media (min-width: 1100px) {
+    /* mit offener Seite ein breiteres Fenster; vergroessert: Gespraech 2 Teile, Fenster 3 Teile */
+    .inkluagent-spalten:has(#arbeitsSeite:not([hidden])) { grid-template-columns: minmax(0, 1fr) 30rem; }
+    /* #inkluagentBereich: hoeher gewichtet als die :has(#arbeitsSeite …)-Regel darueber */
+    html.arbeitsfenster-gross #inkluagentBereich .inkluagent-spalten { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+    html.arbeitsfenster-gross .arbeitsfenster-seite iframe { height: 75vh; }
+}
+@media (max-width: 1099px) {
+    /* schmal: vergroessert liegt das Fenster ueber allem, mit „Zurück zum Gespräch“ (der Rest ist inert, inkluagent.js) */
+    html.arbeitsfenster-gross .arbeitsfenster { position: fixed; inset: 0; z-index: 60; overflow: auto; border-radius: 0; max-height: none; }
+    html.arbeitsfenster-gross #arbeitsZurueck { display: inline-block; }
+    html.arbeitsfenster-gross .arbeitsfenster-seite iframe { height: 80vh; }
+}
+/* Eingebettete Seite (im Rahmen des Arbeitsfensters): ohne Seitenleiste, volle Breite */
+body.eingebettet .dash-main { max-width: none; padding: 1rem 1rem 2rem; }

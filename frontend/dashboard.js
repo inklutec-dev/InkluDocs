@@ -140,9 +140,78 @@ let currentUser = null;
 
 // Zur Anmeldung MIT Ruecksprung auf die aktuelle Seite (Express Runde 7): nach der Anmeldung geht es hierher zurueck.
 // Der Server prueft das Ziel (nur interne Pfade); /login selbst ist nie Ziel.
+// ─── Arbeitsfenster der Agentenansicht (13.10.2026) ───
+// Laeuft die Seite eingebettet im Arbeitsfenster (window.EINGEBETTET aus base_app.html), oeffnen Ziele, die nicht in den Rahmen
+// gehoeren, die ganze Seite: Projekte und Startseite (dort ist der Agent selbst), Sprachwechsel (die ganze Oberflaeche),
+// Anmeldung, Zahlung. Alles andere bleibt im Rahmen — der Browser schickt dann „Sec-Fetch-Dest: iframe“, die Seite bleibt eingebettet.
+function imRahmen() {
+  try { return !!(window.EINGEBETTET && window.top !== window); } catch (e) { return false; }
+}
+function ganzeSeite(url) {
+  (imRahmen() ? window.top : window).location.href = url;
+}
+window.ganzeSeite = ganzeSeite;
+function gehoertGanzeSeite(pfad) {
+  return /^\/(app|dashboard)(\/|\?|$)/.test(pfad) || /^\/(set-language|login|logout|register)(\/|\?|$)/.test(pfad);
+}
+function eingebettetEinrichten() {
+  if (!imRahmen()) return;
+  const zurueck = byId('zumGespraech');
+  if (zurueck) zurueck.addEventListener('click', (e) => {
+    e.preventDefault();
+    try { window.parent.inkluagentZumGespraech(); } catch (err) { /* ohne Agent: nichts */ }
+  });
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href]');
+    if (!a || a.hasAttribute('download') || a.target === '_blank' || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    let u;
+    try { u = new URL(a.href, window.location.href); } catch (err) { return; }
+    if (u.origin !== window.location.origin || !gehoertGanzeSeite(u.pathname)) return;
+    e.preventDefault();
+    ganzeSeite(u.pathname + u.search + u.hash);
+  }, true);
+}
+// Ziel eines Hinfuehrens (Begleiter, 12.10.2026): ?hin=<id> bzw. ueberschrift — suchen (die Seite baut oft noch), aufklappen,
+// Fokus, einige Sekunden sichtbar markieren; der Parameter verschwindet aus der Adresse. Auf jeder Seite, auch im Arbeitsfenster.
+// Nur ids aus der festen Liste des Servers (inkluagent/begleiter.py).
+function hinfuehrenBeimLaden() {
+  let ziel = null;
+  try { ziel = new URLSearchParams(window.location.search).get('hin'); } catch (e) { return; }
+  if (!ziel || !/^[A-Za-z][\w-]{0,40}$/.test(ziel)) return;
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.delete('hin');
+    history.replaceState(history.state, '', u);
+  } catch (e) { /* Adresse bleibt */ }
+  let n = 0;
+  const suchen = () => {
+    const el = ziel === 'ueberschrift' ? document.querySelector('#main h1') : document.getElementById(ziel);
+    const det = el && el.closest('details');
+    if (det && !det.open) det.open = true;
+    if (!el || !(el.offsetWidth || el.offsetHeight || el.getClientRects().length)) {
+      if (++n < 40) setTimeout(suchen, 100);
+      return;
+    }
+    if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) el.setAttribute('tabindex', '-1');
+    el.classList.add('inkluagent-hin-ziel');
+    el.scrollIntoView({ block: 'center' });
+    el.focus({ preventScroll: true });
+    setTimeout(() => el.classList.remove('inkluagent-hin-ziel'), 6000);
+  };
+  suchen();
+}
+// In der Agentenansicht oeffnen die Seiten der Navigation im Arbeitsfenster (inkluagent.js) — die Agentenansicht bleibt.
+function imArbeitsfensterOeffnen(e, a) {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const pfad = a.getAttribute('href') || '';
+  if (typeof window.inkluagentSeiteImFensterMoeglich !== 'function' || !window.inkluagentSeiteImFensterMoeglich(pfad)) return;
+  e.preventDefault();
+  window.inkluagentSeiteImFenster(pfad, a.textContent.trim());
+}
+
 function zurAnmeldung(ziel) {
   const hier = ziel || (window.location.pathname + window.location.search + window.location.hash);
-  window.location.href = (!hier || hier.indexOf('/login') === 0) ? '/login' : '/login?weiter=' + encodeURIComponent(hier);
+  ganzeSeite((!hier || hier.indexOf('/login') === 0) ? '/login' : '/login?weiter=' + encodeURIComponent(hier));
 }
 window.zurAnmeldung = zurAnmeldung;
 
@@ -372,6 +441,7 @@ function renderSidebar() {
     a.textContent = it.korb ? expressKorbText() : it.label;
     if (it.korb) a.setAttribute('data-express-korb', '');
     if (navAktuell(it, path)) a.setAttribute('aria-current', 'page');
+    a.addEventListener('click', (e) => imArbeitsfensterOeffnen(e, a));
     li.appendChild(a);
     ul.appendChild(li);
   });
@@ -393,6 +463,7 @@ function renderSidebar() {
     a.href = it.href;
     a.textContent = it.label;
     if (navAktuell(it, path)) { a.setAttribute('aria-current', 'page'); konto.open = true; }
+    a.addEventListener('click', (e) => imArbeitsfensterOeffnen(e, a));
     li.appendChild(a);
     unter.appendChild(li);
   });
@@ -466,6 +537,7 @@ function seitenleisteGespraecheBauen(path) {
   alle.className = 'app-nav-alle';
   alle.textContent = t('Alle Gespräche');
   if (path === '/gespraeche') alle.setAttribute('aria-current', 'page');
+  alle.addEventListener('click', (e) => imArbeitsfensterOeffnen(e, alle));
   bereich.appendChild(h);
   bereich.appendChild(neu);
   bereich.appendChild(liste);
@@ -654,6 +726,8 @@ function renderLegalNote() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  eingebettetEinrichten();   // Arbeitsfenster der Agentenansicht (13.10.2026)
+  hinfuehrenBeimLaden();     // Begleiter: Ziel auf dieser Seite
   await loadCurrentUser();   // setzt currentUser, Begrüßung, Tageslimit
   renderSidebar();
   ansichtFokusNachWechsel();

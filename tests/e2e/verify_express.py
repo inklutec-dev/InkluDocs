@@ -403,8 +403,10 @@ try:
     voll.post(f"/api/admin/express/auftraege/{aid3}/stornieren", json={"grund": "Test"})
     for pfad in ("/express", "/express/warenkorb", "/app", "/api/express/stand"):
         h = kunde.get(pfad).headers
-        check(f"Rahmen-Schutz {pfad}: X-Frame-Options DENY, frame-ancestors 'none' (N6)", h.get("x-frame-options") == "DENY"
-              and "frame-ancestors 'none'" in h.get("content-security-policy", ""), dict(h))
+        # Seit 13.10.2026 mit Arbeitsfenster (Schalter AGENT_ARBEITSFENSTER): SAMEORIGIN / 'self' — fremde Seiten rahmen weiter nicht ein
+        check(f"Rahmen-Schutz {pfad}: kein Einrahmen durch fremde Seiten (N6)",
+              (h.get("x-frame-options"), [x for x in ("frame-ancestors 'none'", "frame-ancestors 'self'") if x in h.get("content-security-policy", "")])
+              in (("DENY", ["frame-ancestors 'none'"]), ("SAMEORIGIN", ["frame-ancestors 'self'"])), dict(h))
 
     print("== G4. Vormonats-Bestellung: Startseite und Guthaben aus einer Rechnung (Nachkontrolle Runde 3, R1/R2) ==")
     import billing  # noqa: E402

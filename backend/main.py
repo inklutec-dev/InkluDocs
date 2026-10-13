@@ -471,14 +471,18 @@ class _RahmenSchutz:
             await self.app(scope, receive, send)
             return
 
+        # Arbeitsfenster der Agentenansicht (13.10.2026, Schalter AGENT_ARBEITSFENSTER): die App rahmt ihre eigenen Seiten ein —
+        # dann SAMEORIGIN / 'self' (nur die eigene Seite darf einrahmen, fremde weiterhin nicht); ohne Schalter wie bisher.
+        eigene = funktionen.an("AGENT_ARBEITSFENSTER")
+
         async def senden(nachricht):
             if nachricht.get("type") == "http.response.start":
                 kopf = list(nachricht.get("headers") or [])
                 namen = {k.lower() for k, _ in kopf}
                 if b"x-frame-options" not in namen:
-                    kopf.append((b"x-frame-options", b"DENY"))
+                    kopf.append((b"x-frame-options", b"SAMEORIGIN" if eigene else b"DENY"))
                 if b"content-security-policy" not in namen:
-                    kopf.append((b"content-security-policy", b"frame-ancestors 'none'"))
+                    kopf.append((b"content-security-policy", b"frame-ancestors 'self'" if eigene else b"frame-ancestors 'none'"))
                 nachricht["headers"] = kopf
             await send(nachricht)
         await self.app(scope, receive, senden)

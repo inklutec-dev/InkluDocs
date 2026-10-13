@@ -11871,3 +11871,28 @@ msgstr "Ta mig dit"
 
 msgid "Einstellung ändern"
 msgstr "Ändra inställning"
+
+# Seiten im Arbeitsfenster (13.10.2026)
+msgid "Zurück zum Gespräch"
+msgstr "Tillbaka till samtalet"
+
+msgid "Arbeitsfenster vergrößern"
+msgstr "Förstora arbetsfönstret"
+
+msgid "Seite schließen"
+msgstr "Stäng sidan"
+
+#, python-brace-format
+msgid "Seite: {name}"
+msgstr "Sida: {name}"
+
+#, python-brace-format
+msgid "Arbeitsfenster: {name}"
+msgstr "Arbetsfönster: {name}"
+
+#, python-brace-format
+msgid "Im Arbeitsfenster geöffnet: {name}"
+msgstr "Öppnad i arbetsfönstret: {name}"
+
+msgid "Seite im Arbeitsfenster geschlossen."
+msgstr "Sidan i arbetsfönstret är stängd."
