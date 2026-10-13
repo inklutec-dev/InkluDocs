@@ -140,6 +140,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/alttext') : ('/api/images/' + imageId + '/alt-text');
     }
 
+    // Projekt-Kennung (Sicherheitspruefung 13.10.2026, S1): es gilt nur eine positive ganze Zahl. Vorher ging der rohe
+    // Adressparameter bis in per innerHTML gebaute Attribute (onclick, data-project-id); ein praeparierter Link auf ein
+    // eigenes Projekt (/app?projekt=<ID>?x="><img onerror=…>) fuehrte Skript im Ursprung der App aus.
+    function projektKennung(wert) {
+        const s = String(wert == null ? '' : wert);
+        return /^[1-9]\d{0,14}$/.test(s) ? Number(s) : null;
+    }
+
     // ─── Init ────────────────────────────────────────
     async function init() {
         // Gast: erst direkt das Projekt versuchen — bei gültiger Gast-Sitzung
@@ -153,8 +161,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         currentUser = meData.user;
         if (meData.daily_limit) window._dailyLimit = meData.daily_limit;
         updateLimitDisplay();
-        const _pid = new URLSearchParams(window.location.search).get('projekt');
-        if (_pid) { showProject(_pid); } else { window.location.href = '/dashboard'; }
+        const _pid = projektKennung(new URLSearchParams(window.location.search).get('projekt'));
+        if (_pid !== null) { showProject(_pid); } else { window.location.href = '/dashboard'; }
     }
 
     // ─── Gast-Modus: E-Mail-Gate, dann read-only Projekt-Ansicht ───
@@ -584,6 +592,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     async function showProject(projectId) {
+        // Einzige Tuer zu allen Ansichten (S1): ausser im Gast-Modus (Freigabe-Token vom Server) zeichnet die Seite nur
+        // mit einer Projekt-Zahl — so bleibt jede Unteransicht sicher, die die Kennung in HTML setzt.
+        if (!window.GUEST_MODE) {
+            const kennung = projektKennung(projectId);
+            if (kennung === null) { window.location.href = '/dashboard'; return; }
+            projectId = kennung;
+        }
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         // Aktuelles Projekt merken, damit die Dokument-Aktionen (Umbenennen/
         // Löschen) wissen, gegen welches Projekt sie arbeiten.
