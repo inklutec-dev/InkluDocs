@@ -11,7 +11,7 @@
 {# Ansicht je Konto (InkluAgent-Ausbau Runde 1, Schritt 5): vom Server gesetzt, damit nichts springt; ohne Schalter fehlt das Attribut #}
 {# Arbeitsfenster der Agentenansicht (13.10.2026): eingebettet = die Seite laeuft im Rahmen des Arbeitsfensters — ohne Seitenleiste,
    Fusszeile und InkluAgent; oben ein Sprunglink zurueck ins Gespraech (i18n.eingebettet) #}
-<body{% if oberflaeche %} data-oberflaeche="{{ oberflaeche }}"{% endif %}{% if eingebettet %} class="eingebettet"{% endif %}>
+<body{% if oberflaeche %} data-oberflaeche="{{ oberflaeche }}"{% endif %}{% if toene %} data-toene="{{ toene }}"{% endif %}{% if eingebettet %} class="eingebettet"{% endif %}>
 {% if eingebettet %}
 <a href="#main" id="zumGespraech" class="dash-skip">{{ _('Zurück zum Gespräch') }}</a>
 {% else %}
@@ -84,6 +84,7 @@ window.EINGEBETTET = {{ 'true' if eingebettet else 'false' }};   {# im Arbeitsfe
 <script src="/static/dashboard.js?v={{ asset_version }}"></script>
 {# Mit Schalter auf jeder Seite; ohne laedt nur app.html das Skript (genau einmal — es deklariert Variablen mit let) #}
 {% if inkluagent_schalter and inkluagent_schalter.ueberall %}<script src="/static/inkluagent.js?v={{ asset_version }}"></script>{% endif %}
+{% if inkluagent_schalter and inkluagent_schalter.klang and not eingebettet %}<script src="/static/klang.js?v={{ asset_version }}"></script>{% endif %}
 {% block page_script %}{% endblock %}
 </body>
 </html>

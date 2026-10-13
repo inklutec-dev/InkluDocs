@@ -47,6 +47,19 @@
       </section>
       {% endif %}
 
+      {# Klangspur des InkluAgent (Paket 1, 13.10.2026, Schalter AGENT_KLANG): ein Kaestchen, gespeichert beim Umschalten (keine
+         Speichern-Taste — ein Kaestchen ist eine Einstellung, kein Kontextwechsel, WCAG 3.2.2); „Probe hören“ spielt den Wusch #}
+      {% if toene %}
+      <section class="dash-card" aria-labelledby="toene-h">
+        <h2 id="toene-h">{{ _('Töne des InkluAgent') }}</h2>
+        <p><input type="checkbox" id="toeneAn"{% if toene == 'an' %} checked{% endif %} aria-describedby="toeneText">
+           <label for="toeneAn">{{ _('Töne abspielen') }}</label></p>
+        <p id="toeneText" class="dash-meta">{{ _('Kurze Klänge zeigen, was der InkluAgent tut: ein Wusch, wenn eine Karte für dich kommt, ein leiser Tick je erledigtem Schritt und ein Klang, wenn er fertig ist oder etwas nicht geklappt hat. Alles steht auch als Text da.') }}</p>
+        <p><button type="button" id="toeneProbe" class="btn btn-secondary">{{ _('Probe hören') }}</button></p>
+        <p id="toeneStatus" role="status"></p>
+      </section>
+      {% endif %}
+
       {# Ab 31.07.2026 ist diese Seite eine reine Uebersicht: ausser der
          Sprachwahl steht hier kein Bedienelement und keine Kontoangabe mehr,
          nur h2 + Satz. Seit 14.09.2026 (Michael Karbe, Mail „Einstellungen“) ist
@@ -70,6 +83,36 @@
       </section>
 {% endblock %}
 {% block page_script %}
+{% if toene %}
+<script>
+{% raw %}
+(function () {
+  'use strict';
+  var kaestchen = document.getElementById('toeneAn');
+  var status = document.getElementById('toeneStatus');
+  var probe = document.getElementById('toeneProbe');
+  if (!kaestchen) return;
+  kaestchen.addEventListener('change', async function () {
+    var an = kaestchen.checked;
+    try {
+      var r = await fetch('/api/me/toene', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                                             body: JSON.stringify({ toene: an }) });
+      if (!r.ok) throw new Error(String(r.status));
+      document.body.setAttribute('data-toene', an ? 'an' : 'aus');
+      status.textContent = an ? t('Töne an.') : t('Töne aus.');
+    } catch (e) {
+      kaestchen.checked = !an;
+      status.textContent = t('Die Einstellung konnte nicht gespeichert werden. Bitte versuch es noch einmal.');
+    }
+  });
+  probe.addEventListener('click', function () {
+    if (!kaestchen.checked) { status.textContent = t('Die Töne sind aus. Schalte sie oben ein, um die Probe zu hören.'); return; }
+    if (!(window.Klang && window.Klang.spielen('karte'))) status.textContent = t('Dein Browser spielt hier gerade keinen Ton ab.');
+  });
+})();
+{% endraw %}
+</script>
+{% endif %}
 {% if ansicht_waehlbar %}
 <script>
 {% raw %}

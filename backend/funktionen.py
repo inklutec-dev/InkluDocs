@@ -120,6 +120,11 @@ AGENT_ARBEITSFENSTER = _umgebung_an("INKLUAGENT_ARBEITSFENSTER")
 # den Einstellungen“), weiss, auf welcher Seite er ist („Was kann ich hier machen?“), und aendert auf ausdruecklichen Wunsch die
 # Sprache der Oberflaeche und die Ansicht (inkluagent/begleiter.py). Braucht AGENT_UEBERALL. INKLUAGENT_BEGLEITER=an.
 AGENT_BEGLEITER = _umgebung_an("INKLUAGENT_BEGLEITER")
+# Klangspur des InkluAgent (Paket 1, Steve 13.10.2026): Zustaende hoerbar statt angesagt — ein Wusch, wenn eine Karte ins Gespraech
+# fliegt (von rechts in die Mitte, wie die Karte), ein Tick je erledigtem Schritt, ein Klang, wenn er fertig ist oder etwas schiefging.
+# Erzeugt im Browser (frontend/klang.js), spaeter Steves eigene Klaenge. Abschaltbar je Konto („Töne“ in den Einstellungen,
+# inkluagent/klang.py). Braucht AGENT_UEBERALL. INKLUAGENT_KLANG=an.
+AGENT_KLANG = _umgebung_an("INKLUAGENT_KLANG")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

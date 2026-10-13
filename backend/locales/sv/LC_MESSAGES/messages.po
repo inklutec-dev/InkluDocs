@@ -12000,3 +12000,31 @@ msgstr "Inga nya funktioner just nu."
 
 msgid "Frühere Einträge"
 msgstr "Tidigare inlägg"
+
+# Paket 1: Klangspur des InkluAgent
+msgid "Töne des InkluAgent"
+msgstr "InkluAgents ljud"
+
+msgid "Töne abspielen"
+msgstr "Spela upp ljud"
+
+msgid "Kurze Klänge zeigen, was der InkluAgent tut: ein Wusch, wenn eine Karte für dich kommt, ein leiser Tick je erledigtem Schritt und ein Klang, wenn er fertig ist oder etwas nicht geklappt hat. Alles steht auch als Text da."
+msgstr "Korta ljud visar vad InkluAgent gör: ett sus när ett kort kommer till dig, ett tyst tick för varje färdigt steg och ett ljud när den är klar eller något gick fel. Allt finns också som text."
+
+msgid "Probe hören"
+msgstr "Lyssna på ett prov"
+
+msgid "Töne an."
+msgstr "Ljud på."
+
+msgid "Töne aus."
+msgstr "Ljud av."
+
+msgid "Die Einstellung konnte nicht gespeichert werden. Bitte versuch es noch einmal."
+msgstr "Inställningen kunde inte sparas. Försök igen."
+
+msgid "Die Töne sind aus. Schalte sie oben ein, um die Probe zu hören."
+msgstr "Ljuden är av. Slå på dem ovan för att höra provet."
+
+msgid "Dein Browser spielt hier gerade keinen Ton ab."
+msgstr "Din webbläsare spelar inte upp ljud här just nu."

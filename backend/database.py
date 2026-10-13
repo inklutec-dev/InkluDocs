@@ -1004,6 +1004,9 @@ def _migrate_columns(conn):
         # Ansicht, Vorgabe auch fuer neue Konten) oder „agent“ (Agentenansicht). Nur gelesen, wenn funktionen.AGENT_ANSICHT an
         # ist. Rueckwaerts: alter Code liest die Spalte nicht; entfernen mit „ALTER TABLE users DROP COLUMN oberflaeche“.
         ("users", "oberflaeche", "ALTER TABLE users ADD COLUMN oberflaeche TEXT DEFAULT 'klassisch'"),
+        # Klangspur des InkluAgent (Paket 1, 13.10.2026, inkluagent/klang.py): 1 = Töne an (Vorgabe), 0 = aus. Nur gelesen, wenn
+        # funktionen.AGENT_KLANG an ist. Rueckwaerts: entfernen mit „ALTER TABLE users DROP COLUMN agent_toene“.
+        ("users", "agent_toene", "ALTER TABLE users ADD COLUMN agent_toene INTEGER DEFAULT 1"),
         # Gastzugang-Rollen (10.07.2026): Rolle der Einladung — 'kunde' (Endkunde,
         # Default, entspricht dem bisherigen Verhalten) oder 'lektorat'.
         ("shares", "role", "ALTER TABLE shares ADD COLUMN role TEXT DEFAULT 'kunde'"),

@@ -12429,3 +12429,31 @@ msgstr "Zurzeit keine neuen Funktionen."
 
 msgid "Frühere Einträge"
 msgstr "Frühere Einträge"
+
+# Paket 1: Klangspur des InkluAgent
+msgid "Töne des InkluAgent"
+msgstr "Töne des InkluAgent"
+
+msgid "Töne abspielen"
+msgstr "Töne abspielen"
+
+msgid "Kurze Klänge zeigen, was der InkluAgent tut: ein Wusch, wenn eine Karte für dich kommt, ein leiser Tick je erledigtem Schritt und ein Klang, wenn er fertig ist oder etwas nicht geklappt hat. Alles steht auch als Text da."
+msgstr "Kurze Klänge zeigen, was der InkluAgent tut: ein Wusch, wenn eine Karte für dich kommt, ein leiser Tick je erledigtem Schritt und ein Klang, wenn er fertig ist oder etwas nicht geklappt hat. Alles steht auch als Text da."
+
+msgid "Probe hören"
+msgstr "Probe hören"
+
+msgid "Töne an."
+msgstr "Töne an."
+
+msgid "Töne aus."
+msgstr "Töne aus."
+
+msgid "Die Einstellung konnte nicht gespeichert werden. Bitte versuch es noch einmal."
+msgstr "Die Einstellung konnte nicht gespeichert werden. Bitte versuch es noch einmal."
+
+msgid "Die Töne sind aus. Schalte sie oben ein, um die Probe zu hören."
+msgstr "Die Töne sind aus. Schalte sie oben ein, um die Probe zu hören."
+
+msgid "Dein Browser spielt hier gerade keinen Ton ab."
+msgstr "Dein Browser spielt hier gerade keinen Ton ab."

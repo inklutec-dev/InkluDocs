@@ -93,6 +93,24 @@ class Ziele(unittest.TestCase):
         self.assertFalse(begleiter.ausfuehren("hinfuehren", {"ziel": "verwaltung"}, self.u["id"])["ok"])
         self.assertFalse(begleiter.ausfuehren("hinfuehren", {"ziel": "warenkorb"}, self.u["id"])["ok"], "ohne Express kein Ziel")
 
+    def test_wortpruefung_ganze_woerter_und_wortanfaenge(self):
+        """Runde 2 (S-N4): kurze Woerter nur ganz, laengere auch als Wortanfang, Wortfolgen als Folge."""
+        N, g = begleiter._NUR_AUF_NENNUNG, begleiter._genannt
+        for text, ziel, soll in (("Tell me about it", "abo", False), ("Bring mich zu meinem Abo", "abo", True),
+                                 ("my keyboard is broken", "api", False), ("Bring mich zum API-Schlüssel", "api_neu", True),
+                                 ("Cancel the generation", "kuendigen", False), ("Ich will kündigen", "kuendigen", True),
+                                 ("I want to cancel my subscription", "kuendigen", True), ("E-Mail ändern", "email", True),
+                                 ("Mailing", "email", False), ("Take me to my account", "konto", True),
+                                 ("Fasse die Datei zusammen", "anzeigename", False), ("Anzeigename ändern", "anzeigename", True),
+                                 ("Wo ändere ich mein Passwort", "passwort", True), ("teamwork", "team", False),
+                                 ("Mein Team verwalten", "team", True)):
+            with self.subTest(text=text, ziel=ziel):
+                self.assertEqual(g(text, N[ziel]), soll)
+        for ziel in ("anzeigename", "pdf_ersteller"):
+            r = begleiter.ausfuehren("hinfuehren", {"ziel": ziel, "sofort": True}, self.u["id"],
+                                     begleiter.Lauf(nutzer_text="Fasse die Datei zusammen"))
+            self.assertNotIn("aktionen", r, "fuehrt auf /konto (Konto loeschen) — nur ueber den Knopf")
+
     def test_sicherheit_geld_recht_nur_auf_eigene_nennung(self):
         """Pruefung 13.10.2026, S8: zu Konto, E-Mail, Passwort, Abo, Team, API, Kuendigen und Widerruf von selbst nur, wenn der
         Nutzer das Ziel nennt; sonst nur der Knopf „Hinführen“."""

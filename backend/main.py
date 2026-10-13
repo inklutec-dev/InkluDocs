@@ -539,10 +539,12 @@ app.add_middleware(_RahmenSchutz)
 class _HerkunftPruefen:
     """Schutz gegen untergeschobene Anfragen (CSRF, Pruefung 13.10.2026, S5). Die Anmeldung haengt allein am Cookie; SameSite=Lax
     haelt fremde Sites ab, aber nicht gleichrangige Subdomains derselben Site (*.inklutec.de, darunter Staging) — und ein Formular
-    mit enctype=text/plain kommt an jedem JSON-Endpunkt an. Darum: aendernde Anfragen (POST, PUT, PATCH, DELETE) MIT Cookie nur
-    von der eigenen Herkunft. Der Browser sagt das in Sec-Fetch-Site (same-origin; none = vom Nutzer selbst ausgeloest); fehlt
-    der Kopf (aeltere Browser), muss Origin zum Host passen. Ohne Cookie (oeffentliche API mit X-API-Key, Stripe-Webhook,
-    Skripte) gibt es nichts zu missbrauchen. Reine ASGI-Schicht wie _RahmenSchutz."""
+    mit enctype=text/plain kommt an jedem JSON-Endpunkt an. Darum: aendernde Anfragen (POST, PUT, PATCH, DELETE) aus einem Browser
+    nur von der eigenen Herkunft. Der Browser sagt das in Sec-Fetch-Site (same-origin; none = vom Nutzer selbst ausgeloest);
+    fehlt der Kopf (aeltere Browser), muss Origin zum Host passen. Ohne beide Koepfe ist es kein Browser (oeffentliche API mit
+    X-API-Key, Stripe-Webhook, Skripte) — dann gibt es keine fremde Seite, die etwas unterschieben koennte.
+    Runde 2 (S-N2): auch OHNE Cookie — vorher konnte eine fremde Seite per /api/login einen Besucher in ein fremdes Konto
+    einloggen (Login-CSRF); fuer Screenreader-Nutzer faellt ein Kontowechsel kaum auf. Reine ASGI-Schicht wie _RahmenSchutz."""
 
     _SICHER = frozenset({"GET", "HEAD", "OPTIONS"})
 
@@ -560,8 +562,6 @@ class _HerkunftPruefen:
     @staticmethod
     def _erlaubt(scope) -> bool:
         kopf = {k.lower(): v for k, v in scope.get("headers") or []}
-        if not kopf.get(b"cookie"):
-            return True
         seite = kopf.get(b"sec-fetch-site")
         if seite is not None:
             return seite in (b"same-origin", b"none")
@@ -1034,6 +1034,8 @@ async def me(user: dict = Depends(get_current_user)):
             # Schritt 5 (funktionen.AGENT_ANSICHT): Ansicht je Konto und ob sie waehlbar ist (Umschalter in der Seitenleiste)
             "oberflaeche": _ansicht_me(db_user["id"]),
             "oberflaeche_waehlbar": bool(funktionen.AGENT_ANSICHT),
+            # Paket 1 (funktionen.AGENT_KLANG): Töne des InkluAgent je Konto; None ohne Schalter
+            "toene": _toene_me(db_user["id"]),
         },
         # deprecated: altes Tages-Limit — bleibt bis zur Frontend-Umstellung
         # auf den "abo"-Block mitgeliefert, danach entfernen.
@@ -11699,6 +11701,12 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
         return JSONResponse(status_code=404, content={"detail": _("Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu."),
                                                       "karte": abgelaufen})
     _schluessel, angebot = treffer
+    # Auch ein Karten-Knopf ist ein Lauf des Kontos (Pruefung 13.10.2026, Runde 2, S-N3): parallele Klicks belegten sonst den
+    # Arbeitsbereich des Agenten fuer alle Kunden. Arbeitet der Agent gerade, wartet der Knopf (die Karte bleibt offen).
+    start = _lauf_anmelden(user["id"])
+    if start is None:
+        _ag.angebot_loslassen(angebot_id)
+        return JSONResponse(status_code=409, content={"detail": _("Der InkluAgent arbeitet noch an deiner letzten Nachricht. Warte bitte auf seine Antwort.")})
 
     def _ausfuehren() -> dict:
         from inkluagent.agent_loop import _werkzeugsatz
@@ -11725,6 +11733,7 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
         r = await asyncio.get_running_loop().run_in_executor(_AGENT_EXECUTOR, _ausfuehren)   # wie Agent-Laeufe (S4)
     finally:
         _ag.angebot_loslassen(angebot_id)
+        _lauf_abmelden(user["id"], start)
     r = r if isinstance(r, dict) else {}
     anhang = r.pop("anhang", None)
     karten = r.pop("karten", None) or []
@@ -11751,12 +11760,14 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
     anhaenge = [anhang] if (anhang and anhang.get("art") != "bestaetigung") else []
 
     def _speichern():
+        # Eine Zeile des SERVERS, nicht getippt (Pruefung 13.10.2026, S3 und Runde 2 S-N1): in zusatz, damit Projekt- und
+        # Dokumentnamen darin im Gedaechtnis als Daten gekennzeichnet sind, nicht als Bitte des Nutzers
         frage = _("Bestätigt über den Knopf: {text}").format(text=angebot.get("beschreibung") or angebot.get("text") or "")
         if funktionen.AGENT_KONTO or project_id is None:   # Gespraech je Konto (Ausbau Runde 2, Schritt 2)
-            storage.konto_anhaengen(user["id"], project_id, "user", frage)
+            storage.konto_anhaengen(user["id"], project_id, "user", "", zusatz=frage)
             storage.konto_anhaengen(user["id"], project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
             return
-        storage.append_message(project_id, "user", frage)
+        storage.append_message(project_id, "user", "", zusatz=frage)
         storage.append_message(project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
     await asyncio.get_running_loop().run_in_executor(None, _speichern)
     return {"ok": True, "reply": antwort, "anhang": anhaenge, "werkzeuge": [angebot["werkzeug"]], "karte": karte,
@@ -12205,7 +12216,9 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
            # Agentenansicht wie ChatGPT mit Arbeitsfenster und „Gespräche“ in der Seitenleiste (Michael Karbe, Punkt 6)
            "arbeitsfenster": bool(ueberall and funktionen.AGENT_ANSICHT and funktionen.AGENT_ARBEITSFENSTER),
            # Begleiter durch InkluDocs (12.10.2026): Seite mitschicken, Hinfuehren, Sprache/Ansicht auf Wunsch
-           "begleiter": bool(ueberall and funktionen.AGENT_BEGLEITER)}
+           "begleiter": bool(ueberall and funktionen.AGENT_BEGLEITER),
+           # Klangspur (Paket 1): Seite laedt frontend/klang.js; ob es klingt, sagt <body data-toene> (je Konto)
+           "klang": bool(ueberall and funktionen.AGENT_KLANG)}
     # Knopf „Dateien anhängen“ in der Agentenansicht (Steve 12.10.2026): derselbe Weg wie das Feld (POST /api/agent/hochladen)
     out["anhaengen"] = bool(out["arbeitsfenster"] and funktionen.AGENT_HOCHLADEN)
     if ueberall:
@@ -12688,6 +12701,9 @@ def _render_protected_template(request: Request, template_name: str, **extra):
     # funktionen.AGENT_ANSICHT aus ist (dann bleibt der Seitenrahmen, wie er ist).
     from inkluagent import ansicht as _ansicht
     extra.setdefault("oberflaeche", _ansicht.seiten_wert(_nutzer.get("id")))
+    # Klangspur (Paket 1, funktionen.AGENT_KLANG): „Töne“ je Konto am <body data-toene>, None ohne Schalter
+    from inkluagent import klang as _klang
+    extra.setdefault("toene", _klang.seiten_wert(_nutzer.get("id")))
     extra.setdefault("inkluagent_schalter", _inkluagent_schalter(lang))   # Runde 2: window.INKLUAGENT
     return templates.TemplateResponse(
         template_name,
@@ -12740,6 +12756,26 @@ def _ansicht_me(user_id: int) -> str:
     """/api/me: gespeicherte Ansicht (Schritt 5); ohne Schalter immer die Vorgabe „klassisch“."""
     from inkluagent import ansicht as _ansicht
     return _ansicht.fuer_konto(user_id) if _ansicht.an() else _ansicht.VORGABE
+
+
+def _toene_me(user_id: int) -> Optional[bool]:
+    from inkluagent import klang as _klang
+    return _klang.fuer_konto(user_id) if _klang.an() else None
+
+
+@app.put("/api/me/toene")
+async def toene_setzen(request: Request, user: dict = Depends(get_current_user)):
+    """Töne des InkluAgent an oder aus (Paket 1, Einstellungen). 404, solange der Schalter aus ist."""
+    funktionen.endpunkt_frei("AGENT_KLANG")
+    try:
+        data = await request.json()
+    except Exception:  # noqa: BLE001
+        data = {}
+    wert = (data or {}).get("toene") if isinstance(data, dict) else None
+    if not isinstance(wert, bool):
+        raise HTTPException(status_code=400, detail="toene muss true oder false sein")
+    from inkluagent import klang as _klang
+    return {"ok": True, "toene": _klang.setzen(user["id"], wert)}
 
 
 @app.put("/api/me/oberflaeche")

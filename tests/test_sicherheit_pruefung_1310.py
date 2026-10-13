@@ -457,7 +457,7 @@ class MitServer(unittest.TestCase):
         self.assertNotIn("hinZiele", self.main._inkluagent_schalter(), "ohne Begleiter keine Liste")
 
     def test_aendernde_anfragen_mit_cookie_nur_von_der_eigenen_herkunft(self):
-        """S5: Sec-Fetch-Site bzw. Origin; ohne Cookie (API-Schluessel, Webhook) keine Pruefung."""
+        """S5: Sec-Fetch-Site bzw. Origin, mit und ohne Cookie; ohne Herkunftskoepfe (API-Schluessel, Webhook) keine Pruefung."""
         antwort = {"reply": "Ok (fiktiv).", "intent": "agentic", "werkzeuge": []}
         c = self.client()
         with mock.patch.object(self.chat_engine, "process_konto_message", return_value=antwort):
@@ -467,8 +467,11 @@ class MitServer(unittest.TestCase):
                 r = c.post("/api/agent/nachricht", json={"message": "Hallo (fiktiv)"}, headers=kopf)
                 self.assertEqual(r.status_code, erwartet, (kopf, r.text))
             ohne_cookie = self.TestClient(self.main.app)
-            r = ohne_cookie.post("/api/agent/nachricht", json={"message": "Hallo"}, headers={"Sec-Fetch-Site": "cross-site"})
-            self.assertEqual(r.status_code, 401, "ohne Cookie entscheidet die Anmeldung, nicht die Herkunft")
+            r = ohne_cookie.post("/api/login", json={"email": "angreifer@beispiel.invalid", "password": "x"},
+                                 headers={"Sec-Fetch-Site": "cross-site"})
+            self.assertEqual(r.status_code, 403, "Runde 2, S-N2: auch ohne Cookie (Login-CSRF)")
+            r = ohne_cookie.post("/api/agent/nachricht", json={"message": "Hallo"})
+            self.assertEqual(r.status_code, 401, "kein Browser (keine Herkunftskoepfe): es entscheidet die Anmeldung")
         self.assertEqual(c.get("/api/me", headers={"Sec-Fetch-Site": "cross-site"}).status_code, 200, "Lesen bleibt frei")
 
     def test_eigener_arbeitsbereich(self):

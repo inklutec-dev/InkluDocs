@@ -12428,3 +12428,31 @@ msgstr "Por ahora no hay funciones nuevas."
 
 msgid "Frühere Einträge"
 msgstr "Entradas anteriores"
+
+# Paket 1: Klangspur des InkluAgent
+msgid "Töne des InkluAgent"
+msgstr "Sonidos del InkluAgent"
+
+msgid "Töne abspielen"
+msgstr "Reproducir sonidos"
+
+msgid "Kurze Klänge zeigen, was der InkluAgent tut: ein Wusch, wenn eine Karte für dich kommt, ein leiser Tick je erledigtem Schritt und ein Klang, wenn er fertig ist oder etwas nicht geklappt hat. Alles steht auch als Text da."
+msgstr "Sonidos breves muestran lo que hace el InkluAgent: un silbido cuando llega una tarjeta para ti, un tic suave por cada paso terminado y un sonido cuando ha terminado o algo ha fallado. Todo aparece también como texto."
+
+msgid "Probe hören"
+msgstr "Escuchar una muestra"
+
+msgid "Töne an."
+msgstr "Sonidos activados."
+
+msgid "Töne aus."
+msgstr "Sonidos desactivados."
+
+msgid "Die Einstellung konnte nicht gespeichert werden. Bitte versuch es noch einmal."
+msgstr "No se pudo guardar el ajuste. Vuelve a intentarlo."
+
+msgid "Die Töne sind aus. Schalte sie oben ein, um die Probe zu hören."
+msgstr "Los sonidos están desactivados. Actívalos arriba para escuchar la muestra."
+
+msgid "Dein Browser spielt hier gerade keinen Ton ab."
+msgstr "Tu navegador no reproduce sonido aquí en este momento."

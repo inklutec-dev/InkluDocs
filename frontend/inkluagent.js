@@ -1187,6 +1187,7 @@ function inkluagentArbeitsFertig(ev) {
     }
     if (ev.ok && ev.text) z.ergebnis = { schritt: schritt ? schritt.text : inkluagentWerkzeugLabel(ev.name), text: String(ev.text) };
     inkluagentArbeitsMerken();
+    if (ev.ok) inkluagentKlang('schritt');   // ein Tick von rechts (aus dem Arbeitsfenster) je erledigtem Schritt
     if (!ev.ok && schritt) inkluagentSchrittAnsagen(schritt.text + ' – ' + t('hat nicht geklappt'), true);
 }
 // Lauf: Start (Schritte neu, ausser man verfolgt den Lauf einer vorigen Seite), je Werkzeug ein Schritt, Ende, Fehler
@@ -1735,7 +1736,14 @@ function inkluagentNeuMarkieren(an) {
 // fokussieren: vorher (VOR dem Nachziehen) mit inkluagentFokusImChat() bestimmt. Pruefung 13.10.2026 (B3): ob der Fokus wirklich
 // angekommen ist, wird geprueft (in einem inerten Bereich tut focus() nichts) — sonst kommt die Ansage. Nimmt die Antwort den Fokus
 // nicht, merkt sich die Seite sie: „Zurück zum Gespräch“ fuehrt dann zu ihr; bei offener Ueberlagerung sagt die Ansage das.
+// Klangspur (Paket 1, frontend/klang.js, Schalter AGENT_KLANG): nur, wenn die Seite sie geladen hat; ob es klingt, entscheidet das Konto
+function inkluagentKlang(name) {
+    if (window.Klang && typeof window.Klang.spielen === 'function') window.Klang.spielen(name);
+}
 function inkluagentAntwortMelden(el, fokussieren) {
+    // Wartet in der Antwort eine Karte auf dich, rauscht sie hoerbar herein (von rechts in die Mitte), sonst der Klang „fertig“
+    const antwort = el || inkluagentLetzteAntwort();
+    inkluagentKlang(antwort && antwort.querySelector('.inkluagent-bestaetigung[data-zustand="offen"]') ? 'karte' : 'fertig');
     if (fokussieren && el) {
         el.focus();
         if (document.activeElement === el) return true;
@@ -2170,6 +2178,7 @@ function inkluagentSetStatus(text, isError) {
     // global angesagt wird ein Fehler nur, wenn man die Statuszeile NICHT hoert: Chat zugeklappt (hidden) oder unter der Ueberlagerung
     // (inert). Vorher kam er bei offenem Chat und Fokus woanders doppelt, unter der Ueberlagerung gar nicht.
     if (isError && text && status.closest('[hidden], [inert]')) announce(text);
+    if (isError && text) inkluagentKlang('fehler');
     if (isError && text && typeof inkluagentArbeitsFehler === 'function') inkluagentArbeitsFehler(text);
 }
 

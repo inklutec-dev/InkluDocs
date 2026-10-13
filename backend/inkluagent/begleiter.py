@@ -68,17 +68,24 @@ NAMEN = ("hinfuehren", "einstellung_aendern")
 # Sicherheit, Geld und Recht (S8): sofort nur, wenn der Nutzer das Ziel in SEINER Nachricht nennt — „Bring mich zum
 # API-Schlüssel“ fuehrt weiter direkt hin (Steve: wenig Klicks), ein Satz in einer Datei draengt aber nicht auf die
 # Kuendigungsseite; sonst bleibt der Knopf „Hinführen“. Wortanfaenge in den sechs Oberflaechensprachen, klein.
-_API = ("api", "schlüssel", "schluessel", "key", "clé", "clave", "nøgle", "nogle", "nyckel")
+# Woerter: bis vier Buchstaben nur als ganzes Wort („api“, „abo“, „key“), laengere auch als Wortanfang („passw“ -> „Passwort“),
+# mit Leerzeichen als Wortfolge. Runde 2 (S-N4): vorher war jeder Eintrag ein Wortanfang — „about“ oeffnete „abo“, „keyboard“ „api“,
+# „Cancel the generation“ die Kuendigung. Anzeigename und PDF-Ersteller fuehren auf /konto, wo man das Konto auch loescht.
+_API = ("api", "schlüssel", "schluessel", "key", "keys", "clé", "clés", "clave", "claves", "nøgle", "nøgler", "nyckel", "nycklar")
+_KONTO = ("konto", "account", "compte", "cuenta")
 _NUR_AUF_NENNUNG: dict[str, tuple] = {
-    "konto": ("konto", "account", "compte", "cuenta"),
-    "email": ("mail", "courriel", "correo"),
+    "konto": _KONTO,
+    "anzeigename": _KONTO + ("anzeigename", "display name", "nom affiché", "nombre visible", "visningsnavn", "visningsnamn"),
+    "pdf_ersteller": _KONTO + ("ersteller", "creator", "créateur", "creador", "opretter", "skapare", "dokument-eigenschaften"),
+    "email": ("mail", "e-mail", "email", "courriel", "correo"),
     "passwort": ("passw", "kennwort", "password", "mot de passe", "contraseña", "contrasena", "adgangskode", "lösenord", "losenord"),
-    "abo": ("abo", "subscription", "abonnement", "suscripci", "credits", "guthaben", "tarif"),
-    "team": ("team", "équipe", "equipe", "equipo"),
+    "abo": ("abo", "abos", "abonnement", "subscription", "suscripción", "suscripcion", "credits", "guthaben", "tarif"),
+    "team": ("team", "teams", "équipe", "equipe", "equipo"),
     "api": _API,
     "api_neu": _API,
-    "kuendigen": ("kündig", "kuendig", "cancel", "résili", "resili", "opsig", "säg upp", "sag upp", "baja"),
-    "widerrufen": ("widerruf", "withdraw", "revoca", "rétract", "retract", "desist", "fortryd", "ånger", "anger"),
+    "kuendigen": ("kündig", "kuendig", "unsubscribe", "cancel my subscription", "cancel the subscription", "résili", "resili",
+                  "dar de baja", "darme de baja", "opsig", "säg upp", "sag upp"),
+    "widerrufen": ("widerruf", "withdraw", "revocation", "rétract", "retract", "desist", "fortryd", "ånger"),
 }
 _UEBERSCHRIFT = "ueberschrift"   # ?hin=ueberschrift: die Ueberschrift 1 der Seite
 _PFAD = re.compile(r"^/[A-Za-z0-9/_-]{0,80}$")
@@ -150,8 +157,17 @@ _ANSICHT_WOERTER = ("ansicht", "agentenansicht", "manuell", "klassisch", "view",
 
 
 def _genannt(text: str, woerter) -> bool:
-    flach = (text or "").lower()
-    return any(re.search(r"(?<![\w])" + re.escape(w), flach) for w in woerter)
+    """Hat der Nutzer eines der Woerter selbst geschrieben? Kurze (bis 4 Buchstaben) nur als ganzes Wort, laengere auch als
+    Wortanfang, Wortfolgen als Folge ganzer Woerter."""
+    flach = " ".join(re.findall(r"[^\W\d_]+", (text or "").lower()))
+    for w in woerter:
+        w = " ".join(re.findall(r"[^\W\d_]+", w.lower()))
+        if not w:
+            continue
+        ende = r"\b" if (" " in w or len(w) <= 4) else ""
+        if re.search(r"(?<!\w)" + re.escape(w) + ende, flach):
+            return True
+    return False
 
 
 # ─── Werkzeuge ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
