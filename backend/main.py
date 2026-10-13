@@ -63,6 +63,7 @@ from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_a
 # WORD-WERKZEUG (26.08.2026): .docx lesen (Bilder + Kontext) und Alt-Texte zurueckschreiben
 from docx_processor import extract_images_from_docx, extract_docx, validiere_docx, DocxFehler
 import docx_export
+import netz_sicher   # Abruf fremder Adressen ohne Weg ins interne Netz (Pruefung 13.10.2026, S11)
 import funktionen   # Funktionsschalter fuer Oberflaeche, Chatbot und Endpunkte (30.09.2026)
 import pdfua_export
 import docx_hoerprobe
@@ -436,6 +437,16 @@ async def lifespan(app: FastAPI):
     except Exception as _e:  # noqa: BLE001
         print(f"[tagging] Start-Reparatur uebersprungen: {_e}")
     asyncio.create_task(tagging_api.testfassungen_schleife())
+    # Genau EIN uvicorn-Worker (Pruefung 13.10.2026, H5): laufende Agent-Laeufe, Fortschritt, Notizen, Angebote und Karten liegen
+    # im Prozess. Mit mehreren Workern gingen Karten, Status und die Sperre „ein Lauf je Konto“ still verloren.
+    try:
+        if int(os.environ.get("WEB_CONCURRENCY") or 1) > 1:
+            logger.error("WEB_CONCURRENCY > 1: InkluDocs setzt genau einen Worker voraus (Zustand des InkluAgent im Prozess)")
+    except ValueError:
+        pass
+    # Eingang des InkluAgent (Pruefung 13.10.2026, S6): abgelaufene wartende Dateien aller Konten, beim Start und alle 5 Minuten
+    from inkluagent import hochladen as _hl_eingang
+    asyncio.create_task(_hl_eingang.eingang_schleife())
 
     yield
 
@@ -470,6 +481,9 @@ app.add_middleware(
 
 
 
+_NIE_EINRAHMEN = re.compile(r"^/(login|logout|register|reset|set-language|team-einladung|freigabe)(/|$)")
+
+
 class _RahmenSchutz:
     """Kein Einrahmen der App in fremde Seiten (Nachpruefung Entwicklung 05.10.2026, N6, Clickjacking): jede Antwort
     bekommt X-Frame-Options DENY und CSP frame-ancestors 'none' — ausser sie setzt selbst etwas. Geprueft: die App bettet
@@ -487,7 +501,10 @@ class _RahmenSchutz:
 
         # Arbeitsfenster der Agentenansicht (13.10.2026, Schalter AGENT_ARBEITSFENSTER): die App rahmt ihre eigenen Seiten ein —
         # dann SAMEORIGIN / 'self' (nur die eigene Seite darf einrahmen, fremde weiterhin nicht); ohne Schalter wie bisher.
-        eigene = funktionen.an("AGENT_ARBEITSFENSTER")
+        # Anmelden, Registrieren, Passwort, Einladungen und Gast-Freigaben nie (Pruefung 13.10.2026, S15): die Agentenansicht
+        # oeffnet sie als ganze Seite, und eine kuenftige HTML-Einschleusung koennte sie sonst unsichtbar ueberlagern.
+        schalter = funktionen.an("AGENT_ARBEITSFENSTER")
+        eigene = schalter and not _NIE_EINRAHMEN.match(scope.get("path") or "")
 
         async def senden(nachricht):
             if nachricht.get("type") == "http.response.start":
@@ -497,12 +514,63 @@ class _RahmenSchutz:
                     kopf.append((b"x-frame-options", b"SAMEORIGIN" if eigene else b"DENY"))
                 if b"content-security-policy" not in namen:
                     kopf.append((b"content-security-policy", b"frame-ancestors 'self'" if eigene else b"frame-ancestors 'none'"))
+                # Dieselbe Adresse liefert im Rahmen eine andere Seite (i18n.eingebettet, K14): Caches trennen beide Fassungen
+                # und fragen nach, statt eine eingebettete Seite im Hauptfenster zu zeigen
+                art = next((v for k, v in kopf if k.lower() == b"content-type"), b"")
+                if schalter and art.startswith(b"text/html"):
+                    vary = next((i for i, (k, _v) in enumerate(kopf) if k.lower() == b"vary"), None)
+                    if vary is None:
+                        kopf.append((b"vary", b"Sec-Fetch-Dest"))
+                    elif b"sec-fetch-dest" not in kopf[vary][1].lower():
+                        kopf[vary] = (kopf[vary][0], kopf[vary][1] + b", Sec-Fetch-Dest")
+                    if b"cache-control" not in namen:
+                        kopf.append((b"cache-control", b"private, no-cache"))
                 nachricht["headers"] = kopf
             await send(nachricht)
         await self.app(scope, receive, senden)
 
 
 app.add_middleware(_RahmenSchutz)
+
+
+class _HerkunftPruefen:
+    """Schutz gegen untergeschobene Anfragen (CSRF, Pruefung 13.10.2026, S5). Die Anmeldung haengt allein am Cookie; SameSite=Lax
+    haelt fremde Sites ab, aber nicht gleichrangige Subdomains derselben Site (*.inklutec.de, darunter Staging) — und ein Formular
+    mit enctype=text/plain kommt an jedem JSON-Endpunkt an. Darum: aendernde Anfragen (POST, PUT, PATCH, DELETE) MIT Cookie nur
+    von der eigenen Herkunft. Der Browser sagt das in Sec-Fetch-Site (same-origin; none = vom Nutzer selbst ausgeloest); fehlt
+    der Kopf (aeltere Browser), muss Origin zum Host passen. Ohne Cookie (oeffentliche API mit X-API-Key, Stripe-Webhook,
+    Skripte) gibt es nichts zu missbrauchen. Reine ASGI-Schicht wie _RahmenSchutz."""
+
+    _SICHER = frozenset({"GET", "HEAD", "OPTIONS"})
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http" or scope.get("method") in self._SICHER or self._erlaubt(scope):
+            await self.app(scope, receive, send)
+            return
+        logger.warning("Anfrage von fremder Herkunft abgelehnt: %s %s", scope.get("method"), scope.get("path"))
+        antwort = JSONResponse(status_code=403, content={"detail": "Anfrage von einer fremden Seite abgelehnt."})
+        await antwort(scope, receive, send)
+
+    @staticmethod
+    def _erlaubt(scope) -> bool:
+        kopf = {k.lower(): v for k, v in scope.get("headers") or []}
+        if not kopf.get(b"cookie"):
+            return True
+        seite = kopf.get(b"sec-fetch-site")
+        if seite is not None:
+            return seite in (b"same-origin", b"none")
+        herkunft = kopf.get(b"origin")
+        if herkunft is None:
+            return True   # kein Browser (oder ein sehr alter): ohne Origin keine fremde Seite, die man pruefen koennte
+        host = kopf.get(b"host", b"").decode("latin-1").lower()
+        teile = urlparse(herkunft.decode("latin-1"))
+        return bool(host) and (teile.netloc or "").lower() == host
+
+
+app.add_middleware(_HerkunftPruefen)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="/app/frontend"), name="static")
@@ -5977,60 +6045,43 @@ def _web_page_text(soup) -> str:
     return "\n".join(parts)[:15000]
 
 
-# --- SSRF-Schutz fuer den URL-Scanner (18.08.2026, Fable 5) ------------------
-# Der Scanner ruft beliebige, vom Nutzer angegebene Adressen ab (Seite + alle
-# Bilder). Ohne Schutz kann ein angemeldeter Nutzer den Server interne Ziele
-# abrufen lassen (z.B. die Cloud-Metadaten-Adresse 169.254.169.254 -> AWS-
-# Zugangsdaten, oder localhost/private Netze). _pruefe_url_sicher() loest den
-# Host auf und blockiert interne Adressbereiche; _safe_fetch() folgt Redirects
-# MANUELL und prueft JEDEN Hop (follow_redirects=True wuerde die Vorpruefung
-# aushebeln) und begrenzt die Download-Groesse.
-# Bekannte Restgrenze: DNS-Rebinding (Aufloesung aendert sich zwischen Pruefung
-# und Abruf) ist nicht abgedeckt; die praktischen Angriffe (Metadaten,
-# localhost, private Bereiche) sind geschlossen.
-def _pruefe_url_sicher(url: str) -> None:
-    import ipaddress, socket
+# --- SSRF-Schutz fuer den URL-Scanner (18.08.2026, Fable 5; Pruefung 13.10.2026, S11) ----------------------------------------
+# Der Scanner ruft beliebige, vom Nutzer angegebene Adressen ab (Seite + alle Bilder). Ohne Schutz kann ein angemeldeter Nutzer
+# den Server interne Ziele abrufen lassen (Cloud-Metadaten 169.254.169.254, localhost, private Netze). _pruefe_url_sicher()
+# prueft Schema und Host frueh und mit verstaendlicher Meldung; der Client aus netz_sicher.client() verbindet nur mit Adressen,
+# die er im selben Schritt geprueft hat (vorher: DNS-Rebinding zwischen Pruefung und Abruf moeglich). _safe_fetch() folgt
+# Weiterleitungen MANUELL, prueft jeden Hop und liest gestreamt bis zur Grenze.
+_SCAN_HOECHSTENS_BILDER = 300
+_SCAN_HOECHSTENS_BYTES = 300 * 1024 * 1024
+
+
+async def _pruefe_url_sicher(url: str) -> None:
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):
         raise HTTPException(status_code=400, detail="Nur HTTP/HTTPS-URLs werden unterstuetzt")
     host = parsed.hostname
     if not host:
         raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
-    # Testgeschirr (19.08.2026): verify_multidatei2 serviert Pruefseiten von
-    # 127.0.0.1. Loopback ist NUR erlaubt, wenn der Betreiber es ausdruecklich
-    # per Umgebungsvariable freigibt — auf Staging gesetzt, auf Prod/Demo NIE.
-    if os.environ.get("SCAN_ERLAUBE_LOOPBACK") == "1" and host in ("127.0.0.1", "localhost"):
-        return
     try:
-        infos = socket.getaddrinfo(host, None)
-    except Exception:
+        await netz_sicher.erlaubte_adresse(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+    except netz_sicher.AdresseNichtErlaubt:
         raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
-    for info in infos:
-        ip_str = info[4][0]
-        try:
-            addr = ipaddress.ip_address(ip_str)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
-        mapped = getattr(addr, "ipv4_mapped", None)
-        if mapped is not None:
-            addr = mapped
-        if (addr.is_private or addr.is_loopback or addr.is_link_local
-                or addr.is_reserved or addr.is_multicast or addr.is_unspecified):
-            raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
 
 
 async def _safe_fetch(client, url, *, max_redirects: int = 5, max_bytes: int | None = None):
-    """SSRF-sicherer GET: prueft jeden Redirect-Hop, begrenzt die Groesse."""
+    """SSRF-sicherer GET mit einem Client aus netz_sicher.client(): prueft jeden Weiterleitungs-Schritt, liest gestreamt und
+    bricht bei max_bytes ab (413). Die Antwort traegt den gelesenen Inhalt (content, text, headers, raise_for_status)."""
     current = url
     for _ in range(max_redirects + 1):
-        _pruefe_url_sicher(current)
-        resp = await client.get(current, follow_redirects=False)
-        if resp.is_redirect and resp.headers.get("location"):
-            current = urljoin(current, resp.headers["location"])
-            continue
-        if max_bytes is not None and len(resp.content) > max_bytes:
-            raise HTTPException(status_code=413, detail="Datei zu gross")
-        return resp
+        await _pruefe_url_sicher(current)
+        async with client.stream("GET", current, follow_redirects=False) as resp:
+            if resp.is_redirect and resp.headers.get("location"):
+                current = urljoin(current, resp.headers["location"])
+                continue
+            inhalt = await netz_sicher.lesen_bis(resp, max_bytes)
+            # Inhalt ist schon entpackt: ohne Content-Encoding/-Length weitergeben, sonst entpackte httpx ein zweites Mal
+            kopf = [(k, v) for k, v in resp.headers.raw if k.lower() not in (b"content-encoding", b"content-length", b"transfer-encoding")]
+            return httpx.Response(resp.status_code, headers=kopf, content=inhalt, request=resp.request)
     raise HTTPException(status_code=502, detail="Zu viele Weiterleitungen")
 
 
@@ -6058,7 +6109,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         _seiten_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
         }
-        async with httpx.AsyncClient(timeout=30.0, headers=_seiten_headers) as client:
+        async with netz_sicher.client(timeout=30.0, headers=_seiten_headers) as client:
             response = await _safe_fetch(client, url, max_bytes=15 * 1024 * 1024)
             response.raise_for_status()
     except HTTPException:
@@ -6073,6 +6124,11 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     # Parse HTML
     soup = BeautifulSoup(response.text, "html.parser")
     img_tags = soup.find_all("img")
+    # Grenzen je Seite (Pruefung 13.10.2026, S11): eine praeparierte Seite mit tausenden Bildern zu je 20 MB band sonst den Server
+    # minutenlang und fuellte die Platte. Mehr Bilder stehen auf echten Seiten nicht; sie kosten ohnehin je Bild Credits.
+    if len(img_tags) > _SCAN_HOECHSTENS_BILDER:
+        logger.warning("scan_url: %d Bilder auf der Seite, nur die ersten %d", len(img_tags), _SCAN_HOECHSTENS_BILDER)
+        img_tags = img_tags[:_SCAN_HOECHSTENS_BILDER]
 
     if not img_tags:
         raise HTTPException(status_code=404, detail="Keine Bilder auf dieser Seite gefunden")
@@ -6144,6 +6200,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     os.makedirs(img_dir, exist_ok=True)
 
     downloaded = 0
+    geladen_bytes = 0   # Summe ueber alle Bilder dieser Seite (_SCAN_HOECHSTENS_BYTES)
     # Browser-like headers for image downloads: many WordPress sites block requests
     # without Referer header (hotlink protection / bot detection). Fix for 403 errors
     # on sites like dc-tischlermeister.de. Reported by Stephan Raithel, 25.03.2026.
@@ -6152,7 +6209,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
         "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
     }
-    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=img_download_headers) as client:
+    async with netz_sicher.client(timeout=15.0, headers=img_download_headers) as client:
         for raw_idx, img_tag in enumerate(img_tags, 1):
             # Beim Anhaengen weiterer Seiten ab dem bisherigen Maximum weiterzaehlen (siehe base_idx).
             idx = base_idx + raw_idx
@@ -6289,10 +6346,14 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
             context_text = "\n".join(all_context) if all_context else ""
 
             # Download image
+            if geladen_bytes >= _SCAN_HOECHSTENS_BYTES:
+                logger.warning("scan_url: %d Bytes geladen, restliche Bilder uebersprungen", geladen_bytes)
+                break
             try:
                 img_response = await _safe_fetch(client, img_url, max_bytes=20 * 1024 * 1024)
                 img_response.raise_for_status()
                 img_content = img_response.content
+                geladen_bytes += len(img_content)
 
                 # Determine extension from content type or URL
                 content_type = img_response.headers.get("content-type", "")
@@ -11495,16 +11556,6 @@ def _gespraeche_frei() -> None:
     funktionen.endpunkt_frei("AGENT_KONTO")
 
 
-def _gespraech_datum(wert: str) -> str:
-    """„2026-10-12 11:45:00“ (UTC, SQLite) -> „12.10.2026, 13:45“ (Berlin)."""
-    try:
-        from zoneinfo import ZoneInfo
-        d = datetime.strptime(str(wert)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).astimezone(ZoneInfo("Europe/Berlin"))
-        return d.strftime("%d.%m.%Y, %H:%M")
-    except Exception:  # noqa: BLE001
-        return str(wert or "")
-
-
 def _gespraech_weiter(user_id: int, g: dict) -> str:
     """Wohin „Hier weitermachen“ fuehrt: ins letzte (noch vorhandene, eigene) Projekt des Gespraechs, sonst auf die Uebersicht —
     mit offenem InkluAgent (agent=offen)."""
@@ -11535,7 +11586,7 @@ async def agent_gespraeche(projekt: Optional[int] = None, suche: str = "", anzah
     # anzahl: die Seitenleiste der Agentenansicht holt nur die neuesten (Arbeitsfenster, 12.10.2026)
     liste = storage.gespraeche_liste(user["id"], projekt, (suche or "")[:100], limit=max(1, min(int(anzahl or 100), 100)))
     for g in liste:
-        g["datum"] = _gespraech_datum(g["zuletzt_am"])
+        g["datum"] = storage.datum(g["zuletzt_am"])
     return {"gespraeche": liste}
 
 
@@ -11563,7 +11614,7 @@ async def gespraeche_seite(request: Request, projekt: Optional[int] = None):
     from inkluagent import storage
     liste = storage.gespraeche_liste(nutzer["id"], projekt)
     for g in liste:
-        g["datum"] = _gespraech_datum(g["zuletzt_am"])
+        g["datum"] = storage.datum(g["zuletzt_am"])
     projekt_name = ""
     if projekt:
         conn = get_db()
@@ -11591,7 +11642,7 @@ async def gespraech_seite(request: Request, gespraech_id: int):
         raise HTTPException(status_code=404, detail="Gespräch nicht gefunden")
     g = next((x for x in storage.gespraeche_liste(nutzer["id"]) if x["id"] == gespraech_id), None) or {
         "id": gespraech_id, "titel": "", "zuletzt_am": "", "anzahl": 0, "projekte": [], "aktuell": False}
-    g["datum"] = _gespraech_datum(g.get("zuletzt_am"))
+    g["datum"] = storage.datum(g.get("zuletzt_am"))
     vorher = object()
     for n in nachrichten:
         n["marke"] = n["project_id"] != vorher
@@ -12158,6 +12209,9 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
         from inkluagent.tools import namen as _werkzeug_namen
         out["werkzeug_namen"] = _werkzeug_namen.fuer_oberflaeche(get_gettext(lang or "de"))
         out["hilfe"] = bool(funktionen.AGENT_HILFE)
+    if out["begleiter"]:
+        from inkluagent import begleiter as _begleiter
+        out["hinZiele"] = _begleiter.hin_ziele()   # erlaubte Sprungziele fuer ?hin= (S14)
     return out
 
 
@@ -12511,20 +12565,24 @@ async def set_language(lang: str, request: Request):
     # der alte Praefix-Check passte nur auf EINE davon; auf allen anderen
     # landete der Sprachwechsel faelschlich auf "/" (= Anmeldemaske).
     # Weitergeleitet wird nur der Pfad, nie eine fremde absolute URL.
-    from urllib.parse import urlsplit
+    from urllib.parse import parse_qsl, urlencode, urlsplit
     redirect_to = "/"
-    if referer.startswith("/") and not referer.startswith("//"):
-        redirect_to = referer
-    else:
-        try:
-            parts = urlsplit(referer)
-            req_host = (request.url.hostname or "").lower()
-            if parts.hostname and req_host and parts.hostname.lower() == req_host:
-                redirect_to = parts.path or "/"
-                if parts.query:
-                    redirect_to += "?" + parts.query
-        except ValueError:
-            pass
+    try:
+        parts = urlsplit(referer)
+        req_host = (request.url.hostname or "").lower()
+        eigen = (not parts.scheme and not parts.netloc) or bool(
+            parts.hostname and req_host and parts.hostname.lower() == req_host)
+        if eigen:
+            # Die Seite im Arbeitsfenster (?eingebettet=1) wechselt die Sprache der GANZEN Seite: zurueck ohne den Parameter,
+            # sonst stuende das Hauptfenster ohne Seitenleiste und Agent da (Pruefung 13.10.2026, Nebenbefund Sicherheit)
+            abfrage = urlencode([(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k != "eingebettet"])
+            redirect_to = (parts.path or "/") + ("?" + abfrage if abfrage else "")
+    except ValueError:
+        pass
+    # Nur ein eigener Pfad: genau ein „/“ am Anfang. „//host“ und „/\host“ machen Browser zu einer fremden Adresse
+    # (offene Weiterleitung; Pruefung 13.10.2026, S14 — vorher kam ein Referer-Pfad mit „//“ durch).
+    if not redirect_to.startswith("/") or redirect_to[1:2] in ("/", "\\"):
+        redirect_to = "/"
     response = RedirectResponse(redirect_to, status_code=303)
     if lang in SUPPORTED_LANGUAGES:
         # 1 Jahr gueltig, samesite=lax, nicht HttpOnly (Client koennte lesen).

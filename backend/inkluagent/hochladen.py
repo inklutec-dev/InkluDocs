@@ -13,7 +13,8 @@ Steves Schwerpunkt: Dateien und eine Webadresse direkt im Agenten abgeben. Die Z
    ausgefuehrt wird Kostenpflichtiges nur mit Karte (agent_loop: nur_mit_karte).
 Bremsen (Umgebung, Vorgaben): hoechstens INKLUAGENT_MAX_DATEIEN Dateien je Nachricht (10), INKLUAGENT_MAX_NEUE_PROJEKTE_TAG
 neue Projekte je Konto und Tag ueber den Agenten (20), INKLUAGENT_MAX_WEBADRESSEN_STUNDE Webadressen je Konto und Stunde (10).
-Webadressen kommen NUR aus dem Feld, das der Nutzer selbst ausfuellt — das Modell hat kein Werkzeug, das Adressen abruft.
+Webadressen kommen NUR aus der eigenen Nachricht des Nutzers (finde_webadressen) und werden nur ueber den Knopf einer Karte
+geladen (konto.webseite_laden) — das Modell hat kein Werkzeug, das Adressen abruft.
 """
 from __future__ import annotations
 
@@ -198,13 +199,8 @@ def _fehlertext(e: Exception, _=None) -> str:
     """Text fuer Menschen: der Grund einer HTTPException (Passwort, beschaedigt, Groesse — dieselben Saetze wie beim Knopf);
     alles andere nur allgemein, Einzelheiten ins Log (Pruefung 13.10.2026, S10: vorher kamen Pfade und Datenbankfehler in die
     Ergebnisliste und an das Modell)."""
-    from fastapi import HTTPException
-    if isinstance(e, HTTPException):
-        d = (e.detail.get("text") or e.detail.get("detail")) if isinstance(e.detail, dict) else e.detail
-        if d:
-            return str(d)
-    log.warning("Hochladen im InkluAgent fehlgeschlagen: %r", e)
-    return (_ or (lambda text: text))("Das hat nicht geklappt. Bitte versuch es noch einmal.")
+    from .kern import fehlertext
+    return fehlertext(e, (_ or (lambda text: text))("Das hat nicht geklappt. Bitte versuch es noch einmal."))
 
 
 async def _lesen(quelle: Any, grenze: int) -> bytes:
@@ -285,7 +281,8 @@ async def hochladen(user: dict, dateien: list[tuple[str, Any]], webadresse: str 
     dateien: (Name, Inhalt) mit Inhalt als Bytes oder als hochgeladene Datei (wird erst beim Verarbeiten gelesen, _lesen).
     `_` uebersetzt die eigenen Meldungen (Sprache der Oberflaeche); Meldungen von upload_file kommen wie beim Knopf.
     zuordnen (Seite ohne Projekt, Steve 12.10.2026): gibt es fuer eine Datei schon ein aehnliches Projekt derselben Art, wird sie
-    NICHT sofort abgelegt, sondern wartet (Eingang, 30 Minuten) — Karten „In … hochladen“ / „Als neues Projekt hochladen“."""
+    NICHT sofort abgelegt, sondern wartet (Eingang, solange die Karten gelten) — Karten „In … hochladen“ / „Als neues Projekt
+    hochladen“."""
     from database import get_db
     _ = _ or (lambda s: s)
     m = _main()
@@ -339,7 +336,12 @@ async def hochladen(user: dict, dateien: list[tuple[str, Any]], webadresse: str 
             from .zuordnung import aehnliche_projekte
             aehnliche = aehnliche_projekte(uid, name, art)[:2]
             if aehnliche:
-                datei = eingang_ablegen(uid, name, daten)
+                try:
+                    datei = eingang_ablegen(uid, name, daten)
+                except EingangVoll:
+                    e["fehler"] = _("Es warten schon viele Dateien auf deine Entscheidung. Entscheide erst über diese, dann geht es "
+                                    "weiter.")
+                    continue
                 karten += eingang_karten(uid, datei, name, aehnliche, _)
                 e.update({"ok": True, "wartet": True, "vorschlaege": [a["name"] for a in aehnliche],
                           "vorschlaege_ids": [a["project_id"] for a in aehnliche]})
@@ -399,7 +401,11 @@ async def hochladen(user: dict, dateien: list[tuple[str, Any]], webadresse: str 
 
 
 # ─── Eingang: Dateien, die auf eine Entscheidung warten (Zuordnung, Steve 12.10.2026) ─────────────────────────────────────────
-EINGANG_AUFBEWAHRUNG_S = 30 * 60
+# Wartende Dateien leben so lange wie ihre Karten (Pruefung 13.10.2026, S6: vorher 30 Minuten bei 15 Minuten Kartengueltigkeit —
+# danach konnte sie niemand mehr ablegen) und je Konto hoechstens _EINGANG_HOECHSTENS Stueck.
+EINGANG_AUFBEWAHRUNG_S = 15 * 60
+_EINGANG_HOECHSTENS = 20
+_EINGANG_SCHLEIFE_S = 5 * 60
 _EINGANG_NAME = re.compile(r"^[0-9a-f]{32}\.[a-z0-9]{2,5}$")
 
 
@@ -407,23 +413,54 @@ def _eingang_ordner(user_id: int) -> str:
     return os.path.join(_main().RESULTS_DIR, str(int(user_id)), "_agent_eingang")
 
 
-def eingang_ablegen(user_id: int, name: str, daten: bytes) -> str:
-    """Datei bis zur Entscheidung ablegen (nur im eigenen Ordner, zufaelliger Name); aeltere als 30 Minuten raeumt der Aufruf weg."""
-    ordner = _eingang_ordner(user_id)
-    os.makedirs(ordner, exist_ok=True)
-    jetzt = time.time()
-    for alt in os.listdir(ordner):
-        pfad = os.path.join(ordner, alt)
+class EingangVoll(Exception):
+    """Zu viele wartende Dateien in diesem Konto."""
+
+
+def _abgelaufene_entfernen(pfade, jetzt: float) -> int:
+    n = 0
+    for pfad in pfade:
         try:
             if jetzt - os.path.getmtime(pfad) > EINGANG_AUFBEWAHRUNG_S:
                 os.remove(pfad)
+                n += 1
         except OSError:
             pass
+    return n
+
+
+def eingang_ablegen(user_id: int, name: str, daten: bytes) -> str:
+    """Datei bis zur Entscheidung ablegen (nur im eigenen Ordner, zufaelliger Name). Abgelaufene raeumt der Aufruf weg, alle
+    anderen die Schleife (eingang_schleife). EingangVoll, wenn schon _EINGANG_HOECHSTENS Dateien warten."""
+    ordner = _eingang_ordner(user_id)
+    os.makedirs(ordner, exist_ok=True)
+    _abgelaufene_entfernen([os.path.join(ordner, x) for x in os.listdir(ordner)], time.time())
+    if len(os.listdir(ordner)) >= _EINGANG_HOECHSTENS:
+        raise EingangVoll()
     endung = (os.path.splitext(name or "")[1].lower().lstrip(".") or "bin")[:5]
     datei = f"{uuid.uuid4().hex}.{re.sub(r'[^a-z0-9]', '', endung) or 'bin'}"
     with open(os.path.join(ordner, datei), "wb") as f:
         f.write(daten)
     return datei
+
+
+def eingang_aufraeumen() -> int:
+    """Abgelaufene wartende Dateien ALLER Konten loeschen (S6: vorher nur beim naechsten Hochladen desselben Kontos — wer nie
+    wieder hochlud, behielt sie unbegrenzt, unsichtbar und nicht von „Projekt löschen“ erfasst). Rueckgabe: geloeschte Dateien."""
+    import glob
+    return _abgelaufene_entfernen(glob.glob(os.path.join(_main().RESULTS_DIR, "*", "_agent_eingang", "*")), time.time())
+
+
+async def eingang_schleife() -> None:
+    """Beim Start und dann alle fuenf Minuten (main.lifespan)."""
+    while True:
+        try:
+            n = await asyncio.get_running_loop().run_in_executor(None, eingang_aufraeumen)
+            if n:
+                log.info("Eingang des InkluAgent: %d abgelaufene Dateien geloescht", n)
+        except Exception:  # noqa: BLE001 — die Schleife laeuft weiter
+            log.exception("Eingang des InkluAgent: Aufraeumen fehlgeschlagen")
+        await asyncio.sleep(_EINGANG_SCHLEIFE_S)
 
 
 def eingang_pfad(user_id: int, datei: str) -> Optional[str]:

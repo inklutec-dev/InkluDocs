@@ -252,8 +252,8 @@ def werkzeuge_anpassen(defs: list, immer: bool = False) -> list:
             schema = dict(d.get("input_schema") or {})
             props = dict(schema.get("properties") or {})
             props["bestaetigt"] = {"type": "boolean", "description": (
-                "Nur nach einer Rückfrage des Servers (rueckfrage_noetig) und einem klaren Ja des Nutzers in einer späteren "
-                "Nachricht: true führt genau dieses Angebot aus. Sonst weglassen.")}
+                "Nur nach einer Rückfrage des Servers (rueckfrage_noetig) und einem klaren Ja des Nutzers in der Nachricht "
+                "direkt danach: true führt genau dieses Angebot aus. Sonst weglassen.")}
             schema["properties"] = props
             d["input_schema"] = schema
         out.append(d)
@@ -262,7 +262,7 @@ def werkzeuge_anpassen(defs: list, immer: bool = False) -> list:
 
 PROMPT_ZUSATZ = """Bezahlte Einzelaktionen und Zustimmung (Server-Regel)
 
-Alt-Text generieren oder ändern und Quickinfo generieren oder ändern kosten je Vorgang Credits. Je Nachricht des Nutzers führt der Server höchstens EINE davon ohne Rückfrage aus; für jede weitere liefert das Werkzeug eine Rückfrage (rueckfrage_noetig) mit Ziel und Preis, und unter deiner Antwort steht eine Karte. Nenne dann Ziel und Preis und warte. Ein getipptes Ja zählt nur, wenn die Nachricht des Nutzers eine kurze, eindeutige Zustimmung ist („Ja“, „Ja, mach das“, „OK“) — ohne Verneinung, ohne Rückfrage, ohne weitere Wünsche. Sonst führt der Server nichts aus; frag noch einmal oder verweise auf den Knopf der Karte."""
+Alt-Text generieren oder ändern und Quickinfo generieren oder ändern kosten je Vorgang Credits. Je Nachricht des Nutzers führt der Server höchstens EINE davon ohne Rückfrage aus; für jede weitere liefert das Werkzeug eine Rückfrage (rueckfrage_noetig) mit Ziel und Preis, und unter deiner Antwort steht eine Karte. Nenne dann Ziel und Preis und warte. Ein getipptes Ja zählt nur, wenn die Nachricht des Nutzers direkt nach dem Angebot kommt und eine kurze, eindeutige Zustimmung ist („Ja“, „Ja, mach das“, „OK“) — ohne Verneinung, ohne Rückfrage, ohne weitere Wünsche. Sonst führt der Server nichts aus; frag noch einmal oder verweise auf den Knopf der Karte. Löschen geht nur über den Knopf der Karte."""
 
 
 # ─── 3. Tagesgrenze und 4. Kostendeckel ────────────────────────────────────────────────────────────────────────────────────
@@ -290,17 +290,14 @@ def tageszaehler_erhoehen(user_id: int) -> None:
 
 
 def kosten_heute_cent(user_id: int) -> float:
-    """KI-Kosten des Gespraechs (Zweck chatbot) heute (UTC) fuer das Konto, zu dem der Nutzer gerade gehoert."""
-    import billing
+    """KI-Kosten des Gespraechs (Zweck chatbot) heute (UTC), die DIESE Person verursacht hat. Je Person wie die Nachrichtengrenze
+    (Pruefung 13.10.2026, S18: vorher je Team-Topf — ein Mitglied konnte den InkluAgent fuer das ganze Team bis Mitternacht
+    sperren). Websuchen (Tavily) haben keine Token-Kosten in ki_aufrufe; ihre Zahl begrenzt die Nachrichtengrenze."""
     from database import get_db
-    try:
-        konto = billing._konto_fuer(int(user_id))
-    except Exception:  # noqa: BLE001
-        konto = user_id
     conn = get_db()
     try:
-        r = conn.execute("SELECT COALESCE(SUM(kosten_eur_cent), 0) FROM ki_aufrufe WHERE konto_user_id = ? AND zweck = 'chatbot' "
-                         "AND created_at >= date('now')", (konto,)).fetchone()
+        r = conn.execute("SELECT COALESCE(SUM(kosten_eur_cent), 0) FROM ki_aufrufe WHERE user_id = ? AND zweck = 'chatbot' "
+                         "AND created_at >= date('now')", (int(user_id),)).fetchone()
         return float(r[0] or 0)
     finally:
         conn.close()
@@ -313,5 +310,5 @@ def chat_sperre(user_id: int, limit: int, _=None) -> Optional[str]:
         return _('Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter.').format(n=limit)
     deckel = _kosten_deckel_cent()
     if deckel and kosten_heute_cent(user_id) >= deckel:
-        return _('Der InkluAgent hat für dein Konto heute das Tageslimit erreicht. Morgen geht es weiter.')
+        return _('Der InkluAgent hat für dein Konto heute das Tageslimit erreicht. Morgen geht es weiter.')   # je Person (S18)
     return None

@@ -11924,3 +11924,13 @@ msgstr "Jag kan inte hjälpa till utan ett projekt just nu. Öppna ett projekt."
 
 msgid "Das hat nicht geklappt. Bitte versuch es noch einmal."
 msgstr "Det fungerade inte. Försök igen."
+
+# Pruefung 13.10.2026: Eingang des InkluAgent
+msgid "Die Datei liegt nicht mehr bereit. Bitte noch einmal hochladen."
+msgstr "Filen finns inte längre kvar. Ladda upp den igen."
+
+msgid "Das dauert noch: Das Projekt erscheint gleich unter „Meine Projekte“."
+msgstr "Det tar en stund till: projektet visas snart under ”Mina projekt”."
+
+msgid "Es warten schon viele Dateien auf deine Entscheidung. Entscheide erst über diese, dann geht es weiter."
+msgstr "Många filer väntar redan på ditt beslut. Bestäm om dem först, sedan kan du fortsätta."

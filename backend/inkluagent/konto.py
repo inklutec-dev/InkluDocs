@@ -13,6 +13,7 @@ der Oberflaeche (inkluagent/kern.py). Den Besitz prueft jedes Werkzeug selbst (u
 """
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 from typing import Any, Optional
@@ -20,6 +21,9 @@ from typing import Any, Optional
 import funktionen
 
 from .daten import DATEN_MARKE, daten
+from .kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
+
+log = logging.getLogger(__name__)
 from .prompts.system_gemeinsam import (GESPRAECHSSTIL, PRUEFEN, daten_keine_anweisung, gemeinsam_ehrlichkeit,
                                        gemeinsam_schreibstil)
 
@@ -121,11 +125,6 @@ def seite_wechseln(project_id: int) -> dict:
     return {"type": "seite_wechseln", "url": f"/app?projekt={int(project_id)}", "project_id": int(project_id)}
 
 
-def storage_fokus(user_id: int, project_id: int) -> None:
-    from . import storage
-    storage.fokus_setzen(user_id, project_id)
-
-
 def _projekte(user_id: int, suche: str = "") -> tuple[int, list[dict]]:
     from database import get_db
     conn = get_db()
@@ -208,7 +207,8 @@ class KontoExecutor:
                     liste.append(e)
                 return {"ok": True, "result": {"anzahl": len(liste), "laeuft": liste}}
         except Exception as e:  # noqa: BLE001
-            return {"ok": False, "error": f"{name} fehlgeschlagen: {e}"}
+            log.exception("Konto-Werkzeug %s fehlgeschlagen", name)
+            return {"ok": False, "error": fehlertext(e, f"{name} hat gerade nicht geklappt.")}
         return {"ok": False, "error": f"Unbekanntes Werkzeug: {name}"}
 
     # ─── Schritt 4: aendernde Konto-Werkzeuge (je derselbe Endpunkt wie der Knopf) ─────────────────────────────────────────
@@ -264,7 +264,8 @@ class KontoExecutor:
             return {"ok": False, "error": self._fehler(e)}
         hochladen._zaehlen(self.user_id, hochladen._tag())
         pid = int(r["project_id"])
-        storage_fokus(self.user_id, pid)
+        from . import storage
+        storage.fokus_setzen(self.user_id, pid)
         return {"ok": True, "result": {"project_id": pid, "name_daten": daten(name), "art": ART.get(art, art), "hinweis": SEITE_WECHSELT},
                 "anhang": {"art": "link", "url": f"/app?projekt={pid}", "text": self._("Projekt „{projekt}“ öffnen").format(projekt=name)},
                 "aktionen": [seite_wechseln(pid)]}
@@ -346,7 +347,7 @@ class KontoExecutor:
             pid = None
         suche = str(args.get("suche") or "").strip()[:100]
         liste = [g for g in storage.gespraeche_liste(self.user_id, pid, suche) if not g["aktuell"]][:5]
-        ergebnis = [{"gespraech_id": g["id"], "titel_daten": daten(g["titel"]), "zuletzt": _datum(g["zuletzt_am"]),
+        ergebnis = [{"gespraech_id": g["id"], "titel_daten": daten(g["titel"]), "zuletzt": storage.datum(g["zuletzt_am"]),
                      "nachrichten": g["anzahl"], "projekte_daten": [daten(p["name"]) for p in g["projekte"]]} for g in liste]
         links = [{"art": "link", "url": f"/gespraeche/{g['id']}",
                   "text": self._("Gespräch „{titel}“ lesen").format(titel=g["titel"] or self._("Gespräch ohne Titel"))} for g in liste[:3]]
@@ -362,7 +363,6 @@ class KontoExecutor:
         aus der eigenen Nachricht des Nutzers als neues Projekt laden oder an das Webseiten-Projekt haengen — ueber
         hochladen.hochladen (Bremsen, Schutz gegen interne Adressen in scan_url). Die andere Karte derselben Adresse verfaellt."""
         from . import hochladen
-        from .kern import warten
         from .tools import ausgaben
         url = str(args.get("url") or "")
         ziel = args.get("project_id")
@@ -379,7 +379,10 @@ class KontoExecutor:
                 alt = ausgaben._ANGEBOTE.pop(k)
                 ausgaben._NACH_ID.pop(alt.get("id"), None)
                 ausgaben._VERBRAUCHT.setdefault((self.user_id, 0), []).append((alt.get("id"), alt, False))
-        erg = warten(hochladen.hochladen({"id": self.user_id}, [], url, int(ziel) if ziel else None, request=None, _=self._))
+        erg = self._hochladen_abwarten(hochladen.hochladen({"id": self.user_id}, [], url, int(ziel) if ziel else None, request=None,
+                                                            _=self._))
+        if erg is None:
+            return ausgaben.nachbereiten(self._laeuft_noch(), "webseite_laden", args, self.user_id, 0, vorher)
         e = (erg.get("ergebnisse") or [{}])[0] if erg.get("ok") else {"ok": False, "fehler": erg.get("fehler_text")}
         if not e.get("ok"):
             return ausgaben.nachbereiten({"ok": False, "error": e.get("fehler") or "Die Seite ließ sich nicht laden."}, "webseite_laden",
@@ -395,12 +398,27 @@ class KontoExecutor:
             r["aktionen"] = [seite_wechseln(pid)]   # neues Projekt: dorthin wechseln (Steve 12.10.2026)
         return ausgaben.nachbereiten(r, "webseite_laden", args, self.user_id, 0, vorher)
 
+    @staticmethod
+    def _hochladen_abwarten(coro, frist_s: float = 150.0) -> Optional[dict]:
+        """Hochladen aus dem Knopf einer Karte abwarten (auf der Server-Schleife). None, wenn es laenger dauert: dann laeuft es im
+        Hintergrund weiter (K16: vorher meldete der Knopf „fehlgeschlagen“, und wer neu hochlud, bekam das Projekt doppelt)."""
+        import concurrent.futures
+        from .kern import warten
+        try:
+            return warten(coro, timeout=frist_s)
+        except concurrent.futures.TimeoutError:
+            return None
+
+    def _laeuft_noch(self) -> dict:
+        return {"ok": True, "result": {"laeuft_noch": True},
+                "anhang": {"art": "link", "url": "/projekte",
+                           "text": self._("Das dauert noch: Das Projekt erscheint gleich unter „Meine Projekte“.")}}
+
     def _datei_ablegen(self, args: dict) -> dict:
         """Nur ueber den Knopf einer Karte aus hochladen.eingang_karten: die wartende Datei ins gewaehlte Projekt oder als neues
         Projekt hochladen (hochladen.hochladen, ohne erneutes Zuordnen); die anderen Karten derselben Datei verfallen, danach
         wechselt die Seite ins Projekt."""
         from . import hochladen
-        from .kern import warten
         from .tools import ausgaben
         datei = str(args.get("datei") or "")
         name = str(args.get("name") or "")
@@ -420,15 +438,17 @@ class KontoExecutor:
                 ausgaben._VERBRAUCHT.setdefault((self.user_id, 0), []).append((alt.get("id"), alt, False))
         pfad = hochladen.eingang_pfad(self.user_id, datei)
         if not pfad:
-            return ausgaben.nachbereiten({"ok": False, "error": self._("Die Datei liegt nicht mehr bereit (nach 30 Minuten gelöscht). "
-                                                                       "Bitte noch einmal hochladen.")}, "datei_ablegen", args, self.user_id, 0, vorher)
+            return ausgaben.nachbereiten({"ok": False, "error": self._("Die Datei liegt nicht mehr bereit. Bitte noch einmal "
+                                                                       "hochladen.")}, "datei_ablegen", args, self.user_id, 0, vorher)
         with open(pfad, "rb") as f:
             inhalt = f.read()
-        erg = warten(hochladen.hochladen({"id": self.user_id}, [(name, inhalt)], "", ziel, request=None, _=self._))
-        try:
+        try:   # die Karte ist eingeloest: die Datei hat ihren Zweck erfuellt, auch wenn das Hochladen gleich scheitert (K16)
             os.remove(pfad)
         except OSError:
             pass
+        erg = self._hochladen_abwarten(hochladen.hochladen({"id": self.user_id}, [(name, inhalt)], "", ziel, request=None, _=self._))
+        if erg is None:
+            return ausgaben.nachbereiten(self._laeuft_noch(), "datei_ablegen", args, self.user_id, 0, vorher)
         e = (erg.get("ergebnisse") or [{}])[0] if erg.get("ok") else {"ok": False, "fehler": erg.get("fehler_text")}
         if not e.get("ok") or not e.get("project_id"):
             return ausgaben.nachbereiten({"ok": False, "error": e.get("fehler") or "Die Datei ließ sich nicht ablegen."}, "datei_ablegen",
@@ -519,17 +539,6 @@ _NICHT_AENDERN = ("* Projekte anlegen, umbenennen oder löschen und Läufe abbre
 
 _GESPRAECHE = """Frühere Gespräche
 Spricht der Nutzer über ein Projekt oder ein Thema, über das ihr schon früher gesprochen habt, findest du mit fruehere_gespraeche die passenden Gespräche und sagst in einem Satz, dass unter deiner Antwort Links stehen; dort kann er mit „Hier weitermachen“ fortsetzen. Das laufende Gespräch ist nicht dabei. Neue Gespräche beginnt der Nutzer selbst mit dem Knopf „Neues Gespräch“."""
-
-
-def _datum(wert: str) -> str:
-    """UTC aus der Datenbank -> „12.10.2026, 13:45“ (Berlin)."""
-    try:
-        from datetime import datetime, timezone
-        from zoneinfo import ZoneInfo
-        d = datetime.strptime(str(wert)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).astimezone(ZoneInfo("Europe/Berlin"))
-        return d.strftime("%d.%m.%Y, %H:%M")
-    except Exception:  # noqa: BLE001
-        return str(wert or "")
 
 
 def system_konto(aendern: bool = False) -> str:

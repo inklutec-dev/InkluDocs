@@ -85,6 +85,11 @@ def _gekuerzt(text: str) -> str:
     return text[:1500]
 
 
+class GeminiAntwortGesperrt(GeminiProviderError):
+    """Gemini hat die Anfrage beantwortet, aber ohne Kandidaten (promptFeedback.blockReason): endgueltig, kein zweiter Versuch
+    (Pruefung 13.10.2026, K10 — vorher wurde daraus im Stream eine leere, als normale Antwort gespeicherte Nachricht)."""
+
+
 class GeminiProvider(LLMProvider):
     # Livestream (Arbeitsfenster, 12.10.2026): invoke_with_tools nimmt on_text und liefert den Antworttext Stueck fuer Stueck
     kann_streamen = True
@@ -129,11 +134,12 @@ class GeminiProvider(LLMProvider):
                 raise letzter from e
         raise letzter or GeminiProviderError("Gemini-Aufruf fehlgeschlagen")
 
-    def _aufruf_strom(self, model: str, body: dict, on_text) -> tuple[dict, bool]:
+    def _aufruf_strom(self, model: str, body: dict, on_text) -> dict:
         """Wie _aufruf, aber ueber streamGenerateContent (SSE): Textteile gehen sofort an on_text. Ergebnis wie generateContent —
-        zusammenhaengender Text als ein Teil, Funktionsaufrufe unveraendert (mit Gedankensignatur), finishReason, usageMetadata
-        (Kosten wie bisher). Zweiter Wert: ob schon Text gesendet wurde. Scheitert der Aufruf, bevor Text kam, nimmt der
-        Aufrufer den Weg ohne Stream."""
+        zusammenhaengender Text als ein Teil, Funktionsaufrufe unveraendert (mit Gedankensignatur), finishReason, usageMetadata.
+        Kosten werden auch fuer einen abgebrochenen Stream erfasst, soweit Gemini sie schon gemeldet hat (Pruefung 13.10.2026,
+        S12: sonst zaehlte der Tages-Kostendeckel zu wenig). Ein Fehlerobjekt im Stream ist ein Fehler (der Aufrufer nimmt den
+        Weg ohne Stream); eine Antwort ganz ohne Kandidaten mit blockReason ist endgueltig (GeminiAntwortGesperrt)."""
         from pipelines.v4 import gemini_auth
         url = _endpunkt(model).replace(":generateContent", ":streamGenerateContent")
         url += ("&" if "?" in url else "?") + "alt=sse"
@@ -142,40 +148,58 @@ class GeminiProvider(LLMProvider):
         finish = ""
         usage: dict = {}
         feedback = None
-        gesendet = False
-        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
-            for roh in r:
-                zeile = roh.decode("utf-8", "ignore").strip()
-                if not zeile.startswith("data:"):
-                    continue
-                try:
-                    stueck = json.loads(zeile[5:].strip())
-                except ValueError:
-                    continue
-                usage = stueck.get("usageMetadata") or usage
-                feedback = stueck.get("promptFeedback") or feedback
-                kandidat = (stueck.get("candidates") or [{}])[0] or {}
-                finish = kandidat.get("finishReason") or finish
-                for p in ((kandidat.get("content") or {}).get("parts") or []):
-                    letzter_text = bool(parts) and "text" in parts[-1] and not parts[-1].get("thought") and "functionCall" not in parts[-1]
-                    if p.get("text") and not p.get("thought") and "functionCall" not in p:
-                        if letzter_text:
-                            parts[-1]["text"] += p["text"]
-                            if p.get("thoughtSignature"):
-                                parts[-1]["thoughtSignature"] = p["thoughtSignature"]
-                        else:
-                            parts.append(dict(p))
-                        on_text(p["text"])
-                        gesendet = True
-                    elif p.get("thoughtSignature") and not p.get("text") and "functionCall" not in p and letzter_text:
-                        parts[-1]["thoughtSignature"] = p["thoughtSignature"]   # Signatur im letzten Stueck des Textes
-                    elif p:
-                        parts.append(dict(p))
+        kandidaten = False
+        fertig = False
+        try:
+            with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
+                for roh in r:
+                    zeile = roh.decode("utf-8", "ignore").strip()
+                    if not zeile.startswith("data:"):
+                        continue
+                    try:
+                        stueck = json.loads(zeile[5:].strip())
+                    except ValueError:
+                        continue
+                    if stueck.get("error"):
+                        raise GeminiProviderError(f"Gemini-Stream meldet einen Fehler ({model}): {str(stueck['error'])[:300]}")
+                    usage = stueck.get("usageMetadata") or usage
+                    feedback = stueck.get("promptFeedback") or feedback
+                    kandidaten = kandidaten or bool(stueck.get("candidates"))
+                    self._stueck_aufnehmen(stueck, parts, on_text)
+                    finish = ((stueck.get("candidates") or [{}])[0] or {}).get("finishReason") or finish
+            fertig = True
+        finally:
+            if not fertig and usage:   # abgebrochen: bezahlt ist, was Gemini schon gemeldet hat
+                ki_kosten.erfasse_gemini(model, {"usageMetadata": usage}, schritt="chat", erfolg=False, fehler="stream_abgebrochen",
+                                         standard_zweck="chatbot")
+        if not kandidaten and (feedback or {}).get("blockReason"):
+            ki_kosten.erfasse_gemini(model, {"usageMetadata": usage}, schritt="chat", standard_zweck="chatbot")
+            raise GeminiAntwortGesperrt(f"Keine Antwort von Gemini: {feedback.get('blockReason')}")
         antwort: dict = {"candidates": [{"content": {"role": "model", "parts": parts}, "finishReason": finish}], "usageMetadata": usage}
         if feedback:
             antwort["promptFeedback"] = feedback
         ki_kosten.erfasse_gemini(model, antwort, schritt="chat", standard_zweck="chatbot")
-        return antwort, gesendet
+        return antwort
+
+    @staticmethod
+    def _stueck_aufnehmen(stueck: dict, parts: list[dict], on_text) -> None:
+        """Ein SSE-Stueck in die Teile der Antwort: Text zusammenhaengend (und sofort an on_text), Gedankensignaturen am Text,
+        Funktionsaufrufe und alles andere unveraendert. Gedanken (thought=true) werden weder gesendet noch Text."""
+        kandidat = (stueck.get("candidates") or [{}])[0] or {}
+        for p in ((kandidat.get("content") or {}).get("parts") or []):
+            letzter_text = bool(parts) and "text" in parts[-1] and not parts[-1].get("thought") and "functionCall" not in parts[-1]
+            if p.get("text") and not p.get("thought") and "functionCall" not in p:
+                if letzter_text:
+                    parts[-1]["text"] += p["text"]
+                    if p.get("thoughtSignature"):
+                        parts[-1]["thoughtSignature"] = p["thoughtSignature"]
+                else:
+                    parts.append(dict(p))
+                on_text(p["text"])
+            elif p.get("thoughtSignature") and not p.get("text") and "functionCall" not in p and letzter_text:
+                parts[-1]["thoughtSignature"] = p["thoughtSignature"]   # Signatur im letzten Stueck des Textes
+            elif p:
+                parts.append(dict(p))
 
     # ------------------------------------------------------------ Umsetzung
     def _teile_aus_content(self, content: Any, namen: dict[str, str]) -> list[dict]:
@@ -284,10 +308,16 @@ class GeminiProvider(LLMProvider):
             antwort = None
             if on_text:
                 try:
-                    antwort, _gesendet = self._aufruf_strom(chosen, body, on_text)
+                    antwort = self._aufruf_strom(chosen, body, on_text)
+                except GeminiAntwortGesperrt:
+                    on_text(None)
+                    raise
                 except Exception as e:  # noqa: BLE001
+                    # Bricht der Stream ab (Netz, Fehlerobjekt, kaputte Daten), verwirft die Seite den Entwurf, und derselbe Aufruf
+                    # laeuft ohne Stream — auch wenn schon Text kam: der Nutzer bekommt eine vollstaendige Antwort statt einer
+                    # Fehlermeldung, nach der er ohnehin neu fragen muesste. Die Kosten des abgebrochenen Teils sind erfasst.
                     log.warning("Gemini-Stream fehlgeschlagen (%s) — ohne Stream", e)
-                    on_text(None)   # angefangenen Entwurf verwerfen
+                    on_text(None)
                     antwort = None
             if antwort is None:
                 antwort = self._aufruf(chosen, body)

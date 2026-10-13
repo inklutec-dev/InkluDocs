@@ -12352,3 +12352,13 @@ msgstr "Je ne peux pas aider sans projet pour le moment. Ouvre un projet, s’il
 
 msgid "Das hat nicht geklappt. Bitte versuch es noch einmal."
 msgstr "Cela n’a pas fonctionné. Réessaie, s’il te plaît."
+
+# Pruefung 13.10.2026: Eingang des InkluAgent
+msgid "Die Datei liegt nicht mehr bereit. Bitte noch einmal hochladen."
+msgstr "Le fichier n’est plus disponible. Envoie-le à nouveau, s’il te plaît."
+
+msgid "Das dauert noch: Das Projekt erscheint gleich unter „Meine Projekte“."
+msgstr "Cela prend encore un moment : le projet apparaîtra bientôt sous « Mes projets »."
+
+msgid "Es warten schon viele Dateien auf deine Entscheidung. Entscheide erst über diese, dann geht es weiter."
+msgstr "De nombreux fichiers attendent déjà ta décision. Décide d’abord pour ceux-ci, puis tu pourras continuer."

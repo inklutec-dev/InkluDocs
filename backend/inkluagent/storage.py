@@ -376,6 +376,18 @@ def clear_history(project_id: int) -> int:
         conn.close()
 
 
+def datum(wert: Optional[str]) -> str:
+    """„2026-10-12 11:45:00“ (UTC, SQLite) -> „12.10.2026, 13:45“ (Berlin) — fuer Gespraechslisten in Seite und Agent (vorher je
+    eine Kopie in main und konto, Pruefung 13.10.2026, H2)."""
+    try:
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+        d = datetime.strptime(str(wert)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).astimezone(ZoneInfo("Europe/Berlin"))
+        return d.strftime("%d.%m.%Y, %H:%M")
+    except Exception:  # noqa: BLE001
+        return str(wert or "")
+
+
 def gespraech_der_nachricht(user_id: int, nachricht_id: Optional[int]) -> Optional[int]:
     """In welches Gespraech eine gespeicherte Nachricht des Kontos kam (K3: die Antwort folgt ihrer Frage)."""
     if not nachricht_id:

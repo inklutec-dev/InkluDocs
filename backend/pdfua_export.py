@@ -453,11 +453,13 @@ def dokumenttitel_setzen(docx_path: str, titel: str, sprache: Optional[str] = No
     import zipfile
     from lxml import etree
 
+    from docx_processor import _safe_parser   # wie beim Einlesen: keine Entitaeten, kein Netz (Pruefung 13.10.2026, S16)
+
     try:
         with zipfile.ZipFile(docx_path) as z:
             if "docProps/core.xml" not in z.namelist():
                 return False
-            core = etree.fromstring(z.read("docProps/core.xml"))
+            core = etree.fromstring(z.read("docProps/core.xml"), _safe_parser)
         geaendert = False
         t = core.find("dc:title", _NS)
         if t is None:
@@ -505,6 +507,7 @@ def bildtitel_entfernen(docx_path: str) -> int:
     from lxml import etree
 
     teile = _re.compile(r"^word/(document|header\d*|footer\d*|footnotes|endnotes)\.xml$")
+    from docx_processor import _safe_parser   # wie oben (S16)
     try:
         neu: dict = {}
         n = 0
@@ -512,7 +515,7 @@ def bildtitel_entfernen(docx_path: str) -> int:
             for name in z.namelist():
                 if not teile.match(name):
                     continue
-                wurzel = etree.fromstring(z.read(name))
+                wurzel = etree.fromstring(z.read(name), _safe_parser)
                 vorher = n
                 for behaelter in wurzel.iter("{%s}inline" % _BILD_NS["wp"], "{%s}anchor" % _BILD_NS["wp"]):
                     docpr = behaelter.find("wp:docPr", _BILD_NS)

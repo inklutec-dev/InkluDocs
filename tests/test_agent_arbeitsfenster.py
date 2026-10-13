@@ -529,6 +529,59 @@ class GeminiStrom(unittest.TestCase):
         self.assertEqual(stuecke, [None], "angefangener Entwurf wird verworfen")
         self.assertEqual(r["content"][0]["text"], "Ohne Stream (fiktiv).")
 
+    # Sonderfaelle (Pruefung 13.10.2026, K10/S12)
+    def test_gesperrt_ohne_kandidat_ist_ein_fehler_ohne_zweiten_aufruf(self):
+        stuecke = []
+        with self._sse({"promptFeedback": {"blockReason": "SAFETY"}, "usageMetadata": {"promptTokenCount": 12}}), \
+                mock.patch.object(self.gemini.GeminiProvider, "_aufruf", side_effect=AssertionError("kein zweiter Aufruf")):
+            with self.assertRaises(self.gemini.GeminiAntwortGesperrt):
+                self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=stuecke.append)
+        self.assertEqual(stuecke, [None])
+        self.assertEqual(self.kosten[0]["usageMetadata"]["promptTokenCount"], 12, "auch die gesperrte Anfrage kostet")
+
+    def test_fehlerobjekt_im_stream_nimmt_den_weg_ohne_stream(self):
+        normal = {"candidates": [{"content": {"parts": [{"text": "Ohne Stream (fiktiv)."}]}, "finishReason": "STOP"}]}
+        with self._sse({"error": {"code": 500, "message": "intern (fiktiv)"}}), \
+                mock.patch.object(self.gemini.GeminiProvider, "_aufruf", return_value=normal) as ohne:
+            r = self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=lambda t: None)
+        ohne.assert_called_once()
+        self.assertEqual(r["content"][0]["text"], "Ohne Stream (fiktiv).")
+
+    def test_abbruch_nach_text_erfasst_kosten_und_holt_die_ganze_antwort(self):
+        stuecke = []
+        erstes = ("data: " + json.dumps({"candidates": [{"content": {"parts": [{"text": "Hallo "}]}}],
+                                          "usageMetadata": {"promptTokenCount": 30, "candidatesTokenCount": 2}}) + "\n").encode()
+
+        def zeilen():
+            yield erstes
+            raise OSError("Verbindung weg (fiktiv)")
+
+        class Antwort:
+            def __enter__(self):
+                return zeilen()
+
+            def __exit__(self, *a):
+                return False
+        normal = {"candidates": [{"content": {"parts": [{"text": "Ganze Antwort (fiktiv)."}]}, "finishReason": "STOP"}]}
+        with mock.patch("urllib.request.urlopen", return_value=Antwort()), \
+                mock.patch.object(self.gemini.GeminiProvider, "_aufruf", return_value=normal):
+            r = self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=stuecke.append)
+        self.assertEqual(stuecke, ["Hallo ", None], "Entwurf gezeigt, dann verworfen")
+        self.assertEqual(r["content"][0]["text"], "Ganze Antwort (fiktiv).")
+        self.assertEqual(self.kosten[0]["usageMetadata"]["promptTokenCount"], 30, "der abgebrochene Teil zaehlt fuer den Deckel")
+
+    def test_text_und_zwei_funktionsaufrufe(self):
+        a = {"functionCall": {"name": "projekte_auflisten", "args": {}}, "thoughtSignature": "s1"}
+        b = {"functionCall": {"name": "guthaben_lesen", "args": {}}}
+        stuecke = []
+        with self._sse({"candidates": [{"content": {"parts": [{"text": "Ich schaue nach (fiktiv)."}]}}]},
+                       {"candidates": [{"content": {"parts": [a, b]}, "finishReason": "STOP"}]}):
+            r = self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=stuecke.append)
+        self.assertEqual(stuecke, ["Ich schaue nach (fiktiv)."])
+        self.assertEqual([x["type"] for x in r["content"]], ["text", "tool_use", "tool_use"])
+        self.assertEqual([x.get("name") for x in r["content"][1:]], ["projekte_auflisten", "guthaben_lesen"])
+        self.assertEqual(r["stop_reason"], "tool_use")
+
 
 
 class AgentenansichtKorrekturen(unittest.TestCase):

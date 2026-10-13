@@ -6,12 +6,28 @@ formular_api/uebersetzung_api). Statt ihre Logik zu kopieren, ruft der InkluAgen
 - Anfrage(daten): ersetzt das Request-Objekt, wenn ein Endpunkt nur `await request.json()` liest
 - warten(coro): eine async Endpunkt-Funktion aus einem Werkzeug-Faden heraus ausfuehren (auf der Server-Schleife, wenn sie
   laeuft; sonst — Unit-Tests — in einer eigenen Schleife)
+- fehlertext(e, satz): was ein Werkzeug bei einem Fehler an Modell und Seite gibt (Pruefung 13.10.2026, S10)
 """
 from __future__ import annotations
 
 import asyncio
 import importlib
+import logging
 from typing import Any, Callable, Optional
+
+log = logging.getLogger(__name__)
+
+
+def fehlertext(e: BaseException, satz: str) -> str:
+    """Den Satz einer HTTPException (fuer Menschen geschrieben, derselbe wie beim Knopf), sonst nur `satz`. Pfade, Datenbank- und
+    Anbieterfehler gehen ins Log, nicht an das Modell, in den Chat oder in den Livestream (Pruefung 13.10.2026, S10)."""
+    from fastapi import HTTPException
+    if isinstance(e, HTTPException):
+        d = (e.detail.get("text") or e.detail.get("detail")) if isinstance(e.detail, dict) else e.detail
+        if d:
+            return str(d)
+    log.warning("%s (%r)", satz, e)
+    return satz
 
 
 def _main():

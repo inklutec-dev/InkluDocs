@@ -13,6 +13,7 @@ from typing import Any
 import httpx
 
 from ..daten import daten   # Text von Webseiten = Fremdtext, keine Anweisung (09.10.2026)
+from ..kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
 
 log = logging.getLogger(__name__)
 
@@ -65,12 +66,12 @@ def tavily_search(
         resp.raise_for_status()
     except httpx.HTTPError as e:
         log.warning("Tavily HTTP-Fehler: %s", e)
-        return {"ok": False, "error": f"Tavily HTTP-Fehler: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Die Websuche ist gerade nicht erreichbar.")}
 
     try:
         data = resp.json()
     except ValueError as e:
-        return {"ok": False, "error": f"Tavily Antwort nicht JSON: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Die Websuche hat keine lesbare Antwort geliefert.")}
 
     results = []
     for r in data.get("results", []) or []:

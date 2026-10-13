@@ -228,9 +228,139 @@ class S10KeineInternaNachAussen(unittest.TestCase):
         self.assertEqual(hochladen._fehlertext(HTTPException(400, "Die PDF ist mit einem Passwort geschützt.")),
                          "Die PDF ist mit einem Passwort geschützt.")
         self.assertEqual(hochladen._fehlertext(HTTPException(400, {"text": "Zu groß."})), "Zu groß.")
-        with self.assertLogs("inkluagent.hochladen", level="WARNING"):
+        with self.assertLogs("inkluagent.kern", level="WARNING"):   # Einzelheiten nur ins Log
             t = hochladen._fehlertext(OSError("/app/data/results/7/geheim.pdf: Permission denied"), lambda s: "EN: " + s)
         self.assertEqual(t, "EN: Das hat nicht geklappt. Bitte versuch es noch einmal.")
+
+
+class S18KostendeckelJePerson(unittest.TestCase):
+    def test_ein_teammitglied_sperrt_nicht_das_ganze_team(self):
+        from inkluagent import sicherheit
+        inhaber, mitglied = nutzer(), nutzer()
+        c = database.get_db()
+        try:
+            c.execute("INSERT INTO ki_aufrufe (user_id, konto_user_id, zweck, kosten_eur_cent) VALUES (?, ?, 'chatbot', 1200)",
+                      (mitglied["id"], inhaber["id"]))
+            c.commit()
+        finally:
+            c.close()
+        self.assertEqual(sicherheit.kosten_heute_cent(mitglied["id"]), 1200.0)
+        self.assertEqual(sicherheit.kosten_heute_cent(inhaber["id"]), 0.0, "der Topf des Inhabers zaehlt nicht mit")
+        with mock.patch.dict(os.environ, {"INKLUAGENT_KOSTEN_DECKEL_EUR": "10"}):
+            self.assertIsNotNone(sicherheit.chat_sperre(mitglied["id"], 100))
+            self.assertIsNone(sicherheit.chat_sperre(inhaber["id"], 100))
+
+
+class S6EingangWirdAufgeraeumt(unittest.TestCase):
+    def test_abgelaufene_dateien_aller_konten_und_obergrenze(self):
+        from inkluagent import hochladen
+        ordner = tempfile.mkdtemp(prefix="eingang_")
+        m = mock.MagicMock()
+        m.RESULTS_DIR = ordner
+        with mock.patch.object(hochladen, "_main", return_value=m):
+            a = hochladen.eingang_ablegen(1, "a.pdf", b"%PDF-1.4 fiktiv")
+            b = hochladen.eingang_ablegen(2, "b.pdf", b"%PDF-1.4 fiktiv")
+            alt = time.time() - hochladen.EINGANG_AUFBEWAHRUNG_S - 5
+            os.utime(os.path.join(ordner, "1", "_agent_eingang", a), (alt, alt))
+            self.assertEqual(hochladen.eingang_aufraeumen(), 1, "nur die abgelaufene, ohne dass Konto 1 neu hochlaedt")
+            self.assertIsNone(hochladen.eingang_pfad(1, a))
+            self.assertIsNotNone(hochladen.eingang_pfad(2, b))
+            for i in range(hochladen._EINGANG_HOECHSTENS - 1):
+                hochladen.eingang_ablegen(2, f"x{i}.pdf", b"x")
+            with self.assertRaises(hochladen.EingangVoll):
+                hochladen.eingang_ablegen(2, "zuviel.pdf", b"x")
+        self.assertLessEqual(hochladen.EINGANG_AUFBEWAHRUNG_S, 15 * 60, "nicht laenger als die Karten gelten")
+
+    def test_langes_hochladen_ueber_den_knopf_meldet_laeuft_noch(self):
+        import concurrent.futures
+        from inkluagent import kern, konto
+        with mock.patch.object(kern, "warten", side_effect=concurrent.futures.TimeoutError()):
+            async def nie():
+                return {}
+            coro = nie()
+            self.assertIsNone(konto.KontoExecutor._hochladen_abwarten(coro))
+            coro.close()
+
+
+class S11FremdeAdressenOhneWegInsInterneNetz(unittest.TestCase):
+    def setUp(self):
+        try:
+            import netz_sicher
+        except Exception as e:  # noqa: BLE001
+            raise unittest.SkipTest(f"netz_sicher nicht ladbar: {e}")
+        self.ns = netz_sicher
+
+    def test_nur_global_erreichbare_adressen(self):
+        for ip in ("127.0.0.1", "10.1.2.3", "172.16.0.1", "192.168.1.1", "100.64.0.1", "169.254.169.254", "0.0.0.0", "::1",
+                   "fe80::1", "fd00::1", "::ffff:127.0.0.1", "64:ff9b::7f00:1", "2002:7f00:1::1", "224.0.0.1", "kein-ip"):
+            self.assertFalse(self.ns.adresse_erlaubt(ip), ip)
+        for ip in ("8.8.8.8", "1.1.1.1", "2606:4700:4700::1111", "64:ff9b::808:808"):
+            self.assertTrue(self.ns.adresse_erlaubt(ip), ip)
+
+    def test_name_mit_interner_antwort_wird_nicht_verbunden(self):
+        """DNS-Rebinding: der Client loest selbst auf und verbindet nur mit der geprueften Adresse."""
+        async def aufloesen(host, port, **kw):
+            return [(2, 1, 6, "", ("127.0.0.1", port))] if host == "rebind.invalid" else [(2, 1, 6, "", ("93.184.216.34", port))]
+
+        async def los():
+            loop = asyncio.get_running_loop()
+            with mock.patch.object(loop, "getaddrinfo", side_effect=aufloesen):
+                async with self.ns.client(timeout=5) as c:
+                    await c.get("http://rebind.invalid/")
+        with mock.patch.dict(os.environ, {"SCAN_ERLAUBE_LOOPBACK": ""}):
+            with self.assertRaises(httpx_fehler()):
+                asyncio.run(los())
+
+    def test_der_client_nutzt_die_pruefende_schicht(self):
+        t = self.ns._Transport()
+        self.assertIsInstance(t._pool._network_backend, self.ns._PruefendesNetz)
+        c = self.ns.client(follow_redirects=True)
+        self.assertFalse(c.follow_redirects, "Weiterleitungen nur ueber _safe_fetch")
+        self.assertFalse(c._trust_env, "keine Proxys aus der Umgebung")
+
+    def test_gestreamt_bis_zur_grenze(self):
+        from fastapi import HTTPException
+
+        class Antwort:
+            async def aiter_bytes(self):
+                for _ in range(10):
+                    yield b"x" * 1000
+        self.assertEqual(len(asyncio.run(self.ns.lesen_bis(Antwort(), None))), 10000)
+        with self.assertRaises(HTTPException) as fehler:
+            asyncio.run(self.ns.lesen_bis(Antwort(), 2500))
+        self.assertEqual(fehler.exception.status_code, 413)
+
+    def test_safe_fetch_prueft_jede_weiterleitung_und_liefert_den_inhalt(self):
+        try:
+            import main
+        except Exception as e:  # noqa: BLE001
+            self.skipTest(f"main nicht ladbar: {e}")
+        import gzip
+        import httpx
+        from fastapi import HTTPException
+
+        def antwort(anfrage):
+            if anfrage.url.path == "/start":
+                return httpx.Response(302, headers={"location": "/seite"})
+            if anfrage.url.path == "/seite":
+                return httpx.Response(200, headers={"content-encoding": "gzip", "content-type": "text/html; charset=utf-8"},
+                                      content=gzip.compress("<p>Grüße (fiktiv)</p>".encode()))
+            return httpx.Response(302, headers={"location": "http://169.254.169.254/latest/meta-data/"})
+
+        async def los(pfad):
+            async with httpx.AsyncClient(transport=httpx.MockTransport(antwort)) as c:
+                return await main._safe_fetch(c, "http://127.0.0.1" + pfad, max_bytes=10_000)
+        with mock.patch.dict(os.environ, {"SCAN_ERLAUBE_LOOPBACK": "1"}):
+            r = asyncio.run(los("/start"))
+            self.assertEqual(r.text, "<p>Grüße (fiktiv)</p>", "entpackt, ohne doppeltes Entpacken")
+            with self.assertRaises(HTTPException) as fehler:
+                asyncio.run(los("/umleitung-intern"))
+            self.assertEqual(fehler.exception.status_code, 400)
+
+
+def httpx_fehler():
+    import httpx
+    return httpx.HTTPError
 
 
 class S7DateienNacheinanderGelesen(unittest.TestCase):
@@ -292,6 +422,52 @@ class MitServer(unittest.TestCase):
         c = self.TestClient(self.main.app)
         c.cookies.set("token", self.token)
         return c
+
+    def test_rahmen_nie_fuer_anmelden_und_freigaben_und_getrennte_fassungen(self):
+        with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True):
+            c = self.client()
+            for pfad in ("/login", "/register", "/reset", "/freigabe/abc", "/team-einladung/abc", "/set-language/de"):
+                r = c.get(pfad, follow_redirects=False)
+                self.assertEqual(r.headers.get("x-frame-options"), "DENY", pfad)
+            r = c.get("/einstellungen")
+            self.assertEqual(r.headers.get("x-frame-options"), "SAMEORIGIN")
+            self.assertIn("Sec-Fetch-Dest", r.headers.get("vary", ""), "K14")
+            self.assertEqual(r.headers.get("cache-control"), "private, no-cache")
+        r = self.client().get("/einstellungen")
+        self.assertNotIn("Sec-Fetch-Dest", r.headers.get("vary", ""), "ohne Schalter wie bisher")
+
+    def test_sprache_leitet_nur_auf_eigene_pfade_und_ohne_eingebettet(self):
+        c = self.client()
+        for referer, ziel in (("http://testserver//boese.invalid/x", "/"), ("http://testserver/\\boese.invalid", "/"),
+                              ("https://boese.invalid/projekte", "/"), ("//boese.invalid/", "/"),
+                              ("http://testserver/einstellungen?eingebettet=1&x=2", "/einstellungen?x=2"),
+                              ("http://testserver/ablage?eingebettet=1", "/ablage")):
+            r = c.get("/set-language/de", headers={"Referer": referer}, follow_redirects=False)
+            self.assertEqual(r.headers.get("location"), ziel, referer)
+
+    def test_hin_ziele_fuer_die_seite(self):
+        from inkluagent import begleiter
+        with mock.patch.object(funktionen, "AGENT_BEGLEITER", True):
+            ziele = self.main._inkluagent_schalter()["hinZiele"]
+        self.assertIn("ueberschrift", ziele)
+        self.assertIn("newKeyName", ziele)
+        self.assertEqual(ziele, begleiter.hin_ziele())
+        self.assertNotIn("hinZiele", self.main._inkluagent_schalter(), "ohne Begleiter keine Liste")
+
+    def test_aendernde_anfragen_mit_cookie_nur_von_der_eigenen_herkunft(self):
+        """S5: Sec-Fetch-Site bzw. Origin; ohne Cookie (API-Schluessel, Webhook) keine Pruefung."""
+        antwort = {"reply": "Ok (fiktiv).", "intent": "agentic", "werkzeuge": []}
+        c = self.client()
+        with mock.patch.object(self.chat_engine, "process_konto_message", return_value=antwort):
+            for kopf, erwartet in (({"Sec-Fetch-Site": "cross-site"}, 403), ({"Sec-Fetch-Site": "same-site"}, 403),
+                                   ({"Sec-Fetch-Site": "same-origin"}, 200), ({"Origin": "https://staging.inkludocs.inklutec.de"}, 403),
+                                   ({"Origin": "null"}, 403), ({"Origin": "http://testserver"}, 200), ({}, 200)):
+                r = c.post("/api/agent/nachricht", json={"message": "Hallo (fiktiv)"}, headers=kopf)
+                self.assertEqual(r.status_code, erwartet, (kopf, r.text))
+            ohne_cookie = self.TestClient(self.main.app)
+            r = ohne_cookie.post("/api/agent/nachricht", json={"message": "Hallo"}, headers={"Sec-Fetch-Site": "cross-site"})
+            self.assertEqual(r.status_code, 401, "ohne Cookie entscheidet die Anmeldung, nicht die Herkunft")
+        self.assertEqual(c.get("/api/me", headers={"Sec-Fetch-Site": "cross-site"}).status_code, 200, "Lesen bleibt frei")
 
     def test_eigener_arbeitsbereich(self):
         self.assertTrue(self.main._AGENT_EXECUTOR._thread_name_prefix.startswith("inkluagent"))

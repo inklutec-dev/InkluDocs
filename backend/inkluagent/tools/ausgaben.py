@@ -34,6 +34,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 
 from ..daten import daten, daten_zeilen, text_kennzeichnen   # Fremdtext ist keine Anweisung (09.10.2026)
+from ..kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
 
 log = logging.getLogger(__name__)
 
@@ -603,7 +604,7 @@ def analysiere_word_struktur(project_id: int, user_id: int, document_id: Optiona
             st = docx_struktur.analysiere_struktur(docx_path)
         except Exception as e:  # noqa: BLE001
             log.exception("analysiere_word_struktur: %s", e)
-            doks.append({"dokument": label, "fehler": f"Struktur nicht lesbar: {e}"})
+            doks.append({"dokument": label, "fehler": fehlertext(e, "Struktur nicht lesbar.")})
             continue
         try:
             doc_id = int(unit["doc"]["id"])

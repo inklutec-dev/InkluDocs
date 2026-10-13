@@ -12353,3 +12353,13 @@ msgstr "Ohne Projekt kann ich gerade nicht helfen. Bitte öffne ein Projekt."
 
 msgid "Das hat nicht geklappt. Bitte versuch es noch einmal."
 msgstr "Das hat nicht geklappt. Bitte versuch es noch einmal."
+
+# Pruefung 13.10.2026: Eingang des InkluAgent
+msgid "Die Datei liegt nicht mehr bereit. Bitte noch einmal hochladen."
+msgstr "Die Datei liegt nicht mehr bereit. Bitte noch einmal hochladen."
+
+msgid "Das dauert noch: Das Projekt erscheint gleich unter „Meine Projekte“."
+msgstr "Das dauert noch: Das Projekt erscheint gleich unter „Meine Projekte“."
+
+msgid "Es warten schon viele Dateien auf deine Entscheidung. Entscheide erst über diese, dann geht es weiter."
+msgstr "Es warten schon viele Dateien auf deine Entscheidung. Entscheide erst über diese, dann geht es weiter."

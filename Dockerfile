@@ -26,4 +26,6 @@ RUN mkdir -p /app/data/uploads /app/data/results
 
 EXPOSE 8001
 
+# Genau EIN Worker (kein --workers, kein WEB_CONCURRENCY): laufende Agent-Laeufe, Karten und Notizen des InkluAgent liegen
+# im Prozess (Pruefung 13.10.2026, H5; main.lifespan meldet einen Verstoss im Log).
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]

@@ -65,9 +65,12 @@ class MitServer(unittest.TestCase):
         self.assertEqual((r.headers.get("x-frame-options"), r.headers.get("content-security-policy")), ("DENY", "frame-ancestors 'none'"),
                          "ohne Schalter wie bisher")
         with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True):
-            r = self.c.get("/login")
+            r = self.c.get("/einstellungen")
+            anmelden = self.c.get("/login")
         self.assertEqual((r.headers.get("x-frame-options"), r.headers.get("content-security-policy")),
                          ("SAMEORIGIN", "frame-ancestors 'self'"), "nur die eigene Seite darf einrahmen")
+        self.assertEqual((anmelden.headers.get("x-frame-options"), anmelden.headers.get("content-security-policy")),
+                         ("DENY", "frame-ancestors 'none'"), "Anmelden nie im Rahmen (Pruefung 13.10.2026, S15)")
 
     def test_eingebettete_seite_ohne_seitenleiste_fusszeile_agent(self):
         with mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True):

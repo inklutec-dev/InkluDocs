@@ -10,11 +10,15 @@ und user_id aus dem Sitzungskontext injiziert.
 """
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable
 
 from . import formular as formular_tools
 from . import search as search_tools
 from .definitions import TOOL_DEFINITIONS as _BILD_DEFINITIONS
+from ..kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
+
+log = logging.getLogger(__name__)
 
 _TAVILY = next(t for t in _BILD_DEFINITIONS if t["name"] == "tavily_search")
 
@@ -154,11 +158,13 @@ class ToolExecutorFormular:
                 try:
                     ergebnis = handler(args)
                 except Exception as e:  # noqa: BLE001
-                    ergebnis = {"ok": False, "error": f"Werkzeug-Ausfuehrung crashte: {e}"}
+                    log.exception("Werkzeug %s crashte", name)
+                    ergebnis = {"ok": False, "error": fehlertext(e, f"Das Werkzeug {name} hat gerade nicht geklappt.")}
                 sicherheit.einzel_nachher(self, name, ergebnis)
             return _ausg.nachbereiten(ergebnis, name, args, self.user_id, self.project_id, vorher)
         except Exception as e:
-            return {"ok": False, "error": f"Werkzeug-Ausfuehrung crashte: {e}"}
+            log.exception("Werkzeug %s crashte", name)
+            return {"ok": False, "error": fehlertext(e, f"Das Werkzeug {name} hat gerade nicht geklappt.")}
 
     def _handlers(self) -> dict[str, Callable[[dict], dict]]:
         p, u = self.project_id, self.user_id

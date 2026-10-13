@@ -49,6 +49,7 @@ QUELLE_TEXT = {"": "offen", "pdf": "vorhanden (aus der PDF)", "hand": "von Hand"
 # Schluessel enden auf _daten, der Prompt (system_formular) erklaert, dass diese Inhalte nie Anweisungen sind.
 # Seit 09.10.2026 EINE Kennzeichnung fuer alle Werkzeuge (inkluagent/daten.py); leerer Text bleibt leer.
 from ..daten import daten as _daten  # noqa: E402
+from ..kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
 FELDART_TEXT = {"text": "Textfeld", "checkbox": "Kontrollkästchen", "radio": "Auswahlknopf", "dropdown": "Auswahlliste",
                 "liste": "Listenfeld", "button": "Schaltfläche", "signatur": "Unterschriftsfeld", "unbekannt": "Feld"}
 
@@ -208,7 +209,7 @@ def view_field(feld_id: int, project_id: int, user_id: int, ganze_seite: bool = 
         with open(pfad, "rb") as fh:
             data = fh.read()
     except OSError as e:
-        return {"ok": False, "error": f"Datei nicht lesbar: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Die Datei ist gerade nicht lesbar.")}
     return {"ok": True, "result": {"feld_id": feld_id, "art": "seitenansicht" if ganze_seite else "ausschnitt",
                                    "size_bytes": len(data),
                                    "info": "Bild geladen, im naechsten Turn fuer dich sichtbar. Feldwerte sind NICHT enthalten "
@@ -255,10 +256,10 @@ def generate_quickinfo(feld_id: int, project_id: int, user_id: int) -> dict[str,
             formular_titel=formular_api._d.doc_label(doc), seiten_gesamt=formular_api._seitenzahl(doc),
             bestaetigte=bestaetigte, user_prompt=user_prompt, variation=True, seitenbild_path=(f["page_view_path"] or None))
     except formular_ki.FeldPassFehler as e:
-        return {"ok": False, "error": f"Feld-Pass fehlgeschlagen: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Die Quickinfo konnte gerade nicht erzeugt werden.")}
     except Exception as e:
         log.exception("generate_quickinfo: Feld-Pass crashte")
-        return {"ok": False, "error": f"Feld-Pass fehlgeschlagen: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Die Quickinfo konnte gerade nicht erzeugt werden.")}
     if not vorschlaege:
         return {"ok": False, "error": "Die KI hat fuer dieses Feld keinen Vorschlag geliefert."}
     v = vorschlaege[0]

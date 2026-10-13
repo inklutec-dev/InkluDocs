@@ -8,6 +8,7 @@ angeben (image_id, query, ...).
 """
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any, Callable
 
@@ -20,6 +21,9 @@ from . import oberflaeche as oberflaeche_tools   # alles, was die Oberflaeche ka
 import funktionen   # Funktionsschalter: was die Oberflaeche ausblendet, fuehrt auch der Chatbot nicht aus
 from ..daten import ohne_marke_args   # Fremdtext ist keine Anweisung (09.10.2026)
 from .. import sicherheit   # Sicherheitsfundament (Ausbau Runde 1, Schritt 2, Schalter AGENT_SICHERHEIT)
+from ..kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
+
+log = logging.getLogger(__name__)
 
 
 TOOL_DEFINITIONS: list[dict] = [
@@ -242,13 +246,15 @@ class ToolExecutor:
                     with ki_kosten.kontext(user_id=self.user_id, project_id=self.project_id):
                         ergebnis = handler(args)
                 except Exception as e:  # noqa: BLE001
-                    ergebnis = {"ok": False, "error": f"Tool-Ausführung crashte: {e}"}
+                    log.exception("Werkzeug %s crashte", name)
+                    ergebnis = {"ok": False, "error": fehlertext(e, f"Das Werkzeug {name} hat gerade nicht geklappt.")}
                 sicherheit.einzel_nachher(self, name, ergebnis)
             # neues Angebot -> Bestaetigungs-Karte mit dem Text des SERVERS (Pruefung 3, Entwicklung N1); verbrauchte Karten
             # -> „Erledigt“, Ansicht nachziehen, Download-Frist (Pruefung 4)
             return ausgaben_tools.nachbereiten(ergebnis, name, args, self.user_id, self.project_id, vorher)
-        except Exception as e:
-            return {"ok": False, "error": f"Tool-Ausführung crashte: {e}"}
+        except Exception as e:  # noqa: BLE001
+            log.exception("Werkzeug %s crashte", name)
+            return {"ok": False, "error": fehlertext(e, f"Das Werkzeug {name} hat gerade nicht geklappt.")}
 
     def _handlers(self) -> dict[str, Callable[[dict], dict]]:
         p, u = self.project_id, self.user_id

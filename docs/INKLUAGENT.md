@@ -327,8 +327,8 @@ Kern: `backend/inkluagent/sicherheit.py`. Schalter aus = alles wie vorher (gepr�
   `update_quickinfo` (`EINZEL_BEZAHLT`). Je Nutzer-Nachricht läuft höchstens EINE davon ohne Rückfrage
   (`EINZEL_OHNE_KARTE_JE_NACHRICHT = 1`, gezählt wird nur eine erfolgreiche). Jede weitere legt der ToolExecutor als
   Angebot vor (`einzel_vorab`): Rückfrage mit Ziel („Bild 2“, „Feld 3“, dieselbe Zählung wie die Oberfläche) und Preis, Karte
-  vom Server („Alt-Text speichern: „Bild 2“ für 5 Credits.“), Ausführung nur über den Knopf oder ein klares Ja in einer
-  späteren Nachricht — dieselbe Freigabe wie die großen Aktionen (`ausgaben._angebot_merken/_angebot_einloesen`). Die vier
+  vom Server („Alt-Text speichern: „Bild 2“ für 5 Credits.“), Ausführung nur über den Knopf oder ein klares Ja in der
+  Nachricht direkt danach (seit 13.10.2026, siehe „Prüfung 13.10.2026: Server“) — dieselbe Freigabe wie die großen Aktionen (`ausgaben._angebot_merken/_angebot_einloesen`). Die vier
   Werkzeuge nehmen dann `bestaetigt` an; der Prompt bekommt den Absatz `PROMPT_ZUSATZ`.
 - **Ja-Prüfung auf dem Server:** `bestaetigt=true` vom Modell gilt nur, wenn die Nachricht des Nutzers in dieser Runde ein
   kurzes, eindeutiges Ja ist (`ist_klares_ja`: höchstens sechs Wörter und 60 Zeichen, nur Wörter aus `JA_ERLAUBT`, mindestens
@@ -385,7 +385,7 @@ Oberfläche dieser Projekte anbietet, mit demselben Kern wie der Knopf und derse
 - Neu: `bild_umbenennen` und `bild_loeschen` (`tools/oberflaeche.py`). Der Kern der Knöpfe ist dafür aus den Endpunkten
   `rename_image` und `delete_image` herausgezogen (`main._bild_umbenennen_sync`, `main._bild_loeschen_sync`); die Endpunkte
   rufen ihn unverändert auf (Statuscodes und Antworten gleich, lokal geprüft). Löschen ist unumkehrbar: Angebot, Karte („Bild
-  löschen: „Bild 2 (foto.png)“. Das lässt sich nicht rückgängig machen.“), Knopf oder Ja in einer späteren Nachricht.
+  löschen: „Bild 2 (foto.png)“. Das lässt sich nicht rückgängig machen.“); löschen kann seit 13.10.2026 nur der Knopf.
 - Webseiten-Projekte zusätzlich `dokument_umbenennen` und `dokument_loeschen` (eine Webseite samt Bildern).
 - Bewusst nicht: Teilen/Gäste einladen (verschickt Mails), Bewertung mit dem Daumen (verschickt eine Mail an das Team), keine
   Ablage. Weitere Bilder oder Webseiten hinzufügen kommt mit dem Hochladefeld (Runde 2); der Prompt sagt das.
@@ -460,9 +460,10 @@ Modell. Kern: `backend/inkluagent/hochladen.py`, Endpunkt `POST /api/agent/hochl
 - **Notiz für das Modell:** Fakten und Preise je Datei (`notiz_text`, Namen als Daten gekennzeichnet), im Prozess abgelegt
   (30 Minuten), einmal abholbar und nur vom eigenen Nutzer (`notiz_holen`). Der Chat-Endpunkt nimmt `hochgeladen` (Kennung)
   an, holt die Notiz erst nach der Chat-Bremse (eine abgewiesene Nachricht verbraucht sie nicht) und hängt sie für das Modell
-  an (Dateinamen bekommt das Modell nur dort, als Daten gekennzeichnet). Im Verlauf steht nur die Kurzzeile für Menschen
-  („Hochgeladen: a.pdf, b.docx. Nicht hochgeladen: c.doc“,
-  `kurzzeile`/`nachricht_fuer_verlauf`). Die Seite bekommt die Notiz nie.
+  an (Dateinamen bekommt das Modell nur dort, als Daten gekennzeichnet). Im Verlauf steht unter dem getippten Text die Kurzzeile
+  für Menschen („Hochgeladen: a.pdf, b.docx. Nicht hochgeladen: c.doc“, `kurzzeile`) — seit 13.10.2026 getrennt gespeichert
+  (Spalte `zusatz`, `storage.anzeige`), im Gedächtnis des Agenten als Daten gekennzeichnet (`storage.fuer_modell`). Die Seite
+  bekommt die Notiz nie.
 - **Nichts Kostenpflichtiges ohne Karte:** in der Nachricht mit hochgeladenen Dateien legen auch die vier Einzelaktionen
   (`EINZEL_BEZAHLT`) erst eine Karte vor (`executor.nur_mit_karte`, `sicherheit.einzel_vorab`, Hinweis `G_HOCHGELADEN`) —
   auch ohne `AGENT_SICHERHEIT`. Der Prompt bekommt `hochladen.PROMPT_ZUSATZ`.
@@ -551,9 +552,9 @@ InkluAgent auch in den Ansichten „Dokument“ und „Barrierefreiheitsprüfung
   10 Minuten). Die neue Seite sagt „Der InkluAgent arbeitet noch an seiner letzten Antwort …“, fragt alle 2,5 Sekunden nach
   und lädt die Antwort, wenn sie da ist (Ansage wie bei einer neuen Antwort, bei zugeklapptem Agenten „neue Antwort“ am Knopf).
 - **Fehler behoben, auch ohne Schalter:** Verließ man die Seite, während der Agent antwortete, brach der Server mit dem Stream
-  auch den Lauf ab — die Antwort wurde nie gespeichert, obwohl das Modell weiterlief (und kostete). Jetzt `asyncio.shield`
-  um den Lauf und eine starke Referenz (`_AGENT_HINTERGRUND`); der Kommentar „bricht der Client ab, bleibt die Antwort“ stimmt
-  damit wieder.
+  auch den Lauf ab — die Antwort wurde nie gespeichert, obwohl das Modell weiterlief (und kostete). Seit 13.10.2026 startet
+  der Lauf als eigene Aufgabe, bevor die Antwort an den Browser geht, mit starker Referenz (`_AGENT_HINTERGRUND`); der Stream
+  liest nur noch die Warteschlange (vorher `asyncio.shield`, siehe „Prüfung 13.10.2026: Server“, K13).
 - **Werkzeugnamen und Hilfe-Schalter** kommen auf Seiten ohne `app.html` mit `window.INKLUAGENT` (`werkzeug_namen`, `hilfe`).
   9 neue Texte in sechs Sprachen; die vier Werkzeuge stehen in `tools/namen.py` und `daten.WERKZEUG_FREMDTEXT`.
 
@@ -701,8 +702,8 @@ er wechselt dann auf die jeweilige Projektseite.“
 - **Projekt anlegen** (`konto.projekt_anlegen`): gibt es ähnliche, legt das Werkzeug nichts an und gibt sie dem Modell (Namen als
   Daten) — der Agent fragt: eines öffnen oder trotzdem neu (`trotzdem: true`, nur auf ausdrücklichen Wunsch).
 - **Datei auf einer Seite ohne Projekt** (`hochladen.hochladen(zuordnen=True)`, `POST /api/agent/hochladen` ohne Projekt): gibt
-  es ein ähnliches Projekt, wartet die Datei im Eingang (`results/<Konto>/_agent_eingang/`, zufälliger Name, 30 Minuten, nur
-  eigene, gültige Namen) statt sofort abgelegt zu werden. Unter der Antwort Karten „Wohin soll die Datei?“: „In „…“ hochladen“
+  es ein ähnliches Projekt, wartet die Datei im Eingang (`results/<Konto>/_agent_eingang/`, zufälliger Name, 15 Minuten wie die
+  Karten, höchstens 20 je Konto, Aufräumen alle 5 Minuten, nur eigene, gültige Namen) statt sofort abgelegt zu werden. Unter der Antwort Karten „Wohin soll die Datei?“: „In „…“ hochladen“
   (bis zu zwei ähnliche) und „Als neues Projekt hochladen“; Knopf über `POST /api/agent/bestaetigen` (`konto` „datei_ablegen“,
   kein Werkzeug des Modells) legt über `hochladen.hochladen` ab, räumt den Eingang, die anderen Karten verfallen. Liste am Feld:
   „wartet auf deine Entscheidung“; Kurzzeile „Wartet auf deine Entscheidung: …“; Ansage „1 wartet auf deine Entscheidung.“
@@ -816,8 +817,10 @@ will, hört jeden Schritt.
 - **Antwort Wort für Wort:** `GeminiProvider.invoke_with_tools(on_text=…)` ruft `streamGenerateContent?alt=sse` auf
   (`_aufruf_strom`): Textstücke gehen sofort an `on_text`, das Ergebnis ist wie bei `generateContent` (zusammenhängender Text als
   ein Teil, Funktionsaufrufe unverändert mit Gedankensignatur, `finishReason`, `usageMetadata` → KI-Kosten wie bisher).
-  Scheitert der Stream, bevor Text kam, geht derselbe Aufruf ohne Stream; eine entgleiste Antwort (zweiter Versuch) verwirft den
-  Entwurf (`on_text(None)`). Provider ohne `kann_streamen` (Bedrock) bleiben ohne Stream. Auf der Seite wächst im Chatstil ein
+  Scheitert der Stream (Netz, Fehlerobjekt), verwirft die Seite den Entwurf, und derselbe Aufruf geht ohne Stream — auch wenn
+  schon Text kam; die Kosten des abgebrochenen Teils werden erfasst. Eine gesperrte Anfrage ohne Kandidaten ist ein Fehler
+  (`GeminiAntwortGesperrt`), kein zweiter Aufruf. Eine entgleiste Antwort (zweiter Versuch) verwirft den Entwurf
+  (`on_text(None)`). Provider ohne `kann_streamen` (Bedrock) bleiben ohne Stream. Auf der Seite wächst im Chatstil ein
   Entwurf (`#inkluagentEntwurf`, `aria-busy`, Sterne/Rauten wie `sanitize_markdown` entfernt), das Arbeitsfenster sagt „Schreibt
   die Antwort …“; die fertige, bereinigte Antwort ersetzt ihn und bekommt den Fokus. Der Verlauf sagt nichts von selbst an.
 - **Zwischenstand:** Schreibt das Modell Text und ruft danach Werkzeuge auf, war der Text nur ein Zwischenstand
@@ -940,3 +943,87 @@ Fokus, eingebettet ohne Seitenleiste/Fußzeile/Agent, Vergrößern breit, Projek
 im Fenster mit Fokus aufs Feld, axe Agent und eingebettete Seite ohne Verstöße, „Zurück zum Gespräch“, Neuladen ohne Fokusraub,
 „Seite schließen“, schmal über allem mit `inert` und Escape, 320 px, Ansicht im Fenster gewechselt). Ältere Proben angepasst
 (kein „nur diese Seite manuell“) und mit allen Staging-Schaltern grün.
+
+## Prüfung 13.10.2026: Server
+
+Steve: „Alles, was ich umgebaut habe, auf Fehler und Sicherheitslücken testen … keine Pflaster … sauberen Code.“ Drei
+unabhängige Prüfungen (Sicherheit S1–S18, Korrektheit K1–K19, Barrierefreiheit B1–B23) über f2be564..13c88b8; Berichte auf dem
+Server unter `/home/claude/pruefung-1310/`. Dieser Abschnitt: was auf der Server-Seite behoben ist. Die Oberfläche steht im
+Abschnitt „Prüfung 13.10.2026: Oberfläche“. Regressionstests: `tests/test_sicherheit_pruefung_1310.py`, dazu angepasste
+bestehende Tests.
+
+**Production-Hotfix (nur S1 und S5, Branch `hotfix-sicherheit-20261013`, Image `inkludocs:v4-20260918-sec1`):**
+- S1 DOM-XSS über `?projekt=`: `app.html` nahm den Adressparameter roh und setzte ihn per `innerHTML` in Attribute (onclick am
+  Knopf „Neu generieren“ jedes Bildes, `data-project-id`). Jetzt `projektKennung()` (nur positive ganze Zahl) an Adresse und
+  Zurück-Taste und als einzige Tür in `showProject()`; `inkluagent.js` maskiert zusätzlich. Lokal auf dem exakten Prod-Code
+  nachgewiesen und nach dem Fix geprüft (`lokal/probe_xss_projekt.py`).
+- S5 CORS: die Liste enthielt fest die Staging-Herkunft mit Anmeldedaten (gleiche Site `*.inklutec.de`). Jetzt
+  `CORS_HERKUENFTE` aus `BASE_URL` und `API_BASE_URL` dieser Umgebung.
+
+**Nachrichtenweg des InkluAgent (`main._agent_nachricht`):**
+- K2/S4 Ein Lauf je Konto: `_lauf_anmelden` (409 „Der InkluAgent arbeitet noch …“), `_lauf_abmelden` in jedem Ausgang. Läufe im
+  eigenen, begrenzten Arbeitsbereich `_AGENT_EXECUTOR` (`INKLUAGENT_PARALLEL`, Vorgabe 4) statt im gemeinsamen Thread-Pool, den
+  Hochladen, Exporte und `kern.warten` brauchen; auch die Karten-Knöpfe laufen dort. Gesamtfrist je Nachricht über alle Runden
+  (`INKLUAGENT_FRIST_S`, Vorgabe 300 s, `agent_loop._frist_s`).
+- K13 Der Lauf startet als Aufgabe, BEVOR die Antwort an den Browser geht; der Stream liest nur die Warteschlange.
+- K5 Lebenszeichen `{"type": "ping"}` alle 15 s, solange der Lauf still ist (ein Proxy schloss sonst die Verbindung).
+- K4 Dieselbe Bremse (`_agent_bremse`) vor Nachricht UND Hochladen; höchstens ein Hochladen je Konto gleichzeitig.
+- K3 Die Antwort kommt in das Gespräch ihrer Frage (`storage.konto_anhaengen(gespraech_id=…)`,
+  `storage.gespraech_der_nachricht`), auch wenn der Nutzer während des Laufs ein neues beginnt.
+- K1/S13 Die Ja-Prüfung liest den GETIPPTEN Text (`nutzer_text` bis `run_agent`), nicht den Text mit Notizen des Servers
+  (Seite, Hochladen, Webadressen) — mit dem Begleiter zählte ein „Ja“ vorher nie.
+- K9 Der Begleiter gehört nur zum InkluAgent des Kontos: `run_agent(begleiter_lauf=begleiter.Lauf(...))` nur aus
+  `_agent_nachricht`, nie in der Demo; Sprache, Übersetzung und getippter Text als Argument statt Thread-Speicher.
+
+**Bestätigen (S2, `tools/ausgaben._angebot_einloesen`, `sicherheit.ja_grund`):**
+- Löschen (Dokument, Bild, Ablage-Eintrag, Projekt; `_UNUMKEHRBAR_ARTEN`) geht nur über den Knopf der Karte, nie über
+  `bestaetigt=true` vom Modell. Vorher genügte ein Ja auf eine Frage, deren Text das Modell bestimmt.
+- Ein getipptes Ja zählt nur als klares Ja (`ist_klares_ja`) in der Nachricht DIREKT nach dem Angebot
+  (`sicherheit.nachricht_merken` merkt die Reihenfolge je Konto, `G_DIREKT`) — und das jetzt immer, nicht nur mit
+  `AGENT_SICHERHEIT` (ohne Schalter genügte vorher irgendeine spätere Nachricht). Tool-Texte, Prompts und die Hilfe sagen es so.
+
+**Gedächtnis und Speicher:**
+- S3 „Hochgeladen: …“ und „Bestätigt über den Knopf: …“ stehen in der Spalte `zusatz` (Migration für `chat_messages` und
+  `agent_nachrichten`), nicht im getippten Text; Anzeige `storage.anzeige`, Gedächtnis `storage.fuer_modell` mit Daten-Marke.
+- K15 Lesen legt keine Gespräche an (`_laufendes_gespraech`); Altbestand ohne Gespräch übernimmt die Start-Migration; die Liste
+  holt die Projekte aller Gespräche in einer Abfrage; Index `idx_agent_nachrichten_gespraech`; Karten nur im eigenen Konto;
+  die Suche behandelt `%` und `_` als Text.
+
+**Werkzeuge und Begleiter:**
+- S8 Sprache und Ansicht stellt der Begleiter nur um, wenn der Nutzer sie in seiner Nachricht nennt (`_SPRACHNAMEN`,
+  `_ANSICHT_WOERTER`, `G_NICHT_GENANNT`). Zu Konto, E-Mail, Passwort, Abo, Team, API, Kündigen, Widerruf nur über den Knopf
+  „Hinführen“ (`_NUR_KNOPF`). Der Rückweg-Link „Zurück zu …“ trägt `lang` (B11). Umbenennen und Laufabbruch bleiben ohne Karte
+  (umkehrbar, Steves Wunsch nach wenig Klicks); Dateinamen erreichen das Modell nur noch als Daten (S3).
+- S9 Kein Rückfall auf den alten Vier-Wege-Dispatcher nach einem Absturz im Werkzeug-Modus (er konnte bezahlte Neugenerierungen
+  ohne Karte starten): Fehlermeldung in der Sprache der Oberfläche.
+- S10 Fehler ohne Interna: `kern.fehlertext(e, satz)` für alle Werkzeuge (Satz einer HTTPException, sonst ein allgemeiner Satz;
+  Einzelheiten ins Log), Provider-Fehler nicht mehr im Chat, Werkzeug-Argumente im Log nur mit Länge (`_args_kurz`), keine
+  Seiten-Notiz auf `/verwaltung`.
+- S6/K16 Eingang: Aufbewahrung wie die Karten (15 Minuten), höchstens 20 Dateien je Konto, `hochladen.eingang_schleife` räumt
+  alle Konten (Start und alle 5 Minuten). Datei ablegen und Webadresse laden über den Knopf: dauert es länger als 150 s, meldet
+  der Knopf „läuft noch“ statt „fehlgeschlagen“ (das Hochladen läuft weiter).
+- S7/K12 Hochladen im Agenten liest die Dateien eine nach der anderen (`hochladen._lesen`) und wartet aufs Auslesen insgesamt
+  höchstens 60 s (danach „wird noch ausgelesen“).
+- S12/K10 Gemini-Stream: Kosten auch für abgebrochene Streams, Fehlerobjekt im Stream = Fehler, gesperrte Anfrage =
+  `GeminiAntwortGesperrt` ohne zweiten Aufruf.
+- S18 Kostendeckel je Person (`ki_aufrufe.user_id`) statt je Team-Topf.
+
+**Weitere Schutzschichten (wirken auf die ganze App):**
+- S5 `_HerkunftPruefen`: ändernde Anfragen MIT Cookie nur von der eigenen Herkunft (`Sec-Fetch-Site`, sonst `Origin` gegen
+  Host); ohne Cookie (API-Schlüssel, Stripe-Webhook) keine Prüfung. Ein Content-Type-Zwang für JSON ist damit überflüssig.
+- S11 `netz_sicher.py`: der Seitenscanner verbindet nur mit Adressen, die er im selben Schritt geprüft hat (kein
+  DNS-Rebinding), `is_global` statt Einzelbereichen (100.64.0.0/10, NAT64, 6to4), Lesen gestreamt bis zur Grenze, Auflösung
+  ohne die Ereignisschleife zu blockieren; höchstens 300 Bilder und 300 MB je Seite.
+- S14 `/set-language` leitet nur auf eigene Pfade (kein `//host`, kein `/\host`) und ohne `eingebettet`; die Seite bekommt
+  die erlaubten Sprungziele für `?hin=` (`window.INKLUAGENT.hinZiele`).
+- S15/K14 Selbst-Einrahmen nie für Anmelden, Registrieren, Passwort, Einladungen, Freigaben; HTML mit Schalter trägt
+  `Vary: Sec-Fetch-Dest` und `Cache-Control: private, no-cache`.
+- S16 `pdfua_export` liest XML mit dem sicheren Parser (`docx_processor._safe_parser`).
+- H5 Genau ein uvicorn-Worker (Dockerfile-Kommentar, Log-Fehler bei `WEB_CONCURRENCY > 1`).
+- H2/H3 Doppelte Helfer zusammengeführt (`storage.datum`), feste Sätze an Nutzer übersetzbar (12 neue Texte in 6 Sprachen).
+
+**Offen (Entscheidung Steve):** „Gespräch löschen“ als neue Funktion (S17); Vorgabe „Jeden Schritt ansagen“ (B9).
+**Bewusst nicht geändert:** Sprachwechsel bleibt direkt auf ausdrückliche Bitte, ohne Karte (Steves Regel 12.10.2026).
+**Vor dem nächsten Prod-Rollout beachten (Korrektheit H4):** `TAGGING_PROFESSIONELL` setzen, sonst ist „Barrierefrei machen“
+gesperrt; die Ja-Prüfung und „Löschen nur über den Knopf“ gelten dann auch auf Prod; CSRF-Schicht und `netz_sicher` wirken
+auf die ganze App.

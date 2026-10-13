@@ -102,6 +102,12 @@ def ziel_url(ort: dict) -> str:
     return f"{ort['pfad']}?hin={ort['element'] or _UEBERSCHRIFT}"
 
 
+def hin_ziele() -> list[str]:
+    """Alle Element-IDs, auf die ?hin= zeigen darf (window.INKLUAGENT.hinZiele): die Seite setzt den Fokus nur auf diese, nicht
+    auf ein beliebiges Element, das ein fremder Link nennt (Pruefung 13.10.2026, S14)."""
+    return sorted({e or _UEBERSCHRIFT for _s, _p, e, _n, _w, _b in _ORTE})
+
+
 # ─── Dieser Lauf ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @dataclass(frozen=True)
 class Lauf:
@@ -247,6 +253,9 @@ def seite_notiz(seite: Any, user_id: int) -> str:
         return ""
     pfad = str(seite.get("pfad") or "")
     if not _PFAD.match(pfad):
+        return ""
+    if pfad == "/verwaltung" or pfad.startswith("/verwaltung/"):
+        # Verwaltungsseiten nennen Kunden in der Ueberschrift („Verwaltung: Kunde …“): die gehen nicht ans Modell (S10)
         return ""
     titel = re.sub(r"\s+", " ", str(seite.get("titel") or "")).strip()[:120]
     ort = next((o for o in orte(user_id) if o["pfad"] == pfad and not o["element"]), None)

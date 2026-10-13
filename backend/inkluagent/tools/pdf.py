@@ -29,6 +29,7 @@ from fastapi import HTTPException
 
 import funktionen   # Funktionsschalter (30.09.2026): was die Oberflaeche ausblendet, blendet auch der Chatbot aus
 from . import ausgaben as _ausg
+from ..kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
 from ..daten import DATEN_MARKE, daten   # EINE Marke fuer alle Werkzeuge (09.10.2026)
 
 log = logging.getLogger(__name__)
@@ -538,7 +539,7 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
         return _fehler(e)
     except Exception as e:  # noqa: BLE001
         log.exception("[bot] PDF-Export fehlgeschlagen")
-        return {"ok": False, "error": f"Der Export ist fehlgeschlagen: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Der Export ist fehlgeschlagen.")}
     finally:
         m._export_freigeben(user_id)
     h = erg.get("headers") or {}

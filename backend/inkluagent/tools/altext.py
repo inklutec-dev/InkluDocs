@@ -14,6 +14,7 @@ import billing  # Abo-/Credit-System Etappe 1
 from typing import Any, Optional
 
 from ..adapters.inkludocs import run_pipeline_for_image as _run_pipeline
+from ..kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ def generate_alt_text(image_id: int, project_id: int, user_id: int) -> dict[str,
             result = _run_pipeline(image_id, project_id, user_id)
     except Exception as e:
         log.exception("generate_alt_text Pipeline-Fehler")
-        return {"ok": False, "error": f"Pipeline-Fehler: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Der Alt-Text konnte gerade nicht erzeugt werden.")}
 
     # Review-Befund 6 (31.07.2026): Marker der Kontingent-Sperre abfangen —
     # er darf nie als gueltiges Pipeline-Ergebnis durchrutschen. Die Vorab-
@@ -240,7 +241,7 @@ def update_alt_text(
         affected = cursor.rowcount
     except sqlite3.Error as e:
         log.exception("update_alt_text DB-Fehler")
-        return {"ok": False, "error": f"DB-Fehler beim Speichern: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Der Alt-Text konnte gerade nicht gespeichert werden.")}
     finally:
         conn.close()
 
@@ -296,7 +297,7 @@ def revert_alt_text(image_id: int, project_id: int, user_id: int) -> dict[str, A
         original = (row[0] if row else "") or ""
     except sqlite3.Error as e:
         log.exception("revert_alt_text DB-Fehler")
-        return {"ok": False, "error": f"DB-Fehler beim Rollback: {e}"}
+        return {"ok": False, "error": fehlertext(e, "Der vorherige Alt-Text konnte gerade nicht zurückgeholt werden.")}
     finally:
         conn.close()
 
