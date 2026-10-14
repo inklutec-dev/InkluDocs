@@ -12699,3 +12699,115 @@ msgstr "Han llegado {n} avisos de InkluAgent."
 #, python-brace-format
 msgid "{n} Rückmeldungen stehen in anderen Gesprächen. Du findest sie unter „Frühere Gespräche“."
 msgstr "Hay {n} avisos en otras conversaciones. Los encontrarás en «Conversaciones anteriores»."
+
+# Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py)
+msgid "Dein Auftrag"
+msgstr "Tu encargo"
+
+msgid "Auftrag erteilen"
+msgstr "Confirmar el encargo"
+
+msgid "Zusätzlich per Mail an mein Konto melden, wenn der Auftrag fertig ist"
+msgstr "Avisarme también por correo a mi cuenta cuando el encargo esté terminado"
+
+#, python-brace-format
+msgid "„{name}“, {n} Seiten"
+msgstr "«{name}», {n} páginas"
+
+msgid "Barrierefrei machen entfällt: Alle Dokumente sind schon getaggt."
+msgstr "Hacer accesible no hace falta: todos los documentos ya están etiquetados."
+
+msgid "Alt-Texte generieren entfällt: Es gibt keine Bilder dafür."
+msgstr "Generar textos alternativos no hace falta: no hay imágenes."
+
+#, python-brace-format
+msgid "Alt-Texte generieren überschreibt {n} eigene Texte."
+msgstr "Generar textos alternativos sobrescribe {n} textos propios."
+
+msgid "Nach dem Tagging kann die Zahl der Bilder eine andere sein. Kosten die Alt-Texte dann mehr, hält der Auftrag vorher an und ich sage es dir."
+msgstr "Después del etiquetado, el número de imágenes puede cambiar. Si los textos alternativos cuestan entonces más, el encargo se detiene antes y te lo digo."
+
+msgid "Quickinfos generieren entfällt: Es gibt keine benannten Formularfelder."
+msgstr "Generar sugerencias no hace falta: no hay campos de formulario con nombre."
+
+msgid "Übersetzen entfällt: In dieser Sprache ist schon alles übersetzt, oder es gibt keinen Text."
+msgstr "Traducir no hace falta: ya está todo traducido a este idioma o no hay texto."
+
+#, python-brace-format
+msgid "{sprache}, {n} Wörter"
+msgstr "{sprache}, {n} palabras"
+
+msgid "alle Dokumente als ZIP"
+msgstr "todos los documentos en ZIP"
+
+msgid "ein Dokument"
+msgstr "un documento"
+
+#, python-brace-format
+msgid "höchstens {n} Credits"
+msgstr "como máximo {n} créditos"
+
+#, python-brace-format
+msgid "Projekt „{projekt}“."
+msgstr "Proyecto «{projekt}»."
+
+#, python-brace-format
+msgid "Zusammen höchstens {n} Credits."
+msgstr "Como máximo {n} créditos en total."
+
+#, python-brace-format
+msgid "Zusammen {n} Credits."
+msgstr "{n} créditos en total."
+
+#, python-brace-format
+msgid "Dein Guthaben: {n} Credits."
+msgstr "Tu saldo: {n} créditos."
+
+msgid "Die Schritte laufen nacheinander im Hintergrund; du kannst die Seite danach schließen."
+msgstr "Los pasos se ejecutan uno tras otro en segundo plano; después puedes cerrar la página."
+
+msgid "Umfang oder Preis haben sich geändert. Bitte frag im Chat neu."
+msgstr "El alcance o el precio han cambiado. Vuelve a preguntar en el chat, por favor."
+
+msgid "In diesem Projekt läuft schon ein Auftrag. Warte bitte, bis er fertig ist."
+msgstr "Ya hay un encargo en marcha en este proyecto. Espera a que termine, por favor."
+
+#, python-brace-format
+msgid "Es laufen schon {n} Aufträge. Warte bitte, bis einer fertig ist."
+msgstr "Ya hay {n} encargos en marcha. Espera a que termine uno, por favor."
+
+msgid "Es warten schon zu viele Rückmeldungen. Warte bitte, bis eine da ist."
+msgstr "Ya hay demasiados avisos pendientes. Espera a que llegue uno, por favor."
+
+msgid "Auftrag erteilt. Die Schritte laufen jetzt nacheinander im Hintergrund; du kannst die Seite schließen."
+msgstr "Encargo confirmado. Los pasos se ejecutan ahora uno tras otro en segundo plano; puedes cerrar la página."
+
+msgid "Auftrag vorbereiten"
+msgstr "Preparar el encargo"
+
+msgid "Stand des Auftrags"
+msgstr "Estado del encargo"
+
+msgid "Auftrag anhalten"
+msgstr "Detener el encargo"
+
+msgid "Mehrere Schritte als ein Auftrag"
+msgstr "Varios pasos como un solo encargo"
+
+msgid "Sag dem InkluAgent, was in einem Projekt alles passieren soll, zum Beispiel „Mach die Alt-Texte und gib mir dann die Word-Datei“. Er legt dir eine Karte mit allen Schritten, ihren Preisen und der Summe vor. Mit „Auftrag erteilen“ startest du alles auf einmal; danach kannst du die Seite schließen."
+msgstr "Dile al InkluAgent todo lo que debe hacerse en un proyecto, por ejemplo «Haz los textos alternativos y luego dame el archivo de Word». Te muestra una tarjeta con todos los pasos, sus precios y el total. Con «Confirmar el encargo» lo inicias todo a la vez; después puedes cerrar la página."
+
+msgid "Ein Auftrag kostet nie mehr als die Summe auf der Karte. Würde ein Schritt teurer oder geht einer schief, hält er an und sagt es dir. Ist alles fertig, meldet sich der InkluAgent im Gespräch, auf Wunsch auch per Mail, und die Dateien stehen zum Herunterladen bereit."
+msgstr "Un encargo nunca cuesta más que el total de la tarjeta. Si un paso fuera a costar más o algo sale mal, se detiene y te lo dice. Cuando todo está listo, el InkluAgent te avisa en la conversación, también por correo si quieres, y los archivos están listos para descargar."
+
+# Auftraege, Baustein 2: Einzahl auf der Karte
+msgid "ein Feld"
+msgstr "un campo"
+
+#, python-brace-format
+msgid "„{name}“, eine Seite"
+msgstr "«{name}», una página"
+
+#, python-brace-format
+msgid "{sprache}, ein Wort"
+msgstr "{sprache}, una palabra"

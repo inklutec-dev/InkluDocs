@@ -12699,3 +12699,115 @@ msgstr "{n} comptes rendus de l’InkluAgent sont arrivés."
 #, python-brace-format
 msgid "{n} Rückmeldungen stehen in anderen Gesprächen. Du findest sie unter „Frühere Gespräche“."
 msgstr "{n} comptes rendus se trouvent dans d’autres conversations. Tu les trouves sous « Conversations précédentes »."
+
+# Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py)
+msgid "Dein Auftrag"
+msgstr "Ta mission"
+
+msgid "Auftrag erteilen"
+msgstr "Confier la mission"
+
+msgid "Zusätzlich per Mail an mein Konto melden, wenn der Auftrag fertig ist"
+msgstr "Me prévenir aussi par e-mail sur mon compte quand la mission est terminée"
+
+#, python-brace-format
+msgid "„{name}“, {n} Seiten"
+msgstr "« {name} », {n} pages"
+
+msgid "Barrierefrei machen entfällt: Alle Dokumente sind schon getaggt."
+msgstr "Rendre accessible n’est pas nécessaire : tous les documents sont déjà balisés."
+
+msgid "Alt-Texte generieren entfällt: Es gibt keine Bilder dafür."
+msgstr "Générer les textes alternatifs n’est pas nécessaire : il n’y a pas d’images."
+
+#, python-brace-format
+msgid "Alt-Texte generieren überschreibt {n} eigene Texte."
+msgstr "Générer les textes alternatifs remplace {n} textes que tu as écrits."
+
+msgid "Nach dem Tagging kann die Zahl der Bilder eine andere sein. Kosten die Alt-Texte dann mehr, hält der Auftrag vorher an und ich sage es dir."
+msgstr "Après le balisage, le nombre d’images peut changer. Si les textes alternatifs coûtent alors plus cher, la mission s’arrête avant et je te le dis."
+
+msgid "Quickinfos generieren entfällt: Es gibt keine benannten Formularfelder."
+msgstr "Générer les info-bulles n’est pas nécessaire : il n’y a pas de champs de formulaire nommés."
+
+msgid "Übersetzen entfällt: In dieser Sprache ist schon alles übersetzt, oder es gibt keinen Text."
+msgstr "Traduire n’est pas nécessaire : tout est déjà traduit dans cette langue, ou il n’y a pas de texte."
+
+#, python-brace-format
+msgid "{sprache}, {n} Wörter"
+msgstr "{sprache}, {n} mots"
+
+msgid "alle Dokumente als ZIP"
+msgstr "tous les documents en ZIP"
+
+msgid "ein Dokument"
+msgstr "un document"
+
+#, python-brace-format
+msgid "höchstens {n} Credits"
+msgstr "au plus {n} crédits"
+
+#, python-brace-format
+msgid "Projekt „{projekt}“."
+msgstr "Projet « {projekt} »."
+
+#, python-brace-format
+msgid "Zusammen höchstens {n} Credits."
+msgstr "Au plus {n} crédits au total."
+
+#, python-brace-format
+msgid "Zusammen {n} Credits."
+msgstr "{n} crédits au total."
+
+#, python-brace-format
+msgid "Dein Guthaben: {n} Credits."
+msgstr "Ton solde : {n} crédits."
+
+msgid "Die Schritte laufen nacheinander im Hintergrund; du kannst die Seite danach schließen."
+msgstr "Les étapes s’exécutent l’une après l’autre en arrière-plan ; tu peux ensuite fermer la page."
+
+msgid "Umfang oder Preis haben sich geändert. Bitte frag im Chat neu."
+msgstr "L’étendue ou le prix a changé. Redemande dans le chat, s’il te plaît."
+
+msgid "In diesem Projekt läuft schon ein Auftrag. Warte bitte, bis er fertig ist."
+msgstr "Une mission est déjà en cours dans ce projet. Attends qu’elle soit terminée, s’il te plaît."
+
+#, python-brace-format
+msgid "Es laufen schon {n} Aufträge. Warte bitte, bis einer fertig ist."
+msgstr "{n} missions sont déjà en cours. Attends que l’une d’elles soit terminée, s’il te plaît."
+
+msgid "Es warten schon zu viele Rückmeldungen. Warte bitte, bis eine da ist."
+msgstr "Trop de comptes rendus sont déjà en attente. Attends qu’un d’eux soit arrivé, s’il te plaît."
+
+msgid "Auftrag erteilt. Die Schritte laufen jetzt nacheinander im Hintergrund; du kannst die Seite schließen."
+msgstr "Mission confiée. Les étapes s’exécutent maintenant l’une après l’autre en arrière-plan ; tu peux fermer la page."
+
+msgid "Auftrag vorbereiten"
+msgstr "Préparer la mission"
+
+msgid "Stand des Auftrags"
+msgstr "État de la mission"
+
+msgid "Auftrag anhalten"
+msgstr "Arrêter la mission"
+
+msgid "Mehrere Schritte als ein Auftrag"
+msgstr "Plusieurs étapes en une seule mission"
+
+msgid "Sag dem InkluAgent, was in einem Projekt alles passieren soll, zum Beispiel „Mach die Alt-Texte und gib mir dann die Word-Datei“. Er legt dir eine Karte mit allen Schritten, ihren Preisen und der Summe vor. Mit „Auftrag erteilen“ startest du alles auf einmal; danach kannst du die Seite schließen."
+msgstr "Dis à l’InkluAgent tout ce qui doit se faire dans un projet, par exemple « Fais les textes alternatifs, puis donne-moi le fichier Word ». Il te présente une carte avec toutes les étapes, leurs prix et le total. Avec « Confier la mission », tu lances tout d’un coup ; ensuite, tu peux fermer la page."
+
+msgid "Ein Auftrag kostet nie mehr als die Summe auf der Karte. Würde ein Schritt teurer oder geht einer schief, hält er an und sagt es dir. Ist alles fertig, meldet sich der InkluAgent im Gespräch, auf Wunsch auch per Mail, und die Dateien stehen zum Herunterladen bereit."
+msgstr "Une mission ne coûte jamais plus que le total indiqué sur la carte. Si une étape devait coûter plus cher ou si quelque chose échoue, elle s’arrête et te le dit. Quand tout est terminé, l’InkluAgent te répond dans la conversation, aussi par e-mail si tu le souhaites, et les fichiers sont prêts à être téléchargés."
+
+# Auftraege, Baustein 2: Einzahl auf der Karte
+msgid "ein Feld"
+msgstr "un champ"
+
+#, python-brace-format
+msgid "„{name}“, eine Seite"
+msgstr "« {name} », une page"
+
+#, python-brace-format
+msgid "{sprache}, ein Wort"
+msgstr "{sprache}, un mot"

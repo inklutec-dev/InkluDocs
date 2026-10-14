@@ -178,7 +178,9 @@ class Werkzeuge(unittest.TestCase):
             self.assertIn(name, WERKZEUG_NAMEN, f"{name} umbenannt? Dann START_WERKZEUGE nachziehen")
         self.assertEqual(WERKZEUG_NAMEN["melden_wenn_fertig"], "Rückmeldung einrichten")
         self.assertEqual(WERKZEUG_FREMDTEXT["melden_wenn_fertig"], ("projekt_daten",))
-        self.assertEqual(set(rm.START_WERKZEUGE.values()) | {"verarbeitung"}, set(rm.WAS))
+        # Jede Art hat ihren Satzanfang: die Arten der Start-Werkzeuge, „verarbeitung“ (aus der Oberflaeche gestartet) und
+        # „auftrag“ (Baustein 2, inkluagent/auftraege.py — angelegt beim Erteilen, nicht von einem Start-Werkzeug)
+        self.assertEqual(set(rm.START_WERKZEUGE.values()) | {"verarbeitung", "auftrag"}, set(rm.WAS))
 
 
 # ─── 2. Vormerken ────────────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -49,6 +49,8 @@ WERKZEUG_NAMEN: dict[str, str] = {
     "einladen_vorbereiten": "Einladung vorbereiten", "express_bestellen_vorbereiten": "Bestellung vorbereiten",
     # Rueckmeldung (14.10.2026, inkluagent/rueckmeldung.py)
     "melden_wenn_fertig": "Rückmeldung einrichten",
+    # Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py)
+    "auftrag_vorbereiten": "Auftrag vorbereiten", "auftrag_stand": "Stand des Auftrags", "auftrag_abbrechen": "Auftrag anhalten",
 }
 
 

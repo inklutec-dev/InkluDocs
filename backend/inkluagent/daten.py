@@ -117,6 +117,11 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     "express_bestellen_vorbereiten": (),
     # Rueckmeldung (14.10.2026, inkluagent/rueckmeldung.py): der Projektname kommt gekennzeichnet, sonst Saetze des Servers
     "melden_wenn_fertig": ("projekt_daten",),
+    # Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py): Projekt- und Dokumentnamen (im Umfang eines Schritts)
+    # gekennzeichnet; Schritt-Titel, Zustaende und Gruende sind Saetze des Servers
+    "auftrag_vorbereiten": ("projekt_daten", "schritte[].umfang_daten"),
+    "auftrag_stand": ("auftraege[].projekt_daten", "auftraege[].schritte[].umfang_daten"),
+    "auftrag_abbrechen": ("projekt_daten",),
 }
 
 

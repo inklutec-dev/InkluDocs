@@ -12697,3 +12697,115 @@ msgstr "{n} updates from the InkluAgent have arrived."
 #, python-brace-format
 msgid "{n} Rückmeldungen stehen in anderen Gesprächen. Du findest sie unter „Frühere Gespräche“."
 msgstr "{n} updates are in other conversations. You can find them under “Earlier conversations”."
+
+# Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py)
+msgid "Dein Auftrag"
+msgstr "Your task"
+
+msgid "Auftrag erteilen"
+msgstr "Assign task"
+
+msgid "Zusätzlich per Mail an mein Konto melden, wenn der Auftrag fertig ist"
+msgstr "Also notify me by email to my account when the task is done"
+
+#, python-brace-format
+msgid "„{name}“, {n} Seiten"
+msgstr "“{name}”, {n} pages"
+
+msgid "Barrierefrei machen entfällt: Alle Dokumente sind schon getaggt."
+msgstr "Make accessible is not needed: all documents are already tagged."
+
+msgid "Alt-Texte generieren entfällt: Es gibt keine Bilder dafür."
+msgstr "Generate alt texts is not needed: there are no images for it."
+
+#, python-brace-format
+msgid "Alt-Texte generieren überschreibt {n} eigene Texte."
+msgstr "Generate alt texts overwrites {n} texts of your own."
+
+msgid "Nach dem Tagging kann die Zahl der Bilder eine andere sein. Kosten die Alt-Texte dann mehr, hält der Auftrag vorher an und ich sage es dir."
+msgstr "After tagging, the number of images may differ. If the alt texts then cost more, the task stops beforehand and I will tell you."
+
+msgid "Quickinfos generieren entfällt: Es gibt keine benannten Formularfelder."
+msgstr "Generate tooltips is not needed: there are no named form fields."
+
+msgid "Übersetzen entfällt: In dieser Sprache ist schon alles übersetzt, oder es gibt keinen Text."
+msgstr "Translate is not needed: everything is already translated into this language, or there is no text."
+
+#, python-brace-format
+msgid "{sprache}, {n} Wörter"
+msgstr "{sprache}, {n} words"
+
+msgid "alle Dokumente als ZIP"
+msgstr "all documents as ZIP"
+
+msgid "ein Dokument"
+msgstr "one document"
+
+#, python-brace-format
+msgid "höchstens {n} Credits"
+msgstr "at most {n} credits"
+
+#, python-brace-format
+msgid "Projekt „{projekt}“."
+msgstr "Project “{projekt}”."
+
+#, python-brace-format
+msgid "Zusammen höchstens {n} Credits."
+msgstr "At most {n} credits in total."
+
+#, python-brace-format
+msgid "Zusammen {n} Credits."
+msgstr "{n} credits in total."
+
+#, python-brace-format
+msgid "Dein Guthaben: {n} Credits."
+msgstr "Your balance: {n} credits."
+
+msgid "Die Schritte laufen nacheinander im Hintergrund; du kannst die Seite danach schließen."
+msgstr "The steps run one after another in the background; you can close the page afterwards."
+
+msgid "Umfang oder Preis haben sich geändert. Bitte frag im Chat neu."
+msgstr "The scope or price has changed. Please ask again in the chat."
+
+msgid "In diesem Projekt läuft schon ein Auftrag. Warte bitte, bis er fertig ist."
+msgstr "A task is already running in this project. Please wait until it is done."
+
+#, python-brace-format
+msgid "Es laufen schon {n} Aufträge. Warte bitte, bis einer fertig ist."
+msgstr "{n} tasks are already running. Please wait until one is done."
+
+msgid "Es warten schon zu viele Rückmeldungen. Warte bitte, bis eine da ist."
+msgstr "Too many reports are already waiting. Please wait until one has arrived."
+
+msgid "Auftrag erteilt. Die Schritte laufen jetzt nacheinander im Hintergrund; du kannst die Seite schließen."
+msgstr "Task assigned. The steps now run one after another in the background; you can close the page."
+
+msgid "Auftrag vorbereiten"
+msgstr "Prepare task"
+
+msgid "Stand des Auftrags"
+msgstr "Task status"
+
+msgid "Auftrag anhalten"
+msgstr "Stop task"
+
+msgid "Mehrere Schritte als ein Auftrag"
+msgstr "Several steps as one task"
+
+msgid "Sag dem InkluAgent, was in einem Projekt alles passieren soll, zum Beispiel „Mach die Alt-Texte und gib mir dann die Word-Datei“. Er legt dir eine Karte mit allen Schritten, ihren Preisen und der Summe vor. Mit „Auftrag erteilen“ startest du alles auf einmal; danach kannst du die Seite schließen."
+msgstr "Tell the InkluAgent everything that should happen in a project, for example “Do the alt texts and then give me the Word file”. It shows you a card with all steps, their prices and the total. With “Assign task” you start everything at once; afterwards you can close the page."
+
+msgid "Ein Auftrag kostet nie mehr als die Summe auf der Karte. Würde ein Schritt teurer oder geht einer schief, hält er an und sagt es dir. Ist alles fertig, meldet sich der InkluAgent im Gespräch, auf Wunsch auch per Mail, und die Dateien stehen zum Herunterladen bereit."
+msgstr "A task never costs more than the total on the card. If a step would cost more or something goes wrong, it stops and tells you. When everything is done, the InkluAgent reports back in the conversation, by email too if you like, and the files are ready to download."
+
+# Auftraege, Baustein 2: Einzahl auf der Karte
+msgid "ein Feld"
+msgstr "one field"
+
+#, python-brace-format
+msgid "„{name}“, eine Seite"
+msgstr "“{name}”, one page"
+
+#, python-brace-format
+msgid "{sprache}, ein Wort"
+msgstr "{sprache}, one word"

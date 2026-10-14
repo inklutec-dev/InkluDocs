@@ -802,6 +802,34 @@ def init_db():
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_rueckmeldungen_zustand ON agent_rueckmeldungen(zustand, id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_rueckmeldungen_konto ON agent_rueckmeldungen(user_id, zustand)")
+    # Auftraege des InkluAgent, Baustein 2 (Steve 14.10.2026, inkluagent/auftraege.py, Schalter AGENT_AUFTRAEGE): je erteiltem
+    # Auftrag eine Zeile. schritte: JSON-Liste der Schritte mit Plan (Werkzeug, Argumente, geplanter Preis, Umfang) und Stand
+    # (zustand offen | laeuft | fertig | teilweise | fehler | uebersprungen | ausgelassen, freigegebener Preis, Grund, Datei).
+    # freigegeben: die Summe der Karte (Obergrenze); verbraucht: die freigegebenen Preise der gestarteten Schritte. zustand:
+    # laeuft | fertig | gescheitert | abgebrochen. abbrechen: auftrag_abbrechen hat angehalten (setzt nur das Werkzeug).
+    # fehlversuche: unerwartete Fehler hintereinander. Die Rueckmeldung am Ende: agent_rueckmeldungen mit auftrag_id (Spalte
+    # ueber _migrate_columns). Vorwaerts: diese Zeilen (idempotent). Rueckwaerts: alter Code liest die Tabelle nicht; entfernen
+    # mit „DROP TABLE agent_auftraege“.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS agent_auftraege (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            project_id INTEGER NOT NULL,
+            gespraech_id INTEGER,
+            sprache TEXT NOT NULL DEFAULT 'de',
+            schritte TEXT NOT NULL DEFAULT '[]',
+            freigegeben INTEGER NOT NULL DEFAULT 0,
+            verbraucht INTEGER NOT NULL DEFAULT 0,
+            zustand TEXT NOT NULL DEFAULT 'laeuft',
+            abbrechen INTEGER NOT NULL DEFAULT 0,
+            fehlversuche INTEGER NOT NULL DEFAULT 0,
+            angelegt_am TEXT DEFAULT (datetime('now')),
+            geprueft_am TEXT,
+            beendet_am TEXT
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_auftraege_zustand ON agent_auftraege(zustand, id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_auftraege_konto ON agent_auftraege(user_id, project_id, zustand)")
 
     # EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Kunden lassen Dokumente von Profis aufbereiten oder pruefen,
     # Lieferung innerhalb einer Frist, Bezahlung in Credits (vorgemerkt bei der Bestellung, abgebucht bei der Lieferung,
@@ -1172,6 +1200,8 @@ def _migrate_columns(conn):
         # damit ein Screenreader nach einem Sprachwechsel aeltere Nachrichten in ihrer Sprache liest. Leer = unbekannt (Altbestand).
         ("chat_messages", "sprache", "ALTER TABLE chat_messages ADD COLUMN sprache TEXT"),
         ("agent_nachrichten", "sprache", "ALTER TABLE agent_nachrichten ADD COLUMN sprache TEXT"),
+        # Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py): die Rueckmeldung zu einem Auftrag kennt ihn
+        ("agent_rueckmeldungen", "auftrag_id", "ALTER TABLE agent_rueckmeldungen ADD COLUMN auftrag_id INTEGER"),
         # KI-FACH (28.08.2026, Steve: wie alt_text/alt_text_edited bei Bildern): der letzte
         # KI-Vorschlag bleibt erhalten, auch wenn von Hand darueber geschrieben wird —
         # Knopf „KI-Vorschlag uebernehmen“ holt ihn zurueck.
@@ -1543,9 +1573,9 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM email_verifications WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM user_prompts WHERE user_id = ?", (user_id,))
     # InkluAgent (Ausbau Runde 1/2): Gespraech je Konto, Fokus und Zaehler des Kontos; Rueckmeldungen (14.10.2026, mit der
-    # getippten Bitte, solange eine wartet)
+    # getippten Bitte, solange eine wartet) und Auftraege (Baustein 2, mit Dateinamen in den Schritten)
     for _tabelle in ("agent_nachrichten", "agent_fokus", "agent_zaehler", "agent_tageszaehler", "agent_gespraeche",
-                     "agent_rueckmeldungen"):
+                     "agent_rueckmeldungen", "agent_auftraege"):
         conn.execute(f"DELETE FROM {_tabelle} WHERE user_id = ?", (user_id,))
     # Quickinfo-Werkzeug (27.08.2026): Stammdaten-Bibliothek des Kontos.
     conn.execute("DELETE FROM stammdaten WHERE user_id = ?", (user_id,))

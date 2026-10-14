@@ -29,6 +29,7 @@ import sqlite3
 import threading
 import time
 import uuid
+from contextlib import contextmanager
 from typing import Any, Optional
 
 from fastapi import HTTPException
@@ -66,6 +67,12 @@ _ERLEDIGT: dict[str, tuple] = {}         # Kennung -> (user_id, project_id, zeit
 _ERLEDIGT_BEHALTEN_S = 24 * 3600
 _VERBRAUCHT: dict[tuple, list] = {}      # (user_id, project_id) -> [(Kennung, Angebot)] im laufenden Aufruf verbraucht
 _KARTE = threading.local()               # Kennung, deren Knopf gerade in diesem Faden ausfuehrt
+# Auftraege (Baustein 2, Steve 14.10.2026, inkluagent/auftraege.py): ein erteilter Auftrag ist die Zustimmung fuer seine
+# Schritte. Der Server startet jeden Schritt ueber DASSELBE Werkzeug wie im Gespraech (mit bestaetigt=true) in seinem eigenen
+# Faden; dort gilt fuer genau diesen Schritt eine Freigabe — nur seine Art, hoechstens einmal, hoechstens bis zur Rest-Summe
+# der Karte. Ein anderer Faden (Gespraech, Knopf einer Karte) sieht sie nie; ausserhalb gilt sie nicht.
+_AUFTRAG = threading.local()
+G_AUFTRAG_SUMME = "Dieser Schritt würde mehr kosten, als der Auftrag noch freigibt."
 
 # Gruende einer abgelehnten Zustimmung: Text fuer das Modell (Anweisung) und Kennwort fuer die Karte (eigener Satz fuer Menschen)
 _G_KEIN = ("Es liegt kein gueltiges Angebot vor: erst OHNE bestaetigt aufrufen, dem Nutzer Preis und Guthaben "
@@ -126,9 +133,41 @@ def angebot_nach_id(angebot_id: str) -> Optional[tuple]:
     return k, a
 
 
+@contextmanager
+def auftrag_schritt(arten, hoechstens: int):
+    """Freigabe eines erteilten Auftrags fuer EINEN Schritt in diesem Faden (nur inkluagent/auftraege.py). Rueckgabe: ein dict,
+    in das _angebot_einloesen den freigegebenen Preis (preis) bzw. den Grund einer Ablehnung schreibt (grund: „art“ oder
+    „summe“, dazu preis_noetig)."""
+    f = {"arten": frozenset(arten), "hoechstens": max(0, int(hoechstens or 0)), "preis": None, "grund": None}
+    vorher = getattr(_AUFTRAG, "f", None)
+    _AUFTRAG.f = f
+    try:
+        yield f
+    finally:
+        _AUFTRAG.f = vorher
+
+
+def _auftrag_einloesen(f: dict, schluessel: tuple, preis: int) -> Optional[str]:
+    """Zustimmung im Faden eines Auftragsschritts: nur die Art des Schritts, nur einmal, hoechstens die Rest-Summe."""
+    preis = int(preis or 0)
+    if schluessel[2] not in f["arten"] or schluessel[2] in _UNUMKEHRBAR_ARTEN or f["preis"] is not None:
+        f["grund"] = "art"
+        return _G_KEIN
+    if preis > f["hoechstens"]:
+        f["grund"], f["preis_noetig"] = "summe", preis
+        return G_AUFTRAG_SUMME
+    f["preis"] = preis
+    return None
+
+
 def _angebot_einloesen(schluessel: tuple, preis: int, turn_id: str) -> Optional[str]:
     """None = Zustimmung gueltig (Angebot wird verbraucht). Sonst der Grund, warum nicht. Unter der Sperre: Pruefen und
-    Verbrauchen sind ein Schritt, zwei gleichzeitige Zustimmungen fuehren hoechstens eine aus (Pruefung 4, Entwicklung 3)."""
+    Verbrauchen sind ein Schritt, zwei gleichzeitige Zustimmungen fuehren hoechstens eine aus (Pruefung 4, Entwicklung 3).
+    Im Faden eines Auftragsschritts (auftrag_schritt) entscheidet allein die Freigabe des Auftrags — ein Angebot gibt es dort
+    nicht, und ein Angebot aus dem Gespraech gilt dort nicht."""
+    f = getattr(_AUFTRAG, "f", None)
+    if f is not None:
+        return _auftrag_einloesen(f, schluessel, preis)
     with _SPERRE:
         a = _ANGEBOTE.get(schluessel)
         if not a or time.time() - a["zeit"] > _ANGEBOT_GUELTIG_S:

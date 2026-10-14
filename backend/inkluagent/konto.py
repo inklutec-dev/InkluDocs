@@ -52,8 +52,8 @@ TOOL_DEFINITIONS_KONTO: list[dict] = [
     },
     {
         "name": "laufende_arbeit",
-        "description": ("Was im Konto gerade läuft: Alt-Text-Generierung, Auslesen, Übersetzung, Tagging — je mit Projekt. "
-                        "Kostenlos."),
+        "description": ("Was im Konto gerade läuft: Alt-Text-Generierung, Auslesen, Übersetzung, Tagging, Aufträge — je mit "
+                        "Projekt. Kostenlos."),
         "input_schema": {"type": "object", "properties": {}},
     },
 ]
@@ -162,6 +162,9 @@ def laufende(user_id: int) -> list[dict]:
             "was": "Auslesen" if r["status"] == "extracting" else "Generierung oder Übersetzung"} for r in projekte]
     out += [{"project_id": r["pid"], "projekt": r["name"] or r["filename"] or "", "was": "Tagging", "dokument": r["original_filename"] or ""}
             for r in tagging]
+    from . import auftraege   # Auftraege, Baustein 2 (14.10.2026): mit dem Schritt, der dran ist
+    if auftraege.an():
+        out += auftraege.laufende(user_id)
     return out
 
 
@@ -335,10 +338,15 @@ class KontoExecutor:
                 angefordert.append(pfad.split("/")[-2])
         namen = {"generate": "Alt-Text-Generierung", "uebersetzung": "Übersetzung", "quickinfos": "Quickinfo-Generierung"}
         tagging = any(x["project_id"] == p["id"] and x["was"] == "Tagging" for x in laufende(self.user_id))
+        # Ein Auftrag (Baustein 2) in diesem Projekt endet mit: sonst startete er nach dem abgebrochenen Lauf den naechsten Schritt
+        from . import auftraege
+        auftrag = bool(auftraege.an() and auftraege.abbrechen(self.user_id, p["id"]))
+        abgebrochen = [namen[a] for a in angefordert] + (["Auftrag"] if auftrag else [])
         return {"ok": True, "result": {"project_id": p["id"], "name_daten": daten(p["name"]),
-                                       "abgebrochen": [namen[a] for a in angefordert],
-                                       "hinweis": ("Es lief nichts, was sich abbrechen lässt." if not angefordert else
-                                                   "Der Lauf endet nach dem Schritt, der gerade in Arbeit ist; Fertiges bleibt."),
+                                       "abgebrochen": abgebrochen,
+                                       "hinweis": ("Es lief nichts, was sich abbrechen lässt." if not abgebrochen else
+                                                   "Der Lauf endet nach dem Schritt, der gerade in Arbeit ist; Fertiges bleibt."
+                                                   + (" Vom Auftrag startet danach kein weiterer Schritt." if auftrag else "")),
                                        **({"tagging_laeuft": "Tagging lässt sich nicht abbrechen."} if tagging else {})}}
 
     def _fruehere_gespraeche(self, args: dict) -> dict:

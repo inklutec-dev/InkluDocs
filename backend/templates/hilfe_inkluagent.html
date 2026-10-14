@@ -87,6 +87,14 @@
       </section>
       {% endif %}
 
+      {% if hilfe.auftraege %}
+      <section class="dash-card" aria-labelledby="hilfe-auftraege-h">
+        <h2 id="hilfe-auftraege-h">{{ _('Mehrere Schritte als ein Auftrag') }}</h2>
+        <p>{{ _('Sag dem InkluAgent, was in einem Projekt alles passieren soll, zum Beispiel „Mach die Alt-Texte und gib mir dann die Word-Datei“. Er legt dir eine Karte mit allen Schritten, ihren Preisen und der Summe vor. Mit „Auftrag erteilen“ startest du alles auf einmal; danach kannst du die Seite schließen.') }}</p>
+        <p>{{ _('Ein Auftrag kostet nie mehr als die Summe auf der Karte. Würde ein Schritt teurer oder geht einer schief, hält er an und sagt es dir. Ist alles fertig, meldet sich der InkluAgent im Gespräch, auf Wunsch auch per Mail, und die Dateien stehen zum Herunterladen bereit.') }}</p>
+      </section>
+      {% endif %}
+
       <section class="dash-card" aria-labelledby="hilfe-nicht-h">
         <h2 id="hilfe-nicht-h">{{ _('Was der InkluAgent nicht macht') }}</h2>
         <p>{{ _('Das erledigst du selbst in den Einstellungen:') }}</p>

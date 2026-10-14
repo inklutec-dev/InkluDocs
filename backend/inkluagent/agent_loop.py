@@ -375,6 +375,13 @@ def run_agent(
         system_base = system_base + "\n\n" + _rueckmeldung.PROMPT
         rueckmeldung_kontext = {"user_id": user_id, "project_id": project_id, "gespraech_id": gespraech_id,
                                 "sprache": begleiter_lauf.ui_sprache, "auftrag": begleiter_lauf.nutzer_text}
+    # Auftraege, Baustein 2 (14.10.2026, Schalter AGENT_AUFTRAEGE): mehrere Schritte als EIN Auftrag mit Gesamtpreis — die Karte
+    # bringen die Formular-Karten, das Melden am Ende die Rueckmeldung; also nur, wenn beide hier gelten
+    from . import auftraege as _auftraege
+    auftraege_an = rueckmeldung_an and karten_an and _auftraege.an()
+    if auftraege_an:
+        tool_defs = list(tool_defs) + _auftraege.werkzeuge(project_id)
+        system_base = system_base + "\n\n" + _auftraege.PROMPT
     # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
     sicherheit.nachricht_merken(executor.turn_id, user_message if nutzer_text is None else nutzer_text, user_id)
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
@@ -474,6 +481,8 @@ def run_agent(
                 result = _karten.ausfuehren(name, args, user_id, project_id, _t)
             elif rueckmeldung_an and name in _rueckmeldung.NAMEN:
                 result = _rueckmeldung.ausfuehren(name, args, **rueckmeldung_kontext)
+            elif auftraege_an and name in _auftraege.NAMEN:
+                result = _auftraege.ausfuehren(name, args, _t=_t, **rueckmeldung_kontext)
             else:
                 result = executor.execute(name, args)
                 if rueckmeldung_an:   # Lauf im Hintergrund gestartet: vormerken, das Ergebnis sagt dem Modell, dass er sich meldet

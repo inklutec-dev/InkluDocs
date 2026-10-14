@@ -12271,3 +12271,115 @@ msgstr "{n} besked från InkluAgent har kommit."
 #, python-brace-format
 msgid "{n} Rückmeldungen stehen in anderen Gesprächen. Du findest sie unter „Frühere Gespräche“."
 msgstr "{n} besked finns i andra konversationer. Du hittar dem under ”Tidigare konversationer”."
+
+# Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py)
+msgid "Dein Auftrag"
+msgstr "Ditt uppdrag"
+
+msgid "Auftrag erteilen"
+msgstr "Ge uppdraget"
+
+msgid "Zusätzlich per Mail an mein Konto melden, wenn der Auftrag fertig ist"
+msgstr "Meddela mig också via e-post till mitt konto när uppdraget är klart"
+
+#, python-brace-format
+msgid "„{name}“, {n} Seiten"
+msgstr "”{name}”, {n} sidor"
+
+msgid "Barrierefrei machen entfällt: Alle Dokumente sind schon getaggt."
+msgstr "Gör tillgänglig behövs inte: alla dokument är redan taggade."
+
+msgid "Alt-Texte generieren entfällt: Es gibt keine Bilder dafür."
+msgstr "Generera alt-texter behövs inte: det finns inga bilder."
+
+#, python-brace-format
+msgid "Alt-Texte generieren überschreibt {n} eigene Texte."
+msgstr "Generera alt-texter skriver över {n} egna texter."
+
+msgid "Nach dem Tagging kann die Zahl der Bilder eine andere sein. Kosten die Alt-Texte dann mehr, hält der Auftrag vorher an und ich sage es dir."
+msgstr "Efter taggningen kan antalet bilder vara ett annat. Kostar alt-texterna då mer, stannar uppdraget innan och jag säger det till dig."
+
+msgid "Quickinfos generieren entfällt: Es gibt keine benannten Formularfelder."
+msgstr "Generera hjälptexter behövs inte: det finns inga namngivna formulärfält."
+
+msgid "Übersetzen entfällt: In dieser Sprache ist schon alles übersetzt, oder es gibt keinen Text."
+msgstr "Översätt behövs inte: allt är redan översatt till det här språket, eller så finns ingen text."
+
+#, python-brace-format
+msgid "{sprache}, {n} Wörter"
+msgstr "{sprache}, {n} ord"
+
+msgid "alle Dokumente als ZIP"
+msgstr "alla dokument som ZIP"
+
+msgid "ein Dokument"
+msgstr "ett dokument"
+
+#, python-brace-format
+msgid "höchstens {n} Credits"
+msgstr "högst {n} krediter"
+
+#, python-brace-format
+msgid "Projekt „{projekt}“."
+msgstr "Projekt ”{projekt}”."
+
+#, python-brace-format
+msgid "Zusammen höchstens {n} Credits."
+msgstr "Högst {n} krediter totalt."
+
+#, python-brace-format
+msgid "Zusammen {n} Credits."
+msgstr "{n} krediter totalt."
+
+#, python-brace-format
+msgid "Dein Guthaben: {n} Credits."
+msgstr "Ditt saldo: {n} krediter."
+
+msgid "Die Schritte laufen nacheinander im Hintergrund; du kannst die Seite danach schließen."
+msgstr "Stegen körs efter varandra i bakgrunden; du kan stänga sidan efteråt."
+
+msgid "Umfang oder Preis haben sich geändert. Bitte frag im Chat neu."
+msgstr "Omfattning eller pris har ändrats. Fråga igen i chatten."
+
+msgid "In diesem Projekt läuft schon ein Auftrag. Warte bitte, bis er fertig ist."
+msgstr "Ett uppdrag pågår redan i det här projektet. Vänta tills det är klart."
+
+#, python-brace-format
+msgid "Es laufen schon {n} Aufträge. Warte bitte, bis einer fertig ist."
+msgstr "{n} uppdrag pågår redan. Vänta tills ett av dem är klart."
+
+msgid "Es warten schon zu viele Rückmeldungen. Warte bitte, bis eine da ist."
+msgstr "För många återkopplingar väntar redan. Vänta tills en har kommit."
+
+msgid "Auftrag erteilt. Die Schritte laufen jetzt nacheinander im Hintergrund; du kannst die Seite schließen."
+msgstr "Uppdraget är givet. Stegen körs nu efter varandra i bakgrunden; du kan stänga sidan."
+
+msgid "Auftrag vorbereiten"
+msgstr "Förbered uppdrag"
+
+msgid "Stand des Auftrags"
+msgstr "Uppdragets status"
+
+msgid "Auftrag anhalten"
+msgstr "Stoppa uppdrag"
+
+msgid "Mehrere Schritte als ein Auftrag"
+msgstr "Flera steg som ett uppdrag"
+
+msgid "Sag dem InkluAgent, was in einem Projekt alles passieren soll, zum Beispiel „Mach die Alt-Texte und gib mir dann die Word-Datei“. Er legt dir eine Karte mit allen Schritten, ihren Preisen und der Summe vor. Mit „Auftrag erteilen“ startest du alles auf einmal; danach kannst du die Seite schließen."
+msgstr "Säg till InkluAgent vad som ska hända i ett projekt, till exempel ”Gör alt-texterna och ge mig sedan Word-filen”. Den visar dig ett kort med alla steg, deras priser och summan. Med ”Ge uppdraget” startar du allt på en gång; efteråt kan du stänga sidan."
+
+msgid "Ein Auftrag kostet nie mehr als die Summe auf der Karte. Würde ein Schritt teurer oder geht einer schief, hält er an und sagt es dir. Ist alles fertig, meldet sich der InkluAgent im Gespräch, auf Wunsch auch per Mail, und die Dateien stehen zum Herunterladen bereit."
+msgstr "Ett uppdrag kostar aldrig mer än summan på kortet. Skulle ett steg bli dyrare eller något gå fel, stannar det och säger det till dig. När allt är klart hör InkluAgent av sig i samtalet, även via e-post om du vill, och filerna finns att ladda ner."
+
+# Auftraege, Baustein 2: Einzahl auf der Karte
+msgid "ein Feld"
+msgstr "ett fält"
+
+#, python-brace-format
+msgid "„{name}“, eine Seite"
+msgstr "”{name}”, en sida"
+
+#, python-brace-format
+msgid "{sprache}, ein Wort"
+msgstr "{sprache}, ett ord"

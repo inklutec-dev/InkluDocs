@@ -2413,6 +2413,9 @@ async function inkluagentFormularAbsenden(karte, a, form, knopf, status) {
         const ergebnis = inkluagentFormularErgebnis(karte, text, res.ok ? data.anhang : null);
         inkluagentKlang(res.ok ? 'fertig' : 'fehler');
         fokusAuf(ergebnis);
+        // Ein erteilter Auftrag (Baustein 2) meldet sich, wenn er zu Ende ist: wie nach dem Knopf einer Bestaetigungs-Karte
+        // nachsehen, solange eine Rueckmeldung wartet (fragt nur, solange eine wartet)
+        if (res.ok) inkluagentRueckmeldungenBeobachten();
         return;
     }
     knopf.removeAttribute('aria-disabled');

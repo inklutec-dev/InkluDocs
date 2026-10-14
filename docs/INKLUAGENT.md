@@ -1522,8 +1522,86 @@ in einem anderen Stand auf einem Server (beide Arbeitsschritte sind EIN Commit) 
 
 **Kosten:** Aufpassen und Mail kosten nichts; je Rückmeldung ein Modellaufruf (etwa 0,5 ct). Für den Kunden keine Credits extra.
 
-**Offen (Baustein 2):** Folgeschritte mit einer gemeinsamen Freigabe („erst Alt-Texte, dann barrierefrei machen, dann Word
-exportieren“ — ein Budget, eine Karte); Credits für Agenten-Arbeit (Steve: später); „ohne Rückfrage“ je Konto (Steve: später).
+**Offen:** Folgeschritte mit einer gemeinsamen Freigabe — gebaut als Baustein 2 (nächster Abschnitt); Credits für Agenten-Arbeit
+(Steve: später); „ohne Rückfrage“ je Konto (Steve: später).
+
+## Aufträge, Baustein 2: Auftrag mit Gesamtpreis (Steve 14.10.2026; Schalter `AGENT_AUFTRAEGE`, Umgebung `INKLUAGENT_AUFTRAEGE=an`, braucht `AGENT_KARTEN` und `AGENT_RUECKMELDUNG`)
+
+Steve: „Bitte nimm dir die Aufgabe — er sagt, das kostet so und so viel, dann kann man ihn beauftragen, und dann macht er im
+Hintergrund, und man kann die Seite zumachen.“ Kein Budget vorher, sondern: der Agent nennt den Preis, ein Klick erteilt den
+ganzen Auftrag. Bezahlen im Chat (Credits, Abo) folgt als eigener Baustein, immer mit ausdrücklicher Bestätigung.
+
+**Ablauf (`inkluagent/auftraege.py`, Tabelle `agent_auftraege`):**
+1. *Planen (Werkzeug `auftrag_vorbereiten`):* Der Agent nennt die gewünschten Schritte (`schritte`, dazu `zielsprache` bzw.
+   `format`, `per_mail`). Der Server prüft sie gegen den Katalog (`KATALOG`) und gegen das, was es im Projekt als Werkzeug gibt
+   (`agent_loop._werkzeugsatz`, also mit denselben Schaltern; „Barrierefrei machen“ nur mit `TAGGING_PROFESSIONELL`), ordnet sie
+   in die feste Reihenfolge des Katalogs (taggen, beschreiben, prüfen, übersetzen, herunterladen — wie die Kette) und rechnet je
+   Schritt den Preis mit DENSELBEN Funktionen wie das einzelne Werkzeug: `main._generierung_vorschau_daten`,
+   `formular_api.quickinfos_vorschau_daten`, Seiten × `pdf_tagging` bzw. `pdf_pruefung`, `uebersetzung_api.bot_vorschau`,
+   `ausgaben._kosten_vorschau`, `billing.TABELLEN_EXPORTE`, `main._pdf_export_plan`. Tagging und Prüfung je Dokument (nur
+   ungetaggte PDFs taggen; prüfen nur getaggte oder im Auftrag getaggte). Katalog:
+   - `tagging` (barrierefrei_machen), `alt_texte` (alt_texte_generieren), `quickinfos` (quickinfos_generieren), `pruefung`
+     (pruefung_starten), `uebersetzung` (uebersetze_dokument, danach die übersetzte Datei, kostenlos) — laufen im Hintergrund;
+   - `alt_texte_tabelle` (exportiere_alt_texte), `quickinfos_tabelle` (exportiere_quickinfos), `word` (exportiere_word), `pdfua`
+     (konvertiere_zu_pdfua), `pdf` (exportiere_fertige_pdf, mehrere Dokumente als ZIP) — fertig, wenn das Werkzeug zurückkehrt.
+   „PDF herunterladen“ kostet nur, was bearbeitet wurde; bearbeitet der Auftrag vorher, steht dort eine Obergrenze („höchstens“:
+   alle Bilder der getaggten oder im Auftrag getaggten Dokumente und alle Felder). Geht ein Schritt nicht, reicht das Guthaben
+   nicht oder läuft im Projekt schon ein Auftrag, gibt es KEINE Karte, sondern den Grund für das Modell (mit den möglichen
+   Schritten). Sonst legt der Server die Karte „Dein Auftrag“ vor (`karten.AUFTRAG`, eine Formular-Karte aus Paket 1): Projekt,
+   Summe, Guthaben, je Schritt eine Zeile mit Umfang und Preis, Hinweise (eigene Alt-Texte werden überschrieben; nach dem
+   Tagging kann sich die Zahl der Bilder ändern) und der Haken „Zusätzlich per Mail an mein Konto melden …“ (vorbelegt, wenn der
+   Nutzer darum bat). Plan und Summe hält der Server (Karten-Kontext), der Browser schickt nur den Haken.
+2. *Erteilen:* NUR der Knopf „Auftrag erteilen“ (`POST /api/agent/karte` → `karten.absenden` → `auftraege.erteilen`). Es gibt
+   keinen Parameter `bestaetigt`; ein getipptes „Ja“ erteilt nichts. Der Server rechnet den Plan neu: andere Summe oder ein Schritt
+   geht nicht mehr → die Karte gilt nicht mehr (409, „Umfang oder Preis haben sich geändert“). Guthaben zu klein → 402, die Karte
+   bleibt offen (aufladen, noch einmal klicken). Ein laufender Auftrag je Projekt, höchstens `JE_KONTO` (3) je Konto. Auftrag und
+   Rückmeldung (Art „auftrag“, `rueckmeldung.anmelden_in` mit `auftrag_id`) entstehen in EINER Transaktion (`BEGIN IMMEDIATE`);
+   ist kein Platz für die Rückmeldung (`WARTEND_JE_KONTO`), entsteht auch kein Auftrag. Antwort auf der Karte: „Auftrag erteilt.
+   Die Schritte laufen jetzt nacheinander im Hintergrund; du kannst die Seite schließen. Ich melde mich hier (und per Mail) …“.
+3. *Abarbeiten ohne KI:* `schleife()` (aus `main.lifespan`, alle 10 s und sofort nach Erteilen oder Anhalten) bringt in einem
+   EIGENEN Faden (`_POOL`, ein Arbeiter) jeden laufenden Auftrag weiter (`weiter`): einen laufenden Schritt auswerten, dann den
+   nächsten starten — über DASSELBE Werkzeug wie im Gespräch (Executor aus `agent_loop._werkzeugsatz`, `bestaetigt=true`). Die
+   Zustimmung gibt der Auftrag: `ausgaben.auftrag_schritt` setzt in diesem Faden für genau diesen Schritt eine Freigabe, die
+   `ausgaben._angebot_einloesen` vor allem anderen liest — nur die Art des Schritts (`freigabe`, etwa „alt_texte“ oder
+   „uebersetzung:en-gb“), höchstens einmal, nie Unumkehrbares, höchstens die Rest-Summe (Summe der Karte minus die freigegebenen
+   Preise der Schritte davor). Ein Angebot aus dem Gespräch gilt dort nicht, und ein anderer Faden sieht die Freigabe nie. Vor
+   dem Start hält der Server fest, dass der Schritt startet (`gestartet` false): bricht danach etwas ab, startet ihn kein zweiter
+   Rundgang noch einmal — er gilt als „unterbrochen“. Läuft im Projekt gerade etwas anderes (`rueckmeldung.was_laeuft`, auch aus
+   der Oberfläche gestartet), wartet der Schritt, höchstens `WARTEN_HOECHSTENS_S` (2 h). Hintergrund-Schritte wartet der Server
+   an denselben Zuständen ab wie die Rückmeldung (`rueckmeldung.laeuft`; ist der Lauf schon beim Start sichtbar, gilt keine
+   Anlaufzeit, sonst `ANLAUF_S`), höchstens `SCHRITT_HOECHSTENS_S` (6 h), und wertet sie aus denselben Daten aus wie Oberfläche
+   und Werkzeuge: Tagging und Prüfung am Status des Dokuments, Alt-Texte an den Bildern und am Hinweis des Laufs, Quickinfos und
+   Übersetzung am Zustand ihres Laufs.
+   Regeln: Ein Schritt, der scheitert (auch: würde jetzt mehr kosten als freigegeben, Guthaben weg, Projekt oder Dokument
+   gelöscht, zu lang, Neustart), hält den Auftrag an — was danach käme, startet nicht und kostet nichts („nicht mehr gestartet“).
+   Ein Schritt, der nur teilweise klappt (einzelne Bilder ohne Alt-Text), hält ihn nicht an, wie die Kette (Steve und Michael
+   22.09.2026). Bricht der Nutzer einen Lauf in der Oberfläche ab, endet auch der Auftrag („abgebrochen“). `auftrag_abbrechen`
+   (und `lauf_abbrechen` der Konto-Werkzeuge) halten ihn an: der laufende Schritt läuft zu Ende, danach startet nichts mehr.
+   Unerwartete Fehler: nach `FEHLVERSUCHE` (3) hintereinander gilt er als gescheitert — er steht nie ewig als laufend da.
+4. *Melden:* Die Rückmeldung wartet, bis der Auftrag zu Ende ist (`rueckmeldung._laeuft_eintrag`; die zwölf Stunden gelten für
+   Aufträge nicht — jeder Schritt ist selbst begrenzt). Die Nachricht des Agenten bekommt das Ergebnis jedes Schritts
+   (`auftraege.fakten`: Schritt, Umfang, Ergebnis, Grund, Datei) und dieselben Zahlen wie bei den einzelnen Arbeiten
+   (`rueckmeldung.fakten` mit allen Arten, die im Auftrag liefen); `SYSTEM_MELDUNG` sagt: zu jedem Schritt kurz, bei einem
+   Abbruch der Grund und was nicht mehr lief, höchstens sechs Sätze. Unter der Nachricht stehen zuerst die Dateien aus den
+   Schritten (Herunterladen, Ablage; Links mit Frist zeigt die Seite nach Ablauf als abgelaufen), dann „Projekt … öffnen“. Mail
+   auf Wunsch wie bei Baustein 1 (nur ans eigene Konto, ohne Dateien, mit Link zum Gespräch). Rückmeldungen zu Aufträgen werden
+   nie mit anderen zusammengelegt; `melden_wenn_fertig` legt bei laufendem Auftrag keine zweite an (eine erbetene Mail kommt zur
+   Rückmeldung des Auftrags dazu).
+
+**Neustart:** Die Läufe der Schritte leben im Prozess. `nach_neustart()` (in `starten()`): lief ein Schritt, gilt er als
+gescheitert („Der Server wurde neu gestartet, während dieser Schritt lief. Was bis dahin fertig war, bleibt.“), der Auftrag endet,
+die Rückmeldung meldet sich mit dem ehrlichen Stand (ohne den allgemeinen Neustart-Hinweis — der steht genau beim Schritt). Ein
+Auftrag zwischen zwei Schritten läuft weiter.
+
+**Weitere Anbindungen:** Agent-Schleife (Werkzeuge und `PROMPT` nur mit Karten UND Rückmeldung, also nie in der Demo), Werkzeuge
+auch auf Seiten ohne Projekt (mit `project_id`), `konto.laufende` nennt laufende Aufträge („Auftrag, Schritt 2 von 3: …“),
+Werkzeugnamen „Auftrag vorbereiten“, „Stand des Auftrags“, „Auftrag anhalten“, Daten-Einordnung (Projekt- und Dokumentnamen als
+Daten), Hilfe-Abschnitt „Mehrere Schritte als ein Auftrag“ (nur mit Schalter), Kontolöschung nimmt `agent_auftraege` mit. Die
+Seite: nach dem Absenden einer Formular-Karte fragt sie nach Rückmeldungen (`inkluagentRueckmeldungenBeobachten`, nur solange eine
+wartet) — die Karte selbst ist die vorhandene Formular-Karte (fliegt ein, Wusch, Haken als echtes Kästchen, Fehler am Feld).
+
+**Kosten:** Planen und Abarbeiten kosten keine KI; je Auftrag eine Rückmeldung (etwa 0,5 ct). Für den Kunden: die Credits der
+Schritte wie einzeln, nie mehr als die Summe der Karte.
 
 ## Vor dem nächsten Prod-Rollout: was sich ohne Schalter ändert (Korrektheit H4, Stand Runde 2)
 
@@ -1549,3 +1627,8 @@ Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sic
   ist aus `chat_sperre` herausgezogen und `storage.konto_anhaengen_in` aus `konto_anhaengen` (gleiches Verhalten);
   `tagging_api._korrektur_sync` gibt die Korrektur erst nach dem Speichern ihres Berichts frei (vorher davor — gleiches
   Ergebnis, nur ohne Lücke zur Nachprüfung).
+- Aufträge ohne Schalter (Baustein 2): neue Tabelle `agent_auftraege` (leer, keine Schleife) und Spalte
+  `agent_rueckmeldungen.auftrag_id` (vorwärts idempotent, alter Code liest sie nicht); `ausgaben._angebot_einloesen` liest zuerst
+  die Freigabe eines Auftrags in diesem Faden — ohne Auftrag gibt es keine, das Verhalten ist dasselbe; `rueckmeldung.anmelden`
+  arbeitet über `anmelden_in` (gleiches Verhalten); die Seite fragt nach dem Absenden einer Formular-Karte nach Rückmeldungen
+  (ohne Schalter `rueckmeldung` fragt sie nicht).

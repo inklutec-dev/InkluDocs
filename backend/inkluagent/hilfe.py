@@ -43,7 +43,8 @@ def formulare(_: Optional[Callable[[str], str]] = None) -> list[str]:
 
 def seite(_: Optional[Callable[[str], str]] = None) -> dict:
     """{"projektarten": [{"schluessel", "titel", "ohne_rueckfrage": [Namen], "mit_rueckfrage": [Namen]}], "ausserhalb": [...],
-    "formulare": [...], "rueckmeldung": bool (Abschnitt „Wenn etwas im Hintergrund läuft“, inkluagent/rueckmeldung.py)}"""
+    "formulare": [...], "rueckmeldung": bool (Abschnitt „Wenn etwas im Hintergrund läuft“, inkluagent/rueckmeldung.py),
+    "auftraege": bool (Abschnitt „Mehrere Schritte als ein Auftrag“, inkluagent/auftraege.py)}"""
     _ = _ or (lambda s: s)
     from .agent_loop import _werkzeugsatz
     from .tools.namen import werkzeug_name
@@ -59,6 +60,6 @@ def seite(_: Optional[Callable[[str], str]] = None) -> dict:
         arten.append({"schluessel": schluessel, "titel": _(titel), "ohne_rueckfrage": ohne, "mit_rueckfrage": mit})
     from . import karten
     ausserhalb = AUSSERHALB_MIT_KARTEN if karten.an() else AUSSERHALB
-    from . import rueckmeldung
+    from . import auftraege, rueckmeldung
     return {"projektarten": arten, "ausserhalb": [_(t) for t in ausserhalb], "formulare": formulare(_),
-            "rueckmeldung": rueckmeldung.an()}
+            "rueckmeldung": rueckmeldung.an(), "auftraege": auftraege.an()}

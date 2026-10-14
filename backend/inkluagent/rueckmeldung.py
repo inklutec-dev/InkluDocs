@@ -7,7 +7,9 @@ Korrektur, Testlauf, Uebersetzung —, arbeitet auf dem Server weiter, auch wenn
 
 1. Anmelden: startet ein Werkzeug einen solchen Lauf (nach_werkzeug — im Gespraech und ueber den Knopf einer Karte), merkt sich
    der Server das Gespraech in agent_rueckmeldungen. Laeuft die Arbeit schon (auch ueber einen Knopf der Oberflaeche gestartet),
-   meldet das Werkzeug melden_wenn_fertig sie an. per_mail nur, wenn der Nutzer selbst darum bittet.
+   meldet das Werkzeug melden_wenn_fertig sie an. per_mail nur, wenn der Nutzer selbst darum bittet. Ein Auftrag mit mehreren
+   Schritten (Baustein 2, auftraege.py) meldet sich ueber dieselbe Tabelle: Art „auftrag“ mit auftrag_id, angelegt zusammen mit
+   dem Auftrag, gemeldet, wenn sein letzter Schritt zu Ende ist — mit den Ergebnissen aller Schritte und den Dateien darunter.
 2. Aufpassen OHNE KI: schleife() sieht alle PRUEF_S Sekunden nach, ob der Lauf noch laeuft — an denselben Zustaenden, die auch
    Oberflaeche und Werkzeuge lesen (Projektstatus, Tagging-, Pruef- und Korrekturstand, Kette, Uebersetzung). Kein Token.
 3. Melden: ist der Lauf zu Ende, schreibt der Agent eine kurze persoenliche Nachricht (Steve: „keine Standardtexte“) — EIN
@@ -98,6 +100,8 @@ WAS = {
     "testlauf": "Der Testlauf",
     "uebersetzung": "Die Übersetzung",
     "verarbeitung": "Die Verarbeitung",
+    # Auftrag mit mehreren Schritten (Baustein 2, inkluagent/auftraege.py): wartet, bis der ganze Auftrag zu Ende ist
+    "auftrag": "Dein Auftrag",
 }
 SPRACHEN = {"de": "Deutsch", "en": "Englisch (English)", "fr": "Französisch (français)", "es": "Spanisch (español)",
             "da": "Dänisch (dansk)", "sv": "Schwedisch (svenska)"}
@@ -156,9 +160,10 @@ NEUSTART_HINWEIS = ("Hinweis des Servers: InkluDocs wurde neu gestartet, währen
 SYSTEM_MELDUNG = """Du bist der InkluAgent von InkluDocs. Für den Nutzer lief eine Arbeit im Hintergrund weiter; jetzt ist sie zu Ende. Schreib ihm eine kurze, persönliche Rückmeldung für euer Gespräch.
 
 So schreibst du:
-- In der angegebenen Sprache, per du, zwei bis vier Sätze als zusammenhängender Text.
+- In der angegebenen Sprache, per du, zwei bis vier Sätze als zusammenhängender Text (bei einem Auftrag mit mehreren Schritten höchstens sechs).
 - Beziehe dich auf seine Bitte, wenn sie dabei ist, aber wiederhole sie nicht wörtlich.
 - Sag, was fertig ist, mit den Zahlen aus den Ergebnissen. Ist etwas schiefgegangen, abgebrochen oder unvollständig, sag das ehrlich und wie viel betroffen ist.
+- Bei einem Auftrag mit mehreren Schritten: sag zu jedem Schritt kurz, was herauskam. Ist einer gescheitert oder wurde der Auftrag angehalten oder abgebrochen, nenne den Grund und welche Schritte deshalb nicht mehr liefen. Sind Dateien entstanden, sag, dass sie im Gespräch zum Herunterladen bereitstehen.
 - Nenne, was er sich ansehen sollte (zum Beispiel Bilder, die geprüft werden sollten), und höchstens einen nächsten Schritt als Vorschlag.
 - Nur, was in den Ergebnissen steht: nichts erfinden, keine Preise oder Zeiten schätzen, nichts versprechen.
 - Erwähne keine Mail; ob eine Mail rausging, ergänzt der Server.
@@ -216,34 +221,44 @@ def anmelden(user_id: int, gespraech_id: int, project_id: int, art: str, per_mai
     dazu, Gespraech und Bitte werden die neuesten, die Zeit zaehlt ab dem neuen Lauf; betrafen die Laeufe verschiedene Dokumente,
     berichtet sie ueber das ganze Projekt (document_id leer — sonst fehlte der Bericht zum ersten, Pruefung 14.10.2026, Befund 5).
     False, wenn das Konto schon WARTEND_JE_KONTO offene hat oder Angaben fehlen."""
-    if art not in WAS or not (user_id and gespraech_id and project_id):
+    conn = get_db()
+    try:
+        ok = anmelden_in(conn, user_id, gespraech_id, project_id, art, per_mail, sprache, auftrag, document_id)
+        conn.commit()
+        return ok
+    finally:
+        conn.close()
+
+
+def anmelden_in(conn, user_id: int, gespraech_id: int, project_id: int, art: str, per_mail: bool = False,
+                sprache: Optional[str] = None, auftrag: str = "", document_id: Optional[int] = None,
+                auftrag_id: Optional[int] = None) -> bool:
+    """anmelden in der Verbindung (und Transaktion) des Aufrufers, OHNE commit — fuer auftraege.erteilen, das Auftrag und
+    Rueckmeldung in EINEM Schritt anlegt. Die Rueckmeldung eines Auftrags (auftrag_id) wird nie mit einer anderen
+    zusammengelegt: jeder Auftrag meldet sich mit seinen eigenen Ergebnissen."""
+    if art not in WAS or not (user_id and gespraech_id and project_id) or (art == "auftrag") != bool(auftrag_id):
         return False
     sprache = sprache if sprache in SPRACHEN else "de"
     auftrag = (auftrag or "").strip()[:1000]
-    conn = get_db()
-    try:
-        # Ein Schritt mit der Bedingung „wartet“: belegt der Rundgang den Eintrag gerade zum Melden, bekommt der neue Lauf einen
-        # eigenen (sonst ginge seine Rueckmeldung in der schon geschriebenen auf)
-        if conn.execute("UPDATE agent_rueckmeldungen SET per_mail = MAX(per_mail, ?), gespraech_id = ?, sprache = ?, "
-                        "auftrag = CASE WHEN ? <> '' THEN ? ELSE auftrag END, "
-                        "document_id = CASE WHEN document_id IS ? THEN document_id ELSE NULL END, "
-                        "angelegt_am = datetime('now'), neustart = 0 "
-                        "WHERE user_id = ? AND project_id = ? AND art = ? AND zustand = 'wartet'",
-                        (int(bool(per_mail)), gespraech_id, sprache, auftrag, auftrag, document_id, user_id, project_id, art)).rowcount:
-            conn.commit()
-            return True
-        offen = conn.execute("SELECT COUNT(*) FROM agent_rueckmeldungen WHERE user_id = ? AND zustand IN ('wartet', 'meldet')",
-                             (user_id,)).fetchone()[0]
-        if offen >= WARTEND_JE_KONTO:
-            log.warning("Rueckmeldung: Konto %s hat schon %d offene — keine weitere", user_id, offen)
-            return False
-        conn.execute("INSERT INTO agent_rueckmeldungen (user_id, gespraech_id, project_id, document_id, art, per_mail, auftrag, "
-                     "sprache) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                     (user_id, gespraech_id, project_id, document_id, art, int(bool(per_mail)), auftrag, sprache))
-        conn.commit()
+    # Ein Schritt mit der Bedingung „wartet“: belegt der Rundgang den Eintrag gerade zum Melden, bekommt der neue Lauf einen
+    # eigenen (sonst ginge seine Rueckmeldung in der schon geschriebenen auf)
+    if not auftrag_id and conn.execute(
+            "UPDATE agent_rueckmeldungen SET per_mail = MAX(per_mail, ?), gespraech_id = ?, sprache = ?, "
+            "auftrag = CASE WHEN ? <> '' THEN ? ELSE auftrag END, "
+            "document_id = CASE WHEN document_id IS ? THEN document_id ELSE NULL END, "
+            "angelegt_am = datetime('now'), neustart = 0 "
+            "WHERE user_id = ? AND project_id = ? AND art = ? AND zustand = 'wartet' AND auftrag_id IS NULL",
+            (int(bool(per_mail)), gespraech_id, sprache, auftrag, auftrag, document_id, user_id, project_id, art)).rowcount:
         return True
-    finally:
-        conn.close()
+    offen = conn.execute("SELECT COUNT(*) FROM agent_rueckmeldungen WHERE user_id = ? AND zustand IN ('wartet', 'meldet')",
+                         (user_id,)).fetchone()[0]
+    if offen >= WARTEND_JE_KONTO:
+        log.warning("Rueckmeldung: Konto %s hat schon %d offene — keine weitere", user_id, offen)
+        return False
+    conn.execute("INSERT INTO agent_rueckmeldungen (user_id, gespraech_id, project_id, document_id, art, per_mail, auftrag, "
+                 "sprache, auftrag_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                 (user_id, gespraech_id, project_id, document_id, art, int(bool(per_mail)), auftrag, sprache, auftrag_id))
+    return True
 
 
 def nach_werkzeug(name: str, args: dict, result: Any, *, user_id: int, project_id: Optional[int], gespraech_id: Optional[int],
@@ -297,9 +312,25 @@ def _melden_wenn_fertig(args: dict, user_id: int, project_id: Optional[int], ges
     if not gespraech_id:
         return {"ok": False, "error": "Rückmeldungen gibt es nur im Gespräch des Kontos"}
     per_mail = _ja((args or {}).get("per_mail"))
+    projekt = daten(p["name"] or p["filename"] or "")
+    # Laeuft im Projekt ein Auftrag (Baustein 2), meldet sich der Agent ohnehin, wenn er zu Ende ist — die Schritte darin nicht
+    # noch einmal einzeln (sonst kaemen zwei Rueckmeldungen und zwei Mails). Eine erbetene Mail kommt dazu.
+    conn = get_db()
+    try:
+        r = conn.execute("SELECT id FROM agent_rueckmeldungen WHERE user_id = ? AND project_id = ? AND art = 'auftrag' "
+                         "AND zustand IN ('wartet', 'meldet') ORDER BY id DESC LIMIT 1", (user_id, p["id"])).fetchone()
+        if r and per_mail:
+            conn.execute("UPDATE agent_rueckmeldungen SET per_mail = 1 WHERE id = ?", (r["id"],))
+            conn.commit()
+    finally:
+        conn.close()
+    if r:
+        return {"ok": True, "result": {"angemeldet": [WAS["auftrag"]], "per_mail": per_mail, "projekt_daten": projekt, "hinweis": (
+            "In diesem Projekt läuft ein Auftrag; der InkluAgent meldet sich von selbst, wenn er zu Ende ist"
+            + (", und schickt dieselbe Nachricht per Mail an die Adresse des Kontos." if per_mail else ".")
+            + " Sag das dem Nutzer in einem Satz.")}}
     arten = was_laeuft(p["id"])
     gemerkt = [a for a in arten if anmelden(user_id, gespraech_id, p["id"], a, per_mail, sprache, auftrag)]
-    projekt = daten(p["name"] or p["filename"] or "")
     if not arten:
         return {"ok": True, "result": {"angemeldet": [], "projekt_daten": projekt,
                                        "hinweis": "In diesem Projekt läuft gerade nichts. Sag das dem Nutzer."}}
@@ -363,6 +394,14 @@ def laeuft(art: str, project_id: int) -> bool:
     return bool(z.get(art))
 
 
+def _laeuft_eintrag(e: dict) -> bool:
+    """Laeuft, worauf dieser Eintrag wartet? Ein Auftrag (Baustein 2) laeuft, bis sein letzter Schritt zu Ende ist."""
+    if e["art"] == "auftrag":
+        from . import auftraege
+        return auftraege.laeuft(e.get("auftrag_id"))
+    return laeuft(e["art"], e["project_id"])
+
+
 def was_laeuft(project_id: int) -> list[str]:
     """Alles, was im Projekt gerade laeuft (fuer melden_wenn_fertig), jeder Lauf genau einmal: die Kette umfasst ihre Stationen;
     Uebersetzung und Tagging zeigen sich auch am Projektstatus — dann nicht noch einmal als „verarbeitung“ (sonst kaemen fuer
@@ -400,7 +439,7 @@ def durchlauf() -> int:
         conn.execute("UPDATE agent_rueckmeldungen SET zustand = 'wartet' WHERE zustand = 'meldet' "
                      "AND belegt_am < datetime('now', ?)", (f"-{BELEGT_HOECHSTENS_S} seconds",))
         rows = [dict(r) for r in conn.execute(
-            "SELECT id, user_id, project_id, art, gesehen_laufen, "
+            "SELECT id, user_id, project_id, art, auftrag_id, gesehen_laufen, "
             "CAST((julianday('now') - julianday(angelegt_am)) * 86400 AS INTEGER) AS alter_s "
             "FROM agent_rueckmeldungen WHERE zustand = 'wartet' ORDER BY COALESCE(geprueft_am, ''), id LIMIT ?",
             (RUNDGANG_MAX,)).fetchall()]
@@ -413,12 +452,14 @@ def durchlauf() -> int:
             break
         _setzen(e["id"], geprueft_am=_jetzt())   # nur, wer wirklich angesehen wurde, rueckt nach hinten
         try:
-            noch = laeuft(e["art"], e["project_id"])
+            noch = _laeuft_eintrag(e)
         except Exception:  # noqa: BLE001 — Zustand nicht lesbar: beim naechsten Rundgang wieder
             log.exception("Rueckmeldung %s: Zustand nicht lesbar", e["id"])
             continue
         if noch:
-            if e["alter_s"] > HOECHSTENS_S:
+            # Ein Auftrag begrenzt jeden Schritt selbst (auftraege.SCHRITT_HOECHSTENS_S) und endet immer — seine Rueckmeldung
+            # wartet auf sein Ende, auch wenn mehrere lange Schritte zusammen laenger als zwoelf Stunden brauchen
+            if e["alter_s"] > HOECHSTENS_S and e["art"] != "auftrag":
                 gemeldet += int(melden(e["id"], zu_lang=True))
             elif not e["gesehen_laufen"]:
                 _setzen(e["id"], gesehen_laufen=1)
@@ -543,6 +584,9 @@ def _melden(e: dict, zu_lang: bool) -> bool:
             return _verwerfen(e["id"])
         zusatz = _mail_zeile(e, u, text, projekt, _)
     anhang = [{"art": "link", "url": f"/app?projekt={int(p['id'])}", "text": _(T_PROJEKT_OEFFNEN).format(projekt=projekt)}]
+    if e["art"] == "auftrag":   # die Dateien aus den Schritten (Herunterladen, Ablage) zuerst, wie unter einer Antwort
+        from . import auftraege
+        anhang = auftraege.anhaenge(e.get("auftrag_id")) + anhang
     # Nachricht und Zustand in EINEM Schritt (unabhaengige Pruefung 14.10.2026, Befunde 3 und 8): BEGIN IMMEDIATE nimmt die
     # Schreibsperre vor der Pruefung, ob Konto und Projekt noch da sind — eine Kontoloeschung kann nicht dazwischen kommen, und
     # ein Neustart laesst keine halbe Rueckmeldung zurueck. Die getippte Bitte braucht es danach nicht mehr.
@@ -630,6 +674,12 @@ def fakten(e: dict) -> dict:
     Ein Teil, der sich nicht lesen laesst, steht als Fehler darin; das Melden scheitert daran nicht."""
     art, pid, uid, did = e["art"], e["project_id"], e["user_id"], e.get("document_id")
     out: dict[str, Any] = {"art": WAS[art]}
+    # Ein Auftrag (Baustein 2): sein Ergebnis je Schritt, dazu dieselben Zahlen wie bei den Arbeiten, die darin liefen
+    arten = {art}
+    if art == "auftrag":
+        from . import auftraege
+        out.update(auftraege.fakten(e.get("auftrag_id")))
+        arten = auftraege.arten(e.get("auftrag_id"))
     conn = get_db()
     try:
         p = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
@@ -637,11 +687,11 @@ def fakten(e: dict) -> dict:
         out["projekt"] = {"name": p.get("name") or p.get("filename") or "", "status": p.get("status")}
         if p.get("lauf_hinweis"):
             out["projekt"]["hinweis_des_laufs"] = p["lauf_hinweis"]
-        if art in ("alt_texte", "verarbeitung", "kette"):
+        if arten & {"alt_texte", "verarbeitung", "kette"}:
             out["alt_texte"] = _bilder(conn, pid, did)
-        if art in ("quickinfos", "verarbeitung", "kette"):
+        if arten & {"quickinfos", "verarbeitung", "kette"}:
             felder = _felder(conn, pid, did)
-            if felder["felder"] or art == "quickinfos":
+            if felder["felder"] or "quickinfos" in arten:
                 out["quickinfos"] = felder
     except Exception:  # noqa: BLE001
         log.exception("Rueckmeldung %s: Zahlen nicht lesbar", e.get("id"))
@@ -649,12 +699,12 @@ def fakten(e: dict) -> dict:
     finally:
         conn.close()
     try:
-        if art in ("tagging", "testlauf", "kette", "pruefung", "korrektur"):
+        if arten & {"tagging", "testlauf", "kette", "pruefung", "korrektur"}:
             from .tools import pdf as pdf_tools
             out["dokumente"] = _ergebnis(pdf_tools.dokument_stand(pid, uid, did))
-            if art in ("pruefung", "korrektur"):
+            if arten & {"pruefung", "korrektur"}:
                 out["pruefbericht"] = _ergebnis(pdf_tools.pruefbericht_lesen(pid, uid, did))
-        if art == "uebersetzung":
+        if "uebersetzung" in arten:
             from .tools import ausgaben as ausgaben_tools
             out["uebersetzung"] = _ergebnis(ausgaben_tools.uebersetzung_stand(pid, uid))
     except Exception:  # noqa: BLE001
@@ -673,7 +723,7 @@ def _eingabe(e: dict, fakten_: dict, projekt: str) -> str:
              "Projekt: " + daten(projekt)]
     if e.get("auftrag"):
         teile.append("Seine Bitte (von ihm selbst getippt): " + e["auftrag"])
-    if e.get("neustart"):
+    if e.get("neustart") and e["art"] != "auftrag":   # ein Auftrag traegt den Neustart genau im Ergebnis des Schritts
         teile.append(NEUSTART_HINWEIS)
     teile.append("Ergebnisse vom Server: " + DATEN_MARKE + roh)
     return "\n".join(teile)

@@ -8,6 +8,8 @@ Karten (KARTENTYPEN):
 - „einladen“: Zur Prüfung einladen (Projekt freigeben) — dieselbe Funktion wie der Dialog im Projekt (main._freigabe_anlegen).
 - „express_bestellen“: Express-Warenkorb zahlungspflichtig bestellen — dieselbe Funktion wie der Warenkorb
   (express_api.bestellung) mit Aufstellung, Preis und Bedingungen. Nur mit funktionen.EXPRESS.
+- „auftrag“: einen Auftrag mit mehreren Schritten erteilen (Baustein 2, 14.10.2026) — Plan, Preise und Summe haelt der Server
+  (inkluagent/auftraege.py, Werkzeug auftrag_vorbereiten); die Karte hat nur den Haken „per Mail melden“.
 
 Sicherheit:
 - Was zaehlt, haelt der SERVER in der Karte: Projekt, Warenkorb, erwarteter Preis, Fassung, Idempotenz. Der Browser schickt nur
@@ -84,7 +86,15 @@ EXPRESS_BESTELLEN = Kartentyp(
              link=("/express/bedingungen", "Bedingungen für den Express-Service lesen (öffnet in neuem Tab)")),
     ))
 
-KARTENTYPEN = {k.art: k for k in (EINLADEN, EXPRESS_BESTELLEN)}
+# Auftrag mit mehreren Schritten (Baustein 2): Schritte, Preise und Summe stehen als Text und Zeilen auf der Karte; abgeschickt
+# wird nur der Haken. Werkzeug und Erteilen: inkluagent/auftraege.py (auftrag_vorbereiten, karte_senden).
+AUFTRAG = Kartentyp(
+    art="auftrag", titel="Dein Auftrag", knopf="Auftrag erteilen",
+    felder=(
+        Feld("per_mail", "haken", "Zusätzlich per Mail an mein Konto melden, wenn der Auftrag fertig ist"),
+    ))
+
+KARTENTYPEN = {k.art: k for k in (EINLADEN, EXPRESS_BESTELLEN, AUFTRAG)}
 
 
 def _uebersetzt(typ: Kartentyp, werte: dict, _: Callable[[str], str]) -> list[dict]:
@@ -335,6 +345,9 @@ async def absenden(kid: str, user: dict, roh: Any, sprache: str, absender: str =
     try:
         if typ is EINLADEN:
             status, antwort = await _einladen_senden(e, user, werte, _)
+        elif typ is AUFTRAG:
+            from . import auftraege
+            status, antwort = await auftraege.karte_senden(e, user, werte, sprache, _)
         else:
             status, antwort = await _express_senden(e, user, werte, sprache, absender, _)
     except Exception:

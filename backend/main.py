@@ -457,6 +457,14 @@ async def lifespan(app: FastAPI):
             _rueckmeldung.starten()
         except Exception:  # noqa: BLE001 — ohne Rueckmeldung laeuft alles andere weiter
             logger.exception("InkluAgent: Rueckmeldung nicht gestartet")
+    # Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py, Schalter AGENT_AUFTRAEGE): nach einem Neustart abgebrochene
+    # Schritte als gescheitert eintragen, dann alle 10 s ohne KI die laufenden Auftraege einen Schritt weiter bringen
+    from inkluagent import auftraege as _auftraege
+    if _auftraege.an():
+        try:
+            _auftraege.starten()
+        except Exception:  # noqa: BLE001 — ohne Auftraege laeuft alles andere weiter
+            logger.exception("InkluAgent: Auftraege nicht gestartet")
 
     yield
 

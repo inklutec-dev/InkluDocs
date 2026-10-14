@@ -136,6 +136,11 @@ AGENT_KARTEN = _umgebung_an("INKLUAGENT_KARTEN")
 # dieselbe Nachricht per Mail an die Adresse des eigenen Kontos (inkluagent/rueckmeldung.py). Braucht AGENT_KONTO; die Seite
 # meldet sie live mit AGENT_UEBERALL (GET /api/agent/status). INKLUAGENT_RUECKMELDUNG=an.
 AGENT_RUECKMELDUNG = _umgebung_an("INKLUAGENT_RUECKMELDUNG")
+# Auftraege, Baustein 2 (Steve 14.10.2026: „nimm dir die Aufgabe, sag, was sie kostet, ich beauftrage dich, und du machst sie im
+# Hintergrund“): mehrere Arbeitsschritte in einem Projekt als EIN Auftrag mit Gesamtpreis auf einer Karte; nur der Knopf erteilt
+# ihn, der Server arbeitet die Schritte ohne KI ab (dieselben Werkzeuge wie im Gespraech, nie mehr als die Summe der Karte), am
+# Ende meldet sich der Agent (inkluagent/auftraege.py). Braucht AGENT_KARTEN und AGENT_RUECKMELDUNG. INKLUAGENT_AUFTRAEGE=an.
+AGENT_AUFTRAEGE = _umgebung_an("INKLUAGENT_AUFTRAEGE")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {
