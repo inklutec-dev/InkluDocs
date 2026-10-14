@@ -1464,7 +1464,8 @@ Agent wie bisher, das Aufpassen ein einfaches Programm (kein Token); nur die Nac
    schreibt der Server in EINEM Schritt (`BEGIN IMMEDIATE`, `storage.konto_anhaengen_in`), unmittelbar nachdem er geprüft hat,
    dass Konto und Projekt noch da sind — keine doppelte Nachricht nach einem Neustart, keine Daten für ein gerade gelöschtes
    Konto. Die Nachricht steht im Gespräch, in dem der Lauf begann (wie jede Antwort, K3), mit `intent`
-   „rueckmeldung“, der Sprache der Oberfläche beim Start und dem Link „Projekt „…“ öffnen“. Projekt oder Konto gelöscht: verworfen.
+   „rueckmeldung“, der Sprache der Oberfläche beim Start und dem Link „Projekt „…“ öffnen“ — ohne Werkzeug-Zeile (sie beantwortet
+   keine Frage). Projekt oder Konto gelöscht: verworfen.
    Ein Fehler beim Melden: nächster Rundgang, nach `VERSUCHE` (3) verworfen (Fehler im Log).
 4. *Mail auf Wunsch:* `per_mail` nur auf ausdrückliches `true` (die Beschreibung sagt: nur, wenn der Nutzer selbst darum bittet).
    Dieselbe Nachricht an die Adresse des EIGENEN Kontos — einen Parameter für eine andere Adresse gibt es nicht —, nur bestätigte

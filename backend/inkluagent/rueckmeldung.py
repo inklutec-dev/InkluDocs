@@ -554,7 +554,9 @@ def _melden(e: dict, zu_lang: bool) -> bool:
             conn.execute("UPDATE agent_rueckmeldungen SET zustand = 'verworfen', auftrag = '' WHERE id = ?", (e["id"],))
             conn.commit()
             return False
-        nid = storage.konto_anhaengen_in(conn, e["user_id"], p["id"], "assistant", text, intent="rueckmeldung", werkzeuge=[],
+        # werkzeuge=None: keine Zeile „Genutzt: …“ bzw. „Ohne Werkzeug (aus dem Gesprächsverlauf)“ — die Rueckmeldung beantwortet
+        # keine Frage (Rauchtest Staging 14.10.2026)
+        nid = storage.konto_anhaengen_in(conn, e["user_id"], p["id"], "assistant", text, intent="rueckmeldung", werkzeuge=None,
                                          anhang=anhang, zusatz=zusatz, gespraech_id=e["gespraech_id"], sprache=e["sprache"])
         conn.execute("UPDATE agent_rueckmeldungen SET zustand = 'gemeldet', nachricht_id = ?, gemeldet_am = ?, auftrag = '' "
                      "WHERE id = ?", (nid, _jetzt(), e["id"]))

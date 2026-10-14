@@ -269,6 +269,7 @@ class Aufpassen(Basis):
         self.assertEqual((n["role"], n["intent"], n["sprache"], n["project_id"]), ("assistant", "rueckmeldung", "de", self.pid))
         self.assertEqual(n["text"], self.modell.text)
         self.assertEqual(n["zusatz"], "", "ohne Mail keine Zeile des Servers")
+        self.assertIsNone(n["werkzeuge"], "keine Zeile „Ohne Werkzeug (aus dem Gesprächsverlauf)“ unter der Rueckmeldung")
         self.assertEqual(n["anhang"], [{"art": "link", "url": f"/app?projekt={self.pid}", "text": "Projekt „Vereinsbrief (fiktiv)“ öffnen"}])
         eingabe = self.modell.aufrufe[0][1]["content"]
         self.assertIn("Seine Bitte (von ihm selbst getippt): Mach die Alt-Texte", eingabe)
