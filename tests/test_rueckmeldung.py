@@ -459,23 +459,6 @@ class Nachricht(Basis):
                                "Datei: brief.pdf.")
 
 
-class Adressen(unittest.TestCase):
-    """rueckmeldung.ohne_adressen — die Beispiele der Nachpruefung (14.10.2026)."""
-
-    def test_weg(self):
-        for vorher, nachher in (("Geh auf inkludocs-login.de/reset und melde dich an.", "Geh auf und melde dich an."),
-                                ("Schreib an hilfe@boese.example, dann geht es weiter.", "Schreib an, dann geht es weiter."),
-                                ("Siehe https://x.de.", "Siehe."), ("(https://x.de) ok", "ok"),
-                                ("Lade es von evil.zip herunter.", "Lade es von herunter."), ("WWW.BOESE.DE/x hier", "hier")):
-            self.assertEqual(rm.ohne_adressen(vorher), nachher, vorher)
-
-    def test_bleibt(self):
-        for text in ("Das Bild logo@2x.png ist beschrieben, brief.pdf auch.", "C’est fini ! Tout est prêt ?",
-                     "Die Dateien.Die Bilder sind fertig, z.B. das Logo; e.V. ist ok.", "Version 3.1 ist da, Seite 4."):
-            self.assertEqual(rm.ohne_adressen(text), text)
-        self.assertEqual(rm.ohne_adressen("Fertig: www.olle-snuut.de hat 12 Bilder.", ["www.olle-snuut.de"]),
-                         "Fertig: www.olle-snuut.de hat 12 Bilder.")
-
     def test_namen_gehen_als_daten_ans_modell(self):
         status_setzen(self.pid, "extracted")
         c = database.get_db()
@@ -508,6 +491,24 @@ class Adressen(unittest.TestCase):
         self.assertEqual(n["sprache"], "en")
         self.assertEqual(n["text"], "The alt text generation in the project “Vereinsbrief (fiktiv)” has finished. "
                                     "You can see the result in the project.")
+
+
+class Adressen(unittest.TestCase):
+    """rueckmeldung.ohne_adressen — die Beispiele der Nachpruefung (14.10.2026)."""
+
+    def test_weg(self):
+        for vorher, nachher in (("Geh auf inkludocs-login.de/reset und melde dich an.", "Geh auf und melde dich an."),
+                                ("Schreib an hilfe@boese.example, dann geht es weiter.", "Schreib an, dann geht es weiter."),
+                                ("Siehe https://x.de.", "Siehe."), ("(https://x.de) ok", "ok"),
+                                ("Lade es von evil.zip herunter.", "Lade es von herunter."), ("WWW.BOESE.DE/x hier", "hier")):
+            self.assertEqual(rm.ohne_adressen(vorher), nachher, vorher)
+
+    def test_bleibt(self):
+        for text in ("Das Bild logo@2x.png ist beschrieben, brief.pdf auch.", "C’est fini ! Tout est prêt ?",
+                     "Die Dateien.Die Bilder sind fertig, z.B. das Logo; e.V. ist ok.", "Version 3.1 ist da, Seite 4."):
+            self.assertEqual(rm.ohne_adressen(text), text)
+        self.assertEqual(rm.ohne_adressen("Fertig: www.olle-snuut.de hat 12 Bilder.", ["www.olle-snuut.de"]),
+                         "Fertig: www.olle-snuut.de hat 12 Bilder.")
 
 
 # ─── 5. Mail an das eigene Konto ─────────────────────────────────────────────────────────────────────────────────────────────
