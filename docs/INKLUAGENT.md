@@ -1603,6 +1603,48 @@ wartet) — die Karte selbst ist die vorhandene Formular-Karte (fliegt ein, Wusc
 **Kosten:** Planen und Abarbeiten kosten keine KI; je Auftrag eine Rückmeldung (etwa 0,5 ct). Für den Kunden: die Credits der
 Schritte wie einzeln, nie mehr als die Summe der Karte.
 
+**Unabhängige Prüfung (14.10.2026, eigener Prüf-Agent über den ganzen Commit):** nichts Kritisches; bestätigt: kein Auftrag ohne
+Knopf (kein Werkzeug zum Abschicken, Karte an das Konto gebunden, 96-Bit-Kennung, Doppelklick 409, parallele Klicks über
+`BEGIN IMMEDIATE`), die Freigabe bleibt im Faden, keine fremden Projekte, Mail nur ans eigene Konto, die Rest-Summe stimmt.
+Behoben (je Befund ein Test in `Befunde`, Gegenprobe der drei mittleren: rot):
+- (M1) Ein Schritt nahm die Karte eines Angebots, das im Gespräch GLEICHZEITIG entstand, als seine (Werkzeug und Argumente
+  überschrieben) und holte dessen verbrauchte Angebote ab. Jetzt fassen `ausgaben.nachbereiten` und `_angebot_merken` im Faden
+  eines Auftragsschritts weder Karten noch Angebote an; die übersetzte Datei läuft ebenfalls in diesem Faden (ohne Freigabe).
+- (M2) Übersetzen buchte mehr als angezeigt: die Vorschau rundet einmal über alle Wörter, der Lauf rundete je Paket auf (zehn
+  Pakete zu 150 Wörtern: 15 angezeigt, 20 gebucht). `uebersetzung_api._uebersetze_projekt` rundet jetzt fortlaufend — auch
+  außerhalb von Aufträgen (Anzeige = Abrechnung).
+- (M3) Ein Schritt galt als fertig, obwohl nichts Neues entstand (Rettung bei Alt-Texten: alter Text bleibt, Status „done“ mit
+  Fehlergrund; Quickinfos ohne ein neues Feld). Jetzt zählt bei Alt-Texten nur ein Bild ohne Fehlergrund als neu; kein neuer
+  Text bzw. keine neue Quickinfo = gescheitert (der Auftrag hält vor dem bezahlten Herunterladen an).
+- (M4) Ein Auftrag konnte für immer „läuft“: Schalter aus (`main.lifespan` beendet laufende Aufträge jetzt mit Grund),
+  Aufräumen nach dem Neustart wirft (die Schleife startet trotzdem), ein hängendes Werkzeug (die Rückmeldung gibt einen Auftrag
+  nach `AUFTRAG_HOECHSTENS_S`, zwei Tagen, auf: `auftraege.aufgeben`, dann meldet sie den Stand). Gespeichert wird nur, solange
+  der Auftrag läuft — ein Abarbeiter, der doch zurückkehrt, schreibt den Stand nicht mehr um.
+- (N1) Zwei Abarbeiter starten nie denselben Schritt: der Start wird bedingt geschrieben (`_beanspruchen`, Vergleich mit dem
+  gelesenen Stand). (N2) Inzwischen getaggt: übersprungen statt noch einmal taggen und bezahlen; die Seitengrenze
+  `pdf_tagging.MAX_SEITEN` schon beim Planen. (N3) Baut gerade ein Herunterladen für das Konto oder ist es gedrosselt, wartet
+  der Schritt (Pause `PAUSE_DROSSEL_S`), statt zu scheitern. (N4) Das Erteilen vergleicht je Schritt Art, Dokument und Preis
+  (`fingerabdruck`), nicht nur die Summe. (N5) Ohne Modell nennt die schlichte Meldung je Schritt sein Ergebnis. (N6) Wartet im
+  Projekt noch eine Rückmeldung aus Baustein 1, startet der Schritt erst danach (sonst meldete sie seine Zahlen ein zweites
+  Mal). (N7) Der Knopf nennt die Summe („Auftrag erteilen (45 Credits)“), die Schritte stehen als nummerierte Liste, die
+  Hinweise als eigene Absätze. (N8) „Läuft gerade“ im Arbeitsfenster in der Sprache der Oberfläche. (N9) Mit dem Projekt gehen
+  seine Aufträge; beendete Aufträge nach `AUFBEWAHREN_TAGE` (30). (N10) Die Ergebnisse nennen die Frist von Sofort-Downloads
+  (24 Stunden), die Nachricht sagt sie.
+- Randnotiz (bewusst so): `auftrag_abbrechen` hält nur an — eingeschleuster Text könnte einen Auftrag anhalten, aber nichts
+  kosten.
+
+**Tests:** `tests/test_auftraege.py` (74): Plan (Reihenfolge, doppelte, nur was es gibt, Tagging gesperrt, Prüfung nur getaggt,
+Obergrenze beim Herunterladen, Guthaben, Einzahl, mehrere Dokumente), Werkzeug (Karte, kein Ja, keine Karte bei Fehler, Guthaben
+oder laufendem Auftrag, nur eigene Projekte), Erteilen (eine Transaktion, andere Summe, Guthaben, je Projekt und Konto, voller
+Rückmeldungs-Platz, gleichzeitige Klicks), Freigabe im Faden (Art, einmal, Rest-Summe, nie Unumkehrbares, anderer Faden, echtes
+Werkzeug), Abarbeiten (nacheinander, Anlaufzeit, teurer, Guthaben weg, Scheitern, teilweise, nichts mehr zu tun, belegt,
+Abbrechen, in der Oberfläche abgebrochen, Projekt gelöscht, Neustart, unterbrochener Start, Fehler, zu lang, Stand, Konto),
+Melden (Dateien, ehrlich bei Abbruch, Mail, nie zusammengelegt, Zeitgrenze, `melden_wenn_fertig`, Kontolöschung), Agent-Schleife
+und Karte über den Server, Oberfläche, Hilfe, dazu je Prüf-Befund ein Test. Gegenprobe: drei absichtliche Fehler je Runde rot.
+`tests/test_werkzeug_schema.py`: jedes Werkzeug mit Auswahllisten nur aus Texten (Rauchtest 14.10.2026: eine Zahlen-Liste ließ
+Gemini jede Anfrage ablehnen). Klickprobe `lokal/probe_auftraege.py` (Ersatz-KI `IA_ERSATZ_BILD=an`): 24 Punkte. Rauchtest
+Staging mit echtem Modell `rauch_auftraege.py`: Karte, Erteilen, Abarbeiten, persönliche Rückmeldung mit der Datei.
+
 ## Aufträge, Baustein 3: Kaufen im Gespräch (Steve 14.10.2026; Schalter `AGENT_KAUFEN`, Umgebung `INKLUAGENT_KAUFEN=an`, braucht `AGENT_KARTEN` und die Online-Zahlung)
 
 Steve: „Man kann auch mit dem Bot Pakete und Credits buchen. Allerdings muss man das ausdrücklich bestätigen.“ Zwei
@@ -1672,3 +1714,7 @@ Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sic
   Prüfungen, gleiche Antworten, gleiche Protokollierung (Tests in `test_kaufen.py`, Klasse Endpunkte). Formular-Felder können
   mehrere Links tragen (`links`); die Seite leitet nach einer Karte nur zu Stripe-Checkout weiter, und nur, wenn die Antwort
   `weiter` trägt (ohne Schalter nie).
+- Prüfung der Aufträge ohne Schalter: **Übersetzen bucht fortlaufend gerundet** (`uebersetzung_api._uebersetze_projekt`) —
+  Kunden zahlen nie mehr als die Rückfrage nennt (vorher je Paket aufgerundet, bis zu einem Credit je Paket mehr); ein Projekt
+  löschen löscht seine Aufträge; `GET /api/agent/ueberblick` übersetzt die Auftragszeile; Formular-Karten können Schritte
+  nummerieren und Hinweise tragen (bestehende Karten unverändert).

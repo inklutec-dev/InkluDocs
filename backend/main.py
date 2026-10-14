@@ -460,11 +460,13 @@ async def lifespan(app: FastAPI):
     # Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py, Schalter AGENT_AUFTRAEGE): nach einem Neustart abgebrochene
     # Schritte als gescheitert eintragen, dann alle 10 s ohne KI die laufenden Auftraege einen Schritt weiter bringen
     from inkluagent import auftraege as _auftraege
-    if _auftraege.an():
-        try:
+    try:
+        if _auftraege.an():
             _auftraege.starten()
-        except Exception:  # noqa: BLE001 — ohne Auftraege laeuft alles andere weiter
-            logger.exception("InkluAgent: Auftraege nicht gestartet")
+        elif _auftraege.ausgeschaltet():   # Schalter aus: laufende beenden, sonst warteten Projekt und Rueckmeldung ewig (M4)
+            logger.warning("InkluAgent: Auftraege sind ausgeschaltet — laufende Auftraege beendet")
+    except Exception:  # noqa: BLE001 — ohne Auftraege laeuft alles andere weiter
+        logger.exception("InkluAgent: Auftraege nicht gestartet")
 
     yield
 
@@ -7207,6 +7209,9 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
     # Gespraech je Konto (InkluAgent-Ausbau Runde 2, Schritt 2; Steve 09.10.2026): es BLEIBT, der Projektbezug gilt als geloescht
     from inkluagent import storage as _agent_storage
     _agent_storage.projekt_geloescht_markieren(conn, project_id)
+    # Auftraege des Projekts (Baustein 2): ihre Schritte nennen Dokument- und Dateinamen (Pruefung N9). Ein laufender endet damit —
+    # der Abarbeiter findet ihn nicht mehr, und seine Rueckmeldung verwirft der Rundgang (Projekt weg).
+    conn.execute("DELETE FROM agent_auftraege WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM messages WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM shares WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
@@ -12025,7 +12030,7 @@ async def agent_status(user: dict = Depends(get_current_user)):
 
 
 @app.get("/api/agent/ueberblick")
-async def agent_ueberblick(user: dict = Depends(get_current_user)):
+async def agent_ueberblick(request: Request, user: dict = Depends(get_current_user)):
     """Ueberblick fuer das Arbeitsfenster, solange der InkluAgent nichts tut (Steve 12.10.2026; Schalter AGENT_ARBEITSFENSTER):
     Guthaben, was gerade laeuft, Express (offene Auftraege, Warenkorb) und die drei zuletzt bearbeiteten Projekte. Ohne KI —
     nur Datenbank. Namen sind Nutzerdaten; die Seite setzt sie mit textContent."""
@@ -12034,8 +12039,16 @@ async def agent_ueberblick(user: dict = Depends(get_current_user)):
     import billing
     from inkluagent import konto as _konto
     v = billing.verfuegbare_credits(user["id"])
+    _ = get_gettext(resolve_ui_language(request))
+
+    def _was(x: dict) -> str:
+        """Ein Auftrag (Baustein 2) als Satz in der Sprache der Oberflaeche — die anderen Arten uebersetzt die Seite selbst."""
+        a = x.get("auftrag")
+        if not a:
+            return x["was"]
+        return _("Auftrag, Schritt {n} von {m}: {schritt}").format(n=a["schritt"], m=a["von"], schritt=_(a["titel"]))
     out: dict = {"guthaben": None if v is None else int(v),
-                 "laeuft": [{"project_id": x["project_id"], "projekt": x["projekt"], "was": x["was"]}
+                 "laeuft": [{"project_id": x["project_id"], "projekt": x["projekt"], "was": _was(x)}
                             for x in _konto.laufende(user["id"])][:5]}
     conn = get_db()
     try:

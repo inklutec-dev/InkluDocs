@@ -12825,3 +12825,28 @@ msgstr "Abo wechseln oder kündigen, Rechnungen und Zahlungsart"
 
 msgid "Weiter zur Bezahlseite von Stripe. Bezahlt wird dort; danach kommst du zurück zu „Abo & Verbrauch“."
 msgstr "Weiter zur Bezahlseite von Stripe. Bezahlt wird dort; danach kommst du zurück zu „Abo & Verbrauch“."
+
+# Auftraege, Pruefung 14.10.2026 (Knopf mit Preis, schlichte Meldung, Ueberblick)
+msgid "teilweise fertig"
+msgstr "teilweise fertig"
+
+msgid "gescheitert"
+msgstr "gescheitert"
+
+msgid "nichts zu tun"
+msgstr "nichts zu tun"
+
+msgid "nicht mehr gestartet"
+msgstr "nicht mehr gestartet"
+
+#, python-brace-format
+msgid "Auftrag erteilen ({preis})"
+msgstr "Auftrag erteilen ({preis})"
+
+#, python-brace-format
+msgid "{schritt}: {ergebnis}."
+msgstr "{schritt}: {ergebnis}."
+
+#, python-brace-format
+msgid "Auftrag, Schritt {n} von {m}: {schritt}"
+msgstr "Auftrag, Schritt {n} von {m}: {schritt}"

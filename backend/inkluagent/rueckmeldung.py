@@ -54,6 +54,7 @@ log = logging.getLogger(__name__)
 PRUEF_S = 10                   # Abstand der Rundgaenge
 ANLAUF_S = 45                  # so lange darf ein Lauf brauchen, bis er als laufend sichtbar ist (Tagging startet im Thread)
 HOECHSTENS_S = 12 * 3600       # laeuft er laenger, meldet sich der Agent mit dem Hinweis, nachzusehen
+AUFTRAG_HOECHSTENS_S = 48 * 3600   # ein Auftrag (mehrere Schritte, je hoechstens sechs Stunden) laenger: aufgeben und melden
 JE_DURCHLAUF = 5               # hoechstens so viele Meldungen je Rundgang (je eine mit Modellaufruf)
 VERSUCHE = 3                   # schlaegt das Melden so oft fehl, wird der Eintrag verworfen (Fehler im Log)
 BELEGT_HOECHSTENS_S = 600      # laenger „meldet“ heisst: das Melden brach ab (Datenbank, Absturz) — zurueck in die Warteschlange
@@ -163,7 +164,7 @@ So schreibst du:
 - In der angegebenen Sprache, per du, zwei bis vier Sätze als zusammenhängender Text (bei einem Auftrag mit mehreren Schritten höchstens sechs).
 - Beziehe dich auf seine Bitte, wenn sie dabei ist, aber wiederhole sie nicht wörtlich.
 - Sag, was fertig ist, mit den Zahlen aus den Ergebnissen. Ist etwas schiefgegangen, abgebrochen oder unvollständig, sag das ehrlich und wie viel betroffen ist.
-- Bei einem Auftrag mit mehreren Schritten: sag zu jedem Schritt kurz, was herauskam. Ist einer gescheitert oder wurde der Auftrag angehalten oder abgebrochen, nenne den Grund und welche Schritte deshalb nicht mehr liefen. Sind Dateien entstanden, sag, dass sie im Gespräch zum Herunterladen bereitstehen.
+- Bei einem Auftrag mit mehreren Schritten: sag zu jedem Schritt kurz, was herauskam. Ist einer gescheitert oder wurde der Auftrag angehalten oder abgebrochen, nenne den Grund und welche Schritte deshalb nicht mehr liefen. Sind Dateien entstanden, sag, dass sie im Gespräch zum Herunterladen bereitstehen; steht bei einer Datei eine Frist (datei_herunterladbar_bis), sag, bis wann.
 - Nenne, was er sich ansehen sollte (zum Beispiel Bilder, die geprüft werden sollten), und höchstens einen nächsten Schritt als Vorschlag.
 - Nur, was in den Ergebnissen steht: nichts erfinden, keine Preise oder Zeiten schätzen, nichts versprechen.
 - Erwähne keine Mail; ob eine Mail rausging, ergänzt der Server.
@@ -457,9 +458,18 @@ def durchlauf() -> int:
             log.exception("Rueckmeldung %s: Zustand nicht lesbar", e["id"])
             continue
         if noch:
-            # Ein Auftrag begrenzt jeden Schritt selbst (auftraege.SCHRITT_HOECHSTENS_S) und endet immer — seine Rueckmeldung
-            # wartet auf sein Ende, auch wenn mehrere lange Schritte zusammen laenger als zwoelf Stunden brauchen
-            if e["alter_s"] > HOECHSTENS_S and e["art"] != "auftrag":
+            # Ein Auftrag begrenzt jeden Schritt selbst (auftraege.SCHRITT_HOECHSTENS_S); seine Rueckmeldung wartet auf sein Ende,
+            # auch wenn mehrere lange Schritte zusammen laenger als zwoelf Stunden brauchen. Haengt sein Abarbeiter (ein Werkzeug,
+            # das nie zurueckkehrt), gibt sie ihn nach AUFTRAG_HOECHSTENS_S auf und meldet den Stand (Pruefung Auftraege, M4)
+            if e["art"] == "auftrag":
+                if e["alter_s"] > AUFTRAG_HOECHSTENS_S:
+                    from . import auftraege
+                    auftraege.aufgeben(e.get("auftrag_id"))
+                    gemeldet += int(melden(e["id"]))
+                elif not e["gesehen_laufen"]:
+                    _setzen(e["id"], gesehen_laufen=1)
+                continue
+            if e["alter_s"] > HOECHSTENS_S:
                 gemeldet += int(melden(e["id"], zu_lang=True))
             elif not e["gesehen_laufen"]:
                 _setzen(e["id"], gesehen_laufen=1)
@@ -570,6 +580,9 @@ def _melden(e: dict, zu_lang: bool) -> bool:
     text = None
     if not zu_lang:
         text = text_vom_agenten(e, fakten(e), projekt, admin=bool(u.get("is_admin")), erlaubt=[str(n) for n in namen if n])
+    if not text and e["art"] == "auftrag":   # ohne Modell: je Schritt sein Ergebnis (Pruefung Auftraege, N5)
+        from . import auftraege
+        text = auftraege.schlichte_meldung(e.get("auftrag_id"), projekt, _)
     if not text:
         text = _(T_ZU_LANG if zu_lang else T_FERTIG).format(was=_(WAS[e["art"]]), projekt=projekt)
     zusatz = None

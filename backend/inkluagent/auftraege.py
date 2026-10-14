@@ -40,6 +40,7 @@ import asyncio
 import importlib
 import json
 import logging
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -61,6 +62,9 @@ JE_RUNDGANG = 50                   # so viele laufende Auftraege je Rundgang, re
 UEBERGAENGE_JE_RUNDGANG = 4        # so viele Schritte eines Auftrags hoechstens je Rundgang (synchrone Schritte nacheinander)
 FEHLVERSUCHE = 3                   # so viele unerwartete Fehler hintereinander, dann gilt der Auftrag als gescheitert
 STAND_LISTE = 5                    # so viele Auftraege nennt auftrag_stand
+PAUSE_DROSSEL_S = 120              # Herunterladen gerade belegt oder gedrosselt: so lange wartet der Schritt, dann noch einmal
+AUFBEWAHREN_TAGE = 30              # beendete Auftraege (mit Dokument- und Dateinamen) so lange, danach geloescht (Datenschutz)
+AUFRAEUMEN_S = 3600                # so oft sieht der Rundgang nach alten Auftraegen
 
 # Endzustaende eines Auftrags; „laeuft“ ist der einzige andere
 ENDE = ("fertig", "gescheitert", "abgebrochen")
@@ -117,6 +121,11 @@ T_SUMME = "Dieser Schritt würde jetzt {n} Credits kosten; der Auftrag gibt daf�
 T_GUTHABEN = "Das Guthaben reichte für diesen Schritt nicht mehr."
 T_VOM_NUTZER = "Der Lauf wurde in der Oberfläche abgebrochen."
 T_NICHTS = "Als der Schritt dran war, gab es dafür nichts mehr zu tun."
+T_SCHON_GETAGGT = "Das Dokument war inzwischen schon getaggt."
+T_AUS = "Aufträge wurden auf dem Server ausgeschaltet; der Auftrag wurde angehalten."
+T_AUFGEGEBEN = "Der Auftrag lief länger als zwei Tage und wurde nicht weiter abgewartet."
+T_KEIN_ALT_TEXT = "Für kein Bild ist ein neuer Alt-Text entstanden."
+T_KEINE_QUICKINFO = "Es ist keine neue Quickinfo entstanden."
 
 
 def an() -> bool:
@@ -199,8 +208,8 @@ def _v_tagging(c: _Rechnen) -> list:
     gesperrt = funktionen.tagging_professionell_gesperrt()
     if gesperrt:
         raise _Nicht(gesperrt)
-    t, m, billing = _modul("tagging_api"), _modul("main"), _modul("billing")
-    if not _modul("pdf_tagging").verfuegbar():
+    t, m, billing, pt = _modul("tagging_api"), _modul("main"), _modul("billing"), _modul("pdf_tagging")
+    if not pt.verfuegbar():
         raise _Nicht("Das Tagging ist auf diesem Server nicht eingerichtet.")
     out = []
     for d in c.docs:
@@ -212,6 +221,8 @@ def _v_tagging(c: _Rechnen) -> list:
         seiten = t._seiten(d)
         if not seiten:
             raise _Nicht(f"„{_dokname(d)}“: Die PDF konnte nicht gelesen werden.")
+        if seiten > pt.MAX_SEITEN:   # dieselbe Grenze wie das Tagging selbst (sonst scheitert der Schritt erst im Lauf)
+            raise _Nicht(f"„{_dokname(d)}“ hat {seiten} Seiten; barrierefrei machen geht bis {pt.MAX_SEITEN} Seiten.")
         out.append(_eintrag(c, "tagging", billing.aktion_preis(t.AKTION, seiten),
                             _menge(_, seiten, "„{name}“, eine Seite", "„{name}“, {n} Seiten", name=_dokname(d)),
                             args={"document_id": d["id"]}, document_id=d["id"]))
@@ -406,10 +417,22 @@ def _preis_text(e: dict, _) -> str:
 
 
 def karte_zeilen(plan: dict, _) -> list[str]:
-    """Die Schritte fuer die Karte, nummeriert, mit Umfang und Preis; danach die Hinweise."""
-    zeilen = [f"{i}. {_(e['titel'])} ({e['umfang']}): {_preis_text(e, _)}" if e["umfang"] else
-              f"{i}. {_(e['titel'])}: {_preis_text(e, _)}" for i, e in enumerate(plan["eintraege"], 1)]
-    return zeilen + list(plan["hinweise"])
+    """Die Schritte fuer die Karte mit Umfang und Preis — die Oberflaeche nummeriert sie (nummerierte Liste)."""
+    return [f"{_(e['titel'])} ({e['umfang']}): {_preis_text(e, _)}" if e["umfang"] else f"{_(e['titel'])}: {_preis_text(e, _)}"
+            for e in plan["eintraege"]]
+
+
+def karte_knopf(plan: dict, _) -> str:
+    """„Auftrag erteilen (45 Credits)“: der Knopf nennt die Summe — wer per Tab oder Rotor „Formulare“ hinkommt, hoert den Preis
+    beim Knopf (wie die Bestaetigungs-Karten seit Pruefung 4; Pruefung Auftraege N7)."""
+    summe = {"preis_geplant": plan["summe"], "hoechstens": plan["hoechstens"]}
+    return _("Auftrag erteilen ({preis})").format(preis=_preis_text(summe, _))
+
+
+def fingerabdruck(plan: dict) -> list:
+    """Was die Karte zeigte: je Schritt Art, Dokument und Preis — das Erteilen vergleicht mehr als die Summe (Pruefung N4: Dokument
+    A geloescht, B mit gleicher Seitenzahl hochgeladen, gleiche Summe — die Karte zeigte A)."""
+    return [[e["art"], e.get("document_id"), e["preis_geplant"]] for e in plan["eintraege"]]
 
 
 def karte_text(projekt: str, plan: dict, _) -> str:
@@ -552,11 +575,12 @@ def _vorbereiten(args: dict, user_id: int, project_id: Optional[int], gespraech_
         return {"ok": True, "result": {"karte": None, "projekt_daten": projekt_daten, "schritte": schritte, "summe": plan["summe"],
                                        "verfuegbar": plan["verfuegbar"], "fehlend": fehlend, "guthaben_reicht_nicht": True,
                                        "hinweis": "Das Guthaben reicht für diesen Auftrag nicht. Nenne Summe und Guthaben." + kaufen}}
-    kontext = {"project_id": int(p["id"]), "wunsch": wunsch, "summe": plan["summe"], "gespraech_id": int(gespraech_id),
-               "sprache": sprache or "de", "auftrag": (auftrag or "").strip()[:1000]}
+    kontext = {"project_id": int(p["id"]), "wunsch": wunsch, "summe": plan["summe"], "fingerabdruck": fingerabdruck(plan),
+               "gespraech_id": int(gespraech_id), "sprache": sprache or "de", "auftrag": (auftrag or "").strip()[:1000]}
     kid = karten._merken(user_id, karten.AUFTRAG, None if project_id is None else int(p["id"]), kontext)
     anhang = karten.karte(karten.AUFTRAG, kid, {"per_mail": rueckmeldung._ja(args.get("per_mail"))}, _,
-                          text=karte_text(_projektname(p), plan, _), zeilen=karte_zeilen(plan, _))
+                          text=karte_text(_projektname(p), plan, _), zeilen=karte_zeilen(plan, _), nummeriert=True,
+                          hinweise=plan["hinweise"], knopf=karte_knopf(plan, _))
     return {"ok": True,
             "result": {"karte": "auftrag", "projekt_daten": projekt_daten, "schritte": schritte, "summe": plan["summe"],
                        "hoechstens": plan["hoechstens"], "verfuegbar": plan["verfuegbar"], "hinweise": plan["hinweise"],
@@ -649,7 +673,8 @@ def erteilen(kontext: dict, user: dict, werte: dict, _) -> tuple[int, dict]:
     if not p:
         return _abgelaufen(_("Das Projekt gibt es nicht mehr."), 404)
     plan = planen(uid, p, kontext["wunsch"], _)
-    if plan["fehler"] or not plan["eintraege"] or plan["summe"] != int(kontext["summe"]):
+    if (plan["fehler"] or not plan["eintraege"] or plan["summe"] != int(kontext["summe"])
+            or fingerabdruck(plan) != kontext.get("fingerabdruck")):
         return _abgelaufen(_("Umfang oder Preis haben sich geändert. Bitte frag im Chat neu."))
     if not plan["erlaubt"]:
         return 402, {"detail": _("Dein Guthaben reicht nicht: {f} Credits fehlen.").format(
@@ -700,6 +725,7 @@ def _laden(aid: int) -> Optional[dict]:
 
 
 def _zeile(a: dict) -> dict:
+    a["schritte_roh"] = a.get("schritte") or "[]"   # fuer _beanspruchen: genau dieser Stand in der Datenbank
     try:
         a["schritte"] = json.loads(a.get("schritte") or "[]")
     except ValueError:
@@ -707,16 +733,39 @@ def _zeile(a: dict) -> dict:
     return a
 
 
-def _speichern(a: dict, **felder) -> None:
-    """Schritte, Verbrauch und uebergebene Felder schreiben — nie „abbrechen“ (das setzt nur auftrag_abbrechen)."""
-    felder = dict(felder, schritte=json.dumps(a["schritte"], ensure_ascii=False), verbraucht=int(a["verbraucht"]))
+def _speichern(a: dict, **felder) -> bool:
+    """Schritte, Verbrauch und uebergebene Felder schreiben — nie „abbrechen“ (das setzt nur auftrag_abbrechen) und nur, solange
+    der Auftrag laeuft: wurde er inzwischen anderswo beendet (aufgegeben, ausgeschaltet), bleibt dessen Stand (Pruefung M4).
+    True = geschrieben."""
+    roh = json.dumps(a["schritte"], ensure_ascii=False)
+    felder = dict(felder, schritte=roh, verbraucht=int(a["verbraucht"]))
     conn = get_db()
     try:
-        conn.execute("UPDATE agent_auftraege SET " + ", ".join(f"{k} = ?" for k in felder) + ", geprueft_am = datetime('now') "
-                     "WHERE id = ?", (*felder.values(), a["id"]))
+        n = conn.execute("UPDATE agent_auftraege SET " + ", ".join(f"{k} = ?" for k in felder) + ", geprueft_am = datetime('now') "
+                         "WHERE id = ? AND zustand = 'laeuft'", (*felder.values(), a["id"])).rowcount
         conn.commit()
     finally:
         conn.close()
+    if n:
+        a["schritte_roh"] = roh
+    return bool(n)
+
+
+def _beanspruchen(a: dict) -> bool:
+    """Den Start des naechsten Schritts in EINEM bedingten Schritt festhalten: nur, wenn die Schritte noch genau so in der
+    Datenbank stehen, wie dieser Rundgang sie gelesen hat. Zwei Abarbeiter (zwei Prozesse, ein ueberlappender Container beim
+    Neustart) starten so nie denselben Schritt (Pruefung N1). True = beansprucht."""
+    roh = json.dumps(a["schritte"], ensure_ascii=False)
+    conn = get_db()
+    try:
+        n = conn.execute("UPDATE agent_auftraege SET schritte = ?, geprueft_am = datetime('now') WHERE id = ? AND zustand = 'laeuft' "
+                         "AND schritte = ?", (roh, a["id"], a["schritte_roh"])).rowcount
+        conn.commit()
+    finally:
+        conn.close()
+    if n:
+        a["schritte_roh"] = roh
+    return bool(n)
 
 
 def _beenden(a: dict, zustand: str) -> None:
@@ -736,6 +785,7 @@ def _iso() -> str:
 def durchlauf() -> int:
     """Ein Rundgang (im eigenen Faden): jeden laufenden Auftrag einen Schritt weiter bringen. Reihum nach dem letzten Blick.
     Rueckgabe: Zahl der angesehenen Auftraege."""
+    _aufraeumen()
     conn = get_db()
     try:
         ids = [r[0] for r in conn.execute("SELECT id FROM agent_auftraege WHERE zustand = 'laeuft' "
@@ -750,6 +800,28 @@ def durchlauf() -> int:
             log.exception("Auftrag %s: Rundgang fehlgeschlagen", aid)
             _fehlversuch(aid)
     return len(ids)
+
+
+_AUFGERAEUMT_AM = 0.0
+
+
+def _aufraeumen() -> None:
+    """Beendete Auftraege nach AUFBEWAHREN_TAGE loeschen (Pruefung N9: die Schritte nennen Dokument- und Dateinamen); hoechstens
+    einmal je AUFRAEUMEN_S. Die Rueckmeldung braucht sie nur bis zum Melden — eine noch wartende behaelt ihren Auftrag."""
+    global _AUFGERAEUMT_AM
+    if _jetzt() - _AUFGERAEUMT_AM < AUFRAEUMEN_S:
+        return
+    _AUFGERAEUMT_AM = _jetzt()
+    conn = get_db()
+    try:
+        n = conn.execute("DELETE FROM agent_auftraege WHERE zustand <> 'laeuft' AND beendet_am < datetime('now', ?) AND id NOT IN "
+                         "(SELECT auftrag_id FROM agent_rueckmeldungen WHERE auftrag_id IS NOT NULL AND zustand IN ('wartet', 'meldet'))",
+                         (f"-{AUFBEWAHREN_TAGE} days",)).rowcount
+        conn.commit()
+    finally:
+        conn.close()
+    if n:
+        log.info("Auftraege: %d alte geloescht (aelter als %d Tage)", n, AUFBEWAHREN_TAGE)
 
 
 def _fehlversuch(aid: int, zuruecksetzen: bool = False) -> None:
@@ -812,9 +884,12 @@ def weiter(aid: int) -> None:
             return
         if s["zustand"] != "fehler":
             # Erst festhalten, dass er startet (gestartet=False): bricht danach etwas ab (Datenbank, Absturz), startet ihn der
-            # naechste Rundgang nicht noch einmal — _zu_ende sagt dann ehrlich „unterbrochen“, statt doppelt zu buchen
+            # naechste Rundgang nicht noch einmal — _zu_ende sagt dann ehrlich „unterbrochen“, statt doppelt zu buchen. Bedingt
+            # geschrieben: hat ein anderer Abarbeiter den Stand schon geaendert, startet dieser hier nichts (Pruefung N1).
             s.update(zustand="laeuft", gestartet=False, gestartet_am=_jetzt())
-            _speichern(a)
+            if not _beanspruchen(a):
+                log.warning("Auftrag %s: Schritt %s schon von einem anderen Abarbeiter beansprucht", a["id"], s["art"])
+                return
             try:
                 s.update(_starten(a, s))
             except Exception:  # noqa: BLE001 — ein unerwarteter Fehler beim Start haelt den Auftrag an, statt ihn zu wiederholen
@@ -825,7 +900,7 @@ def weiter(aid: int) -> None:
         if s["zustand"] == "fehler":
             _beenden(a, "gescheitert")
             return
-        if s["zustand"] == "laeuft":
+        if s["zustand"] in ("laeuft", "offen"):   # offen: Herunterladen gerade belegt oder gedrosselt — spaeter noch einmal
             return
 
 
@@ -833,15 +908,35 @@ def _belegt(a: dict, s: dict) -> bool:
     """Laeuft im Projekt gerade etwas anderes (auch aus der Oberflaeche gestartet)? Dann wartet der Schritt — hoechstens
     WARTEN_HOECHSTENS_S, danach gilt er als gescheitert (zustand fehler, Rueckgabe False)."""
     from . import rueckmeldung
-    if not rueckmeldung.was_laeuft(a["project_id"]):
-        s.pop("wartet_seit", None)
-        return False
     jetzt = _jetzt()
+    if not (rueckmeldung.was_laeuft(a["project_id"]) or _export_belegt(a["user_id"]) or float(s.get("pause_bis") or 0) > jetzt
+            or _rueckmeldung_wartet(a)):
+        s.pop("wartet_seit", None)
+        s.pop("pause_bis", None)
+        return False
     s.setdefault("wartet_seit", jetzt)
     if jetzt - float(s["wartet_seit"]) > WARTEN_HOECHSTENS_S:
         s.update(zustand="fehler", grund=T_BELEGT)
         return False
     return True
+
+
+def _export_belegt(user_id: int) -> bool:
+    """Baut gerade ein Herunterladen fuer dieses Konto (main._export_belegen, je Nutzer EINES)? Dann wartet „PDF herunterladen“,
+    statt sofort zu scheitern — am Ende eines Auftrags, nachdem alles davor bezahlt ist (Pruefung N3)."""
+    m = sys.modules.get("main")
+    return bool(m is not None and int(user_id) in getattr(m, "_export_nutzer", ()))
+
+
+def _rueckmeldung_wartet(a: dict) -> bool:
+    """Wartet im Projekt noch eine Rueckmeldung zu einem Lauf ausserhalb des Auftrags (Baustein 1)? Dann wartet der Schritt, bis
+    sie gemeldet ist — sonst saehe sie den Lauf des Auftrags als ihren und meldete dessen Zahlen ein zweites Mal (Pruefung N6)."""
+    conn = get_db()
+    try:
+        return bool(conn.execute("SELECT 1 FROM agent_rueckmeldungen WHERE user_id = ? AND project_id = ? AND auftrag_id IS NULL "
+                                 "AND zustand IN ('wartet', 'meldet') LIMIT 1", (a["user_id"], a["project_id"])).fetchone())
+    finally:
+        conn.close()
 
 
 def _starten(a: dict, s: dict) -> dict:
@@ -851,8 +946,13 @@ def _starten(a: dict, s: dict) -> dict:
     p = _eigenes_projekt(a["user_id"], a["project_id"])
     if not p:
         return {"zustand": "fehler", "grund": T_PROJEKT_WEG}
-    if s.get("document_id") and not _dokument(s["document_id"], p["id"]):
+    doc = _dokument(s["document_id"], p["id"]) if s.get("document_id") else None
+    if s.get("document_id") and not doc:
         return {"zustand": "fehler", "grund": T_DOKUMENT_WEG}
+    if s["art"] == "tagging" and _modul("main")._dokument_getaggt(doc):
+        # Inzwischen getaggt (etwa per Knopf, waehrend der Auftrag ein anderes Dokument taggte): nicht noch einmal taggen und
+        # bezahlen — „Neu taggen“ ersetzte sonst die gerade entstandenen Tags (Pruefung N2)
+        return {"zustand": "uebersprungen", "grund": T_SCHON_GETAGGT, "preis": 0}
     namen, executor = _werkzeugsatz(p, a["user_id"])
     if s["werkzeug"] not in namen:
         return {"zustand": "fehler", "grund": T_NICHT_DA}
@@ -863,6 +963,9 @@ def _starten(a: dict, s: dict) -> dict:
     felder: dict[str, Any] = {"gestartet_am": _jetzt(), "preis": preis}
     res = r.get("result") if isinstance(r, dict) else None
     if not (isinstance(r, dict) and r.get("ok")):
+        if _herunterladen_belegt(r):   # nichts gebaut, nichts gebucht: spaeter noch einmal (wartet hoechstens WARTEN_HOECHSTENS_S)
+            return {"zustand": "offen", "gestartet": False, "preis": 0, "pause_bis": _jetzt() + PAUSE_DROSSEL_S,
+                    "wartet_seit": s.get("wartet_seit") or _jetzt()}
         return dict(felder, zustand="fehler", preis=0, grund=str((r or {}).get("error") or T_INTERN))
     res = res if isinstance(res, dict) else {}
     if res.get("rueckfrage_noetig"):
@@ -885,6 +988,14 @@ def _starten(a: dict, s: dict) -> dict:
     anhang = r.get("anhang") if isinstance(r.get("anhang"), dict) else None
     log.info("Auftrag %s: %s fertig (%d Credits freigegeben)", a["id"], s["art"], preis)
     return dict(felder, zustand="fertig", anhang=anhang, beendet_am=_jetzt())
+
+
+def _herunterladen_belegt(r: Any) -> bool:
+    """Scheiterte ein Herunterladen nur, weil fuer das Konto gerade eines gebaut wird oder es gedrosselt ist (main._export_belegt_text)?"""
+    m = sys.modules.get("main")
+    if m is None or not isinstance(r, dict):
+        return False
+    return str(r.get("error") or "") in {m._export_belegt_text("laeuft"), m._export_belegt_text("drossel")}
 
 
 def _laeuft_schon(s: dict, project_id: int) -> bool:
@@ -957,19 +1068,26 @@ def _auswerten(a: dict, s: dict) -> dict:
             return {"zustand": "fertig"}
         return {"zustand": "fehler", "grund": str(t._pruef_bericht(d).get("fehler") or "Die Prüfung ist fehlgeschlagen.")}
     if art == "alt_texte":
+        # Neu ist ein Text, wenn das Bild fertig ist und keinen Fehlergrund traegt: der Lauf leert fehler_grund bei Erfolg und
+        # setzt ihn bei einem Fehlversuch — auch wenn ein alter Text bleibt (Rettung, Status 'done' mit needs_review). Vorher
+        # zaehlte jedes fertige Bild; fiel die KI fuer alle aus, hiess der Schritt „fertig“, und der Auftrag lief weiter zum
+        # bezahlten Herunterladen (Pruefung M3). Vom Autor als Schmuck gekennzeichnete Bilder laufen nie mit.
         conn = get_db()
         try:
-            b = rueckmeldung._bilder(conn, pid, None)
+            z = dict(conn.execute(
+                "SELECT COUNT(*) AS n, SUM(CASE WHEN status = 'done' AND COALESCE(fehler_grund, '') = '' THEN 1 ELSE 0 END) AS neu, "
+                "SUM(CASE WHEN status = 'error' OR COALESCE(fehler_grund, '') <> '' THEN 1 ELSE 0 END) AS kaputt, "
+                "SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS offen FROM images WHERE project_id = ? "
+                "AND NOT (COALESCE(original_alt, '') = 'dekorativ' AND COALESCE(image_type, '') = 'dekorativ')", (pid,)).fetchone())
         finally:
             conn.close()
         h = _hinweis_des_laufs(pid)
-        n = b["nach_status"]
         if h.get("grund") == "abbruch":
             return {"zustand": "teilweise", "vom_nutzer": True, "grund": T_VOM_NUTZER}
-        if not n.get("fertig") and b["bilder"]:
-            return {"zustand": "fehler", "grund": "Für kein Bild ist ein Alt-Text entstanden."}
         grund = {"credits": T_GUTHABEN, "tageslimit": "Das Tageslimit für KI-Aufrufe war erreicht."}.get(h.get("grund"), "")
-        if grund or n.get("fehler") or n.get("offen"):
+        if z["n"] and not z["neu"]:
+            return {"zustand": "fehler", "grund": grund or T_KEIN_ALT_TEXT}
+        if grund or z["kaputt"] or z["offen"]:
             return {"zustand": "teilweise", "grund": grund or "Nicht für alle Bilder ist ein Alt-Text entstanden."}
         return {"zustand": "fertig"}
     if art == "quickinfos":
@@ -977,7 +1095,10 @@ def _auswerten(a: dict, s: dict) -> dict:
         if st.get("abbruch"):
             return {"zustand": "teilweise", "vom_nutzer": True, "grund": T_VOM_NUTZER}
         if st.get("fehler"):
-            return {"zustand": "teilweise", "grund": str(st["fehler"][0])}
+            # keine neue Quickinfo = gescheitert (haelt an), sonst teilweise (Pruefung M3)
+            return {"zustand": "teilweise" if st.get("felder_neu") else "fehler", "grund": str(st["fehler"][0])}
+        if st and not st.get("felder_neu"):
+            return {"zustand": "fehler", "grund": T_KEINE_QUICKINFO}
         return {"zustand": "fertig"}
     if art == "uebersetzung":
         st = _modul("uebersetzung_api")._lauf.get(pid) or {}
@@ -990,7 +1111,11 @@ def _auswerten(a: dict, s: dict) -> dict:
         p = _eigenes_projekt(a["user_id"], pid)
         namen, executor = _werkzeugsatz(p, a["user_id"]) if p else (set(), None)
         if executor is not None and "exportiere_uebersetzung" in namen:
-            r = executor.execute("exportiere_uebersetzung", {})
+            # im Faden des Schritts (ohne Freigabe — die Datei ist kostenlos): so fasst das Werkzeug keine Angebote und Karten des
+            # Gespraechs an (Pruefung M1, tools/ausgaben.nachbereiten)
+            from .tools import ausgaben
+            with ausgaben.auftrag_schritt((), 0):
+                r = executor.execute("exportiere_uebersetzung", {})
             if isinstance(r, dict) and r.get("ok") and isinstance(r.get("anhang"), dict):
                 ergebnis["anhang"] = r["anhang"]
             else:
@@ -1024,8 +1149,10 @@ def laufende(user_id: int) -> list[dict]:
     for a in rows:
         dran = next((i for i, s in enumerate(a["schritte"], 1) if s["zustand"] in ("offen", "laeuft")), len(a["schritte"]))
         titel = a["schritte"][dran - 1]["titel"] if a["schritte"] else ""
+        # „was“ deutsch fuer das Modell; „auftrag“ fuer die Oberflaeche, die den Satz in ihrer Sprache baut (Pruefung N8)
         out.append({"project_id": a["project_id"], "projekt": a["projekt"],
-                    "was": f"Auftrag, Schritt {dran} von {len(a['schritte'])}: {titel}"})
+                    "was": f"Auftrag, Schritt {dran} von {len(a['schritte'])}: {titel}",
+                    "auftrag": {"schritt": dran, "von": len(a["schritte"]), "titel": titel}})
     return out
 
 
@@ -1042,9 +1169,49 @@ def fakten(auftrag_id: int) -> dict:
             e["grund"] = s["grund"]
         if isinstance(s.get("anhang"), dict) and s["anhang"].get("dateiname"):
             e["datei"] = s["anhang"]["dateiname"]
+            if s["anhang"].get("gueltig_bis"):   # Sofort-Downloads gelten 24 Stunden; die Ablage bleibt (Pruefung N10)
+                e["datei_herunterladbar_bis"] = s["anhang"]["gueltig_bis"]
         schritte.append(e)
     return {"auftrag": {"ergebnis": AUFTRAG_ZUSTAND.get(a["zustand"], a["zustand"]), "schritte": schritte,
                         "credits_freigegeben": a["freigegeben"]}}
+
+
+def schlichte_meldung(auftrag_id: int, projekt: str, _) -> str:
+    """Die Meldung ohne Modell (Modell ausgefallen, Kostendeckel): Ende des Auftrags und je Schritt sein Ergebnis in der Sprache
+    der Oberflaeche — vorher hiess es auch bei einem angehaltenen Auftrag nur „ist zu Ende“ (Pruefung N5)."""
+    from . import rueckmeldung
+    a = _laden(auftrag_id)
+    kopf = _(rueckmeldung.T_FERTIG).format(was=_(rueckmeldung.WAS["auftrag"]), projekt=projekt)
+    if not a:
+        return kopf
+    return kopf + " " + " ".join(_("{schritt}: {ergebnis}.").format(schritt=_(s["titel"]),
+                                                                    ergebnis=_(SCHRITT_ZUSTAND.get(s["zustand"], s["zustand"])))
+                                 for s in a["schritte"])
+
+
+def aufgeben(auftrag_id: Optional[int], grund: str = T_AUFGEGEBEN) -> bool:
+    """Einen Auftrag von aussen beenden (die Rueckmeldung nach zwei Tagen, rueckmeldung.AUFTRAG_HOECHSTENS_S): ein Abarbeiter,
+    der in einem Werkzeug haengt, haelt sonst den Auftrag, sein Projekt und die Rueckmeldung fuer immer fest (Pruefung M4).
+    True = er lief noch und ist jetzt beendet."""
+    a = _laden(auftrag_id) if auftrag_id else None
+    if not a or a["zustand"] != "laeuft":
+        return False
+    laufend = next((s for s in a["schritte"] if s["zustand"] in ("offen", "laeuft")), None)
+    if laufend:
+        laufend.update(zustand="fehler", grund=grund, beendet_am=_jetzt())
+    _beenden(a, "gescheitert")
+    return True
+
+
+def ausgeschaltet() -> int:
+    """Beim Start ohne Schalter (main.lifespan): laufende Auftraege werden nicht mehr abgearbeitet — beenden, damit Projekt und
+    Rueckmeldung nicht fuer immer warten (Pruefung M4). Rueckgabe: Zahl der beendeten."""
+    conn = get_db()
+    try:
+        ids = [r[0] for r in conn.execute("SELECT id FROM agent_auftraege WHERE zustand = 'laeuft'").fetchall()]
+    finally:
+        conn.close()
+    return sum(1 for aid in ids if aufgeben(aid, T_AUS))
 
 
 def arten(auftrag_id: int) -> set:
@@ -1094,7 +1261,10 @@ async def schleife() -> None:
 def starten() -> None:
     """Aus main.lifespan (ein uvicorn-Worker): nach einem Neustart aufraeumen, dann die Schleife — einmal je Prozess."""
     global _AUFGABE, _LOOP, _WECKER
-    nach_neustart()
+    try:
+        nach_neustart()
+    except Exception:  # noqa: BLE001 — etwa Datenbank gesperrt: die Schleife startet trotzdem (Pruefung M4)
+        log.exception("Auftraege: Aufraeumen nach dem Neustart fehlgeschlagen")
     _LOOP = asyncio.get_running_loop()
     if _WECKER is None:
         _WECKER = asyncio.Event()

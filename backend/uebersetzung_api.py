@@ -484,13 +484,17 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
     if ziel == "ar":
         st["fehler"].append("Arabisch: Die Schreibrichtung der Absätze bleibt in der Datei links-nach-rechts; "
                             "bitte in Word über „Absatz > Textrichtung“ auf rechts-nach-links umstellen.")
+    # Fortlaufend gerundet (Pruefung Auftraege 14.10.2026, M2): die Vorschau rundet EINMAL ueber alle Woerter, der Lauf rundete
+    # je Paket auf — bei zehn Paketen zu je 150 Woertern standen 15 Credits in der Rueckfrage und 20 wurden gebucht. Jetzt bucht
+    # jedes Paket nur, was die Rundung ueber alle bisher geschriebenen Woerter mehr verlangt: zusammen nie mehr als die Vorschau.
+    geschrieben_woerter = 0
     try:
         for did, batch in pakete:
             if st.get("abbruch"):
                 st["fehler"].append("Vom Nutzer abgebrochen – der Rest bleibt unübersetzt.")
                 break
             woerter = sum(seg.woerter for _nr, seg in batch)
-            preis = ue.credits_fuer(woerter)
+            preis = max(0, ue.credits_fuer(geschrieben_woerter + woerter) - int(st["credits"]))
             wache = _d.billing.aktion_pruefung(user_id, AKTION, preis)
             if not wache["erlaubt"]:
                 st["fehler"].append(f"Guthaben reicht nicht für das nächste Paket ({preis} Credits nötig, "
@@ -539,8 +543,9 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
             st["segmente_fertig"] += len(geschrieben_ids)
             if geschrieben_ids:
                 # Preis NUR fuer tatsaechlich geschriebene Segmente (Review 18.09.2026, M2c) —
-                # nichts geschrieben = nichts verbucht.
-                anteil = ue.credits_fuer(sum(seg.woerter for nr, seg in batch if nr in geschrieben_ids))
+                # nichts geschrieben = nichts verbucht. Fortlaufend gerundet (M2, siehe oben).
+                geschrieben_woerter += sum(seg.woerter for nr, seg in batch if nr in geschrieben_ids)
+                anteil = max(0, ue.credits_fuer(geschrieben_woerter) - int(st["credits"]))
                 if anteil:
                     _d.billing.verbuche(user_id, "sammellauf", aktion=AKTION, credits=anteil)
                     st["credits"] += anteil

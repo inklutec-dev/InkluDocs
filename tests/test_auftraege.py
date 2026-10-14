@@ -11,7 +11,9 @@ Projekt belegt wartet, Abbrechen, in der Oberflaeche abgebrochen, Projekt geloes
 Fehler, zu lang. Melden: wartet bis zum Ende, Dateien unter der Nachricht, nie zusammengelegt, keine zwoelf Stunden, melden_wenn_
 fertig, Kontoloeschung, Konto-Werkzeuge, Agent-Schleife (nie in der Demo), Oberflaeche, Hilfe.
 """
+import asyncio
 import itertools
+import json
 import os
 import sys
 import tempfile
@@ -110,9 +112,14 @@ class Werkzeug:
     def __init__(self, art: str, preis: int, hintergrund: bool = True, erlaubt: bool = True, ergebnis=None):
         self.art, self.preis, self.hintergrund, self.erlaubt, self.ergebnis = art, preis, hintergrund, erlaubt, ergebnis
         self.aufrufe, self.freigaben = [], []
+        self.nebenher = None   # Funktion, die waehrend des Aufrufs in einem ANDEREN Faden laeuft (etwa das Gespraech)
 
     def __call__(self, project_id, user_id, document_id=None, *a, bestaetigt=False, turn=None, **kw):
         self.aufrufe.append({"document_id": document_id, "bestaetigt": bestaetigt, **kw})
+        if self.nebenher:
+            t = threading.Thread(target=self.nebenher)
+            t.start()
+            t.join()
         f = getattr(ausgaben._AUFTRAG, "f", None)
         self.freigaben.append(dict(f) if f else None)
         if not self.erlaubt:
@@ -165,8 +172,9 @@ class Basis(unittest.TestCase):
     def kontext(self, *schritte, pid=None, **mehr):
         p = af._eigenes_projekt(self.u["id"], pid or self.pid)
         plan = af.planen(self.u["id"], p, self.wunsch(*schritte, **mehr))
-        return {"project_id": p["id"], "wunsch": self.wunsch(*schritte, **mehr), "summe": plan["summe"], "gespraech_id": self.gid,
-                "sprache": "de", "auftrag": "Mach die Alt-Texte und dann die Word-Datei (fiktiv)"}
+        return {"project_id": p["id"], "wunsch": self.wunsch(*schritte, **mehr), "summe": plan["summe"],
+                "fingerabdruck": af.fingerabdruck(plan), "gespraech_id": self.gid, "sprache": "de",
+                "auftrag": "Mach die Alt-Texte und dann die Word-Datei (fiktiv)"}
 
     def erteilen(self, *schritte, per_mail=False, **mehr):
         status, antwort = af.erteilen(self.kontext(*schritte, **mehr), self.u, {"per_mail": per_mail}, lambda s: s)
@@ -278,9 +286,12 @@ class Vorbereiten(Basis):
         self.assertTrue(r["ok"], r)
         k = r["anhang"]
         self.assertEqual((k["art"], k["karte"], k["titel"], k["knopf"], k["zustand"]),
-                         ("formular", "auftrag", "Dein Auftrag", "Auftrag erteilen", "offen"))
-        self.assertEqual(k["zeilen"][:2], ["1. Alt-Texte generieren (3 Bilder): 15 Credits",
-                                           "2. Als Word herunterladen (3 Bilder): 30 Credits"])
+                         ("formular", "auftrag", "Dein Auftrag", "Auftrag erteilen (45 Credits)", "offen"),
+                         "der Knopf nennt die Summe (Pruefung N7)")
+        self.assertEqual(k["zeilen"], ["Alt-Texte generieren (3 Bilder): 15 Credits", "Als Word herunterladen (3 Bilder): 30 Credits"],
+                         "nur die Schritte, ohne Nummer im Text")
+        self.assertTrue(k["nummeriert"], "die Oberflaeche nummeriert sie (ol)")
+        self.assertNotIn("hinweise", k, "keine Hinweise: kein leerer Absatz")
         self.assertIn("Projekt „Vereinsbrief (fiktiv)“. Zusammen 45 Credits.", k["text"])
         self.assertIn("du kannst die Seite danach schließen", k["text"])
         self.assertEqual([(f["name"], f["art"], f["wert"]) for f in k["felder"]], [("per_mail", "haken", True)])
@@ -659,7 +670,8 @@ class Abarbeiten(MitWerkzeugen):
                          [("Alt-Texte generieren", "läuft"), ("Als Word herunterladen", "wartet")])
         self.assertTrue(st["auftraege"][0]["projekt_daten"].startswith(DATEN_MARKE))
         self.assertIn({"project_id": self.pid, "projekt": "Vereinsbrief (fiktiv)",
-                       "was": "Auftrag, Schritt 1 von 2: Alt-Texte generieren"}, konto.laufende(self.u["id"]))
+                       "was": "Auftrag, Schritt 1 von 2: Alt-Texte generieren",
+                       "auftrag": {"schritt": 1, "von": 2, "titel": "Alt-Texte generieren"}}, konto.laufende(self.u["id"]))
 
     def test_lauf_abbrechen_im_konto_haelt_den_auftrag_an(self):
         from inkluagent import konto
@@ -813,6 +825,300 @@ class Schleife(Basis):
         self.assertEqual(verlauf[-1]["anhang"][0]["zustand"], "gesendet", "nach dem Neuladen nicht wieder offen")
 
 
+# ─── 8. Unabhaengige Pruefung 14.10.2026: je Befund ein Test ────────────────────────────────────────────────────────────────
+class Befunde(MitWerkzeugen):
+    def test_m1_schritt_fasst_angebote_und_karten_des_gespraechs_nicht_an(self):
+        uid, pid = self.u["id"], self.pid
+        gespraech = {}
+
+        def im_gespraech():   # waehrend der Schritt laeuft: ein neues Angebot mit Karte und ein verbrauchtes (anderer Faden)
+            gespraech["neu"] = ausgaben._angebot_merken((uid, pid, "uebersetzung:en", None), 7, "runde-gespraech")
+            ausgaben.angebot_nach_id(gespraech["neu"])[1].update(werkzeug="uebersetze_dokument", args={"zielsprache": "en"})
+            with ausgaben._SPERRE:
+                ausgaben._VERBRAUCHT.setdefault((uid, pid), []).append(("frueher-fiktiv", {"id": "frueher-fiktiv"}, True))
+        self.word.nebenher = im_gespraech
+        aid = self.erteilen("alt_texte", "word")
+        af.durchlauf()
+        self.fertig_machen()
+        try:
+            af.durchlauf()
+            self.assertEqual(self.auftrag(aid)["zustand"], "fertig")
+            neu = ausgaben.angebot_nach_id(gespraech["neu"])[1]
+            self.assertEqual((neu["werkzeug"], neu["args"]), ("uebersetze_dokument", {"zielsprache": "en"}),
+                             "die Karte des Gespraechs fuehrt weiter genau sein Angebot aus")
+            self.assertIn("frueher-fiktiv", [x[0] for x in ausgaben._VERBRAUCHT.get((uid, pid), [])],
+                          "verbrauchte Angebote des Gespraechs bleiben dem Gespraech")
+            with ausgaben.auftrag_schritt({"docx"}, 10):
+                self.assertEqual(ausgaben._angebot_merken((uid, pid, "docx", None), 5, "t"), "", "im Schritt entsteht kein Angebot")
+        finally:
+            with ausgaben._SPERRE:
+                ausgaben._VERBRAUCHT.pop((uid, pid), None)
+
+    def test_m2_uebersetzung_bucht_nie_mehr_als_die_vorschau(self):
+        """Zehn Pakete zu je 150 Woertern: Vorschau 15 Credits — vorher wurden je Paket 2, also 20 gebucht."""
+        import uebersetzung_api
+        from uebersetzung import SegmentErgebnis
+        c = database.get_db()
+        did = c.execute("SELECT id FROM documents WHERE project_id = ?", (self.pid,)).fetchone()[0]
+        for i in range(300):
+            c.execute("INSERT INTO uebersetzung_segmente (project_id, document_id, position, anker, woerter, stuecke, original) "
+                      "VALUES (?, ?, ?, ?, 5, ?, ?)", (self.pid, did, i, f"w/p{i}|0", json.dumps(["eins zwei drei vier fünf"]),
+                                                       "eins zwei drei vier fünf"))
+        c.commit()
+        v = uebersetzung_api._vorschau(c, self.u["id"], self.pid, None, "en", True)
+        c.close()
+        self.assertEqual((v["woerter"], v["preis"]), (1500, 15))
+        gebucht = []
+
+        def paket(batch, *a, **k):
+            return [SegmentErgebnis(nr=nr, ziel_stuecke={0: "one two three four five"}, status="fertig") for nr, _s in batch]
+        uebersetzung_api._lauf.pop(self.pid, None)
+        try:
+            with mock.patch.object(uebersetzung_api.ue, "uebersetze_batch", side_effect=paket), \
+                    mock.patch.object(uebersetzung_api._d.billing, "verbuche", side_effect=lambda *a, **k: gebucht.append(k["credits"])):
+                asyncio.run(uebersetzung_api._uebersetze_projekt(self.pid, self.u["id"],
+                                                                 {"zielsprache": "en", "alt_texte": True, "sprache_setzen": True}, None))
+            st = uebersetzung_api._lauf[self.pid]
+            self.assertEqual((st["pakete_gesamt"], st["segmente_fertig"]), (10, 300))
+            self.assertEqual((sum(gebucht), st["credits"]), (15, 15), gebucht)
+        finally:
+            uebersetzung_api._lauf.pop(self.pid, None)
+
+    def test_m3_alt_texte_ohne_neuen_text_halten_an(self):
+        aid = self.erteilen("alt_texte", "word")
+        af.durchlauf()
+        # Rettung im Sammellauf: KI fuer alle Bilder ausgefallen, der alte Text bleibt (Status done), Fehlergrund gesetzt
+        sql("UPDATE images SET fehler_grund = 'KI nicht erreichbar (fiktiv)', needs_review = 1 WHERE project_id = ?", self.pid)
+        self.fertig_machen()
+        af.durchlauf()
+        a = self.auftrag(aid)
+        self.assertEqual([s["zustand"] for s in a["schritte"]], ["fehler", "ausgelassen"])
+        self.assertEqual(a["schritte"][0]["grund"], af.T_KEIN_ALT_TEXT)
+        self.assertEqual(self.word.aufrufe, [], "kein bezahltes Herunterladen danach")
+
+    def test_m3_auswertung_der_anderen_schritte(self):
+        import formular_api
+        import tagging_api
+        import uebersetzung_api
+        a = {"user_id": self.u["id"], "project_id": self.pid, "id": 0}
+        for st, erwartet in (({"felder_neu": 0, "fehler": ["Seite 1: Guthaben (fiktiv)"]}, "fehler"),
+                             ({"felder_neu": 3, "fehler": ["Seite 4 (fiktiv)"]}, "teilweise"),
+                             ({"felder_neu": 0, "fehler": []}, "fehler"), ({"felder_neu": 4, "fehler": []}, "fertig")):
+            with self.subTest(st=st), mock.patch.dict(formular_api._generierung, {self.pid: st}):
+                self.assertEqual(af._auswerten(a, {"art": "quickinfos"})["zustand"], erwartet)
+        did = sql("SELECT id FROM documents WHERE project_id = ?", self.pid)[0]["id"]
+        sql("UPDATE documents SET tagging_status = ?, getaggt = 1 WHERE id = ?", tagging_api.STATUS_FERTIG, did)
+        self.assertEqual(af._auswerten(a, {"art": "tagging", "document_id": did}), {"zustand": "fertig"})
+        sql("UPDATE documents SET tagging_status = ?, getaggt = 0, tagging_bericht = ? WHERE id = ?", tagging_api.STATUS_FEHLER,
+            json.dumps({"fehler": "PDFix stieg aus (fiktiv)"}), did)
+        self.assertEqual(af._auswerten(a, {"art": "tagging", "document_id": did}), {"zustand": "fehler", "grund": "PDFix stieg aus (fiktiv)"})
+        sql("UPDATE documents SET pruefung_status = ? WHERE id = ?", tagging_api.STATUS_FERTIG, did)
+        self.assertEqual(af._auswerten(a, {"art": "pruefung", "document_id": did}), {"zustand": "fertig"})
+        gesehen = []
+
+        def export(p, u):   # die uebersetzte Datei: kostenlos, im Faden des Schritts (ohne Freigabe, ohne Karten des Gespraechs)
+            gesehen.append(getattr(ausgaben._AUFTRAG, "f", None))
+            return {"ok": True, "result": {"dateiname": "brief-en.docx"},
+                    "anhang": {"art": "docx", "dateiname": "brief-en.docx", "download_url": "/api/sofort/fiktiv"}}
+        with mock.patch.dict(uebersetzung_api._lauf, {self.pid: {"laeuft": False, "segmente_fertig": 9, "fehler": []}}), \
+                mock.patch.object(ausgaben, "exportiere_uebersetzung", side_effect=export):
+            e = af._auswerten(a, {"art": "uebersetzung"})
+        self.assertEqual((e["zustand"], e["anhang"]["dateiname"]), ("fertig", "brief-en.docx"))
+        self.assertEqual(gesehen[0]["arten"], frozenset(), "keine Freigabe fuer irgendetwas")
+        with mock.patch.dict(uebersetzung_api._lauf, {self.pid: {"laeuft": False, "segmente_fertig": 0, "fehler": ["Paket weg (fiktiv)"]}}):
+            self.assertEqual(af._auswerten(a, {"art": "uebersetzung"}), {"zustand": "fehler", "grund": "Paket weg (fiktiv)"})
+
+    def test_m4_nach_zwei_tagen_aufgegeben_und_gemeldet(self):
+        aid = self.erteilen("alt_texte", "word")
+        af.durchlauf()
+        alt = self.auftrag(aid)   # der Stand eines Abarbeiters, der in einem Werkzeug haengt
+        sql("UPDATE agent_rueckmeldungen SET angelegt_am = datetime('now', '-49 hours')")
+        self.assertEqual(rm.durchlauf(), 1)
+        a = self.auftrag(aid)
+        self.assertEqual((a["zustand"], a["schritte"][0]["zustand"], a["schritte"][0]["grund"]), ("gescheitert", "fehler", af.T_AUFGEGEBEN))
+        self.assertEqual(sql("SELECT zustand FROM agent_rueckmeldungen"), [{"zustand": "gemeldet"}])
+        self.assertFalse(af._speichern(alt), "kehrt er doch noch zurueck, schreibt er den Stand nicht mehr um")
+        self.assertEqual(self.auftrag(aid)["schritte"][0]["zustand"], "fehler")
+
+    def test_m4_schalter_aus_und_aufraeumen_scheitert(self):
+        aid = self.erteilen("alt_texte", "word")
+        self.assertEqual(af.ausgeschaltet(), 1)
+        a = self.auftrag(aid)
+        self.assertEqual((a["zustand"], a["schritte"][0]["grund"]), ("gescheitert", af.T_AUS))
+
+        async def start():
+            with mock.patch.object(af, "nach_neustart", side_effect=RuntimeError("Datenbank gesperrt (fiktiv)")):
+                af.starten()
+            laeuft = af._AUFGABE is not None and not af._AUFGABE.done()
+            af._AUFGABE.cancel()
+            return laeuft
+        try:
+            self.assertTrue(asyncio.run(start()), "die Schleife startet trotzdem")
+        finally:
+            af._AUFGABE, af._LOOP, af._WECKER = None, None, None
+
+    def test_n1_zwei_abarbeiter_starten_nie_denselben_schritt(self):
+        aid = self.erteilen("alt_texte", "word")
+        erster, zweiter = self.auftrag(aid), self.auftrag(aid)
+        for a in (erster, zweiter):
+            a["schritte"][0].update(zustand="laeuft", gestartet=False)
+        self.assertTrue(af._beanspruchen(erster))
+        self.assertFalse(af._beanspruchen(zweiter), "der zweite las einen alten Stand")
+        with mock.patch.object(af, "_laden", side_effect=lambda i: zweiter if i == aid else None):
+            af.weiter(aid)
+        self.assertEqual(self.alt.aufrufe, [], "und startet deshalb nichts")
+
+    def test_n2_schon_getaggt_und_seitengrenze(self):
+        import pdf_tagging
+        import tagging_api
+        from inkluagent.tools import pdf as pdf_tools
+        self.pid = projekt(self.u["id"], PDF)
+        mock.patch.object(tagging_api, "_seiten", return_value=2).start()
+        mock.patch.object(tagging_api, "lesbar_grund", return_value=None).start()
+        mock.patch.object(pdf_tagging, "verfuegbar", return_value=True).start()
+        mock.patch.object(funktionen, "TAGGING_PROFESSIONELL", True).start()
+        tagging = Werkzeug("tagging", 40)
+        mock.patch.object(pdf_tools, "barrierefrei_machen", tagging).start()
+        aid = self.erteilen("tagging", "alt_texte")
+        sql("UPDATE documents SET getaggt = 1 WHERE project_id = ?", self.pid)   # inzwischen per Knopf getaggt
+        af.durchlauf()
+        s = self.schritt(aid, 0)
+        self.assertEqual((s["zustand"], s["grund"], s["preis"]), ("uebersprungen", af.T_SCHON_GETAGGT, 0))
+        self.assertEqual(tagging.aufrufe, [], "nicht noch einmal taggen und bezahlen")
+        neu = projekt(self.u["id"], PDF)
+        with mock.patch.object(pdf_tagging, "MAX_SEITEN", 1):
+            plan = af.planen(self.u["id"], af._eigenes_projekt(self.u["id"], neu), self.wunsch("tagging"))
+        self.assertEqual(plan["eintraege"], [])
+        self.assertTrue(any("geht bis 1 Seiten" in f for f in plan["fehler"]), plan["fehler"])
+
+    def test_n3_herunterladen_belegt_oder_gedrosselt_wartet(self):
+        aid = self.erteilen("word")
+        main._export_nutzer.add(self.u["id"])   # fuer das Konto wird gerade eine PDF gebaut
+        try:
+            af.durchlauf()
+            self.assertEqual((self.schritt(aid, 0)["zustand"], self.word.aufrufe), ("offen", []))
+        finally:
+            main._export_nutzer.discard(self.u["id"])
+        self.word.ergebnis = {"ok": False, "error": main._export_belegt_text("drossel")}
+        af.durchlauf()
+        a = self.auftrag(aid)
+        self.assertEqual((a["zustand"], a["schritte"][0]["zustand"], a["verbraucht"], len(self.word.aufrufe)), ("laeuft", "offen", 0, 1))
+        af.durchlauf()
+        self.assertEqual(len(self.word.aufrufe), 1, "Pause: nicht gleich noch einmal")
+        self.word.ergebnis = None
+        a = self.auftrag(aid)
+        a["schritte"][0]["pause_bis"] = 0
+        af._speichern(a)
+        af.durchlauf()
+        self.assertEqual(self.auftrag(aid)["zustand"], "fertig")
+
+    def test_n4_die_karte_zeigte_ein_anderes_dokument(self):
+        k = self.kontext("alt_texte", "word")
+        k["fingerabdruck"][0][1] = 999999
+        status, antwort = af.erteilen(k, self.u, {"per_mail": False}, lambda s: s)
+        self.assertEqual((status, antwort["karte"]["zustand"]), (409, "abgelaufen"))
+        self.assertEqual(sql("SELECT * FROM agent_auftraege"), [])
+
+    def test_n5_schlichte_meldung_mit_dem_ergebnis_je_schritt(self):
+        self.word.preis = 99
+        self.erteilen("alt_texte", "word")
+        af.durchlauf()
+        self.fertig_machen()
+        af.durchlauf()
+        sql("UPDATE agent_rueckmeldungen SET angelegt_am = datetime('now', '-60 seconds')")
+        with mock.patch.object(rm, "text_vom_agenten", return_value=None):
+            self.assertEqual(rm.durchlauf(), 1)
+        self.assertEqual(storage.konto_verlauf(self.u["id"], gespraech_id=self.gid)[-1]["text"],
+                         "Dein Auftrag im Projekt „Vereinsbrief (fiktiv)“ ist zu Ende. Das Ergebnis siehst du im Projekt. "
+                         "Alt-Texte generieren: fertig. Als Word herunterladen: gescheitert.")
+
+    def test_n6_erst_die_wartende_rueckmeldung_aus_baustein_1(self):
+        aid = self.erteilen("alt_texte", "word")
+        sql("INSERT INTO agent_rueckmeldungen (user_id, gespraech_id, project_id, art, sprache) VALUES (?, ?, ?, 'verarbeitung', 'de')",
+            self.u["id"], self.gid, self.pid)
+        af.durchlauf()
+        self.assertEqual((self.schritt(aid, 0)["zustand"], self.alt.aufrufe), ("offen", []))
+        sql("UPDATE agent_rueckmeldungen SET zustand = 'gemeldet' WHERE art = 'verarbeitung'")
+        af.durchlauf()
+        self.assertEqual(self.schritt(aid, 0)["zustand"], "laeuft")
+
+    def test_n7_hinweise_als_eigener_absatz(self):
+        sql("UPDATE images SET alt_text_edited = 'Eigener Text (fiktiv)' WHERE project_id = ?", self.pid)
+        k = af.ausfuehren(af.WERKZEUG_VORBEREITEN, {"schritte": ["alt_texte"]}, user_id=self.u["id"], project_id=self.pid,
+                          gespraech_id=self.gid, sprache="de")["anhang"]
+        self.assertEqual(k["zeilen"], ["Alt-Texte generieren (3 Bilder): 15 Credits"])
+        self.assertEqual(k["hinweise"], ["Alt-Texte generieren überschreibt 3 eigene Texte."])
+
+    def test_n8_ueberblick_in_der_sprache_der_oberflaeche(self):
+        from fastapi.testclient import TestClient
+        mock.patch.object(main, "INKLUAGENT_ENABLED", True).start()
+        mock.patch.object(funktionen, "AGENT_ARBEITSFENSTER", True).start()
+        self.erteilen("alt_texte", "word")
+        sql("UPDATE users SET language = 'en' WHERE id = ?", self.u["id"])
+        c = TestClient(main.app)
+        c.cookies.set("token", main.create_token(self.u["id"], self.u["email"], 0))
+        laeuft = c.get("/api/agent/ueberblick").json()["laeuft"]
+        self.assertTrue(any(x["was"].startswith("Task, step 1 of 2: ") for x in laeuft), laeuft)
+
+    def test_n9_projekt_loeschen_und_aufbewahrung(self):
+        from fastapi.testclient import TestClient
+        self.erteilen("alt_texte", "word")
+        c = TestClient(main.app)
+        c.cookies.set("token", main.create_token(self.u["id"], self.u["email"], 0))
+        self.assertEqual(c.delete(f"/api/projects/{self.pid}").status_code, 200)
+        self.assertEqual(sql("SELECT * FROM agent_auftraege WHERE project_id = ?", self.pid), [])
+        self.pid = projekt(self.u["id"])
+        alt = self.erteilen("alt_texte")
+        af.ausgeschaltet()
+        sql("UPDATE agent_auftraege SET beendet_am = datetime('now', '-31 days') WHERE id = ?", alt)
+        af._AUFGERAEUMT_AM = 0
+        af._aufraeumen()
+        self.assertTrue(self.auftrag(alt), "seine Rueckmeldung wartet noch: er bleibt")
+        sql("UPDATE agent_rueckmeldungen SET zustand = 'gemeldet' WHERE auftrag_id = ?", alt)
+        af._AUFGERAEUMT_AM = 0
+        af._aufraeumen()
+        self.assertIsNone(self.auftrag(alt), "nach 30 Tagen geloescht")
+
+    def test_n10_frist_der_dateien_in_den_ergebnissen(self):
+        aid = self.erteilen("word")
+        af.durchlauf()
+        a = self.auftrag(aid)
+        self.assertEqual(a["zustand"], "fertig")
+        a["schritte"][0]["anhang"]["gueltig_bis"] = "2026-10-15T14:00:00Z"
+        sql("UPDATE agent_auftraege SET schritte = ? WHERE id = ?", json.dumps(a["schritte"]), aid)
+        self.assertEqual(af.fakten(aid)["auftrag"]["schritte"][0]["datei_herunterladbar_bis"], "2026-10-15T14:00:00Z")
+
+    def test_gleichzeitige_klicks_legen_genau_einen_an(self):
+        k = self.kontext("alt_texte", "word")
+        start, ergebnisse = threading.Barrier(4), []
+
+        def klick():
+            start.wait()
+            ergebnisse.append(af.erteilen(dict(k), self.u, {"per_mail": False}, lambda s: s)[0])
+        faeden = [threading.Thread(target=klick) for _i in range(4)]
+        for f in faeden:
+            f.start()
+        for f in faeden:
+            f.join()
+        self.assertEqual(sorted(ergebnisse), [200, 409, 409, 409])
+        self.assertEqual(len(sql("SELECT * FROM agent_auftraege")), 1)
+
+    def test_mehrere_dokumente_taggen_und_pruefen(self):
+        import pdf_tagging
+        import tagging_api
+        self.pid = projekt(self.u["id"], PDF)
+        sql("INSERT INTO documents (project_id, doc_index, original_filename, original_path, getaggt) VALUES (?, 2, 'anlage.pdf', "
+            "'/tmp/fiktiv/anlage.pdf', 0)", self.pid)
+        mock.patch.object(tagging_api, "_seiten", return_value=3).start()
+        mock.patch.object(tagging_api, "lesbar_grund", return_value=None).start()
+        mock.patch.object(pdf_tagging, "verfuegbar", return_value=True).start()
+        with mock.patch.object(funktionen, "KI_PRUEFUNG", True), mock.patch.object(funktionen, "TAGGING_PROFESSIONELL", True):
+            plan = af.planen(self.u["id"], af._eigenes_projekt(self.u["id"], self.pid), self.wunsch("pruefung", "tagging"))
+        self.assertEqual([(e["art"], e["preis_geplant"]) for e in plan["eintraege"]],
+                         [("tagging", 60), ("tagging", 60), ("pruefung", 6), ("pruefung", 6)])
+        self.assertEqual(len({e["document_id"] for e in plan["eintraege"]}), 2)
+
+
 class Oberflaeche(unittest.TestCase):
     def test_nach_dem_absenden_horcht_die_seite_auf_die_rueckmeldung(self):
         backend = next(k for k in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app") if os.path.isdir(k))
@@ -821,6 +1127,9 @@ class Oberflaeche(unittest.TestCase):
         js = open(os.path.join(frontend, "inkluagent.js"), encoding="utf-8").read()
         absenden = js[js.index("async function inkluagentFormularAbsenden("):js.index("function inkluagentKarteEinfliegen(")]
         self.assertIn("if (res.ok) inkluagentRueckmeldungenBeobachten();", absenden)
+        karte = js[js.index("function inkluagentFormularKarte("):js.index("function inkluagentFormularFeld(")]
+        self.assertIn("document.createElement(a.nummeriert ? 'ol' : 'ul')", karte, "Schritte als nummerierte Liste (N7)")
+        self.assertIn("p.className = 'inkluagent-karte-hinweis';", karte, "Hinweise als eigene Absaetze (N7)")
 
     def test_namen_und_daten(self):
         from inkluagent import daten

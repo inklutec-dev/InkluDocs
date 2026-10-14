@@ -12396,3 +12396,28 @@ msgstr "Byta eller säga upp abonnemanget, fakturor och betalningssätt"
 
 msgid "Weiter zur Bezahlseite von Stripe. Bezahlt wird dort; danach kommst du zurück zu „Abo & Verbrauch“."
 msgstr "Vidare till Stripes betalningssida. Du betalar där; efteråt kommer du tillbaka till ”Abonnemang och förbrukning”."
+
+# Auftraege, Pruefung 14.10.2026 (Knopf mit Preis, schlichte Meldung, Ueberblick)
+msgid "teilweise fertig"
+msgstr "delvis klart"
+
+msgid "gescheitert"
+msgstr "misslyckades"
+
+msgid "nichts zu tun"
+msgstr "inget att göra"
+
+msgid "nicht mehr gestartet"
+msgstr "inte startat"
+
+#, python-brace-format
+msgid "Auftrag erteilen ({preis})"
+msgstr "Ge uppdraget ({preis})"
+
+#, python-brace-format
+msgid "{schritt}: {ergebnis}."
+msgstr "{schritt}: {ergebnis}."
+
+#, python-brace-format
+msgid "Auftrag, Schritt {n} von {m}: {schritt}"
+msgstr "Uppdrag, steg {n} av {m}: {schritt}"

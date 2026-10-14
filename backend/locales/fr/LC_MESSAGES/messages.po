@@ -12824,3 +12824,28 @@ msgstr "Changer ou résilier l’abonnement, factures et moyen de paiement"
 
 msgid "Weiter zur Bezahlseite von Stripe. Bezahlt wird dort; danach kommst du zurück zu „Abo & Verbrauch“."
 msgstr "Direction la page de paiement de Stripe. Le paiement se fait là-bas ; ensuite, tu reviens à « Abonnement et consommation »."
+
+# Auftraege, Pruefung 14.10.2026 (Knopf mit Preis, schlichte Meldung, Ueberblick)
+msgid "teilweise fertig"
+msgstr "en partie terminé"
+
+msgid "gescheitert"
+msgstr "échoué"
+
+msgid "nichts zu tun"
+msgstr "rien à faire"
+
+msgid "nicht mehr gestartet"
+msgstr "pas lancé"
+
+#, python-brace-format
+msgid "Auftrag erteilen ({preis})"
+msgstr "Confier la mission ({preis})"
+
+#, python-brace-format
+msgid "{schritt}: {ergebnis}."
+msgstr "{schritt} : {ergebnis}."
+
+#, python-brace-format
+msgid "Auftrag, Schritt {n} von {m}: {schritt}"
+msgstr "Mission, étape {n} sur {m} : {schritt}"

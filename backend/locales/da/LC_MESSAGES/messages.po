@@ -12521,3 +12521,28 @@ msgstr "Skift eller opsig abonnementet, fakturaer og betalingsmåde"
 
 msgid "Weiter zur Bezahlseite von Stripe. Bezahlt wird dort; danach kommst du zurück zu „Abo & Verbrauch“."
 msgstr "Videre til Stripes betalingsside. Du betaler der; bagefter kommer du tilbage til »Abonnement og forbrug«."
+
+# Auftraege, Pruefung 14.10.2026 (Knopf mit Preis, schlichte Meldung, Ueberblick)
+msgid "teilweise fertig"
+msgstr "delvist færdig"
+
+msgid "gescheitert"
+msgstr "mislykkedes"
+
+msgid "nichts zu tun"
+msgstr "intet at gøre"
+
+msgid "nicht mehr gestartet"
+msgstr "ikke startet"
+
+#, python-brace-format
+msgid "Auftrag erteilen ({preis})"
+msgstr "Giv opgaven ({preis})"
+
+#, python-brace-format
+msgid "{schritt}: {ergebnis}."
+msgstr "{schritt}: {ergebnis}."
+
+#, python-brace-format
+msgid "Auftrag, Schritt {n} von {m}: {schritt}"
+msgstr "Opgave, trin {n} af {m}: {schritt}"

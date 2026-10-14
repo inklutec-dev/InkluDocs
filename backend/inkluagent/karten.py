@@ -233,11 +233,19 @@ def _zustand(kid: str, zustand: str) -> None:
             e["zustand"] = zustand
 
 
-def karte(typ: Kartentyp, kid: str, werte: dict, _: Callable[[str], str], text: str = "", zeilen: Optional[list] = None) -> dict:
+def karte(typ: Kartentyp, kid: str, werte: dict, _: Callable[[str], str], text: str = "", zeilen: Optional[list] = None,
+          nummeriert: bool = False, hinweise: Optional[list] = None, knopf: Optional[str] = None) -> dict:
     """Anhang fuer die Antwort (art „formular“): so steht die Karte im Gespraech und im gespeicherten Verlauf. Abgeschickt wird
-    jede Karte ueber POST /api/agent/karte, auf jeder Seite."""
-    return {"art": "formular", "karte": typ.art, "karten_id": kid, "titel": _(typ.titel), "text": text,
-            "zeilen": list(zeilen or []), "felder": _uebersetzt(typ, werte, _), "knopf": _(typ.knopf), "zustand": "offen"}
+    jede Karte ueber POST /api/agent/karte, auf jeder Seite. nummeriert: die Zeilen sind Schritte (nummerierte Liste, ohne „1.“
+    im Text); hinweise: Saetze nach der Liste als eigene Absaetze; knopf: eigene Beschriftung (etwa mit dem Preis), sonst die
+    des Kartentyps (Auftraege, Pruefung N7)."""
+    k = {"art": "formular", "karte": typ.art, "karten_id": kid, "titel": _(typ.titel), "text": text, "zeilen": list(zeilen or []),
+         "felder": _uebersetzt(typ, werte, _), "knopf": knopf or _(typ.knopf), "zustand": "offen"}
+    if nummeriert:
+        k["nummeriert"] = True
+    if hinweise:
+        k["hinweise"] = [str(h) for h in hinweise]
+    return k
 
 
 # ─── Werkzeuge des Agenten ───────────────────────────────────────────────────────────────────────────────────────────────────

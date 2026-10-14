@@ -12822,3 +12822,28 @@ msgstr "Change or cancel the subscription, invoices and payment method"
 
 msgid "Weiter zur Bezahlseite von Stripe. Bezahlt wird dort; danach kommst du zurück zu „Abo & Verbrauch“."
 msgstr "On to Stripe’s payment page. You pay there; afterwards you come back to “Subscription & usage”."
+
+# Auftraege, Pruefung 14.10.2026 (Knopf mit Preis, schlichte Meldung, Ueberblick)
+msgid "teilweise fertig"
+msgstr "partly done"
+
+msgid "gescheitert"
+msgstr "failed"
+
+msgid "nichts zu tun"
+msgstr "nothing to do"
+
+msgid "nicht mehr gestartet"
+msgstr "not started"
+
+#, python-brace-format
+msgid "Auftrag erteilen ({preis})"
+msgstr "Assign task ({preis})"
+
+#, python-brace-format
+msgid "{schritt}: {ergebnis}."
+msgstr "{schritt}: {ergebnis}."
+
+#, python-brace-format
+msgid "Auftrag, Schritt {n} von {m}: {schritt}"
+msgstr "Task, step {n} of {m}: {schritt}"

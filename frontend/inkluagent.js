@@ -2272,11 +2272,19 @@ function inkluagentFormularKarte(a) {
         karte.appendChild(p);
     }
     if (Array.isArray(a.zeilen) && a.zeilen.length) {
-        const ul = document.createElement('ul');
+        // Schritte eines Auftrags als nummerierte Liste (der Screenreader sagt „Liste, 3 Einträge“ und die Nummer), sonst Aufzaehlung
+        const ul = document.createElement(a.nummeriert ? 'ol' : 'ul');
         ul.className = 'inkluagent-karte-zeilen';
         a.zeilen.forEach(z => { const li = document.createElement('li'); li.textContent = String(z); ul.appendChild(li); });
         karte.appendChild(ul);
     }
+    // Hinweise zur Karte als eigene Absaetze, nicht als weitere Punkte der Liste (Pruefung Auftraege, N7)
+    (Array.isArray(a.hinweise) ? a.hinweise : []).forEach(h => {
+        const p = document.createElement('p');
+        p.className = 'inkluagent-karte-hinweis';
+        p.textContent = String(h);
+        karte.appendChild(p);
+    });
     if (!offen) {
         inkluagentFormularErgebnis(karte, a.ergebnis || (karte.dataset.zustand === 'gesendet' ? t('Abgeschickt.') : t('Nicht mehr gültig.')));
         return karte;

@@ -101,6 +101,10 @@ _UNUMKEHRBAR_ARTEN = frozenset(UNUMKEHRBAR.values())
 
 
 def _angebot_merken(schluessel: tuple, preis: int, turn_id: str) -> str:
+    if getattr(_AUFTRAG, "f", None) is not None:
+        # Im Faden eines Auftragsschritts entsteht kein Angebot: die Zustimmung gibt der Auftrag, und ein Angebot hier ersetzte
+        # das zuletzt genannte des Gespraechs (_LETZTES) — dessen Karte galte dann nicht mehr (Pruefung Auftraege, M1)
+        return ""
     with _SPERRE:
         return _angebot_merken_ungesperrt(schluessel, preis, turn_id)
 
@@ -331,10 +335,15 @@ AENDERT_ANSICHT = frozenset({
 def nachbereiten(result: dict, werkzeug: str, args: dict, user_id: int, project_id: int, vorher_id: Optional[str]) -> dict:
     """Nach JEDEM Werkzeugaufruf (ToolExecutor): Karte fuer ein neues Angebot anhaengen; Karten verbrauchter oder ersetzter
     Angebote auf „Erledigt“ bzw. „Nicht mehr gültig“ stellen (gespeichert + als Aktion an die Oberflaeche); melden, ob die
-    offene Ansicht nachgezogen werden muss; Download-Links mit Frist (gueltig_bis) kennzeichnen."""
-    result = karte_anhaengen(result, werkzeug, args, user_id, project_id, vorher_id)
+    offene Ansicht nachgezogen werden muss; Download-Links mit Frist (gueltig_bis) kennzeichnen.
+    Im Faden eines Auftragsschritts (auftrag_schritt) weder Karte noch verbrauchte Angebote: die gehoeren dem Gespraech, das
+    vielleicht gleichzeitig laeuft — vorher konnte ein Schritt die Karte eines neuen Angebots im Gespraech als seine nehmen
+    (Werkzeug und Argumente ueberschrieben) und dessen verbrauchte Karten nach seinem eigenen Ergebnis stellen (Pruefung M1)."""
+    im_auftrag = getattr(_AUFTRAG, "f", None) is not None
+    if not im_auftrag:
+        result = karte_anhaengen(result, werkzeug, args, user_id, project_id, vorher_id)
     with _SPERRE:
-        verbraucht = _VERBRAUCHT.pop((int(user_id), int(project_id)), [])
+        verbraucht = [] if im_auftrag else _VERBRAUCHT.pop((int(user_id), int(project_id)), [])
     if not isinstance(result, dict):
         return result
     erfolg = bool(result.get("ok")) and not (result.get("result") or {}).get("rueckfrage_noetig")
