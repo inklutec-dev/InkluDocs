@@ -272,8 +272,11 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
                             "Knopf „Kostenpflichtig kaufen“. Der Knopf führt zur Bezahlseite von Stripe; bezahlt wird nur dort — "
                             "du kaufst nichts. Nur, wenn der Nutzer Credits kaufen will."),
             "input_schema": {"type": "object", "properties": {
-                "paket": {"type": "integer", "enum": sorted(billing.PAKET_PREISE),
-                          "description": "Vorschlag für die Paketgröße in Credits (der Nutzer kann auf der Karte eine andere wählen)."}}},
+                # Ohne „enum“: Gemini nimmt Auswahllisten nur aus Texten (HTTP 400 bei Zahlen, Rauchtest Staging 14.10.2026);
+                # der Server nimmt ohnehin nur eine Groesse aus billing.PAKET_PREISE (sonst die kleinste)
+                "paket": {"type": "integer", "description": (
+                    "Vorschlag für die Paketgröße in Credits: " + ", ".join(str(g) for g in sorted(billing.PAKET_PREISE))
+                    + " (der Nutzer kann auf der Karte eine andere wählen).")}}},
         }, {
             "name": "abo_buchen_vorbereiten",
             "description": ("Legt dem Nutzer die Karte „Abo buchen“ ins Gespräch: Plan und Laufzeit fest, Gesamtpreis, Leistung, "
@@ -283,7 +286,7 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
                             "der Seite „Abo & Verbrauch“."),
             "input_schema": {"type": "object", "properties": {
                 "plan": {"type": "string", "enum": sorted(billing.PLAN_PREISE_EUR)},
-                "laufzeit_monate": {"type": "integer", "enum": list(billing.PLAN_LAUFZEITEN),
+                "laufzeit_monate": {"type": "integer",   # ohne „enum“ (Gemini, siehe paket); der Server prueft PLAN_LAUFZEITEN
                                     "description": "1 = Monatsabo (monatlich kündbar), sonst feste Laufzeit 3, 6 oder 12 Monate."}},
                 "required": ["plan", "laufzeit_monate"]},
         }]
