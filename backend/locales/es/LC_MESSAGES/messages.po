@@ -12600,3 +12600,102 @@ msgstr "Enviar"
 
 msgid "Wird gesendet …"
 msgstr "Enviando …"
+
+# Rueckmeldung des InkluAgent (14.10.2026, inkluagent/rueckmeldung.py)
+msgid "Die Alt-Text-Generierung"
+msgstr "La generación de textos alternativos"
+
+msgid "Die Quickinfo-Generierung"
+msgstr "La generación de sugerencias"
+
+msgid "Das Tagging"
+msgstr "El etiquetado"
+
+msgid "„Komplett barrierefrei machen“"
+msgstr "«Hacer completamente accesible»"
+
+msgid "Die KI-basierte Prüfung"
+msgstr "La comprobación con IA"
+
+msgid "Die Korrektur"
+msgstr "La corrección"
+
+msgid "Der Testlauf"
+msgstr "El etiquetado de prueba"
+
+msgid "Die Übersetzung"
+msgstr "La traducción"
+
+msgid "Die Verarbeitung"
+msgstr "El procesamiento"
+
+#, python-brace-format
+msgid "{was} im Projekt „{projekt}“ ist zu Ende. Das Ergebnis siehst du im Projekt."
+msgstr "{was} en el proyecto «{projekt}» ha terminado. Puedes ver el resultado en el proyecto."
+
+#, python-brace-format
+msgid "{was} im Projekt „{projekt}“ läuft seit mehr als zwölf Stunden. Sieh bitte im Projekt nach, ob etwas hängt."
+msgstr "{was} en el proyecto «{projekt}» lleva más de doce horas en marcha. Comprueba en el proyecto si algo se ha atascado."
+
+msgid "Diese Rückmeldung ging auch per Mail an dein Konto."
+msgstr "Este aviso también se envió por correo a tu cuenta."
+
+msgid "Die Mail an dein Konto ging nicht raus."
+msgstr "No se pudo enviar el correo a tu cuenta."
+
+#, python-brace-format
+msgid "Die Mail an dein Konto ging nicht raus: Mehr als {n} Rückmeldungen am Tag schickt der InkluAgent nicht per Mail."
+msgstr "No se envió el correo a tu cuenta: InkluAgent no envía más de {n} avisos al día por correo."
+
+msgid "Die Mail ging nicht raus, weil die Adresse deines Kontos noch nicht bestätigt ist."
+msgstr "El correo no se envió porque la dirección de tu cuenta aún no está confirmada."
+
+#, python-brace-format
+msgid "InkluDocs: Rückmeldung zum Projekt „{projekt}“"
+msgstr "InkluDocs: aviso sobre el proyecto «{projekt}»"
+
+msgid "Rückmeldung vom InkluAgent"
+msgstr "Aviso de InkluAgent"
+
+msgid "Gespräch öffnen"
+msgstr "Abrir la conversación"
+
+msgid "Du bekommst diese Mail, weil du den InkluAgent darum gebeten hast."
+msgstr "Recibes este correo porque se lo pediste a InkluAgent."
+
+msgid "Ich melde mich hier, wenn es fertig ist."
+msgstr "Te avisaré aquí cuando esté listo."
+
+msgid "Ich melde mich hier und per Mail, wenn es fertig ist."
+msgstr "Te avisaré aquí y por correo cuando esté listo."
+
+msgid "Rückmeldung einrichten"
+msgstr "Configurar un aviso"
+
+msgid "Wenn etwas im Hintergrund läuft"
+msgstr "Cuando algo se ejecuta en segundo plano"
+
+msgid "Alt-Texte, Quickinfos, Tagging, Prüfung und Übersetzung laufen auf dem Server weiter, auch wenn du die Seite schließt. Startet der InkluAgent so etwas für dich, meldet er sich von selbst im Gespräch, sobald es fertig ist: mit einem kurzen Bericht und einem Klang."
+msgstr "Los textos alternativos, las sugerencias, el etiquetado, la comprobación y la traducción siguen en el servidor, aunque cierres la página. Cuando InkluAgent inicia algo así para ti, te avisa por sí solo en la conversación en cuanto termina: con un breve informe y un sonido."
+
+msgid "Sagst du dazu „Schick mir eine Mail, wenn es fertig ist“, bekommst du denselben Bericht auch per Mail an die Adresse deines Kontos. An andere Adressen schickt der InkluAgent nichts."
+msgstr "Si añades «Mándame un correo cuando esté listo», recibes también el mismo informe por correo en la dirección de tu cuenta. InkluAgent no envía nada a otras direcciones."
+
+#, python-brace-format
+msgid "Der InkluAgent hat sich im Gespräch „{titel}“ gemeldet. Du findest es unter „Frühere Gespräche“."
+msgstr "InkluAgent ha dejado un aviso en la conversación «{titel}». La encontrarás en «Conversaciones anteriores»."
+
+msgid "Rückmeldung vom InkluAgent ist da."
+msgstr "InkluAgent ha dejado un aviso."
+
+msgid "Rückmeldung vom InkluAgent ist da. „Zurück zum Gespräch“ führt zu ihr."
+msgstr "InkluAgent ha dejado un aviso. «Volver a la conversación» te lleva a él."
+
+# Rueckmeldung des InkluAgent, mehrere auf einmal (14.10.2026)
+#, python-brace-format
+msgid "{n} Rückmeldungen vom InkluAgent sind da."
+msgstr "Han llegado {n} avisos de InkluAgent."
+
+#, python-brace-format
+msgid "{n} Rückmeldungen stehen in anderen Gesprächen. Du findest sie unter „Frühere Gespräche“."
+msgstr "Hay {n} avisos en otras conversaciones. Los encontrarás en «Conversaciones anteriores»."

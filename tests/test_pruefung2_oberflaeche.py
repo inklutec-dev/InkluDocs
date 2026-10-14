@@ -302,7 +302,7 @@ class Quelltext(unittest.TestCase):
         for aufruf in ("m.anhang, m.sprache);", "data.anhang, data.sprache);", "data.anhang || [], data.sprache);",
                        "inkluagentSpracheSetzen(c, m.sprache);", "inkluagentSpracheSetzen(contentEl, sprache);"):
             self.assertIn(aufruf, self.js)
-        self.assertEqual(self.js.count("m.anhang, m.sprache);"), 2)
+        self.assertEqual(self.js.count("m.anhang, m.sprache);"), 3)   # dazu die angehaengte Rueckmeldung (14.10.2026)
         self.assertIn('{% if n.sprache and n.sprache in supported_languages %} lang="{{ n.sprache }}"{% endif %}',
                       lies(BACKEND, "templates", "gespraech.html"))
 

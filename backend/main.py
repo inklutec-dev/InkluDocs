@@ -430,8 +430,10 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(express_api.erinnerungs_schleife())
 
     # Testweise taggen (09.10.2026): Testfassungen nach TESTFASSUNG_AUFBEWAHRUNG_TAGE (Vorgabe 30) loeschen — jetzt beim
-    # Start und danach taeglich. Dazu die Start-Reparatur haengender Tagging-Laeufe: sie stand nur im router-„startup“
-    # von tagging_api, und der laeuft neben diesem lifespan nicht (siehe express_api.erinnerungs_schleife).
+    # Start und danach taeglich. Dazu die Start-Reparatur haengender Tagging-Laeufe (idempotent). Hinweis 14.10.2026: die
+    # router-„startup“-Funktionen (tagging_api, kette_api, uebersetzung_api, formular_api) laufen mit FastAPI 0.115.0 /
+    # Starlette 0.38.6 NEBEN diesem lifespan doch (im Staging-Container geprueft) — die Reparatur hier ist also doppelt, aber
+    # harmlos. Neue Start-Arbeit gehoert trotzdem hierher: auf on_event verlaesst sich die Zukunft von FastAPI nicht.
     try:
         tagging_api.haengende_laeufe_zuruecksetzen()
     except Exception as _e:  # noqa: BLE001
@@ -447,6 +449,14 @@ async def lifespan(app: FastAPI):
     # Eingang des InkluAgent (Pruefung 13.10.2026, S6): abgelaufene wartende Dateien aller Konten, beim Start und alle 5 Minuten
     from inkluagent import hochladen as _hl_eingang
     asyncio.create_task(_hl_eingang.eingang_schleife())
+    # Rueckmeldung des InkluAgent (14.10.2026, inkluagent/rueckmeldung.py, Schalter AGENT_RUECKMELDUNG): halb gemeldete Eintraege
+    # aufraeumen, dann alle 10 s ohne KI nachsehen, ob vorgemerkte Laeufe zu Ende sind
+    from inkluagent import rueckmeldung as _rueckmeldung
+    if _rueckmeldung.an():
+        try:
+            _rueckmeldung.starten()
+        except Exception:  # noqa: BLE001 — ohne Rueckmeldung laeuft alles andere weiter
+            logger.exception("InkluAgent: Rueckmeldung nicht gestartet")
 
     yield
 
@@ -11819,20 +11829,39 @@ async def _karte_bestaetigen(request: Request, user: dict, project_id: Optional[
     # sagen „Läuft noch“ (Pruefung 13.10.2026, Runde 2, K-N6)
     antwort = (_("Läuft noch: {text}") if res.get("laeuft_noch") else _("Erledigt: {text}")).format(text=erledigt)
     anhaenge = [anhang] if (anhang and anhang.get("art") != "bestaetigung") else []
+    loop = asyncio.get_running_loop()
+    konto_gespraech = bool(funktionen.AGENT_KONTO or project_id is None)   # Gespraech je Konto (Ausbau Runde 2, Schritt 2)
+    gid = await loop.run_in_executor(None, storage.aktuelles_gespraech, user["id"]) if konto_gespraech else None
+    # Rueckmeldung (14.10.2026, inkluagent/rueckmeldung.py): hat der Knopf einen Lauf im Hintergrund gestartet, meldet sich der
+    # Agent, wenn er zu Ende ist — im Gespraech, in dem diese Antwort steht; die Bitte des Nutzers stand in der Nachricht davor
+    from inkluagent import rueckmeldung as _rueckmeldung
+    if gid and project_id and _rueckmeldung.an():
+        def _vormerken():
+            # Der Lauf ist schon gestartet: ein Fehler hier darf die Antwort des Knopfs nicht verhindern (dann ohne Rueckmeldung)
+            try:
+                return _rueckmeldung.nach_werkzeug(angebot["werkzeug"], angebot.get("args") or {}, r, user_id=user["id"],
+                                                   project_id=project_id, gespraech_id=gid, sprache=sprache,
+                                                   auftrag=storage.letzte_frage(user["id"], gid))
+            except Exception:  # noqa: BLE001
+                logger.exception("InkluAgent: Rueckmeldung nach dem Knopf nicht vorgemerkt")
+                return None
+        vorgemerkt = await loop.run_in_executor(None, _vormerken)
+        if vorgemerkt:
+            antwort += " " + _(_rueckmeldung.T_MELDE_MICH_MAIL if vorgemerkt["per_mail"] else _rueckmeldung.T_MELDE_MICH)
 
     def _speichern():
         # Eine Zeile des SERVERS, nicht getippt (Pruefung 13.10.2026, S3 und Runde 2 S-N1): in zusatz, damit Projekt- und
         # Dokumentnamen darin im Gedaechtnis als Daten gekennzeichnet sind, nicht als Bitte des Nutzers
         frage = _("Bestätigt über den Knopf: {text}").format(text=angebot.get("beschreibung") or angebot.get("text") or "")
-        if funktionen.AGENT_KONTO or project_id is None:   # Gespraech je Konto (Ausbau Runde 2, Schritt 2)
-            storage.konto_anhaengen(user["id"], project_id, "user", "", zusatz=frage, sprache=sprache)
+        if konto_gespraech:
+            storage.konto_anhaengen(user["id"], project_id, "user", "", zusatz=frage, sprache=sprache, gespraech_id=gid)
             storage.konto_anhaengen(user["id"], project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None,
-                                    sprache=sprache)
+                                    sprache=sprache, gespraech_id=gid)
             return
         storage.append_message(project_id, "user", "", zusatz=frage, sprache=sprache)
         storage.append_message(project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None,
                                sprache=sprache)
-    await asyncio.get_running_loop().run_in_executor(None, _speichern)
+    await loop.run_in_executor(None, _speichern)
     return {"ok": True, "reply": antwort, "anhang": anhaenge, "werkzeuge": [angebot["werkzeug"]], "karte": karte,
             "actions": actions, "sprache": sprache}
 
@@ -11972,6 +12001,10 @@ async def agent_status(user: dict = Depends(get_current_user)):
             f = _AGENT_FORTSCHRITT.get(user["id"])
             if f:
                 out.update({"projekt": f["projekt"], "schritte": [dict(x) for x in f["schritte"]], "schreibt": f["schreibt"]})
+    # Rueckmeldung (14.10.2026): wie viele noch offen sind und welche zuletzt kam — die Seite fragt nur nach, solange eine wartet
+    from inkluagent import rueckmeldung as _rueckmeldung
+    if _rueckmeldung.an():
+        out["rueckmeldung"] = await asyncio.get_running_loop().run_in_executor(None, _rueckmeldung.stand, user["id"])
     return out
 
 
@@ -12333,7 +12366,9 @@ def _inkluagent_schalter(lang: Optional[str] = None) -> dict:
            # Klangspur (Paket 1): Seite laedt frontend/klang.js; ob es klingt, sagt <body data-toene> (je Konto)
            "klang": bool(ueberall and funktionen.AGENT_KLANG),
            # Formular-Karten (Paket 1): ohne Schalter zeigt die Seite gespeicherte Karten nur noch an (ohne Knopf)
-           "karten": bool(funktionen.AGENT_KARTEN and INKLUAGENT_ENABLED)}
+           "karten": bool(funktionen.AGENT_KARTEN and INKLUAGENT_ENABLED),
+           # Rueckmeldung (14.10.2026): die Seite fragt GET /api/agent/status, solange eine wartet, und meldet sie mit Klang
+           "rueckmeldung": bool(ueberall and funktionen.AGENT_RUECKMELDUNG)}
     # Knopf „Dateien anhängen“ in der Agentenansicht (Steve 12.10.2026): derselbe Weg wie das Feld (POST /api/agent/hochladen)
     out["anhaengen"] = bool(out["arbeitsfenster"] and funktionen.AGENT_HOCHLADEN)
     if ueberall:

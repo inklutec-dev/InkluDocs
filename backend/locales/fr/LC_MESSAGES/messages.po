@@ -12600,3 +12600,102 @@ msgstr "Envoyer"
 
 msgid "Wird gesendet …"
 msgstr "Envoi en cours …"
+
+# Rueckmeldung des InkluAgent (14.10.2026, inkluagent/rueckmeldung.py)
+msgid "Die Alt-Text-Generierung"
+msgstr "La génération des textes alternatifs"
+
+msgid "Die Quickinfo-Generierung"
+msgstr "La génération des info-bulles"
+
+msgid "Das Tagging"
+msgstr "Le balisage"
+
+msgid "„Komplett barrierefrei machen“"
+msgstr "« Rendre entièrement accessible »"
+
+msgid "Die KI-basierte Prüfung"
+msgstr "La vérification par IA"
+
+msgid "Die Korrektur"
+msgstr "La correction"
+
+msgid "Der Testlauf"
+msgstr "Le balisage d’essai"
+
+msgid "Die Übersetzung"
+msgstr "La traduction"
+
+msgid "Die Verarbeitung"
+msgstr "Le traitement"
+
+#, python-brace-format
+msgid "{was} im Projekt „{projekt}“ ist zu Ende. Das Ergebnis siehst du im Projekt."
+msgstr "{was} dans le projet « {projekt} » : c’est terminé. Tu vois le résultat dans le projet."
+
+#, python-brace-format
+msgid "{was} im Projekt „{projekt}“ läuft seit mehr als zwölf Stunden. Sieh bitte im Projekt nach, ob etwas hängt."
+msgstr "{was} dans le projet « {projekt} » est en cours depuis plus de douze heures. Vérifie dans le projet si quelque chose est bloqué."
+
+msgid "Diese Rückmeldung ging auch per Mail an dein Konto."
+msgstr "Ce compte rendu a aussi été envoyé par e-mail à ton compte."
+
+msgid "Die Mail an dein Konto ging nicht raus."
+msgstr "L’e-mail à ton compte n’a pas pu être envoyé."
+
+#, python-brace-format
+msgid "Die Mail an dein Konto ging nicht raus: Mehr als {n} Rückmeldungen am Tag schickt der InkluAgent nicht per Mail."
+msgstr "L’e-mail à ton compte n’a pas été envoyé : l’InkluAgent n’envoie pas plus de {n} comptes rendus par jour par e-mail."
+
+msgid "Die Mail ging nicht raus, weil die Adresse deines Kontos noch nicht bestätigt ist."
+msgstr "L’e-mail n’a pas été envoyé, car l’adresse de ton compte n’est pas encore confirmée."
+
+#, python-brace-format
+msgid "InkluDocs: Rückmeldung zum Projekt „{projekt}“"
+msgstr "InkluDocs : compte rendu sur le projet « {projekt} »"
+
+msgid "Rückmeldung vom InkluAgent"
+msgstr "Compte rendu de l’InkluAgent"
+
+msgid "Gespräch öffnen"
+msgstr "Ouvrir la conversation"
+
+msgid "Du bekommst diese Mail, weil du den InkluAgent darum gebeten hast."
+msgstr "Tu reçois cet e-mail parce que tu l’as demandé à l’InkluAgent."
+
+msgid "Ich melde mich hier, wenn es fertig ist."
+msgstr "Je te donnerai des nouvelles ici quand ce sera terminé."
+
+msgid "Ich melde mich hier und per Mail, wenn es fertig ist."
+msgstr "Je te donnerai des nouvelles ici et par e-mail quand ce sera terminé."
+
+msgid "Rückmeldung einrichten"
+msgstr "Prévoir un compte rendu"
+
+msgid "Wenn etwas im Hintergrund läuft"
+msgstr "Quand quelque chose tourne en arrière-plan"
+
+msgid "Alt-Texte, Quickinfos, Tagging, Prüfung und Übersetzung laufen auf dem Server weiter, auch wenn du die Seite schließt. Startet der InkluAgent so etwas für dich, meldet er sich von selbst im Gespräch, sobald es fertig ist: mit einem kurzen Bericht und einem Klang."
+msgstr "Les textes alternatifs, les info-bulles, le balisage, la vérification et la traduction continuent sur le serveur, même si tu fermes la page. Quand l’InkluAgent lance quelque chose de ce genre pour toi, il revient vers toi dans la conversation dès que c’est terminé : avec un bref compte rendu et un son."
+
+msgid "Sagst du dazu „Schick mir eine Mail, wenn es fertig ist“, bekommst du denselben Bericht auch per Mail an die Adresse deines Kontos. An andere Adressen schickt der InkluAgent nichts."
+msgstr "Si tu ajoutes « Envoie-moi un e-mail quand c’est terminé », tu reçois aussi le même compte rendu par e-mail à l’adresse de ton compte. L’InkluAgent n’envoie rien à d’autres adresses."
+
+#, python-brace-format
+msgid "Der InkluAgent hat sich im Gespräch „{titel}“ gemeldet. Du findest es unter „Frühere Gespräche“."
+msgstr "L’InkluAgent a donné des nouvelles dans la conversation « {titel} ». Tu la trouves sous « Conversations précédentes »."
+
+msgid "Rückmeldung vom InkluAgent ist da."
+msgstr "L’InkluAgent a donné des nouvelles."
+
+msgid "Rückmeldung vom InkluAgent ist da. „Zurück zum Gespräch“ führt zu ihr."
+msgstr "L’InkluAgent a donné des nouvelles. « Retour à la conversation » y mène."
+
+# Rueckmeldung des InkluAgent, mehrere auf einmal (14.10.2026)
+#, python-brace-format
+msgid "{n} Rückmeldungen vom InkluAgent sind da."
+msgstr "{n} comptes rendus de l’InkluAgent sont arrivés."
+
+#, python-brace-format
+msgid "{n} Rückmeldungen stehen in anderen Gesprächen. Du findest sie unter „Frühere Gespräche“."
+msgstr "{n} comptes rendus se trouvent dans d’autres conversations. Tu les trouves sous « Conversations précédentes »."

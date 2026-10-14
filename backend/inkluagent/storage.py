@@ -152,41 +152,63 @@ def konto_anhaengen(
     """Wie append_message, aber ins Gespraech des Kontos; der Projektname wird als Marke festgehalten.
     gespraech_id (Pruefung 13.10.2026, K3): die Antwort gehoert in das Gespraech ihrer Frage — auch wenn der Nutzer waehrend des
     Laufs ein neues Gespraech begonnen oder ein frueheres fortgesetzt hat. Ohne (oder fremd): das laufende Gespraech."""
-    if role not in _VALID_ROLES:
-        raise ValueError(f"Ungueltige Rolle: {role!r}")
     conn = get_db()
     try:
-        name = ""
-        if project_id:
-            p = conn.execute("SELECT name, filename FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
-            name = ((p["name"] or p["filename"]) if p else "") or ""
-        gid = None
-        if gespraech_id and conn.execute("SELECT 1 FROM agent_gespraeche WHERE id = ? AND user_id = ?",
-                                         (int(gespraech_id), user_id)).fetchone():
-            gid = int(gespraech_id)
-        if gid is None:
-            gid = _aktuelles_gespraech(conn, user_id)
-        cursor = conn.execute(
-            "INSERT INTO agent_nachrichten (user_id, project_id, projekt_name, role, content, zusatz, sprache, image_refs, intent, "
-            "werkzeuge, anhang, gespraech_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                user_id, project_id, name, role, content or "",
-                (zusatz or "").strip() or None,
-                _sprache(sprache),
-                json.dumps(image_refs) if image_refs else None,
-                intent,
-                json.dumps(werkzeuge) if werkzeuge is not None else None,
-                json.dumps(anhang, ensure_ascii=False) if anhang else None,
-                gid,
-            ),
-        )
-        # Titel = die erste Frage (eine Zeile, gekuerzt; ohne getippten Text die Zeile des Servers, z. B. „Hochgeladen: a.pdf“)
-        conn.execute("UPDATE agent_gespraeche SET zuletzt_am = datetime('now'), titel = CASE WHEN titel = '' AND ? = 'user' "
-                     "THEN ? ELSE titel END WHERE id = ?", (role, _titel(content or zusatz or ""), gid))
+        nid = konto_anhaengen_in(conn, user_id, project_id, role, content, image_refs=image_refs, intent=intent,
+                                 werkzeuge=werkzeuge, anhang=anhang, zusatz=zusatz, gespraech_id=gespraech_id, sprache=sprache)
         conn.commit()
-        return cursor.lastrowid
+        return nid
     finally:
         conn.close()
+
+
+def konto_anhaengen_in(
+    conn,
+    user_id: int,
+    project_id: Optional[int],
+    role: str,
+    content: str,
+    image_refs: Optional[list[int]] = None,
+    intent: Optional[str] = None,
+    werkzeuge: Optional[list[str]] = None,
+    anhang: Optional[list[dict]] = None,
+    zusatz: Optional[str] = None,
+    gespraech_id: Optional[int] = None,
+    sprache: Optional[str] = None,
+) -> int:
+    """konto_anhaengen in der Verbindung (und Transaktion) des Aufrufers, OHNE commit — fuer die Rueckmeldung des Agenten, die
+    Nachricht und ihren eigenen Zustand in EINEM Schritt schreibt (rueckmeldung.py: sonst stuende sie nach einem Neustart
+    dazwischen zweimal im Gespraech)."""
+    if role not in _VALID_ROLES:
+        raise ValueError(f"Ungueltige Rolle: {role!r}")
+    name = ""
+    if project_id:
+        p = conn.execute("SELECT name, filename FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
+        name = ((p["name"] or p["filename"]) if p else "") or ""
+    gid = None
+    if gespraech_id and conn.execute("SELECT 1 FROM agent_gespraeche WHERE id = ? AND user_id = ?",
+                                     (int(gespraech_id), user_id)).fetchone():
+        gid = int(gespraech_id)
+    if gid is None:
+        gid = _aktuelles_gespraech(conn, user_id)
+    cursor = conn.execute(
+        "INSERT INTO agent_nachrichten (user_id, project_id, projekt_name, role, content, zusatz, sprache, image_refs, intent, "
+        "werkzeuge, anhang, gespraech_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            user_id, project_id, name, role, content or "",
+            (zusatz or "").strip() or None,
+            _sprache(sprache),
+            json.dumps(image_refs) if image_refs else None,
+            intent,
+            json.dumps(werkzeuge) if werkzeuge is not None else None,
+            json.dumps(anhang, ensure_ascii=False) if anhang else None,
+            gid,
+        ),
+    )
+    # Titel = die erste Frage (eine Zeile, gekuerzt; ohne getippten Text die Zeile des Servers, z. B. „Hochgeladen: a.pdf“)
+    conn.execute("UPDATE agent_gespraeche SET zuletzt_am = datetime('now'), titel = CASE WHEN titel = '' AND ? = 'user' "
+                 "THEN ? ELSE titel END WHERE id = ?", (role, _titel(content or zusatz or ""), gid))
+    return cursor.lastrowid
 
 
 # ─── Gespraeche (Steve 12.10.2026): „Neues Gespräch“, „Frühere Gespräche“, „Hier weitermachen“ ─────────────────────────────
@@ -405,6 +427,20 @@ def gespraech_der_nachricht(user_id: int, nachricht_id: Optional[int]) -> Option
     try:
         r = conn.execute("SELECT gespraech_id FROM agent_nachrichten WHERE id = ? AND user_id = ?", (int(nachricht_id), user_id)).fetchone()
         return int(r["gespraech_id"]) if r and r["gespraech_id"] else None
+    finally:
+        conn.close()
+
+
+def letzte_frage(user_id: int, gid: Optional[int]) -> str:
+    """Was der Nutzer zuletzt in diesem Gespraech getippt hat (ohne Zeilen des Servers) — fuer die Rueckmeldung nach einem
+    Karten-Knopf: dort gibt es keinen getippten Text, die Bitte stand in der Nachricht davor (rueckmeldung.py)."""
+    if not gid:
+        return ""
+    conn = get_db()
+    try:
+        r = conn.execute("SELECT content FROM agent_nachrichten WHERE user_id = ? AND gespraech_id = ? AND role = 'user' "
+                         "AND content <> '' ORDER BY id DESC LIMIT 1", (user_id, int(gid))).fetchone()
+        return (r["content"] or "") if r else ""
     finally:
         conn.close()
 

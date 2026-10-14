@@ -770,6 +770,38 @@ def init_db():
         )
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_gespraeche_konto ON agent_gespraeche(user_id, zuletzt_am)")
+    # Rueckmeldung des InkluAgent (Steve 14.10.2026, inkluagent/rueckmeldung.py, Schalter AGENT_RUECKMELDUNG): je Lauf im
+    # Hintergrund, nach dem sich der Agent melden soll, eine Zeile. zustand: wartet | meldet (gerade belegt, seit belegt_am) |
+    # gemeldet | verworfen (Projekt oder Konto weg, oder VERSUCHE Fehlschlaege). gesehen_laufen: der Lauf war schon einmal als
+    # laufend sichtbar. geprueft_am: letzter Blick des Rundgangs (reihum). neustart: der Server startete neu, waehrend sie wartete.
+    # mail_gesendet: die Mail ging raus (ein zweiter Versuch schickt sie nicht noch einmal). auftrag: die getippte Bitte, nur
+    # solange sie wartet. Ohne Fremdschluessel: ein geloeschtes Projekt verwirft der Rundgang. Vorwaerts: diese Zeilen
+    # (idempotent). Rueckwaerts: alter Code liest die Tabelle nicht; entfernen mit „DROP TABLE agent_rueckmeldungen“.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS agent_rueckmeldungen (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            gespraech_id INTEGER NOT NULL,
+            project_id INTEGER NOT NULL,
+            document_id INTEGER,
+            art TEXT NOT NULL,
+            per_mail INTEGER NOT NULL DEFAULT 0,
+            auftrag TEXT NOT NULL DEFAULT '',
+            sprache TEXT NOT NULL DEFAULT 'de',
+            zustand TEXT NOT NULL DEFAULT 'wartet',
+            gesehen_laufen INTEGER NOT NULL DEFAULT 0,
+            versuche INTEGER NOT NULL DEFAULT 0,
+            neustart INTEGER NOT NULL DEFAULT 0,
+            mail_gesendet INTEGER NOT NULL DEFAULT 0,
+            nachricht_id INTEGER,
+            angelegt_am TEXT DEFAULT (datetime('now')),
+            belegt_am TEXT,
+            geprueft_am TEXT,
+            gemeldet_am TEXT
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_rueckmeldungen_zustand ON agent_rueckmeldungen(zustand, id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_rueckmeldungen_konto ON agent_rueckmeldungen(user_id, zustand)")
 
     # EXPRESS-SERVICE Stufe 1 (05.10.2026, Steve/Michael): Kunden lassen Dokumente von Profis aufbereiten oder pruefen,
     # Lieferung innerhalb einer Frist, Bezahlung in Credits (vorgemerkt bei der Bestellung, abgebucht bei der Lieferung,
@@ -1510,8 +1542,10 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM email_changes WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM email_verifications WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM user_prompts WHERE user_id = ?", (user_id,))
-    # InkluAgent (Ausbau Runde 1/2): Gespraech je Konto, Fokus und Zaehler des Kontos
-    for _tabelle in ("agent_nachrichten", "agent_fokus", "agent_zaehler", "agent_tageszaehler", "agent_gespraeche"):
+    # InkluAgent (Ausbau Runde 1/2): Gespraech je Konto, Fokus und Zaehler des Kontos; Rueckmeldungen (14.10.2026, mit der
+    # getippten Bitte, solange eine wartet)
+    for _tabelle in ("agent_nachrichten", "agent_fokus", "agent_zaehler", "agent_tageszaehler", "agent_gespraeche",
+                     "agent_rueckmeldungen"):
         conn.execute(f"DELETE FROM {_tabelle} WHERE user_id = ?", (user_id,))
     # Quickinfo-Werkzeug (27.08.2026): Stammdaten-Bibliothek des Kontos.
     conn.execute("DELETE FROM stammdaten WHERE user_id = ?", (user_id,))

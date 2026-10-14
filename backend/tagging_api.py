@@ -475,26 +475,30 @@ def _korrektur_sync(project_id: int, document_id: int, user_id: int, erneut: boo
     pfad = doc.get("original_path") or ""
     pb = _pruef_bericht(doc)
     uebers = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None
+    # Die Korrektur gilt als laufend, bis ihr Bericht gespeichert und die Nachpruefung markiert ist (14.10.2026, Rueckmeldung des
+    # InkluAgent, unabhaengige Pruefung Befund 2): vorher wurde sie VOR dem Speichern frei gegeben — einen Augenblick lief dann
+    # weder Korrektur noch Pruefung, und wer darauf wartete (inkluagent/rueckmeldung.py), hielt den Lauf fuer beendet.
     try:
-        kb = pdf_korrektur.anwenden(pfad, pb.get("befunde") or [], uebers)
-        pb["korrigiert_am"] = kb["zeit"]
-        log.info("[korrektur] Dokument %s: %s Änderungen in %ss", document_id, kb.get("anzahl"), kb.get("dauer_s"))
-    except Exception as e:  # noqa: BLE001
-        bekannt = isinstance(e, pdf_korrektur.KorrekturFehler)
-        if not bekannt:
-            log.exception("[korrektur] Dokument %s fehlgeschlagen", document_id)
-        kb = {"fehler": (str(e) if bekannt else "Unerwarteter Fehler bei der Korrektur"), "zeit": time.strftime("%Y-%m-%d %H:%M:%S")}
-        erneut = False
+        try:
+            kb = pdf_korrektur.anwenden(pfad, pb.get("befunde") or [], uebers)
+            pb["korrigiert_am"] = kb["zeit"]
+            log.info("[korrektur] Dokument %s: %s Änderungen in %ss", document_id, kb.get("anzahl"), kb.get("dauer_s"))
+        except Exception as e:  # noqa: BLE001
+            bekannt = isinstance(e, pdf_korrektur.KorrekturFehler)
+            if not bekannt:
+                log.exception("[korrektur] Dokument %s fehlgeschlagen", document_id)
+            kb = {"fehler": (str(e) if bekannt else "Unerwarteter Fehler bei der Korrektur"), "zeit": time.strftime("%Y-%m-%d %H:%M:%S")}
+            erneut = False
+        conn = _d.get_db()
+        try:
+            conn.execute("UPDATE documents SET korrektur_bericht = ?, pruefung_bericht = ? WHERE id = ?",
+                         (json.dumps(kb, ensure_ascii=False), json.dumps(pb, ensure_ascii=False), document_id))
+            conn.commit()
+            gestartet = erneut and pruefung_markieren(conn, document_id, min(_seiten(doc), pdf_pruefung.MAX_SEITEN))
+        finally:
+            conn.close()
     finally:
         _korrektur_laeuft.pop(document_id, None)
-    conn = _d.get_db()
-    try:
-        conn.execute("UPDATE documents SET korrektur_bericht = ?, pruefung_bericht = ? WHERE id = ?",
-                     (json.dumps(kb, ensure_ascii=False), json.dumps(pb, ensure_ascii=False), document_id))
-        conn.commit()
-        gestartet = erneut and pruefung_markieren(conn, document_id, min(_seiten(doc), pdf_pruefung.MAX_SEITEN))
-    finally:
-        conn.close()
     if gestartet:
         _pruefung_sync(project_id, document_id, user_id, preis, ui_lang)
 

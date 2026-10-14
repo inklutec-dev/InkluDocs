@@ -365,6 +365,16 @@ def run_agent(
     if karten_an:
         tool_defs = list(tool_defs) + _karten.werkzeuge(project_id)
         system_base = system_base + "\n\n" + _karten.PROMPT
+    # Rueckmeldung (Steve 14.10.2026, Schalter AGENT_RUECKMELDUNG): ebenfalls nur aus dem Chat-Endpunkt des Kontos und nur mit
+    # Gespraech — startet ein Werkzeug einen Lauf im Hintergrund, meldet sich der Agent in diesem Gespraech, wenn er zu Ende ist
+    from . import rueckmeldung as _rueckmeldung
+    rueckmeldung_an = begleiter_lauf is not None and gespraech_id is not None and _rueckmeldung.an()
+    rueckmeldung_kontext: dict = {}
+    if rueckmeldung_an:
+        tool_defs = _rueckmeldung.werkzeuge_anpassen(list(tool_defs), project_id)
+        system_base = system_base + "\n\n" + _rueckmeldung.PROMPT
+        rueckmeldung_kontext = {"user_id": user_id, "project_id": project_id, "gespraech_id": gespraech_id,
+                                "sprache": begleiter_lauf.ui_sprache, "auftrag": begleiter_lauf.nutzer_text}
     # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
     sicherheit.nachricht_merken(executor.turn_id, user_message if nutzer_text is None else nutzer_text, user_id)
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
@@ -462,8 +472,12 @@ def run_agent(
                 result = _begleiter.ausfuehren(name, args, user_id, begleiter_lauf)
             elif karten_an and name in _karten.NAMEN:
                 result = _karten.ausfuehren(name, args, user_id, project_id, _t)
+            elif rueckmeldung_an and name in _rueckmeldung.NAMEN:
+                result = _rueckmeldung.ausfuehren(name, args, **rueckmeldung_kontext)
             else:
                 result = executor.execute(name, args)
+                if rueckmeldung_an:   # Lauf im Hintergrund gestartet: vormerken, das Ergebnis sagt dem Modell, dass er sich meldet
+                    _rueckmeldung.nach_werkzeug(name, args, result, **rueckmeldung_kontext)
             vorher = len(actions_log)
             actions_log.append({
                 "tool": name,

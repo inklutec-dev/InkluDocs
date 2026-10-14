@@ -115,6 +115,8 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     # des Warenkorbs) geht als anhang an die Oberflaeche, nicht ans Modell
     "einladen_vorbereiten": ("projekt_daten",),
     "express_bestellen_vorbereiten": (),
+    # Rueckmeldung (14.10.2026, inkluagent/rueckmeldung.py): der Projektname kommt gekennzeichnet, sonst Saetze des Servers
+    "melden_wenn_fertig": ("projekt_daten",),
 }
 
 

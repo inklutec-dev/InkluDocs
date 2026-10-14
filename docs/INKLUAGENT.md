@@ -1411,6 +1411,114 @@ Stand der Läufe am 13.10.2026: `probe_r2_alle` 89 OK, `probe_pr13_alle` 149 OK,
   (Hinführen zu „Kontakt“ in der manuellen Ansicht landet oben auf der Seite).
 - Echter Screenreader und Safari: wie in Runde 1; dazu Prüfpunkt 13 (Ansage beim Öffnen, Antwort unter der Überlagerung).
 
+## Aufträge, Baustein 1: Rückmeldung — „er meldet sich, wenn er fertig ist“ (Steve 14.10.2026; Schalter `AGENT_RUECKMELDUNG`, Umgebung `INKLUAGENT_RUECKMELDUNG=an`, braucht `AGENT_KONTO`)
+
+Die schwere Arbeit macht der InkluAgent nicht selbst: Alt-Texte, Quickinfos, Tagging, „Komplett barrierefrei machen“, KI-basierte
+Prüfung, Korrektur, Testlauf und Übersetzung startet er über dieselben Hintergrundläufe wie die Knöpfe, und die laufen auf dem
+Server weiter, auch wenn die Seite zu ist. Bisher sagte er nur „läuft im Hintergrund“, und man musste nachfragen. Steves Wunsch:
+„Mach das, ich bin jetzt nicht da, schick mir eine Mail, wenn du fertig bist“ — mit einer persönlichen Nachricht, keinen
+Standardtexten. Steves Frage nach einem eigenen kleinen Koordinator-Agenten auf dem Server: ja, aber OHNE KI — den Plan macht der
+Agent wie bisher, das Aufpassen ein einfaches Programm (kein Token); nur die Nachricht am Ende schreibt das Modell.
+
+**Ablauf (`inkluagent/rueckmeldung.py`, Tabelle `agent_rueckmeldungen`):**
+1. *Vormerken:* Startet ein Werkzeug aus `START_WERKZEUGE` wirklich einen Lauf (`gestartet` true; beim Testlauf `fertig` false —
+   nicht nach Rückfrage, Fehler oder „nichts zu tun“), merkt sich der Server Konto, Gespräch, Projekt, Art, Sprache der
+   Oberfläche, die getippte Bitte und ob eine Mail gewünscht ist (`nach_werkzeug`; in `agent_loop` nach jedem Werkzeug, in
+   `main._karte_bestaetigen` nach dem Knopf einer Karte — dort ist die Bitte die letzte getippte Frage im Gespräch,
+   `storage.letzte_frage`). Das Werkzeug-Ergebnis bekommt den Satz „meldet sich von selbst …“, damit das Modell es dem Nutzer
+   sagt; der Knopf hängt „Ich melde mich hier (und per Mail), wenn es fertig ist.“ an seine Antwort. Eine offene Rückmeldung je
+   Projekt und Art (ein zweiter Start schließt sich an: `per_mail` bleibt, die Zeit zählt ab dem neuen Lauf, betrafen die Läufe
+   verschiedene Dokumente, berichtet sie über das ganze Projekt), höchstens `WARTEND_JE_KONTO` (20) je Konto.
+   Läuft die Arbeit schon (auch per Knopf der Oberfläche gestartet), meldet `melden_wenn_fertig` alles an, was im Projekt läuft
+   (`was_laeuft`, jeder Lauf genau einmal: die Kette umfasst ihre Stationen; Übersetzung und Tagging zeigen sich auch am
+   Projektstatus und zählen nicht noch einmal als „Verarbeitung“).
+2. *Aufpassen ohne KI:* `schleife()` (gestartet in `main.lifespan`, ein Worker) macht alle 10 s einen Rundgang im Thread-Pool
+   (`durchlauf`, reihum nach `geprueft_am`, höchstens 200 je Rundgang). `_zustand(projekt)` liest dieselben Zustände wie
+   Oberfläche und Werkzeuge: Projektstatus (`processing` setzen Alt-Texte, Quickinfos und Übersetzung; `extracting` das Auslesen
+   nach dem Hochladen und das Tagging), `tagging_api._laeuft`/`_test_laeuft`/`_pruefung_laeuft`/`_korrektur_laeuft` und die
+   Spalten `tagging_status`/`pruefung_status`, `kette_api._laeuft`/`kette_json`, `uebersetzung_api._lauf`. Eine Korrektur gilt
+   als laufend, solange ihre Nachprüfung läuft (`erneut_pruefen`). Gemeldet wird, wenn der Lauf
+   einmal als laufend sichtbar war und es nicht mehr ist — oder nach `ANLAUF_S` (45 s), wenn er nie sichtbar wurde (Tagging startet
+   im eigenen Faden; ein sehr kurzer Lauf ist dann schon fertig). Läuft er länger als zwölf Stunden, kommt der Hinweis, im Projekt
+   nachzusehen. Arbeitet der Agent gerade an einer Antwort für das Konto, wartet die Rückmeldung einen Rundgang (sonst stünde sie
+   zwischen Frage und Antwort). Höchstens `JE_DURCHLAUF` (5) Meldungen je Rundgang.
+3. *Melden:* Der Eintrag wird erst belegt (`wartet` → `meldet`, ein Schritt, `belegt_am`; wer länger als zehn Minuten belegt
+   bleibt, kommt zurück in die Warteschlange), dann schreibt das Modell 2–4 Sätze
+   (`SYSTEM_MELDUNG`, ein Aufruf ohne Werkzeuge, `chat_engine._provider.chat`, etwa ein halber Cent, abgerechnet als InkluAgent
+   dieses Kontos über `ki_kosten.kontext(zweck="chatbot")`). Grundlage sind die Ergebnisse, die der Server liest (`fakten`): Zahlen
+   der Bilder je Status und „prüfen empfohlen“, Felder mit/ohne Quickinfo, für PDF-Arbeit dieselben Lese-Werkzeuge wie im Gespräch
+   (`dokument_stand`, `pruefbericht_lesen`, `uebersetzung_stand`, ohne deren Hinweise an den Agenten), gekürzt (Listen 8 Einträge,
+   Texte 300 Zeichen, gesamt 8000). Scheitert der Aufruf oder ist der Tages-Kostendeckel erreicht
+   (`sicherheit.kosten_deckel_erreicht`), kommt die schlichte Meldung „… ist zu Ende. Das Ergebnis siehst du im Projekt.“ — die
+   Rückmeldung bleibt nie aus. Adressen fliegen aus dem Text (`ohne_adressen`): Webadressen, Mail-Adressen und nackte Domains
+   wie „beispiel.de/login“ (Mail-Programme machen auch daraus Links) — eine Rückmeldung braucht keine, und ein eingeschleuster
+   „Klick hier“-Satz aus einem Dokument stünde sonst in einer echten InkluDocs-Mail. Es bleiben Namen, die der Server kennt
+   (Projekt, Dokumente, Adresse eines Webseiten-Projekts, etwa „www.olle-snuut.de“), Dateinamen („brief.pdf“, „logo@2x.png“;
+   nicht .zip und .mov, das sind auch Domain-Endungen) und Satzzeichen hinter einer Adresse; Leerzeichen vor „!“, „?“, „:“ und
+   „;“ (Französisch) fasst die Bereinigung nicht an. Nachricht und Zustand
+   schreibt der Server in EINEM Schritt (`BEGIN IMMEDIATE`, `storage.konto_anhaengen_in`), unmittelbar nachdem er geprüft hat,
+   dass Konto und Projekt noch da sind — keine doppelte Nachricht nach einem Neustart, keine Daten für ein gerade gelöschtes
+   Konto. Die Nachricht steht im Gespräch, in dem der Lauf begann (wie jede Antwort, K3), mit `intent`
+   „rueckmeldung“, der Sprache der Oberfläche beim Start und dem Link „Projekt „…“ öffnen“. Projekt oder Konto gelöscht: verworfen.
+   Ein Fehler beim Melden: nächster Rundgang, nach `VERSUCHE` (3) verworfen (Fehler im Log).
+4. *Mail auf Wunsch:* `per_mail` nur auf ausdrückliches `true` (die Beschreibung sagt: nur, wenn der Nutzer selbst darum bittet).
+   Dieselbe Nachricht an die Adresse des EIGENEN Kontos — einen Parameter für eine andere Adresse gibt es nicht —, nur bestätigte
+   Adressen, höchstens `MAILS_JE_TAG` (20), keine Kopie ans Team, Text als Text (HTML-maskiert), Link zum Gespräch
+   (`/gespraeche/<id>`, ohne `AGENT_GESPRAECHE` zum Projekt). Ob sie rausging, sagt eine Zeile des SERVERS unter der Nachricht
+   (`zusatz`), nicht das Modell (`SYSTEM_MELDUNG` verbietet, Mails zu erwähnen). `mail_gesendet` sorgt dafür, dass ein zweiter
+   Versuch (Speichern scheiterte nach dem Senden) keine zweite Mail schickt.
+
+**Neustart:** Die Tabelle bleibt. `nach_neustart()` (in `starten()`): alles, was wartete oder gerade gemeldet wurde, wartet weiter
+und trägt die Marke `neustart` — die Nachricht sagt dann ehrlich, dass ein noch laufender Lauf abgebrochen sein kann und die
+Ergebnisse von einem früheren stammen können (`NEUSTART_HINWEIS`; Testlauf, Korrektur und Übersetzung leben nur im Speicher). Läufe, die der Neustart abgebrochen hat, meldet der nächste Rundgang
+mit ihrem Stand: Alt-Texte räumen beim Herunterfahren auf (`_process_project`, `_notaufraeumen`), Tagging, Kette, Übersetzung und
+Quickinfos haben Start-Reparaturen (im `startup` ihrer Router — die laufen neben `main.lifespan`, geprüft mit FastAPI 0.115.0 /
+Starlette 0.38.6 im Staging-Container). Bleibt ein Zustand nach einem harten Absturz hängen, kommt nach zwölf Stunden der
+Hinweis, im Projekt nachzusehen.
+
+**Oberfläche (`inkluagent.js`, „Rückmeldung“):** `GET /api/agent/status` trägt mit Schalter `rueckmeldung: {wartet, letzte,
+neu: [{id, im_laufenden, titel, project_id}]}` (die fünf jüngsten, älteste zuerst — kommen zwei zwischen zwei Abfragen, zeigt die
+Seite beide, mit EINEM Klang und EINER Ansage). Die Seite fragt nur, SOLANGE eine wartet (alle 15 s; angestoßen beim Laden der Seite, nach jeder
+Antwort, nach einem Karten-Knopf und nach dem Verfolgen eines Laufs; fünf Fehlversuche nacheinander beenden das Fragen bis zum
+nächsten Anlass). Eine neue Rückmeldung wird wie eine Antwort gemeldet — Klang „fertig“, Ansage „Rückmeldung vom InkluAgent ist
+da.“, Markierung am Knopf des Agenten, wenn er zu ist —, aber ohne den Fokus zu nehmen. Sie wird angehängt, nicht der Verlauf neu
+gebaut (wer im Gespräch liest, bleibt an seiner Stelle; mitgescrollt wird nur, wer schon unten war); `data-nachricht-id` verhindert
+Doppelte. Arbeitete der Lauf im offenen Projekt, zieht die Ansicht nach. Steht die Rückmeldung in einem anderen Gespräch, sagt die
+Ansage, in welchem. Während die Seite selbst sendet, wartet die Meldung (`inkluagentBeschaeftigt`). Ohne neues Element (Agent zu,
+Verlauf nicht erreichbar) bezieht sich die Meldung NICHT auf die letzte alte Antwort (`inkluagentAntwortMelden(el, fokus, ansage)`:
+keine alte Karte fliegt noch einmal ein, „Zurück zum Gespräch“ führt nicht zu ihr).
+
+**Hilfe:** Abschnitt „Wenn etwas im Hintergrund läuft“ (nur mit Schalter). Werkzeugname „Rückmeldung einrichten“.
+
+**Tests:** `tests/test_rueckmeldung.py` (50): Werkzeuge (`per_mail` nur an Start-Werkzeugen, Definition unverändert, Namen und
+Daten-Einordnung), Vormerken (nur gestartete Läufe, nur mit Schalter, Konto, Gespräch und Projekt, nie in der Demo, `per_mail` nur
+`true`, eine je Projekt und Art, Grenze, belegter Eintrag), Aufpassen (erst am Ende, Anlaufzeit, zwölf Stunden, Agent arbeitet,
+gelöschtes Projekt, Grenze je Rundgang, Zustände aller Arten), Nachricht (schlichte Meldung bei Fehler und über dem Kostendeckel,
+bereinigt und gekürzt, Namen als Daten, Wiederholen und Verwerfen, Englisch), Mail (nur auf Wunsch und nur ans eigene Konto,
+maskiert, Link, ehrlicher Fehlschlag, keine zweite Mail, unbestätigte Adresse, Tagesgrenze), Neustart und Stand, `melden_wenn_fertig`,
+Agent-Schleife, Knopf einer Karte über den Endpunkt, Status und Schalter, Quelltext der Oberfläche, Hilfe; dazu je Befund der
+unabhängigen Prüfung ein Test (siehe unten). Gegenprobe: drei absichtlich eingebaute Fehler (Anlaufzeit, zweite Mail, Fokus) machen
+die Tests rot. Klickprobe `lokal/probe_rueckmeldung.py` (`probe_rm_alle.sh`, Ports 8880–8889, 17 Punkte): Rückmeldung im laufenden
+Gespräch (angehängt, Klang, Ansage, Link, Zeile zur Mail, Fokus bleibt, axe, danach keine Abfragen mehr, nach dem Neuladen genau
+einmal und nicht noch einmal angesagt), in einem anderen Gespräch, bei zugeklapptem Agenten.
+
+**Unabhängige Prüfung (14.10.2026, eigener Prüf-Agent über den ganzen Commit):** nichts Kritisches, nichts Hohes. Behoben:
+(1, mittel) Tagging setzt das Projekt auf `extracting` — `melden_wenn_fertig` merkte denselben Lauf zweimal vor (zwei Nachrichten,
+zwei Mails); jetzt `was_laeuft` jeder Lauf einmal, Alt-Texte und Quickinfos nur `processing`. (2, mittel) Korrektur mit Nachprüfung
+wurde zu früh gemeldet: `tagging_api._korrektur_sync` gab die Korrektur VOR dem Speichern frei (ein Augenblick ohne Lauf), jetzt
+erst, wenn die Nachprüfung markiert ist; die Korrektur gilt als laufend, solange die Prüfung läuft. (3, 8) Nachricht und Zustand in
+einem Schritt, Konto vorher geprüft (auch vor der Mail). (4) „meldet“ bleibt nicht hängen. (5) zwei Dokumente → Bericht übers
+Projekt. (6) mehrere Rückmeldungen zwischen zwei Abfragen. (7) keine alte Antwort als Bezug. (9) Links und Adressen aus dem Text.
+(10) reihum statt der ersten 200; Neustart-Marke; Fehler beim Vormerken nach dem Knopf geben keinen 500. Nachprüfung der
+Korrekturen (derselbe Prüf-Agent): alle zehn behoben; nachgezogen: nackte Domains und geschützte Namen (Befund 9), „Verarbeitung“
+nur ohne Tagging statt ohne jeden PDF-Lauf, nur wirklich angesehene Einträge rücken im Rundgang nach hinten. Die Tabelle stand nie
+in einem anderen Stand auf einem Server (beide Arbeitsschritte sind EIN Commit) — darum keine Migration für ihre Spalten.
+
+**Kosten:** Aufpassen und Mail kosten nichts; je Rückmeldung ein Modellaufruf (etwa 0,5 ct). Für den Kunden keine Credits extra.
+
+**Offen (Baustein 2):** Folgeschritte mit einer gemeinsamen Freigabe („erst Alt-Texte, dann barrierefrei machen, dann Word
+exportieren“ — ein Budget, eine Karte); Credits für Agenten-Arbeit (Steve: später); „ohne Rückfrage“ je Konto (Steve: später).
+
 ## Vor dem nächsten Prod-Rollout: was sich ohne Schalter ändert (Korrektheit H4, Stand Runde 2)
 
 Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sich trotzdem:
@@ -1430,3 +1538,8 @@ Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sic
   (`main._freigabe_anlegen`, `express_api.bestellung`) — gleiches Verhalten, dieselben Tests.
 - Datenbank: neue Spalten (`zusatz`, `sprache` in `chat_messages` und `agent_nachrichten`, `users.agent_toene`) und Index; alle
   Migrationen vorwärts idempotent, alter Code liest die Spalten nicht.
+- Rückmeldung ohne Schalter (14.10.2026): neue Tabelle `agent_rueckmeldungen` (leer, keine Schleife); der Knopf einer Karte
+  speichert Frage und Antwort mit ausdrücklichem Gespräch (dasselbe wie vorher: das laufende); `sicherheit.kosten_deckel_erreicht`
+  ist aus `chat_sperre` herausgezogen und `storage.konto_anhaengen_in` aus `konto_anhaengen` (gleiches Verhalten);
+  `tagging_api._korrektur_sync` gibt die Korrektur erst nach dem Speichern ihres Berichts frei (vorher davor — gleiches
+  Ergebnis, nur ohne Lücke zur Nachprüfung).

@@ -79,6 +79,14 @@
       </section>
       {% endif %}
 
+      {% if hilfe.rueckmeldung %}
+      <section class="dash-card" aria-labelledby="hilfe-rueckmeldung-h">
+        <h2 id="hilfe-rueckmeldung-h">{{ _('Wenn etwas im Hintergrund läuft') }}</h2>
+        <p>{{ _('Alt-Texte, Quickinfos, Tagging, Prüfung und Übersetzung laufen auf dem Server weiter, auch wenn du die Seite schließt. Startet der InkluAgent so etwas für dich, meldet er sich von selbst im Gespräch, sobald es fertig ist: mit einem kurzen Bericht und einem Klang.') }}</p>
+        <p>{{ _('Sagst du dazu „Schick mir eine Mail, wenn es fertig ist“, bekommst du denselben Bericht auch per Mail an die Adresse deines Kontos. An andere Adressen schickt der InkluAgent nichts.') }}</p>
+      </section>
+      {% endif %}
+
       <section class="dash-card" aria-labelledby="hilfe-nicht-h">
         <h2 id="hilfe-nicht-h">{{ _('Was der InkluAgent nicht macht') }}</h2>
         <p>{{ _('Das erledigst du selbst in den Einstellungen:') }}</p>

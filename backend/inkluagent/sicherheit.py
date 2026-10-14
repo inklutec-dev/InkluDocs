@@ -302,12 +302,17 @@ def kosten_heute_cent(user_id: int) -> float:
         conn.close()
 
 
+def kosten_deckel_erreicht(user_id: int) -> bool:
+    """Hat diese Person heute den Tages-Kostendeckel des InkluAgent erreicht? (Nachricht und Rueckmeldung, rueckmeldung.py)"""
+    deckel = _kosten_deckel_cent()
+    return bool(deckel and kosten_heute_cent(user_id) >= deckel)
+
+
 def chat_sperre(user_id: int, limit: int, _=None) -> Optional[str]:
     """Vor einer Nachricht (Admins ausgenommen, das prueft der Endpunkt): Text fuer 429 oder None."""
     _ = _ or (lambda s: s)
     if tageszaehler(user_id) >= limit:
         return _('Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter.').format(n=limit)
-    deckel = _kosten_deckel_cent()
-    if deckel and kosten_heute_cent(user_id) >= deckel:
+    if kosten_deckel_erreicht(user_id):
         return _('Der InkluAgent hat für dein Konto heute das Tageslimit erreicht. Morgen geht es weiter.')   # je Person (S18)
     return None

@@ -12172,3 +12172,102 @@ msgstr "Skicka"
 
 msgid "Wird gesendet …"
 msgstr "Skickar …"
+
+# Rueckmeldung des InkluAgent (14.10.2026, inkluagent/rueckmeldung.py)
+msgid "Die Alt-Text-Generierung"
+msgstr "Genereringen av alt-texter"
+
+msgid "Die Quickinfo-Generierung"
+msgstr "Genereringen av hjälptexter"
+
+msgid "Das Tagging"
+msgstr "Taggningen"
+
+msgid "„Komplett barrierefrei machen“"
+msgstr "”Gör helt tillgänglig”"
+
+msgid "Die KI-basierte Prüfung"
+msgstr "Den AI-baserade kontrollen"
+
+msgid "Die Korrektur"
+msgstr "Korrigeringen"
+
+msgid "Der Testlauf"
+msgstr "Testtaggningen"
+
+msgid "Die Übersetzung"
+msgstr "Översättningen"
+
+msgid "Die Verarbeitung"
+msgstr "Bearbetningen"
+
+#, python-brace-format
+msgid "{was} im Projekt „{projekt}“ ist zu Ende. Das Ergebnis siehst du im Projekt."
+msgstr "{was} i projektet ”{projekt}” är klar. Du ser resultatet i projektet."
+
+#, python-brace-format
+msgid "{was} im Projekt „{projekt}“ läuft seit mehr als zwölf Stunden. Sieh bitte im Projekt nach, ob etwas hängt."
+msgstr "{was} i projektet ”{projekt}” har pågått i mer än tolv timmar. Kontrollera i projektet om något har fastnat."
+
+msgid "Diese Rückmeldung ging auch per Mail an dein Konto."
+msgstr "Det här beskedet skickades också med mejl till ditt konto."
+
+msgid "Die Mail an dein Konto ging nicht raus."
+msgstr "Mejlet till ditt konto kunde inte skickas."
+
+#, python-brace-format
+msgid "Die Mail an dein Konto ging nicht raus: Mehr als {n} Rückmeldungen am Tag schickt der InkluAgent nicht per Mail."
+msgstr "Mejlet till ditt konto skickades inte: InkluAgent skickar högst {n} besked om dagen med mejl."
+
+msgid "Die Mail ging nicht raus, weil die Adresse deines Kontos noch nicht bestätigt ist."
+msgstr "Mejlet skickades inte eftersom adressen till ditt konto ännu inte är bekräftad."
+
+#, python-brace-format
+msgid "InkluDocs: Rückmeldung zum Projekt „{projekt}“"
+msgstr "InkluDocs: Besked om projektet ”{projekt}”"
+
+msgid "Rückmeldung vom InkluAgent"
+msgstr "Besked från InkluAgent"
+
+msgid "Gespräch öffnen"
+msgstr "Öppna konversationen"
+
+msgid "Du bekommst diese Mail, weil du den InkluAgent darum gebeten hast."
+msgstr "Du får det här mejlet eftersom du bad InkluAgent om det."
+
+msgid "Ich melde mich hier, wenn es fertig ist."
+msgstr "Jag hör av mig här när det är klart."
+
+msgid "Ich melde mich hier und per Mail, wenn es fertig ist."
+msgstr "Jag hör av mig här och med mejl när det är klart."
+
+msgid "Rückmeldung einrichten"
+msgstr "Beställ besked"
+
+msgid "Wenn etwas im Hintergrund läuft"
+msgstr "När något körs i bakgrunden"
+
+msgid "Alt-Texte, Quickinfos, Tagging, Prüfung und Übersetzung laufen auf dem Server weiter, auch wenn du die Seite schließt. Startet der InkluAgent so etwas für dich, meldet er sich von selbst im Gespräch, sobald es fertig ist: mit einem kurzen Bericht und einem Klang."
+msgstr "Alt-texter, hjälptexter, taggning, kontroll och översättning fortsätter på servern, även om du stänger sidan. När InkluAgent startar något sådant åt dig hör den själv av sig i samtalet så snart det är klart: med en kort rapport och ett ljud."
+
+msgid "Sagst du dazu „Schick mir eine Mail, wenn es fertig ist“, bekommst du denselben Bericht auch per Mail an die Adresse deines Kontos. An andere Adressen schickt der InkluAgent nichts."
+msgstr "Säger du också ”Skicka ett mejl till mig när det är klart” får du samma rapport med mejl till adressen för ditt konto. InkluAgent skickar inget till andra adresser."
+
+#, python-brace-format
+msgid "Der InkluAgent hat sich im Gespräch „{titel}“ gemeldet. Du findest es unter „Frühere Gespräche“."
+msgstr "InkluAgent har hört av sig i konversationen ”{titel}”. Du hittar den under ”Tidigare konversationer”."
+
+msgid "Rückmeldung vom InkluAgent ist da."
+msgstr "InkluAgent har hört av sig."
+
+msgid "Rückmeldung vom InkluAgent ist da. „Zurück zum Gespräch“ führt zu ihr."
+msgstr "InkluAgent har hört av sig. ”Tillbaka till samtalet” tar dig dit."
+
+# Rueckmeldung des InkluAgent, mehrere auf einmal (14.10.2026)
+#, python-brace-format
+msgid "{n} Rückmeldungen vom InkluAgent sind da."
+msgstr "{n} besked från InkluAgent har kommit."
+
+#, python-brace-format
+msgid "{n} Rückmeldungen stehen in anderen Gesprächen. Du findest sie unter „Frühere Gespräche“."
+msgstr "{n} besked finns i andra konversationer. Du hittar dem under ”Tidigare konversationer”."

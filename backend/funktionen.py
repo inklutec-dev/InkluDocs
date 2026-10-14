@@ -130,6 +130,12 @@ AGENT_KLANG = _umgebung_an("INKLUAGENT_KLANG")
 # InkluAgent das Formular vorbelegt ins Gespraech — „Zur Prüfung einladen“, „Zahlungspflichtig bestellen“ (Express). Abschicken
 # nur ueber den Knopf der Karte, ueber DIESELBE Funktion wie die Seite (inkluagent/karten.py). INKLUAGENT_KARTEN=an.
 AGENT_KARTEN = _umgebung_an("INKLUAGENT_KARTEN")
+# Rueckmeldung (Steve 14.10.2026, erster Baustein der Auftraege: „er meldet sich, wenn er fertig ist“): startet der InkluAgent
+# einen Lauf im Hintergrund (Alt-Texte, Quickinfos, Tagging, Kette, KI-Pruefung, Korrektur, Testlauf, Uebersetzung), passt der
+# Server ohne KI auf und schreibt, wenn er zu Ende ist, eine persoenliche Nachricht des Agenten ins Gespraech; auf Wunsch
+# dieselbe Nachricht per Mail an die Adresse des eigenen Kontos (inkluagent/rueckmeldung.py). Braucht AGENT_KONTO; die Seite
+# meldet sie live mit AGENT_UEBERALL (GET /api/agent/status). INKLUAGENT_RUECKMELDUNG=an.
+AGENT_RUECKMELDUNG = _umgebung_an("INKLUAGENT_RUECKMELDUNG")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {
