@@ -12811,3 +12811,16 @@ msgstr "«{name}», una página"
 #, python-brace-format
 msgid "{sprache}, ein Wort"
 msgstr "{sprache}, una palabra"
+
+# Kaufen im Gespraech, Baustein 3 (14.10.2026, inkluagent/karten.py)
+msgid "Kauf vorbereiten"
+msgstr "Preparar la compra"
+
+msgid "Abo-Buchung vorbereiten"
+msgstr "Preparar la suscripción"
+
+msgid "Abo wechseln oder kündigen, Rechnungen und Zahlungsart"
+msgstr "Cambiar o cancelar la suscripción, facturas y forma de pago"
+
+msgid "Weiter zur Bezahlseite von Stripe. Bezahlt wird dort; danach kommst du zurück zu „Abo & Verbrauch“."
+msgstr "Vamos a la página de pago de Stripe. El pago se hace allí; después vuelves a «Suscripción y consumo»."

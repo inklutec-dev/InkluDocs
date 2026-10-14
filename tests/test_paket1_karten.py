@@ -85,9 +85,12 @@ class Schema(unittest.TestCase):
         self.assertEqual((b["art"], b["wert"], b["link"]["url"]), ("haken", False, "/express/bedingungen"))
 
     def test_jedes_werkzeug_hat_eine_karte(self):
-        with mock.patch.object(funktionen, "EXPRESS", True):
+        # alle Schalter an: Express und Kaufen im Gespraech (Baustein 3, braucht die Karten und die Online-Zahlung)
+        import stripe_zahlung
+        with mock.patch.object(funktionen, "EXPRESS", True), mock.patch.object(funktionen, "AGENT_KARTEN", True), \
+                mock.patch.object(funktionen, "AGENT_KAUFEN", True), mock.patch.object(stripe_zahlung, "AKTIV", True):
             self.assertEqual({d["name"] for d in karten.werkzeuge(None)}, set(karten.NAMEN))
-        self.assertEqual({d["name"] for d in karten.werkzeuge(None)}, {"einladen_vorbereiten"}, "Express nur mit Schalter")
+        self.assertEqual({d["name"] for d in karten.werkzeuge(None)}, {"einladen_vorbereiten"}, "Express und Kaufen nur mit Schalter")
 
 
 class ImGespraech(unittest.TestCase):

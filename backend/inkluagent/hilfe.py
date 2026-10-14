@@ -29,6 +29,8 @@ def fragt_vorher(definition: dict) -> bool:
 
 # Formular-Karten (Paket 1, Schalter AGENT_KARTEN): Gaeste zur Pruefung einladen geht dann im Gespraech — ueber den Knopf der Karte
 AUSSERHALB_MIT_KARTEN = tuple("Team einladen" if t == "Team und Gäste einladen" else t for t in AUSSERHALB)
+# Kaufen im Gespraech (Baustein 3, Schalter AGENT_KAUFEN): Credits kaufen und ein Abo buchen gehen dann im Gespraech
+AUSSERHALB_KAUFEN = "Abo wechseln oder kündigen, Rechnungen und Zahlungsart"
 
 
 def formulare(_: Optional[Callable[[str], str]] = None) -> list[str]:
@@ -60,6 +62,8 @@ def seite(_: Optional[Callable[[str], str]] = None) -> dict:
         arten.append({"schluessel": schluessel, "titel": _(titel), "ohne_rueckfrage": ohne, "mit_rueckfrage": mit})
     from . import karten
     ausserhalb = AUSSERHALB_MIT_KARTEN if karten.an() else AUSSERHALB
+    if karten.kaufen_an():   # Kaufen im Gespraech (Baustein 3): buchen geht im Gespraech, Wechsel und Kuendigung nicht
+        ausserhalb = tuple(AUSSERHALB_KAUFEN if t == "Abo und Zahlung" else t for t in ausserhalb)
     from . import auftraege, rueckmeldung
     return {"projektarten": arten, "ausserhalb": [_(t) for t in ausserhalb], "formulare": formulare(_),
             "rueckmeldung": rueckmeldung.an(), "auftraege": auftraege.an()}

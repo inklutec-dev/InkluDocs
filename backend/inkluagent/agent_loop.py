@@ -364,7 +364,7 @@ def run_agent(
     karten_an = begleiter_lauf is not None and _karten.an()
     if karten_an:
         tool_defs = list(tool_defs) + _karten.werkzeuge(project_id)
-        system_base = system_base + "\n\n" + _karten.PROMPT
+        system_base = system_base + "\n\n" + _karten.prompt()   # mit dem Kaufen nur, wenn es das gibt (Baustein 3)
     # Rueckmeldung (Steve 14.10.2026, Schalter AGENT_RUECKMELDUNG): ebenfalls nur aus dem Chat-Endpunkt des Kontos und nur mit
     # Gespraech — startet ein Werkzeug einen Lauf im Hintergrund, meldet sich der Agent in diesem Gespraech, wenn er zu Ende ist
     from . import rueckmeldung as _rueckmeldung

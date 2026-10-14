@@ -101,6 +101,8 @@ services:
       - INKLUAGENT_RUECKMELDUNG=${INKLUAGENT_RUECKMELDUNG:-an}
       # Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py): mehrere Schritte als ein Auftrag mit Gesamtpreis, im Hintergrund
       - INKLUAGENT_AUFTRAEGE=${INKLUAGENT_AUFTRAEGE:-an}
+      # Kaufen im Gespraech, Baustein 3 (14.10.2026): Karten „Zusatz-Credits kaufen“ und „Abo buchen“ (Stripe-Testmodus auf Staging)
+      - INKLUAGENT_KAUFEN=${INKLUAGENT_KAUFEN:-an}
       # AWS Bedrock (08.05.2026): Anthropic Claude über Frankfurt fuer v4
       - AWS_REGION=${AWS_REGION:-eu-central-1}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}

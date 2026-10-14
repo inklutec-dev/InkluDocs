@@ -3341,21 +3341,21 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
             status_code=400,
             detail="Bitte bestätige zuerst den sofortigen Leistungsbeginn und die "
                    "Kenntnisnahme der Widerrufsbelehrung.")
-    db_user = get_user_by_id(user["id"])
+    url = await asyncio.get_running_loop().run_in_executor(
+        None, _abo_checkout_url, get_user_by_id(user["id"]), plan, monate, absender.limit_schluessel(request))
+    return {"ok": True, "url": url}
+
+
+def _abo_checkout_url(db_user: dict, plan: str, monate: int, absender_schluessel: str) -> str:
+    """Kern von „Abo buchen“ (POST /api/abo/checkout und die Karte „Abo buchen“ des InkluAgent, Baustein 3, 14.10.2026):
+    Stripe-Kunde, protokollierte Zustimmung zum sofortigen Leistungsbeginn, Checkout-Link. Die Zustimmung (Haken) hat der
+    Aufrufer schon geprueft; Plan und Laufzeit auch. HTTPException wie der Endpunkt."""
     if billing.effektiver_plan(db_user) != "free":
         raise HTTPException(status_code=400,
                             detail="Du hast bereits ein aktives Abo. Plan-Wechsel bitte über "
                                    "support@inkludocs.de — Online-Wechsel folgt")
     try:
-        kunde = stripe_zahlung.kunde_fuer(db_user)
-        if kunde != db_user.get("stripe_customer_id"):
-            conn = get_db()
-            try:
-                conn.execute("UPDATE users SET stripe_customer_id = ? WHERE id = ?",
-                             (kunde, db_user["id"]))
-                conn.commit()
-            finally:
-                conn.close()
+        kunde = _stripe_kunde(db_user)
         conn = get_db()
         try:
             cur = conn.execute(
@@ -3363,7 +3363,7 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
                 "summe_cent, belehrung_fassung, absender) VALUES (?, ?, ?, ?, ?, ?)",
                 (db_user["id"], plan, monate,
                  round(billing.preis_pro_monat(plan, monate) * monate * 100),
-                 WIDERRUFSBELEHRUNG_FASSUNG, absender.limit_schluessel(request)))
+                 WIDERRUFSBELEHRUNG_FASSUNG, absender_schluessel))
             zustimmung_id = cur.lastrowid
             conn.commit()
         finally:
@@ -3372,14 +3372,26 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
         # so dokumentiert die Bestaetigungsmail genau DIE Zustimmung, die zu
         # dieser Zahlung gehoert, nicht die eines abgebrochenen Versuchs
         # (Geldfluss-Review Befund 7, 24.08.2026).
-        url = stripe_zahlung.checkout_abo(db_user, plan, monate, BASE_URL, kunde,
-                                          zustimmung_id=zustimmung_id)
+        return stripe_zahlung.checkout_abo(db_user, plan, monate, BASE_URL, kunde,
+                                           zustimmung_id=zustimmung_id)
     except HTTPException:
         raise
     except Exception:
-        logger.exception("Stripe-Checkout fehlgeschlagen (user=%s)", user["id"])
+        logger.exception("Stripe-Checkout fehlgeschlagen (user=%s)", db_user["id"])
         raise HTTPException(status_code=502, detail="Die Zahlungsseite konnte nicht erstellt werden")
-    return {"ok": True, "url": url}
+
+
+def _stripe_kunde(db_user: dict) -> str:
+    """Stripe-Kunde des Kontos (angelegt, falls noch keiner da ist) und an users.stripe_customer_id gemerkt."""
+    kunde = stripe_zahlung.kunde_fuer(db_user)
+    if kunde != db_user.get("stripe_customer_id"):
+        conn = get_db()
+        try:
+            conn.execute("UPDATE users SET stripe_customer_id = ? WHERE id = ?", (kunde, db_user["id"]))
+            conn.commit()
+        finally:
+            conn.close()
+    return kunde
 
 
 @app.post("/api/abo/paket-checkout")
@@ -3394,22 +3406,18 @@ async def abo_paket_checkout(request: Request, user: dict = Depends(get_current_
         raise HTTPException(status_code=400, detail="groesse fehlt")
     if groesse not in billing.PAKET_PREISE:
         raise HTTPException(status_code=400, detail="Ungueltige Paketgroesse")
-    db_user = get_user_by_id(user["id"])
-    try:
-        kunde = stripe_zahlung.kunde_fuer(db_user)
-        if kunde != db_user.get("stripe_customer_id"):
-            conn = get_db()
-            try:
-                conn.execute("UPDATE users SET stripe_customer_id = ? WHERE id = ?",
-                             (kunde, db_user["id"]))
-                conn.commit()
-            finally:
-                conn.close()
-        url = stripe_zahlung.checkout_paket(db_user, groesse, BASE_URL, kunde)
-    except Exception:
-        logger.exception("Stripe-Paket-Checkout fehlgeschlagen (user=%s)", user["id"])
-        raise HTTPException(status_code=502, detail="Die Zahlungsseite konnte nicht erstellt werden")
+    url = await asyncio.get_running_loop().run_in_executor(None, _paket_checkout_url, get_user_by_id(user["id"]), groesse)
     return {"ok": True, "url": url}
+
+
+def _paket_checkout_url(db_user: dict, groesse: int) -> str:
+    """Kern von „Zusatz-Credits kaufen“ (POST /api/abo/paket-checkout und die Karte „Zusatz-Credits kaufen“ des InkluAgent,
+    Baustein 3, 14.10.2026): Stripe-Kunde und Checkout-Link fuer eine gepruefte Paketgroesse. HTTPException wie der Endpunkt."""
+    try:
+        return stripe_zahlung.checkout_paket(db_user, groesse, BASE_URL, _stripe_kunde(db_user))
+    except Exception:
+        logger.exception("Stripe-Paket-Checkout fehlgeschlagen (user=%s)", db_user["id"])
+        raise HTTPException(status_code=502, detail="Die Zahlungsseite konnte nicht erstellt werden")
 
 
 @app.post("/api/abo/portal")

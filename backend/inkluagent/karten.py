@@ -10,6 +10,9 @@ Karten (KARTENTYPEN):
   (express_api.bestellung) mit Aufstellung, Preis und Bedingungen. Nur mit funktionen.EXPRESS.
 - „auftrag“: einen Auftrag mit mehreren Schritten erteilen (Baustein 2, 14.10.2026) — Plan, Preise und Summe haelt der Server
   (inkluagent/auftraege.py, Werkzeug auftrag_vorbereiten); die Karte hat nur den Haken „per Mail melden“.
+- „credits_kaufen“ und „abo_buchen“: Kaufen im Gespraech (Baustein 3, 14.10.2026, Schalter funktionen.AGENT_KAUFEN, nur mit
+  Online-Zahlung) — dieselben Wege wie die Seite „Abo & Verbrauch“ (main._paket_checkout_url, main._abo_checkout_url). Der Knopf
+  fuehrt zur Bezahlseite von Stripe; bezahlt wird nur dort. Wortlaut, Pflicht-Haken und Links wie auf der Seite (§ 312j BGB).
 
 Sicherheit:
 - Was zaehlt, haelt der SERVER in der Karte: Projekt, Warenkorb, erwarteter Preis, Fassung, Idempotenz. Der Browser schickt nur
@@ -30,6 +33,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
+import billing
 import funktionen
 
 GUELTIG_S = 30 * 60
@@ -57,6 +61,7 @@ class Feld:
     auswahl: tuple = ()            # ((wert, label-msgid), …)
     autocomplete: str = ""
     link: Optional[tuple] = None   # (url, text-msgid) neben dem Feld, z. B. die Bedingungen
+    links: tuple = ()              # weitere Links daneben: ((url, text-msgid), …)
 
 
 @dataclass(frozen=True)
@@ -94,7 +99,41 @@ AUFTRAG = Kartentyp(
         Feld("per_mail", "haken", "Zusätzlich per Mail an mein Konto melden, wenn der Auftrag fertig ist"),
     ))
 
-KARTENTYPEN = {k.art: k for k in (EINLADEN, EXPRESS_BESTELLEN, AUFTRAG)}
+# Kaufen im Gespraech (Baustein 3, Steve 14.10.2026: „man kann auch mit dem Bot Pakete und Credits buchen — aber man muss das
+# ausdrücklich bestätigen“). Wortlaut wie auf „Abo & Verbrauch“ (abo.html): Knopf „Kostenpflichtig kaufen“ bzw. „Kostenpflichtig
+# buchen“, Preis direkt beim Knopf (Paket: in der Auswahl; Abo: Plan, Laufzeit, Gesamtpreis und Verlaengerung fest auf der Karte),
+# der Haken zum sofortigen Leistungsbeginn NICHT vorbelegt, Widerrufsbelehrung und Nutzungsbedingungen daneben.
+def _paket_auswahl() -> tuple:
+    """Paketgroessen mit Betrag aus billing.PAKET_PREISE — dieselbe Liste wie auf „Abo & Verbrauch“."""
+    return tuple((str(groesse), f"{text} — {betrag}") for groesse, text, betrag in billing.pakete_fuer_anzeige())
+
+
+CREDITS_KAUFEN = Kartentyp(
+    art="credits_kaufen", titel="Zusatz-Credits kaufen", knopf="Kostenpflichtig kaufen",
+    felder=(Feld("paket", "auswahl", "Paketgröße (Credits)", pflicht=True, auswahl=_paket_auswahl()),))
+
+ZUSTIMMUNG_LEISTUNGSBEGINN = (
+    "Ich verlange ausdrücklich, dass InkluDocs sofort nach der Buchung bereitsteht — also vor Ablauf der 14-tägigen "
+    "Widerrufsfrist. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für die bis dahin verbrauchten Credits schulde und "
+    "mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt.")
+ABO_BUCHEN = Kartentyp(
+    art="abo_buchen", titel="Abo buchen", knopf="Kostenpflichtig buchen",
+    felder=(Feld("widerruf", "haken", ZUSTIMMUNG_LEISTUNGSBEGINN, pflicht=True,
+                 link=("/widerruf", "Widerrufsbelehrung und Muster-Widerrufsformular"),
+                 links=(("/nutzungsbedingungen", "Nutzungsbedingungen"),)),))
+
+KARTENTYPEN = {k.art: k for k in (EINLADEN, EXPRESS_BESTELLEN, AUFTRAG, CREDITS_KAUFEN, ABO_BUCHEN)}
+
+
+def kaufen_an() -> bool:
+    """Kaufen im Gespraech: Schalter AGENT_KAUFEN, die Karten und die Online-Zahlung (Stripe konfiguriert)."""
+    if not (an() and funktionen.an("AGENT_KAUFEN")):
+        return False
+    try:
+        import stripe_zahlung
+        return bool(stripe_zahlung.AKTIV)
+    except Exception:  # noqa: BLE001 — ohne Stripe-Modul kein Kaufen
+        return False
 
 
 def _uebersetzt(typ: Kartentyp, werte: dict, _: Callable[[str], str]) -> list[dict]:
@@ -109,6 +148,8 @@ def _uebersetzt(typ: Kartentyp, werte: dict, _: Callable[[str], str]) -> list[di
             d["autocomplete"] = f.autocomplete
         if f.link:
             d["link"] = {"url": f.link[0], "text": _(f.link[1])}
+        if f.links:
+            d["links"] = [{"url": u, "text": _(t)} for u, t in f.links]
         out.append(d)
     return out
 
@@ -224,15 +265,48 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
             "input_schema": {"type": "object", "properties": {
                 "ansprechpartner": {"type": "string"}, "telefon": {"type": "string"}, "hinweise": {"type": "string"}}},
         })
+    if kaufen_an():
+        defs += [{
+            "name": "credits_kaufen_vorbereiten",
+            "description": ("Legt dem Nutzer die Karte „Zusatz-Credits kaufen“ ins Gespräch: Paketgröße mit Preis (vorbelegt) und "
+                            "Knopf „Kostenpflichtig kaufen“. Der Knopf führt zur Bezahlseite von Stripe; bezahlt wird nur dort — "
+                            "du kaufst nichts. Nur, wenn der Nutzer Credits kaufen will."),
+            "input_schema": {"type": "object", "properties": {
+                "paket": {"type": "integer", "enum": sorted(billing.PAKET_PREISE),
+                          "description": "Vorschlag für die Paketgröße in Credits (der Nutzer kann auf der Karte eine andere wählen)."}}},
+        }, {
+            "name": "abo_buchen_vorbereiten",
+            "description": ("Legt dem Nutzer die Karte „Abo buchen“ ins Gespräch: Plan und Laufzeit fest, Gesamtpreis, Leistung, "
+                            "Verlängerung, der Pflicht-Haken zum sofortigen Leistungsbeginn und Knopf „Kostenpflichtig buchen“. Der "
+                            "Knopf führt zur Bezahlseite von Stripe; bezahlt wird nur dort. Nur, wenn der Nutzer ein Abo buchen will "
+                            "und Plan und Laufzeit feststehen (frag sonst nach). Für Konten ohne Abo; Wechsel und Kündigung gehen auf "
+                            "der Seite „Abo & Verbrauch“."),
+            "input_schema": {"type": "object", "properties": {
+                "plan": {"type": "string", "enum": sorted(billing.PLAN_PREISE_EUR)},
+                "laufzeit_monate": {"type": "integer", "enum": list(billing.PLAN_LAUFZEITEN),
+                                    "description": "1 = Monatsabo (monatlich kündbar), sonst feste Laufzeit 3, 6 oder 12 Monate."}},
+                "required": ["plan", "laufzeit_monate"]},
+        }]
     return defs
 
 
-WERKZEUG_KARTE = {"einladen_vorbereiten": EINLADEN, "express_bestellen_vorbereiten": EXPRESS_BESTELLEN}
+WERKZEUG_KARTE = {"einladen_vorbereiten": EINLADEN, "express_bestellen_vorbereiten": EXPRESS_BESTELLEN,
+                  "credits_kaufen_vorbereiten": CREDITS_KAUFEN, "abo_buchen_vorbereiten": ABO_BUCHEN}
 NAMEN = frozenset(WERKZEUG_KARTE)
 
 PROMPT = """Formulare im Gespräch (Karten)
 
 Will der Nutzer jemanden zum Prüfen einladen oder seinen Express-Warenkorb bestellen, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten), statt ihn auf eine Seite zu schicken. Fülle vor, was er gesagt hat; erfinde nichts. Abschicken kann nur der Nutzer mit dem Knopf der Karte — frag also nicht nach einem Ja, sondern sag in einem Satz, was vorbelegt ist und welcher Knopf abschickt."""
+
+# Kaufen im Gespraech (Baustein 3): nur mit kaufen_an() im Systemprompt (agent_loop haengt prompt() an)
+PROMPT_KAUFEN = """Kaufen im Gespräch
+
+Will der Nutzer Credits nachkaufen oder ein Abo buchen, bring ihm die Karte (credits_kaufen_vorbereiten, abo_buchen_vorbereiten). Kaufen kann nur er selbst: Der Knopf der Karte führt zur Bezahlseite von Stripe, bezahlt wird nur dort. Biete Käufe nicht von dir aus an; reicht das Guthaben für etwas nicht, sag es und frag, ob du ihm die Karte bringen sollst. Ein Abo wechseln oder kündigen, Rechnungen und Zahlungsart gehen auf der Seite „Abo & Verbrauch“."""
+
+
+def prompt() -> str:
+    """Der Teil des Systemprompts fuer die Karten — mit dem Kaufen nur, wenn es das gerade gibt."""
+    return PROMPT + ("\n\n" + PROMPT_KAUFEN if kaufen_an() else "")
 
 
 def ausfuehren(name: str, args: dict, user_id: int, project_id: Optional[int], _t: Optional[Callable[[str], str]] = None) -> dict:
@@ -244,6 +318,10 @@ def ausfuehren(name: str, args: dict, user_id: int, project_id: Optional[int], _
             return _einladen_vorbereiten(args, user_id, project_id, _)
         if name == "express_bestellen_vorbereiten" and funktionen.an("EXPRESS"):
             return _express_vorbereiten(args, user_id, _)
+        if name == "credits_kaufen_vorbereiten" and kaufen_an():
+            return _credits_vorbereiten(args, user_id, project_id, _)
+        if name == "abo_buchen_vorbereiten" and kaufen_an():
+            return _abo_vorbereiten(args, user_id, project_id, _)
     except Exception:  # noqa: BLE001
         import logging
         logging.getLogger(__name__).exception("Karte %s nicht vorbereitet", name)
@@ -324,6 +402,90 @@ def _express_vorbereiten(args: dict, user_id: int, _) -> dict:
             "anhang": karte(EXPRESS_BESTELLEN, kid, werte, _, text=text, zeilen=zeilen)}
 
 
+def _zahl(n: int) -> str:
+    """Credits mit Tausenderpunkt wie auf „Abo & Verbrauch“ (pakete_fuer_anzeige)."""
+    return f"{int(n):,}".replace(",", ".")
+
+
+def _euro(betrag: float) -> str:
+    return f"{betrag:.2f}".replace(".", ",")
+
+
+T_STRIPE = ("Bezahlt wird auf der sicheren Stripe-Seite. Welche Zahlungsarten dort erscheinen, hängt davon ab, was für dein Land "
+            "freigeschaltet ist; Kartenzahlung geht immer.")
+T_ENDPREISE = "Preise sind Endpreise. Nach § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen."
+
+
+def _credits_vorbereiten(args: dict, user_id: int, project_id: Optional[int], _) -> dict:
+    try:
+        paket = int(args.get("paket") or min(billing.PAKET_PREISE))
+    except (TypeError, ValueError):
+        paket = min(billing.PAKET_PREISE)
+    if paket not in billing.PAKET_PREISE:
+        paket = min(billing.PAKET_PREISE)
+    guthaben = billing.verfuegbare_credits(int(user_id))
+    kid = _merken(user_id, CREDITS_KAUFEN, project_id, {})
+    text = (_("Dein Guthaben: {n} Credits.").format(n=_zahl(guthaben)) + " " if guthaben is not None else "") + _(T_STRIPE)
+    return {"ok": True,
+            "result": {"karte": "credits_kaufen", "pakete": {g: p for g, p in billing.PAKET_PREISE.items()}, "vorbelegt": paket,
+                       "guthaben": guthaben,
+                       "hinweis": ("Die Karte steht unter deiner Antwort. Sag in einem Satz, welches Paket vorbelegt ist und was es "
+                                   "kostet, und dass „Kostenpflichtig kaufen“ zur Bezahlseite von Stripe führt — bezahlt wird nur dort.")},
+            "anhang": karte(CREDITS_KAUFEN, kid, {"paket": str(paket)}, _, text=text, zeilen=[_(T_ENDPREISE)])}
+
+
+def _abo_zeilen(plan: str, monate: int, _) -> list[str]:
+    """Bestellung wie „Deine Bestellung“ auf „Abo & Verbrauch“ (abo.html, aktualisiereSumme): Plan mit Leistung, Gesamtpreis,
+    Leistung, Laufzeit und Verlaengerung — dieselben Saetze, dieselben Zahlen aus billing."""
+    name = {"single": "Single", "team": "Team", "enterprise": "Enterprise"}[plan]
+    credits, plaetze = _zahl(billing.PLAN_KONTINGENTE[plan]), billing.PLAN_SITZE.get(plan)
+    rate = billing.preis_pro_monat(plan, monate)
+    summe = _euro(rate * monate)
+    alt, qi = billing.AKTIONS_PREISE["bild_generierung"], billing.AKTIONS_PREISE["quickinfo_generierung"]
+    return [
+        (_("{plan} — {credits} Credits im Monat, bis {plaetze} Personen").format(plan=name, credits=credits, plaetze=plaetze)
+         if plaetze else _("{plan} — {credits} Credits im Monat, ein Konto").format(plan=name, credits=credits)),
+        (_("Gesamtpreis: {summe} € pro Monat, monatlich kündbar.").format(summe=summe) if monate == 1 else
+         _("Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat.").format(summe=summe, monate=monate, rate=_euro(rate))),
+        (_("Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Alt-Text kostet {alt} Credits, "
+           "eine Quickinfo {qi} Credit.").format(credits=credits, plaetze=plaetze, alt=alt, qi=qi) if plaetze else
+         _("Leistung: {credits} Credits pro Monat. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit.").format(
+             credits=credits, alt=alt, qi=qi)),
+        (_("Monatsabo: {summe} € werden jeweils für einen Monat im Voraus abgebucht. Das Abo verlängert sich monatlich und ist "
+           "jederzeit zum Ende des laufenden Monats kündbar.").format(summe=summe) if monate == 1 else
+         _("Laufzeit {monate} Monate, im Voraus zu zahlen. Wenn du nicht zum Laufzeitende kündigst, läuft das Abo danach als "
+           "Monatsabo zur Treuekondition weiter: {treue} € pro Monat, jederzeit monatlich kündbar.").format(
+             monate=monate, treue=_euro(billing.treue_preis_eur(plan)))),
+        _(T_ENDPREISE),
+    ]
+
+
+def _abo_vorbereiten(args: dict, user_id: int, project_id: Optional[int], _) -> dict:
+    from database import get_user_by_id
+    plan = str(args.get("plan") or "").strip().lower()
+    try:
+        monate = int(args.get("laufzeit_monate"))
+    except (TypeError, ValueError):
+        monate = 0
+    if plan not in billing.PLAN_PREISE_EUR or monate not in billing.PLAN_LAUFZEITEN:
+        return {"ok": False, "error": "Plan (single, team, enterprise) und Laufzeit (1, 3, 6 oder 12 Monate) fehlen. Frag nach."}
+    nutzer = get_user_by_id(int(user_id)) or {}
+    jetzt = billing.effektiver_plan(nutzer)
+    if jetzt != "free":
+        return {"ok": True, "result": {"karte": None, "plan_jetzt": jetzt, "hinweis": (
+            "Das Konto hat schon ein Abo. Ein Wechsel oder eine Kündigung geht auf der Seite „Abo & Verbrauch“ — sag das und "
+            "biete an, ihn hinzubringen.")}}
+    kid = _merken(user_id, ABO_BUCHEN, project_id, {"plan": plan, "monate": monate})
+    zeilen = _abo_zeilen(plan, monate, _)
+    return {"ok": True,
+            "result": {"karte": "abo_buchen", "plan": plan, "laufzeit_monate": monate,
+                       "gesamtpreis_eur": round(billing.preis_pro_monat(plan, monate) * monate, 2),
+                       "hinweis": ("Die Karte steht unter deiner Antwort. Sag in einem Satz Plan, Laufzeit und Gesamtpreis und dass "
+                                   "der Nutzer den Haken zum sofortigen Leistungsbeginn setzen und dann „Kostenpflichtig buchen“ "
+                                   "drücken muss; bezahlt wird auf der Seite von Stripe.")},
+            "anhang": karte(ABO_BUCHEN, kid, {"widerruf": False}, _, text=_(T_STRIPE), zeilen=zeilen)}
+
+
 # ─── Abschicken (Knopf der Karte) ────────────────────────────────────────────────────────────────────────────────────────────
 async def absenden(kid: str, user: dict, roh: Any, sprache: str, absender: str = "") -> tuple[int, dict]:
     """POST /api/agent/karte: (HTTP-Status, Antwort). Antwort bei Erfolg {"ok", "text", "karte": {"zustand", "ergebnis"},
@@ -348,6 +510,8 @@ async def absenden(kid: str, user: dict, roh: Any, sprache: str, absender: str =
         elif typ is AUFTRAG:
             from . import auftraege
             status, antwort = await auftraege.karte_senden(e, user, werte, sprache, _)
+        elif typ in (CREDITS_KAUFEN, ABO_BUCHEN):
+            status, antwort = await _kaufen_senden(typ, e, user, werte, absender, _)
         else:
             status, antwort = await _express_senden(e, user, werte, sprache, absender, _)
     except Exception:
@@ -404,6 +568,33 @@ async def _express_senden(e: dict, user: dict, werte: dict, sprache: str, absend
     text = _("Bestellt: Express-Auftrag {nr}. Die Bestätigung kommt per E-Mail.").format(nr=erg["auftrag_id"])
     return 200, {"ok": True, "text": text, "karte": {"zustand": "gesendet", "ergebnis": text},
                  "anhang": {"art": "link", "url": f"/express/auftrag/{int(erg['auftrag_id'])}", "text": _("Auftrag ansehen")}}
+
+
+T_WEITER = "Weiter zur Bezahlseite von Stripe. Bezahlt wird dort; danach kommst du zurück zu „Abo & Verbrauch“."
+
+
+async def _kaufen_senden(typ: Kartentyp, e: dict, user: dict, werte: dict, absender: str, _) -> tuple[int, dict]:
+    """Knopf „Kostenpflichtig kaufen“ / „Kostenpflichtig buchen“: derselbe Kern wie „Abo & Verbrauch“ (Stripe-Checkout). Die Seite
+    leitet zu „weiter“ (nur eine Adresse von Stripe-Checkout) — bezahlt wird nur dort. Plan und Laufzeit kommen aus der Karte des
+    Servers, nicht vom Browser; das Paket aus der geprueften Auswahl."""
+    import asyncio
+    from fastapi import HTTPException
+    m = _main()
+    if not kaufen_an():
+        text = _("Diese Karte gilt nicht mehr. Bitte frag im Chat neu.")
+        return 404, {"detail": text, "karte": {"zustand": "abgelaufen", "ergebnis": text}}
+    nutzer = m.get_user_by_id(user["id"])
+    try:
+        if typ is CREDITS_KAUFEN:
+            url = await asyncio.get_running_loop().run_in_executor(None, m._paket_checkout_url, nutzer, int(werte["paket"]))
+        else:
+            k = e["kontext"]
+            url = await asyncio.get_running_loop().run_in_executor(None, m._abo_checkout_url, nutzer, k["plan"], int(k["monate"]),
+                                                                   absender)
+    except HTTPException as fehler:
+        return fehler.status_code, {"detail": _(str(fehler.detail))}
+    text = _(T_WEITER)
+    return 200, {"ok": True, "text": text, "karte": {"zustand": "gesendet", "ergebnis": text}, "weiter": url}
 
 
 def _im_verlauf_aendern(user_id: int, e: dict, kid: str, felder: dict) -> None:

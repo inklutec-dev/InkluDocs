@@ -122,6 +122,9 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     "auftrag_vorbereiten": ("projekt_daten", "schritte[].umfang_daten"),
     "auftrag_stand": ("auftraege[].projekt_daten", "auftraege[].schritte[].umfang_daten"),
     "auftrag_abbrechen": ("projekt_daten",),
+    # Kaufen im Gespraech, Baustein 3 (14.10.2026, inkluagent/karten.py): nur Zahlen und Saetze des Servers
+    "credits_kaufen_vorbereiten": (),
+    "abo_buchen_vorbereiten": (),
 }
 
 

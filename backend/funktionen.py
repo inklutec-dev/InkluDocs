@@ -141,6 +141,11 @@ AGENT_RUECKMELDUNG = _umgebung_an("INKLUAGENT_RUECKMELDUNG")
 # ihn, der Server arbeitet die Schritte ohne KI ab (dieselben Werkzeuge wie im Gespraech, nie mehr als die Summe der Karte), am
 # Ende meldet sich der Agent (inkluagent/auftraege.py). Braucht AGENT_KARTEN und AGENT_RUECKMELDUNG. INKLUAGENT_AUFTRAEGE=an.
 AGENT_AUFTRAEGE = _umgebung_an("INKLUAGENT_AUFTRAEGE")
+# Kaufen im Gespraech, Baustein 3 (Steve 14.10.2026: „man kann auch mit dem Bot Pakete und Credits buchen — aber man muss das
+# ausdrücklich bestätigen“): Karten „Zusatz-Credits kaufen“ und „Abo buchen“ mit denselben Texten, Pflicht-Haken und Wegen wie
+# „Abo & Verbrauch“; der Knopf fuehrt zur Bezahlseite von Stripe, bezahlt wird nur dort (inkluagent/karten.py). Braucht
+# AGENT_KARTEN und die Online-Zahlung (stripe_zahlung.AKTIV). INKLUAGENT_KAUFEN=an.
+AGENT_KAUFEN = _umgebung_an("INKLUAGENT_KAUFEN")
 
 # Chatbot-Werkzeuge, die an einem Schalter haengen. Alle anderen sind immer da.
 WERKZEUG_SCHALTER = {

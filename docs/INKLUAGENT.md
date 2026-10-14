@@ -1603,6 +1603,41 @@ wartet) — die Karte selbst ist die vorhandene Formular-Karte (fliegt ein, Wusc
 **Kosten:** Planen und Abarbeiten kosten keine KI; je Auftrag eine Rückmeldung (etwa 0,5 ct). Für den Kunden: die Credits der
 Schritte wie einzeln, nie mehr als die Summe der Karte.
 
+## Aufträge, Baustein 3: Kaufen im Gespräch (Steve 14.10.2026; Schalter `AGENT_KAUFEN`, Umgebung `INKLUAGENT_KAUFEN=an`, braucht `AGENT_KARTEN` und die Online-Zahlung)
+
+Steve: „Man kann auch mit dem Bot Pakete und Credits buchen. Allerdings muss man das ausdrücklich bestätigen.“ Zwei
+Formular-Karten (`inkluagent/karten.py`), nur wenn `stripe_zahlung.AKTIV` (sonst gibt es die Werkzeuge nicht):
+- **„Zusatz-Credits kaufen“** (`credits_kaufen_vorbereiten`, Vorschlag `paket`): Auswahl „Paketgröße (Credits)“ mit Preis je Paket
+  aus `billing.pakete_fuer_anzeige` (dieselbe Liste wie „Abo & Verbrauch“), vorbelegt; dazu Guthaben, Stripe-Hinweis und
+  Endpreise; Knopf „Kostenpflichtig kaufen“.
+- **„Abo buchen“** (`abo_buchen_vorbereiten`, `plan` und `laufzeit_monate` Pflicht — fehlen sie, fragt der Agent): Plan,
+  Laufzeit, Gesamtpreis, Leistung und Verlängerung FEST auf der Karte (dieselben Sätze und Zahlen wie „Deine Bestellung“ auf
+  „Abo & Verbrauch“, § 312j BGB: alles direkt beim Knopf), der Haken zum sofortigen Leistungsbeginn (Pflicht, NICHT vorbelegt,
+  derselbe Wortlaut), daneben Widerrufsbelehrung und Nutzungsbedingungen (neues Fenster; `Feld.links` für mehr als einen Link);
+  Knopf „Kostenpflichtig buchen“. Für Konten mit Abo keine Karte — Wechsel und Kündigung bleiben auf „Abo & Verbrauch“.
+
+**Abschicken:** `karten._kaufen_senden` ruft DENSELBEN Kern wie die Endpunkte der Abo-Seite: `main._paket_checkout_url` bzw.
+`main._abo_checkout_url` (herausgezogen aus `POST /api/abo/paket-checkout` und `/api/abo/checkout`; dort laufen sie jetzt im
+Thread-Pool statt auf der Ereignisschleife; `main._stripe_kunde` für beide). Die Zustimmung wird wie bisher in
+`widerruf_zustimmungen` protokolliert (Fassung, Summe, Absender) und reist als Metadatum durch Stripe. Plan und Laufzeit kommen
+aus der Karte des Servers, nicht vom Browser; das Paket nur aus der geprüften Auswahl. Die Antwort trägt `weiter` (die
+Checkout-Adresse); die Seite leitet NUR zu `https://checkout.stripe.com/…` weiter (`inkluagentZurBezahlung`), als ganze Seite
+(Zahlung nie im Rahmen), nach 1,5 s, damit das Ergebnis der Karte („Weiter zur Bezahlseite von Stripe …“) noch angesagt wird.
+Bezahlt wird nur bei Stripe; nach der Zahlung führt Stripe zurück zu „Abo & Verbrauch“, wo die Gutschrift wie bisher über den
+Webhook ankommt. Eine Karte schickt genau einmal ab; scheitert der Kern (Stripe nicht erreichbar), bleibt sie offen.
+
+**Agent:** `karten.prompt()` hängt den Abschnitt „Kaufen im Gespräch“ nur mit Schalter an: Karten nur, wenn der Nutzer kaufen will;
+reicht das Guthaben nicht, sagt er es und fragt, ob er die Karte bringen soll (Auftrag: `auftrag_vorbereiten` nennt dann das
+kleinste Paket, das die fehlenden Credits deckt). Werkzeugnamen „Kauf vorbereiten“, „Abo-Buchung vorbereiten“; Hilfe: die beiden
+Karten stehen unter den Formularen, „Was der InkluAgent nicht macht“ sagt dann „Abo wechseln oder kündigen, Rechnungen und
+Zahlungsart“.
+
+**Tests:** `tests/test_kaufen.py` (22): Schalter (nie ohne Karten, Online-Zahlung oder in der Demo), beide Karten wörtlich wie
+„Abo & Verbrauch“, Abschicken (Paket nur aus der Auswahl, Haken Pflicht, Plan aus der Karte, genau einmal, fremde Karte, Schalter
+aus, Fehler des Kerns), die Endpunkte der Abo-Seite (Zustimmung protokolliert, mit Abo abgelehnt, Paket, Stripe-Fehler 502),
+Oberfläche (nur Stripe-Checkout, ganze Seite, mehrere Links), Hilfe, Namen, passendes Paket. Klickprobe `lokal/probe_kaufen.py`
+(Stripe-Attrappe `IA_ERSATZ_STRIPE=an`, die Bezahlseite fängt die Probe ab): 14 Punkte.
+
 ## Vor dem nächsten Prod-Rollout: was sich ohne Schalter ändert (Korrektheit H4, Stand Runde 2)
 
 Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sich trotzdem:
@@ -1632,3 +1667,8 @@ Prod setzt keinen InkluAgent-Schalter. Mit dem Stand dieses Branches ändert sic
   die Freigabe eines Auftrags in diesem Faden — ohne Auftrag gibt es keine, das Verhalten ist dasselbe; `rueckmeldung.anmelden`
   arbeitet über `anmelden_in` (gleiches Verhalten); die Seite fragt nach dem Absenden einer Formular-Karte nach Rückmeldungen
   (ohne Schalter `rueckmeldung` fragt sie nicht).
+- Kaufen ohne Schalter (Baustein 3): `POST /api/abo/checkout` und `/api/abo/paket-checkout` rufen ihren herausgezogenen Kern
+  (`_abo_checkout_url`, `_paket_checkout_url`, `_stripe_kunde`) im Thread-Pool auf statt auf der Ereignisschleife — gleiche
+  Prüfungen, gleiche Antworten, gleiche Protokollierung (Tests in `test_kaufen.py`, Klasse Endpunkte). Formular-Felder können
+  mehrere Links tragen (`links`); die Seite leitet nach einer Karte nur zu Stripe-Checkout weiter, und nur, wenn die Antwort
+  `weiter` trägt (ohne Schalter nie).

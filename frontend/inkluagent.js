@@ -2336,17 +2336,19 @@ function inkluagentFormularFeld(kennung, f) {
     fehler.id = id + '-fehler';
     fehler.className = 'inkluagent-formular-fehler';
     el.setAttribute('aria-describedby', fehler.id);
-    // Wie im Express-Warenkorb: der Link zu den Bedingungen steht VOR dem Haken
-    if (f.link && eigenerPfad(f.link.url)) {
+    // Wie im Express-Warenkorb: der Link zu den Bedingungen steht VOR dem Haken; „Abo buchen“ (Baustein 3) hat zwei
+    // (Widerrufsbelehrung, Nutzungsbedingungen) — je ein Absatz, nur Pfade dieser Anwendung
+    [f.link].concat(Array.isArray(f.links) ? f.links : []).forEach(link => {
+        if (!link || !eigenerPfad(link.url)) return;
         const lp = document.createElement('p');
         const l = document.createElement('a');
-        l.href = f.link.url;
+        l.href = link.url;
         l.target = '_blank';
         l.rel = 'noopener';
-        l.textContent = f.link.text || f.link.url;
+        l.textContent = link.text || link.url;
         lp.appendChild(l);
         wrap.appendChild(lp);
-    }
+    });
     if (f.art === 'haken') { wrap.appendChild(el); wrap.appendChild(label); }
     else { wrap.appendChild(label); wrap.appendChild(el); }
     wrap.appendChild(fehler);
@@ -2416,6 +2418,11 @@ async function inkluagentFormularAbsenden(karte, a, form, knopf, status) {
         // Ein erteilter Auftrag (Baustein 2) meldet sich, wenn er zu Ende ist: wie nach dem Knopf einer Bestaetigungs-Karte
         // nachsehen, solange eine Rueckmeldung wartet (fragt nur, solange eine wartet)
         if (res.ok) inkluagentRueckmeldungenBeobachten();
+        // Kaufen im Gespraech (Baustein 3): weiter zur Bezahlseite von Stripe — nur dorthin, als ganze Seite (Zahlung nie im
+        // Rahmen, wie auf „Abo & Verbrauch“); kurz warten, damit das Ergebnis der Karte noch angesagt wird
+        if (res.ok && inkluagentZurBezahlung(data.weiter)) {
+            setTimeout(() => { (window.top || window).location.assign(data.weiter); }, 1500);
+        }
         return;
     }
     knopf.removeAttribute('aria-disabled');
@@ -2423,6 +2430,11 @@ async function inkluagentFormularAbsenden(karte, a, form, knopf, status) {
     inkluagentKlang('fehler');
     const erstes = inkluagentFormularFehlerZeigen(form, data.fehler || {});
     if (erstes) erstes.focus();
+}
+// Adresse der Bezahlseite (Baustein 3): nur Stripe-Checkout ueber https — eine andere Adresse aus einer Antwort des Servers wird
+// nie angesteuert
+function inkluagentZurBezahlung(url) {
+    return typeof url === 'string' && /^https:\/\/checkout\.stripe\.com\//.test(url);
 }
 // Paket 1 (Steve 13.10.2026: „wenn der Knopf dann so angerauscht kommt“): eine neue Karte fliegt von rechts — von dort, wo das
 // Arbeitsfenster steht — ins Gespraech, zugleich mit dem Wusch der Klangspur (von rechts in die Mitte); danach laeuft einmal ein Glanz

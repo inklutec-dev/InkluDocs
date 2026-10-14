@@ -545,9 +545,13 @@ def _vorbereiten(args: dict, user_id: int, project_id: Optional[int], gespraech_
     schritte = [{"schritt": e["titel"], "umfang_daten": daten(e["umfang"]), "preis": e["preis_geplant"],
                  "hoechstens": e["hoechstens"]} for e in plan["eintraege"]]
     if not plan["erlaubt"]:
+        fehlend = max(0, plan["summe"] - int(plan["verfuegbar"] or 0))
+        kaufen = (" Frag, ob du ihm die Karte „Zusatz-Credits kaufen“ bringen sollst (credits_kaufen_vorbereiten, paket "
+                  f"{_passendes_paket(fehlend)}); sagt er ja, bring sie." if karten.kaufen_an() else
+                  " Verweise auf „Abo & Verbrauch“.")
         return {"ok": True, "result": {"karte": None, "projekt_daten": projekt_daten, "schritte": schritte, "summe": plan["summe"],
-                                       "verfuegbar": plan["verfuegbar"], "guthaben_reicht_nicht": True, "hinweis": (
-            "Das Guthaben reicht für diesen Auftrag nicht. Nenne Summe und Guthaben und verweise auf „Abo & Verbrauch“.")}}
+                                       "verfuegbar": plan["verfuegbar"], "fehlend": fehlend, "guthaben_reicht_nicht": True,
+                                       "hinweis": "Das Guthaben reicht für diesen Auftrag nicht. Nenne Summe und Guthaben." + kaufen}}
     kontext = {"project_id": int(p["id"]), "wunsch": wunsch, "summe": plan["summe"], "gespraech_id": int(gespraech_id),
                "sprache": sprache or "de", "auftrag": (auftrag or "").strip()[:1000]}
     kid = karten._merken(user_id, karten.AUFTRAG, None if project_id is None else int(p["id"]), kontext)
@@ -560,6 +564,12 @@ def _vorbereiten(args: dict, user_id: int, project_id: Optional[int], gespraech_
                                    "er zusammen kostet; erteilen kann nur der Nutzer mit „Auftrag erteilen“, danach darf er die "
                                    "Seite schließen.")},
             "anhang": anhang}
+
+
+def _passendes_paket(fehlend: int) -> int:
+    """Das kleinste Zusatzpaket, das die fehlenden Credits deckt (sonst das groesste) — Vorschlag fuer die Kauf-Karte."""
+    groessen = sorted(_modul("billing").PAKET_PREISE)
+    return next((g for g in groessen if g >= fehlend), groessen[-1])
 
 
 def _schritte_kurz(a: dict) -> list:
