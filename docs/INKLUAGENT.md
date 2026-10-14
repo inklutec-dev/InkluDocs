@@ -1248,6 +1248,11 @@ Endpunkt genau einmal und nur vom eigenen Konto, Bestellen mit Preis und Korb vo
 Quelltext der Oberfläche); Klickprobe `lokal/probe_p1_karten.py` (`probe_p1_alle.sh`, Ports 8870–8879; Ersatzmodell: „lade zum
 pruefen ein“): Einflug, Wusch, benanntes Formular, Vorbelegung, axe, Fehler am Feld, Abschicken, Neuladen, „Bewegung reduzieren“.
 
+**Nachtrag 14.10.2026 (Rauchtest Staging):** Eine Formular-Karte, die der Server nicht mehr kennt (Neustart, 30 Minuten, verdrängt),
+sah im Verlauf noch offen aus; erst das Abschicken sagte „gilt nicht mehr“ (404). Jetzt zeigt der Verlauf sie gleich so — nur zum
+Lesen, mit dem Satz „Diese Karte gilt nicht mehr. Bitte frag im Chat neu.“ (`karten.gilt`, `tools/ausgaben.karten_im_verlauf`, wie
+bei den Bestätigungs-Karten). Test: `test_unbekannte_karte_steht_im_verlauf_nicht_mehr_offen`.
+
 **Offen:** eigene Klänge von Steve statt der Synthese; weitere Karten (z. B. Projekt anlegen mit Dateien, Abo wechseln); der
 Klang „frage“ ist für eine Karte vorgesehen, die länger auf eine Entscheidung wartet.
 

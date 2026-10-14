@@ -201,6 +201,19 @@ class MitServer(unittest.TestCase):
         self.assertEqual(gespeichert["zustand"], "gesendet", "nach dem Neuladen keine offene Karte mehr")
         self.assertEqual(gespeichert["werte"]["email"], "lea@beispiel.invalid")
 
+    def test_unbekannte_karte_steht_im_verlauf_nicht_mehr_offen(self):
+        """14.10.2026 (Rauchtest Staging): nach einem Neustart kennt der Server die Karte nicht mehr — vorher sah sie im Verlauf
+        noch offen aus, und erst das Abschicken sagte 404. Jetzt zeigt der Verlauf sie gleich als „nicht mehr gültig“."""
+        self._einladen(email="lea@beispiel.invalid")
+        with AN, mock.patch.object(funktionen, "AGENT_KONTO", True):
+            def karte():
+                return self.client().get("/api/agent/verlauf").json()["messages"][-1]["anhang"][0]
+            self.assertEqual(karte()["zustand"], "offen")
+            karten._KARTEN.clear()   # wie nach einem Neustart
+            k = karte()
+        self.assertEqual((k["zustand"], k["ergebnis"]), ("abgelaufen", "Diese Karte gilt nicht mehr. Bitte frag im Chat neu."))
+        self.assertEqual(storage.konto_verlauf(self.u["id"])[-1]["anhang"][0]["zustand"], "offen", "nur die Anzeige, gespeichert bleibt")
+
     def test_nur_vom_eigenen_konto(self):
         k = self._einladen(email="lea@beispiel.invalid")
         with AN, mock.patch.object(funktionen, "AGENT_KONTO", True):

@@ -328,9 +328,15 @@ def nachbereiten(result: dict, werkzeug: str, args: dict, user_id: int, project_
 
 def karten_im_verlauf(messages: list, _) -> list:
     """GET /chat/history: offene Karten, deren Angebot nicht mehr gilt (abgelaufen, ersetzt, Neustart), als „Nicht mehr
-    gültig“ zeigen — ohne Knopf. Erledigte stehen schon so im gespeicherten Verlauf."""
+    gültig“ zeigen — ohne Knopf. Erledigte stehen schon so im gespeicherten Verlauf. Ebenso offene Formular-Karten (Paket 1),
+    die der Server nicht mehr kennt (14.10.2026: nach einem Neustart sahen sie noch offen aus, Abschicken gab erst dann 404)."""
+    from .. import karten as _karten
     for nachricht in messages or []:
         for a in (nachricht.get("anhang") or []):
+            if isinstance(a, dict) and a.get("art") == "formular":
+                if a.get("zustand") in (None, "", "offen") and not _karten.gilt(a.get("karten_id")):
+                    a.update({"zustand": "abgelaufen", "ergebnis": _("Diese Karte gilt nicht mehr. Bitte frag im Chat neu.")})
+                continue
             if not (isinstance(a, dict) and a.get("art") == "bestaetigung") or a.get("zustand") in ("erledigt", "abgelaufen"):
                 continue
             if angebot_nach_id(a.get("angebot_id")):

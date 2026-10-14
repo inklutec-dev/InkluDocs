@@ -166,6 +166,15 @@ def _belegen(kid: str, user_id: int) -> tuple[Optional[dict], str]:
         return e, ""
 
 
+def gilt(kid: Optional[str]) -> bool:
+    """Kennt der Server diese Karte noch als offen (oder gerade beim Abschicken)? Nach Ablauf (GUELTIG_S), Neustart oder
+    Verdraengung nicht mehr — dann zeigt der Verlauf sie als „nicht mehr gültig“ (tools/ausgaben.karten_im_verlauf)."""
+    with _SPERRE:
+        _aufraeumen(time.time())
+        e = _KARTEN.get(kid or "")
+        return bool(e) and e["zustand"] in ("offen", "laeuft")
+
+
 def _zustand(kid: str, zustand: str) -> None:
     with _SPERRE:
         e = _KARTEN.get(kid)
