@@ -309,6 +309,14 @@ PROMPT = """Formulare im Gespräch (Karten)
 
 Will der Nutzer jemanden zum Prüfen einladen oder seinen Express-Warenkorb bestellen, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten), statt ihn auf eine Seite zu schicken. Fülle vor, was er gesagt hat; erfinde nichts. Abschicken kann nur der Nutzer mit dem Knopf der Karte — frag also nicht nach einem Ja, sondern sag in einem Satz, was vorbelegt ist und welcher Knopf abschickt."""
 
+# Ohne Express-Service (funktionen.EXPRESS aus) fehlt das Werkzeug express_bestellen_vorbereiten — der Text nennt es dann
+# nicht (gefunden vom Werkzeug-Waechter, 15.10.2026)
+PROMPT_OHNE_EXPRESS = PROMPT.replace(
+    "Will der Nutzer jemanden zum Prüfen einladen oder seinen Express-Warenkorb bestellen, bring ihm das Formular als Karte ins "
+    "Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten)",
+    "Will der Nutzer jemanden zum Prüfen einladen, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten)")
+assert PROMPT_OHNE_EXPRESS != PROMPT
+
 # Kaufen im Gespraech (Baustein 3): nur mit kaufen_an() im Systemprompt (eigenes Schubfach „kaufen“, prompts/schubfaecher.py)
 PROMPT_KAUFEN = """Kaufen im Gespräch
 

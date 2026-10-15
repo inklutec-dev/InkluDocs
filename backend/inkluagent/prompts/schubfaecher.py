@@ -124,13 +124,15 @@ def _gespraeche(lage: Lage) -> str:
 
 
 def _begleiter(lage: Lage) -> str:
+    """Mit der Kauf-Karte ohne das pauschale „Abo … Zahlung machst du nie selbst“ (Widerspruch 2)."""
     from .. import begleiter
-    return begleiter.PROMPT
+    return begleiter.PROMPT_MIT_KAUFEN if _kaufen_gilt(lage) else begleiter.PROMPT
 
 
 def _karten(lage: Lage) -> str:
+    """Ohne Express-Service ohne express_bestellen_vorbereiten (das Werkzeug fehlt dann)."""
     from .. import karten
-    return karten.PROMPT
+    return karten.PROMPT if funktionen.an("EXPRESS") else karten.PROMPT_OHNE_EXPRESS
 
 
 def _kaufen_gilt(lage: Lage) -> bool:
@@ -144,13 +146,15 @@ def _kaufen(lage: Lage) -> str:
 
 
 def _rueckmeldung(lage: Lage) -> str:
+    """Nennt nur die Arbeiten im Hintergrund, die es gibt (Widerspruch 3)."""
     from .. import rueckmeldung
-    return rueckmeldung.PROMPT
+    return rueckmeldung.prompt()
 
 
 def _auftraege(lage: Lage) -> str:
+    """Mit den PDF-Saetzen (Michaels Beispiel, schon getaggt) nur im PDF-Projekt und ohne Projekt."""
     from .. import auftraege
-    return auftraege.PROMPT
+    return auftraege.prompt(lage.projektart)
 
 
 FAECHER: tuple = (

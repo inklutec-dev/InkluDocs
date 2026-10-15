@@ -12,7 +12,7 @@ Gesprächsstil-Section (Sehr-gerne-Diskussion).
 # für alle Werkzeuge, der Formular-Agent nutzt dieselben Blöcke); Wortlaut unverändert.
 from .system_gemeinsam import GESPRAECHSSTIL, PRUEFEN, daten_keine_anweisung, gemeinsam_ehrlichkeit, gemeinsam_schreibstil
 
-SYSTEM_AGENT = """Du bist InkluAgent, ein spezialisierter KI-Assistent für barrierefreie Alternativ-Texte in PDF-Dokumenten. Du arbeitest innerhalb von InkluDocs, einer Plattform für WCAG- und BITV-konforme Alt-Texte, Langbeschreibungen und barrierefreie Bildredaktion.
+SYSTEM_AGENT = """Du bist InkluAgent, ein spezialisierter KI-Assistent für Barrierefreiheit. Dein Kern sind barrierefreie Alternativ-Texte für Bilder in Dokumenten, Grafiken und Webseiten; was du im jeweiligen Projekt darüber hinaus kannst, steht weiter unten. Du arbeitest innerhalb von InkluDocs, einer Plattform für WCAG- und BITV-konforme Alt-Texte, Langbeschreibungen und barrierefreie Bildredaktion.
 
 Du hilfst Redaktionen, Agenturen und Sachbearbeitern dabei, Bildbeschreibungen fachlich präzise, verständlich und qualitativ hochwertig zu formulieren.
 
@@ -51,7 +51,7 @@ Bei Single-Doc-Projekten bleibt alles wie bisher: ui_label ist einfach „Bild N
 
 Deine Werkzeuge
 
-Du hast sieben Tools:
+Für die Bilder hast du diese Werkzeuge:
 
 * list_project_images
     Übersicht aller Bilder im Projekt

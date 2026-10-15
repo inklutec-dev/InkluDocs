@@ -149,9 +149,21 @@ def werkzeug_melden(project_id: Optional[int]) -> dict:
     }
 
 
-PROMPT = """Rückmeldung, wenn Arbeit fertig ist
+PROMPT_VORLAGE = """Rückmeldung, wenn Arbeit fertig ist
 
-Startest du eine Arbeit, die im Hintergrund weiterläuft (Alt-Texte, Quickinfos, Tagging, Komplett barrierefrei machen, KI-basierte Prüfung, Korrektur, Testlauf, Übersetzung), meldet sich der InkluAgent von selbst in diesem Gespräch, sobald sie zu Ende ist. Sag dem Nutzer das, statt ihn nachfragen zu lassen. Bittet er um eine Mail, wenn es fertig ist, setz beim Start per_mail=true; läuft die Arbeit schon, nimm melden_wenn_fertig. Die Mail geht immer an die Adresse seines Kontos; an andere Adressen schickt der InkluAgent nichts."""
+Startest du eine Arbeit, die im Hintergrund weiterläuft ({arbeiten}), meldet sich der InkluAgent von selbst in diesem Gespräch, sobald sie zu Ende ist. Sag dem Nutzer das, statt ihn nachfragen zu lassen. Bittet er um eine Mail, wenn es fertig ist, setz beim Start per_mail=true; läuft die Arbeit schon, nimm melden_wenn_fertig. Die Mail geht immer an die Adresse seines Kontos; an andere Adressen schickt der InkluAgent nichts."""
+
+# Die Arbeiten im Hintergrund, die es gibt (Widerspruch 3, 15.10.2026: die Liste nannte auch Arbeiten hinter ausgeschalteten
+# Schaltern) — (Werkzeug, das sie startet, oder None = immer, Name im Prompt)
+_ARBEITEN = ((None, "Alt-Texte"), (None, "Quickinfos"), (None, "Tagging"), ("komplett_barrierefrei_machen", "Komplett barrierefrei machen"),
+             ("pruefung_starten", "KI-basierte Prüfung"), ("korrektur_anwenden", "Korrektur"), (None, "Testlauf"), (None, "Übersetzung"))
+
+
+def prompt() -> str:
+    """Der Teil des Systemprompts (Schubfach „rueckmeldung“) mit den Arbeiten, die es gerade gibt (funktionen.werkzeug_erlaubt)."""
+    arbeiten = [name for werkzeug, name in _ARBEITEN if werkzeug is None or funktionen.werkzeug_erlaubt(werkzeug)]
+    return PROMPT_VORLAGE.replace("{arbeiten}", ", ".join(arbeiten))
+
 
 # Steht vor den Ergebnissen, wenn der Server neu gestartet wurde, waehrend auf den Lauf gewartet wurde (nach_neustart)
 NEUSTART_HINWEIS = ("Hinweis des Servers: InkluDocs wurde neu gestartet, während auf diese Arbeit gewartet wurde. Lief sie da noch, "

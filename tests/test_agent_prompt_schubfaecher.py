@@ -152,12 +152,12 @@ class Werkzeuge(unittest.TestCase):
             vorhanden = ({d["name"] for d in begleiter.werkzeuge(1)} | {d["name"] for d in karten.werkzeuge(None)}
                          | {rueckmeldung.werkzeug_melden(None)["name"]} | set(auftraege.NAMEN)
                          | {konto.TOOL_DEFINITION_GESPRAECHE["name"]})
-        for f in sf.FAECHER:
-            for w in f.werkzeuge:
-                with self.subTest(fach=f.name, werkzeug=w):
-                    self.assertIn(w, vorhanden)
-                    self.assertIn(w, f.text(sf.Lage("konto" if f.name == "gespraeche" else "pdf", 1)),
-                                  "das Fach nennt sein Werkzeug auch im Text")
+            for f in sf.FAECHER:   # Text mit allen Schaltern (ohne EXPRESS nennt Karten das Express-Werkzeug bewusst nicht)
+                for w in f.werkzeuge:
+                    with self.subTest(fach=f.name, werkzeug=w):
+                        self.assertIn(w, vorhanden)
+                        self.assertIn(w, f.text(sf.Lage("konto" if f.name == "gespraeche" else "pdf", 1, karten=True)),
+                                      "das Fach nennt sein Werkzeug auch im Text")
 
 
 if __name__ == "__main__":

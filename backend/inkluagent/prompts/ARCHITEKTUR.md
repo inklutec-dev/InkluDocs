@@ -82,25 +82,39 @@ beides im selben Prompt.
 
 ## Prüfen
 
-- `tests/test_agent_prompt_snapshots.py`: der fertige Prompt für 21 Lagen (Projektart × Profil staging, alle_an, alle_aus, dazu
-  Demo und Agentenansicht; alle Schalter ausdrücklich gesetzt), Byte für Byte gegen `tests/snapshots/agent_prompts/`. Gebaut über
-  `run_agent` mit einem Ersatzmodell, also genau so, wie das Modell ihn bekommt.
+- `tests/test_agent_prompt_snapshots.py`: der fertige Prompt für 27 Lagen (Projektart × Profil staging, staging_ohne_express,
+  alle_an, alle_aus, dazu Demo und Agentenansicht; alle Schalter ausdrücklich gesetzt), Byte für Byte gegen
+  `tests/snapshots/agent_prompts/`. Gebaut über `run_agent` mit einem Ersatzmodell, also genau so, wie das Modell ihn bekommt —
+  mit den Werkzeugen der Lage. Dazu die Wächter (Klasse `Waechter`): kein Werkzeugname im Text, den es in der Lage nicht gibt;
+  keine Arbeit hinter einem ausgeschalteten Schalter („KI-basierte Prüfung“, „Komplett barrierefrei“); mit Begleiter und
+  Kauf-Karte kein pauschales „Abo … Zahlung machst du nie selbst“; keine Werkzeugzahl, keine reine PDF-Identität.
 - `tests/test_agent_prompt_schubfaecher.py`: Projektart-Weiche (dieselbe für Text und Werkzeuge), feste Reihenfolge, Fächer nur
   in ihren Projektarten, Demo ohne Gesprächs-Fächer, Leitplanke am Ende, Aufträge entscheiden den PDF-Schritt, jedes genannte
   Werkzeug gibt es und das Fach nennt es auch.
 
 ## Änderungsverlauf
 
+- **15.10.2026, Widerspruchs-Runde** (auf der neuen Struktur, jeder Fall nach Lage entschieden, Wächter je Fall):
+  - `system_agent`: „spezialisierter KI-Assistent für Barrierefreiheit. Dein Kern sind barrierefreie Alternativ-Texte für Bilder
+    in Dokumenten, Grafiken und Webseiten; was du im jeweiligen Projekt darüber hinaus kannst, steht weiter unten.“ statt „…
+    Alternativ-Texte in PDF-Dokumenten“; „Für die Bilder hast du diese Werkzeuge:“ statt „Du hast sieben Tools:“ (ohne
+    `TEXT_ZURUECK` waren es ohnehin sechs).
+  - Begleiter mit Kauf-Karte (`begleiter.PROMPT_MIT_KAUFEN`): „Abo wechseln oder kündigen, Widerruf, Zahlungsart … machst du
+    nie selbst … Credits nachkaufen oder ein Abo buchen geht im Gespräch nur über die Karte …; bezahlt wird nur bei Stripe.“
+    Ohne Kauf-Karte unverändert.
+  - Rückmeldung (`rueckmeldung.prompt()`): die Liste der Arbeiten im Hintergrund nennt Komplett barrierefrei, KI-basierte
+    Prüfung und Korrektur nur mit ihrem Schalter.
+  - Karten ohne `EXPRESS` (`karten.PROMPT_OHNE_EXPRESS`): nur noch Einladen, ohne `express_bestellen_vorbereiten`.
+  - Aufträge (`auftraege.prompt(projektart)`): Michaels Beispiel und „schon getaggt … neu taggen“ nur im PDF-Projekt (mit
+    `barrierefrei_machen`) und ohne Projekt („im Projekt“); in Word-, Grafik-, Webseiten- und Formular-Projekten nicht mehr.
+    Den Namen in fremden Projektarten fand der Werkzeug-Wächter (er stammte aus dem Fix am Vormittag).
+  Schnappschüsse bewusst neu geschrieben; der Diff zeigt genau diese Sätze. Gegenprobe: jede Korrektur einzeln zurück → ihr
+  Wächter rot.
 - **15.10.2026, Umbau in Schubfächer, ohne Wortänderung.** Neu `prompts/schubfaecher.py`; `run_agent`, `_werkzeugsatz` und
   `konto.werkzeugsatz` setzen nicht mehr selbst zusammen; `karten.prompt()` entfällt (Karten und Kaufen sind zwei Fächer).
   Beweis: Schnappschüsse vom Stand 8438d8e (Commit d8a2015) vorher gezogen, nachher Byte für Byte gleich.
 - **15.10.2026, vorher: Widerspruch 1 behoben** (8438d8e, Michaels Fall). Mehrere Schritte = ein Auftrag, nach Lage
   entschieden; Doku in `docs/INKLUAGENT.md`, Nachtrag zu Baustein 2.
 
-Noch offen (Widerspruchs-Runde auf dieser Struktur):
-- Begleiter: „Zahlung machst du nie selbst“, obwohl es mit `kaufen` eine Kauf-Karte gibt.
-- `system_agent`: Identität „spezialisierter KI-Assistent für barrierefreie Alternativ-Texte in PDF-Dokumenten“ und „Du hast
-  sieben Tools“, auch in Word-, Grafik- und Webseiten-Projekten und dort, wo der Agent viel mehr kann; die
-  Rückmeldung nennt in ihrer Liste Arbeiten hinter ausgeschalteten Schaltern (Komplett barrierefrei, KI-Prüfung, Korrektur).
-- Karten: der Text nennt `express_bestellen_vorbereiten` auch ohne Schalter `EXPRESS`, obwohl das Werkzeug dann fehlt
-  (gefunden beim Bau des Werkzeug-Wächters, 15.10.2026).
+Bekannt, bewusst so gelassen: die Rückmeldungs-Liste nennt „Tagging“ und „Übersetzung“ in jeder Projektart (sie beschreibt,
+wann sich der Agent meldet, und bietet nichts an).

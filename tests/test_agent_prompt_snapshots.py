@@ -52,6 +52,8 @@ PROFILE = {
     "alle_an": dict({s: True for s in SCHALTER}, _stripe=True),
     "alle_aus": dict({s: False for s in SCHALTER}, _stripe=False),
 }
+# Wie Staging, aber ohne Express-Service (so koennte Prod mit Karten aussehen) — Waechter fuer Werkzeuge hinter EXPRESS
+PROFILE["staging_ohne_express"] = dict(PROFILE["staging"], EXPRESS=False)
 # Projektart -> (project_type, tool); "konto" = Seite ohne Projekt
 ARTEN = {"pdf": ("pdf", "pdf"), "word": ("docx", "word"), "grafik": ("images", "grafik"), "web": ("url", "web"),
          "formular": ("pdf", "formular"), "konto": None}
@@ -61,6 +63,7 @@ LAGEN.update({
     "pdf_demo": ("staging", "pdf", False, True, False),           # Demo: ohne Lauf und Gespraech, mit Leitplanke
     "pdf_staging_agentenansicht": ("staging", "pdf", True, False, True),
     "konto_staging_agentenansicht": ("staging", "konto", True, False, True),
+    "pdf_staging_ohne_express": ("staging_ohne_express", "pdf", True, False, False),
 })
 
 
@@ -71,9 +74,11 @@ class _Mitschreiber:
 
     def __init__(self):
         self.system = None
+        self.werkzeuge = set()
 
     def invoke_with_tools(self, anthropic_messages, tools, system, **kw):
         self.system = system
+        self.werkzeuge = {t["name"] for t in tools}
         return {"content": [{"type": "text", "text": "Gern (fiktiv)."}], "stop_reason": "end_turn"}
 
 
@@ -103,6 +108,11 @@ def _projekt(uid: int, art: str):
 
 def prompt_der_lage(name: str) -> str:
     """Der Systemprompt, den das Modell in dieser Lage bekommt."""
+    return lage_bauen(name)[0]
+
+
+def lage_bauen(name: str) -> tuple:
+    """(Systemprompt, Namen der Werkzeuge), wie das Modell sie in dieser Lage bekommt."""
     profil, art, mit_lauf, demo, agentenansicht = LAGEN[name]
     werte = PROFILE[profil]
     patches = [mock.patch.object(funktionen, s, werte[s]) for s in SCHALTER]
@@ -122,10 +132,64 @@ def prompt_der_lage(name: str) -> str:
         m = _Mitschreiber()
         agent_loop.run_agent(pid, uid, "Was kannst du hier? (fiktiv)", projekt, m, system_suffix=suffix, konto=True,
                              begleiter_lauf=lauf, gespraech_id=gid)
-        return m.system
+        return m.system, m.werkzeuge
     finally:
         for p in reversed(patches):
             p.stop()
+
+
+def alle_werkzeugnamen() -> set:
+    """Jedes Werkzeug, das es irgendwo gibt (ungefiltert, auch hinter Schaltern)."""
+    from inkluagent import auftraege, begleiter as bg, karten, konto, rueckmeldung
+    from inkluagent.tools import definitions, definitions_formular, definitions_oberflaeche, definitions_pdf
+    namen = set()
+    for mod in (definitions, definitions_formular, definitions_pdf, definitions_oberflaeche, konto):
+        for k, v in vars(mod).items():
+            if k.startswith("TOOL_DEFINITION"):
+                namen |= {d["name"] for d in (v if isinstance(v, list) else [v]) if isinstance(d, dict) and "name" in d}
+    return namen | set(bg.NAMEN) | set(karten.NAMEN) | set(rueckmeldung.NAMEN) | set(auftraege.NAMEN)
+
+
+class Waechter(unittest.TestCase):
+    """Widerspruchs-Runde 15.10.2026: der Prompt nennt nur, was es in der Lage gibt."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.lagen = {name: lage_bauen(name) for name in sorted(LAGEN)}
+        cls.alle = alle_werkzeugnamen()
+
+    def test_kein_werkzeug_das_es_hier_nicht_gibt(self):
+        import re
+        for name, (system, werkzeuge) in self.lagen.items():
+            with self.subTest(lage=name):
+                genannt = {w for w in self.alle if re.search(r"(?<!\w)" + re.escape(w) + r"(?!\w)", system)}
+                self.assertEqual(sorted(genannt - werkzeuge), [], "Werkzeug im Text, das es in dieser Lage nicht gibt")
+
+    def test_keine_arbeit_hinter_einem_ausgeschalteten_schalter(self):
+        for name, (system, werkzeuge) in self.lagen.items():
+            profil = PROFILE[LAGEN[name][0]]
+            with self.subTest(lage=name):
+                if not profil["KI_PRUEFUNG"]:
+                    self.assertNotIn("KI-basierte Prüfung", system)
+                if not profil["KETTE"]:
+                    self.assertNotIn("Komplett barrierefrei", system)
+
+    def test_mit_kauf_karte_kein_pauschales_nie_selbst(self):
+        from inkluagent import begleiter as bg
+        geprueft = 0
+        for name, (system, werkzeuge) in self.lagen.items():
+            if "credits_kaufen_vorbereiten" in werkzeuge and "hinfuehren" in werkzeuge:
+                geprueft += 1
+                with self.subTest(lage=name):
+                    self.assertNotIn(bg._NIE_SELBST, system)
+                    self.assertIn("Credits nachkaufen oder ein Abo buchen geht im Gespräch nur über die Karte", system)
+        self.assertGreater(geprueft, 0, "mindestens eine Lage mit Begleiter und Kauf-Karte")
+
+    def test_keine_werkzeugzahl_und_keine_reine_pdf_identitaet(self):
+        for name, (system, _w) in self.lagen.items():
+            with self.subTest(lage=name):
+                self.assertNotIn("sieben Tools", system)
+                self.assertNotIn("Alternativ-Texte in PDF-Dokumenten", system)
 
 
 class Schnappschuesse(unittest.TestCase):

@@ -304,3 +304,12 @@ PROMPT = """Begleiter durch InkluDocs
 Du kannst den Nutzer zu jeder Stelle der Oberfläche bringen (hinfuehren). Will er ausdrücklich hingebracht werden („bring mich“, „führ mich“, „zeig mir“, „geh zu“), setze sofort=true und sag in einem Satz, wohin es geht. Fragt er nur, wo etwas ist, erkläre es in ein, zwei Sätzen und setze sofort=false — darunter steht dann ein Knopf „Hinführen“. Mehrschrittiges erklärst du kurz der Reihe nach und bringst ihn zum ersten Feld.
 Steht in seiner Nachricht „[Vom Server: Der Nutzer ist gerade auf der Seite …]“, weißt du, wo er ist; „hier“ meint diese Seite. Fragt er „Was kann ich hier machen?“, beantworte es für diese Seite und biete passende Ziele mit hinfuehren an.
 Einstellungen: Die Sprache der Oberfläche und die Ansicht änderst du mit einstellung_aendern, aber nur, wenn er es ausdrücklich will — das kann er in jeder Sprache sagen; antworte in seiner Sprache. E-Mail, Passwort, API-Schlüssel, Team, Abo, Kündigen, Widerruf, Zahlung und Konto löschen machst du nie selbst: dorthin führst du ihn, dort handelt er selbst."""
+# Mit der Kauf-Karte (Schubfach „kaufen“, karten.kaufen_an) gilt der letzte Satz so (Widerspruch 2, 15.10.2026): Credits und ein
+# Abo kauft der Nutzer im Gespraech ueber die Karte, bezahlt bei Stripe — alles andere bleibt in der Oberflaeche
+_NIE_SELBST = ("E-Mail, Passwort, API-Schlüssel, Team, Abo, Kündigen, Widerruf, Zahlung und Konto löschen machst du nie selbst: "
+               "dorthin führst du ihn, dort handelt er selbst.")
+PROMPT_MIT_KAUFEN = PROMPT.replace(_NIE_SELBST, (
+    "E-Mail, Passwort, API-Schlüssel, Team, Abo wechseln oder kündigen, Widerruf, Zahlungsart und Konto löschen machst du nie "
+    "selbst: dorthin führst du ihn, dort handelt er selbst. Credits nachkaufen oder ein Abo buchen geht im Gespräch nur über "
+    "die Karte (siehe „Kaufen im Gespräch“); bezahlt wird nur bei Stripe."))
+assert PROMPT_MIT_KAUFEN != PROMPT

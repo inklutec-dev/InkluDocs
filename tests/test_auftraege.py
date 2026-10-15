@@ -1228,7 +1228,9 @@ class EinDokument(Basis):
         props = next(d for d in af.werkzeuge(self.pid) if d["name"] == af.WERKZEUG_VORBEREITEN)["input_schema"]["properties"]
         self.assertEqual(props["document_id"]["type"], "integer")
         self.assertNotIn("enum", props["document_id"], "keine Zahlen-Auswahlliste (Gemini lehnte sonst jede Anfrage ab)")
-        self.assertIn("ist ein Auftrag mit den Schritten tagging, alt_texte und pdf", af.PROMPT)
+        self.assertIn("ist ein Auftrag mit den Schritten tagging, alt_texte und pdf", af.prompt("pdf"))
+        self.assertNotIn("barrierefrei_machen", af.prompt("word"), "das Werkzeug gibt es nur im PDF-Projekt")
+        self.assertNotIn("barrierefrei_machen", af.prompt("konto"))
 
 
 @unittest.skipIf(main is None, "main nicht ladbar")

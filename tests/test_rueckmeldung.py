@@ -790,7 +790,7 @@ class ImGespraech(Basis):
         g = self._lauf({"per_mail": True})
         self.assertIn("per_mail", g["tools"]["alt_texte_generieren"]["input_schema"]["properties"])
         self.assertIn("melden_wenn_fertig", g["tools"])
-        self.assertIn(rm.PROMPT, g["system"])
+        self.assertIn(rm.prompt(), g["system"])
         self.assertIn(rm.HINWEIS_MAIL, g["ergebnis"])
         z = zeilen(self.u["id"])
         self.assertEqual([(x["art"], x["per_mail"], x["gespraech_id"], x["auftrag"]) for x in z],

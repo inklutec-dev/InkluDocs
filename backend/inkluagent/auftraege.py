@@ -543,7 +543,22 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
 
 PROMPT = """Aufträge mit mehreren Schritten
 
-Will der Nutzer mehrere Arbeitsschritte in einem Projekt nacheinander erledigt haben (zum Beispiel Alt-Texte generieren, dann als Word herunterladen; oder barrierefrei machen, Alt-Texte, dann die fertige PDF), leg ihm mit auftrag_vorbereiten EINE Karte vor, statt jeden Schritt einzeln anzubieten. Das gilt auch, wenn er das Wort „Auftrag“ nicht benutzt: „Mach die PDF barrierefrei, erzeug die Alt-Texte und gib mir dann die fertige PDF“ ist ein Auftrag mit den Schritten tagging, alt_texte und pdf. Meint er ein bestimmtes Dokument, gib dessen document_id mit; sonst gilt der Auftrag für alle Dokumente des Projekts. Ist ein Dokument schon getaggt, lässt der Server das Taggen weg und sagt es auf der Karte; neu taggen geht nur als einzelner Schritt (barrierefrei_machen). Der Server ordnet die Schritte, rechnet die Preise und die Summe und zeigt alles auf der Karte. Erteilen kann nur der Nutzer mit dem Knopf „Auftrag erteilen“ — frag nicht nach einem Ja, sondern sag in einem Satz, was der Auftrag umfasst, was er zusammen kostet und dass er danach die Seite schließen kann. Der Server arbeitet die Schritte im Hintergrund ab, und du meldest dich von selbst, wenn alles fertig ist; eine Mail gibt es, wenn er den Haken auf der Karte setzt. Geht ein Schritt nicht oder reicht das Guthaben nicht, sagt dir das Werkzeug den Grund: Nenne ihn und frag, wie er weitermachen will. Fragt er, wie weit der Auftrag ist: auftrag_stand. Will er ihn anhalten: auftrag_abbrechen."""
+Will der Nutzer mehrere Arbeitsschritte in einem Projekt nacheinander erledigt haben (zum Beispiel Alt-Texte generieren, dann als Word herunterladen; oder barrierefrei machen, Alt-Texte, dann die fertige PDF), leg ihm mit auftrag_vorbereiten EINE Karte vor, statt jeden Schritt einzeln anzubieten. Das gilt auch, wenn er das Wort „Auftrag“ nicht benutzt. Meint er ein bestimmtes Dokument, gib dessen document_id mit; sonst gilt der Auftrag für alle Dokumente des Projekts. Der Server ordnet die Schritte, rechnet die Preise und die Summe und zeigt alles auf der Karte. Erteilen kann nur der Nutzer mit dem Knopf „Auftrag erteilen“ — frag nicht nach einem Ja, sondern sag in einem Satz, was der Auftrag umfasst, was er zusammen kostet und dass er danach die Seite schließen kann. Der Server arbeitet die Schritte im Hintergrund ab, und du meldest dich von selbst, wenn alles fertig ist; eine Mail gibt es, wenn er den Haken auf der Karte setzt. Geht ein Schritt nicht oder reicht das Guthaben nicht, sagt dir das Werkzeug den Grund: Nenne ihn und frag, wie er weitermachen will. Fragt er, wie weit der Auftrag ist: auftrag_stand. Will er ihn anhalten: auftrag_abbrechen."""
+
+# PDF: das Beispiel aus Michaels Fall (15.10.2026) und das schon getaggte Dokument — nur dort, wo es PDF-Projekte gibt. Ohne
+# Projekt gibt es barrierefrei_machen nicht (der Werkzeug-Waechter fand den Namen in Word-, Grafik- und Konto-Gespraechen).
+_PDF = ("In PDF-Projekten: „Mach die PDF barrierefrei, erzeug die Alt-Texte und gib mir dann die fertige PDF“ ist ein Auftrag mit den "
+        "Schritten tagging, alt_texte und pdf. Ist ein Dokument schon getaggt, lässt der Server das Taggen weg und sagt es auf der "
+        "Karte; neu taggen geht nur als einzelner Schritt")
+
+
+def prompt(projektart: str) -> str:
+    """PROMPT fuer die Projektart (prompts/schubfaecher.py): im PDF-Projekt und ohne Projekt mit den PDF-Saetzen."""
+    if projektart == "pdf":
+        return PROMPT + "\n\n" + _PDF + " (barrierefrei_machen)."
+    if projektart == "konto":
+        return PROMPT + "\n\n" + _PDF + " im Projekt."
+    return PROMPT
 
 
 def ausfuehren(name: str, args: dict, *, user_id: int, project_id: Optional[int], gespraech_id: Optional[int],

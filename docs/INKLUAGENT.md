@@ -1679,8 +1679,9 @@ weil er „Bitte als einen Auftrag“ dazuschrieb. Behoben:
 
 Der Systemprompt entsteht seit 15.10.2026 an EINER Stelle: `inkluagent/prompts/schubfaecher.py` (Projektart, dann die Fächer
 Kosten, Hochladen, Hochladen hier, Frühere Gespräche, Begleiter, Karten, Kaufen, Rückmeldung, Aufträge, dann die
-Demo-Leitplanke). Umbau ohne Wortänderung, Beweis über 21 Schnappschüsse (`tests/snapshots/agent_prompts/`). Aufbau, Regeln für
-neue Fächer und offene Widersprüche: `inkluagent/prompts/ARCHITEKTUR.md`.
+Demo-Leitplanke). Umbau ohne Wortänderung, Beweis über Schnappschüsse (`tests/snapshots/agent_prompts/`); danach die
+Widerspruchs-Runde mit Wächtern (Identität, Begleiter/Kaufen, Rückmeldungs-Liste, Karten ohne Express, PDF-Sätze der Aufträge).
+Aufbau, Regeln für neue Fächer und Änderungsverlauf: `inkluagent/prompts/ARCHITEKTUR.md`.
 
 ## Aufträge, Baustein 3: Kaufen im Gespräch (Steve 14.10.2026; Schalter `AGENT_KAUFEN`, Umgebung `INKLUAGENT_KAUFEN=an`, braucht `AGENT_KARTEN` und die Online-Zahlung)
 
