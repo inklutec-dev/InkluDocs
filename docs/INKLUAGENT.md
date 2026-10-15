@@ -1675,6 +1675,13 @@ weil er „Bitte als einen Auftrag“ dazuschrieb. Behoben:
   absichtliche Fehler (Flag nicht durchgereicht, Auswertung ohne Dokument, Dokument nicht gefiltert, Herunterladen ohne
   Dokument) — jeder rot. Rauchtest Staging mit echtem Modell und Michaels Satz OHNE „als einen Auftrag“: `rauch_michael1510.py`.
 
+## Systemprompt aus Schubfächern (15.10.2026)
+
+Der Systemprompt entsteht seit 15.10.2026 an EINER Stelle: `inkluagent/prompts/schubfaecher.py` (Projektart, dann die Fächer
+Kosten, Hochladen, Hochladen hier, Frühere Gespräche, Begleiter, Karten, Kaufen, Rückmeldung, Aufträge, dann die
+Demo-Leitplanke). Umbau ohne Wortänderung, Beweis über 21 Schnappschüsse (`tests/snapshots/agent_prompts/`). Aufbau, Regeln für
+neue Fächer und offene Widersprüche: `inkluagent/prompts/ARCHITEKTUR.md`.
+
 ## Aufträge, Baustein 3: Kaufen im Gespräch (Steve 14.10.2026; Schalter `AGENT_KAUFEN`, Umgebung `INKLUAGENT_KAUFEN=an`, braucht `AGENT_KARTEN` und die Online-Zahlung)
 
 Steve: „Man kann auch mit dem Bot Pakete und Credits buchen. Allerdings muss man das ausdrücklich bestätigen.“ Zwei

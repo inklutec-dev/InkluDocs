@@ -1,6 +1,6 @@
 """Zusatz zum Alt-Text-Prompt fuer PDF-PROJEKTE (Werkzeugsatz nach Dateiart, 22.09.2026).
 
-Wird in agent_loop._werkzeugsatz an SYSTEM_AGENT angehaengt, wenn das Projekt ein PDF-Projekt ist
+Steht im Schubfach der Projektart „pdf“ hinter SYSTEM_AGENT (prompts/schubfaecher.py), wenn das Projekt ein PDF-Projekt ist
 (project_type pdf, tool pdf). Beschreibt die drei Stationen, die Feld-Werkzeuge (Quickinfos) und die
 PDF-Werkzeuge (Tagging, Kette, Hoerprobe, Pruefung, fertige PDF) und die Reihenfolge, in der der
 Bot ein Dokument fertig macht. Ein Gespraech je Projekt — der Nutzer kann in jeder Ansicht stehen.

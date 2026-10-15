@@ -1,7 +1,7 @@
 """Zusatz zum Alt-Text-Prompt fuer WORD-Projekte (Schritt 2 „Meine Ablage", 11.09.2026; vormittags „Ausgaben").
 
-Wird in agent_loop._werkzeugsatz an SYSTEM_AGENT angehaengt, wenn das Projekt ein
-Word-Projekt ist (project_type docx). Beschreibt die fuenf zusaetzlichen Werkzeuge
+Steht im Schubfach der Projektart „word“ hinter SYSTEM_AGENT (prompts/schubfaecher.py), wenn das
+Projekt ein Word-Projekt ist (project_type docx). Beschreibt die fuenf zusaetzlichen Werkzeuge
 und die Reihenfolge, in der der Bot ein Dokument fertig macht.
 """
 

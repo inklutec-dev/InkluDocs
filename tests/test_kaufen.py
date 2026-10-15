@@ -102,8 +102,12 @@ class Schalter(unittest.TestCase):
             with self.subTest(kaufen=kaufen, stripe=stripe), an(kaufen, stripe):
                 namen = {d["name"] for d in karten.werkzeuge(None)}
                 self.assertEqual(self.NAMEN <= namen, erwartet)
-                self.assertEqual(karten.PROMPT_KAUFEN in karten.prompt(), erwartet)
-                self.assertTrue(karten.prompt().startswith(karten.PROMPT))
+                from inkluagent.prompts import schubfaecher
+                lage = schubfaecher.Lage("pdf", 1, karten=True)
+                faecher = [f.name for f in schubfaecher.faecher(lage)]
+                self.assertEqual("kaufen" in faecher, erwartet)
+                self.assertIn("karten", faecher)
+                self.assertEqual(karten.PROMPT_KAUFEN in schubfaecher.zusammensetzen(lage), erwartet)
         with mock.patch.object(funktionen, "AGENT_KARTEN", False), mock.patch.object(funktionen, "AGENT_KAUFEN", True), \
                 mock.patch.object(stripe_zahlung, "AKTIV", True):
             self.assertFalse(karten.kaufen_an(), "ohne Karten kein Kaufen")

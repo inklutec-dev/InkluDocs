@@ -309,15 +309,10 @@ PROMPT = """Formulare im Gespräch (Karten)
 
 Will der Nutzer jemanden zum Prüfen einladen oder seinen Express-Warenkorb bestellen, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten), statt ihn auf eine Seite zu schicken. Fülle vor, was er gesagt hat; erfinde nichts. Abschicken kann nur der Nutzer mit dem Knopf der Karte — frag also nicht nach einem Ja, sondern sag in einem Satz, was vorbelegt ist und welcher Knopf abschickt."""
 
-# Kaufen im Gespraech (Baustein 3): nur mit kaufen_an() im Systemprompt (agent_loop haengt prompt() an)
+# Kaufen im Gespraech (Baustein 3): nur mit kaufen_an() im Systemprompt (eigenes Schubfach „kaufen“, prompts/schubfaecher.py)
 PROMPT_KAUFEN = """Kaufen im Gespräch
 
 Will der Nutzer Credits nachkaufen oder ein Abo buchen, bring ihm die Karte (credits_kaufen_vorbereiten, abo_buchen_vorbereiten). Kaufen kann nur er selbst: Der Knopf der Karte führt zur Bezahlseite von Stripe, bezahlt wird nur dort. Biete Käufe nicht von dir aus an; reicht das Guthaben für etwas nicht, sag es und frag, ob du ihm die Karte bringen sollst. Ein Abo wechseln oder kündigen, Rechnungen und Zahlungsart gehen auf der Seite „Abo & Verbrauch“."""
-
-
-def prompt() -> str:
-    """Der Teil des Systemprompts fuer die Karten — mit dem Kaufen nur, wenn es das gerade gibt."""
-    return PROMPT + ("\n\n" + PROMPT_KAUFEN if kaufen_an() else "")
 
 
 def ausfuehren(name: str, args: dict, user_id: int, project_id: Optional[int], _t: Optional[Callable[[str], str]] = None) -> dict:

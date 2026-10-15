@@ -1,6 +1,6 @@
 """Zusatz zum Alt-Text-Prompt fuer GRAFIK- und WEBSEITEN-Projekte (InkluAgent-Ausbau Runde 1, Schritt 4, 09.10.2026).
 
-Nur mit Schalter funktionen.AGENT_BILD_WERKZEUGE (agent_loop._werkzeugsatz_roh). Vorher hatte der Agent dort nur die sechs
+Nur mit Schalter funktionen.AGENT_BILD_WERKZEUGE (Projektart grafik/web, prompts/schubfaecher.py). Vorher hatte der Agent dort nur die sechs
 Bild-Werkzeuge; jetzt alles, was die Oberflaeche dieser Projekte anbietet — dieselben Preise, dieselbe Rueckfrage.
 """
 

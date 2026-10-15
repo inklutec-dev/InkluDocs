@@ -358,8 +358,13 @@ class Anhaengen(unittest.TestCase):
                 self.assertFalse(main._inkluagent_schalter()["anhaengen"])
 
     def test_projekt_prompt_nimmt_den_absatz(self):
-        quelle = lies(BACKEND, "inkluagent", "agent_loop.py")
-        self.assertIn("hochladen.prompt_hochladen_hier(user_id, im_projekt=True)", quelle)
+        """Im Projekt steht der Absatz im Prompt, sobald es im Agenten einen Weg gibt (seit 15.10.2026 ueber das Schubfach
+        „hochladen_hier“, prompts/schubfaecher.py — vorher stand die Zeile in agent_loop und wurde hier als Text gesucht)."""
+        from inkluagent import agent_loop
+        pdf = {"project_type": "pdf", "tool": "pdf"}
+        self.assertNotIn("Dateien anhängen", agent_loop._werkzeugsatz(pdf, 1, self.u["id"])[2], "manuelle Ansicht: kein Absatz")
+        self.ansicht.setzen(self.u["id"], "agent")
+        self.assertIn("„Dateien anhängen“", agent_loop._werkzeugsatz(pdf, 1, self.u["id"])[2])
 
     def test_oberflaeche(self):
         js = lies(FRONTEND, "inkluagent.js")

@@ -33,14 +33,9 @@ from .tools.definitions_pdf import TOOL_DEFINITIONS_PDF   # PDF-Projekte (22.09.
 from .tools.definitions_oberflaeche import (TOOL_DEFINITIONS_OBERFLAECHE_PDF, TOOL_DEFINITIONS_OBERFLAECHE_WORD,
                                             TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR,
                                             TOOL_DEFINITIONS_OBERFLAECHE_GRAFIK)   # alles, was die Oberflaeche kann (30.09.2026)
-from .prompts.system_bild import system_bild   # Grafik- und Webseiten-Projekte (Ausbau Runde 1, Schritt 4)
-from .prompts.system_pdf import system_pdf
-from .prompts.system_agent import system_agent
+from .prompts import schubfaecher   # Systemprompt aus Schubfaechern (15.10.2026): Projektart, Faehigkeiten, Demo
 import funktionen   # Funktionsschalter: ausgeblendet in der Oberflaeche = ausgeblendet im Chatbot (30.09.2026)
-from .prompts.system_agent import SYSTEM_AGENT
-from .prompts.system_ausgaben import SYSTEM_AUSGABEN
 from .tools.definitions import TOOL_DEFINITIONS_WORD
-from .prompts.system_formular import SYSTEM_FORMULAR
 from .adapters.inkludocs import build_project_summary
 from .sanitize import sanitize_markdown
 from .daten import DATEN_MARKE, KONTEXT_KOPF, ohne_marke   # Fremdtext ist keine Anweisung (09.10.2026)
@@ -98,8 +93,10 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int, auftraege: bool 
     """(tool_definitions, executor, system_prompt) fuer dieses Projekt. Seit 30.09.2026 (Steve: der Chatbot kann alles, was
     die Oberflaeche kann, und nichts, was sie nicht anbietet): Werkzeuge hinter einem ausgeschalteten Schalter
     (funktionen.py) fehlen hier, der Executor fuehrt sie nicht aus, und die Systemprompts nennen sie nicht.
-    auftraege: gibt es in diesem Gespraech Auftraege (run_agent), sagt der PDF-Prompt „mehrere Schritte = ein Auftrag“."""
-    defs, executor, system = _werkzeugsatz_roh(project, project_id, user_id, auftraege)
+    Der Text kommt aus den Schubfaechern (prompts/schubfaecher.py) — hier der Teil des Projekts ohne die Faecher des Gespraechs
+    (Begleiter, Karten, Rueckmeldung, Auftraege; die setzt run_agent dazu). auftraege: gibt es in diesem Gespraech Auftraege,
+    sagt der PDF-Prompt „mehrere Schritte = ein Auftrag“."""
+    defs, executor = _werkzeugsatz_roh(project, project_id, user_id)
     namen = set()
     eindeutig = []
     for d in funktionen.werkzeuge_filtern(defs):
@@ -108,57 +105,37 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int, auftraege: bool 
             eindeutig.append(d)
     # Schritt 2 (seit Runde 2 der Pruefung 13.10.2026 immer): Einzelaktionen nehmen bestaetigt an, der Prompt nennt die Server-Regel
     eindeutig = sicherheit.werkzeuge_anpassen(eindeutig)
-    system = system + "\n\n" + sicherheit.PROMPT_ZUSATZ
-    if funktionen.an("AGENT_HOCHLADEN"):   # Runde 2, Schritt 1: Hochladefeld — Zuordnung macht der Server
-        from . import hochladen
-        system = system + "\n\n" + hochladen.PROMPT_ZUSATZ
-        # Dateien im Agenten (Feld oder Knopf „Dateien anhängen“ in der Agentenansicht, 12.10.2026)
-        _hier = hochladen.prompt_hochladen_hier(user_id, im_projekt=True)
-        if _hier:
-            system = system + "\n\n" + _hier
-    return eindeutig, executor, system
+    lage = schubfaecher.Lage(schubfaecher.projektart(project), int(user_id or 0), auftraege=auftraege)
+    return eindeutig, executor, schubfaecher.zusammensetzen(lage)
 
 
-def _werkzeugsatz_roh(project: dict, project_id: int, user_id: int, auftraege: bool = False):
-    if _ist_formular(project):
+def _werkzeugsatz_roh(project: dict, project_id: int, user_id: int):
+    """(tool_definitions, executor) nach Projektart — dieselbe Weiche wie der Text (schubfaecher.projektart)."""
+    art = schubfaecher.projektart(project)
+    if art == "formular":   # alte Formular-Projekte (tool formular) behalten ihren Satz
         return (TOOL_DEFINITIONS_FORMULAR + TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR,
-                ToolExecutorFormular(project_id=project_id, user_id=user_id), SYSTEM_FORMULAR)
+                ToolExecutorFormular(project_id=project_id, user_id=user_id))
     # Word-Projekte (11.09.2026, Meine Ausgaben Schritt 2): Bild-Werkzeuge + Pruefen/Umwandeln/Word-Export/Regal.
-    if (project or {}).get("project_type") == "docx":
+    if art == "word":
         doku = [d for d in TOOL_DEFINITIONS_PDF if d["name"] in ("dokument_umbenennen", "dokument_loeschen", "alt_sprache_setzen")]
         return (TOOL_DEFINITIONS + TOOL_DEFINITIONS_WORD + doku + TOOL_DEFINITIONS_OBERFLAECHE_WORD,
-                ToolExecutor(project_id=project_id, user_id=user_id, word=True),
-                system_agent() + "\n\n" + SYSTEM_AUSGABEN)
+                ToolExecutor(project_id=project_id, user_id=user_id, word=True))
     # PDF-Projekte (Werkzeugsatz nach Dateiart, 22.09.2026, Michael 18.09. + Steve): EIN Satz fuer alle Stationen —
     # Bild-Werkzeuge + Feld-Werkzeuge (Quickinfos) + PDF-Werkzeuge + Werkzeuge der Oberflaeche.
-    # Alte Formular-Projekte (tool formular) behalten ihren Satz.
-    if (project or {}).get("project_type") == "pdf" and (project or {}).get("tool") == "pdf":
+    if art == "pdf":
         bekannt = {d["name"] for d in TOOL_DEFINITIONS}
         felder = [d for d in TOOL_DEFINITIONS_FORMULAR if d["name"] not in bekannt]
         ablage = [d for d in TOOL_DEFINITIONS_WORD if d["name"] in ("liste_ausgaben", "lies_ausgabe")]
         return (TOOL_DEFINITIONS + felder + TOOL_DEFINITIONS_PDF + ablage + TOOL_DEFINITIONS_OBERFLAECHE_PDF,
-                ToolExecutor(project_id=project_id, user_id=user_id, pdf=True),
-                system_agent() + "\n\n" + system_pdf(auftraege=auftraege))
+                ToolExecutor(project_id=project_id, user_id=user_id, pdf=True))
     # Grafik- und Webseiten-Projekte (InkluAgent-Ausbau Runde 1, Schritt 4, Schalter AGENT_BILD_WERKZEUGE): alles, was die
-    # Oberflaeche dort anbietet. Schalter aus = die sechs Bild-Werkzeuge wie bisher.
-    art = _bild_art(project)
-    if art and funktionen.an("AGENT_BILD_WERKZEUGE"):
+    # Oberflaeche dort anbietet. Schalter aus = Projektart alt_text, die sechs Bild-Werkzeuge wie bisher.
+    if art in ("grafik", "web"):
         doku = [d for d in TOOL_DEFINITIONS_PDF if d["name"] == "alt_sprache_setzen"
                 or (art == "web" and d["name"] in ("dokument_umbenennen", "dokument_loeschen"))]
         return (TOOL_DEFINITIONS + TOOL_DEFINITIONS_OBERFLAECHE_GRAFIK + doku,
-                ToolExecutor(project_id=project_id, user_id=user_id, bild=art),
-                system_agent() + "\n\n" + system_bild(art))
-    return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id), system_agent()
-
-
-def _bild_art(project: dict) -> str:
-    """„grafik“ (Bild-Projekt), „web“ (Webseiten-Projekt) oder leer."""
-    p = project or {}
-    if p.get("project_type") == "images" or p.get("tool") == "grafik":
-        return "grafik"
-    if p.get("project_type") == "url" or p.get("tool") == "web":
-        return "web"
-    return ""
+                ToolExecutor(project_id=project_id, user_id=user_id, bild=art))
+    return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id)
 
 
 def _formular_summary(project_id: int, user_id: int) -> str:
@@ -353,35 +330,35 @@ def run_agent(
     karten_an = begleiter_lauf is not None and _karten.an()
     rueckmeldung_an = begleiter_lauf is not None and gespraech_id is not None and _rueckmeldung.an()
     auftraege_an = rueckmeldung_an and karten_an and _auftraege.an()
+    # Den Systemprompt setzt EIN Zusammensetzer aus den Schubfaechern zusammen (prompts/schubfaecher.py, 15.10.2026); hier
+    # kommen nur noch die Werkzeuge der Faecher dazu. Den Text, den die Werkzeugsaetze mitliefern, braucht es hier nicht.
+    lage = schubfaecher.Lage(schubfaecher.projektart(project), int(user_id or 0), begleiter=begleiter_an, karten=karten_an,
+                             rueckmeldung=rueckmeldung_an, auftraege=auftraege_an, demo_leitplanke=system_suffix or None)
     if project is None:
         # Runde 2, Schritt 3: Seite ohne Projekt — Konto-Werkzeuge, Konto-Kontext, Gespraech des Kontos (inkluagent/konto.py)
         from . import konto as _konto
-        tool_defs, executor, system_base = _konto.werkzeugsatz(user_id, uebersetzen)
+        tool_defs, executor, _projekt_text = _konto.werkzeugsatz(user_id, uebersetzen)
     else:
-        tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id, auftraege=auftraege_an)
+        tool_defs, executor, _projekt_text = _werkzeugsatz(project, project_id, user_id, auftraege=auftraege_an)
     # Begleiter durch InkluDocs (Steve 12.10.2026, Schalter AGENT_BEGLEITER): Hinfuehren und harmlose Einstellungen — in jedem
     # Gespraech, mit und ohne Projekt; ausgefuehrt von inkluagent/begleiter.py, nicht vom Executor des Projekts
     if begleiter_an:
         tool_defs = list(tool_defs) + _begleiter.werkzeuge(user_id)
-        system_base = system_base + "\n\n" + _begleiter.PROMPT
     # Formular-Karten (Paket 1, Schalter AGENT_KARTEN): wie der Begleiter nur aus dem Chat-Endpunkt des Kontos (begleiter_lauf
     # gesetzt), nie in der Demo — von dort liessen sich sonst Einladungen an beliebige Adressen vorbereiten
     if karten_an:
-        tool_defs = list(tool_defs) + _karten.werkzeuge(project_id)
-        system_base = system_base + "\n\n" + _karten.prompt()   # mit dem Kaufen nur, wenn es das gibt (Baustein 3)
+        tool_defs = list(tool_defs) + _karten.werkzeuge(project_id)   # mit dem Kaufen nur, wenn es das gibt (Baustein 3)
     # Rueckmeldung (Steve 14.10.2026, Schalter AGENT_RUECKMELDUNG): ebenfalls nur aus dem Chat-Endpunkt des Kontos und nur mit
     # Gespraech — startet ein Werkzeug einen Lauf im Hintergrund, meldet sich der Agent in diesem Gespraech, wenn er zu Ende ist
     rueckmeldung_kontext: dict = {}
     if rueckmeldung_an:
         tool_defs = _rueckmeldung.werkzeuge_anpassen(list(tool_defs), project_id)
-        system_base = system_base + "\n\n" + _rueckmeldung.PROMPT
         rueckmeldung_kontext = {"user_id": user_id, "project_id": project_id, "gespraech_id": gespraech_id,
                                 "sprache": begleiter_lauf.ui_sprache, "auftrag": begleiter_lauf.nutzer_text}
     # Auftraege, Baustein 2 (14.10.2026, Schalter AGENT_AUFTRAEGE): mehrere Schritte als EIN Auftrag mit Gesamtpreis — die Karte
     # bringen die Formular-Karten, das Melden am Ende die Rueckmeldung; also nur, wenn beide hier gelten (auftraege_an oben)
     if auftraege_an:
         tool_defs = list(tool_defs) + _auftraege.werkzeuge(project_id)
-        system_base = system_base + "\n\n" + _auftraege.PROMPT
     # Ja-Pruefung auf dem Server (Schritt 2): die Freigabe liest die Nachricht des Nutzers dieser Runde
     sicherheit.nachricht_merken(executor.turn_id, user_message if nutzer_text is None else nutzer_text, user_id)
     # Runde 2, Schritt 1: nach dem Hochladen in dieser Nachricht nichts Kostenpflichtiges ohne Karte
@@ -392,7 +369,7 @@ def run_agent(
     else:
         messages = _build_initial_messages(project_id, user_message, project, user_id, konto=konto, ohne_nachricht=ohne_nachricht,
                                            gespraech_id=gespraech_id)
-    system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
+    system_text = schubfaecher.zusammensetzen(lage)
 
     actions_log: list[dict] = []
     werkzeuge: list[str] = []

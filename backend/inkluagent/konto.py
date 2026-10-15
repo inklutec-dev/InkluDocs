@@ -496,17 +496,12 @@ class KontoExecutor:
 
 
 def werkzeugsatz(user_id: int, _=None):
-    """(tool_defs, executor, system) ohne Projekt — wie agent_loop._werkzeugsatz."""
-    system = system_konto(aendern_an())
-    if funktionen.an("AGENT_HOCHLADEN"):
-        from . import hochladen
-        system = system + "\n\n" + hochladen.PROMPT_ZUSATZ
-    from . import hochladen as _hl
-    system = system + "\n\n" + _hl.prompt_hochladen_hier(user_id)   # Feld, Knopf „Dateien anhängen“ oder gar nicht
+    """(tool_defs, executor, system) ohne Projekt — wie agent_loop._werkzeugsatz. Der Text kommt aus den Schubfaechern
+    (prompts/schubfaecher.py, Projektart „konto“: Rolle, Hochladen, Feld oder Knopf „Dateien anhängen“, Frühere Gespräche)."""
+    from .prompts import schubfaecher
     defs = (TOOL_DEFINITIONS_KONTO + (TOOL_DEFINITIONS_KONTO_AENDERN if aendern_an() else [])
             + ([TOOL_DEFINITION_GESPRAECHE] if funktionen.an("AGENT_GESPRAECHE") else []))
-    if funktionen.an("AGENT_GESPRAECHE"):
-        system = system + "\n\n" + _GESPRAECHE
+    system = schubfaecher.zusammensetzen(schubfaecher.Lage("konto", int(user_id or 0)))
     return [dict(d) for d in defs], KontoExecutor(user_id, _), system
 
 
