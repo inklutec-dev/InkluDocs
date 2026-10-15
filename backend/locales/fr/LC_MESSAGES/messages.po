@@ -12849,3 +12849,12 @@ msgstr "{schritt} : {ergebnis}."
 #, python-brace-format
 msgid "Auftrag, Schritt {n} von {m}: {schritt}"
 msgstr "Mission, étape {n} sur {m} : {schritt}"
+
+# InkluAgent Auftrag fuer ein Dokument (Michael 15.10.2026)
+#, python-brace-format
+msgid "Barrierefrei machen entfällt: „{name}“ ist schon getaggt."
+msgstr "Rendre accessible n’est pas nécessaire : « {name} » est déjà balisé."
+
+#, python-brace-format
+msgid "Projekt „{projekt}“, Dokument „{dokument}“."
+msgstr "Projet « {projekt} », document « {dokument} »."

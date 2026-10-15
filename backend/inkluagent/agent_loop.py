@@ -94,11 +94,12 @@ def _ist_formular(project: dict) -> bool:
     return (project or {}).get("tool") == "formular"
 
 
-def _werkzeugsatz(project: dict, project_id: int, user_id: int):
+def _werkzeugsatz(project: dict, project_id: int, user_id: int, auftraege: bool = False):
     """(tool_definitions, executor, system_prompt) fuer dieses Projekt. Seit 30.09.2026 (Steve: der Chatbot kann alles, was
     die Oberflaeche kann, und nichts, was sie nicht anbietet): Werkzeuge hinter einem ausgeschalteten Schalter
-    (funktionen.py) fehlen hier, der Executor fuehrt sie nicht aus, und die Systemprompts nennen sie nicht."""
-    defs, executor, system = _werkzeugsatz_roh(project, project_id, user_id)
+    (funktionen.py) fehlen hier, der Executor fuehrt sie nicht aus, und die Systemprompts nennen sie nicht.
+    auftraege: gibt es in diesem Gespraech Auftraege (run_agent), sagt der PDF-Prompt „mehrere Schritte = ein Auftrag“."""
+    defs, executor, system = _werkzeugsatz_roh(project, project_id, user_id, auftraege)
     namen = set()
     eindeutig = []
     for d in funktionen.werkzeuge_filtern(defs):
@@ -118,7 +119,7 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int):
     return eindeutig, executor, system
 
 
-def _werkzeugsatz_roh(project: dict, project_id: int, user_id: int):
+def _werkzeugsatz_roh(project: dict, project_id: int, user_id: int, auftraege: bool = False):
     if _ist_formular(project):
         return (TOOL_DEFINITIONS_FORMULAR + TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR,
                 ToolExecutorFormular(project_id=project_id, user_id=user_id), SYSTEM_FORMULAR)
@@ -137,7 +138,7 @@ def _werkzeugsatz_roh(project: dict, project_id: int, user_id: int):
         ablage = [d for d in TOOL_DEFINITIONS_WORD if d["name"] in ("liste_ausgaben", "lies_ausgabe")]
         return (TOOL_DEFINITIONS + felder + TOOL_DEFINITIONS_PDF + ablage + TOOL_DEFINITIONS_OBERFLAECHE_PDF,
                 ToolExecutor(project_id=project_id, user_id=user_id, pdf=True),
-                system_agent() + "\n\n" + system_pdf())
+                system_agent() + "\n\n" + system_pdf(auftraege=auftraege))
     # Grafik- und Webseiten-Projekte (InkluAgent-Ausbau Runde 1, Schritt 4, Schalter AGENT_BILD_WERKZEUGE): alles, was die
     # Oberflaeche dort anbietet. Schalter aus = die sechs Bild-Werkzeuge wie bisher.
     art = _bild_art(project)
@@ -345,30 +346,31 @@ def run_agent(
     (je nach ihrem Schalter) — nie in der Demo. uebersetzen: Uebersetzung der festen Saetze an den Nutzer (Sprache der Oberflaeche).
     """
     _t = uebersetzen or (lambda text: text)
+    # Welche Zusaetze gelten, steht VOR dem Werkzeugsatz fest: mit Auftraegen sagt der PDF-Prompt „mehrere Schritte = ein
+    # Auftrag“ statt „Schritt fuer Schritt“ (Michael 15.10.2026: sonst bot der Agent nur das Tagging an und blieb danach stehen)
+    from . import auftraege as _auftraege, begleiter as _begleiter, karten as _karten, rueckmeldung as _rueckmeldung
+    begleiter_an = begleiter_lauf is not None and _begleiter.an()
+    karten_an = begleiter_lauf is not None and _karten.an()
+    rueckmeldung_an = begleiter_lauf is not None and gespraech_id is not None and _rueckmeldung.an()
+    auftraege_an = rueckmeldung_an and karten_an and _auftraege.an()
     if project is None:
         # Runde 2, Schritt 3: Seite ohne Projekt — Konto-Werkzeuge, Konto-Kontext, Gespraech des Kontos (inkluagent/konto.py)
         from . import konto as _konto
         tool_defs, executor, system_base = _konto.werkzeugsatz(user_id, uebersetzen)
     else:
-        tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
+        tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id, auftraege=auftraege_an)
     # Begleiter durch InkluDocs (Steve 12.10.2026, Schalter AGENT_BEGLEITER): Hinfuehren und harmlose Einstellungen — in jedem
     # Gespraech, mit und ohne Projekt; ausgefuehrt von inkluagent/begleiter.py, nicht vom Executor des Projekts
-    from . import begleiter as _begleiter
-    begleiter_an = begleiter_lauf is not None and _begleiter.an()
     if begleiter_an:
         tool_defs = list(tool_defs) + _begleiter.werkzeuge(user_id)
         system_base = system_base + "\n\n" + _begleiter.PROMPT
     # Formular-Karten (Paket 1, Schalter AGENT_KARTEN): wie der Begleiter nur aus dem Chat-Endpunkt des Kontos (begleiter_lauf
     # gesetzt), nie in der Demo — von dort liessen sich sonst Einladungen an beliebige Adressen vorbereiten
-    from . import karten as _karten
-    karten_an = begleiter_lauf is not None and _karten.an()
     if karten_an:
         tool_defs = list(tool_defs) + _karten.werkzeuge(project_id)
         system_base = system_base + "\n\n" + _karten.prompt()   # mit dem Kaufen nur, wenn es das gibt (Baustein 3)
     # Rueckmeldung (Steve 14.10.2026, Schalter AGENT_RUECKMELDUNG): ebenfalls nur aus dem Chat-Endpunkt des Kontos und nur mit
     # Gespraech — startet ein Werkzeug einen Lauf im Hintergrund, meldet sich der Agent in diesem Gespraech, wenn er zu Ende ist
-    from . import rueckmeldung as _rueckmeldung
-    rueckmeldung_an = begleiter_lauf is not None and gespraech_id is not None and _rueckmeldung.an()
     rueckmeldung_kontext: dict = {}
     if rueckmeldung_an:
         tool_defs = _rueckmeldung.werkzeuge_anpassen(list(tool_defs), project_id)
@@ -376,9 +378,7 @@ def run_agent(
         rueckmeldung_kontext = {"user_id": user_id, "project_id": project_id, "gespraech_id": gespraech_id,
                                 "sprache": begleiter_lauf.ui_sprache, "auftrag": begleiter_lauf.nutzer_text}
     # Auftraege, Baustein 2 (14.10.2026, Schalter AGENT_AUFTRAEGE): mehrere Schritte als EIN Auftrag mit Gesamtpreis — die Karte
-    # bringen die Formular-Karten, das Melden am Ende die Rueckmeldung; also nur, wenn beide hier gelten
-    from . import auftraege as _auftraege
-    auftraege_an = rueckmeldung_an and karten_an and _auftraege.an()
+    # bringen die Formular-Karten, das Melden am Ende die Rueckmeldung; also nur, wenn beide hier gelten (auftraege_an oben)
     if auftraege_an:
         tool_defs = list(tool_defs) + _auftraege.werkzeuge(project_id)
         system_base = system_base + "\n\n" + _auftraege.PROMPT

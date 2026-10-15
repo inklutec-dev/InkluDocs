@@ -12421,3 +12421,12 @@ msgstr "{schritt}: {ergebnis}."
 #, python-brace-format
 msgid "Auftrag, Schritt {n} von {m}: {schritt}"
 msgstr "Uppdrag, steg {n} av {m}: {schritt}"
+
+# InkluAgent Auftrag fuer ein Dokument (Michael 15.10.2026)
+#, python-brace-format
+msgid "Barrierefrei machen entfällt: „{name}“ ist schon getaggt."
+msgstr "Gör tillgänglig behövs inte: ”{name}” är redan taggat."
+
+#, python-brace-format
+msgid "Projekt „{projekt}“, Dokument „{dokument}“."
+msgstr "Projekt ”{projekt}”, dokument ”{dokument}”."

@@ -1645,6 +1645,36 @@ und Karte über den Server, Oberfläche, Hilfe, dazu je Prüf-Befund ein Test. G
 Gemini jede Anfrage ablehnen). Klickprobe `lokal/probe_auftraege.py` (Ersatz-KI `IA_ERSATZ_BILD=an`): 24 Punkte. Rauchtest
 Staging mit echtem Modell `rauch_auftraege.py`: Karte, Erteilen, Abarbeiten, persönliche Rückmeldung mit der Datei.
 
+**Nachtrag 15.10.2026: Michaels Fall — mehrere Schritte als EIN Auftrag, auch für ein Dokument.** Michael schrieb auf Staging:
+„Mach das Dokument 2 barrierefrei, erzeug die Alt-Texte und gib mir dann die fertige PDF.“ Der Agent bot nur das Tagging an
+(eine Bestätigungs-Karte), und die Rückmeldung danach endete mit „Sieh dir am besten die Struktur sowie die Bilder an, damit
+wir als Nächstes …“ — Michael wusste nicht, wie es weitergeht. Ursache: der PDF-Prompt (`prompts/system_pdf.py`) sagte für
+„mach das Dokument barrierefrei“ ausdrücklich „Schritt für Schritt: Tagging, dann Alt-Texte …“ und am Ende „erledige eine,
+berichte, und frage für die nächste neu“; der Absatz der Aufträge kam erst danach und verlor. Der Vorführ-Rauchtest bestand nur,
+weil er „Bitte als einen Auftrag“ dazuschrieb. Behoben:
+- *Der Schalter entscheidet, nicht ein „außer wenn“ im Text:* `run_agent` legt VOR dem Werkzeugsatz fest, ob es Aufträge gibt
+  (`auftraege_an`: Lauf des Kontos, Gespräch, Karten, Rückmeldung, `AGENT_AUFTRAEGE`), und gibt das an
+  `_werkzeugsatz(…, auftraege=…)` → `system_pdf(auftraege=…)`. Mit Aufträgen steht dort `_SCHRITT2_AUFTRAG` („Will der Nutzer
+  mehr als einen Schritt …, leg ihm mit auftrag_vorbereiten EINEN Auftrag … vor“) und `_SCHLUSS_AUFTRAG` („Mehrere Schritte
+  gehören in EINEN Auftrag“); ohne (Demo, Schalter aus) bleibt der Prompt Byte für Byte wie vorher (`_SCHRITT2` bzw.
+  `_SCHRITT2_KETTE`, `_SCHLUSS_EINZELN`). `PROMPT` der Aufträge nennt Michaels Satz als Beispiel für einen Auftrag ohne das
+  Wort „Auftrag“.
+- *Auftrag für ein Dokument:* `auftrag_vorbereiten` nimmt `document_id` (Ganzzahl, keine Auswahlliste). `wunsch_aus` liest sie
+  (`_dokument_wunsch`: „7“ und 7.0 gehen, alles andere wird -1 und damit ein Fehler — nie still das ganze Projekt); `planen`
+  nimmt nur dieses Dokument: Tagging, Alt-Texte, Quickinfos, Prüfung und „PDF herunterladen“ mit seiner `document_id` (Preis aus
+  denselben Vorschau-Funktionen mit Dokument, Herunterladen als ein Dokument statt ZIP). Schritte, deren Werkzeug nur das ganze
+  Projekt kennt (`_NUR_GANZES_PROJEKT`: Übersetzen, Tabellen, Word, Umwandeln), gehen mit `document_id` nur, wenn das Projekt
+  nur dieses Dokument hat. Die Karte sagt „Projekt „…“, Dokument „…“.“; ein schon getaggtes Dokument: „Barrierefrei machen
+  entfällt: „…“ ist schon getaggt.“ (neu taggen bleibt ein einzelner Schritt). Der Wunsch samt `document_id` steht im
+  Karten-Kontext, der Knopf rechnet also mit demselben Dokument; `_auswerten` zählt bei Alt-Texten nur die Bilder dieses
+  Dokuments. Ohne `document_id` ist alles wie vorher. Zwei neue Texte in allen sechs Sprachen.
+- *Rückmeldung fragt, statt zu schicken:* `SYSTEM_MELDUNG`: Bleibt von der Bitte noch etwas zu tun, endet die Nachricht mit
+  genau einer Frage, ob der Agent das jetzt erledigen soll (ohne Preis — den nennt er nach dem Ja, das Weitere kommt als Karte);
+  was der Nutzer sich ansehen kann, ist ein Hinweis, keine Bedingung zum Weitermachen.
+- *Tests:* `tests/test_auftraege.py` Klassen `EinDokument` (9) und `PromptNachSchalter` (3), zusammen 86. Gegenprobe: vier
+  absichtliche Fehler (Flag nicht durchgereicht, Auswertung ohne Dokument, Dokument nicht gefiltert, Herunterladen ohne
+  Dokument) — jeder rot. Rauchtest Staging mit echtem Modell und Michaels Satz OHNE „als einen Auftrag“: `rauch_michael1510.py`.
+
 ## Aufträge, Baustein 3: Kaufen im Gespräch (Steve 14.10.2026; Schalter `AGENT_KAUFEN`, Umgebung `INKLUAGENT_KAUFEN=an`, braucht `AGENT_KARTEN` und die Online-Zahlung)
 
 Steve: „Man kann auch mit dem Bot Pakete und Credits buchen. Allerdings muss man das ausdrücklich bestätigen.“ Zwei

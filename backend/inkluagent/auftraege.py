@@ -100,6 +100,8 @@ KATALOG: tuple = (
 NACH_ART = {s.art: s for s in KATALOG}
 # Schritte, die etwas am Projekt aendern, das ein spaeteres Herunterladen berechnet (billing.pdf_download_preis)
 _BEARBEITEN = frozenset({"tagging", "alt_texte", "quickinfos"})
+# Schritte ohne Dokument-Auswahl (ihr Werkzeug nimmt das ganze Projekt) — mit document_id nur, wenn das Projekt nur dieses hat
+_NUR_GANZES_PROJEKT = frozenset({"uebersetzung", "alt_texte_tabelle", "quickinfos_tabelle", "word", "pdfua"})
 _FORMATE = {"csv": "CSV", "xlsx": "Excel", "json": "JSON"}
 _WUNSCH_MAX = 20   # so viele Eintraege liest der Server aus „schritte“ (der Katalog hat zehn; der Rest waere Unsinn)
 
@@ -180,6 +182,15 @@ class _Rechnen:
     def pid(self) -> int:
         return int(self.project["id"])
 
+    @property
+    def dok(self) -> Optional[int]:
+        """Das eine Dokument, auf das der Auftrag beschraenkt ist (document_id), sonst None = alle Dokumente des Projekts."""
+        return self.wunsch.get("document_id")
+
+    def nur_dok(self) -> dict:
+        """Argumente fuer ein Werkzeug, das ein Dokument annimmt: mit Beschraenkung dessen document_id, sonst nichts."""
+        return {"document_id": self.dok} if self.dok else {}
+
 
 def _eintrag(c: _Rechnen, art: str, preis: int, umfang: str, args: Optional[dict] = None, document_id: Optional[int] = None,
              hoechstens: bool = False) -> dict:
@@ -227,13 +238,16 @@ def _v_tagging(c: _Rechnen) -> list:
                             _menge(_, seiten, "„{name}“, eine Seite", "„{name}“, {n} Seiten", name=_dokname(d)),
                             args={"document_id": d["id"]}, document_id=d["id"]))
     if not out:
-        c.hinweise.append(_("Barrierefrei machen entfällt: Alle Dokumente sind schon getaggt."))
+        if c.dok:
+            c.hinweise.append(_("Barrierefrei machen entfällt: „{name}“ ist schon getaggt.").format(name=_dokname(c.docs[0])))
+        else:
+            c.hinweise.append(_("Barrierefrei machen entfällt: Alle Dokumente sind schon getaggt."))
     return out
 
 
 def _v_alt_texte(c: _Rechnen) -> list:
     _ = c._
-    v = _modul("main")._generierung_vorschau_daten(c.pid, c.user_id, {"modus": "alle"})
+    v = _modul("main")._generierung_vorschau_daten(c.pid, c.user_id, dict({"modus": "alle"}, **c.nur_dok()))
     if not v.get("anzahl"):
         c.hinweise.append(_("Alt-Texte generieren entfällt: Es gibt keine Bilder dafür."))
         return []
@@ -242,16 +256,18 @@ def _v_alt_texte(c: _Rechnen) -> list:
     if "tagging" in c.davor:
         c.hinweise.append(_("Nach dem Tagging kann die Zahl der Bilder eine andere sein. Kosten die Alt-Texte dann mehr, hält der "
                             "Auftrag vorher an und ich sage es dir."))
-    return [_eintrag(c, "alt_texte", v["preis"], _menge(_, v["anzahl"], "ein Bild", "{n} Bilder"))]
+    return [_eintrag(c, "alt_texte", v["preis"], _menge(_, v["anzahl"], "ein Bild", "{n} Bilder"), args=c.nur_dok(),
+                     document_id=c.dok)]
 
 
 def _v_quickinfos(c: _Rechnen) -> list:
     _ = c._
-    v = _modul("formular_api").quickinfos_vorschau_daten(c.pid, c.user_id, None)
+    v = _modul("formular_api").quickinfos_vorschau_daten(c.pid, c.user_id, c.dok)
     if not v.get("anzahl"):
         c.hinweise.append(_("Quickinfos generieren entfällt: Es gibt keine benannten Formularfelder."))
         return []
-    return [_eintrag(c, "quickinfos", v["preis"], _menge(_, v["anzahl"], "ein Feld", "{n} Felder"))]
+    return [_eintrag(c, "quickinfos", v["preis"], _menge(_, v["anzahl"], "ein Feld", "{n} Felder"), args=c.nur_dok(),
+                     document_id=c.dok)]
 
 
 def _v_pruefung(c: _Rechnen) -> list:
@@ -318,8 +334,8 @@ def _v_pdf(c: _Rechnen) -> list:
     der Bilder bleibt (billing.pdf_download_preis waechst mit beiden; Alt-Texte stehen nur in getaggten Dateien)."""
     _ = c._
     m, billing = _modul("main"), _modul("billing")
-    alle = len(c.docs) > 1
-    args = {"alle": True} if alle else {}
+    alle = len(c.docs) > 1   # mit document_id steht in c.docs nur dieses Dokument
+    args = {"alle": True} if alle else c.nur_dok()
     umfang = _("alle Dokumente als ZIP") if alle else _("ein Dokument")
     if c.davor & _BEARBEITEN:
         getaggt = ({d["id"] for d in c.docs if m._dokument_getaggt(d)}
@@ -328,12 +344,14 @@ def _v_pdf(c: _Rechnen) -> list:
         try:
             bilder = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND document_id IN (%s)"
                                   % ",".join("?" * len(getaggt)), (c.pid, *getaggt)).fetchone()[0] if getaggt else 0
-            felder = conn.execute("SELECT COUNT(*) FROM formularfelder WHERE project_id = ?", (c.pid,)).fetchone()[0]
+            felder = conn.execute("SELECT COUNT(*) FROM formularfelder WHERE project_id = ?" + (" AND document_id = ?" if c.dok else ""),
+                                  (c.pid, *([c.dok] if c.dok else []))).fetchone()[0]
         finally:
             conn.close()
-        return [_eintrag(c, "pdf", billing.pdf_download_preis(bilder, felder)["preis"], umfang, args=args, hoechstens=True)]
-    units = m._load_pdf_export_units(c.project, c.user_id, None)
-    return [_eintrag(c, "pdf", m._pdf_export_plan(c.user_id, units)["preis"], umfang, args=args)]
+        return [_eintrag(c, "pdf", billing.pdf_download_preis(bilder, felder)["preis"], umfang, args=args, document_id=c.dok,
+                         hoechstens=True)]
+    units = m._load_pdf_export_units(c.project, c.user_id, c.dok)
+    return [_eintrag(c, "pdf", m._pdf_export_plan(c.user_id, units)["preis"], umfang, args=args, document_id=c.dok)]
 
 
 _VORSCHAU: dict[str, Callable[[_Rechnen], list]] = {
@@ -343,9 +361,24 @@ _VORSCHAU: dict[str, Callable[[_Rechnen], list]] = {
 }
 
 
+def _dokument_wunsch(wert: Any) -> Optional[int]:
+    """document_id aus den Argumenten: None = alle Dokumente; eine ganze Zahl (auch „12“ oder 12.0, wie Modelle sie schicken);
+    alles andere -1 (planen() nennt es als Fehler, statt still das ganze Projekt zu nehmen)."""
+    if wert is None or wert == "":
+        return None
+    if isinstance(wert, bool):
+        return -1
+    try:
+        f = float(str(wert).strip())
+    except (TypeError, ValueError):
+        return -1
+    return int(f) if f.is_integer() and f > 0 else -1
+
+
 def wunsch_aus(args: dict) -> dict:
-    """Die Argumente des Modells als Wunsch: bekannte Arten in der genannten Reihenfolge (doppelte einmal), Zielsprache, Format.
-    Unbekannte Arten bleiben drin — planen() nennt sie als Fehler."""
+    """Die Argumente des Modells als Wunsch: bekannte Arten in der genannten Reihenfolge (doppelte einmal), Zielsprache, Format,
+    Dokument (document_id, Michael 15.10.2026: „Mach das Dokument 2 barrierefrei …“). Unbekannte Arten bleiben drin — planen()
+    nennt sie als Fehler."""
     roh = (args or {}).get("schritte")
     roh = roh if isinstance(roh, list) else ([roh] if isinstance(roh, str) else [])
     schritte: list[str] = []
@@ -354,7 +387,8 @@ def wunsch_aus(args: dict) -> dict:
         if a and a not in schritte:
             schritte.append(a)
     fmt = str((args or {}).get("format") or "csv").strip().lower()[:10]
-    return {"schritte": schritte, "zielsprache": str((args or {}).get("zielsprache") or "").strip().lower()[:10], "format": fmt}
+    return {"schritte": schritte, "zielsprache": str((args or {}).get("zielsprache") or "").strip().lower()[:10], "format": fmt,
+            "document_id": _dokument_wunsch((args or {}).get("document_id"))}
 
 
 def planen(user_id: int, project: dict, wunsch: dict, _: Optional[Callable[[str], str]] = None) -> dict:
@@ -383,6 +417,19 @@ def planen(user_id: int, project: dict, wunsch: dict, _: Optional[Callable[[str]
                                               (project["id"],)).fetchall()]
     finally:
         conn.close()
+    dokument = None
+    if wunsch.get("document_id") is not None:
+        # Nur dieses Dokument: Tagging, Alt-Texte, Quickinfos, Pruefung und Herunterladen nehmen seine document_id; was es nur
+        # fuers ganze Projekt gibt (Uebersetzen, Tabellen, Word, Umwandeln), geht dann nur, wenn das Projekt nur dieses hat
+        nur = [d for d in docs if d["id"] == wunsch["document_id"]]
+        if not nur:
+            fehler.append("Dieses Dokument gibt es in diesem Projekt nicht. Nimm die document_id aus dokument_stand oder lass "
+                          "document_id weg (dann alle Dokumente).")
+        else:
+            if len(docs) > 1:
+                fehler += [f"„{NACH_ART[a].titel}“ geht im Auftrag nur für das ganze Projekt, nicht für ein einzelnes Dokument."
+                           for a in gewuenscht if a in _NUR_GANZES_PROJEKT]
+            docs, dokument = nur, _dokname(nur[0])
     c = _Rechnen(project=project, user_id=int(user_id), docs=docs, wunsch=wunsch, _=_)
     eintraege: list[dict] = []
     if not fehler:
@@ -407,7 +454,7 @@ def planen(user_id: int, project: dict, wunsch: dict, _: Optional[Callable[[str]
     summe = sum(e["preis_geplant"] for e in eintraege)
     verf = billing.verfuegbare_credits(int(user_id))
     return {"eintraege": eintraege, "summe": summe, "hoechstens": any(e["hoechstens"] for e in eintraege), "verfuegbar": verf,
-            "erlaubt": verf is None or verf >= summe, "hinweise": c.hinweise, "fehler": fehler}
+            "erlaubt": verf is None or verf >= summe, "hinweise": c.hinweise, "fehler": fehler, "dokument": dokument}
 
 
 def _preis_text(e: dict, _) -> str:
@@ -436,7 +483,8 @@ def fingerabdruck(plan: dict) -> list:
 
 
 def karte_text(projekt: str, plan: dict, _) -> str:
-    teile = [_("Projekt „{projekt}“.").format(projekt=projekt)]
+    teile = [_("Projekt „{projekt}“, Dokument „{dokument}“.").format(projekt=projekt, dokument=plan["dokument"])
+             if plan.get("dokument") else _("Projekt „{projekt}“.").format(projekt=projekt)]
     summe = (_("Zusammen höchstens {n} Credits.") if plan["hoechstens"] else _("Zusammen {n} Credits.")).format(n=plan["summe"])
     teile.append(summe)
     if plan["verfuegbar"] is not None:
@@ -456,7 +504,8 @@ _SCHRITTE_BESCHREIBUNG = (
     "Quickinfos für alle benannten Formularfelder, pruefung = KI-basierte Prüfung der getaggten PDFs, uebersetzung = Word-Dokument "
     "übersetzen (zielsprache nötig; die übersetzte Datei kommt dazu), alt_texte_tabelle = Alt-Texte als Tabelle herunterladen "
     "(format), quickinfos_tabelle = Quickinfos als CSV, word = Word-Datei mit Alt-Texten, pdfua = Word in barrierefreie PDF "
-    "umwandeln, pdf = fertige PDF herunterladen (mehrere Dokumente als ZIP).")
+    "umwandeln, pdf = fertige PDF herunterladen (mehrere Dokumente als ZIP). Mit document_id gelten tagging, alt_texte, quickinfos, "
+    "pruefung und pdf nur für dieses Dokument.")
 
 
 def werkzeuge(project_id: Optional[int]) -> list[dict]:
@@ -471,6 +520,9 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
          "input_schema": {"type": "object", "properties": dict(pid, **{
              "schritte": {"type": "array", "items": {"type": "string", "enum": [s.art for s in KATALOG]},
                           "description": "Die gewünschten Schritte; die Reihenfolge legt der Server fest."},
+             "document_id": {"type": "integer", "description": (
+                 "Nur wenn der Nutzer ein bestimmtes Dokument meint (z. B. „Dokument 2“): dessen Kennung aus dokument_stand. Ohne "
+                 "gilt der Auftrag für alle Dokumente des Projekts.")},
              "zielsprache": {"type": "string", "description": "Nur für uebersetzung: z. B. en-gb, en, fr, es-419."},
              "format": {"type": "string", "enum": list(_FORMATE), "description": "Nur für alt_texte_tabelle. Standard csv."},
              "per_mail": {"type": "boolean", "description": (
@@ -491,7 +543,7 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
 
 PROMPT = """Aufträge mit mehreren Schritten
 
-Will der Nutzer mehrere Arbeitsschritte in einem Projekt nacheinander erledigt haben (zum Beispiel Alt-Texte generieren, dann als Word herunterladen; oder barrierefrei machen, Alt-Texte, dann die fertige PDF), leg ihm mit auftrag_vorbereiten EINE Karte vor, statt jeden Schritt einzeln anzubieten. Der Server ordnet die Schritte, rechnet die Preise und die Summe und zeigt alles auf der Karte. Erteilen kann nur der Nutzer mit dem Knopf „Auftrag erteilen“ — frag nicht nach einem Ja, sondern sag in einem Satz, was der Auftrag umfasst, was er zusammen kostet und dass er danach die Seite schließen kann. Der Server arbeitet die Schritte im Hintergrund ab, und du meldest dich von selbst, wenn alles fertig ist; eine Mail gibt es, wenn er den Haken auf der Karte setzt. Geht ein Schritt nicht oder reicht das Guthaben nicht, sagt dir das Werkzeug den Grund: Nenne ihn und frag, wie er weitermachen will. Fragt er, wie weit der Auftrag ist: auftrag_stand. Will er ihn anhalten: auftrag_abbrechen."""
+Will der Nutzer mehrere Arbeitsschritte in einem Projekt nacheinander erledigt haben (zum Beispiel Alt-Texte generieren, dann als Word herunterladen; oder barrierefrei machen, Alt-Texte, dann die fertige PDF), leg ihm mit auftrag_vorbereiten EINE Karte vor, statt jeden Schritt einzeln anzubieten. Das gilt auch, wenn er das Wort „Auftrag“ nicht benutzt: „Mach die PDF barrierefrei, erzeug die Alt-Texte und gib mir dann die fertige PDF“ ist ein Auftrag mit den Schritten tagging, alt_texte und pdf. Meint er ein bestimmtes Dokument, gib dessen document_id mit; sonst gilt der Auftrag für alle Dokumente des Projekts. Ist ein Dokument schon getaggt, lässt der Server das Taggen weg und sagt es auf der Karte; neu taggen geht nur als einzelner Schritt (barrierefrei_machen). Der Server ordnet die Schritte, rechnet die Preise und die Summe und zeigt alles auf der Karte. Erteilen kann nur der Nutzer mit dem Knopf „Auftrag erteilen“ — frag nicht nach einem Ja, sondern sag in einem Satz, was der Auftrag umfasst, was er zusammen kostet und dass er danach die Seite schließen kann. Der Server arbeitet die Schritte im Hintergrund ab, und du meldest dich von selbst, wenn alles fertig ist; eine Mail gibt es, wenn er den Haken auf der Karte setzt. Geht ein Schritt nicht oder reicht das Guthaben nicht, sagt dir das Werkzeug den Grund: Nenne ihn und frag, wie er weitermachen will. Fragt er, wie weit der Auftrag ist: auftrag_stand. Will er ihn anhalten: auftrag_abbrechen."""
 
 
 def ausfuehren(name: str, args: dict, *, user_id: int, project_id: Optional[int], gespraech_id: Optional[int],
@@ -1072,13 +1124,17 @@ def _auswerten(a: dict, s: dict) -> dict:
         # setzt ihn bei einem Fehlversuch — auch wenn ein alter Text bleibt (Rettung, Status 'done' mit needs_review). Vorher
         # zaehlte jedes fertige Bild; fiel die KI fuer alle aus, hiess der Schritt „fertig“, und der Auftrag lief weiter zum
         # bezahlten Herunterladen (Pruefung M3). Vom Autor als Schmuck gekennzeichnete Bilder laufen nie mit.
+        # Mit document_id (Auftrag fuer ein Dokument) zaehlen nur dessen Bilder — offene Bilder anderer Dokumente sind nicht Teil
+        # des Schritts und machten ihn sonst „teilweise“
+        nur_dok = s.get("document_id")
         conn = get_db()
         try:
             z = dict(conn.execute(
                 "SELECT COUNT(*) AS n, SUM(CASE WHEN status = 'done' AND COALESCE(fehler_grund, '') = '' THEN 1 ELSE 0 END) AS neu, "
                 "SUM(CASE WHEN status = 'error' OR COALESCE(fehler_grund, '') <> '' THEN 1 ELSE 0 END) AS kaputt, "
                 "SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS offen FROM images WHERE project_id = ? "
-                "AND NOT (COALESCE(original_alt, '') = 'dekorativ' AND COALESCE(image_type, '') = 'dekorativ')", (pid,)).fetchone())
+                "AND NOT (COALESCE(original_alt, '') = 'dekorativ' AND COALESCE(image_type, '') = 'dekorativ')"
+                + (" AND document_id = ?" if nur_dok else ""), (pid, *([nur_dok] if nur_dok else []))).fetchone())
         finally:
             conn.close()
         h = _hinweis_des_laufs(pid)

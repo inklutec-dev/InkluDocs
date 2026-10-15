@@ -1119,6 +1119,160 @@ class Befunde(MitWerkzeugen):
         self.assertEqual(len({e["document_id"] for e in plan["eintraege"]}), 2)
 
 
+# ─── 9. Michael 15.10.2026: „Mach das Dokument 2 barrierefrei, erzeug die Alt-Texte und gib mir dann die fertige PDF“ ───────
+# Der Agent bot nur das Tagging an (der PDF-Prompt sagte „Schritt fuer Schritt“), und die Rueckmeldung danach sagte „sieh dir
+# die Struktur an“ statt weiterzumachen. Jetzt: mehrere Schritte = ein Auftrag (Prompt nach Schalter), auch fuer EIN Dokument.
+@unittest.skipIf(main is None, "main nicht ladbar")
+class EinDokument(Basis):
+    def setUp(self):
+        super().setUp()
+        import pdf_tagging
+        import tagging_api
+        self.pid = projekt(self.u["id"], PDF, bilder=3)
+        self.erstes = sql("SELECT id FROM documents WHERE project_id = ?", self.pid)[0]["id"]
+        c = database.get_db()
+        self.zweites = c.execute("INSERT INTO documents (project_id, doc_index, original_filename, original_path, getaggt) "
+                                 "VALUES (?, 2, 'anlage-fiktiv.pdf', '/tmp/fiktiv/anlage.pdf', 0)", (self.pid,)).lastrowid
+        for i in range(2):
+            c.execute("INSERT INTO images (project_id, document_id, page_number, image_index, image_path, status) "
+                      "VALUES (?, ?, 1, ?, '', 'done')", (self.pid, self.zweites, i))
+        c.commit()
+        c.close()
+        mock.patch.object(tagging_api, "_seiten", return_value=5).start()
+        mock.patch.object(tagging_api, "lesbar_grund", return_value=None).start()
+        mock.patch.object(pdf_tagging, "verfuegbar", return_value=True).start()
+        mock.patch.object(funktionen, "TAGGING_PROFESSIONELL", True).start()
+
+    def p(self):
+        return af._eigenes_projekt(self.u["id"], self.pid)
+
+    def test_wunsch_liest_die_dokument_kennung(self):
+        for wert, erwartet in ((None, None), ("", None), (7, 7), ("7", 7), (7.0, 7), (" 12 ", 12), (True, -1), (False, -1),
+                               ("Dokument 2", -1), (0, -1), (-3, -1), (2.5, -1), ([2], -1)):
+            with self.subTest(wert=wert):
+                self.assertEqual(af.wunsch_aus({"schritte": ["pdf"], "document_id": wert})["document_id"], erwartet)
+        self.assertIsNone(af.wunsch_aus({"schritte": ["pdf"]})["document_id"], "ohne: alle Dokumente wie bisher")
+
+    def test_nur_dieses_dokument_taggen_beschreiben_herunterladen(self):
+        plan = af.planen(self.u["id"], self.p(), self.wunsch("pdf", "alt_texte", "tagging", document_id=self.zweites))
+        self.assertEqual(plan["fehler"], [])
+        self.assertEqual([(e["art"], e["document_id"], e["args"]) for e in plan["eintraege"]],
+                         [("tagging", self.zweites, {"document_id": self.zweites}),
+                          ("alt_texte", self.zweites, {"document_id": self.zweites}),
+                          ("pdf", self.zweites, {"document_id": self.zweites})])
+        self.assertEqual(plan["eintraege"][1]["umfang"], "2 Bilder", "nur die Bilder dieses Dokuments")
+        self.assertEqual(plan["eintraege"][2]["umfang"], "ein Dokument", "kein ZIP aller Dokumente")
+        self.assertEqual(plan["dokument"], "anlage-fiktiv.pdf")
+
+    def test_ohne_dokument_wie_bisher_alle(self):
+        plan = af.planen(self.u["id"], self.p(), self.wunsch("tagging", "alt_texte", "pdf"))
+        self.assertEqual(plan["fehler"], [])
+        self.assertEqual([e["art"] for e in plan["eintraege"]], ["tagging", "tagging", "alt_texte", "pdf"])
+        self.assertEqual(plan["eintraege"][2]["args"], {})
+        self.assertIsNone(plan["eintraege"][2]["document_id"])
+        self.assertEqual(plan["eintraege"][2]["umfang"], "5 Bilder")
+        self.assertEqual(plan["eintraege"][3]["args"], {"alle": True})
+        self.assertIsNone(plan["dokument"])
+
+    def test_schon_getaggt_faellt_weg_mit_namen(self):
+        sql("UPDATE documents SET getaggt = 1 WHERE id = ?", self.zweites)
+        plan = af.planen(self.u["id"], self.p(), self.wunsch("tagging", "alt_texte", "pdf", document_id=self.zweites))
+        self.assertEqual(plan["fehler"], [])
+        self.assertEqual([e["art"] for e in plan["eintraege"]], ["alt_texte", "pdf"])
+        self.assertIn("Barrierefrei machen entfällt: „anlage-fiktiv.pdf“ ist schon getaggt.", plan["hinweise"])
+
+    def test_fremdes_oder_unbekanntes_dokument(self):
+        anderer = nutzer()
+        fremd = sql("SELECT id FROM documents WHERE project_id = ?", projekt(anderer["id"], PDF))[0]["id"]
+        for dok in (fremd, 999999, "Dokument 2"):
+            with self.subTest(dok=dok):
+                plan = af.planen(self.u["id"], self.p(), self.wunsch("alt_texte", "pdf", document_id=dok))
+                self.assertEqual(plan["eintraege"], [], "kein halber Plan und nie das ganze Projekt")
+                self.assertTrue(any("Dieses Dokument gibt es in diesem Projekt nicht" in f for f in plan["fehler"]), plan["fehler"])
+
+    def test_schritte_nur_fuers_ganze_projekt(self):
+        with mock.patch.object(af, "moeglich", return_value=["alt_texte", "alt_texte_tabelle", "pdf"]):
+            plan = af.planen(self.u["id"], self.p(), self.wunsch("alt_texte", "alt_texte_tabelle", document_id=self.zweites))
+        self.assertEqual(plan["eintraege"], [])
+        self.assertIn("„Alt-Texte herunterladen“ geht im Auftrag nur für das ganze Projekt, nicht für ein einzelnes Dokument.",
+                      plan["fehler"])
+        # Hat das Projekt nur dieses eine Dokument, ist es dasselbe wie das ganze Projekt
+        einzeln = projekt(self.u["id"], WORD)
+        dok = sql("SELECT id FROM documents WHERE project_id = ?", einzeln)[0]["id"]
+        plan = af.planen(self.u["id"], af._eigenes_projekt(self.u["id"], einzeln), self.wunsch("alt_texte", "word", document_id=dok))
+        self.assertEqual(plan["fehler"], [])
+        self.assertEqual([e["art"] for e in plan["eintraege"]], ["alt_texte", "word"])
+
+    def test_karte_nennt_das_dokument_und_der_knopf_rechnet_gleich(self):
+        r = af.ausfuehren(af.WERKZEUG_VORBEREITEN, {"schritte": ["alt_texte"], "document_id": self.zweites}, user_id=self.u["id"],
+                          project_id=self.pid, gespraech_id=self.gid, sprache="de", auftrag="Mach Dokument 2 fertig (fiktiv)")
+        self.assertTrue(r["ok"], r)
+        k = r["anhang"]
+        self.assertIn("Projekt „Vereinsbrief (fiktiv)“, Dokument „anlage-fiktiv.pdf“. Zusammen 10 Credits.", k["text"])
+        self.assertEqual(k["zeilen"], ["Alt-Texte generieren (2 Bilder): 10 Credits"])
+        kontext = karten._KARTEN[k["karten_id"]]["kontext"]
+        self.assertEqual(kontext["wunsch"]["document_id"], self.zweites, "der Knopf rechnet mit demselben Dokument")
+        status, antwort = af.erteilen(kontext, self.u, {"per_mail": False}, lambda s: s)
+        self.assertEqual(status, 200, antwort)
+        s = af._laden(antwort["auftrag_id"])["schritte"][0]
+        self.assertEqual((s["art"], s["document_id"], s["args"]), ("alt_texte", self.zweites, {"document_id": self.zweites}))
+
+    def test_auswertung_zaehlt_nur_die_bilder_des_dokuments(self):
+        sql("UPDATE images SET status = 'pending' WHERE document_id = ?", self.erstes)
+        a = {"user_id": self.u["id"], "project_id": self.pid, "id": 0}
+        self.assertEqual(af._auswerten(a, {"art": "alt_texte", "document_id": self.zweites}), {"zustand": "fertig"})
+        self.assertEqual(af._auswerten(a, {"art": "alt_texte", "document_id": None})["zustand"], "teilweise",
+                         "ohne Dokument zaehlt das ganze Projekt wie bisher")
+
+    def test_werkzeug_nimmt_document_id(self):
+        props = next(d for d in af.werkzeuge(self.pid) if d["name"] == af.WERKZEUG_VORBEREITEN)["input_schema"]["properties"]
+        self.assertEqual(props["document_id"]["type"], "integer")
+        self.assertNotIn("enum", props["document_id"], "keine Zahlen-Auswahlliste (Gemini lehnte sonst jede Anfrage ab)")
+        self.assertIn("ist ein Auftrag mit den Schritten tagging, alt_texte und pdf", af.PROMPT)
+
+
+@unittest.skipIf(main is None, "main nicht ladbar")
+class PromptNachSchalter(Basis):
+    """Der PDF-Prompt sagt mit Auftraegen „mehrere Schritte = ein Auftrag“, ohne sie wie bisher „Schritt fuer Schritt“ — der
+    Schalter entscheidet im Code, kein „ausser wenn“ im Text."""
+
+    def lauf(self, mit_lauf=True):
+        g = {}
+        pid = projekt(self.u["id"], PDF)
+        p = af._eigenes_projekt(self.u["id"], pid)
+        lauf = begleiter.Lauf(ui_sprache="de", nutzer_text="Mach die PDF barrierefrei, erzeug die Alt-Texte und gib mir die PDF") \
+            if mit_lauf else None
+        agent_loop.run_agent(pid, self.u["id"], "Mach die PDF barrierefrei, erzeug die Alt-Texte und gib mir die PDF", p, Agent(g),
+                             konto=True, begleiter_lauf=lauf, gespraech_id=self.gid if mit_lauf else None)
+        return g
+
+    def test_mit_auftraegen_ein_auftrag_statt_schritt_fuer_schritt(self):
+        from inkluagent.prompts import system_pdf
+        system = self.lauf()["system"]
+        self.assertIn(system_pdf._SCHRITT2_AUFTRAG, system)
+        self.assertIn(system_pdf._SCHLUSS_AUFTRAG, system)
+        self.assertNotIn("Schritt für Schritt", system)
+        self.assertNotIn("frage für die nächste neu", system)
+        self.assertIn("auftrag_vorbereiten", self.lauf()["tools"])
+
+    def test_ohne_auftraege_wie_bisher(self):
+        from inkluagent.prompts import system_pdf
+        demo = self.lauf(mit_lauf=False)["system"]   # nie in der Demo
+        with mock.patch.object(funktionen, "AGENT_AUFTRAEGE", False):
+            aus = self.lauf()["system"]
+        for name, system in (("Demo", demo), ("Schalter aus", aus)):
+            with self.subTest(name):
+                self.assertTrue(system_pdf._SCHRITT2 in system or system_pdf._SCHRITT2_KETTE in system)
+                self.assertIn(system_pdf._SCHLUSS_EINZELN, system)
+                self.assertNotIn(system_pdf._SCHRITT2_AUFTRAG, system)
+                self.assertNotIn("auftrag_vorbereiten", system)
+        self.assertEqual(system_pdf.system_pdf(), system_pdf.system_pdf(auftraege=False), "Standard unveraendert")
+
+    def test_rueckmeldung_fragt_ob_sie_weitermachen_soll(self):
+        self.assertIn("schließ mit genau einer Frage, ob du das jetzt erledigen sollst", rm.SYSTEM_MELDUNG)
+        self.assertIn("keine Bedingung zum Weitermachen", rm.SYSTEM_MELDUNG)
+
+
 class Oberflaeche(unittest.TestCase):
     def test_nach_dem_absenden_horcht_die_seite_auf_die_rueckmeldung(self):
         backend = next(k for k in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app") if os.path.isdir(k))
