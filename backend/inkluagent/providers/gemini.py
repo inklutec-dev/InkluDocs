@@ -41,10 +41,22 @@ _THINKING_LEVEL = os.environ.get("INKLUAGENT_GEMINI_THINKING", "").strip().lower
 _TEMPERATUR = float(os.environ.get("INKLUAGENT_GEMINI_TEMPERATURE", "1.0") or "1.0")
 _HTTP_TIMEOUT = 180
 _VERSUCHE = 3
+# Stille im Stream (Steve 15.10.2026): Auf Staging hing Gemini dreimal drei Minuten ohne ein einziges Byte (Begleiter-Rauchtest,
+# 11:35 bis 11:52); der Timeout galt je Lesevorgang mit der ganzen Zeit des Aufrufs, die Nachricht lief in die Gesamtfrist, und der
+# Nutzer bekam keine Antwort. Jetzt: kommt so lange nichts — auch nicht das erste Stueck nach dem Denken —, gilt der Stream als
+# haengend, und derselbe Aufruf laeuft sofort ohne Stream (invoke_with_tools). Mindestens 10 s; Umgebung INKLUAGENT_GEMINI_STILLE_S.
+_STILLE_S = max(10.0, float(os.environ.get("INKLUAGENT_GEMINI_STILLE_S") or 45))
 
 
 class GeminiProviderError(BedrockProviderError):
     pass
+
+
+def _still(e: BaseException) -> bool:
+    """Lief der Lesevorgang in den Timeout (Stille), statt dass die Verbindung brach? urllib meldet das als TimeoutError oder als
+    URLError mit einem Timeout als Grund."""
+    grund = getattr(e, "reason", None)
+    return isinstance(e, TimeoutError) or isinstance(grund, TimeoutError) or "timed out" in str(e).lower()
 
 
 def _endpunkt(model: str) -> str:
@@ -160,7 +172,8 @@ class GeminiProvider(LLMProvider):
         kandidaten = False
         fertig = False
         try:
-            with urllib.request.urlopen(req, timeout=uhr.naechster()) as r:
+            # Der Timeout gilt je Lesevorgang: hoechstens _STILLE_S ohne Daten, die ganze Zeit des Aufrufs begrenzt uhr.pruefen()
+            with urllib.request.urlopen(req, timeout=min(uhr.naechster(), _STILLE_S)) as r:
                 for roh in r:
                     uhr.pruefen()
                     zeile = roh.decode("utf-8", "ignore").strip()
@@ -328,7 +341,10 @@ class GeminiProvider(LLMProvider):
                     # Bricht der Stream ab (Netz, Fehlerobjekt, kaputte Daten), verwirft die Seite den Entwurf, und derselbe Aufruf
                     # laeuft ohne Stream — auch wenn schon Text kam: der Nutzer bekommt eine vollstaendige Antwort statt einer
                     # Fehlermeldung, nach der er ohnehin neu fragen muesste. Die Kosten des abgebrochenen Teils sind erfasst.
-                    log.warning("Gemini-Stream fehlgeschlagen (%s) — ohne Stream", e)
+                    if _still(e):
+                        log.warning("Gemini-Stream %d s ohne Daten (%s) — derselbe Aufruf sofort ohne Stream", int(_STILLE_S), e)
+                    else:
+                        log.warning("Gemini-Stream fehlgeschlagen (%s) — ohne Stream", e)
                     on_text(None)
                     antwort = None
             if antwort is None:

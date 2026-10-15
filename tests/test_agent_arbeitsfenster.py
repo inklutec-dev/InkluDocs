@@ -590,6 +590,56 @@ class GeminiStrom(unittest.TestCase):
         self.assertEqual(r["content"][0]["text"], "Ganze Antwort (fiktiv).")
         self.assertEqual(self.kosten[0]["usageMetadata"]["promptTokenCount"], 30, "der abgebrochene Teil zaehlt fuer den Deckel")
 
+    # Stille im Stream (Steve 15.10.2026: Gemini hing drei Minuten ohne ein Byte, die Nachricht lief in die Gesamtfrist)
+    def test_stille_begrenzt_den_lesevorgang(self):
+        gesehen = []
+
+        class Antwort:
+            def __enter__(self):
+                return iter([("data: " + json.dumps({"candidates": [{"content": {"parts": [{"text": "Hallo, hier schreibt der Test (fiktiv)."}]},
+                                                                      "finishReason": "STOP"}]}) + "\n").encode()])
+
+            def __exit__(self, *a):
+                return False
+
+        def urlopen(req, timeout=None):
+            gesehen.append(timeout)
+            return Antwort()
+        with mock.patch("urllib.request.urlopen", side_effect=urlopen):
+            self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=lambda t: None,
+                                     frist=__import__("time").monotonic() + 300)
+        self.assertEqual(gesehen, [self.gemini._STILLE_S], "je Lesevorgang hoechstens die Stille, nicht die ganze Frist")
+        self.assertLessEqual(self.gemini._STILLE_S, 60)
+
+    def test_stille_nimmt_sofort_den_weg_ohne_stream(self):
+        stuecke = []
+
+        def zeilen():
+            raise TimeoutError("The read operation timed out")
+            yield b""   # noqa: unreachable — macht die Funktion zum Generator
+
+        class Antwort:
+            def __enter__(self):
+                return zeilen()
+
+            def __exit__(self, *a):
+                return False
+        normal = {"candidates": [{"content": {"parts": [{"text": "Ohne Stream (fiktiv)."}]}, "finishReason": "STOP"}]}
+        with mock.patch("urllib.request.urlopen", return_value=Antwort()), \
+                mock.patch.object(self.gemini.GeminiProvider, "_aufruf", return_value=normal) as ohne, \
+                self.assertLogs(self.gemini.log, level="WARNING") as protokoll:
+            r = self.p.invoke_with_tools([{"role": "user", "content": "Hi"}], [], on_text=stuecke.append)
+        ohne.assert_called_once()
+        self.assertEqual(r["content"][0]["text"], "Ohne Stream (fiktiv).")
+        self.assertEqual(stuecke, [None])
+        self.assertIn("ohne Daten", protokoll.output[0])
+
+    def test_stille_erkennen(self):
+        import urllib.error
+        self.assertTrue(self.gemini._still(TimeoutError("The read operation timed out")))
+        self.assertTrue(self.gemini._still(urllib.error.URLError(TimeoutError("timed out"))))
+        self.assertFalse(self.gemini._still(OSError("Verbindung weg (fiktiv)")))
+
     def test_text_und_zwei_funktionsaufrufe(self):
         a = {"functionCall": {"name": "projekte_auflisten", "args": {}}, "thoughtSignature": "s1"}
         b = {"functionCall": {"name": "guthaben_lesen", "args": {}}}

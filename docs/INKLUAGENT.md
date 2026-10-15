@@ -1675,6 +1675,17 @@ weil er „Bitte als einen Auftrag“ dazuschrieb. Behoben:
   absichtliche Fehler (Flag nicht durchgereicht, Auswertung ohne Dokument, Dokument nicht gefiltert, Herunterladen ohne
   Dokument) — jeder rot. Rauchtest Staging mit echtem Modell und Michaels Satz OHNE „als einen Auftrag“: `rauch_michael1510.py`.
 
+## Stille im Gemini-Stream (15.10.2026)
+
+Auf Staging hing Gemini am 15.10. zwischen 11:35 und 11:52 Uhr dreimal drei Minuten lang ohne ein einziges Byte (Begleiter-
+Rauchtest). Der Timeout des Streams galt je Lesevorgang mit der ganzen Zeit des Aufrufs (bis 180 s); danach reichte die
+Gesamtfrist der Nachricht nicht mehr für den Weg ohne Stream, und der Nutzer bekam keine Antwort. Jetzt
+(`providers/gemini.py`, `_STILLE_S`, Vorgabe 45 s, mindestens 10, Umgebung `INKLUAGENT_GEMINI_STILLE_S`): kommt so lange nichts —
+auch nicht das erste Stück nach dem Denken —, bricht der Stream ab, und derselbe Aufruf läuft sofort ohne Stream (der Entwurf auf
+der Seite wird verworfen). Die ganze Zeit des Aufrufs begrenzt weiter `Uhr.pruefen()`. Im Protokoll steht dann „Gemini-Stream
+45 s ohne Daten … — derselbe Aufruf sofort ohne Stream“ statt „Gemini-Stream fehlgeschlagen“. Tests: `test_agent_arbeitsfenster`,
+Klasse `GeminiStrom` (Stille begrenzt den Lesevorgang, Stille nimmt sofort den Weg ohne Stream, Stille erkennen).
+
 ## Systemprompt aus Schubfächern (15.10.2026)
 
 Der Systemprompt entsteht seit 15.10.2026 an EINER Stelle: `inkluagent/prompts/schubfaecher.py` (Projektart, dann die Fächer
