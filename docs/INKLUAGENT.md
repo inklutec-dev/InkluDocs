@@ -1219,6 +1219,16 @@ Wusch der Klangspur (rechts → Mitte). Mit „Bewegung reduzieren“ steht sie 
   mit Link; Knopf „Zahlungspflichtig bestellen“. Abgeschickt über dieselbe Funktion wie der Warenkorb (`express_api.bestellung`,
   vorher der Rumpf von `POST /api/express/bestellen`) — mit Bremse, allen Prüfungen und den Mails danach. Leerer Korb oder zu
   wenig Guthaben: keine Karte, der Agent sagt, was fehlt.
+  **Seit 16.10.2026 legt der Agent die Dokumente selbst hinein** (Steve nach Michaels Test auf Staging: „Mach Du dies“ — der
+  Agent konnte nur auf den Knopf am Dokument verweisen, der Hinweis „Seite 1 prüfen“ ging verloren): Argument `document_ids`
+  (Kennungen aus `dokument_stand`, Liste ganzer Zahlen ohne `enum`) → `express.dokumente_hinzufuegen`, dieselbe Funktion wie der
+  Knopf „In den Express-Warenkorb“ (nur Dokumente dieses Kontos, alles oder nichts, Grenzen, Dateityp), danach die Karte für den
+  ganzen Korb mit den Hinweisen des Nutzers. Das Modell bekommt nur Zahlen (`hineingelegt`, `schon_im_warenkorb`,
+  `nicht_moeglich`); warum ein Dokument nicht hineinkam, steht mit seinem Namen nur auf der Karte (`hinweise`, `textContent`).
+  Hineinlegen kostet nichts; bestellen bleibt der Knopf „Zahlungspflichtig bestellen“ (§ 312j BGB). Ansprechpartner und Telefon
+  kommen vom zuletzt bestellten Auftrag (`express.letzte_kontaktdaten`: nur bestellte, keine gelöschten), sonst der Anzeigename;
+  was der Nutzer sagt, geht vor. Dieselbe Vorbelegung hat die Seite `/express` (`GET /api/express/stand` mit `telefon`).
+  Tests: `tests/test_express_agent.py` (17).
 
 **Sicherheit:**
 - Was zählt, hält der SERVER in der Karte: Projekt, Warenkorb, erwarteter Preis, Fassung der Bedingungen, Idempotenz. Der Browser

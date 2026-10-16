@@ -401,13 +401,16 @@ def build_router(deps: Deps) -> APIRouter:
         korb = await _im_thread(express.warenkorb, user["id"])
         verf = await _im_thread(billing.verfuegbare_credits, user["id"])
         db = _d.get_user_by_id(user["id"]) or {}
+        letzte = await _im_thread(express.letzte_kontaktdaten, user["id"])
         _ = _d.get_gettext(_d.resolve_ui_language(request))
         typen = express.angebotene_dateitypen()
         return {"warenkorb": korb, "preise": dict(e["preise"]), "leistungen": express.leistungen_liste(e),
                 "dateitypen": [{"schluessel": t.schluessel, "name": t.name, "accept": t.accept} for t in typen],
                 "frist_stunden": e["frist_stunden"], "max_seiten": e["max_seiten_auftrag"],
                 "max_dokumente": e["max_dokumente_auftrag"], "guthaben": verf,
-                "ansprechpartner": (db.get("display_name") or "").strip(),
+                # vom letzten Auftrag, sonst der Anzeigename (Steve 16.10.2026: „dass er sich das merkt“)
+                "ansprechpartner": letzte["ansprechpartner"] or (db.get("display_name") or "").strip(),
+                "telefon": letzte["telefon"],
                 "texte": {"bedingungen": _(express.TEXT_BEDINGUNGEN)}}
 
     @router.get("/api/express/projekte")

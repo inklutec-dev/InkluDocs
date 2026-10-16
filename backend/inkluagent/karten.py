@@ -267,11 +267,17 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
         defs.append({
             "name": "express_bestellen_vorbereiten",
             "description": ("Legt dem Nutzer das Formular „Zahlungspflichtig bestellen“ für seinen Express-Warenkorb als Karte "
-                            "ins Gespräch: Aufstellung, Preis in Credits, Ansprechpartner, Bedingungen. Bestellen kann NUR der "
-                            "Nutzer mit dem Knopf der Karte. Ist der Warenkorb leer, sag ihm, wie Dokumente hineinkommen "
-                            "(am Dokument „In den Express-Warenkorb“)."),
+                            "ins Gespräch: Aufstellung, Preis in Credits, Ansprechpartner, Telefon, Hinweise, Bedingungen. Will der "
+                            "Nutzer Dokumente an den Express-Service geben, nimm sie mit document_ids gleich mit: Der Server legt "
+                            "sie selbst in den Warenkorb, schick den Nutzer dafür nicht zum Knopf am Dokument. Bestellen kann NUR "
+                            "der Nutzer mit dem Knopf der Karte."),
             "input_schema": {"type": "object", "properties": {
-                "ansprechpartner": {"type": "string"}, "telefon": {"type": "string"}, "hinweise": {"type": "string"}}},
+                "document_ids": {"type": "array", "items": {"type": "integer"}, "description": (
+                    "Dokumente, die in den Express-Warenkorb sollen: ihre Kennungen aus dokument_stand (z. B. für „Dokument 2“). "
+                    "Hineinlegen kostet nichts, der Nutzer kann sie wieder entfernen; die Karte zeigt dann den ganzen Warenkorb. "
+                    "Ohne: die Karte für das, was schon im Warenkorb liegt.")},
+                "ansprechpartner": {"type": "string"}, "telefon": {"type": "string"},
+                "hinweise": {"type": "string", "description": "Hinweise des Nutzers für das Team, z. B. „Seite 1 prüfen“."}}},
         })
     if kaufen_an():
         defs += [{
@@ -307,14 +313,16 @@ NAMEN = frozenset(WERKZEUG_KARTE)
 
 PROMPT = """Formulare im Gespräch (Karten)
 
-Will der Nutzer jemanden zum Prüfen einladen oder seinen Express-Warenkorb bestellen, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten), statt ihn auf eine Seite zu schicken. Fülle vor, was er gesagt hat; erfinde nichts. Abschicken kann nur der Nutzer mit dem Knopf der Karte — frag also nicht nach einem Ja, sondern sag in einem Satz, was vorbelegt ist und welcher Knopf abschickt."""
+Will der Nutzer jemanden zum Prüfen einladen oder Dokumente an den Express-Service geben, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten), statt ihn auf eine Seite zu schicken; die Dokumente legst du dabei selbst in den Express-Warenkorb (document_ids). Fülle vor, was er gesagt hat; erfinde nichts. Abschicken kann nur der Nutzer mit dem Knopf der Karte — frag also nicht nach einem Ja, sondern sag in einem Satz, was vorbelegt ist und welcher Knopf abschickt."""
 
 # Ohne Express-Service (funktionen.EXPRESS aus) fehlt das Werkzeug express_bestellen_vorbereiten — der Text nennt es dann
 # nicht (gefunden vom Werkzeug-Waechter, 15.10.2026)
 PROMPT_OHNE_EXPRESS = PROMPT.replace(
-    "Will der Nutzer jemanden zum Prüfen einladen oder seinen Express-Warenkorb bestellen, bring ihm das Formular als Karte ins "
-    "Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten)",
-    "Will der Nutzer jemanden zum Prüfen einladen, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten)")
+    "Will der Nutzer jemanden zum Prüfen einladen oder Dokumente an den Express-Service geben, bring ihm das Formular als Karte "
+    "ins Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten), statt ihn auf eine Seite zu schicken; die Dokumente "
+    "legst du dabei selbst in den Express-Warenkorb (document_ids).",
+    "Will der Nutzer jemanden zum Prüfen einladen, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten), statt "
+    "ihn auf eine Seite zu schicken.")
 assert PROMPT_OHNE_EXPRESS != PROMPT
 
 # Kaufen im Gespraech (Baustein 3): nur mit kaufen_an() im Systemprompt (eigenes Schubfach „kaufen“, prompts/schubfaecher.py)
@@ -384,11 +392,26 @@ def _express_vorbereiten(args: dict, user_id: int, _) -> dict:
     import billing
     import express
     from database import get_user_by_id
+    # Steve 16.10.2026 (Michael: „Mach Du dies“ — der Agent konnte nichts in den Warenkorb legen): Dokumente legt der Server
+    # selbst hinein, ueber dieselbe Funktion wie der Knopf am Dokument (nur Dokumente dieses Kontos, Grenzen, Dateityp). Das
+    # Modell bekommt nur Zahlen; die Hinweise mit Dokumentnamen stehen auf der Karte (textContent), nicht im Werkzeug-Ergebnis.
+    ids, hinzu, schon_drin = args.get("document_ids"), None, 0
+    if ids not in (None, "", []):
+        ids = ids if isinstance(ids, list) else [ids]
+        if any(isinstance(x, bool) or not isinstance(x, (int, str)) for x in ids):
+            return {"ok": False, "error": "document_ids: bitte nur Kennungen aus dokument_stand."}
+        vorher = {p["document_id"] for p in express.warenkorb(user_id).get("positionen") or []}
+        try:
+            hinzu = express.dokumente_hinzufuegen(user_id, list(ids))
+        except express.ExpressFehler as fe:
+            return {"ok": False, "error": fe.text}
+        schon_drin = len({int(x) for x in ids} & vorher)
     korb = express.warenkorb(user_id)
     if not korb.get("id") or not korb.get("positionen"):
-        return {"ok": True, "result": {"warenkorb_leer": True, "hinweis": (
-            "Der Express-Warenkorb ist leer. Sag dem Nutzer, dass er Dokumente im Projekt mit „In den Express-Warenkorb“ "
-            "hineinlegt; dann bringst du ihm das Bestellformular.")}}
+        return {"ok": True, "result": {"warenkorb_leer": True, "nicht_moeglich": len(hinzu["hinweise"]) if hinzu else 0, "hinweis": (
+            "Der Express-Warenkorb ist leer. Frag, welche Dokumente in den Express-Service sollen, und ruf dann "
+            "express_bestellen_vorbereiten mit ihren Kennungen (document_ids) auf." if not hinzu else
+            "Keines der Dokumente konnte in den Express-Warenkorb (heute nur PDF). Sag das dem Nutzer.")}}
     e = express.einstellungen()
     guthaben = billing.verfuegbare_credits(user_id)
     leistung = {l["schluessel"]: l["name"] for l in express.leistungen_liste(e)}
@@ -398,22 +421,37 @@ def _express_vorbereiten(args: dict, user_id: int, _) -> dict:
     text = _("{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben: {g} Credits. Fertig in {h} Stunden.").format(
         d=korb["dokumente"], s=korb["seiten"], c=korb["credits"], g=guthaben, h=e["frist_stunden"])
     if guthaben < korb["credits"]:
-        return {"ok": True, "result": {"guthaben_reicht_nicht": True, "credits": korb["credits"], "guthaben": guthaben,
-                                       "hinweis": "Das Guthaben reicht nicht. Nenne Preis und Guthaben und verweise auf "
-                                                  "„Abo & Verbrauch“."}}
+        knapp = {"guthaben_reicht_nicht": True, "credits": korb["credits"], "guthaben": guthaben,
+                 "hinweis": "Das Guthaben reicht nicht. Nenne Preis und Guthaben und verweise auf „Abo & Verbrauch“."}
+        if hinzu is not None:
+            knapp.update(hineingelegt=hinzu["hinzugefuegt"], schon_im_warenkorb=schon_drin,
+                         nicht_moeglich=len(hinzu["hinweise"]) - schon_drin)
+        return {"ok": True, "result": knapp}
     nutzer = get_user_by_id(user_id) or {}
-    werte = {"ansprechpartner": _vorschlag(args.get("ansprechpartner"), 120) or (nutzer.get("display_name") or "").strip()[:120],
-             "telefon": _vorschlag(args.get("telefon"), 40), "hinweise": _vorschlag(args.get("hinweise"), 2000),
-             "bedingungen": False}
+    # Was der Nutzer gesagt hat, geht vor; sonst Ansprechpartner und Telefon vom letzten Auftrag (Steve 16.10.2026: „dass er sich
+    # das merkt“), sonst der Anzeigename
+    letzte = express.letzte_kontaktdaten(user_id)
+    werte = {"ansprechpartner": (_vorschlag(args.get("ansprechpartner"), 120) or letzte["ansprechpartner"][:120]
+                                 or (nutzer.get("display_name") or "").strip()[:120]),
+             "telefon": _vorschlag(args.get("telefon"), 40) or letzte["telefon"][:40],
+             "hinweise": _vorschlag(args.get("hinweise"), 2000), "bedingungen": False}
     kid = _merken(user_id, EXPRESS_BESTELLEN, None, {
         "korb_id": int(korb["id"]), "erwartete_credits": int(korb["credits"]), "fassung": korb["fassung"],
         "idempotenz": "karte-" + secrets.token_hex(12)})
-    return {"ok": True,
-            "result": {"karte": "express_bestellen", "dokumente": korb["dokumente"], "seiten": korb["seiten"],
-                       "credits": korb["credits"], "guthaben": guthaben,
-                       "hinweis": "Die Karte steht unter deiner Antwort. Nenne Preis und Frist in einem Satz; bestellen kann nur "
-                                  "der Nutzer mit „Zahlungspflichtig bestellen“, nachdem er die Bedingungen akzeptiert hat."},
-            "anhang": karte(EXPRESS_BESTELLEN, kid, werte, _, text=text, zeilen=zeilen)}
+    ergebnis = {"karte": "express_bestellen", "dokumente": korb["dokumente"], "seiten": korb["seiten"],
+                "credits": korb["credits"], "guthaben": guthaben, "vorbelegt": [k for k, v in werte.items() if v],
+                "vom_letzten_auftrag": [k for k in ("ansprechpartner", "telefon")
+                                        if letzte[k] and not _vorschlag(args.get(k), 200) and werte[k]],
+                "hinweis": "Die Karte steht unter deiner Antwort. Nenne Preis und Frist in einem Satz; bestellen kann nur "
+                           "der Nutzer mit „Zahlungspflichtig bestellen“, nachdem er die Bedingungen akzeptiert hat."}
+    if hinzu is not None:
+        nicht_moeglich = len(hinzu["hinweise"]) - schon_drin
+        ergebnis.update(hineingelegt=hinzu["hinzugefuegt"], schon_im_warenkorb=schon_drin, nicht_moeglich=nicht_moeglich)
+        if nicht_moeglich > 0:
+            ergebnis["hinweis"] += " Nicht jedes Dokument konnte hinein (heute nur PDF); warum, steht auf der Karte."
+    return {"ok": True, "result": ergebnis,
+            "anhang": karte(EXPRESS_BESTELLEN, kid, werte, _, text=text, zeilen=zeilen,
+                            hinweise=(hinzu or {}).get("hinweise") or None)}
 
 
 def _zahl(n: int) -> str:

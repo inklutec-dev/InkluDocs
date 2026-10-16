@@ -574,6 +574,21 @@ def korb_kurz(user_id: int) -> dict:
     return {"dokumente": int(r["n"] or 0) if r else 0, "seiten": int(r["s"] or 0) if r else 0}
 
 
+def letzte_kontaktdaten(user_id: int) -> dict:
+    """Ansprechpartner und Telefon des zuletzt bestellten Auftrags dieses Kontos, zum Vorbelegen des Bestellformulars (Steve
+    16.10.2026: „dass er sich das merkt“). Nur wirklich bestellte Auftraege; geloeschte zaehlen nicht (kunde_loeschen leert die
+    Felder). Ohne Auftrag beide leer."""
+    conn = get_db()
+    try:
+        r = conn.execute("SELECT ansprechpartner, telefon FROM express_auftraege WHERE user_id = ? AND bestellt_am IS NOT NULL "
+                         "AND TRIM(ansprechpartner) != '' ORDER BY bestellt_am DESC, id DESC LIMIT 1", (int(user_id),)).fetchone()
+    except sqlite3.OperationalError:
+        r = None
+    finally:
+        conn.close()
+    return {"ansprechpartner": (r["ansprechpartner"] or "").strip() if r else "", "telefon": (r["telefon"] or "").strip() if r else ""}
+
+
 def _grenzen_pruefen(dokumente: int, seiten: int, e: dict) -> None:
     if dokumente > e["max_dokumente_auftrag"]:
         raise ExpressFehler(f"Ein Express-Auftrag kann höchstens {e['max_dokumente_auftrag']} Dokumente enthalten. "

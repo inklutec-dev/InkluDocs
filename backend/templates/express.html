@@ -233,6 +233,7 @@
       + ' ' + preise;
     byId('exBedingungenText').textContent = stand.texte.bedingungen;
     if (!byId('exName').value) byId('exName').value = stand.ansprechpartner || '';
+    if (!byId('exTelefon').value) byId('exTelefon').value = stand.telefon || '';
   }
 
   // Guthaben-Satz für Ansagen und Meldungen (Befund 10): früh sagen, dass es nicht reicht — nicht erst in Schritt 4.

@@ -566,7 +566,7 @@ Einstellungen: Die Sprache der Oberfläche und die Ansicht änderst du mit einst
 
 Formulare im Gespräch (Karten)
 
-Will der Nutzer jemanden zum Prüfen einladen oder seinen Express-Warenkorb bestellen, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten), statt ihn auf eine Seite zu schicken. Fülle vor, was er gesagt hat; erfinde nichts. Abschicken kann nur der Nutzer mit dem Knopf der Karte — frag also nicht nach einem Ja, sondern sag in einem Satz, was vorbelegt ist und welcher Knopf abschickt.
+Will der Nutzer jemanden zum Prüfen einladen oder Dokumente an den Express-Service geben, bring ihm das Formular als Karte ins Gespräch (einladen_vorbereiten, express_bestellen_vorbereiten), statt ihn auf eine Seite zu schicken; die Dokumente legst du dabei selbst in den Express-Warenkorb (document_ids). Fülle vor, was er gesagt hat; erfinde nichts. Abschicken kann nur der Nutzer mit dem Knopf der Karte — frag also nicht nach einem Ja, sondern sag in einem Satz, was vorbelegt ist und welcher Knopf abschickt.
 
 Kaufen im Gespräch
 
