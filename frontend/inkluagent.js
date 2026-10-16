@@ -749,7 +749,7 @@ function inkluagentSeiteZeigen() {
     const s = window._arbeitsSeite;
     if (!f || !s) return;
     const titel = f.querySelector('#arbeitsSeiteTitel');
-    const neu = s.projekt ? t('Projekt: {name}', { name: s.name }) : t('Seite: {name}', { name: s.name });
+    const neu = s.projekt ? s.name : t('Seite: {name}', { name: s.name });   // Projekt: seine Ueberschrift („Alt-Texte – Projekt: …“)
     // Das Projekt ist der Grundzustand des Fensters auf seiner Seite: kein „Seite schließen“, dafuer „Mitverfolgen“
     f.querySelector('#arbeitsSeiteZu').hidden = !!s.projekt;
     f.querySelector('#arbeitsFolgen').hidden = !s.projekt;
@@ -799,7 +799,8 @@ function inkluagentRahmenGeladen(rahmen) {
         const titel = (h1 && h1.textContent.trim()) || String(doc.title || '').split(' · ')[0].trim();
         const vorher = window._arbeitsSeite || {};
         const fokus = !!vorher.fokus || document.activeElement === rahmen;
-        window._arbeitsSeite = { offen: true, pfad: pfad, name: titel || vorher.name || loc.pathname, fokus: false, hin: false, projekt: projekt };
+        const name = projekt ? ((h1 && h1.textContent.trim()) || vorher.name || titel) : (titel || vorher.name || loc.pathname);
+        window._arbeitsSeite = { offen: true, pfad: pfad, name: name, fokus: false, hin: false, projekt: projekt };
         inkluagentSeiteZeigen();
         inkluagentSeiteMerken();
         if (fokus) inkluagentRahmenFokus(rahmen, !!(vorher.fokus && vorher.hin), loc.hash);
@@ -942,8 +943,46 @@ function inkluagentProjektGeladen(win, doc) {
     ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(art => doc.addEventListener(art, e => {
         if (e.isTrusted) inkluagentFolgenSetzen(false, false);
     }, { passive: true }));
+    // Die Projektansichten zeichnen ihren Hauptbereich neu (Abruf, Nachfragen waehrend eines Laufs, Ansichtswechsel darin): danach
+    // Ueberschrift, Markierung und „So klingt diese Stelle“ nachziehen — gebuendelt
+    const main = doc.getElementById('main');
+    if (main && win && typeof win.MutationObserver === 'function') {
+        let wartet = false;
+        new win.MutationObserver(() => {
+            if (wartet) return;
+            wartet = true;
+            setTimeout(() => { wartet = false; inkluagentRahmenNeuGezeichnet(win, doc); }, 150);
+        }).observe(main, { childList: true, subtree: true });
+    }
+    inkluagentRahmenNeuGezeichnet(win, doc);
     const ziel = window._arbeitsFolgeZiel;
     if (ziel) inkluagentFensterFolgen(ziel, true);
+}
+function inkluagentRahmenNeuGezeichnet(win, doc) {
+    const s = window._arbeitsSeite;
+    const rahmen = document.getElementById('arbeitsSeiteRahmen');
+    if (!s || !s.projekt || !rahmen) return;
+    try { if (rahmen.contentDocument !== doc) return; } catch (e) { return; }   // inzwischen eine andere Seite im Fenster
+    const h1 = doc.querySelector('#main h1');
+    const name = h1 ? h1.textContent.trim() : '';
+    if (name && name !== s.name) { s.name = name; inkluagentSeiteZeigen(); }
+    // Die Markierung der Stelle ueberlebt ein Neuzeichnen (sonst verschwand sie nach Sekundenbruchteilen)
+    const m = window._arbeitsMarke;
+    if (m && Date.now() < m.bis) {
+        const el = doc.getElementById(m.id);
+        const k = el && (el.closest('section.image-review, details, .card') || el);
+        if (k && !k.classList.contains('inkluagent-hin-ziel')) {
+            for (let d = el.closest('details'); d; d = d.parentElement ? d.parentElement.closest('details') : null) d.open = true;
+            k.classList.add('inkluagent-hin-ziel');
+            setTimeout(() => k.classList.remove('inkluagent-hin-ziel'), Math.max(0, m.bis - Date.now()));
+        }
+    }
+    // Mitsehen: was jetzt in der Karte der verfolgten Stelle steht (ein Lauf fuellt den Alt-Text waehrenddessen)
+    const ziel = window._arbeitsFolgeZiel;
+    const karte = ziel ? inkluagentZielKarte(ziel) : null;
+    const feld = karte && karte.feld ? doc.getElementById(karte.feld) : null;
+    if (feld && /^alttext_/.test(karte.feld)) inkluagentMithoerenSetzen({ art: 'bild', alt: feld.value });
+    else if (feld) inkluagentMithoerenSetzen({ art: 'feld', info: feld.value });
 }
 function inkluagentFolgenAn() {
     const k = document.getElementById('arbeitsFolgen');
@@ -990,6 +1029,11 @@ function inkluagentFensterFolgen(ziel, nachLaden) {
     if (!win || !doc) return;
     const lauf = window._arbeitsFolgeLauf = (window._arbeitsFolgeLauf || 0) + 1;
     let versuche = nachLaden ? 32 : 1;   // nach dem Laden bis zu 8 s auf die Karte warten (die Seite baut sie nach ihrem Abruf)
+    // Steht das Fenster in einer anderen Ansicht (die Adresse der Seite traegt sie: ?ansicht=), die passende laden — einmal; Werkzeuge
+    // ohne Ansichten (Grafik, Web) haben keine in der Adresse
+    let aktuell = null;
+    try { aktuell = new URLSearchParams(doc.location.search).get('ansicht'); } catch (e) { aktuell = null; }
+    if (!nachLaden && karte.ansicht && aktuell && aktuell !== karte.ansicht) { inkluagentProjektImFenster(karte.ansicht); return; }
     const suchen = () => {
         if (lauf !== window._arbeitsFolgeLauf || document.activeElement === rahmen) return;
         const el = doc.getElementById(karte.id);
@@ -1011,6 +1055,7 @@ function inkluagentImRahmenZeigen(win, doc, el, karte) {
     ziel.classList.add('inkluagent-hin-ziel');
     clearTimeout(ziel._inkluagentHin);
     ziel._inkluagentHin = setTimeout(() => ziel.classList.remove('inkluagent-hin-ziel'), 3500);
+    window._arbeitsMarke = { id: el.id, bis: Date.now() + 3500 };   // ueberlebt ein Neuzeichnen der Seite (inkluagentRahmenNeuGezeichnet)
     if (typeof win.zeigeHand === 'function') setTimeout(() => { try { win.zeigeHand(el); } catch (e) { /* nur Schmuck */ } }, ruhig ? 0 : 500);
     // Mitsehen und Mithoeren: was in der Karte steht, so wie ein Screenreader es ungefaehr vorliest
     const feld = karte && karte.feld ? doc.getElementById(karte.feld) : null;

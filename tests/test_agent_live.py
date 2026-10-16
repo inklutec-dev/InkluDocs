@@ -309,6 +309,17 @@ class Buehne(unittest.TestCase):
         n = funktion(self.js, "function inkluagentRahmenNachziehen(")
         self.assertIn("document.activeElement === rahmen) return;", n, "nie neu zeichnen, solange man im Fenster arbeitet")
 
+    def test_neu_gezeichnet_ueberschrift_marke_mithoeren(self):
+        g = funktion(self.js, "function inkluagentProjektGeladen(")
+        self.assertIn("}).observe(main, { childList: true, subtree: true });", g)
+        n = funktion(self.js, "function inkluagentRahmenNeuGezeichnet(")
+        self.assertIn("if (rahmen.contentDocument !== doc) return;", n, "nur die Seite, die gerade im Fenster steht")
+        self.assertIn("if (m && Date.now() < m.bis) {", n)
+        self.assertIn("inkluagentMithoerenSetzen({ art: 'bild', alt: feld.value });", n)
+        f = funktion(self.js, "function inkluagentFensterFolgen(")
+        self.assertIn("if (!nachLaden && karte.ansicht && aktuell && aktuell !== karte.ansicht) { inkluagentProjektImFenster(karte.ansicht); return; }", f)
+        self.assertIn("const neu = s.projekt ? s.name : t('Seite: {name}', { name: s.name });", funktion(self.js, "function inkluagentSeiteZeigen("))
+
     def test_karten_der_ziele(self):
         k = funktion(self.js, "function inkluagentZielKarte(")
         for teil in ("'img_heading_' + id", "'alttext_' + id", "ansicht: 'alttexte'", "'feld_heading_' + id", "ansicht: 'quickinfos'",
