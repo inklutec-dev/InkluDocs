@@ -811,8 +811,17 @@ Werkzeuge“ — und auf die Frage nach dem elegantesten Weg „Mitsehen und Mit
   sie ungefähr vorliest — „Bild, <Alternativtext>“ bzw. ohne Text der Hinweis, dass ein Screenreader nur „Bild“ sagt oder es
   überspringt; bei Formularfeldern „Formularfeld, <Quickinfo>“. Quelle: das Feld in der echten Karte bzw. der fertige Text des Laufs.
   Mit „Anhören“ (dieselben Regeln wie unter jeder Antwort, nur Stimmen auf dem Gerät).
-- Tests: `tests/test_agent_live.py` Klasse `Buehne` (9); drei wörtliche Erwartungen älterer Tests angepasst (Ziel mit Kennungen,
-  Erfolg auch für das Projekt). Klickprobe `probe_buehne.py`, Rauchtest mit echtem Lauf `rauch_live1610.py` (Hilfsdateien).
+- **Gefunden in Klickprobe und Rauchtest, behoben:** (1) Ohne festen Agentenbereich fiel die eingebettete Projektseite auf den alten
+  eingebetteten Agenten zurück, dessen Agentenansicht die Bildliste im Fenster versteckte — eingebettet liefert `inkluagentSectionHtml`
+  nichts und `inkluagentInit` merkt nur das Projekt. (2) Jede Projektansicht fokussierte beim ersten Zeichnen ihre Überschrift 1; im
+  Fenster sprang der Fokus damit aus dem Gespräch in den Rahmen — `fokusHierErlaubt` (dashboard.js): im Rahmen nur, wenn der Fokus
+  schon dort steht (dokument.js, abschluss.js, formular.js, uebersetzen.js). (3) Ansichtslinks im Fenster öffneten die ganze Seite —
+  Links auf dasselbe Projekt bleiben im Rahmen (`gleichesProjekt`). (4) Die Ansicht „Dokument“ kennt die Bildkarten auch: maßgeblich
+  ist die Ansicht in der Adresse der Seite. (5) Die Seite im Fenster zeichnet sich regelmäßig neu: ein Beobachter zieht Überschrift
+  (mit Ansicht und Namen) als Titel, Markierung, „im Blick halten“ (30 s) und „So klingt diese Stelle“ nach; nach jedem fertigen Bild
+  und am Ende eines Laufs zeichnet die Seite draußen das Fenster neu. (6) Die Pillen schlugen `hidden` — `.arbeitsfenster [hidden]`.
+- Tests: `tests/test_agent_live.py` Klasse `Buehne` (14); drei wörtliche Erwartungen älterer Tests angepasst (Ziel mit Kennungen,
+  Erfolg auch für das Projekt). Klickprobe `probe_buehne.py` 18/18, Rauchtest mit echtem Lauf `rauch_live1610.py` 16/16 (Hilfsdateien).
 
 ### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
 
