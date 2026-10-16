@@ -968,14 +968,18 @@ function inkluagentRahmenNeuGezeichnet(win, doc) {
     if (name && name !== s.name) { s.name = name; inkluagentSeiteZeigen(); }
     // Die Markierung der Stelle ueberlebt ein Neuzeichnen (sonst verschwand sie nach Sekundenbruchteilen)
     const m = window._arbeitsMarke;
-    if (m && Date.now() < m.bis) {
-        const el = doc.getElementById(m.id);
-        const k = el && (el.closest('section.image-review, details, .card') || el);
-        if (k && !k.classList.contains('inkluagent-hin-ziel')) {
-            for (let d = el.closest('details'); d; d = d.parentElement ? d.parentElement.closest('details') : null) d.open = true;
-            k.classList.add('inkluagent-hin-ziel');
-            setTimeout(() => k.classList.remove('inkluagent-hin-ziel'), Math.max(0, m.bis - Date.now()));
-        }
+    const el = m ? doc.getElementById(m.id) : null;
+    const k = el && (el.closest('section.image-review, details, .card') || el);
+    if (k && Date.now() < m.bis && !k.classList.contains('inkluagent-hin-ziel')) {
+        for (let d = el.closest('details'); d; d = d.parentElement ? d.parentElement.closest('details') : null) d.open = true;
+        k.classList.add('inkluagent-hin-ziel');
+        setTimeout(() => k.classList.remove('inkluagent-hin-ziel'), Math.max(0, m.bis - Date.now()));
+    }
+    // Im Blick halten: ein Neuzeichnen setzt die Seite oft nach oben — solange „Mitverfolgen“ an ist und niemand im Fenster arbeitet,
+    // steht die verfolgte Karte danach wieder mittig (sofort, ohne Fahrt)
+    if (k && Date.now() < m.halten && inkluagentFolgenAn() && document.activeElement !== rahmen) {
+        const r = k.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > win.innerHeight) inkluagentRahmenRollen(win, k, false);
     }
     // Mitsehen: was jetzt in der Karte der verfolgten Stelle steht (ein Lauf fuellt den Alt-Text waehrenddessen)
     const ziel = window._arbeitsFolgeZiel;
@@ -1049,18 +1053,23 @@ function inkluagentImRahmenZeigen(win, doc, el, karte) {
     for (let d = el.closest('details'); d; d = d.parentElement ? d.parentElement.closest('details') : null) d.open = true;
     const ziel = el.closest('section.image-review, details, .card') || el;
     const ruhig = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const r = ziel.getBoundingClientRect();
-    const oben = Math.max(0, (win.scrollY || 0) + r.top - Math.max(12, (win.innerHeight - Math.min(r.height, win.innerHeight)) / 2));
-    try { win.scrollTo({ top: oben, behavior: ruhig ? 'auto' : 'smooth' }); } catch (e) { win.scrollTo(0, oben); }
+    inkluagentRahmenRollen(win, ziel, !ruhig);
     ziel.classList.add('inkluagent-hin-ziel');
     clearTimeout(ziel._inkluagentHin);
     ziel._inkluagentHin = setTimeout(() => ziel.classList.remove('inkluagent-hin-ziel'), 3500);
-    window._arbeitsMarke = { id: el.id, bis: Date.now() + 3500 };   // ueberlebt ein Neuzeichnen der Seite (inkluagentRahmenNeuGezeichnet)
+    // Marke 3,5 s; im Blick halten 30 s — beides ueberlebt ein Neuzeichnen der Seite (inkluagentRahmenNeuGezeichnet)
+    window._arbeitsMarke = { id: el.id, bis: Date.now() + 3500, halten: Date.now() + 30000 };
     if (typeof win.zeigeHand === 'function') setTimeout(() => { try { win.zeigeHand(el); } catch (e) { /* nur Schmuck */ } }, ruhig ? 0 : 500);
     // Mitsehen und Mithoeren: was in der Karte steht, so wie ein Screenreader es ungefaehr vorliest
     const feld = karte && karte.feld ? doc.getElementById(karte.feld) : null;
     if (feld && /^alttext_/.test(karte.feld)) inkluagentMithoerenSetzen({ art: 'bild', alt: feld.value });
     else if (feld) inkluagentMithoerenSetzen({ art: 'feld', info: feld.value });
+}
+// Nur den Rahmen rollen, die Karte mittig (scrollIntoView rollte auch die Seite draussen); weich nur ohne „Bewegung reduzieren“
+function inkluagentRahmenRollen(win, karte, weich) {
+    const r = karte.getBoundingClientRect();
+    const oben = Math.max(0, (win.scrollY || 0) + r.top - Math.max(12, (win.innerHeight - Math.min(r.height, win.innerHeight)) / 2));
+    try { win.scrollTo({ top: oben, behavior: weich ? 'smooth' : 'auto' }); } catch (e) { win.scrollTo(0, oben); }
 }
 // Nach Aenderungen des Agenten: die Projektseite im Fenster neu zeichnen und wieder zur Stelle — nicht, solange man dort arbeitet
 function inkluagentRahmenNachziehen() {
