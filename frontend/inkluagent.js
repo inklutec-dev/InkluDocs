@@ -1866,6 +1866,7 @@ function inkluagentFrueherZeigen(projectId, anzahl) {
                 inkluagentSpracheSetzen(c, m.sprache);   // Runde 2 (B11, Punkt 4)
                 c.textContent = m.content || '';
                 w.appendChild(h);
+                if (m.role === 'assistant') inkluagentAnhoerenKnopf(h, c);   // auch hier anhören (16.10.2026)
                 w.appendChild(c);
                 box.appendChild(w);
             });
@@ -2609,6 +2610,7 @@ function inkluagentAppendMessage(role, content, werkzeuge, anhang, sprache) {
     if (role === 'assistant' && window.INKLUAGENT && window.INKLUAGENT.bloecke) inkluagentBloeckeBauen(contentEl, content || '');
     else contentEl.textContent = content || '';
     wrapper.appendChild(roleEl);
+    if (role === 'assistant') inkluagentAnhoerenKnopf(roleEl, contentEl);
     wrapper.appendChild(contentEl);
     if (role === 'assistant' && Array.isArray(anhang) && anhang.length) {
         const aEl = inkluagentAnhangEl(anhang);
@@ -2624,6 +2626,86 @@ function inkluagentAppendMessage(role, content, werkzeuge, anhang, sprache) {
     }
     log.appendChild(wrapper);
     return wrapper;
+}
+
+// Anhören (16.10.2026, Steve: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“): unter der Überschrift jeder
+// Antwort ein Knopf „Anhören“, wie in InkluEdit seit 15.10. Start und Stopp über denselben Knopf (aria-pressed), Escape hält an,
+// immer nur eine Stimme — auch zusammen mit „Anhören“ beim Alt-Text und den Hörproben (gemeinsame Klasse tts-btn, app.html
+// vorlesenStopp setzt auch diesen Knopf zurück). Wie dort nur Stimmen, die AUF DEM GERÄT laufen (voice.localService): Chrome bietet
+// auch Google-Stimmen an, die den Text übers Netz schicken, die nehmen wir aus Datenschutzgründen nie. Gelesen wird nur der Text der
+// Antwort (nicht Karte, Download oder „Genutzt: …“), in ihrer Sprache (lang am Inhalt), satzweise (Chrome bricht lange Äußerungen
+// ab). Ohne Sprachausgabe im Browser gibt es keinen Knopf.
+// window._inkluagentAnhoerenLauf: jeder Start zaehlt hoch; spaete onend/onerror alter Aeusserungen laufen dann ins Leere (auf
+// oberster Ebene stehen nur Funktionen, test_inkluagent_js)
+function inkluagentAnhoerenStopp() {
+    window._inkluagentAnhoerenLauf = (window._inkluagentAnhoerenLauf || 0) + 1;
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* nichts zu stoppen */ }
+    document.querySelectorAll('.tts-btn[aria-pressed="true"]').forEach(b => {
+        b.setAttribute('aria-pressed', 'false');
+        b.textContent = b.dataset.label || t('Anhören');
+    });
+}
+function inkluagentLokaleStimmen() {
+    return new Promise(fertig => {
+        const synth = window.speechSynthesis;
+        const jetzt = (synth && synth.getVoices()) || [];
+        if (jetzt.length || !synth) { fertig(jetzt); return; }
+        let erledigt = false;
+        const ende = () => { if (!erledigt) { erledigt = true; fertig(synth.getVoices() || []); } };
+        synth.addEventListener('voiceschanged', ende, { once: true });
+        setTimeout(ende, 1200);
+    });
+}
+function inkluagentAnhoerenKnopf(roleEl, contentEl) {
+    if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-secondary btn-small tts-btn inkluagent-anhoeren';
+    b.textContent = t('Anhören');
+    b.dataset.label = t('Anhören');
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => inkluagentAnhoeren(b, contentEl));
+    roleEl.insertAdjacentElement('afterend', b);
+    if (!window._inkluagentAnhoerenEsc) {
+        window._inkluagentAnhoerenEsc = true;
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && document.querySelector('.inkluagent-anhoeren[aria-pressed="true"]')) inkluagentAnhoerenStopp();
+        });
+    }
+}
+async function inkluagentAnhoeren(b, contentEl) {
+    if (b.getAttribute('aria-pressed') === 'true') { inkluagentAnhoerenStopp(); return; }
+    inkluagentAnhoerenStopp();
+    const lauf = window._inkluagentAnhoerenLauf;
+    // Saetze trennen ohne Lookbehind (Safari < 16.4 kennt ihn nicht, wie in app.html)
+    const teile = String(contentEl.innerText || contentEl.textContent || '').replace(/([.!?:])\s+/g, '$1\n').split(/\n+/)
+        .map(x => x.trim()).filter(Boolean);
+    if (!teile.length) { announce(t('Kein Text zum Vorlesen vorhanden.')); return; }
+    const zurueck = () => {
+        if (lauf !== window._inkluagentAnhoerenLauf) return;
+        b.setAttribute('aria-pressed', 'false');
+        b.textContent = t('Anhören');
+    };
+    // Zustand VOR dem Warten auf die Stimmen: ein zweiter Druck in der Wartezeit stoppt, statt doppelt zu starten
+    b.setAttribute('aria-pressed', 'true');
+    b.textContent = t('Stopp');
+    const traeger = contentEl.closest('[lang]');
+    const kennung = String((traeger && traeger.getAttribute('lang')) || window.LANG || 'de').slice(0, 2).toLowerCase();
+    const stimme = (await inkluagentLokaleStimmen()).find(v => v.localService && v.lang && v.lang.toLowerCase().indexOf(kennung) === 0);
+    if (lauf !== window._inkluagentAnhoerenLauf) return;   // inzwischen gestoppt oder neu gestartet
+    if (!stimme) {
+        zurueck();
+        announce(t('Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor.'));
+        return;
+    }
+    teile.forEach((teil, i) => {
+        const u = new SpeechSynthesisUtterance(teil);
+        u.voice = stimme;
+        u.lang = stimme.lang;
+        if (i === teile.length - 1) u.onend = zurueck;
+        u.onerror = zurueck;
+        window.speechSynthesis.speak(u);
+    });
 }
 
 function inkluagentSetStatus(text, isError) {

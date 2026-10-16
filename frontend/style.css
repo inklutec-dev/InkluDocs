@@ -1136,6 +1136,12 @@ ul.inkluagent-kurzhilfe {
     letter-spacing: 0.03em;
     margin-bottom: 0.3rem;
 }
+/* „Anhören“ unter dem Absender jeder Antwort (16.10.2026, wie InkluEdit): klein, links, mit etwas Luft zum Text */
+.inkluagent-anhoeren {
+    margin: 0 0 0.45rem 0;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.85rem;
+}
 .inkluagent-message-content {
     font-size: 0.95rem;
     color: var(--text);

@@ -753,6 +753,18 @@ Punkt 6 (eigene Agentenansicht wie bei ChatGPT) folgt als eigener Schritt.
   Agentenansicht mit Gesprächen in der Seitenleiste bleiben die beiden im Agenten ausgeblendet.
 - Tests: `test_michael_feedback_1012.test_neue_funktionen_neben_geteilten_projekten`, `test_agent_gespraeche.test_knoepfe_neben_senden_nur_mit_schalter`;
   Proben `probe_gespraeche` (Reihe der drei Knöpfe), Rauchtest `rauch_michael`.
+### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
+
+Unter dem Absender jeder Antwort des InkluAgent (auch im Verlauf, in der Rückmeldung und im älteren Gespräch, nicht am wachsenden
+Entwurf) steht ein echter Knopf „Anhören“ (`inkluagent.js`, `inkluagentAnhoerenKnopf`), wie in InkluEdit seit 15.10. Ein Druck
+startet, derselbe Knopf stoppt (`aria-pressed`, Beschriftung „Stopp“), Escape hält an. Immer nur eine Stimme: Start beendet jede
+andere Ausgabe, auch „Anhören“ beim Alt-Text und die Hörproben (gemeinsame Klasse `tts-btn`; `vorlesenStopp` in `app.html` setzt
+auch diesen Knopf zurück). Gelesen wird nur der Text der Antwort (nicht Karte, Download oder „Genutzt: …“), satzweise, in ihrer
+Sprache (`lang` am Inhalt). Wie beim Alt-Text nur Stimmen, die auf dem Gerät laufen (`voice.localService`) — Chrome bietet auch
+Google-Stimmen an, die den Text übers Netz schicken; ohne lokale Stimme kommt der bekannte Hinweis statt Vorlesen. Ohne
+Sprachausgabe im Browser gibt es keinen Knopf. Tests: `tests/test_agent_anhoeren.py` (7, Gegenprobe 3/3), Klickprobe mit
+nachgebauter Sprachausgabe.
+
 ### Agentenansicht wie ChatGPT/Claude mit Arbeitsfenster (Michael Karbe Punkt 6, Steves Vision 12.10.2026; Schalter `AGENT_ARBEITSFENSTER`, Umgebung `INKLUAGENT_ARBEITSFENSTER=an`, braucht `AGENT_ANSICHT` und `AGENT_UEBERALL`)
 
 Steve: „Auf der einen Seite das Eingabefeld, auf der anderen sieht man, was der Agent gerade macht — welche Seite, welches
