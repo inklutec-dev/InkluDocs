@@ -753,6 +753,35 @@ Punkt 6 (eigene Agentenansicht wie bei ChatGPT) folgt als eigener Schritt.
   Agentenansicht mit Gesprächen in der Seitenleiste bleiben die beiden im Agenten ausgeblendet.
 - Tests: `test_michael_feedback_1012.test_neue_funktionen_neben_geteilten_projekten`, `test_agent_gespraeche.test_knoepfe_neben_senden_nur_mit_schalter`;
   Proben `probe_gespraeche` (Reihe der drei Knöpfe), Rauchtest `rauch_michael`.
+### Live-Fenster und Gesicht wie das Sichtfenster in InkluEdit (Steve 16.10.2026)
+
+Steve nach dem Gespräch mit Michael: „dass man sieht, wo er sich gerade aufhält, was er gerade macht. Wenn er einen
+Alternativtext für die Bilder macht, dass man in dem Moment das Bild eingeblendet sieht … wie einen Livestream im
+Arbeitsfenster“. Und: dasselbe Gesicht wie das Sichtfenster in InkluEdit, aber ohne Geräte.
+
+- **Was läuft wirklich:** `main._ALT_LAEUFE` (Projekt → `{gesamt, document_id, seit}`) — `_process_project` trägt jeden
+  Alt-Text-Lauf beim Start ein (`_alt_lauf_eintragen` zählt die Bilder, die er vor sich hat, wie `_process_project_lauf` sie
+  auswählt) und im `finally` wieder aus, auch bei Abbruch. Ein Projektstatus `processing` kann nach einem Absturz hängen bleiben
+  (Staging: Bilder vom Mai 2026) — die zeigt das Live-Fenster nie.
+- **`GET /api/agent/live?vorher=<Bild>`** (Schalter `AGENT_ARBEITSFENSTER`, `inkluagent/arbeitsfenster.live`): der jüngste
+  laufende Lauf in einem Projekt DIESES Kontos — Projektname, `gesamt`, `fertig` (gesamt minus noch offene), das Bild in Arbeit
+  wie `ziel` (Nummer je Dokument, Seite, Dokument, `/api/images/<id>/file|page-view`). `vorher`: das Bild, das die Seite zuletzt
+  als „in Arbeit“ zeigte — ist es `done`/`error` und gehört zum Konto, kommt sein Alt-Text mit (wie die Oberfläche ihn zeigt,
+  `_display_alt_text`). Ohne KI, nie eine Ausnahme nach außen.
+- **Seite** (`inkluagentLiveBeobachten`, `inkluagentLiveZeigen`): angestoßen, wo auch die Rückmeldung beobachtet wird
+  (Seitenaufbau, Knopf einer Karte, nach einer Antwort; zweimal nachsehen, falls der Lauf noch nicht eingetragen ist); fragt
+  alle 2,5 s, solange er läuft und der Tab sichtbar ist. Block „Im Hintergrund: Alt-Texte für „…“, n von m fertig“ oben im
+  Fenster: Fortschritt, das Bild in Arbeit mit pulsierendem Ring („In Arbeit: Bild 2 · Seite 1 · Dokument …“), darunter
+  „Gerade fertig: Bild 1“ mit dem Alt-Text (blendet ein). Die Hand zeigt einmal auf das erste Bild (mit Wusch), danach ein
+  leiser Tick je fertigem Bild. Keine Ansagen; „Stand vorlesen“ nennt Hintergrund, Bild in Arbeit und den letzten Alt-Text; die
+  Kopfzeile sagt „Arbeitet im Hintergrund: Alt-Texte, n von m fertig.“, solange der Agent selbst nichts tut. Alles mit
+  `textContent`, Bilder nur von den eigenen Endpunkten.
+- **Gesicht** (nur `style.css`, Knöpfe und Reihenfolge unverändert): Karte mit weichem Schatten, Auge-Symbol vor „Arbeitsfenster“,
+  der Stand als Zeile mit Punkt (grau bereit, grün pulsierend arbeitet), Knöpfe als Pillen mit Symbol (Lucide, ISC, als Maske),
+  Punktfläche als Bühne; die Seite im Fenster mit Kopf wie eine Browserleiste. Bei „Bewegung reduzieren“ ohne Puls, Ring und
+  Einblenden; Hochkontrast mit Rändern.
+- Tests: `tests/test_agent_live.py` (16, Gegenprobe 4/4), 6 neue Texte in sechs Sprachen.
+
 ### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
 
 Unter dem Absender jeder Antwort des InkluAgent (auch im Verlauf, in der Rückmeldung und im älteren Gespräch, nicht am wachsenden

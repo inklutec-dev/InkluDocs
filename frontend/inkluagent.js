@@ -624,6 +624,14 @@ function inkluagentArbeitsfensterBauen() {
         + '</div>'
         + '<p id="arbeitsStand" class="arbeitsfenster-stand"></p>'
         + '<progress id="arbeitsFortschritt" class="arbeitsfenster-fortschritt" aria-labelledby="arbeitsStand" hidden></progress>'
+        // Live-Fenster (Steve 16.10.2026): was ein Lauf im Hintergrund gerade tut — das Bild, an dem er schreibt, darunter der Alt-Text
+        // des Bildes davor, sobald er fertig ist. Texte aus Daten setzt inkluagentLiveZeigen mit textContent.
+        + '<div id="arbeitsLive" class="arbeitsfenster-live" hidden>'
+        +   '<h3 id="arbeitsLiveTitel"></h3>'
+        +   '<progress id="arbeitsLiveFortschritt" class="arbeitsfenster-fortschritt" aria-labelledby="arbeitsLiveTitel"></progress>'
+        +   '<figure class="arbeitsfenster-live-bild"><img alt=""><figcaption></figcaption></figure>'
+        +   '<p id="arbeitsLiveFertig" class="arbeitsfenster-live-fertig" hidden></p>'
+        + '</div>'
         // Seiten im Arbeitsfenster (13.10.2026, Steve: wie die Vorschau in InkluEdit): die echte Seite, eingebettet und bedienbar
         + '<div id="arbeitsSeite" class="arbeitsfenster-seite" hidden>'
         +   '<div class="arbeitsfenster-seite-kopf"><h3 id="arbeitsSeiteTitel"></h3>'
@@ -1084,7 +1092,11 @@ function inkluagentArbeitsZeigen() {
     const f = document.getElementById('arbeitsfenster');
     if (!f) return;
     const z = inkluagentArbeitsZustand();
-    inkluagentTextSetzen(f.querySelector('#arbeitsStand'), z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.'));
+    // Live-Fenster (16.10.2026): tut der Agent selbst nichts, aber ein Lauf arbeitet im Hintergrund, sagt der Stand das
+    const lv = window._arbeitsLive && window._arbeitsLive.laeuft;
+    const hinten = (!z.laeuft && lv) ? t('Arbeitet im Hintergrund: Alt-Texte, {n} von {m} fertig.', { n: lv.fertig, m: lv.gesamt }) : '';
+    inkluagentTextSetzen(f.querySelector('#arbeitsStand'), hinten || z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.'));
+    f.dataset.zustand = z.laeuft ? 'laeuft' : (lv ? 'hinten' : 'ruhe');   // nur fuer den Punkt vor dem Stand (style.css)
     f.querySelector('#arbeitsFortschritt').hidden = !z.laeuft;
     const notiz = f.querySelector('#arbeitsNotiz');
     inkluagentTextSetzen(notiz, z.notiz ? t('Zwischenstand: {text}', { text: String(z.notiz) }) : '');
@@ -1291,6 +1303,11 @@ function inkluagentArbeitsStart(text, behalten) {
     const z = inkluagentArbeitsZustand();
     z.laeuft = true;
     if (!behalten) { z.schritte = []; z.notiz = ''; z.ergebnis = null; }
+    if (!behalten && !(window._arbeitsLive && window._arbeitsLive.laeuft)) {
+        window._arbeitsLive = null;
+        const lb = document.getElementById('arbeitsLive');
+        if (lb) lb.hidden = true;
+    }
     z.stand = text || t('Arbeitet: liest deine Nachricht und plant die Schritte.');
     inkluagentArbeitsMerken();
 }
@@ -1341,7 +1358,125 @@ function inkluagentStandVorlesen() {
     if (z.ergebnis && z.ergebnis.text) teile.push(t('Zuletzt fertig') + ': ' + z.ergebnis.schritt + ': ' + z.ergebnis.text);
     const seiteOffen = !!(window._arbeitsSeite && window._arbeitsSeite.offen);
     if (!seiteOffen && !z.laeuft) inkluagentUeberblickZeilen().forEach(([k, v]) => teile.push(k + ': ' + (Array.isArray(v) ? v.map(x => x.name).join(', ') : v)));
+    inkluagentLiveTexte().forEach(x => teile.push(x));   // Live-Fenster: was im Hintergrund laeuft und was gerade fertig wurde
     announce(teile.map(x => x.replace(/[.\s]+$/, '')).join('. ') + '.');
+}
+// ─── Live-Fenster (Steve 16.10.2026: „wie einen Livestream im Arbeitsfenster … wenn er einen Alternativtext für die Bilder macht,
+// dass man in dem Moment das Bild eingeblendet sieht“) ───
+// Laeuft ein Alt-Text-Lauf im Hintergrund (nach „Auftrag erteilen“ oder dem Knopf einer Karte), fragt die Seite GET /api/agent/live
+// alle 2,5 Sekunden, solange er laeuft und die Seite sichtbar ist. Gezeigt wird das Bild, an dem er gerade schreibt (Hand und Ring),
+// mit Nummer, Seite und Dokument, darunter der Alt-Text des Bildes davor, sobald er fertig ist (Klang „schritt“ je Bild). Keine
+// Ansagen: VoiceOver bekommt alles mit „Stand vorlesen“ und am Ende die Rueckmeldung des Agenten. Zustand im window
+// (_arbeitsLive = {laeuft, vorher, bild}); auf oberster Ebene nur Funktionen (test_inkluagent_js).
+function inkluagentLiveBeobachten() {
+    if (!inkluagentArbeitsfensterAn()) return;
+    // Ein Lauf, den die Antwort oder der Knopf gerade erst angestossen hat, steht vielleicht noch nicht beim Server: zweimal nachsehen
+    window._arbeitsLiveAnlauf = 2;
+    if (window._arbeitsLiveBeobachtet) return;
+    window._arbeitsLiveBeobachtet = true;
+    const runde = async () => {
+        let d = null;
+        try {
+            const vorher = window._arbeitsLive && window._arbeitsLive.bild ? window._arbeitsLive.bild.image_id : null;
+            const res = await fetch('/api/agent/live' + (vorher ? '?vorher=' + encodeURIComponent(vorher) : ''));
+            d = res.ok ? await res.json() : null;
+        } catch (e) {
+            d = null;
+        }
+        if (d) inkluagentLiveZeigen(d);
+        if (d && d.laeuft) {
+            // unsichtbarer Tab: erst wieder fragen, wenn er sichtbar wird
+            const weiter = () => setTimeout(runde, 2500);
+            if (document.visibilityState === 'hidden') document.addEventListener('visibilitychange', weiter, { once: true });
+            else weiter();
+        } else if (d && !d.laeuft && window._arbeitsLiveAnlauf > 0 && !(window._arbeitsLive && window._arbeitsLive.vorher)) {
+            window._arbeitsLiveAnlauf--;
+            setTimeout(runde, 3000);
+        } else {
+            window._arbeitsLiveBeobachtet = false;
+        }
+    };
+    runde();
+}
+function inkluagentLiveZeigen(d) {
+    const box = document.getElementById('arbeitsLive');
+    if (!box) return;
+    const alt = window._arbeitsLive || {};
+    const l = d.laeuft || null;
+    const neu = { laeuft: l, bild: l && l.bild ? l.bild : null, vorher: alt.vorher || null };
+    // Fertig wurde das Bild, das zuletzt „in Arbeit“ war: sein Alt-Text kommt mit (vorher), auch wenn der Lauf schon zu Ende ist
+    if (d.vorher && alt.bild && d.vorher.image_id === alt.bild.image_id) {
+        neu.vorher = d.vorher;
+        inkluagentKlang('schritt');   // ein Tick je fertigem Bild, wie je erledigtem Schritt
+    }
+    window._arbeitsLive = neu;
+    if (!l && !neu.vorher) { box.hidden = true; inkluagentArbeitsZeigen(); return; }
+    box.hidden = false;
+    box.dataset.zustand = l ? 'laeuft' : 'fertig';
+    inkluagentTextSetzen(box.querySelector('#arbeitsLiveTitel'), l
+        ? t('Im Hintergrund: Alt-Texte für „{projekt}“, {n} von {m} fertig', { projekt: String(l.projekt || ''), n: l.fertig, m: l.gesamt })
+        : t('Im Hintergrund: fertig'));
+    const p = box.querySelector('#arbeitsLiveFortschritt');
+    p.hidden = !l;
+    if (l) { p.max = Math.max(1, Number(l.gesamt) || 1); p.value = Math.min(p.max, Number(l.fertig) || 0); }
+    const fig = box.querySelector('figure');
+    const img = fig.querySelector('img');
+    const gut = u => typeof u === 'string' && /^\/api\/images\/\d+\/(file|page-view)$/.test(u);
+    const b = neu.bild;
+    if (b && (gut(b.bild_url) || gut(b.seite_url))) {
+        const url = gut(b.bild_url) ? b.bild_url : b.seite_url;
+        img.onerror = () => { if (gut(b.seite_url) && img.getAttribute('src') !== b.seite_url) img.src = b.seite_url; else fig.hidden = true; };
+        const wechsel = img.getAttribute('src') !== url;
+        if (wechsel) img.src = url;
+        inkluagentTextSetzen(fig.querySelector('figcaption'), t('In Arbeit: {bild}', { bild: inkluagentLiveBildText(b) }));
+        fig.hidden = false;
+        // Die Hand zeigt auf das erste Bild eines Laufs (dashboard.js zeigeHand: nur fuers Auge, nicht bei reduzierter Bewegung; mit
+        // dem Wusch der Klangspur — darum nur einmal, nicht je Bild). Danach zeigt der Ring um das Bild, dass er daran schreibt.
+        if (wechsel && !alt.bild && typeof zeigeHand === 'function') zeigeHand(fig);
+    } else {
+        fig.hidden = true;
+    }
+    const fertig = box.querySelector('#arbeitsLiveFertig');
+    const v = neu.vorher;
+    const fertigText = v ? (v.status === 'error'
+        ? t('Gerade fertig: {bild} – hat nicht geklappt', { bild: inkluagentLiveBildText(v) })
+        : t('Gerade fertig: {bild}', { bild: inkluagentLiveBildText(v) })) : '';
+    if (fertig._stand !== JSON.stringify([fertigText, v && v.alt])) {
+        fertig._stand = JSON.stringify([fertigText, v && v.alt]);
+        fertig.textContent = '';
+        if (v) {
+            const s = document.createElement('strong');
+            s.textContent = fertigText;
+            fertig.appendChild(s);
+            if (v.status !== 'error' && v.alt) {
+                const q = document.createElement('span');
+                q.className = 'arbeitsfenster-live-alt';
+                q.textContent = String(v.alt);
+                fertig.appendChild(q);
+            }
+        }
+    }
+    fertig.hidden = !v;
+    inkluagentArbeitsZeigen();   // Stand in der Kopfzeile nachziehen
+}
+// „Bild 3 · Seite 2 · Dokument 1: Name“ — wie die Bildunterschrift der Vorschau
+function inkluagentLiveBildText(b) {
+    if (!b) return '';
+    const dok = b.dokument ? (b.dokument_nr ? t('Dokument {n}: {name}', { n: b.dokument_nr, name: String(b.dokument) }) : String(b.dokument)) : '';
+    return [inkluagentZielText({ art: 'bild', nummer: b.nummer }), b.seite ? t('Seite {n}', { n: b.seite }) : '', dok].filter(Boolean).join(' · ');
+}
+// Fuer „Stand vorlesen“ und die Kopfzeile: was im Hintergrund laeuft und was gerade fertig wurde
+function inkluagentLiveTexte() {
+    const lv = window._arbeitsLive;
+    if (!lv) return [];
+    const out = [];
+    const l = lv.laeuft;
+    if (l) out.push(t('Im Hintergrund: Alt-Texte für „{projekt}“, {n} von {m} fertig', { projekt: String(l.projekt || ''), n: l.fertig, m: l.gesamt }));
+    if (l && l.bild) out.push(t('In Arbeit: {bild}', { bild: inkluagentLiveBildText(l.bild) }));
+    const v = lv.vorher;
+    if (v) out.push(v.status === 'error' ? t('Gerade fertig: {bild} – hat nicht geklappt', { bild: inkluagentLiveBildText(v) })
+                                         : t('Gerade fertig: {bild}', { bild: inkluagentLiveBildText(v) }) + (v.alt ? ': ' + String(v.alt) : ''));
+    return out;
 }
 // Wartet eine Antwort auf eine Entscheidung (offene Karte)?
 function inkluagentWartetAufDich(anhang) {
@@ -1549,6 +1684,7 @@ async function inkluagentRueckmeldungStand() {
 async function inkluagentRueckmeldungenBeobachten() {
     const ABSTAND_MS = 15000;
     const FEHLER_MAX = 5;   // so viele Fehlversuche nacheinander (Netz weg), dann erst beim naechsten Anlass wieder
+    inkluagentLiveBeobachten();   // Live-Fenster (16.10.2026): dieselben Anlaesse koennen einen Lauf im Hintergrund gestartet haben
     if (!inkluagentRueckmeldungAn() || window._inkluagentRmBeobachtet) return;
     window._inkluagentRmBeobachtet = true;
     try {

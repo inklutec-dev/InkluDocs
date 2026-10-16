@@ -1620,6 +1620,84 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoe
     html.arbeitsfenster-gross #arbeitsZurueck { display: inline-block; }
     html.arbeitsfenster-gross .arbeitsfenster-seite iframe { height: 80vh; }
 }
+/* ─── Gesicht wie das Sichtfenster in InkluEdit (Steve 16.10.2026: dasselbe Gesicht für beide Werkzeuge, ohne Geräte) ───
+   Karte mit weichem Schatten; Kopfzeile mit Symbol (Auge) vor dem Titel; der Stand als Zeile mit Punkt (grau = bereit, grün und
+   pulsierend = arbeitet, auch im Hintergrund); Knöpfe als Pillen mit Symbol; die Bühne ist eine Punktfläche, auf der die Seite (mit
+   Browserleiste), das Bild und das Live-Bild liegen. Alles nur CSS — Knöpfe, Namen und Reihenfolge bleiben, wie sie sind. Symbole nach
+   Lucide (ISC-Lizenz, lucide.dev) als Hintergrund bzw. Maske: reiner Schmuck, für Screenreader unsichtbar (kein Text im Inhalt). */
+.arbeitsfenster { border-color: #d5dae3; border-radius: 14px; padding: 0.9rem 1rem 1rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 6px 20px rgba(16, 24, 40, 0.06); }
+.arbeitsfenster h2 { display: flex; align-items: center; gap: 0.7rem; margin: 0 0 0.75rem; font-size: 1.05rem; }
+.arbeitsfenster h2::before { content: ""; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") center / 20px 20px no-repeat, linear-gradient(135deg, #1b2a4a 0%, #33415f 100%); }
+.arbeitsfenster .arbeitsfenster-werkzeuge .btn, #arbeitsVorlesen, #arbeitsSeiteZu {
+    display: inline-flex; align-items: center; gap: 0.45rem; min-height: 40px; padding: 0.4rem 0.85rem; border: 1px solid #6b7280;
+    border-radius: 999px; background: #ffffff; color: var(--primary); font-size: 0.88rem; font-weight: 600; line-height: 1.2; }
+.arbeitsfenster .arbeitsfenster-werkzeuge .btn:hover, #arbeitsVorlesen:hover, #arbeitsSeiteZu:hover { background: #eef1f6; }
+#arbeitsGross::before, #arbeitsZurueck::before, #arbeitsVorlesen::before, #arbeitsSeiteZu::before {
+    content: ""; flex: 0 0 auto; width: 16px; height: 16px; background-color: currentColor;
+    -webkit-mask: var(--af-symbol) center / 16px 16px no-repeat; mask: var(--af-symbol) center / 16px 16px no-repeat; }
+#arbeitsGross { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h6v6'/%3E%3Cpath d='M9 21H3v-6'/%3E%3Cpath d='M21 3l-7 7'/%3E%3Cpath d='M3 21l7-7'/%3E%3C/svg%3E"); }
+#arbeitsZurueck { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 19-7-7 7-7'/%3E%3Cpath d='M19 12H5'/%3E%3C/svg%3E"); }
+#arbeitsVorlesen { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='11 5 6 9 2 9 2 15 6 15 11 19 11 5'/%3E%3Cpath d='M15.54 8.46a5 5 0 0 1 0 7.07'/%3E%3Cpath d='M19.07 4.93a10 10 0 0 1 0 14.14'/%3E%3C/svg%3E"); }
+#arbeitsSeiteZu { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E"); }
+#arbeitsGross[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+.arbeitsfenster-stand { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.55rem 0.75rem; border-radius: 10px;
+    background: #f4f6fa; font-size: 0.95rem; }
+.arbeitsfenster-stand::before { content: ""; flex: 0 0 auto; width: 0.6rem; height: 0.6rem; margin-top: 0.4em; border-radius: 50%;
+    background: #98a2b3; }
+.arbeitsfenster[data-zustand="laeuft"] .arbeitsfenster-stand::before,
+.arbeitsfenster[data-zustand="hinten"] .arbeitsfenster-stand::before { background: #12b76a; animation: af-puls 1.6s ease-out infinite; }
+@keyframes af-puls { 0% { box-shadow: 0 0 0 0 rgba(18, 183, 106, 0.55); } 70% { box-shadow: 0 0 0 7px rgba(18, 183, 106, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(18, 183, 106, 0); } }
+/* Bühne: Punktfläche */
+.arbeitsfenster-seite, .arbeitsfenster-live, .arbeitsfenster-bild { padding: 14px; border-radius: 12px; background-color: #eef1f6;
+    background-image: radial-gradient(#c3cad6 1px, transparent 1px); background-size: 16px 16px; }
+/* Seite im Fenster: Kopf wie eine Browserleiste (drei Punkte), darunter die Seite */
+.arbeitsfenster-seite-kopf { margin: 0; padding: 0.45rem 0.6rem 0.45rem 0.75rem; background: #ffffff; border: 1px solid #cbd2dd;
+    border-bottom: 0; border-radius: 10px 10px 0 0; }
+.arbeitsfenster-seite-kopf h3 { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; min-width: 0; }
+.arbeitsfenster-seite-kopf h3::before { content: ""; flex: 0 0 auto; width: 46px; height: 11px;
+    background: radial-gradient(circle at 5.5px 5.5px, #f97066 5.5px, transparent 6px),
+                radial-gradient(circle at 23px 5.5px, #fdb022 5.5px, transparent 6px),
+                radial-gradient(circle at 40.5px 5.5px, #32d583 5.5px, transparent 6px); }
+.arbeitsfenster-seite iframe { border-color: #cbd2dd; border-radius: 0 0 10px 10px;
+    box-shadow: 0 8px 24px -12px rgba(15, 23, 42, 0.35); }
+.arbeitsfenster-bild img, .arbeitsfenster-live-bild img { border: 0; border-radius: 10px; background: #ffffff;
+    box-shadow: 0 8px 24px -10px rgba(15, 23, 42, 0.4); }
+/* Live: Titel mit rotem Punkt, solange er laeuft; das Bild, an dem er schreibt, mit pulsierendem Ring; der fertige Alt-Text blendet ein */
+.arbeitsfenster-live { margin: 0 0 0.75rem; }
+.arbeitsfenster-live[hidden] { display: none; }
+.arbeitsfenster-live h3 { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; font-size: 0.95rem; }
+.arbeitsfenster-live[data-zustand="laeuft"] h3::before { content: ""; flex: 0 0 auto; width: 0.6rem; height: 0.6rem; border-radius: 50%;
+    background: #d92d20; animation: af-puls-rot 1.6s ease-out infinite; }
+@keyframes af-puls-rot { 0% { box-shadow: 0 0 0 0 rgba(217, 45, 32, 0.5); } 70% { box-shadow: 0 0 0 7px rgba(217, 45, 32, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 45, 32, 0); } }
+.arbeitsfenster-live .arbeitsfenster-fortschritt { margin: 0 0 0.6rem; }
+.arbeitsfenster-live-bild { margin: 0; }
+.arbeitsfenster-live-bild[hidden] { display: none; }
+.arbeitsfenster-live-bild img { display: block; max-width: 100%; max-height: 16rem; margin: 0.4rem auto; }
+.arbeitsfenster-live[data-zustand="laeuft"] .arbeitsfenster-live-bild img { outline: 3px solid var(--accent); outline-offset: 3px;
+    animation: af-ring 1.8s ease-out infinite; }
+@keyframes af-ring { 0% { box-shadow: 0 0 0 0 rgba(199, 80, 0, 0.45); } 70% { box-shadow: 0 0 0 14px rgba(199, 80, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(199, 80, 0, 0); } }
+.arbeitsfenster-live-bild figcaption { font-size: 0.875rem; color: var(--text-muted); text-align: center; margin-top: 0.4rem; }
+.arbeitsfenster-live-fertig { margin: 0.75rem 0 0; padding: 0.6rem 0.75rem; background: #ffffff; border-left: 4px solid var(--accent);
+    border-radius: 8px; font-size: 0.95rem; overflow-wrap: anywhere; }
+.arbeitsfenster-live-fertig[hidden] { display: none; }
+.arbeitsfenster-live-fertig strong { display: block; margin-bottom: 0.2rem; }
+.arbeitsfenster-live-alt { display: block; animation: af-ein 0.6s ease-out; }
+@keyframes af-ein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+    .arbeitsfenster[data-zustand] .arbeitsfenster-stand::before, .arbeitsfenster-live h3::before,
+    .arbeitsfenster-live .arbeitsfenster-live-bild img, .arbeitsfenster-live-alt { animation: none; }
+}
+@media (forced-colors: active) {
+    .arbeitsfenster-stand::before, .arbeitsfenster-live h3::before { background: CanvasText; }
+    #arbeitsGross::before, #arbeitsZurueck::before, #arbeitsVorlesen::before, #arbeitsSeiteZu::before { background-color: ButtonText; }
+    .arbeitsfenster-seite, .arbeitsfenster-live, .arbeitsfenster-bild { border: 1px solid CanvasText; }
+}
+@media (max-width: 1099px) { html.arbeitsfenster-gross #arbeitsZurueck { display: inline-flex; } }   /* Pille mit Symbol */
 /* Eingebettete Seite (im Rahmen des Arbeitsfensters): ohne Seitenleiste, volle Breite */
 body.eingebettet .dash-main { max-width: none; padding: 1rem 1rem 2rem; }
 

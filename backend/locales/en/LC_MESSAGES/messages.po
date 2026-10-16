@@ -12861,3 +12861,27 @@ msgstr "Project “{projekt}”, document “{dokument}”."
 #, python-brace-format
 msgid "{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben ist unbegrenzt. Fertig in {h} Stunden."
 msgstr "{d} documents, {s} pages, {c} credits in total. Your balance is unlimited. Ready within {h} hours."
+
+# InkluAgent: Live-Fenster im Arbeitsfenster (16.10.2026)
+#, python-brace-format
+msgid "Im Hintergrund: Alt-Texte für „{projekt}“, {n} von {m} fertig"
+msgstr "In the background: alt texts for “{projekt}”, {n} of {m} done"
+
+msgid "Im Hintergrund: fertig"
+msgstr "In the background: done"
+
+#, python-brace-format
+msgid "In Arbeit: {bild}"
+msgstr "In progress: {bild}"
+
+#, python-brace-format
+msgid "Gerade fertig: {bild}"
+msgstr "Just finished: {bild}"
+
+#, python-brace-format
+msgid "Gerade fertig: {bild} – hat nicht geklappt"
+msgstr "Just finished: {bild} – did not work"
+
+#, python-brace-format
+msgid "Arbeitet im Hintergrund: Alt-Texte, {n} von {m} fertig."
+msgstr "Working in the background: alt texts, {n} of {m} done."

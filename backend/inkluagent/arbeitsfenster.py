@@ -98,6 +98,56 @@ def _feld(conn, project_id: int, feld_id: int) -> Optional[dict]:
     return out
 
 
+_ALT_MAX = 1000
+
+
+def live(user_id: int, laeufe: dict, vorher=None, alt_text_von=None) -> dict:
+    """Live-Fenster (16.10.2026): {"laeuft": {...} oder None, "vorher": {...} oder None}.
+    laeufe: die Alt-Text-Laeufe des Prozesses (main._ALT_LAEUFE, Projekt -> {gesamt, document_id}); gezeigt wird der juengste in
+    einem Projekt DIESES Kontos — Projektname, gesamt, fertig (gesamt minus noch offene) und das Bild, an dem er gerade ist (wie
+    ziel: Nummer je Dokument, Seite, Dokument, Adressen). vorher: Kennung eines Bildes, das die Seite zuletzt als „in Arbeit“
+    gezeigt hat — ist es fertig (done/error) und gehoert zum Konto, kommt sein Alt-Text (alt_text_von, wie die Oberflaeche ihn
+    zeigt) mit. Nie eine Ausnahme nach aussen."""
+    out: dict = {"laeuft": None, "vorher": None}
+    try:
+        from database import get_db
+        conn = get_db()
+        try:
+            ids = [pid for pid in laeufe if _zahl(pid) is not None]
+            if ids:
+                platz = ",".join("?" * len(ids))
+                p = conn.execute(f"SELECT id, COALESCE(NULLIF(TRIM(name), ''), filename) AS name FROM projects "
+                                 f"WHERE user_id = ? AND id IN ({platz}) ORDER BY id DESC LIMIT 1", (user_id, *ids)).fetchone()
+                if p:
+                    e = laeufe.get(p["id"]) or {}
+                    dok = e.get("document_id")
+                    if dok is not None:
+                        offen = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND document_id = ? AND status IN "
+                                             "('pending', 'processing')", (p["id"], dok)).fetchone()[0]
+                    else:
+                        offen = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status IN ('pending', 'processing')",
+                                             (p["id"],)).fetchone()[0]
+                    gesamt = max(int(e.get("gesamt") or 0), int(offen))
+                    jetzt = conn.execute("SELECT id FROM images WHERE project_id = ? AND status = 'processing' ORDER BY id DESC LIMIT 1",
+                                         (p["id"],)).fetchone()
+                    out["laeuft"] = {"art": "alt_texte", "project_id": p["id"], "projekt": (p["name"] or "")[:_NAME_MAX],
+                                     "gesamt": gesamt, "fertig": max(0, gesamt - int(offen)),
+                                     "bild": dict(_bild(conn, p["id"], jetzt["id"]) or {}, image_id=jetzt["id"]) if jetzt else None}
+            v = _zahl(vorher)
+            if v is not None:
+                r = conn.execute("SELECT i.* FROM images i JOIN projects p ON p.id = i.project_id WHERE i.id = ? AND p.user_id = ? "
+                                 "AND i.status IN ('done', 'error')", (v, user_id)).fetchone()
+                if r:
+                    text = alt_text_von(dict(r)) if alt_text_von else (r["alt_text"] or "")
+                    out["vorher"] = dict(_bild(conn, r["project_id"], r["id"]) or {}, image_id=r["id"], status=r["status"],
+                                         alt=str(text or "")[:_ALT_MAX])
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001
+        log.exception("Live-Fenster: Stand nicht lesbar (ignoriert)")
+    return out
+
+
 def ergebnis(name: str, result, neue_aktionen) -> dict:
     """Livestream (12.10.2026): Kurzfassung nach einem Werkzeug — ok, bei Fehler der Grund (gekuerzt), bei Alt-Text und Quickinfo
     der neue Text (aus den Aktionen fuer die Oberflaeche bzw. dem Ergebnis von generate_alt_text). Die Seite setzt alles mit

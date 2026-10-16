@@ -7618,11 +7618,41 @@ async def _process_project(project_id: int, user_id: int, force: bool = False,
     aussen ab (CancelledError beim Container-Neustart) und raeumt auf. Der Fehler wird danach
     weitergereicht, damit nichts stillschweigend verschwindet."""
     ki_neu_ids = set(ki_neu_ids or ())
+    eintrag = _alt_lauf_eintragen(project_id, document_id)
     try:
         await _process_project_lauf(project_id, user_id, force, document_id, ki_neu_ids)
     except BaseException:
         _notaufraeumen(project_id, ki_neu_ids)
         raise
+    finally:
+        if _ALT_LAEUFE.get(project_id) is eintrag:
+            _ALT_LAEUFE.pop(project_id, None)
+
+
+# Live-Fenster (Steve 16.10.2026): welche Alt-Text-Laeufe in DIESEM Prozess gerade arbeiten — Projekt -> {gesamt, document_id,
+# seit}. Nur hier steht, was wirklich laeuft: ein Projektstatus 'processing' kann nach einem Absturz haengen bleiben (Staging:
+# Bilder vom Mai 2026). gesamt = Bilder, die dieser Lauf vor sich hat (wie _process_project_lauf sie auswaehlt).
+_ALT_LAEUFE: dict = {}
+
+
+def _alt_lauf_eintragen(project_id: int, document_id: Optional[int]) -> dict:
+    gesamt = 0
+    try:
+        conn = get_db()
+        try:
+            if document_id is not None:
+                gesamt = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND document_id = ? AND status = 'pending'",
+                                      (project_id, document_id)).fetchone()[0]
+            else:
+                gesamt = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending'",
+                                      (project_id,)).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001 — die Anzeige darf den Lauf nie aufhalten
+        gesamt = 0
+    eintrag = {"gesamt": int(gesamt), "document_id": document_id, "seit": time.time()}
+    _ALT_LAEUFE[project_id] = eintrag
+    return eintrag
 
 
 async def _process_project_lauf(project_id: int, user_id: int, force: bool = False,
@@ -12027,6 +12057,20 @@ async def agent_status(user: dict = Depends(get_current_user)):
     if _rueckmeldung.an():
         out["rueckmeldung"] = await asyncio.get_running_loop().run_in_executor(None, _rueckmeldung.stand, user["id"])
     return out
+
+
+@app.get("/api/agent/live")
+async def agent_live(vorher: Optional[int] = None, user: dict = Depends(get_current_user)):
+    """Live-Fenster (Steve 16.10.2026: „dass man sieht, wo er sich gerade aufhält … wenn er einen Alternativtext macht, dass man in
+    dem Moment das Bild eingeblendet sieht“; Schalter AGENT_ARBEITSFENSTER): woran ein Alt-Text-Lauf im Hintergrund gerade
+    arbeitet — Bild mit Nummer, Seite, Dokument, Adressen und Fortschritt — und mit vorher=<Bild> dessen fertiger Alt-Text. Nur
+    Laeufe dieses Prozesses (_ALT_LAEUFE) in Projekten DIESES Kontos; ohne KI, nur Datenbank. Namen und Alt-Texte sind Nutzer- bzw.
+    KI-Daten — die Seite setzt sie mit textContent."""
+    _require_inkluagent()
+    funktionen.endpunkt_frei("AGENT_ARBEITSFENSTER")
+    from inkluagent import arbeitsfenster as _af
+    laeufe = {pid: dict(e) for pid, e in list(_ALT_LAEUFE.items())}
+    return await asyncio.to_thread(_af.live, user["id"], laeufe, vorher, _display_alt_text)
 
 
 @app.get("/api/agent/ueberblick")
