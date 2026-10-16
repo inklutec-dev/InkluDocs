@@ -287,6 +287,15 @@ class Buehne(unittest.TestCase):
         self.assertIn("if (window.EINGEBETTET === true) { window._inkluagentProjectId = projectId == null ? null : projectId; return; }", b)
         self.assertLess(b.index("window.EINGEBETTET === true"), b.index("inkluagentRueckmeldungenBeobachten();"))
 
+    def test_eingebettet_gar_kein_agent(self):
+        # Klickprobe 16.10.2026: ohne festen Bereich fiel die eingebettete Projektseite auf den alten eingebetteten Agenten zurueck,
+        # dessen Agentenansicht die Bildliste im Fenster versteckte
+        sh = funktion(self.js, "function inkluagentSectionHtml(")
+        self.assertIn("if (window.EINGEBETTET === true) return '';", sh)
+        self.assertLess(sh.index("window.EINGEBETTET === true"), sh.index("inkluagentInhaltHtml("))
+        ini = funktion(self.js, "function inkluagentInit(")
+        self.assertLess(ini.index("if (window.EINGEBETTET === true) {"), ini.index("inkluagentInitLaden(projectId)"))
+
     def test_nur_dieses_projekt_zaehlt_als_erfolg(self):
         f = funktion(self.js, "function inkluagentIstProjektImRahmen(")
         self.assertIn("new URLSearchParams(loc.search).get('projekt') === String(window._inkluagentProjectId)", f)
@@ -317,7 +326,7 @@ class Buehne(unittest.TestCase):
         self.assertIn("}).observe(main, { childList: true, subtree: true });", g)
         n = funktion(self.js, "function inkluagentRahmenNeuGezeichnet(")
         self.assertIn("if (rahmen.contentDocument !== doc) return;", n, "nur die Seite, die gerade im Fenster steht")
-        self.assertIn("if (m && Date.now() < m.bis) {", n)
+        self.assertIn("if (k && Date.now() < m.bis && !k.classList.contains('inkluagent-hin-ziel')) {", n)
         self.assertIn("inkluagentMithoerenSetzen({ art: 'bild', alt: feld.value });", n)
         f = funktion(self.js, "function inkluagentFensterFolgen(")
         self.assertIn("if (!nachLaden && karte.ansicht && aktuell && aktuell !== karte.ansicht) { inkluagentProjektImFenster(karte.ansicht); return; }", f)

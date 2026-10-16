@@ -26,6 +26,9 @@
 // Variante (28.08.2026): 'formular' = Quickinfo-Werkzeug — gleicher Kasten, gleiche
 // Bedienung, nur Einleitung und Platzhalter sprechen von Feldern statt Bildern.
 function inkluagentSectionHtml(projectId, variante) {
+    // Im Arbeitsfenster (eingebettet, Live-Fenster 16.10.2026) gibt es keinen Agenten: ohne den festen Bereich fiel die Ansicht sonst auf
+    // den alten eingebetteten Agenten zurueck — und dessen Agentenansicht versteckte die Bildliste im Fenster (Klickprobe 16.10.2026)
+    if (window.EINGEBETTET === true) return '';
     // Schritt 3: der Agent steht im festen Bereich — die Ansicht bettet nichts ein, merkt sich nur ihre Variante fuer inkluagentInit
     if (inkluagentUeberall()) { window._inkluagentVariante = variante || 'bilder'; return ''; }
     return inkluagentInhaltHtml(projectId, variante, false);
@@ -1720,6 +1723,12 @@ function inkluagentWartetAufDich(anhang) {
 }
 
 function inkluagentInit(projectId) {
+    // Im Arbeitsfenster (eingebettet) ist die Projektseite nur Buehne: nur das Projekt merken, kein Agent (siehe inkluagentSectionHtml)
+    if (window.EINGEBETTET === true) {
+        window._inkluagentProjectId = projectId == null ? null : projectId;
+        window._inkluagentBereit = Promise.resolve();
+        return window._inkluagentBereit;
+    }
     const p = inkluagentUeberall() ? inkluagentBinden(projectId) : inkluagentInitLaden(projectId);
     window._inkluagentBereit = p;
     return p;
