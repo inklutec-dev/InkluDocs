@@ -1576,6 +1576,13 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoe
 .inkluagent-hin-ziel { outline: 4px solid var(--accent) !important; outline-offset: 4px; background: #fff3e6; border-radius: 4px;
     transition: background 0.4s; }
 @media (prefers-reduced-motion: reduce) { .inkluagent-hin-ziel { transition: none; } }
+/* Die zeigende Hand beim Hinfuehren (16.10.2026, wie in InkluEdit): nur fuers Auge, nimmt keine Klicks; bei reduzierter Bewegung gar
+   nicht erst gebaut (dashboard.js, zeigeHand) */
+.inkluagent-hand { position: fixed; left: 0; top: 0; z-index: 2147483647; pointer-events: none;
+    filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.35)); transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.4s; }
+.inkluagent-hand-ring { position: fixed; z-index: 2147483646; pointer-events: none; width: 40px; height: 40px; border-radius: 50%;
+    border: 3px solid var(--accent); opacity: 0.95; transform: scale(0.3); transition: transform 0.8s ease-out, opacity 0.8s ease-out; }
+.inkluagent-hand-ring.inkluagent-hand-ring-weit { transform: scale(1.9); opacity: 0; }
 /* Ueberblick im Arbeitsfenster, solange der Agent nichts tut */
 .arbeitsfenster-ueberblick { margin: 0.9rem 0 0; }
 .arbeitsfenster-ueberblick dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.3rem 0.75rem; margin: 0; font-size: 0.95rem; }

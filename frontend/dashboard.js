@@ -308,8 +308,78 @@ function hinfuehrenBeimLaden() {
     el.addEventListener('blur', () => el.classList.remove('inkluagent-hin-ziel'), { once: true });
     el.scrollIntoView({ block: 'center' });
     fokusAuf(el, { preventScroll: true });
+    zeigeHand(el);
   };
   suchen();
+}
+
+// Die zeigende Hand (16.10.2026, Steve: „dass der Agent das mit der Hand zeigt“ — wie in InkluEdit seit 15.10.): beim Hinfuehren gleitet
+// eine Hand vom rechten Rand zur Stelle, an der Fingerspitze breitet sich einmal ein Ring aus, dann verschwindet sie. Die Markierung
+// und der Fokus oben bleiben, wie sie waren — die Hand ist nur fuers Auge (aria-hidden, nimmt keine Klicks). Wer im System
+// „Bewegung reduzieren“ eingestellt hat, bekommt keine Hand, nur die Markierung; den Klang hoert er trotzdem (Klang ist keine
+// Bewegung). Klang: 'karte' (Wusch von rechts) aus klang.js, im Arbeitsfenster der des Hauptfensters; ob er klingt, entscheidet
+// das Konto (Töne).
+// Form nach dem Symbol „pointer“ der freien Symbolsammlung Lucide (lucide.dev), ISC-Lizenz — Copyright (c) Lucide Contributors 2022,
+// Teile Copyright (c) Cole Bemis 2013-2022 (Feather, MIT). Die Lizenz erlaubt Nutzung, Aenderung und Weitergabe, auch kommerziell,
+// solange dieser Hinweis erhalten bleibt.
+const HAND_PFADE = ['M22 14a8 8 0 0 1-8 8', 'M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2',
+  'M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1', 'M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10',
+  'M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15'];
+function zeigeKlang() {
+  const k = (w) => { try { return w && w.Klang && typeof w.Klang.spielen === 'function' ? w.Klang : null; } catch (e) { return null; } };
+  const klang = k(window) || (imRahmen() ? k(window.parent) : null);
+  if (klang) { try { klang.spielen('karte'); } catch (e) { /* ohne Ton */ } }
+}
+function zeigeHand(el) {
+  zeigeKlang();
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll('.inkluagent-hand, .inkluagent-hand-ring').forEach(x => x.remove());   // nie zwei Haende
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '64');
+    svg.setAttribute('height', '64');
+    svg.setAttribute('focusable', 'false');
+    [['#ffffff', '4.5'], ['#1b2a4a', '1.9']].forEach(([farbe, breite]) => HAND_PFADE.forEach(d => {
+      const p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', d);
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', farbe);
+      p.setAttribute('stroke-width', breite);
+      p.setAttribute('stroke-linecap', 'round');
+      p.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(p);
+    }));
+    const hand = document.createElement('div');
+    hand.className = 'inkluagent-hand';
+    hand.setAttribute('aria-hidden', 'true');
+    hand.appendChild(svg);
+    const W = window.innerWidth, H = window.innerHeight;
+    hand.style.transform = 'translate(' + (W + 24) + 'px,' + Math.round(H * 0.65) + 'px)';
+    document.body.appendChild(hand);
+    hand.getBoundingClientRect();   // Startlage festhalten, sonst springt die Hand ohne Gleiten ans Ziel
+    // Ziel erst nach dem Rollen messen: Fingerspitze an der linken unteren Ecke des Ziels (bei breiten Zielen etwas eingerueckt)
+    requestAnimationFrame(() => {
+      const r = el.getBoundingClientRect();
+      const zx = Math.round(Math.max(4, Math.min(W - 68, r.left + Math.min(r.width * 0.3, 140) - 21)));
+      const zy = Math.round(Math.max(4, Math.min(H - 68, r.bottom - 6)));
+      hand.style.transform = 'translate(' + zx + 'px,' + zy + 'px)';
+      setTimeout(() => {
+        const ring = document.createElement('div');
+        ring.className = 'inkluagent-hand-ring';
+        ring.setAttribute('aria-hidden', 'true');
+        ring.style.left = (zx + 1) + 'px';
+        ring.style.top = (zy - 15) + 'px';
+        document.body.appendChild(ring);
+        ring.getBoundingClientRect();
+        ring.classList.add('inkluagent-hand-ring-weit');
+        setTimeout(() => ring.remove(), 900);
+      }, 900);
+    });
+    setTimeout(() => { hand.style.opacity = '0'; }, 2600);
+    setTimeout(() => hand.remove(), 3100);
+  } catch (e) { /* ohne Hand: Markierung und Fokus bleiben */ }
 }
 
 // Zur Anmeldung mit Ruecksprung. Im Rahmen des Arbeitsfensters (Pruefung 13.10.2026, K7) ist das Ziel die Seite des HAUPTFENSTERS —
