@@ -320,6 +320,21 @@ class Buehne(unittest.TestCase):
         self.assertIn("if (!nachLaden && karte.ansicht && aktuell && aktuell !== karte.ansicht) { inkluagentProjektImFenster(karte.ansicht); return; }", f)
         self.assertIn("const neu = s.projekt ? s.name : t('Seite: {name}', { name: s.name });", funktion(self.js, "function inkluagentSeiteZeigen("))
 
+    def test_fenster_nimmt_beim_laden_keinen_fokus(self):
+        dash = lies(FRONTEND, "dashboard.js")
+        self.assertIn("return !imRahmen() || document.hasFocus();", funktion(dash, "function fokusHierErlaubt("))
+        for datei, n in (("dokument.js", 1), ("abschluss.js", 2), ("formular.js", 1), ("uebersetzen.js", 1)):
+            q = lies(FRONTEND, datei)
+            self.assertEqual(q.count("if (h1 && !erneut && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) h1.focus();"), n, datei)
+            self.assertNotIn("if (h1 && !erneut) h1.focus();", q, datei)
+
+    def test_ansichtslinks_im_fenster_bleiben_im_fenster(self):
+        dash = lies(FRONTEND, "dashboard.js")
+        e = funktion(dash, "function eingebettetEinrichten(")
+        self.assertIn("if (u.origin !== window.location.origin || fensterSeite(u.pathname) || gleichesProjekt(u)) return;", e)
+        g = funktion(dash, "function gleichesProjekt(")
+        self.assertIn("u.searchParams.get('projekt') === hier", g)
+
     def test_karten_der_ziele(self):
         k = funktion(self.js, "function inkluagentZielKarte(")
         for teil in ("'img_heading_' + id", "'alttext_' + id", "ansicht: 'alttexte'", "'feld_heading_' + id", "ansicht: 'quickinfos'",

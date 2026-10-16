@@ -529,7 +529,7 @@
             if (el.open && d && d.pruefdatei && !details[k]) detailLaden(project.id, k);
         });
         const h1 = document.getElementById('projectName');
-        if (h1 && !erneut) h1.focus();
+        if (h1 && !erneut && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) h1.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (16.10.2026)
         // Ende der KI-Pruefung/Korrektur melden: Text nach dem, was lief (Pruefung gewinnt — bei „Korrigieren und erneut
         // pruefen“ ist die Nachpruefung das Ergebnis), Fokus auf die Statuszeile des KI-Abschnitts
         if (kiFertig.length && window.Dokument) {
@@ -756,7 +756,7 @@
             if (el.open) wordHoerprobeOffen.add(k); else wordHoerprobeOffen.delete(k);
         }));
         const h1 = document.getElementById('projectName');
-        if (h1 && !erneut) h1.focus();
+        if (h1 && !erneut && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) h1.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (16.10.2026)
     }
 
     window.Abschluss = { showProject, erstellen, ergebnisGeklappt, zurSeite, blaettern, vorlesenSeite, listeGeklappt, showWordProject, wordVorlesen, dokVorlesen, dokHoerprobeGeklappt };

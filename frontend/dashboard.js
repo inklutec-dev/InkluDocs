@@ -197,6 +197,13 @@ let currentUser = null;
 function imRahmen() {
   try { return !!(window.EINGEBETTET && window.top !== window); } catch (e) { return false; }
 }
+// Im Arbeitsfenster nimmt eine Seite den Fokus nur, wenn er schon in ihr steht (Live-Fenster 16.10.2026): die Projektseite im Fenster
+// fokussierte beim ersten Zeichnen ihre Ueberschrift 1 — der Fokus sprang aus dem Gespraech in den Rahmen, VoiceOver landete dort, und das
+// Fenster hielt den Nutzer fuer jemanden, der darin arbeitet. Als ganze Seite gilt wie bisher: Fokus erlaubt.
+function fokusHierErlaubt() {
+  try { return !imRahmen() || document.hasFocus(); } catch (e) { return true; }
+}
+window.fokusHierErlaubt = fokusHierErlaubt;
 function ganzeSeite(url) {
   (imRahmen() ? window.top : window).location.href = url;
 }
@@ -230,6 +237,13 @@ function gehoertGanzeSeite(pfad) {
   return pfad === '/' || /^\/(app|dashboard|set-language|login|logout|register|forgot|reset|datensicherheit|impressum-app|widerruf-app|nutzungsbedingungen-app|widerruf|impressum|datenschutz|nutzungsbedingungen|avv|api)(\/|\?|#|$)/.test(pfad);
 }
 window.gehoertGanzeSeite = gehoertGanzeSeite;
+// Ein Link auf das Projekt, das diese eingebettete Seite gerade zeigt (/app?projekt=<dasselbe>)
+function gleichesProjekt(u) {
+  try {
+    const hier = new URLSearchParams(window.location.search).get('projekt');
+    return /^\/app\/?$/.test(window.location.pathname) && /^\/app\/?$/.test(u.pathname) && !!hier && u.searchParams.get('projekt') === hier;
+  } catch (e) { return false; }
+}
 function eingebettetEinrichten() {
   if (!imRahmen()) return;
   const zurueck = byId('zumGespraech');
@@ -261,8 +275,9 @@ function eingebettetEinrichten() {
     if (!a || a.hasAttribute('download') || a.target === '_blank' || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     let u;
     try { u = new URL(a.href, window.location.href); } catch (err) { return; }
-    // Runde 2: was nicht in der Liste der Fensterseiten steht, oeffnet die ganze Seite (der Server rahmt es nicht ein)
-    if (u.origin !== window.location.origin || fensterSeite(u.pathname)) return;
+    // Runde 2: was nicht in der Liste der Fensterseiten steht, oeffnet die ganze Seite (der Server rahmt es nicht ein). Live-Fenster
+    // (16.10.2026): Links auf DASSELBE Projekt (Ansichten „Alt-Texte“, „Dokument“ …) bleiben im Rahmen — die Projektseite faengt sie selbst ab
+    if (u.origin !== window.location.origin || fensterSeite(u.pathname) || gleichesProjekt(u)) return;
     e.preventDefault();
     ganzeSeite(u.pathname + u.search + u.hash);
   }, true);

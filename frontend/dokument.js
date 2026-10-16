@@ -1140,7 +1140,7 @@
         if (typeof inkluagentInit === 'function') inkluagentInit(projectId);
         setupProjectDropzone(projectId);
         const h1 = document.getElementById('projectName');
-        if (h1 && !erneut) h1.focus();
+        if (h1 && !erneut && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) h1.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (16.10.2026)
         const laufende = docs.filter(d => d.tagging && d.tagging.laeuft).map(d => d.id);
         const testende = docs.filter(d => d.tagging && d.tagging.test && d.tagging.test.laeuft).map(d => d.id);
         const pruefende = docs.filter(d => d.tagging && d.tagging.pruefung && d.tagging.pruefung.laeuft).map(d => d.id);

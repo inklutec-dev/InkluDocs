@@ -1025,7 +1025,7 @@
         if (!gast()) setupProjectDropzone(projectId);
         if (!gast() && data.felder.length && typeof populatePromptSelect === 'function') populatePromptSelect(project.id, project.prompt_id);
         const h1 = document.getElementById('projectName');
-        if (h1 && !erneut) h1.focus();
+        if (h1 && !erneut && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) h1.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (16.10.2026)
         // Laeuft die Extraktion oder die KI-Generierung noch: weiter abfragen, ohne den
         // Fokus zu bewegen; am Ende einmal ansagen. (Gast: kein Polling — er sieht den Stand beim Laden.)
         if (!gast() && (project.status === 'extracting' || project.status === 'processing')) {

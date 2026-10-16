@@ -641,7 +641,7 @@
         }
         setupProjectDropzone(projectId);
         const h1 = document.getElementById('projectName');
-        if (h1 && !erneut) h1.focus();
+        if (h1 && !erneut && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) h1.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (16.10.2026)
         if (project.status === 'extracting' || project.status === 'processing') {
             const docsVorher = aktuelleDocs.length;
             const eigenerLauf = project.lauf_art === 'uebersetzung';
