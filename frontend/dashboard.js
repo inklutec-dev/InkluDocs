@@ -773,7 +773,12 @@ async function seitenleisteGespraecheLaden() {
     const a = document.createElement('a');
     a.href = '/gespraeche/' + g.id;
     a.dataset.gespraech = String(g.id);
-    a.textContent = g.titel;
+    // Gekuerzt wird der Text, nicht der Link (16.10.2026): mit der Kuerzung am Link schien die dritte Zeile durch den Innenabstand und
+    // lag ueber dem naechsten Eintrag. Der volle Titel bleibt der Name des Links (VoiceOver liest ihn ganz).
+    const text = document.createElement('span');
+    text.className = 'app-nav-gespraech-text';
+    text.textContent = g.titel;
+    a.appendChild(text);
     a.setAttribute('aria-describedby', 'navGespraecheHinweis');
     if (g.aktuell) a.setAttribute('aria-current', 'true');
     a.addEventListener('click', (e) => seitenleisteGespraechFortsetzen(e, g.id, a));

@@ -351,6 +351,14 @@ class Buehne(unittest.TestCase):
         self.assertIn("if (neu.vorher !== alt.vorher || (alt.laeuft && !l)) inkluagentRahmenNachziehen();",
                       funktion(self.js, "function inkluagentLiveZeigen("))
 
+    def test_gespraechstitel_ueberlappt_nicht(self):
+        dash = lies(FRONTEND, "dashboard.js")
+        self.assertIn("text.className = 'app-nav-gespraech-text';", dash)
+        css = lies(FRONTEND, "dashboard.css")
+        regel = css[css.index(".app-nav-gespraeche-liste a {"):]
+        self.assertNotIn("line-clamp", regel[:regel.index("}")], "Kuerzung nicht am Link mit Innenabstand")
+        self.assertIn(".app-nav-gespraech-text { display:-webkit-box; -webkit-line-clamp:2;", css)
+
     def test_karten_der_ziele(self):
         k = funktion(self.js, "function inkluagentZielKarte(")
         for teil in ("'img_heading_' + id", "'alttext_' + id", "ansicht: 'alttexte'", "'feld_heading_' + id", "ansicht: 'quickinfos'",

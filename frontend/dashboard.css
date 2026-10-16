@@ -452,8 +452,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .app-nav-gespraeche { margin-top:.75rem; padding-top:.5rem; border-top:1px solid rgba(255,255,255,.15); }
 .app-nav-titel { font-size:.95rem; font-weight:700; color:#fff; margin:.35rem 1.25rem .35rem; }
 .app-nav-gespraeche-liste { list-style:none; margin:0; padding:0; }
-.app-nav-gespraeche-liste a { font-size:.95rem; padding:.45rem 1.25rem; overflow-wrap:anywhere;
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.app-nav-gespraeche-liste a { font-size:.95rem; padding:.45rem 1.25rem; }
+/* zwei Zeilen, dann „…“ — am Text, nicht am Link: dort schien die dritte Zeile durch den Innenabstand (16.10.2026) */
+.app-nav-gespraech-text { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
 .app-nav-gespraeche-liste a[aria-current="true"] { background:rgba(255,255,255,.16); border-left-color:var(--accent); font-weight:700; }
 .app-nav-alle { font-size:.95rem; text-decoration:underline !important; }
 @media (max-width:768px) {
