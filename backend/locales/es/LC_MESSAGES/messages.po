@@ -12858,3 +12858,8 @@ msgstr "Hacer accesible no hace falta: «{name}» ya está etiquetado."
 #, python-brace-format
 msgid "Projekt „{projekt}“, Dokument „{dokument}“."
 msgstr "Proyecto «{projekt}», documento «{dokument}»."
+
+# InkluAgent: Express-Karte bei unbegrenztem Guthaben (16.10.2026)
+#, python-brace-format
+msgid "{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben ist unbegrenzt. Fertig in {h} Stunden."
+msgstr "{d} documentos, {s} páginas, {c} créditos en total. Tu saldo es ilimitado. Listo en {h} horas."

@@ -12858,3 +12858,8 @@ msgstr "Rendre accessible n’est pas nécessaire : « {name} » est déjà bali
 #, python-brace-format
 msgid "Projekt „{projekt}“, Dokument „{dokument}“."
 msgstr "Projet « {projekt} », document « {dokument} »."
+
+# InkluAgent: Express-Karte bei unbegrenztem Guthaben (16.10.2026)
+#, python-brace-format
+msgid "{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben ist unbegrenzt. Fertig in {h} Stunden."
+msgstr "{d} documents, {s} pages, {c} crédits au total. Ton solde est illimité. Prêt sous {h} heures."

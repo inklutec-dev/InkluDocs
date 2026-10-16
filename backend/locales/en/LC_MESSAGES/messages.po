@@ -12856,3 +12856,8 @@ msgstr "Make accessible is not needed: “{name}” is already tagged."
 #, python-brace-format
 msgid "Projekt „{projekt}“, Dokument „{dokument}“."
 msgstr "Project “{projekt}”, document “{dokument}”."
+
+# InkluAgent: Express-Karte bei unbegrenztem Guthaben (16.10.2026)
+#, python-brace-format
+msgid "{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben ist unbegrenzt. Fertig in {h} Stunden."
+msgstr "{d} documents, {s} pages, {c} credits in total. Your balance is unlimited. Ready within {h} hours."

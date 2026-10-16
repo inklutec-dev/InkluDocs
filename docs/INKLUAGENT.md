@@ -1228,7 +1228,8 @@ Wusch der Klangspur (rechts → Mitte). Mit „Bewegung reduzieren“ steht sie 
   Hineinlegen kostet nichts; bestellen bleibt der Knopf „Zahlungspflichtig bestellen“ (§ 312j BGB). Ansprechpartner und Telefon
   kommen vom zuletzt bestellten Auftrag (`express.letzte_kontaktdaten`: nur bestellte, keine gelöschten), sonst der Anzeigename;
   was der Nutzer sagt, geht vor. Dieselbe Vorbelegung hat die Seite `/express` (`GET /api/express/stand` mit `telefon`).
-  Tests: `tests/test_express_agent.py` (17).
+  Unbegrenztes Guthaben (Admin, Enterprise: `verfuegbare_credits` = None) bekommt die Karte mit „Dein Guthaben ist unbegrenzt.“ —
+  vorher brach der Vergleich mit None ab und die Karte kam nie (Rauchtest 16.10.2026). Tests: `tests/test_express_agent.py` (18).
 
 **Sicherheit:**
 - Was zählt, hält der SERVER in der Karte: Projekt, Warenkorb, erwarteter Preis, Fassung der Bedingungen, Idempotenz. Der Browser

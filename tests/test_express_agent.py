@@ -189,6 +189,16 @@ class HineinlegenUndKarte(unittest.TestCase):
         self.assertNotIn("anhang", r)
         self.assertEqual(len(express.warenkorb(self.u["id"])["positionen"]), 1)
 
+    def test_unbegrenztes_guthaben_admin_bekommt_die_karte(self):
+        # billing.verfuegbare_credits = None fuer Admin und Enterprise; vorher brach „None < Preis“ ab und die Karte kam nie
+        d1 = dokument(self.pid, "admin (fiktiv).pdf")
+        with EXPRESS_AN, mock.patch.object(billing, "verfuegbare_credits", return_value=None):
+            r = karten.ausfuehren("express_bestellen_vorbereiten", {"document_ids": [d1]}, self.u["id"], None, lambda s: s)
+        self.assertTrue(r["ok"], r)
+        self.assertEqual(r["anhang"]["karte"], "express_bestellen")
+        self.assertIn("Dein Guthaben ist unbegrenzt.", r["anhang"]["text"])
+        self.assertNotIn("None", r["anhang"]["text"])
+
     def test_ohne_express_kein_hineinlegen(self):
         d1 = dokument(self.pid, "c (fiktiv).pdf")
         with mock.patch.object(funktionen, "EXPRESS", False), GUTHABEN:

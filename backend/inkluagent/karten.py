@@ -418,9 +418,15 @@ def _express_vorbereiten(args: dict, user_id: int, _) -> dict:
     zeilen = [_("„{name}“: {seiten} Seiten, {leistung}, {credits} Credits").format(
         name=p.get("dokument_name") or "", seiten=p.get("seiten") or 0, leistung=_(leistung.get(p.get("leistung"), "")),
         credits=p.get("credits") or 0) for p in korb["positionen"]]
-    text = _("{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben: {g} Credits. Fertig in {h} Stunden.").format(
-        d=korb["dokumente"], s=korb["seiten"], c=korb["credits"], g=guthaben, h=e["frist_stunden"])
-    if guthaben < korb["credits"]:
+    # None = unbegrenzt (Admin, Enterprise; billing.verfuegbare_credits). Vorher brach der Vergleich mit None ab und die Karte kam
+    # nie — gefunden beim Rauchtest 16.10.2026 mit einem Admin-Konto.
+    if guthaben is None:
+        text = _("{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben ist unbegrenzt. Fertig in {h} Stunden.").format(
+            d=korb["dokumente"], s=korb["seiten"], c=korb["credits"], h=e["frist_stunden"])
+    else:
+        text = _("{d} Dokumente, {s} Seiten, zusammen {c} Credits. Dein Guthaben: {g} Credits. Fertig in {h} Stunden.").format(
+            d=korb["dokumente"], s=korb["seiten"], c=korb["credits"], g=guthaben, h=e["frist_stunden"])
+    if guthaben is not None and guthaben < korb["credits"]:
         knapp = {"guthaben_reicht_nicht": True, "credits": korb["credits"], "guthaben": guthaben,
                  "hinweis": "Das Guthaben reicht nicht. Nenne Preis und Guthaben und verweise auf „Abo & Verbrauch“."}
         if hinzu is not None:
