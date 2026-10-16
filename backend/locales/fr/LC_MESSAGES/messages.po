@@ -12887,3 +12887,24 @@ msgstr "Vient d’être terminé : {bild} – n’a pas fonctionné"
 #, python-brace-format
 msgid "Arbeitet im Hintergrund: Alt-Texte, {n} von {m} fertig."
 msgstr "Travaille en arrière-plan : textes alternatifs, {n} sur {m} terminés."
+
+# InkluAgent: Projekt im Arbeitsfenster, Mitverfolgen, Mithören (16.10.2026)
+msgid "Mitverfolgen"
+msgstr "Suivre"
+
+msgid "So klingt diese Stelle"
+msgstr "Ce que l’on entend ici"
+
+#, python-brace-format
+msgid "Bild, {alt}"
+msgstr "Image, {alt}"
+
+msgid "Hier gibt es noch keinen Alternativtext. Ein Screenreader sagt nur „Bild“ oder überspringt es."
+msgstr "Il n’y a pas encore de texte alternatif ici. Un lecteur d’écran dit seulement « image » ou l’ignore."
+
+#, python-brace-format
+msgid "Formularfeld, {info}"
+msgstr "Champ de formulaire, {info}"
+
+msgid "Dieses Feld hat noch keine Quickinfo. Ein Screenreader nennt dann oft nur „Textfeld“."
+msgstr "Ce champ n’a pas encore d’info-bulle. Un lecteur d’écran dit alors souvent seulement « champ de texte »."

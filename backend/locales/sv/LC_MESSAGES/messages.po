@@ -12459,3 +12459,24 @@ msgstr "Precis klart: {bild} – det gick inte"
 #, python-brace-format
 msgid "Arbeitet im Hintergrund: Alt-Texte, {n} von {m} fertig."
 msgstr "Arbetar i bakgrunden: alt-texter, {n} av {m} klara."
+
+# InkluAgent: Projekt im Arbeitsfenster, Mitverfolgen, Mithören (16.10.2026)
+msgid "Mitverfolgen"
+msgstr "Följ med"
+
+msgid "So klingt diese Stelle"
+msgstr "Så låter det här stället"
+
+#, python-brace-format
+msgid "Bild, {alt}"
+msgstr "Bild, {alt}"
+
+msgid "Hier gibt es noch keinen Alternativtext. Ein Screenreader sagt nur „Bild“ oder überspringt es."
+msgstr "Här finns ännu ingen alt-text. En skärmläsare säger bara ”bild” eller hoppar över den."
+
+#, python-brace-format
+msgid "Formularfeld, {info}"
+msgstr "Formulärfält, {info}"
+
+msgid "Dieses Feld hat noch keine Quickinfo. Ein Screenreader nennt dann oft nur „Textfeld“."
+msgstr "Det här fältet har ännu ingen snabbinfo. En skärmläsare säger då ofta bara ”textfält”."

@@ -1630,18 +1630,20 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoe
 .arbeitsfenster h2 { display: flex; align-items: center; gap: 0.7rem; margin: 0 0 0.75rem; font-size: 1.05rem; }
 .arbeitsfenster h2::before { content: ""; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 10px;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") center / 20px 20px no-repeat, linear-gradient(135deg, #1b2a4a 0%, #33415f 100%); }
-.arbeitsfenster .arbeitsfenster-werkzeuge .btn, #arbeitsVorlesen, #arbeitsSeiteZu {
+.arbeitsfenster .arbeitsfenster-werkzeuge .btn, #arbeitsVorlesen, #arbeitsSeiteZu, .arbeitsfenster-hoeren .tts-btn {
     display: inline-flex; align-items: center; gap: 0.45rem; min-height: 40px; padding: 0.4rem 0.85rem; border: 1px solid #6b7280;
     border-radius: 999px; background: #ffffff; color: var(--primary); font-size: 0.88rem; font-weight: 600; line-height: 1.2; }
 .arbeitsfenster .arbeitsfenster-werkzeuge .btn:hover, #arbeitsVorlesen:hover, #arbeitsSeiteZu:hover { background: #eef1f6; }
-#arbeitsGross::before, #arbeitsZurueck::before, #arbeitsVorlesen::before, #arbeitsSeiteZu::before {
+#arbeitsGross::before, #arbeitsZurueck::before, #arbeitsVorlesen::before, #arbeitsSeiteZu::before, #arbeitsFolgen::before {
     content: ""; flex: 0 0 auto; width: 16px; height: 16px; background-color: currentColor;
     -webkit-mask: var(--af-symbol) center / 16px 16px no-repeat; mask: var(--af-symbol) center / 16px 16px no-repeat; }
 #arbeitsGross { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h6v6'/%3E%3Cpath d='M9 21H3v-6'/%3E%3Cpath d='M21 3l-7 7'/%3E%3Cpath d='M3 21l7-7'/%3E%3C/svg%3E"); }
 #arbeitsZurueck { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 19-7-7 7-7'/%3E%3Cpath d='M19 12H5'/%3E%3C/svg%3E"); }
 #arbeitsVorlesen { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='11 5 6 9 2 9 2 15 6 15 11 19 11 5'/%3E%3Cpath d='M15.54 8.46a5 5 0 0 1 0 7.07'/%3E%3Cpath d='M19.07 4.93a10 10 0 0 1 0 14.14'/%3E%3C/svg%3E"); }
 #arbeitsSeiteZu { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E"); }
-#arbeitsGross[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+#arbeitsGross[aria-pressed="true"], #arbeitsFolgen[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+#arbeitsFolgen { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M22 12h-4'/%3E%3Cpath d='M6 12H2'/%3E%3Cpath d='M12 6V2'/%3E%3Cpath d='M12 22v-4'/%3E%3C/svg%3E"); }
+.arbeitsfenster .arbeitsfenster-werkzeuge .btn[hidden] { display: none; }
 .arbeitsfenster-stand { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.55rem 0.75rem; border-radius: 10px;
     background: #f4f6fa; font-size: 0.95rem; }
 .arbeitsfenster-stand::before { content: ""; flex: 0 0 auto; width: 0.6rem; height: 0.6rem; margin-top: 0.4em; border-radius: 50%;
@@ -1694,10 +1696,23 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoe
 }
 @media (forced-colors: active) {
     .arbeitsfenster-stand::before, .arbeitsfenster-live h3::before { background: CanvasText; }
-    #arbeitsGross::before, #arbeitsZurueck::before, #arbeitsVorlesen::before, #arbeitsSeiteZu::before { background-color: ButtonText; }
+    #arbeitsGross::before, #arbeitsZurueck::before, #arbeitsVorlesen::before, #arbeitsSeiteZu::before, #arbeitsFolgen::before { background-color: ButtonText; }
+    .arbeitsfenster-hoeren { border: 1px solid CanvasText; }
     .arbeitsfenster-seite, .arbeitsfenster-live, .arbeitsfenster-bild { border: 1px solid CanvasText; }
 }
 @media (max-width: 1099px) { html.arbeitsfenster-gross #arbeitsZurueck { display: inline-flex; } }   /* Pille mit Symbol */
+/* Live-Fenster mit dem Projekt auf der Buehne (16.10.2026): der Live-Block ist dann nur noch Kopfzeile (Bild und Text zeigt die echte
+   Oberflaeche); darunter „So klingt diese Stelle“ — wie ein Screenreader die Stelle vorliest, mit „Anhören“ */
+.arbeitsfenster-live.arbeitsfenster-live-kopf { padding: 0.55rem 0.75rem; }
+.arbeitsfenster-live.arbeitsfenster-live-kopf h3 { margin: 0 0 0.35rem; }
+.arbeitsfenster-live.arbeitsfenster-live-kopf .arbeitsfenster-fortschritt { margin: 0; }
+.arbeitsfenster-hoeren { margin: 0.75rem 0 0; padding: 0.7rem 0.85rem; border-radius: 12px; background: #f4f6fa;
+    border-left: 4px solid var(--primary); }
+.arbeitsfenster-hoeren[hidden] { display: none; }
+.arbeitsfenster-hoeren h3 { margin: 0 0 0.45rem; font-size: 0.95rem; }
+.arbeitsfenster-hoeren .tts-btn { margin: 0 0 0.45rem; }
+.arbeitsfenster-hoeren-text { margin: 0; font-size: 0.95rem; overflow-wrap: anywhere; }
+.arbeitsfenster-seite iframe { scroll-behavior: auto; }
 /* Eingebettete Seite (im Rahmen des Arbeitsfensters): ohne Seitenleiste, volle Breite */
 body.eingebettet .dash-main { max-width: none; padding: 1rem 1rem 2rem; }
 

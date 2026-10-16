@@ -237,7 +237,7 @@ class Oberflaeche(unittest.TestCase):
     def test_keine_ansagen_hand_nur_beim_ersten_bild(self):
         for f in (self.zeigen, self.beob):
             self.assertNotIn("announce(", f)
-        self.assertIn("if (wechsel && !alt.bild && typeof zeigeHand === 'function') zeigeHand(fig);", self.zeigen)
+        self.assertIn("if (wechsel && !alt.bild && !buehne && typeof zeigeHand === 'function') zeigeHand(fig);", self.zeigen)
         self.assertIn("inkluagentKlang('schritt');", self.zeigen, "ein Tick je fertigem Bild")
 
     def test_stand_vorlesen_und_kopfzeile(self):
@@ -267,6 +267,80 @@ class Oberflaeche(unittest.TestCase):
             self.assertIn(anim, reduziert[:reduziert.index("}\n")])
         self.assertIn("@media (forced-colors: active)", teil)
         self.assertIn("Lucide (ISC-Lizenz", teil)
+
+
+class Buehne(unittest.TestCase):
+    """Das Projekt selbst im Arbeitsfenster (echte Oberflaeche), Kamerafahrt, Mitsehen und Mithoeren (16.10.2026)."""
+
+    def setUp(self):
+        self.js = lies(FRONTEND, "inkluagent.js")
+
+    def test_projektseite_einrahmbar_aber_keine_fensterseite(self):
+        from inkluagent import fenster
+        self.assertTrue(fenster.einrahmbar("/app"))
+        self.assertFalse(fenster.im_fenster("/app"), "Links auf Projekte wechseln weiter die ganze Seite")
+        self.assertFalse(fenster.einrahmbar("/api/projects/1"))
+
+    def test_eingebettet_ist_die_projektseite_nur_buehne(self):
+        b = funktion(self.js, "async function inkluagentBinden(")
+        self.assertTrue(b.split("{", 1)[1].lstrip().startswith("// Im Arbeitsfenster"))
+        self.assertIn("if (window.EINGEBETTET === true) { window._inkluagentProjectId = projectId == null ? null : projectId; return; }", b)
+        self.assertLess(b.index("window.EINGEBETTET === true"), b.index("inkluagentRueckmeldungenBeobachten();"))
+
+    def test_nur_dieses_projekt_zaehlt_als_erfolg(self):
+        f = funktion(self.js, "function inkluagentIstProjektImRahmen(")
+        self.assertIn("new URLSearchParams(loc.search).get('projekt') === String(window._inkluagentProjectId)", f)
+        g = funktion(self.js, "function inkluagentRahmenGeladen(")
+        self.assertIn("const projekt = eigene && eingebettet === true && inkluagentIstProjektImRahmen(loc);", g)
+        self.assertIn("(fensterSeite(loc.pathname) || projekt)", g)
+
+    def test_kamerafahrt_zieht_niemanden_weg(self):
+        f = funktion(self.js, "function inkluagentFensterFolgen(")
+        self.assertIn("if (!rahmen || document.activeElement === rahmen) return;", f)
+        self.assertIn("if (!inkluagentFolgenAn() || !s || !s.projekt || s.laedt) return;", f)
+        self.assertIn("lauf !== window._arbeitsFolgeLauf || document.activeElement === rahmen", f)
+        z = funktion(self.js, "function inkluagentImRahmenZeigen(")
+        self.assertNotIn("scrollIntoView", z, "scrollIntoView rollte auch die Seite draussen")
+        self.assertIn("win.scrollTo(", z)
+        self.assertIn("prefers-reduced-motion: reduce", z)
+        g = funktion(self.js, "function inkluagentProjektGeladen(")
+        self.assertIn("['pointerdown', 'wheel', 'keydown', 'touchstart']", g)
+        self.assertIn("if (e.isTrusted) inkluagentFolgenSetzen(false, false);", g)
+        n = funktion(self.js, "function inkluagentRahmenNachziehen(")
+        self.assertIn("document.activeElement === rahmen) return;", n, "nie neu zeichnen, solange man im Fenster arbeitet")
+
+    def test_karten_der_ziele(self):
+        k = funktion(self.js, "function inkluagentZielKarte(")
+        for teil in ("'img_heading_' + id", "'alttext_' + id", "ansicht: 'alttexte'", "'feld_heading_' + id", "ansicht: 'quickinfos'",
+                     "'doc_heading_' + id", "ansicht: 'dokument'"):
+            self.assertIn(teil, k)
+
+    def test_mithoeren_mit_textcontent_und_anhoeren(self):
+        m = funktion(self.js, "function inkluagentMithoerenSetzen(")
+        self.assertIn("inkluagentTextSetzen(box.querySelector('#arbeitsHoerenText'), text);", m)
+        self.assertNotIn("innerHTML", m)
+        bau = funktion(self.js, "function inkluagentArbeitsfensterBauen(")
+        self.assertIn("inkluagentAnhoerenKnopf(s.querySelector('#arbeitsHoerenTitel'), s.querySelector('#arbeitsHoerenText'));", bau)
+        self.assertIn('id="arbeitsFolgen" class="btn btn-secondary" aria-pressed="true" hidden>', bau)
+
+    def test_projekt_hat_vorrang_beim_wiederherstellen(self):
+        w = funktion(self.js, "function inkluagentFensterWiederherstellen(")
+        self.assertIn("frisch && (!inkluagentProjektFensterAn() || w.seite === inkluagentPfadOhne(hier.split('#')[0], ['hin']))", w)
+        self.assertIn("inkluagentProjektImFenster();", w)
+        self.assertIn("if (!s || s.projekt) return;", funktion(self.js, "function inkluagentSeiteMerken("), "das Projekt wird nicht gemerkt")
+        self.assertIn("if (inkluagentProjektFensterAn()) inkluagentProjektImFenster();", funktion(self.js, "function inkluagentSeiteSchliessen("))
+
+    def test_schritte_und_lauf_fahren_hin(self):
+        self.assertIn("if (ziel && typeof ziel === 'object') inkluagentFensterFolgen(ziel);", funktion(self.js, "function inkluagentArbeitsSchritt("))
+        self.assertIn("if (wechsel) inkluagentFensterFolgen({ art: 'bild', image_id: b.image_id, bild_url: b.bild_url });",
+                      funktion(self.js, "function inkluagentLiveZeigen("))
+        self.assertIn("inkluagentRahmenNachziehen();", funktion(self.js, "async function inkluagentAnsichtNachziehen("))
+
+    def test_gestaltung(self):
+        css = lies(FRONTEND, "style.css")
+        self.assertIn(".arbeitsfenster-hoeren {", css)
+        self.assertIn("#arbeitsFolgen { --af-symbol:", css)
+        self.assertIn('#arbeitsFolgen[aria-pressed="true"]', css)
 
 
 if __name__ == "__main__":

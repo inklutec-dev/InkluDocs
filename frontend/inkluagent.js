@@ -621,6 +621,9 @@ function inkluagentArbeitsfensterBauen() {
         + '<div class="arbeitsfenster-werkzeuge">'
         +   '<button type="button" id="arbeitsGross" class="btn btn-secondary" aria-pressed="false">' + t('Arbeitsfenster vergrößern') + '</button>'
         +   '<button type="button" id="arbeitsZurueck" class="btn btn-secondary">' + t('Zurück zum Gespräch') + '</button>'
+        // Live-Fenster (16.10.2026): das Fenster folgt dem Agenten durch die Oberflaeche des Projekts (Kamerafahrt) — aus, sobald man
+        // dort selbst etwas tut; ein Druck folgt wieder. Nur sichtbar, wenn das Projekt im Fenster steht.
+        +   '<button type="button" id="arbeitsFolgen" class="btn btn-secondary" aria-pressed="true" hidden>' + t('Mitverfolgen') + '</button>'
         + '</div>'
         + '<p id="arbeitsStand" class="arbeitsfenster-stand"></p>'
         + '<progress id="arbeitsFortschritt" class="arbeitsfenster-fortschritt" aria-labelledby="arbeitsStand" hidden></progress>'
@@ -640,6 +643,11 @@ function inkluagentArbeitsfensterBauen() {
         + '</div>'
         // Runde 2 (K-N1): kam eine Seite nicht (Fehlerantwort), steht hier, dass sie sich gerade nicht oeffnen laesst
         + '<p id="arbeitsSeiteMeldung" class="arbeitsfenster-seite-meldung" hidden></p>'
+        // Mitsehen und Mithoeren (16.10.2026): wie ein Screenreader die Stelle vorliest, an der der Agent gerade ist
+        + '<div id="arbeitsHoeren" class="arbeitsfenster-hoeren" hidden>'
+        +   '<h3 id="arbeitsHoerenTitel">' + t('So klingt diese Stelle') + '</h3>'
+        +   '<p id="arbeitsHoerenText" class="arbeitsfenster-hoeren-text"></p>'
+        + '</div>'
         + '<p id="arbeitsNotiz" class="arbeitsfenster-notiz" hidden></p>'
         + '<button type="button" id="arbeitsVorlesen" class="btn btn-secondary">' + t('Stand vorlesen') + '</button>'
         // Livestream (Steve 12.10.2026): jeden Schritt ansagen — von Anfang an an, die Wahl bleibt in diesem Browser
@@ -658,6 +666,8 @@ function inkluagentArbeitsfensterBauen() {
     s.querySelector('#arbeitsGross').addEventListener('click', () => inkluagentFensterGross());
     s.querySelector('#arbeitsZurueck').addEventListener('click', inkluagentZumGespraech);
     s.querySelector('#arbeitsSeiteZu').addEventListener('click', inkluagentSeiteSchliessen);
+    s.querySelector('#arbeitsFolgen').addEventListener('click', () => inkluagentFolgenSetzen(!inkluagentFolgenAn(), true));
+    inkluagentAnhoerenKnopf(s.querySelector('#arbeitsHoerenTitel'), s.querySelector('#arbeitsHoerenText'));
     // Jedes Dokument, das der Rahmen laedt, meldet sich (Pruefung 13.10.2026, K6/K7/B14) — dauerhaft, nicht nur beim Oeffnen
     const rahmen = s.querySelector('#arbeitsSeiteRahmen');
     rahmen.addEventListener('load', () => inkluagentRahmenGeladen(rahmen));
@@ -739,7 +749,10 @@ function inkluagentSeiteZeigen() {
     const s = window._arbeitsSeite;
     if (!f || !s) return;
     const titel = f.querySelector('#arbeitsSeiteTitel');
-    const neu = t('Seite: {name}', { name: s.name });
+    const neu = s.projekt ? t('Projekt: {name}', { name: s.name }) : t('Seite: {name}', { name: s.name });
+    // Das Projekt ist der Grundzustand des Fensters auf seiner Seite: kein „Seite schließen“, dafuer „Mitverfolgen“
+    f.querySelector('#arbeitsSeiteZu').hidden = !!s.projekt;
+    f.querySelector('#arbeitsFolgen').hidden = !s.projekt;
     if (titel.textContent !== neu) titel.textContent = neu;
     f.querySelector('#arbeitsSeiteRahmen').title = t('Arbeitsfenster: {name}', { name: s.name });
     f.querySelector('#arbeitsSeite').hidden = false;
@@ -750,7 +763,7 @@ function inkluagentSeiteZeigen() {
 // sie wieder (und jeder Versuch erneuerte die Zeit, die 2-Stunden-Grenze lief nie ab).
 function inkluagentSeiteMerken() {
     const s = window._arbeitsSeite;
-    if (!s) return;
+    if (!s || s.projekt) return;   // das Projekt oeffnet das Fenster auf seiner Seite ohnehin (Live-Fenster)
     try {
         sessionStorage.setItem('inkluagent.fenster', JSON.stringify({ pfad: s.pfad, name: s.name, zeit: Date.now(),
             seite: inkluagentPfadOhne(window.location.pathname + window.location.search, ['agent', 'hin']) }));
@@ -780,15 +793,17 @@ function inkluagentRahmenGeladen(rahmen) {
     const pfad = inkluagentPfadOhne(loc.pathname + loc.search, ['eingebettet', 'hin']);
     const eigene = loc.origin === window.location.origin;
     const eingebettet = win ? win.EINGEBETTET : undefined;   // true, false (Seite der App ohne Einbettung) oder fehlt (keine Seite der App)
-    if (eigene && eingebettet === true && fensterSeite(loc.pathname)) {                    // 1. Erfolg
+    const projekt = eigene && eingebettet === true && inkluagentIstProjektImRahmen(loc);   // Live-Fenster: DIESES Projekt
+    if (eigene && eingebettet === true && (fensterSeite(loc.pathname) || projekt)) {        // 1. Erfolg
         const h1 = doc.querySelector('#main h1');
         const titel = (h1 && h1.textContent.trim()) || String(doc.title || '').split(' · ')[0].trim();
         const vorher = window._arbeitsSeite || {};
         const fokus = !!vorher.fokus || document.activeElement === rahmen;
-        window._arbeitsSeite = { offen: true, pfad: pfad, name: titel || vorher.name || loc.pathname, fokus: false, hin: false };
+        window._arbeitsSeite = { offen: true, pfad: pfad, name: titel || vorher.name || loc.pathname, fokus: false, hin: false, projekt: projekt };
         inkluagentSeiteZeigen();
         inkluagentSeiteMerken();
         if (fokus) inkluagentRahmenFokus(rahmen, !!(vorher.fokus && vorher.hin), loc.hash);
+        if (projekt) inkluagentProjektGeladen(win, doc);
         return;
     }
     if (eigene && /^\/login(\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }   // 2. Anmeldung
@@ -860,6 +875,7 @@ function inkluagentSeiteSchliessen() {
     inkluagentRahmenLaden(f.querySelector('#arbeitsSeiteRahmen'), 'about:blank');
     if (document.documentElement.classList.contains('arbeitsfenster-gross')) inkluagentFensterGross(false);
     announce(t('Seite im Arbeitsfenster geschlossen.'));
+    if (inkluagentProjektFensterAn()) inkluagentProjektImFenster();   // Live-Fenster: wieder das Projekt
     const input = document.getElementById('inkluagentInput');
     if (input) input.focus();
 }
@@ -876,12 +892,159 @@ function inkluagentFensterWiederherstellen() {
     if (inkluagentSeiteImFensterMoeglich(hier) && !(frisch && w.seite === inkluagentPfadOhne(hier.split('#')[0], ['hin']))) {
         const h1 = document.querySelector('#main h1');
         inkluagentSeiteImFenster(hier, h1 ? h1.textContent.trim() : '', !(/[?&]hin=/.test(hier) || /#./.test(hier)));
-    } else if (frisch) {
+    } else if (frisch && (!inkluagentProjektFensterAn() || w.seite === inkluagentPfadOhne(hier.split('#')[0], ['hin']))) {
         inkluagentSeiteImFenster(w.pfad, w.name, true);
+    } else if (inkluagentProjektFensterAn()) {
+        // Live-Fenster (16.10.2026): auf einer Projektseite die echte Oberflaeche dieses Projekts — eine gemerkte andere Seite nur,
+        // wenn sie auf GENAU dieser Seite offen war (Neuladen), nicht von einer frueheren Seite her
+        inkluagentProjektImFenster();
     }
     let gross = '';
     try { gross = sessionStorage.getItem('inkluagent.fenster.gross') || ''; } catch (e) { gross = ''; }
     if (gross === '1' && !inkluagentFensterSchmal()) inkluagentFensterGross(true);
+}
+
+// ─── Das Projekt selbst im Arbeitsfenster: Live-Fenster mit Kamerafahrt, Mitsehen und Mithoeren (Steve 16.10.2026) ───
+// „Dass man wirklich einen Livestream sieht, wo er gerade ist — den Live-Ausschnitt von der Oberflaeche.“ Auf einer Projektseite zeigt das
+// Arbeitsfenster DIESES Projekt als echte, bedienbare Oberflaeche (eingebettet: ohne Seitenleiste und ohne eigenen Agenten, siehe
+// inkluagentBinden). Die Seite haelt sich selbst aktuell (sie fragt waehrend eines Laufs nach); nach Antworten mit Aenderungen zeichnet
+// diese Seite sie neu (inkluagentRahmenNachziehen). Der Agent steuert das Fenster: bei jedem Schritt mit Ziel und bei jedem Bild eines
+// Laufs im Hintergrund faehrt es zur Karte — ohne Neuladen, wenn sie in der Ansicht steht, sonst laedt es die passende Ansicht
+// (?ansicht=, ohne Fokus und ohne Ansage, die gemerkte Ansicht des Projekts bleibt) —, markiert sie und zeigt mit der Hand darauf.
+// Nie, solange der Fokus im Fenster steht, und nicht mehr, sobald man dort selbst etwas tut („Mitverfolgen“ springt dann auf aus; ein
+// Druck folgt wieder). Darunter „So klingt diese Stelle“: wie ein Screenreader sie ungefaehr vorliest, mit „Anhören“.
+// Fuer alle Werkzeuge gleich: PDF, Word, Grafik, Web und Uebersetzen nutzen dieselbe Projektseite. Zustand im window (_arbeitsFolge*).
+function inkluagentProjektFensterAn() {
+    return inkluagentChatstilAktiv() && window._inkluagentProjectId != null && !window.GUEST_MODE;
+}
+function inkluagentProjektPfad(ansicht) {
+    return '/app?projekt=' + encodeURIComponent(window._inkluagentProjectId) + (ansicht ? '&ansicht=' + encodeURIComponent(ansicht) : '');
+}
+function inkluagentIstProjektImRahmen(loc) {
+    if (!loc || !/^\/app\/?$/.test(loc.pathname) || window._inkluagentProjectId == null) return false;
+    return new URLSearchParams(loc.search).get('projekt') === String(window._inkluagentProjectId);
+}
+function inkluagentProjektImFenster(ansicht) {
+    const f = document.getElementById('arbeitsfenster');
+    if (!f || !inkluagentProjektFensterAn()) return;
+    const h1 = document.querySelector('#main h1');
+    window._arbeitsSeite = { offen: true, projekt: true, pfad: inkluagentProjektPfad(ansicht), name: h1 ? h1.textContent.trim() : '',
+                             fokus: false, hin: false, laedt: true };
+    f.querySelector('#arbeitsSeiteMeldung').hidden = true;
+    inkluagentSeiteZeigen();
+    inkluagentRahmenLaden(f.querySelector('#arbeitsSeiteRahmen'), inkluagentProjektPfad(ansicht) + '&eingebettet=1');
+}
+// Das Projekt ist im Fenster geladen: wer dort selbst etwas tut, wird nicht mehr weggezogen; ein Ziel, das waehrend des Ladens kam,
+// wird jetzt gezeigt (die Karten baut die Seite erst nach ihrem Abruf — darum mit Warten)
+function inkluagentProjektGeladen(win, doc) {
+    if (!doc || doc._inkluagentSelbst) return;
+    doc._inkluagentSelbst = true;
+    ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(art => doc.addEventListener(art, e => {
+        if (e.isTrusted) inkluagentFolgenSetzen(false, false);
+    }, { passive: true }));
+    const ziel = window._arbeitsFolgeZiel;
+    if (ziel) inkluagentFensterFolgen(ziel, true);
+}
+function inkluagentFolgenAn() {
+    const k = document.getElementById('arbeitsFolgen');
+    return !k || k.getAttribute('aria-pressed') !== 'false';
+}
+// selbst: per Knopf (dann gleich wieder zur letzten Stelle). Ohne Ansage: der Knopf sagt seinen Zustand selbst.
+function inkluagentFolgenSetzen(an, selbst) {
+    const k = document.getElementById('arbeitsFolgen');
+    if (!k || (k.getAttribute('aria-pressed') === 'true') === !!an) return;
+    k.setAttribute('aria-pressed', an ? 'true' : 'false');
+    if (an && selbst && window._arbeitsFolgeZiel) inkluagentFensterFolgen(window._arbeitsFolgeZiel);
+}
+// Welche Karte gehoert zum Ziel, und in welcher Ansicht steht sie
+function inkluagentZielKarte(ziel) {
+    const zahl = x => (typeof x === 'number' && isFinite(x)) ? Math.floor(x) : (/^\d+$/.test(String(x || '')) ? Number(x) : null);
+    if (ziel.art === 'bild') {
+        let id = zahl(ziel.image_id);
+        if (id == null) { const m = /^\/api\/images\/(\d+)\//.exec(String(ziel.bild_url || '')); id = m ? Number(m[1]) : null; }
+        return id == null ? null : { id: 'img_heading_' + id, feld: 'alttext_' + id, ansicht: 'alttexte' };
+    }
+    if (ziel.art === 'feld') {
+        const id = zahl(ziel.feld_id);
+        return id == null ? null : { id: 'feld_heading_' + id, feld: 'quickinfo_' + id, ansicht: 'quickinfos' };
+    }
+    if (ziel.art === 'dokument') {
+        const id = zahl(ziel.document_id);
+        return id == null ? null : { id: 'doc_heading_' + id, ansicht: 'dokument' };
+    }
+    return null;
+}
+// Kamerafahrt zur Stelle. nachLaden: das Fenster hat gerade (die passende Ansicht) geladen — dann nicht noch einmal laden.
+function inkluagentFensterFolgen(ziel, nachLaden) {
+    if (!ziel || !inkluagentProjektFensterAn()) return;
+    const karte = inkluagentZielKarte(ziel);
+    if (!karte) return;
+    window._arbeitsFolgeZiel = ziel;
+    const s = window._arbeitsSeite;
+    if (!inkluagentFolgenAn() || !s || !s.projekt || s.laedt) return;   // eine andere Seite ist offen, oder sie laedt noch
+    const rahmen = document.getElementById('arbeitsSeiteRahmen');
+    if (!rahmen || document.activeElement === rahmen) return;            // wer im Fenster arbeitet, wird nicht weggezogen
+    let win = null;
+    let doc = null;
+    try { win = rahmen.contentWindow; doc = rahmen.contentDocument; } catch (e) { return; }
+    if (!win || !doc) return;
+    const lauf = window._arbeitsFolgeLauf = (window._arbeitsFolgeLauf || 0) + 1;
+    let versuche = nachLaden ? 32 : 1;   // nach dem Laden bis zu 8 s auf die Karte warten (die Seite baut sie nach ihrem Abruf)
+    const suchen = () => {
+        if (lauf !== window._arbeitsFolgeLauf || document.activeElement === rahmen) return;
+        const el = doc.getElementById(karte.id);
+        if (el) { inkluagentImRahmenZeigen(win, doc, el, karte); return; }
+        if (--versuche > 0) { setTimeout(suchen, 250); return; }
+        // nicht in dieser Ansicht: die passende laden (einmal) — danach zeigt inkluagentProjektGeladen die Stelle
+        if (!nachLaden && karte.ansicht) inkluagentProjektImFenster(karte.ansicht);
+    };
+    suchen();
+}
+// Im Rahmen: zugeklappte Karten oeffnen, nur den Rahmen rollen (scrollIntoView rollte auch diese Seite), Karte markieren, Hand
+function inkluagentImRahmenZeigen(win, doc, el, karte) {
+    for (let d = el.closest('details'); d; d = d.parentElement ? d.parentElement.closest('details') : null) d.open = true;
+    const ziel = el.closest('section.image-review, details, .card') || el;
+    const ruhig = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const r = ziel.getBoundingClientRect();
+    const oben = Math.max(0, (win.scrollY || 0) + r.top - Math.max(12, (win.innerHeight - Math.min(r.height, win.innerHeight)) / 2));
+    try { win.scrollTo({ top: oben, behavior: ruhig ? 'auto' : 'smooth' }); } catch (e) { win.scrollTo(0, oben); }
+    ziel.classList.add('inkluagent-hin-ziel');
+    clearTimeout(ziel._inkluagentHin);
+    ziel._inkluagentHin = setTimeout(() => ziel.classList.remove('inkluagent-hin-ziel'), 3500);
+    if (typeof win.zeigeHand === 'function') setTimeout(() => { try { win.zeigeHand(el); } catch (e) { /* nur Schmuck */ } }, ruhig ? 0 : 500);
+    // Mitsehen und Mithoeren: was in der Karte steht, so wie ein Screenreader es ungefaehr vorliest
+    const feld = karte && karte.feld ? doc.getElementById(karte.feld) : null;
+    if (feld && /^alttext_/.test(karte.feld)) inkluagentMithoerenSetzen({ art: 'bild', alt: feld.value });
+    else if (feld) inkluagentMithoerenSetzen({ art: 'feld', info: feld.value });
+}
+// Nach Aenderungen des Agenten: die Projektseite im Fenster neu zeichnen und wieder zur Stelle — nicht, solange man dort arbeitet
+function inkluagentRahmenNachziehen() {
+    const s = window._arbeitsSeite;
+    const rahmen = document.getElementById('arbeitsSeiteRahmen');
+    if (!s || !s.projekt || s.laedt || !rahmen || document.activeElement === rahmen) return;
+    let win = null;
+    try { win = rahmen.contentWindow; } catch (e) { return; }
+    if (!win || typeof win.showProject !== 'function' || win._inkluagentProjectId == null) return;
+    Promise.resolve(win.showProject(win._inkluagentProjectId, true)).then(() => {
+        if (window._arbeitsFolgeZiel) inkluagentFensterFolgen(window._arbeitsFolgeZiel, true);
+    }).catch(() => {});
+}
+// „So klingt diese Stelle“: vereinfacht, wie VoiceOver oder NVDA es sagen — Bild mit Alternativtext, Formularfeld mit Quickinfo
+function inkluagentMithoerenSetzen(stelle) {
+    const box = document.getElementById('arbeitsHoeren');
+    if (!box || !stelle) return;
+    let text = '';
+    if (stelle.art === 'bild') {
+        const alt = String(stelle.alt || '').trim();
+        if (stelle.status === 'error') text = t('Hier gibt es noch keinen Alternativtext. Ein Screenreader sagt nur „Bild“ oder überspringt es.');
+        else text = alt ? t('Bild, {alt}', { alt: alt }) : t('Hier gibt es noch keinen Alternativtext. Ein Screenreader sagt nur „Bild“ oder überspringt es.');
+    } else if (stelle.art === 'feld') {
+        const info = String(stelle.info || '').trim();
+        text = info ? t('Formularfeld, {info}', { info: info }) : t('Dieses Feld hat noch keine Quickinfo. Ein Screenreader nennt dann oft nur „Textfeld“.');
+    }
+    if (!text) return;
+    inkluagentTextSetzen(box.querySelector('#arbeitsHoerenText'), text);
+    box.hidden = false;
 }
 
 // ─── „Arbeitsfenster vergrößern“ und die Ueberlagerung (13.10.2026; Pruefung 13.10.2026, B2/K8, B3, B7) ───
@@ -1326,6 +1489,7 @@ function inkluagentArbeitsSchritt(name, ziel) {
     z.stand = t('Arbeitet an: {schritt}', { schritt: text });
     inkluagentArbeitsMerken();
     inkluagentSchrittAnsagen(text);   // „Jeden Schritt ansagen“ (Steve 12.10.2026), gebuendelt (B9)
+    if (ziel && typeof ziel === 'object') inkluagentFensterFolgen(ziel);   // Live-Fenster: Kamerafahrt zur Stelle
 }
 function inkluagentArbeitsEnde(wartet) {
     inkluagentSchrittAnsagenVerwerfen();
@@ -1410,6 +1574,10 @@ function inkluagentLiveZeigen(d) {
         inkluagentKlang('schritt');   // ein Tick je fertigem Bild, wie je erledigtem Schritt
     }
     window._arbeitsLive = neu;
+    // Steht das Projekt selbst im Fenster, zeigt dessen echte Oberflaeche Bild und Text; der Block oben bleibt nur Kopfzeile
+    const buehne = !!(window._arbeitsSeite && window._arbeitsSeite.projekt);
+    box.classList.toggle('arbeitsfenster-live-kopf', buehne);
+    if (d.vorher && neu.vorher === d.vorher) inkluagentMithoerenSetzen({ art: 'bild', alt: d.vorher.alt, status: d.vorher.status });
     if (!l && !neu.vorher) { box.hidden = true; inkluagentArbeitsZeigen(); return; }
     box.hidden = false;
     box.dataset.zustand = l ? 'laeuft' : 'fertig';
@@ -1432,10 +1600,13 @@ function inkluagentLiveZeigen(d) {
         fig.hidden = false;
         // Die Hand zeigt auf das erste Bild eines Laufs (dashboard.js zeigeHand: nur fuers Auge, nicht bei reduzierter Bewegung; mit
         // dem Wusch der Klangspur — darum nur einmal, nicht je Bild). Danach zeigt der Ring um das Bild, dass er daran schreibt.
-        if (wechsel && !alt.bild && typeof zeigeHand === 'function') zeigeHand(fig);
+        if (wechsel && !alt.bild && !buehne && typeof zeigeHand === 'function') zeigeHand(fig);
+        // Steht das Projekt im Fenster, faehrt es zur Karte des Bildes (Kamerafahrt) — dort entsteht der Text in der echten Oberflaeche
+        if (wechsel) inkluagentFensterFolgen({ art: 'bild', image_id: b.image_id, bild_url: b.bild_url });
     } else {
         fig.hidden = true;
     }
+    if (buehne) fig.hidden = true;
     const fertig = box.querySelector('#arbeitsLiveFertig');
     const v = neu.vorher;
     const fertigText = v ? (v.status === 'error'
@@ -1456,7 +1627,7 @@ function inkluagentLiveZeigen(d) {
             }
         }
     }
-    fertig.hidden = !v;
+    fertig.hidden = !v || buehne;
     inkluagentArbeitsZeigen();   // Stand in der Kopfzeile nachziehen
 }
 // „Bild 3 · Seite 2 · Dokument 1: Name“ — wie die Bildunterschrift der Vorschau
@@ -1579,6 +1750,9 @@ function inkluagentVarianteSetzen(variante) {
 // Den festen Bereich an ein Projekt binden (oder an keins: null). Gleiches Projekt nach einem Neuzeichnen der Ansicht: nur die
 // Agentenansicht neu anwenden — Verlauf, Entwurf und Auf/Zu bleiben, weil der Bereich ausserhalb von main steht.
 async function inkluagentBinden(projectId) {
+    // Im Arbeitsfenster (eingebettet, Live-Fenster 16.10.2026) ist die Projektseite nur Buehne: der Agent sitzt draussen. Kein Bereich,
+    // kein Verfolgen, keine Rueckmeldung — die meldet die Seite draussen, sonst kaeme jede Ansage doppelt.
+    if (window.EINGEBETTET === true) { window._inkluagentProjectId = projectId == null ? null : projectId; return; }
     inkluagentBereichAufbauen();
     const pid = projectId == null ? null : projectId;
     const neu = !window._inkluagentGebunden || String(window._inkluagentProjectId) !== String(pid);
@@ -2170,6 +2344,7 @@ async function inkluagentAnsichtNachziehen(projectId) {
     const entwurfEl = document.getElementById('inkluagentInput');
     const entwurf = entwurfEl ? entwurfEl.value : '';
     await showProject(projectId, true);
+    inkluagentRahmenNachziehen();   // Live-Fenster: die Oberflaeche im Fenster zeigt dieselben Aenderungen
     try { await window._inkluagentBereit; } catch (e) {}
     const neuEl = document.getElementById('inkluagentInput');
     if (neuEl && entwurf && !neuEl.value) neuEl.value = entwurf;

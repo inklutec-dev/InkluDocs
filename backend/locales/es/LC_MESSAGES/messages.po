@@ -12887,3 +12887,24 @@ msgstr "Recién terminado: {bild} – no ha funcionado"
 #, python-brace-format
 msgid "Arbeitet im Hintergrund: Alt-Texte, {n} von {m} fertig."
 msgstr "Trabajando en segundo plano: textos alternativos, {n} de {m} listos."
+
+# InkluAgent: Projekt im Arbeitsfenster, Mitverfolgen, Mithören (16.10.2026)
+msgid "Mitverfolgen"
+msgstr "Seguir"
+
+msgid "So klingt diese Stelle"
+msgstr "Así suena este punto"
+
+#, python-brace-format
+msgid "Bild, {alt}"
+msgstr "Imagen, {alt}"
+
+msgid "Hier gibt es noch keinen Alternativtext. Ein Screenreader sagt nur „Bild“ oder überspringt es."
+msgstr "Aquí todavía no hay texto alternativo. Un lector de pantalla solo dice «imagen» o lo omite."
+
+#, python-brace-format
+msgid "Formularfeld, {info}"
+msgstr "Campo de formulario, {info}"
+
+msgid "Dieses Feld hat noch keine Quickinfo. Ein Screenreader nennt dann oft nur „Textfeld“."
+msgstr "Este campo todavía no tiene información rápida. Un lector de pantalla suele decir solo «campo de texto»."

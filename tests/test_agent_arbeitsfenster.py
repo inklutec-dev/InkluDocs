@@ -74,9 +74,10 @@ class Ziel(unittest.TestCase):
 
     def test_bild_mit_nummer_seite_und_dokument_wie_die_oberflaeche(self):
         z = arbeitsfenster.ziel(self.u["id"], self.p, {"image_id": self.a, "new_alt_text": "egal"})
-        self.assertEqual(z, {"art": "bild", "nummer": 2, "seite": 2, "bild_url": f"/api/images/{self.a}/file",
+        # Kennungen von Bild und Dokument seit dem Live-Fenster (16.10.2026): damit es die Karte findet
+        self.assertEqual(z, {"art": "bild", "image_id": self.a, "nummer": 2, "seite": 2, "bild_url": f"/api/images/{self.a}/file",
                              "seite_url": f"/api/images/{self.a}/page-view", "dokument": "Jahresbericht (fiktiv).pdf",
-                             "dokument_nr": 1})
+                             "dokument_nr": 1, "document_id": self.d1})
         z = arbeitsfenster.ziel(self.u["id"], self.p, {"image_id": self.c})
         self.assertEqual((z["nummer"], z["dokument_nr"], z["seite_url"]), (1, 2, None), "Nummer je Dokument, ohne Seitenansicht keine")
 
@@ -93,9 +94,10 @@ class Ziel(unittest.TestCase):
         c.commit()
         c.close()
         self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"feld_id": fid}),
-                         {"art": "feld", "nummer": 4, "seite": 3, "dokument": "Anhang (fiktiv).pdf", "dokument_nr": 2})
+                         {"art": "feld", "feld_id": fid, "nummer": 4, "seite": 3, "dokument": "Anhang (fiktiv).pdf", "dokument_nr": 2,
+                          "document_id": self.d2})
         self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"document_id": self.d1}),
-                         {"art": "dokument", "dokument": "Jahresbericht (fiktiv).pdf", "dokument_nr": 1})
+                         {"art": "dokument", "dokument": "Jahresbericht (fiktiv).pdf", "dokument_nr": 1, "document_id": self.d1})
 
     def test_nur_eigene_daten_dieses_projekts(self):
         self.assertIsNone(arbeitsfenster.ziel(self.fremd["id"], self.p, {"image_id": self.a}), "fremdes Konto")

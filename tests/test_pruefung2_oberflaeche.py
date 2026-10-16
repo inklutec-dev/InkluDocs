@@ -277,7 +277,7 @@ class Quelltext(unittest.TestCase):
         self.assertNotIn("sessionStorage", funktion(self.js, "inkluagentSeiteZeigen"))
         self.assertIn("sessionStorage.setItem('inkluagent.fenster'", funktion(self.js, "inkluagentSeiteMerken"))
         g = funktion(self.js, "inkluagentRahmenGeladen")
-        erfolg = g.index("if (eigene && eingebettet === true && fensterSeite(loc.pathname)) {")
+        erfolg = g.index("if (eigene && eingebettet === true && (fensterSeite(loc.pathname) || projekt)) {")
         self.assertGreater(g.index("inkluagentSeiteMerken();"), erfolg)
         self.assertEqual(g.count("inkluagentSeiteMerken();"), 1)
         self.assertLess(g.index("inkluagentSeiteZustandZu();\n        window.location.href = pfad + loc.hash;"), g.rindex("inkluagentSeiteNichtGeladen(rahmen);"))

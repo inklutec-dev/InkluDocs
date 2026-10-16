@@ -154,7 +154,7 @@ class Oberflaeche(unittest.TestCase):
         g = funktion(self.js, "inkluagentRahmenGeladen")
         self.assertIn("doc.querySelector('#main h1')", g)
         # Runde 2 (K-N1): vier Faelle — Erfolg, Anmeldung, ganze Seite, Fehlerantwort (bleibt im Fenster)
-        self.assertIn("if (eigene && eingebettet === true && fensterSeite(loc.pathname)) {", g)
+        self.assertIn("if (eigene && eingebettet === true && (fensterSeite(loc.pathname) || projekt)) {", g)
         self.assertIn("if (eigene && /^\\/login(\\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }", g)
         self.assertIn("inkluagentSeiteNichtGeladen(rahmen);", g)
         self.assertIn("document.activeElement === rahmen", g, "Link im Rahmen: Fokus auf die neue Seite")

@@ -21,8 +21,10 @@ FENSTER_SEITEN: tuple[str, ...] = (
     "/konto", "/kuendigen", "/preise", "/projekt-neu", "/projekte", "/prompts", "/stammdaten", "/team", "/ueber-uns", "/vorlagen",
     "/widerrufen",
 )
-# Einrahmen darf die eigene Seite zusaetzlich die Anmeldung: dort landet der Rahmen, wenn die Sitzung ablaeuft (K7)
-EINRAHMBAR: tuple[str, ...] = FENSTER_SEITEN + ("/login",)
+# Einrahmen darf die eigene Seite zusaetzlich die Anmeldung: dort landet der Rahmen, wenn die Sitzung ablaeuft (K7) — und die
+# Projektseite (Live-Fenster, Steve 16.10.2026): auf einer Projektseite zeigt das Arbeitsfenster DIESES Projekt als echte Oberflaeche,
+# in der der Agent gerade arbeitet. Sie steht bewusst NICHT in FENSTER_SEITEN: Links auf Projekte wechseln weiter die ganze Seite.
+EINRAHMBAR: tuple[str, ...] = FENSTER_SEITEN + ("/login", "/app")
 
 
 def _passt(pfad: str, liste: tuple[str, ...]) -> bool:

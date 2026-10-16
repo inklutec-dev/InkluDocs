@@ -36,7 +36,8 @@ def _dokument(conn, project_id: int, document_id) -> dict:
         return {}
     mehrere = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0] > 1
     return {"dokument": (d["display_name"] or d["original_filename"] or "")[:_NAME_MAX],
-            "dokument_nr": d["doc_index"] if mehrere and d["doc_index"] else None}
+            "dokument_nr": d["doc_index"] if mehrere and d["doc_index"] else None,
+            "document_id": d["id"]}   # Live-Fenster: damit es die Karte des Dokuments findet (doc_heading_<id>)
 
 
 def ziel(user_id: int, project_id: Optional[int], args) -> Optional[dict]:
@@ -79,7 +80,7 @@ def _bild(conn, project_id: int, image_id: int) -> Optional[dict]:
     else:
         ids = [x[0] for x in conn.execute("SELECT id FROM images WHERE project_id = ? AND document_id IS NULL "
                                           "ORDER BY page_number, image_index, id", (project_id,)).fetchall()]
-    out = {"art": "bild", "nummer": ids.index(r["id"]) + 1 if r["id"] in ids else None,
+    out = {"art": "bild", "image_id": r["id"], "nummer": ids.index(r["id"]) + 1 if r["id"] in ids else None,
            "seite": r["page_number"] if r["page_number"] and r["page_number"] > 0 else None,
            "bild_url": f"/api/images/{r['id']}/file",
            "seite_url": f"/api/images/{r['id']}/page-view" if r["page_view_path"] else None}
@@ -92,7 +93,7 @@ def _feld(conn, project_id: int, feld_id: int) -> Optional[dict]:
                      (feld_id, project_id)).fetchone()
     if not r:
         return None
-    out = {"art": "feld", "nummer": r["feld_index"],
+    out = {"art": "feld", "feld_id": r["id"], "nummer": r["feld_index"],
            "seite": r["page_number"] if r["page_number"] and r["page_number"] > 0 else None}
     out.update(_dokument(conn, project_id, r["document_id"]))
     return out

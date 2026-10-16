@@ -786,6 +786,34 @@ Arbeitsfenster“. Und: dasselbe Gesicht wie das Sichtfenster in InkluEdit, aber
 - Tests: `tests/test_agent_live.py` (17, Gegenprobe 4/4), 6 neue Texte in sechs Sprachen; Rauchtest mit echtem Lauf
   `rauch_live1610.py` (Hilfsdateien).
 
+### Das Projekt selbst im Arbeitsfenster: Kamerafahrt, Mitsehen und Mithören (Steve 16.10.2026)
+
+Steve: „ob er auch live die Ansicht und den Abschnitt der jeweiligen Ansicht einblenden kann, wo er gerade arbeitet … für alle
+Werkzeuge“ — und auf die Frage nach dem elegantesten Weg „Mitsehen und Mithören“ dazu.
+- **Echte Oberfläche:** Auf einer Projektseite der Agentenansicht zeigt das Arbeitsfenster DIESES Projekt eingebettet
+  (`/app?projekt=<id>&eingebettet=1`, `inkluagentProjektImFenster`) — bedienbar, ohne Seitenleiste und ohne eigenen Agenten:
+  `inkluagentBinden` kehrt eingebettet sofort zurück (kein Bereich, kein Verfolgen, keine Rückmeldung — die meldet die Seite draußen,
+  sonst käme jede Ansage doppelt). Erwogen und verworfen: den versteckten Hauptbereich der Seite selbst ins Fenster verlegen — die
+  Projektansichten ersetzen `#main` per `innerHTML` und suchen ihre Elemente darin, und die Überschrift 1 der Seite wäre mit ins Fenster
+  gewandert. `/app` steht dafür in `fenster.EINRAHMBAR`, aber bewusst NICHT in `FENSTER_SEITEN` (Links auf Projekte wechseln weiter die
+  ganze Seite); `inkluagentRahmenGeladen` nimmt nur das Projekt dieser Seite als Erfolg. Das Projekt ist der Grundzustand des
+  Fensters (kein „Seite schließen“, nicht gemerkt); eine andere Seite (Einstellungen …) legt sich darüber, „Seite schließen“ bringt das
+  Projekt zurück. Eine gemerkte andere Seite gewinnt nur, wenn sie auf genau dieser Seite offen war (Neuladen).
+- **Kamerafahrt** (`inkluagentFensterFolgen`): bei jedem Schritt des Agenten mit Ziel (Bild, Feld, Dokument — `ziel` trägt jetzt
+  `image_id`, `feld_id`, `document_id`) und bei jedem Bild eines Laufs im Hintergrund fährt das Fenster zur Karte (`img_heading_`,
+  `feld_heading_`, `doc_heading_`): steht sie in der Ansicht, ohne Neuladen; sonst lädt es die passende Ansicht über `?ansicht=`
+  (ohne Fokus und Ansage, die gemerkte Ansicht des Projekts bleibt) und wartet bis 8 s auf die Karte. Zugeklappte Karten gehen auf, nur
+  der Rahmen rollt (kein `scrollIntoView`, das rollte auch die Seite draußen), die Karte wird 3,5 s markiert, die Hand zeigt darauf.
+  Nie, solange der Fokus im Fenster steht; sobald man dort selbst etwas tut (Zeiger, Rad, Taste), springt „Mitverfolgen“ auf aus — ein
+  Druck folgt wieder. Nach Antworten mit Änderungen zeichnet die Seite auch das Fenster neu (`inkluagentRahmenNachziehen`, nicht während
+  man darin arbeitet). Der Live-Block ist mit dem Projekt auf der Bühne nur noch Kopfzeile (Titel, Fortschritt).
+- **Mitsehen und Mithören** (`#arbeitsHoeren`, „So klingt diese Stelle“): an der Stelle, an der der Agent ist, wie ein Screenreader
+  sie ungefähr vorliest — „Bild, <Alternativtext>“ bzw. ohne Text der Hinweis, dass ein Screenreader nur „Bild“ sagt oder es
+  überspringt; bei Formularfeldern „Formularfeld, <Quickinfo>“. Quelle: das Feld in der echten Karte bzw. der fertige Text des Laufs.
+  Mit „Anhören“ (dieselben Regeln wie unter jeder Antwort, nur Stimmen auf dem Gerät).
+- Tests: `tests/test_agent_live.py` Klasse `Buehne` (9); drei wörtliche Erwartungen älterer Tests angepasst (Ziel mit Kennungen,
+  Erfolg auch für das Projekt). Klickprobe `probe_buehne.py`, Rauchtest mit echtem Lauf `rauch_live1610.py` (Hilfsdateien).
+
 ### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
 
 Unter dem Absender jeder Antwort des InkluAgent (auch im Verlauf, in der Rückmeldung und im älteren Gespräch, nicht am wachsenden
