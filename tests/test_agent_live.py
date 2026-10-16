@@ -347,6 +347,10 @@ class Buehne(unittest.TestCase):
         g = funktion(dash, "function gleichesProjekt(")
         self.assertIn("u.searchParams.get('projekt') === hier", g)
 
+    def test_fertiges_bild_und_ende_zeichnen_das_fenster_neu(self):
+        self.assertIn("if (neu.vorher !== alt.vorher || (alt.laeuft && !l)) inkluagentRahmenNachziehen();",
+                      funktion(self.js, "function inkluagentLiveZeigen("))
+
     def test_karten_der_ziele(self):
         k = funktion(self.js, "function inkluagentZielKarte(")
         for teil in ("'img_heading_' + id", "'alttext_' + id", "ansicht: 'alttexte'", "'feld_heading_' + id", "ansicht: 'quickinfos'",

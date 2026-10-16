@@ -1630,6 +1630,9 @@ function inkluagentLiveZeigen(d) {
         neu.vorher = d.vorher;
         inkluagentKlang('schritt');   // ein Tick je fertigem Bild, wie je erledigtem Schritt
     }
+    // Ein Bild ist fertig oder der Lauf zu Ende: die echte Oberflaeche im Fenster gleich neu zeichnen — ihr eigenes Nachfragen endet mit
+    // dem Lauf, das letzte Bild stand dort sonst ohne Text (Rauchtest 16.10.2026)
+    if (neu.vorher !== alt.vorher || (alt.laeuft && !l)) inkluagentRahmenNachziehen();
     window._arbeitsLive = neu;
     // Steht das Projekt selbst im Fenster, zeigt dessen echte Oberflaeche Bild und Text; der Block oben bleibt nur Kopfzeile
     const buehne = !!(window._arbeitsSeite && window._arbeitsSeite.projekt);
