@@ -1643,7 +1643,9 @@ html.mit-seitenleiste-gespraeche .inkluagent-chatstil .inkluagent-gespraech-knoe
 #arbeitsSeiteZu { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E"); }
 #arbeitsGross[aria-pressed="true"], #arbeitsFolgen[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #ffffff; }
 #arbeitsFolgen { --af-symbol: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M22 12h-4'/%3E%3Cpath d='M6 12H2'/%3E%3Cpath d='M12 6V2'/%3E%3Cpath d='M12 22v-4'/%3E%3C/svg%3E"); }
-.arbeitsfenster .arbeitsfenster-werkzeuge .btn[hidden] { display: none; }
+/* Ausgeblendetes bleibt aus: die Pillen setzen display (inline-flex), das schlug das hidden-Attribut — „Seite schließen“ stand beim Projekt
+   sichtbar da (Foto 16.10.2026) */
+.arbeitsfenster [hidden] { display: none !important; }
 .arbeitsfenster-stand { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.55rem 0.75rem; border-radius: 10px;
     background: #f4f6fa; font-size: 0.95rem; }
 .arbeitsfenster-stand::before { content: ""; flex: 0 0 auto; width: 0.6rem; height: 0.6rem; margin-top: 0.4em; border-radius: 50%;

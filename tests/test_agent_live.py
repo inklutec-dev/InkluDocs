@@ -379,6 +379,7 @@ class Buehne(unittest.TestCase):
         self.assertIn(".arbeitsfenster-hoeren {", css)
         self.assertIn("#arbeitsFolgen { --af-symbol:", css)
         self.assertIn('#arbeitsFolgen[aria-pressed="true"]', css)
+        self.assertIn(".arbeitsfenster [hidden] { display: none !important; }", css, "Pillen duerfen hidden nicht ueberstimmen")
 
 
 if __name__ == "__main__":
