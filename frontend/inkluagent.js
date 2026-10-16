@@ -1478,6 +1478,16 @@ function inkluagentLiveTexte() {
                                          : t('Gerade fertig: {bild}', { bild: inkluagentLiveBildText(v) }) + (v.alt ? ': ' + String(v.alt) : ''));
     return out;
 }
+// Nach dem Knopf einer Karte (Bestaetigung, Formular) ist die Entscheidung gefallen: „Wartet auf dich“ im Arbeitsfenster stimmt nicht
+// mehr (16.10.2026, gefunden im Rauchtest des Live-Fensters — der Stand blieb bis zur naechsten Nachricht stehen). Wartet die neue
+// Antwort selbst wieder auf eine Entscheidung, bleibt es dabei.
+function inkluagentEntschieden(anhang) {
+    if (!inkluagentChatstilAktiv()) return;
+    const z = inkluagentArbeitsZustand();
+    if (z.laeuft) return;
+    z.stand = inkluagentWartetAufDich(anhang) ? t('Wartet auf dich: Bitte entscheide unter der Antwort.') : t('Fertig. Die Antwort steht im Gespräch.');
+    inkluagentArbeitsMerken();
+}
 // Wartet eine Antwort auf eine Entscheidung (offene Karte)?
 function inkluagentWartetAufDich(anhang) {
     return Array.isArray(anhang) && anhang.some(a => a && (!a.zustand || a.zustand === 'offen')
@@ -2365,6 +2375,7 @@ async function inkluagentBestaetigen(angebotId, btn, statusEl, konto) {
         if (statusEl) statusEl.textContent = '';
         const fokussieren = inkluagentFokusImChat();
         const el = inkluagentAppendMessage('assistant', data.reply || '', data.werkzeuge || [], data.anhang || [], data.sprache);
+        inkluagentEntschieden(data.anhang);
         const wechsel = inkluagentWechselZiel(data.actions);   // B10: derselbe Weg wie nach einer Nachricht
         if (wechsel && await inkluagentWechseln(wechsel, el, fokussieren)) return;
         if (data.karte) inkluagentKarteSetzen(angebotId, data.karte);
@@ -2562,6 +2573,7 @@ async function inkluagentFormularAbsenden(karte, a, form, knopf, status) {
         fokusAuf(ergebnis);
         // Ein erteilter Auftrag (Baustein 2) meldet sich, wenn er zu Ende ist: wie nach dem Knopf einer Bestaetigungs-Karte
         // nachsehen, solange eine Rueckmeldung wartet (fragt nur, solange eine wartet)
+        if (res.ok) inkluagentEntschieden(data.anhang);
         if (res.ok) inkluagentRueckmeldungenBeobachten();
         // Kaufen im Gespraech (Baustein 3): weiter zur Bezahlseite von Stripe — nur dorthin, als ganze Seite (Zahlung nie im
         // Rahmen, wie auf „Abo & Verbrauch“); kurz warten, damit das Ergebnis der Karte noch angesagt wird

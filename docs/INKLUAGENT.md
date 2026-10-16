@@ -780,7 +780,11 @@ Arbeitsfenster“. Und: dasselbe Gesicht wie das Sichtfenster in InkluEdit, aber
   der Stand als Zeile mit Punkt (grau bereit, grün pulsierend arbeitet), Knöpfe als Pillen mit Symbol (Lucide, ISC, als Maske),
   Punktfläche als Bühne; die Seite im Fenster mit Kopf wie eine Browserleiste. Bei „Bewegung reduzieren“ ohne Puls, Ring und
   Einblenden; Hochkontrast mit Rändern.
-- Tests: `tests/test_agent_live.py` (16, Gegenprobe 4/4), 6 neue Texte in sechs Sprachen.
+- **Nach dem Knopf einer Karte** (Bestätigung, Formular) stand im Fenster weiter „Wartet auf dich: Bitte entscheide unter der
+  Antwort.“, bis zur nächsten Nachricht (gefunden im Rauchtest): `inkluagentEntschieden` setzt den Stand auf „Fertig …“, außer
+  die neue Antwort wartet selbst wieder auf eine Entscheidung.
+- Tests: `tests/test_agent_live.py` (17, Gegenprobe 4/4), 6 neue Texte in sechs Sprachen; Rauchtest mit echtem Lauf
+  `rauch_live1610.py` (Hilfsdateien).
 
 ### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
 

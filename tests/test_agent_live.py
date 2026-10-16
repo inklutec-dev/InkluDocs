@@ -246,6 +246,15 @@ class Oberflaeche(unittest.TestCase):
         self.assertIn("t('Arbeitet im Hintergrund: Alt-Texte, {n} von {m} fertig.'", z)
         self.assertIn("f.dataset.zustand = z.laeuft ? 'laeuft' : (lv ? 'hinten' : 'ruhe');", z)
 
+    def test_nach_dem_knopf_wartet_nichts_mehr(self):
+        e = funktion(self.js, "function inkluagentEntschieden(")
+        self.assertIn("inkluagentWartetAufDich(anhang) ? t('Wartet auf dich: Bitte entscheide unter der Antwort.') : "
+                      "t('Fertig. Die Antwort steht im Gespräch.')", e)
+        self.assertIn("if (z.laeuft) return;", e)
+        best = funktion(self.js, "async function inkluagentBestaetigen(")
+        self.assertLess(best.index("inkluagentEntschieden(data.anhang);"), best.index("if (wechsel && await inkluagentWechseln("))
+        self.assertIn("if (res.ok) inkluagentEntschieden(data.anhang);", self.js, "auch nach einer Formular-Karte")
+
     def test_gestaltung_ohne_text_im_schmuck_und_bewegung_abschaltbar(self):
         css = lies(FRONTEND, "style.css")
         teil = css[css.index("/* ─── Gesicht wie das Sichtfenster in InkluEdit"):css.index("/* Eingebettete Seite (im Rahmen")]
