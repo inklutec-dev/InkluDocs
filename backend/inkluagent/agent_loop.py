@@ -24,7 +24,7 @@ import os
 import time
 from typing import Any, Callable, Optional
 
-from . import storage
+from . import nachweis, storage
 from .providers.base import FristErreicht
 from .providers.bedrock import BedrockProvider, BedrockProviderError
 from .tools.definitions import TOOL_DEFINITIONS, ToolExecutor
@@ -539,6 +539,11 @@ def run_agent(
                 for a in (anhang if isinstance(anhang, list) else [anhang]):
                     anhaenge.append(a)
                     actions_log.append(dict({"type": "anhang"}, **a))
+            # Nachweis (17.10.2026, nachweis.py): Pruefergebnis und Anfang der Hoerprobe als Karte unter der Antwort — Zeilen aus
+            # dem Dokument gehen nie an das Modell
+            for a in nachweis.herausnehmen(result):
+                anhaenge.append(a)
+                actions_log.append(dict({"type": "anhang"}, **a))
 
             # image_bytes-Sonderfall (view_image / view_field)
             img_bytes = result.pop("image_bytes", None) if isinstance(result, dict) else None

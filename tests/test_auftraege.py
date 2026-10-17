@@ -1309,5 +1309,78 @@ class Hilfe(unittest.TestCase):
         self.assertIn("Ein Auftrag kostet nie mehr als die Summe auf der Karte.", vorlage)
 
 
+
+# ─── Kette ueber die Bruecke (17.10.2026): braucht/liefert, „In ein PDF-Projekt laden und prüfen“ ─────────────────────────────
+class KetteBruecke(MitWerkzeugen):
+    """Steve 17.10.2026: der Agent laeuft durch — Word → PDF → PDF-Projekt → pruefen → Nachweis. braucht/liefert im Katalog: fehlt
+    der Vorgaenger, setzt planen() ihn ein (mit Preis und Hinweis auf der Karte)."""
+
+    def setUp(self):
+        super().setUp()
+        self.umwandeln = Werkzeug("pdfua", 30, hintergrund=False, ergebnis={
+            "ok": True, "result": {"ausgabe_id": 77, "bestanden": True},
+            "anhang": {"art": "pdfua", "ausgabe_id": 77, "dateiname": "brief.pdf", "download_url": "/api/ausgaben/77/datei"},
+            "nachweis": {"art": "nachweis", "quelle": "ablage", "bestanden": True, "befunde": 0}})
+        mock.patch.object(ausgaben, "konvertiere_zu_pdfua", self.umwandeln).start()
+        self.bruecke_aufrufe = []
+
+        def bruecke(project_id, user_id, ausgabe_id, ziel=None, pruefen=False):
+            self.bruecke_aufrufe.append({"project_id": project_id, "ausgabe_id": ausgabe_id, "ziel": ziel, "pruefen": pruefen})
+            return {"ok": True, "result": {"project_id": 555, "neues_projekt": True},
+                    "anhang": {"art": "link", "url": "/app?projekt=555", "text": "Projekt „Brief (barrierefreie PDF)“ öffnen"},
+                    "aktionen": [{"type": "seite_wechseln", "url": "/app?projekt=555", "project_id": 555}],
+                    "nachweis": [{"art": "nachweis", "quelle": "pruefdatei", "bestanden": False, "befunde": 2,
+                                  "hoerprobe": ["Absatz: aus der PDF (fiktiv)"]}]}
+        mock.patch.object(ausgaben, "ausgabe_in_projekt", side_effect=bruecke).start()
+
+    def test_braucht_liefert_setzt_das_umwandeln_ein(self):
+        plan = af.planen(self.u["id"], af._eigenes_projekt(self.u["id"], self.pid), self.wunsch("in_pdf_projekt"))
+        self.assertEqual(plan["fehler"], [])
+        self.assertEqual([e["art"] for e in plan["eintraege"]], ["pdfua", "in_pdf_projekt"])
+        self.assertEqual([e["preis_geplant"] for e in plan["eintraege"]], [30, 0], "die Bruecke ist kostenlos")
+        self.assertEqual(plan["eintraege"][1]["args"], {"pruefen": True})
+        self.assertEqual(plan["hinweise"], ["„In ein PDF-Projekt laden und prüfen“ braucht „In barrierefreie PDF umwandeln“ — das ist "
+                                            "im Auftrag dabei."])
+
+    def test_ganze_kette_in_reihenfolge_ohne_hinweis(self):
+        plan = af.planen(self.u["id"], af._eigenes_projekt(self.u["id"], self.pid), self.wunsch("in_pdf_projekt", "alt_texte", "pdfua"))
+        self.assertEqual([e["art"] for e in plan["eintraege"]], ["alt_texte", "pdfua", "in_pdf_projekt"])
+        self.assertEqual(plan["hinweise"], [])
+
+    def test_nur_in_word_projekten(self):
+        pid = projekt(self.u["id"], PDF)
+        plan = af.planen(self.u["id"], af._eigenes_projekt(self.u["id"], pid), self.wunsch("in_pdf_projekt"))
+        self.assertEqual(plan["eintraege"], [])
+        self.assertTrue(plan["fehler"], "im PDF-Projekt gibt es kein Umwandeln, das die PDF liefert")
+
+    def test_laeuft_durch_mit_der_pdf_aus_dem_umwandeln_und_dem_juengsten_nachweis(self):
+        aid = self.erteilen("pdfua", "in_pdf_projekt")
+        af.durchlauf()
+        a = self.auftrag(aid)
+        self.assertEqual([s["zustand"] for s in a["schritte"]], ["fertig", "fertig"], a["schritte"])
+        self.assertEqual(self.bruecke_aufrufe, [{"project_id": self.pid, "ausgabe_id": 77, "ziel": None, "pruefen": True}])
+        anh = af.anhaenge(aid)
+        self.assertEqual([x["art"] for x in anh], ["pdfua", "link", "nachweis"], "Datei, neues Projekt, EIN Nachweis")
+        self.assertEqual(anh[2]["quelle"], "pruefdatei", "der juengste: aus der echten PDF")
+        fakten = json.dumps(af.fakten(aid), ensure_ascii=False)
+        self.assertIn('"nachweis": [{"pdf_ua": "nicht bestanden", "befunde": 2}]', fakten)
+        self.assertNotIn("aus der PDF (fiktiv)", fakten)
+
+    def test_ohne_pdf_aus_dem_umwandeln_haelt_er_an(self):
+        self.umwandeln.ergebnis = {"ok": True, "result": {}, "anhang": {"art": "pdfua", "dateiname": "x.pdf", "download_url": "/x"}}
+        aid = self.erteilen("pdfua", "in_pdf_projekt")
+        af.durchlauf()
+        s = self.schritt(aid, 1)
+        self.assertEqual((s["zustand"], s.get("grund")), ("fehler", af.T_KEINE_PDF))
+        self.assertEqual(self.bruecke_aufrufe, [])
+
+    def test_kein_katalogschritt_braucht_etwas_das_keiner_liefert(self):
+        geliefert = {x for s in af.KATALOG for x in s.liefert}
+        for s in af.KATALOG:
+            for bedarf in s.braucht:
+                self.assertIn(bedarf, geliefert, s.art)
+                self.assertTrue(any(bedarf in q.liefert and af._vor(q.art, s.art) for q in af.KATALOG), f"{s.art}: Lieferant davor")
+
+
 if __name__ == "__main__":
     unittest.main()

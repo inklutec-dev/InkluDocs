@@ -12568,3 +12568,58 @@ msgstr "Filen finns inte längre. Rapporten finns kvar."
 
 msgid "Projekt nicht gefunden"
 msgstr "Projektet hittades inte"
+
+# Fertig mit Nachweis (17.10.2026, inkluagent/nachweis.py, inkluagent-nachrichten.js)
+#, python-brace-format
+msgid "Nachweis: {dokument}"
+msgstr "Intyg: {dokument}"
+
+msgid "Nachweis"
+msgstr "Intyg"
+
+msgid "PDF/UA-Prüfung (veraPDF): bestanden"
+msgstr "PDF/UA-kontroll (veraPDF): godkänd"
+
+#, python-brace-format
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, {n} Befunde"
+msgstr "PDF/UA-kontroll (veraPDF): inte godkänd, {n} anmärkningar"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, 1 Befund"
+msgstr "PDF/UA-kontroll (veraPDF): inte godkänd, 1 anmärkning"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden"
+msgstr "PDF/UA-kontroll (veraPDF): inte godkänd"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht geprüft"
+msgstr "PDF/UA-kontroll (veraPDF): inte kontrollerad"
+
+#, python-brace-format
+msgid "Alt-Texte: {n} von {m} Bildern"
+msgstr "Alternativtexter: {n} av {m} bilder"
+
+msgid "Die Prüfdatei ist älter als der jetzige Stand."
+msgstr "Kontrollfilen är äldre än det nuvarande läget."
+
+msgid "So liest ein Screenreader den Anfang vor:"
+msgstr "Så här läser en skärmläsare upp början:"
+
+#, python-brace-format
+msgid "So liest ein Screenreader den Anfang von „{dokument}“ vor:"
+msgstr "Så här läser en skärmläsare upp början av ”{dokument}”:"
+
+msgid "Prüfbericht in der Ablage"
+msgstr "Kontrollrapport i arkivet"
+
+# Kette ueber die Bruecke, braucht/liefert (17.10.2026, inkluagent/auftraege.py)
+msgid "In ein PDF-Projekt laden und prüfen"
+msgstr "Läs in i ett PDF-projekt och kontrollera"
+
+msgid "neues PDF-Projekt, Prüfung mit veraPDF und Hörprobe"
+msgstr "nytt PDF-projekt, kontroll med veraPDF och lyssningsprov"
+
+#, python-brace-format
+msgid "„{a}“ braucht „{b}“ — das ist im Auftrag dabei."
+msgstr "”{a}” behöver ”{b}” – det ingår i uppdraget."
+
+msgid "Es gab keine PDF aus dem Umwandeln, die ins PDF-Projekt hätte kommen können."
+msgstr "Det fanns ingen PDF från konverteringen som kunde läggas i PDF-projektet."

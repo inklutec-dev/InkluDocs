@@ -12996,3 +12996,58 @@ msgstr "El archivo ya no está disponible. El informe se conserva."
 
 msgid "Projekt nicht gefunden"
 msgstr "Proyecto no encontrado"
+
+# Fertig mit Nachweis (17.10.2026, inkluagent/nachweis.py, inkluagent-nachrichten.js)
+#, python-brace-format
+msgid "Nachweis: {dokument}"
+msgstr "Comprobante: {dokument}"
+
+msgid "Nachweis"
+msgstr "Comprobante"
+
+msgid "PDF/UA-Prüfung (veraPDF): bestanden"
+msgstr "Comprobación PDF/UA (veraPDF): superada"
+
+#, python-brace-format
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, {n} Befunde"
+msgstr "Comprobación PDF/UA (veraPDF): no superada, {n} hallazgos"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, 1 Befund"
+msgstr "Comprobación PDF/UA (veraPDF): no superada, 1 hallazgo"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden"
+msgstr "Comprobación PDF/UA (veraPDF): no superada"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht geprüft"
+msgstr "Comprobación PDF/UA (veraPDF): no realizada"
+
+#, python-brace-format
+msgid "Alt-Texte: {n} von {m} Bildern"
+msgstr "Textos alternativos: {n} de {m} imágenes"
+
+msgid "Die Prüfdatei ist älter als der jetzige Stand."
+msgstr "El archivo de comprobación es anterior al estado actual."
+
+msgid "So liest ein Screenreader den Anfang vor:"
+msgstr "Así lee un lector de pantalla el comienzo:"
+
+#, python-brace-format
+msgid "So liest ein Screenreader den Anfang von „{dokument}“ vor:"
+msgstr "Así lee un lector de pantalla el comienzo de «{dokument}»:"
+
+msgid "Prüfbericht in der Ablage"
+msgstr "Informe de comprobación en el archivo"
+
+# Kette ueber die Bruecke, braucht/liefert (17.10.2026, inkluagent/auftraege.py)
+msgid "In ein PDF-Projekt laden und prüfen"
+msgstr "Cargar en un proyecto PDF y comprobar"
+
+msgid "neues PDF-Projekt, Prüfung mit veraPDF und Hörprobe"
+msgstr "nuevo proyecto PDF, comprobación con veraPDF y muestra de audio"
+
+#, python-brace-format
+msgid "„{a}“ braucht „{b}“ — das ist im Auftrag dabei."
+msgstr "«{a}» necesita «{b}»: está incluido en el encargo."
+
+msgid "Es gab keine PDF aus dem Umwandeln, die ins PDF-Projekt hätte kommen können."
+msgstr "No había ningún PDF de la conversión que pudiera pasar al proyecto PDF."

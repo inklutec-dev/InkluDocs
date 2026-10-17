@@ -50,6 +50,7 @@ import funktionen
 from database import get_db
 
 from .daten import daten
+from . import nachweis   # „Fertig mit Nachweis“ (17.10.2026)
 
 log = logging.getLogger(__name__)
 
@@ -75,13 +76,18 @@ ENDE = ("fertig", "gescheitert", "abgebrochen")
 class Schritt:
     """Ein Schritt, den ein Auftrag enthalten kann. titel ist ein msgid (dieselben Namen wie die Werkzeuge in der Oberflaeche).
     freigabe: die Art im Angebots-Schluessel des Werkzeugs ({ziel} und {format} werden ersetzt) — nur dafuer gibt der Auftrag
-    die Zustimmung. hintergrund: Art fuer rueckmeldung.laeuft; leer = fertig, wenn das Werkzeug zurueckkehrt."""
+    die Zustimmung. hintergrund: Art fuer rueckmeldung.laeuft; leer = fertig, wenn das Werkzeug zurueckkehrt.
+    braucht / liefert (17.10.2026, Steckbrief fuer Ketten): was ein Schritt voraussetzt und was er hervorbringt. Braucht ein gewuenschter
+    Schritt etwas, das kein Schritt davor liefert, setzt planen() den Schritt davor, der es liefert (und den es hier gibt), selbst ein —
+    mit Preis auf der Karte und einem Hinweis. So plant der Server Ketten; ein neuer Schritt nennt nur, was er braucht und liefert."""
     art: str
     werkzeug: str
     titel: str
     freigabe: str
     hintergrund: str = ""
     je_dokument: bool = False
+    braucht: tuple = ()
+    liefert: tuple = ()
 
 
 # Reihenfolge = Reihenfolge im Auftrag (erst taggen, dann beschreiben, dann pruefen, dann herunterladen — wie die Kette)
@@ -94,8 +100,12 @@ KATALOG: tuple = (
     Schritt("alt_texte_tabelle", "exportiere_alt_texte", "Alt-Texte herunterladen", "tabelle_{format}"),
     Schritt("quickinfos_tabelle", "exportiere_quickinfos", "Quickinfos herunterladen", "quickinfo_csv"),
     Schritt("word", "exportiere_word", "Als Word herunterladen", "docx"),
-    Schritt("pdfua", "konvertiere_zu_pdfua", "In barrierefreie PDF umwandeln", "pdfua"),
+    Schritt("pdfua", "konvertiere_zu_pdfua", "In barrierefreie PDF umwandeln", "pdfua", liefert=("pdf_in_ablage",)),
     Schritt("pdf", "exportiere_fertige_pdf", "PDF herunterladen", "pdf_export"),
+    # Die Bruecke (17.10.2026, ablage_projekt.py): die PDF aus dem Umwandeln in ein neues PDF-Projekt, dort Pruefdatei (veraPDF und
+    # Hoerprobe der echten PDF) — kostenlos; der Nachweis steht unter der Rueckmeldung
+    Schritt("in_pdf_projekt", "ausgabe_in_projekt", "In ein PDF-Projekt laden und prüfen", "uebernehmen",
+            braucht=("pdf_in_ablage",), liefert=("pdf_projekt",)),
 )
 NACH_ART = {s.art: s for s in KATALOG}
 # Schritte, die etwas am Projekt aendern, das ein spaeteres Herunterladen berechnet (billing.pdf_download_preis)
@@ -128,6 +138,7 @@ T_AUS = "Aufträge wurden auf dem Server ausgeschaltet; der Auftrag wurde angeha
 T_AUFGEGEBEN = "Der Auftrag lief länger als zwei Tage und wurde nicht weiter abgewartet."
 T_KEIN_ALT_TEXT = "Für kein Bild ist ein neuer Alt-Text entstanden."
 T_KEINE_QUICKINFO = "Es ist keine neue Quickinfo entstanden."
+T_KEINE_PDF = "Es gab keine PDF aus dem Umwandeln, die ins PDF-Projekt hätte kommen können."
 
 
 def an() -> bool:
@@ -354,11 +365,27 @@ def _v_pdf(c: _Rechnen) -> list:
     return [_eintrag(c, "pdf", m._pdf_export_plan(c.user_id, units)["preis"], umfang, args=args, document_id=c.dok)]
 
 
+def _v_in_pdf_projekt(c: _Rechnen) -> list:
+    """Kostenlos: die PDF aus dem Umwandeln davor (planen() sorgt ueber braucht/liefert dafuer, dass es davor steht) in ein neues
+    PDF-Projekt, dort pruefen. Nur in Word-Projekten — ein PDF-Projekt ist schon eins."""
+    _ = c._
+    if (c.project.get("tool") or "") not in ("word", "uebersetzen"):
+        raise _Nicht("„In ein PDF-Projekt laden“ gibt es im Auftrag nur für Word-Projekte; dieses ist schon ein PDF-Projekt.")
+    return [_eintrag(c, "in_pdf_projekt", 0, _("neues PDF-Projekt, Prüfung mit veraPDF und Hörprobe"), args={"pruefen": True})]
+
+
 _VORSCHAU: dict[str, Callable[[_Rechnen], list]] = {
     "tagging": _v_tagging, "alt_texte": _v_alt_texte, "quickinfos": _v_quickinfos, "pruefung": _v_pruefung,
     "uebersetzung": _v_uebersetzung, "alt_texte_tabelle": _v_alt_texte_tabelle, "quickinfos_tabelle": _v_quickinfos_tabelle,
     "word": _v_export("word", "docx"), "pdfua": _v_export("pdfua", "pdfua"), "pdf": _v_pdf,
+    "in_pdf_projekt": _v_in_pdf_projekt,
 }
+
+
+def _vor(a: str, b: str) -> bool:
+    """Steht Schritt a im Katalog vor Schritt b (Reihenfolge im Auftrag)?"""
+    reihe = [s.art for s in KATALOG]
+    return reihe.index(a) < reihe.index(b)
 
 
 def _dokument_wunsch(wert: Any) -> Optional[int]:
@@ -409,6 +436,19 @@ def planen(user_id: int, project: dict, wunsch: dict, _: Optional[Callable[[str]
             fehler.append(f"„{NACH_ART[a].titel}“ gibt es in diesem Projekt nicht.")
         else:
             gewuenscht.append(a)
+    # braucht/liefert (17.10.2026): fehlt einem gewuenschten Schritt, was er braucht, kommt der Schritt dazu, der es liefert und den
+    # es hier gibt (Katalog-Reihenfolge; die Karte sagt es). Gibt es keinen, ist es ein Fehler fuer das Modell.
+    dazu: list[tuple] = []
+    for a in gewuenscht:   # auch die eingesetzten (eine Kette von Vorgaengern)
+        for bedarf in NACH_ART[a].braucht:
+            if any(bedarf in NACH_ART[x].liefert for x in gewuenscht if _vor(x, a)):
+                continue
+            quelle = next((s.art for s in KATALOG if bedarf in s.liefert and s.art in gibt_es and _vor(s.art, a)), None)
+            if quelle is None:
+                fehler.append(f"„{NACH_ART[a].titel}“ braucht einen Schritt davor, den es in diesem Projekt nicht gibt.")
+            elif quelle not in gewuenscht:
+                gewuenscht.append(quelle)
+                dazu.append((a, quelle))
     if wunsch.get("format") not in _FORMATE and "alt_texte_tabelle" in gewuenscht:
         fehler.append("Format für die Alt-Texte: csv, xlsx (Excel) oder json.")
     conn = get_db()
@@ -431,6 +471,8 @@ def planen(user_id: int, project: dict, wunsch: dict, _: Optional[Callable[[str]
                            for a in gewuenscht if a in _NUR_GANZES_PROJEKT]
             docs, dokument = nur, _dokname(nur[0])
     c = _Rechnen(project=project, user_id=int(user_id), docs=docs, wunsch=wunsch, _=_)
+    c.hinweise += [_("„{a}“ braucht „{b}“ — das ist im Auftrag dabei.").format(a=_(NACH_ART[a].titel), b=_(NACH_ART[q].titel))
+                   for a, q in dazu]
     eintraege: list[dict] = []
     if not fehler:
         for s in KATALOG:
@@ -504,8 +546,9 @@ _SCHRITTE_BESCHREIBUNG = (
     "Quickinfos für alle benannten Formularfelder, pruefung = KI-basierte Prüfung der getaggten PDFs, uebersetzung = Word-Dokument "
     "übersetzen (zielsprache nötig; die übersetzte Datei kommt dazu), alt_texte_tabelle = Alt-Texte als Tabelle herunterladen "
     "(format), quickinfos_tabelle = Quickinfos als CSV, word = Word-Datei mit Alt-Texten, pdfua = Word in barrierefreie PDF "
-    "umwandeln, pdf = fertige PDF herunterladen (mehrere Dokumente als ZIP). Mit document_id gelten tagging, alt_texte, quickinfos, "
-    "pruefung und pdf nur für dieses Dokument.")
+    "umwandeln, pdf = fertige PDF herunterladen (mehrere Dokumente als ZIP), in_pdf_projekt = nur Word: die umgewandelte PDF in "
+    "ein neues PDF-Projekt laden und dort prüfen (veraPDF, Hörprobe; kostenlos; braucht pdfua — fehlt es, setzt der Server es "
+    "ein). Mit document_id gelten tagging, alt_texte, quickinfos, pruefung und pdf nur für dieses Dokument.")
 
 
 def werkzeuge(project_id: Optional[int]) -> list[dict]:
@@ -852,7 +895,7 @@ def _beenden(a: dict, zustand: str) -> None:
 _LAUFBUCH: dict = {}
 _LAUFBUCH_ART = {"tagging": "tagging", "alt_texte": "alt_texte", "quickinfos": "quickinfos", "pruefung": "pruefung",
                  "uebersetzung": "uebersetzen", "alt_texte_tabelle": "export", "quickinfos_tabelle": "export", "word": "export",
-                 "pdfua": "umwandeln", "pdf": "export"}
+                 "pdfua": "umwandeln", "pdf": "export", "in_pdf_projekt": "uebernehmen"}
 
 
 def _laufbuch_stand(a: dict) -> None:
@@ -1054,6 +1097,12 @@ def _starten(a: dict, s: dict) -> dict:
         # Inzwischen getaggt (etwa per Knopf, waehrend der Auftrag ein anderes Dokument taggte): nicht noch einmal taggen und
         # bezahlen — „Neu taggen“ ersetzte sonst die gerade entstandenen Tags (Pruefung N2)
         return {"zustand": "uebersprungen", "grund": T_SCHON_GETAGGT, "preis": 0}
+    if s["art"] == "in_pdf_projekt":   # liefert davor: die PDF aus dem Umwandeln (braucht/liefert, 17.10.2026)
+        vorher = next((x for x in reversed(a["schritte"]) if x.get("art") == "pdfua" and x.get("zustand") == "fertig"
+                       and isinstance(x.get("anhang"), dict) and x["anhang"].get("ausgabe_id")), None)
+        if not vorher:
+            return {"zustand": "fehler", "grund": T_KEINE_PDF}
+        s = dict(s, args=dict(s.get("args") or {}, ausgabe_id=int(vorher["anhang"]["ausgabe_id"])))
     namen, executor = _werkzeugsatz(p, a["user_id"])
     if s["werkzeug"] not in namen:
         return {"zustand": "fehler", "grund": T_NICHT_DA}
@@ -1087,8 +1136,9 @@ def _starten(a: dict, s: dict) -> dict:
             return dict(felder, zustand="uebersprungen", preis=0, grund=T_NICHTS)
         return dict(felder, zustand="fehler", preis=0, grund=T_NICHT_DA if res.get("gesperrt") else T_INTERN)
     anhang = r.get("anhang") if isinstance(r.get("anhang"), dict) else None
+    nachweise = nachweis.herausnehmen(r)   # „Fertig mit Nachweis“ (17.10.2026): unter die Rueckmeldung, nicht ans Modell
     log.info("Auftrag %s: %s fertig (%d Credits freigegeben)", a["id"], s["art"], preis)
-    return dict(felder, zustand="fertig", anhang=anhang, beendet_am=_jetzt())
+    return dict(felder, zustand="fertig", anhang=anhang, nachweis=nachweise, beendet_am=_jetzt())
 
 
 def _herunterladen_belegt(r: Any) -> bool:
@@ -1276,6 +1326,11 @@ def fakten(auftrag_id: int) -> dict:
             e["datei"] = s["anhang"]["dateiname"]
             if s["anhang"].get("gueltig_bis"):   # Sofort-Downloads gelten 24 Stunden; die Ablage bleibt (Pruefung N10)
                 e["datei_herunterladbar_bis"] = s["anhang"]["gueltig_bis"]
+        # Nachweis (17.10.2026): nur das Urteil — die Zeilen der Hoerprobe stehen auf der Karte, nicht beim Modell
+        urteile = [{"pdf_ua": {True: "bestanden", False: "nicht bestanden"}.get(n.get("bestanden"), "nicht geprüft"),
+                    "befunde": n.get("befunde")} for n in (s.get("nachweis") or []) if isinstance(n, dict)]
+        if urteile:
+            e["nachweis"] = urteile
         schritte.append(e)
     return {"auftrag": {"ergebnis": AUFTRAG_ZUSTAND.get(a["zustand"], a["zustand"]), "schritte": schritte,
                         "credits_freigegeben": a["freigegeben"]}}
@@ -1328,7 +1383,17 @@ def arten(auftrag_id: int) -> set:
 def anhaenge(auftrag_id: int) -> list[dict]:
     """Die Dateien aus den Schritten (Herunterladen, Ablage) fuer unter die Rueckmeldung — wie unter einer Antwort."""
     a = _laden(auftrag_id)
-    return [dict(s["anhang"]) for s in (a or {}).get("schritte", []) if isinstance(s.get("anhang"), dict)]
+    schritte = (a or {}).get("schritte", [])
+    # Nachweis (17.10.2026): der juengste — der des letzten Schritts, der einen hat (nach „In ein PDF-Projekt laden und pruefen“
+    # der aus der echten PDF, nicht noch einmal der aus dem Umwandeln), gleich hinter dessen Datei bzw. Link
+    mit = [i for i, s in enumerate(schritte) if s.get("nachweis")]
+    out = []
+    for i, s in enumerate(schritte):
+        if isinstance(s.get("anhang"), dict):
+            out.append(dict(s["anhang"]))
+        if mit and i == mit[-1]:
+            out += [dict(n) for n in (s.get("nachweis") or []) if isinstance(n, dict) and n.get("art") == "nachweis"]
+    return out
 
 
 # ─── Schleife ────────────────────────────────────────────────────────────────────────────────────────────────────────────────

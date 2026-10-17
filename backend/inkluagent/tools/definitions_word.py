@@ -123,6 +123,8 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
         "input_schema": {"type": "object", "properties": {
             "ausgabe_id": {"type": "integer", "description": "Die ausgabe_id."},
             "ziel_projekt_id": {"type": "integer", "description": "Nur für ein vorhandenes eigenes Projekt derselben Art; sonst weglassen."},
+            "pruefen": {"type": "boolean", "description": ("Bei einer PDF: danach gleich prüfen (Prüfdatei mit veraPDF und Hörprobe, "
+                                                           "kostenlos) — der Nachweis steht unter deiner Antwort.")},
         }, "required": ["ausgabe_id"]},
     },
 ]

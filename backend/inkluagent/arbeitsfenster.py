@@ -40,6 +40,8 @@ ANSICHT_JE_WERKZEUG: dict = {
     "analysiere_word_struktur": "dokument", "konvertiere_zu_pdfua": "dokument", "exportiere_word": "dokument",
     "pruefe_word_dokument": "abschluss",
     "uebersetze_dokument": "uebersetzung", "uebersetzung_stand": "uebersetzung", "exportiere_uebersetzung": "uebersetzung",
+    # Ablage -> Projekt (17.10.2026): waehrend des Aufrufs die Ansicht Dokument; danach zeigt das Live-Fenster das Ziel
+    "ausgabe_in_projekt": "dokument",
 }
 ANSICHT_JE_LAUF: dict = {
     "alt_texte": "alttexte", "quickinfos": "quickinfos", "tagging": "tagging", "korrektur": "abschluss", "pruefung": "abschluss",

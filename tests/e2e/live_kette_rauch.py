@@ -11,6 +11,7 @@ Fotos /tmp/kette_*.png. Kostet einige Credits des Staging-Kontos und wenige Cent
 Ablage-Einträge danach gelöscht, Ansicht des Kontos wie vorher. Aufruf (vor jedem Einspielen auf Staging, Playwright): python3 tests/e2e/live_kette_rauch.py <mail> <passwort> [A|B|AB]"""
 import io
 import os
+import re
 import sys
 import time
 
@@ -58,7 +59,7 @@ def word(titel):
     return p.getvalue()
 
 
-REKORDER = """() => { window._aufnahme = []; window._ziele = [];
+REKORDER = """() => { window._aufnahme = []; window._ziele = []; window._stationen = [];
     clearInterval(window._rekorder);
     window._rekorder = setInterval(() => {
         const r = document.getElementById('arbeitsSeiteRahmen'); let fr = '-';
@@ -69,10 +70,21 @@ REKORDER = """() => { window._aufnahme = []; window._ziele = [];
         let mk = ''; try { const k = r.contentDocument.querySelector('.inkluagent-hin-ziel'); mk = k ? (k.id || k.tagName) : ''; } catch (e) {}
         const e = fr + ' | ' + was + ' | ' + zt + ' | ' + mk;
         if (window._aufnahme[window._aufnahme.length - 1] !== e) window._aufnahme.push(e);
+        let st = '-'; try { const q = new URLSearchParams(r.contentDocument.location.search); if (q.get('projekt')) st = q.get('projekt') + ':' + (q.get('ansicht') || ''); } catch (e) {}
+        if (st !== '-' && window._stationen[window._stationen.length - 1] !== st) window._stationen.push(st);
     }, 300); }"""
 
+NACHWEIS = """() => { const ms = [...document.querySelectorAll('#inkluagentLog .inkluagent-message.assistant[data-nachricht-id]')]
+        .filter(m => !m._alt && !m.querySelector('.inkluagent-formular'));
+    const m = ms.pop(); const k = m && m.querySelector('.inkluagent-nachweis'); if (!m) return null;
+    const hp = k && k.querySelector('.inkluagent-nachweis-hoerprobe');
+    return { karte: !!k, h: k ? k.querySelector('h4').textContent : '', punkte: k ? [...k.querySelectorAll('li')].map(x => x.textContent) : [],
+             zeilen: hp ? [...hp.querySelectorAll('p')].map(x => x.textContent) : [], lang: hp ? hp.getAttribute('lang') : null,
+             anhoeren: !!(k && k.querySelector('.inkluagent-anhoeren')), sprachausgabe: 'speechSynthesis' in window,
+             links: [...m.querySelectorAll('a')].map(a => a.getAttribute('href')) }; }"""
 
-def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt):
+
+def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt, nachweis=False, neues_projekt=False):
     print(f"\n=== Fall {name}: {titel}")
     pdf_vorher = {a["id"] for a in (pg.request.get(B + "/api/ausgaben").json().get("ausgaben") or [])}
     r = pg.request.post(B + "/api/upload", multipart={"file": {"name": titel.lower().replace(" ", "-") + ".docx",
@@ -80,6 +92,7 @@ def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt):
     pid = (r.json().get("project_id") or r.json().get("id")) if r.ok else None
     check(f"{name}: fiktives Word-Dokument hochgeladen", bool(pid), (r.status, r.text()[:200]))
     neue_ausgaben = set()
+    neue_projekte: list = []
     try:
         if not pid:
             return
@@ -148,7 +161,9 @@ def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt):
         neue_ausgaben = set(nachher) - pdf_vorher
         print(f"  Neue Ablage-Einträge: {[(i, nachher[i].get('dateiname')) for i in sorted(neue_ausgaben)]}")
         pfad = pg.evaluate("() => { const d = document.getElementById('arbeitsSeiteRahmen').contentDocument; return d ? d.location.pathname : ''; }")
-        if endpunkt[1].startswith("."):   # Ergebnis in der Ablage
+        if endpunkt[1] is None:           # endet anderswo (Fall C: im neuen Projekt, unten geprueft)
+            pass
+        elif endpunkt[1].startswith("."):   # Ergebnis in der Ablage
             markiert = [i for i in neue_ausgaben if any(e.startswith("/ablage?") and e.endswith(f"| ausgabe-{i}") for e in aufnahme)]
             check(f"{name}: am Ende steht „Meine Ablage“ im Fenster, das fertige Ergebnis markiert ({endpunkt[1]})",
                   pfad == "/ablage" and markiert and any(str(nachher[i].get("dateiname", "")).lower().endswith(endpunkt[1]) for i in markiert),
@@ -159,9 +174,37 @@ def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt):
                   aufnahme[-4:])
         aussen = pg.evaluate("() => document.activeElement && (document.activeElement.id || document.activeElement.tagName)")
         check(f"{name}: der Fokus blieb draußen", aussen != "arbeitsSeiteRahmen", aussen)
+        if nachweis:   # „Fertig mit Nachweis“ (17.10.2026): die Karte unter der Rueckmeldung
+            n = pg.evaluate(NACHWEIS) or {}
+            print(f"  Nachweis: {n.get('h')} | {n.get('punkte')} | {len(n.get('zeilen') or [])} Zeilen, lang={n.get('lang')}")
+            for z in (n.get("zeilen") or [])[:4]:
+                print("    " + z[:160])
+            check(f"{name}: Nachweis-Karte unter der Rückmeldung", n.get("karte") and str(n.get("h")).startswith("Nachweis"), n)
+            check(f"{name}: Urteil von veraPDF als Text", bool(n.get("punkte")) and n["punkte"][0].startswith("PDF/UA-Prüfung (veraPDF): "), n.get("punkte"))
+            check(f"{name}: der Anfang der Hörprobe steht da", len(n.get("zeilen") or []) >= 2, n.get("zeilen"))
+            check(f"{name}: „Anhören“ an der Hörprobe", n.get("anhoeren") or not n.get("sprachausgabe"), n)
+        if neues_projekt:   # die Bruecke: das neue PDF-Projekt, darin die Pruefdatei, und das Fenster war dort
+            n = pg.evaluate(NACHWEIS) or {}
+            neu = next((int(m.group(1)) for h in (n.get("links") or []) for m in [re.match(r"^/app\?projekt=(\d+)$", h or "")]
+                        if m and int(m.group(1)) != pid), None)
+            check(f"{name}: Link zum neuen PDF-Projekt unter der Rückmeldung", bool(neu), n.get("links"))
+            if neu:
+                neue_projekte.append(neu)
+                d = pg.request.get(B + f"/api/projects/{neu}").json()
+                check(f"{name}: das neue Projekt ist ein PDF-Projekt mit der PDF", d.get("project", {}).get("tool") == "pdf"
+                      and len(d.get("documents") or []) == 1, (d.get("project", {}).get("tool"), len(d.get("documents") or [])))
+                ab = pg.request.get(B + f"/api/projects/{neu}/abschluss").json()
+                doks = ab.get("dokumente") or ab.get("documents") or []
+                check(f"{name}: dort ist die Prüfdatei erstellt", any((x or {}).get("pruefdatei") for x in doks), str(ab)[:300])
+                stationen = pg.evaluate("() => window._stationen")
+                print(f"  Stationen im Fenster (Projekt:Ansicht): {stationen}")
+                check(f"{name}: das Fenster folgte ins neue Projekt bis zur Barrierefreiheitsprüfung",
+                      f"{neu}:abschluss" in stationen and stationen[-1].startswith(f"{neu}:"), stationen)
     finally:
         if pid:
             pg.request.delete(B + f"/api/projects/{pid}")
+        for x in neue_projekte:
+            pg.request.delete(B + f"/api/projects/{x}")
         for i in neue_ausgaben:
             pg.request.delete(B + f"/api/ausgaben/{i}")
 
@@ -181,13 +224,19 @@ with sync_playwright() as p:
                  "Mach dieses Word-Dokument bitte komplett fertig, als einen Auftrag: zuerst die Alt-Texte für alle Bilder, danach "
                  "in eine barrierefreie PDF umwandeln. Ich schaue im Arbeitsfenster zu.",
                  erwartet=("alt_texte", "umwandeln"), verboten=("pruefung", "tagging", "uebersetzen", "korrektur"),
-                 endpunkt=("/app?dokument", ".pdf"))
+                 endpunkt=("/app?dokument", ".pdf"), nachweis=True)
         if "B" in FAELLE:
             fall(pg, "B", "Vereinsbrief Gegenfall (fiktiv)",
                  "Bitte nur die Alt-Texte für alle Bilder erzeugen und mir danach die Word-Datei mit den Alt-Texten geben, als einen "
                  "Auftrag. Sonst nichts.",
                  erwartet=("alt_texte", "export"), verboten=("pruefung", "tagging", "uebersetzen", "korrektur", "umwandeln"),
                  endpunkt=("/app?dokument", "/app?dokument"))   # Word ohne ABLAGE_WORD: Link in der Nachricht, keine Ablage
+        if "C" in FAELLE:   # Steves ganze Kette als EIN Auftrag, ueber die Bruecke, mit Nachweis aus der echten PDF (17.10.2026)
+            fall(pg, "C", "Vereinsbrief Bruecke (fiktiv)",
+                 "Mach dieses Word-Dokument bitte komplett fertig, als einen Auftrag: zuerst die Alt-Texte für alle Bilder, dann in "
+                 "eine barrierefreie PDF umwandeln, und die PDF dann in ein PDF-Projekt laden und dort prüfen.",
+                 erwartet=("alt_texte", "umwandeln", "uebernehmen", "pruefung"), verboten=("tagging", "uebersetzen", "korrektur", "export"),
+                 endpunkt=("/app?dokument", None), nachweis=True, neues_projekt=True)
         check("Keine JavaScript-Fehler", not js, js)
     finally:
         pg.request.put(B + "/api/me/oberflaeche", data={"oberflaeche": vorher})

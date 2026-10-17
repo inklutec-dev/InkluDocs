@@ -16,6 +16,7 @@ from fastapi import HTTPException
 
 from . import ausgaben as _ausg
 from . import pdf as _pdf
+from .. import nachweis   # „Fertig mit Nachweis“ (17.10.2026)
 
 log = logging.getLogger(__name__)
 
@@ -151,6 +152,13 @@ def pruefdatei_erstellen(project_id: int, user_id: int, document_id: Optional[in
     r = pruefdatei_lesen(project_id, user_id, doc["id"])
     if r.get("ok"):
         r["result"]["neu_gebaut"] = bool(neu)
+        # Nachweis (17.10.2026, inkluagent/nachweis.py): veraPDF und der Anfang der Hoerprobe der fertigen Datei unter der Antwort
+        try:
+            _p, _d, daten_ = _pruef_daten(project_id, user_id, doc["id"])
+            r["nachweis"] = nachweis.aus_pruefdatei(project_id, doc["id"], _pdf._name(doc), daten_,
+                                                    nachweis.alt_texte_im_dokument(project_id, doc["id"]))
+        except HTTPException:
+            pass
     return r
 
 

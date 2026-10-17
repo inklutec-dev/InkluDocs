@@ -8,6 +8,10 @@ function inkluagentAnhangEl(anhang) {
     const box = document.createElement('div');
     box.className = 'inkluagent-message-anhang';   // Anordnung in style.css (seit 13.10.2026; vorher als style-Attribut)
     (anhang || []).forEach(a => {
+        if (a && a.art === 'nachweis') {   // „Fertig mit Nachweis“ (17.10.2026)
+            box.appendChild(inkluagentNachweisKarte(a));
+            return;
+        }
         if (a && a.art === 'formular' && a.karten_id) {   // Formular-Karte (Paket 1)
             box.appendChild(inkluagentFormularKarte(a));
             return;
@@ -200,6 +204,53 @@ function inkluagentLokaleStimmen() {
         synth.addEventListener('voiceschanged', ende, { once: true });
         setTimeout(ende, 1200);
     });
+}
+// „Fertig mit Nachweis“ (Steve 17.10.2026, inkluagent/nachweis.py): am Ende zeigt der Agent, dass das Ergebnis geprueft ist —
+// PDF/UA nach veraPDF, Alt-Texte und der Anfang der Hoerprobe, so wie ein Screenreader das Dokument vorliest, mit „Anhören“ (Stimmen
+// auf dem Geraet, inkluagentAnhoerenKnopf). Das Urteil steht immer im Text, nie nur in einer Farbe. Zeilen der Hoerprobe stammen aus
+// dem Dokument: nur textContent; die Sprache des Dokuments (lang) waehlt die Stimme. Links nur auf eigene Pfade.
+function inkluagentNachweisKarte(a) {
+    const karte = document.createElement('div');
+    karte.className = 'inkluagent-karte inkluagent-nachweis';
+    const h = document.createElement('h4');
+    h.textContent = a.dokument ? t('Nachweis: {dokument}', { dokument: String(a.dokument) }) : t('Nachweis');
+    karte.appendChild(h);
+    const punkte = [];
+    const n = Number(a.befunde) || 0;
+    if (a.bestanden === true) punkte.push(t('PDF/UA-Prüfung (veraPDF): bestanden'));
+    else if (a.bestanden === false) punkte.push(n > 1 ? t('PDF/UA-Prüfung (veraPDF): nicht bestanden, {n} Befunde', { n: n })
+        : (n === 1 ? t('PDF/UA-Prüfung (veraPDF): nicht bestanden, 1 Befund') : t('PDF/UA-Prüfung (veraPDF): nicht bestanden')));
+    else punkte.push(t('PDF/UA-Prüfung (veraPDF): nicht geprüft'));
+    if (Number(a.bilder) > 0 && a.alt_texte != null) punkte.push(t('Alt-Texte: {n} von {m} Bildern', { n: Number(a.alt_texte) || 0, m: Number(a.bilder) }));
+    if (a.aktuell === false) punkte.push(t('Die Prüfdatei ist älter als der jetzige Stand.'));
+    const ul = document.createElement('ul');
+    ul.className = 'inkluagent-karte-zeilen';
+    punkte.forEach(p => { const li = document.createElement('li'); li.textContent = p; ul.appendChild(li); });
+    karte.appendChild(ul);
+    const zeilen = Array.isArray(a.hoerprobe) ? a.hoerprobe.filter(z => typeof z === 'string' && z.trim()) : [];
+    if (zeilen.length) {
+        const titel = document.createElement('p');
+        titel.className = 'inkluagent-nachweis-titel';
+        titel.textContent = a.hoerprobe_dokument ? t('So liest ein Screenreader den Anfang von „{dokument}“ vor:', { dokument: String(a.hoerprobe_dokument) })
+            : t('So liest ein Screenreader den Anfang vor:');
+        const hp = document.createElement('div');
+        hp.className = 'inkluagent-nachweis-hoerprobe';
+        if (/^[a-z]{2}$/.test(a.lang || '')) hp.setAttribute('lang', a.lang);
+        zeilen.forEach(z => { const p = document.createElement('p'); p.textContent = z; hp.appendChild(p); });
+        karte.appendChild(titel);
+        karte.appendChild(hp);
+        inkluagentAnhoerenKnopf(titel, hp);
+    }
+    const links = [[a.ablage_url, t('Prüfbericht in der Ablage')], [a.pruefung_url, t('Zur Barrierefreiheitsprüfung')]];
+    links.forEach(([url, text]) => {
+        if (!url || !eigenerPfad(url)) return;
+        const l = document.createElement('a');
+        l.className = 'btn btn-secondary';
+        l.href = url;
+        l.textContent = text;
+        karte.appendChild(l);
+    });
+    return karte;
 }
 function inkluagentAnhoerenKnopf(roleEl, contentEl) {
     if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;

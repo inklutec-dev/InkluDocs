@@ -36,6 +36,7 @@ from fastapi import HTTPException
 
 from ..daten import daten, daten_zeilen, text_kennzeichnen   # Fremdtext ist keine Anweisung (09.10.2026)
 from ..kern import fehlertext   # Fehler ohne Interna an Modell und Seite (Pruefung 13.10.2026, S10)
+from .. import nachweis as _nachweis   # „Fertig mit Nachweis“ (17.10.2026)
 
 log = logging.getLogger(__name__)
 
@@ -555,8 +556,10 @@ def konvertiere_zu_pdfua(project_id: int, user_id: int, document_id: Optional[in
         "ausgaben_anzahl": r.get("ausgaben_anzahl"), "aufbewahrung_tage": r.get("aufbewahrung_tage"),
         "hinweis": ("Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen; die Datei liegt "
                     "ausserdem unter „Meine Ablage“ (Seitenleiste), das Prüfergebnis auch in der Ansicht Barrierefreiheitsprüfung. Fasse das Ergebnis in Worten "
-                    "zusammen: bestanden oder welche Bereiche Hinweise haben, und was der Nutzer dagegen tun kann."),
-    }, "anhang": _anhang("pdfua", r, project_id)}
+                    "zusammen: bestanden oder welche Bereiche Hinweise haben, und was der Nutzer dagegen tun kann. Unter deiner "
+                    "Antwort steht ausserdem der Nachweis mit dem Anfang der Hörprobe zum Anhören."),
+    }, "anhang": _anhang("pdfua", r, project_id),
+        "nachweis": _nachweis.aus_ausgabe(user_id, r["ausgabe_id"], project.get("alt_language"))}
 
 
 def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = None,
@@ -644,10 +647,12 @@ def lies_ausgabe(project_id: int, user_id: int, ausgabe_id: int, teil: str = "be
     }}
 
 
-def ausgabe_in_projekt(project_id: int, user_id: int, ausgabe_id: int, ziel_projekt_id: Optional[int] = None) -> dict[str, Any]:
+def ausgabe_in_projekt(project_id: int, user_id: int, ausgabe_id: int, ziel_projekt_id: Optional[int] = None,
+                       pruefen: bool = False) -> dict[str, Any]:
     """„In ein Projekt laden“ (Steve 17.10.2026, ablage_projekt.py): eine Ausgabe DIESES Projekts in ein neues Projekt oder als
     weiteres Dokument in ein eigenes Projekt derselben Art — derselbe Weg wie der Knopf in Meine Ablage, kostenlos. Ein anderes
-    Projekt oeffnet sich nach der Antwort (Seitenwechsel), das Gespraech geht dort weiter."""
+    Projekt oeffnet sich nach der Antwort (Seitenwechsel), das Gespraech geht dort weiter. pruefen (PDF): danach die Pruefdatei der
+    neuen Dokumente (kostenlos, wie „Prüfung starten“) — der Nachweis aus der echten PDF; geht das nicht, der aus der Ablage."""
     m = _main()
     try:
         m._require_project_owned(project_id, user_id)
@@ -678,6 +683,19 @@ def ausgabe_in_projekt(project_id: int, user_id: int, ausgabe_id: int, ziel_proj
               "preise": hochladen.preise(fakten) if erg["status"] != "error" else {},
               "hinweis": ("Die Datei steht jetzt als Dokument in diesem Projekt." if hier else SEITE_WECHSELT)}
     out: dict[str, Any] = {"ok": True, "result": result}
+    if pruefen and erg["art"] == "pdf" and erg["status"] != "error":
+        from . import oberflaeche
+        nachweise = []
+        for did in erg["dokumente"][:3]:
+            r = oberflaeche.pruefdatei_erstellen(pid, user_id, did)
+            if r.get("ok") and r.get("nachweis"):
+                nachweise.append(r["nachweis"])
+        if not nachweise:   # Pruefdatei ging nicht (Tags, Dienst): der Nachweis aus dem Umwandeln
+            n = _nachweis.aus_ausgabe(user_id, int(ausgabe_id), None)
+            nachweise = [n] if n else []
+        out["nachweis"] = nachweise
+        result["pruefung"] = [{"pdf_ua": {True: "bestanden", False: "nicht bestanden"}.get(n.get("bestanden"), "nicht geprüft"),
+                               "befunde": n.get("befunde")} for n in nachweise]
     if not hier:
         storage.fokus_setzen(user_id, pid)
         out["anhang"] = {"art": "link", "url": f"/app?projekt={pid}", "text": _("Projekt „{projekt}“ öffnen").format(projekt=erg["projekt"])}

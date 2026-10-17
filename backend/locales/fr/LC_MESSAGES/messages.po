@@ -12996,3 +12996,58 @@ msgstr "Le fichier n’est plus disponible. Le rapport reste."
 
 msgid "Projekt nicht gefunden"
 msgstr "Projet introuvable"
+
+# Fertig mit Nachweis (17.10.2026, inkluagent/nachweis.py, inkluagent-nachrichten.js)
+#, python-brace-format
+msgid "Nachweis: {dokument}"
+msgstr "Attestation : {dokument}"
+
+msgid "Nachweis"
+msgstr "Attestation"
+
+msgid "PDF/UA-Prüfung (veraPDF): bestanden"
+msgstr "Contrôle PDF/UA (veraPDF) : réussi"
+
+#, python-brace-format
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, {n} Befunde"
+msgstr "Contrôle PDF/UA (veraPDF) : échoué, {n} constats"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, 1 Befund"
+msgstr "Contrôle PDF/UA (veraPDF) : échoué, 1 constat"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden"
+msgstr "Contrôle PDF/UA (veraPDF) : échoué"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht geprüft"
+msgstr "Contrôle PDF/UA (veraPDF) : non effectué"
+
+#, python-brace-format
+msgid "Alt-Texte: {n} von {m} Bildern"
+msgstr "Textes alternatifs : {n} images sur {m}"
+
+msgid "Die Prüfdatei ist älter als der jetzige Stand."
+msgstr "Le fichier de contrôle est antérieur à l’état actuel."
+
+msgid "So liest ein Screenreader den Anfang vor:"
+msgstr "Voici comment un lecteur d’écran lit le début :"
+
+#, python-brace-format
+msgid "So liest ein Screenreader den Anfang von „{dokument}“ vor:"
+msgstr "Voici comment un lecteur d’écran lit le début de « {dokument} » :"
+
+msgid "Prüfbericht in der Ablage"
+msgstr "Rapport de contrôle dans les archives"
+
+# Kette ueber die Bruecke, braucht/liefert (17.10.2026, inkluagent/auftraege.py)
+msgid "In ein PDF-Projekt laden und prüfen"
+msgstr "Charger dans un projet PDF et contrôler"
+
+msgid "neues PDF-Projekt, Prüfung mit veraPDF und Hörprobe"
+msgstr "nouveau projet PDF, contrôle avec veraPDF et aperçu audio"
+
+#, python-brace-format
+msgid "„{a}“ braucht „{b}“ — das ist im Auftrag dabei."
+msgstr "« {a} » nécessite « {b} » — c’est inclus dans la mission."
+
+msgid "Es gab keine PDF aus dem Umwandeln, die ins PDF-Projekt hätte kommen können."
+msgstr "Aucun PDF issu de la conversion n’a pu être chargé dans le projet PDF."

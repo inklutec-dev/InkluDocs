@@ -12997,3 +12997,58 @@ msgstr "Die Datei ist nicht mehr vorhanden. Der Bericht bleibt."
 
 msgid "Projekt nicht gefunden"
 msgstr "Projekt nicht gefunden"
+
+# Fertig mit Nachweis (17.10.2026, inkluagent/nachweis.py, inkluagent-nachrichten.js)
+#, python-brace-format
+msgid "Nachweis: {dokument}"
+msgstr "Nachweis: {dokument}"
+
+msgid "Nachweis"
+msgstr "Nachweis"
+
+msgid "PDF/UA-Prüfung (veraPDF): bestanden"
+msgstr "PDF/UA-Prüfung (veraPDF): bestanden"
+
+#, python-brace-format
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, {n} Befunde"
+msgstr "PDF/UA-Prüfung (veraPDF): nicht bestanden, {n} Befunde"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, 1 Befund"
+msgstr "PDF/UA-Prüfung (veraPDF): nicht bestanden, 1 Befund"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden"
+msgstr "PDF/UA-Prüfung (veraPDF): nicht bestanden"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht geprüft"
+msgstr "PDF/UA-Prüfung (veraPDF): nicht geprüft"
+
+#, python-brace-format
+msgid "Alt-Texte: {n} von {m} Bildern"
+msgstr "Alt-Texte: {n} von {m} Bildern"
+
+msgid "Die Prüfdatei ist älter als der jetzige Stand."
+msgstr "Die Prüfdatei ist älter als der jetzige Stand."
+
+msgid "So liest ein Screenreader den Anfang vor:"
+msgstr "So liest ein Screenreader den Anfang vor:"
+
+#, python-brace-format
+msgid "So liest ein Screenreader den Anfang von „{dokument}“ vor:"
+msgstr "So liest ein Screenreader den Anfang von „{dokument}“ vor:"
+
+msgid "Prüfbericht in der Ablage"
+msgstr "Prüfbericht in der Ablage"
+
+# Kette ueber die Bruecke, braucht/liefert (17.10.2026, inkluagent/auftraege.py)
+msgid "In ein PDF-Projekt laden und prüfen"
+msgstr "In ein PDF-Projekt laden und prüfen"
+
+msgid "neues PDF-Projekt, Prüfung mit veraPDF und Hörprobe"
+msgstr "neues PDF-Projekt, Prüfung mit veraPDF und Hörprobe"
+
+#, python-brace-format
+msgid "„{a}“ braucht „{b}“ — das ist im Auftrag dabei."
+msgstr "„{a}“ braucht „{b}“ — das ist im Auftrag dabei."
+
+msgid "Es gab keine PDF aus dem Umwandeln, die ins PDF-Projekt hätte kommen können."
+msgstr "Es gab keine PDF aus dem Umwandeln, die ins PDF-Projekt hätte kommen können."

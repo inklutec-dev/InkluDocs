@@ -220,8 +220,9 @@ Besucher (`DEMO_DAILY_CHAT_LIMIT`, 12).
    Hintergrund (`rueckmeldung.START_WERKZEUGE`), darf Schritt eines Auftrags sein (`auftraege.KATALOG` + `_LAUFBUCH_ART`). Der Test
    sammelt alle Werkzeuge (alle Schalter an) und prüft: Anzeigename für genau diese, jede Liste nennt nur echte Werkzeuge, Schalter
    und Preise gibt es, wer im Hintergrund läuft oder Auftragsschritt ist, ist im Live-Fenster zu sehen, wer an einer Stelle arbeitet,
-   hat eine Ansicht (außer Löschen). Er sagt beim Anbauen, was fehlt. Nächster Schritt: ein Steckbrief je Werkzeug, aus dem die
-   Listen entstehen (mit „braucht“ und „liefert“, damit der Agent Ketten selbst planen kann).
+   hat eine Ansicht (außer Löschen). Dazu `daten.WERKZEUG_FREMDTEXT` (welche Felder Text aus Dateien tragen;
+   tests/test_daten_keine_anweisung.py). Er sagt beim Anbauen, was fehlt. Für Ketten: Schritte der Aufträge nennen `braucht`/`liefert`
+   (Abschnitt „Kette mit Nachweis“); nächster Schritt: ein Steckbrief je Werkzeug, aus dem alle Listen entstehen.
 
 
 ## Word-Projekte: der Bot macht das Dokument fertig (Meine Ausgaben, Schritt 2, 11.09.2026)
@@ -939,6 +940,43 @@ Browserproben im Repo (vor jedem Einspielen auf Staging; `INKLUDOCS_BASIS` wähl
   das andere Projekt bzw. die Ablage über die gemerkte Stelle zurück; ein Lauf von Sekunden (Word herunterladen) zeigte keine Station.
 - Hinweis zur Kette: Bei Word ist „taggen“ Teil der Umwandlung (LibreOffice schreibt PDF/UA mit Tags); einen eigenen Tagging-Schritt
   gibt es nur in PDF-Projekten. Die KI-Prüfung (`pruefung` im Auftrag) gilt für getaggte PDFs; „Word prüfen“ ist ein eigenes Werkzeug.
+
+### Kette mit Nachweis: Brücke aus der Ablage, „Fertig mit Nachweis“, braucht/liefert (Steve 17.10.2026)
+
+Steve: „Die Frage ist für mich halt, dass der Agent durchläuft. Wäre natürlich spannend, wenn der Agent das sogar in ein anderes
+Projekt laden könnte, wenn man möchte“ — und „ich brauche einen Wow-Effekt“. Drei Stufen, jede für sich auf Staging geprüft:
+
+1. **Brücke aus der Ablage in ein Projekt** (`backend/ablage_projekt.py`, EINE Funktion für Knopf und Agent — Chatbot = Oberfläche):
+   Knopf „In ein Projekt laden“ in Meine Ablage (`POST /api/ausgaben/{id}/in-projekt`; Auswahl „Neues PDF-Projekt“ oder ein eigenes
+   Projekt derselben Art, wie „Löschen“ ohne Browser-Dialog, `aria-disabled` statt `disabled`) und Werkzeug `ausgabe_in_projekt`
+   (Word- und PDF-Projekte; Seitenwechsel ins neue Projekt, Link, Fokus des Gesprächs, Preise der nächsten Schritte; `pruefen`:
+   danach gleich die Prüfdatei). Die Datei geht denselben Weg wie Hochladen (`main.upload_file` — wichtig: das KOPIERT in den
+   Upload-Ordner; das Löschen eines Projekts entfernt dessen Ursprungsdatei ohne Pfadprüfung, eine Ablage-Datei als Ursprung wäre
+   mitgelöscht worden). ZIP ausgepackt (je PDF/Word ein Dokument), kostenlos, über den Agenten mit Tagesgrenze, Laufbuch-Art
+   `uebernehmen`. `kern.warten` nimmt den Agenten jetzt mit (Laufbuch), wie `main.im_hauptloop`.
+2. **„Fertig mit Nachweis“** (`backend/inkluagent/nachweis.py`): am Ende eine Karte unter der Antwort bzw. der Rückmeldung — „Nachweis:
+   <Dokument>“, PDF/UA nach veraPDF (bestanden / nicht bestanden, n Befunde / nicht geprüft — nie „bestanden“, wenn nicht geprüft),
+   Alt-Texte „n von m Bildern“, und „So liest ein Screenreader den Anfang vor:“ mit den ersten acht Zeilen der Hörprobe und „Anhören“
+   (Stimmen auf dem Gerät, Sprache des Dokuments als `lang`), Link zum Prüfbericht. Nichts wird neu geprüft: Quellen sind der
+   Ablage-Eintrag (Umwandeln: veraPDF + Hörprobe aus dem Word-Dokument; PDF herunterladen: veraPDF) oder die Prüfdatei im PDF-Projekt
+   (veraPDF + Hörprobe der echten, fertigen PDF). Werkzeuge geben ihn als eigenes Feld `nachweis` neben `anhang` zurück
+   (`konvertiere_zu_pdfua`, `exportiere_fertige_pdf`, `pruefdatei_erstellen`, `ausgabe_in_projekt` mit `pruefen`); `agent_loop` und
+   `auftraege` nehmen ihn heraus, bevor das Modell das Ergebnis sieht — Zeilen aus dem Dokument gehen nie an das Modell (die
+   Rückmeldung bekommt nur das Urteil). Eigenes Feld statt Liste in `anhang`, weil Aufträge je Schritt genau einen Anhang speichern.
+3. **braucht/liefert und der Schritt „In ein PDF-Projekt laden und prüfen“** (`auftraege.KATALOG`, Schritt `in_pdf_projekt`, nur
+   Word-Projekte, kostenlos): Schritte nennen, was sie brauchen und liefern (`pdfua` liefert `pdf_in_ablage`, `in_pdf_projekt`
+   braucht es und liefert `pdf_projekt`). Fehlt einem gewünschten Schritt der Vorgänger, setzt `planen()` ihn ein — mit Preis und dem
+   Hinweis „„…“ braucht „…“ — das ist im Auftrag dabei.“ auf der Karte; gibt es keinen, ist es ein Fehler für das Modell. Beim Start
+   nimmt der Schritt die PDF aus dem Umwandeln davor (`ausgabe_id` aus dessen Anhang), lädt sie in ein neues PDF-Projekt und erstellt
+   dort die Prüfdatei; die Rückmeldung zeigt den jüngsten Nachweis (aus der echten PDF, nicht noch einmal den aus dem Umwandeln). So
+   läuft Steves Kette als EIN Auftrag durch: Alt-Texte → In PDF umwandeln → PDF-Projekt → Prüfung → Nachweis. Ein neuer
+   Ketten-Schritt nennt nur, was er braucht und liefert; die Reihenfolge bleibt die des Katalogs.
+
+Tests: `tests/test_ablage_projekt.py` (18), `tests/test_nachweis.py` (16), `tests/test_auftraege.py` Klasse `KetteBruecke` (6);
+Gegenproben 7/7, 8/8, 7/7. Klickprobe `tests/e2e/ablage_bruecke_probe.py` (Tastatur; danach ist die Ablage-Datei noch da).
+Offen: braucht/liefert gilt bisher für die Schritte der Aufträge — der Steckbrief für alle Werkzeuge (Listen daraus erzeugt) folgt;
+kostenpflichtige Schritte im neuen PDF-Projekt (Neu taggen, KI-Prüfung) bietet der Agent danach mit eigenem Preis an (der Preis
+hängt an der fertigen PDF und ist vorher nicht bekannt).
 
 ### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
 

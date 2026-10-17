@@ -12994,3 +12994,58 @@ msgstr "The file is no longer available. The report remains."
 
 msgid "Projekt nicht gefunden"
 msgstr "Project not found"
+
+# Fertig mit Nachweis (17.10.2026, inkluagent/nachweis.py, inkluagent-nachrichten.js)
+#, python-brace-format
+msgid "Nachweis: {dokument}"
+msgstr "Proof: {dokument}"
+
+msgid "Nachweis"
+msgstr "Proof"
+
+msgid "PDF/UA-Prüfung (veraPDF): bestanden"
+msgstr "PDF/UA check (veraPDF): passed"
+
+#, python-brace-format
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, {n} Befunde"
+msgstr "PDF/UA check (veraPDF): not passed, {n} findings"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden, 1 Befund"
+msgstr "PDF/UA check (veraPDF): not passed, 1 finding"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht bestanden"
+msgstr "PDF/UA check (veraPDF): not passed"
+
+msgid "PDF/UA-Prüfung (veraPDF): nicht geprüft"
+msgstr "PDF/UA check (veraPDF): not checked"
+
+#, python-brace-format
+msgid "Alt-Texte: {n} von {m} Bildern"
+msgstr "Alt texts: {n} of {m} images"
+
+msgid "Die Prüfdatei ist älter als der jetzige Stand."
+msgstr "The check file is older than the current state."
+
+msgid "So liest ein Screenreader den Anfang vor:"
+msgstr "This is how a screen reader reads the beginning:"
+
+#, python-brace-format
+msgid "So liest ein Screenreader den Anfang von „{dokument}“ vor:"
+msgstr "This is how a screen reader reads the beginning of “{dokument}”:"
+
+msgid "Prüfbericht in der Ablage"
+msgstr "Check report in the archive"
+
+# Kette ueber die Bruecke, braucht/liefert (17.10.2026, inkluagent/auftraege.py)
+msgid "In ein PDF-Projekt laden und prüfen"
+msgstr "Load into a PDF project and check"
+
+msgid "neues PDF-Projekt, Prüfung mit veraPDF und Hörprobe"
+msgstr "new PDF project, check with veraPDF and listening sample"
+
+#, python-brace-format
+msgid "„{a}“ braucht „{b}“ — das ist im Auftrag dabei."
+msgstr "“{a}” needs “{b}” — it is included in the task."
+
+msgid "Es gab keine PDF aus dem Umwandeln, die ins PDF-Projekt hätte kommen können."
+msgstr "There was no PDF from the conversion that could have gone into the PDF project."

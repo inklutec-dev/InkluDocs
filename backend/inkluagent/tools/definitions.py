@@ -294,7 +294,8 @@ class ToolExecutor:
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
                 "ausgabe_in_projekt": lambda a: ausgaben_tools.ausgabe_in_projekt(
-                    p, u, int(a["ausgabe_id"]), int(a["ziel_projekt_id"]) if a.get("ziel_projekt_id") not in (None, "", 0) else None),
+                    p, u, int(a["ausgabe_id"]), int(a["ziel_projekt_id"]) if a.get("ziel_projekt_id") not in (None, "", 0) else None,
+                    pruefen=bool(a.get("pruefen", False))),
                 # wie die Oberflaeche (30.09.2026): Umbenennen/Loeschen/Sprache in „Dokument“ bzw. „Alt-Texte“, Alt-Texte
                 # herunterladen, Sammellauf, Einstellungen, Ablage-Eintrag loeschen
                 "dokument_umbenennen": lambda a: pdf_tools.dokument_umbenennen(p, u, _doc(a), str(a.get("name") or "")),
@@ -327,7 +328,8 @@ class ToolExecutor:
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
                 "ausgabe_in_projekt": lambda a: ausgaben_tools.ausgabe_in_projekt(
-                    p, u, int(a["ausgabe_id"]), int(a["ziel_projekt_id"]) if a.get("ziel_projekt_id") not in (None, "", 0) else None),
+                    p, u, int(a["ausgabe_id"]), int(a["ziel_projekt_id"]) if a.get("ziel_projekt_id") not in (None, "", 0) else None,
+                    pruefen=bool(a.get("pruefen", False))),
                 # wie die Oberflaeche (30.09.2026)
                 "testweise_taggen": lambda a: oberflaeche_tools.testweise_taggen(p, u, _doc(a)),
                 "pruefdatei_erstellen": lambda a: oberflaeche_tools.pruefdatei_erstellen(p, u, _doc(a)),

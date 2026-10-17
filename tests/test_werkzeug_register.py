@@ -11,6 +11,8 @@ vergisst man eine, funktioniert ein neues Werkzeug nur halb. Dieser Test haelt s
 - inkluagent/arbeitsfenster.ANSICHT_JE_WERKZEUG: in welcher Ansicht man es im Live-Fenster sieht
 - rueckmeldung.START_WERKZEUGE: startet einen Lauf im Hintergrund (der Agent meldet sich, wenn er fertig ist)
 - auftraege.KATALOG: darf Schritt eines Auftrags sein (mit einer Art im Laufbuch)
+- daten.WERKZEUG_FREMDTEXT: welche Felder des Ergebnisses Text aus Dateien tragen (als Daten gekennzeichnet; tests/
+  test_daten_keine_anweisung.py prueft, dass jedes Werkzeug eingeordnet ist)
 Regeln: jede Liste nennt nur echte Werkzeuge; wer im Hintergrund laeuft oder Schritt eines Auftrags ist, ist im Live-Fenster zu
 sehen; wer an einer Stelle arbeitet (Bild, Feld, Dokument), hat eine Ansicht — ausser Loeschen (die Stelle verschwindet).
 Ein neues Werkzeug: Beschreibung + Anzeigename; die uebrigen Listen nur, wenn es das braucht — dieser Test sagt, was fehlt.
@@ -35,7 +37,7 @@ database.init_db()
 
 import funktionen  # noqa: E402
 import laufbuch  # noqa: E402
-from inkluagent import arbeitsfenster, auftraege, begleiter, karten, konto, rueckmeldung, sicherheit  # noqa: E402
+from inkluagent import arbeitsfenster, auftraege, begleiter, daten, karten, konto, rueckmeldung, sicherheit  # noqa: E402
 from inkluagent.tools import ausgaben, namen  # noqa: E402
 from inkluagent.tools import definitions, definitions_formular, definitions_oberflaeche, definitions_pdf  # noqa: E402
 
@@ -93,6 +95,7 @@ class Register(unittest.TestCase):
             "arbeitsfenster.ANSICHT_JE_WERKZEUG": arbeitsfenster.ANSICHT_JE_WERKZEUG,
             "rueckmeldung.START_WERKZEUGE": rueckmeldung.START_WERKZEUGE,
             "auftraege.KATALOG": [s.werkzeug for s in auftraege.KATALOG],
+            "daten.WERKZEUG_FREMDTEXT": daten.WERKZEUG_FREMDTEXT,
             "OHNE_ANSICHT (hier)": OHNE_ANSICHT,
         }
         for titel, liste in listen.items():

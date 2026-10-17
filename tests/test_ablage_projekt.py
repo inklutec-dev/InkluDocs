@@ -296,6 +296,29 @@ class Werkzeug(Basis):
         self.assertNotIn("aktionen", r)
         self.assertEqual(r["result"]["project_id"], hier)
 
+    def test_pruefen_nachweis_aus_der_echten_pdf_sonst_aus_der_ablage(self):
+        from inkluagent import nachweis
+        from inkluagent.tools import ausgaben, oberflaeche
+        aid = self.eintrag()
+        n_pdf = {"art": "nachweis", "quelle": "pruefdatei", "bestanden": True, "befunde": 0}
+        with mock.patch.object(oberflaeche, "pruefdatei_erstellen", return_value={"ok": True, "result": {}, "nachweis": n_pdf}) as pd:
+            r = ausgaben.ausgabe_in_projekt(self.quelle, self.u["id"], aid, pruefen=True)
+        self.assertTrue(r["ok"], r)
+        pd.assert_called_once()
+        self.assertEqual(pd.call_args[0][0], r["result"]["project_id"], "geprueft wird im NEUEN Projekt")
+        self.assertEqual(r["nachweis"], [n_pdf])
+        self.assertEqual(r["result"]["pruefung"], [{"pdf_ua": "bestanden", "befunde": 0}], "das Modell bekommt nur das Urteil")
+        n_ablage = {"art": "nachweis", "quelle": "ablage", "bestanden": None, "befunde": 0}
+        with mock.patch.object(oberflaeche, "pruefdatei_erstellen", return_value={"ok": False, "error": "keine Tags (fiktiv)"}), \
+                mock.patch.object(nachweis, "aus_ausgabe", return_value=n_ablage) as aus:
+            r = ausgaben.ausgabe_in_projekt(self.quelle, self.u["id"], self.eintrag(), pruefen=True)
+        self.assertEqual((r["nachweis"], r["result"]["pruefung"][0]["pdf_ua"]), ([n_ablage], "nicht geprüft"))
+        aus.assert_called_once()
+        with mock.patch.object(oberflaeche, "pruefdatei_erstellen") as pd:
+            r = ausgaben.ausgabe_in_projekt(self.quelle, self.u["id"], self.eintrag())
+        pd.assert_not_called()
+        self.assertNotIn("nachweis", r, "ohne pruefen keine Pruefung")
+
     def test_im_werkzeugsatz_von_word_und_pdf(self):
         from inkluagent import agent_loop
         for tool, typ in (("word", "docx"), ("pdf", "pdf")):

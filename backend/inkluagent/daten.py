@@ -80,6 +80,7 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     "exportiere_uebersetzung": (),
     "liste_ausgaben": (),
     "lies_ausgabe": ("dokumente[].pruefbericht[].text_daten", "dokumente[].hoerprobe_daten"),
+    "ausgabe_in_projekt": ("projekt_daten",),   # Name des Projekts (aus Dokument- bzw. Projektname, 17.10.2026)
     # wie die Oberflaeche
     "testweise_taggen": (),
     "pruefdatei_erstellen": (),

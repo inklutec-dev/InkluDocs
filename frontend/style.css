@@ -1748,6 +1748,11 @@ body.eingebettet .dash-main { max-width: none; padding: 1rem 1rem 2rem; }
 .inkluagent-karte-status:empty, .inkluagent-bestaetigung-status:empty { margin: 0; }
 .inkluagent-karte[data-zustand]:not([data-zustand="offen"]) { background: transparent; box-shadow: none; border-left-color: #6b7a90; }
 .inkluagent-karte-ergebnis { font-weight: 600; }
+/* Nachweis (17.10.2026, inkluagentNachweisKarte): die Hoerprobe als ruhiger Block mit Linie links, „Anhören“ neben ihrem Titel */
+.inkluagent-nachweis-titel { display: inline-block; margin: 0 0.5rem 0.4rem 0 !important; font-weight: 600; }
+.inkluagent-nachweis-hoerprobe { margin: 0 0 0.75rem; padding: 0.4rem 0 0.4rem 0.75rem; border-left: 3px solid #6b7a90; }
+.inkluagent-nachweis-hoerprobe p { margin: 0 0 0.25rem; }
+.inkluagent-nachweis .btn { margin: 0 0.5rem 0 0; }
 /* Felder der Formular-Karte: Beschriftung ueber dem Feld (wie im Einladungs-Dialog), volle Breite, Rand mit 4,5:1 */
 .inkluagent-formular-feld { margin: 0 0 0.75rem; }
 .inkluagent-formular-feld > label { display: block; font-weight: 600; margin: 0 0 0.3rem; }
