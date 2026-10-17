@@ -591,7 +591,10 @@ class Buehne(unittest.TestCase):
         w = funktion(self.js, "function inkluagentFensterWiederherstellen(")
         self.assertIn("frisch && (!inkluagentProjektFensterAn() || w.seite === inkluagentPfadOhne(hier.split('#')[0], ['hin']))", w)
         self.assertIn("inkluagentProjektImFenster();", w)
-        self.assertIn("if (inkluagentProjektFensterAn()) inkluagentProjektImFenster();", funktion(self.js, "function inkluagentSeiteSchliessen("))
+        zu = funktion(self.js, "function inkluagentSeiteSchliessen(")
+        self.assertIn("if (inkluagentProjektFensterAn()) inkluagentProjektImFenster();", zu)
+        # Klickprobe 17.10.2026: ohne das holte das Laden des eigenen Projekts das andere Projekt bzw. die Ablage gleich zurueck
+        self.assertLess(zu.index("window._arbeitsFolgeZiel = null;"), zu.index("if (inkluagentProjektFensterAn()) inkluagentProjektImFenster();"))
 
     def test_schritte_fahren_hin_und_die_ansicht_zieht_nach(self):
         self.assertIn("if (ziel && typeof ziel === 'object') inkluagentFensterFolgen(ziel);", funktion(self.js, "function inkluagentArbeitsSchritt("))

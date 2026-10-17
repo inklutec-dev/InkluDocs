@@ -887,6 +887,9 @@ function inkluagentSeiteSchliessen() {
     inkluagentRahmenLaden(f.querySelector('#arbeitsSeiteRahmen'), 'about:blank');
     if (document.documentElement.classList.contains('arbeitsfenster-gross')) inkluagentFensterGross(false);
     announce(t('Seite im Arbeitsfenster geschlossen.'));
+    // Wer schliesst, will dort nicht wieder hin: die letzte Stelle des Agenten vergessen (sonst holte das Laden des eigenen Projekts
+    // das andere Projekt bzw. die Ablage gleich zurueck); der naechste Schritt des Agenten zeigt wieder, wo er ist
+    window._arbeitsFolgeZiel = null;
     if (inkluagentProjektFensterAn()) inkluagentProjektImFenster();   // Live-Fenster: wieder das Projekt
     const input = document.getElementById('inkluagentInput');
     if (input) input.focus();
