@@ -59,7 +59,8 @@ def node(skript):
 class ReineFunktionen(unittest.TestCase):
     def setUp(self):
         self.dash = lies(FRONTEND, "dashboard.js")
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
 
     def _fenster(self, fenster_js, pfade):
         teile = "\n".join(funktion(self.dash, n) for n in ("imRahmen", "fensterSeitenListe", "fensterSeite", "gehoertGanzeSeite"))
@@ -222,7 +223,8 @@ class Vorlagen(unittest.TestCase):
 
 class Quelltext(unittest.TestCase):
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
         self.dash = lies(FRONTEND, "dashboard.js")
         self.css = lies(FRONTEND, "style.css")
 

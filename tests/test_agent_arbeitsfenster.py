@@ -268,7 +268,8 @@ class MitServer(unittest.TestCase):
 
 class Oberflaeche(unittest.TestCase):
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
 
     def funktion(self, name):
         f = self.js[self.js.index("function " + name + "("):]
@@ -389,7 +390,8 @@ class Anhaengen(unittest.TestCase):
         self.assertIn("„Dateien anhängen“", agent_loop._werkzeugsatz(pdf, 1, self.u["id"])[2])
 
     def test_oberflaeche(self):
-        js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        js = skripte.quelltext(FRONTEND)
 
         def funktion(name):
             f = js[js.index("function " + name + "("):]
@@ -681,7 +683,8 @@ class AgentenansichtKorrekturen(unittest.TestCase):
     „Gespräche“ stand als Ueberschrift 2 vor der Ueberschrift 1, die neue Seite zeigte nach einem Wechsel keine Schritte."""
 
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
 
     def funktion(self, name):
         f = self.js[self.js.index("function " + name + "("):]

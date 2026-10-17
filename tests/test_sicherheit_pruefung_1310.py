@@ -21,6 +21,7 @@ for kandidat in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app"):
         sys.path.insert(0, kandidat)
 
 import database  # noqa: E402
+from inkluagent import skripte  # noqa: E402   die Teile des Agenten-Skripts (17.10.2026)
 database.init_db()
 
 import funktionen  # noqa: E402
@@ -68,7 +69,7 @@ class S1ProjektKennung(unittest.TestCase):
         self.assertLess(pruefung, s.index("fetch("), "vor dem ersten Abruf")
 
     def test_agent_bereich_maskiert_die_kennung(self):
-        self.assertIn("data-project-id=\"' + escHtmlAgent(projectId) + '\"", lies(FRONTEND, "inkluagent.js"))
+        self.assertIn("data-project-id=\"' + escHtmlAgent(projectId) + '\"", skripte.quelltext(FRONTEND))
 
 
 class S5CorsNurEigeneHerkunft(unittest.TestCase):

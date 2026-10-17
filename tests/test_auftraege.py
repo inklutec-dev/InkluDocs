@@ -1280,7 +1280,8 @@ class Oberflaeche(unittest.TestCase):
         backend = next(k for k in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app") if os.path.isdir(k))
         frontend = next(k for k in (os.path.normpath(os.path.join(backend, "..", "frontend")), os.path.join(backend, "frontend"))
                         if os.path.isdir(k))
-        js = open(os.path.join(frontend, "inkluagent.js"), encoding="utf-8").read()
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        js = skripte.quelltext(frontend)
         absenden = js[js.index("async function inkluagentFormularAbsenden("):js.index("function inkluagentKarteEinfliegen(")]
         self.assertIn("if (res.ok) inkluagentRueckmeldungenBeobachten();", absenden)
         karte = js[js.index("function inkluagentFormularKarte("):js.index("function inkluagentFormularFeld(")]

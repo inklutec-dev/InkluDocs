@@ -43,17 +43,24 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 # Formular-Skript aus dem Browser-Cache, weil sich der Hash ohne diese Datei nicht aenderte.
 # 25.09.2026: dokument.js und abschluss.js fehlten — dieselbe Falle wie bei formular.js
 # (nach einem Neubau lief im Browser noch das alte Skript); verwaltung.js ist neu.
+# 17.10.2026: hochladefeld.js, klang.js und das Skript des InkluAgent fehlten — dieselbe Falle. Das InkluAgent-Skript besteht seit
+# heute aus Teilen (inkluagent/skripte.py): alle frontend/inkluagent*.js zaehlen (ein alter Kern mit neuen Teilen waere gemischt).
+# tests/test_asset_version.py prueft, dass jede mit ?v= geladene Datei hier mitzaehlt.
 _ASSET_FILES = ("style.css", "dashboard.css", "dashboard.js", "pwtoggle.js", "start.css",
                 "demo.css", "demo.js", "demo-shell.js", "formular.js", "uebersetzen.js",
-                "dokument.js", "abschluss.js", "verwaltung.js")
+                "dokument.js", "abschluss.js", "verwaltung.js", "hochladefeld.js", "klang.js")
+
+
+def _asset_dateien() -> list:
+    """Die Dateien, deren Inhalt die Version bestimmt (feste Liste + alle Teile des InkluAgent)."""
+    return [FRONTEND_DIR / name for name in _ASSET_FILES] + sorted(FRONTEND_DIR.glob("inkluagent*.js"))
 
 
 def _compute_asset_version() -> str:
     """Kurzer, deterministischer Inhalts-Hash der statischen Assets.
     Aendert sich genau dann, wenn sich eine der Dateien aendert."""
     h = hashlib.md5()
-    for name in _ASSET_FILES:
-        f = FRONTEND_DIR / name
+    for f in _asset_dateien():
         if f.is_file():
             h.update(f.read_bytes())
     return h.hexdigest()[:8]

@@ -272,7 +272,8 @@ class MitServer(unittest.TestCase):
 
 class Oberflaeche(unittest.TestCase):
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
 
     def funktion(self, name):
         f = self.js[self.js.index("function " + name + "("):]

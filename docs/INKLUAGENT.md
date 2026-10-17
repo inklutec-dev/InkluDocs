@@ -41,6 +41,33 @@ Die Weiche liegt an EINER Stelle: `agent_loop._werkzeugsatz(project, …)` gibt
 Bild-Agent kennt keine Feld-Werkzeuge, der Formular-Agent keine Bild-Werkzeuge —
 sie können sich nicht vermischen. Der Chat-Verlauf ist ohnehin je Projekt getrennt.
 
+**Oberfläche in Teilen (seit 17.10.2026).** Das Skript des Agenten in der Seite war eine Datei mit 3.356 Zeilen; jetzt ein Kern und zehn
+Teile je Thema — reines Verschieben, kein geändertes Verhalten. EINE Liste in Ladereihenfolge: `backend/inkluagent/skripte.py`
+(`TEILE`); `base_app.html` und `app.html` binden genau diese Dateien ein (Jinja-Variable `inkluagent_skripte`, gesetzt in `main.py`),
+die Tests lesen sie zusammen (`skripte.quelltext(FRONTEND)`).
+
+```
+frontend/
+├── inkluagent-ansicht.js         Agentenansicht und Chatstil, Aufbau des Arbeitsfensters
+├── inkluagent-arbeitsfenster.js  Stand, Schritte, Entwurf, Vergrößern und Überlagerung, „Stand vorlesen“
+├── inkluagent-fenster.js         Seiten im Arbeitsfenster, das Projekt auf der Bühne (nur über window.InkluBuehne)
+├── inkluagent-live.js            Live-Fenster aus dem Laufbuch
+├── inkluagent-hochladen.js       Dateien mitschicken und anhängen
+├── inkluagent-gespraeche.js      Gespräch des Kontos, Verlauf, frühere Gespräche
+├── inkluagent-nachrichten.js     Nachrichten bauen: Anhänge, Blöcke, „Anhören“
+├── inkluagent-karten.js          Formular-Karten (Bestellen, Bezahlen, Aufträge)
+├── inkluagent-seitenwechsel.js   Seitenwechsel durch den Agenten
+├── inkluagent-rueckmeldung.js    der Agent meldet sich, wenn etwas fertig ist
+└── inkluagent.js                 Kern: Bereich, Binden, Senden, Status, Fokus — lädt ZULETZT
+```
+
+Regeln (tests/test_inkluagent_js.py): auf oberster Ebene nur Funktionen (im Kern dazu zwei Merker); die einzige Ausführung beim
+Laden, `inkluagentBereichAufbauen()`, ist das Letzte im Kern, und der Kern lädt zuletzt; jede Funktion genau einmal über alle Teile
+und keine in anderen Dateien (klassische Skripte teilen sich den globalen Bereich — eine zweite gleichnamige überschriebe still die
+erste); jede Datei `frontend/inkluagent*.js` steht in der Liste; jeder Teil nennt `window.I18N` im Kopf (sonst liest `check_i18n.py`
+seine Texte nicht). Neuer Teil = Datei + Eintrag in `TEILE`. Cache: alle Teile zählen in die Version an `?v=` (i18n.py,
+tests/test_asset_version.py — vorher fehlte das Agenten-Skript dort ganz, ebenso hochladefeld.js und klang.js).
+
 ## Was für alle Werkzeuge gilt (einmal ändern, überall wirksam)
 
 `prompts/system_gemeinsam.py` hält die drei Abschnitte, die den Charakter des
@@ -184,6 +211,15 @@ Besucher (`DEMO_DAILY_CHAT_LIMIT`, 12).
 6. Tests: E2E-Chat-Turn in `tests/e2e/verify_<werkzeug>.py`, Klicktest Kasten vorhanden/abwesend beim Gast.
 7. Livestream im Arbeitsfenster: siehe „So schließt du ein neues Werkzeug an den Livestream an“ (Laufbuch, Liste Werkzeug → Ansicht,
    Bühne; Abschnitt „Livestream zum Anklemmen“, 17.10.2026).
+8. **Werkzeug-Register** (17.10.2026, `tests/test_werkzeug_register.py`): was ein Werkzeug kann, steht heute an mehreren Stellen. Immer:
+   Beschreibung für das Modell + Anzeigename (`tools/namen.py`). Nur wenn es das braucht: Schalter (`funktionen.WERKZEUG_SCHALTER`),
+   Preis der Einzelaktion (`sicherheit.EINZEL_BEZAHLT`), nur per Knopf (`tools/ausgaben.UNUMKEHRBAR`), Ansicht danach nachziehen
+   (`tools/ausgaben.AENDERT_ANSICHT`), Ansicht im Live-Fenster (`arbeitsfenster.ANSICHT_JE_WERKZEUG`), startet einen Lauf im
+   Hintergrund (`rueckmeldung.START_WERKZEUGE`), darf Schritt eines Auftrags sein (`auftraege.KATALOG` + `_LAUFBUCH_ART`). Der Test
+   sammelt alle Werkzeuge (alle Schalter an) und prüft: Anzeigename für genau diese, jede Liste nennt nur echte Werkzeuge, Schalter
+   und Preise gibt es, wer im Hintergrund läuft oder Auftragsschritt ist, ist im Live-Fenster zu sehen, wer an einer Stelle arbeitet,
+   hat eine Ansicht (außer Löschen). Er sagt beim Anbauen, was fehlt. Nächster Schritt: ein Steckbrief je Werkzeug, aus dem die
+   Listen entstehen (mit „braucht“ und „liefert“, damit der Agent Ketten selbst planen kann).
 
 
 ## Word-Projekte: der Bot macht das Dokument fertig (Meine Ausgaben, Schritt 2, 11.09.2026)

@@ -198,7 +198,7 @@
 <script src="/static/dokument.js?v={{ asset_version }}"></script>
 <script src="/static/abschluss.js?v={{ asset_version }}"></script>
 {# InkluAgent (Chat im Projekt): eigene Datei seit 09.10.2026, vor dem Seitenskript geladen (definiert nur Funktionen) #}
-{% if not (inkluagent_schalter and inkluagent_schalter.ueberall) %}<script src="/static/inkluagent.js?v={{ asset_version }}"></script>{% endif %}
+{% if not (inkluagent_schalter and inkluagent_schalter.ueberall) %}{% for s in inkluagent_skripte %}<script src="/static/{{ s }}?v={{ asset_version }}"></script>{% endfor %}{% endif %}
 <script>
 // Upload-Limit vom Server (eine Quelle: MAX_UPLOAD_SIZE in main.py) — fuer
 // Groessen-Hinweis und Fehlertext im Upload-Bereich (Julia-Feedback 02.07.2026).

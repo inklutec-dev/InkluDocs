@@ -8,11 +8,15 @@ nur der Inhalt der Antwort in ihrer Sprache; ohne Sprachausgabe kein Knopf. Das 
 (Playwright, nachgebaute Sprachausgabe).
 """
 import os
+import sys
 import unittest
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 FRONTEND = next(k for k in (os.path.normpath(os.path.join(HIER, "..", "frontend")), os.path.join(HIER, "frontend"),
                             "/app/frontend") if os.path.isdir(k))
+for _k in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app"):   # inkluagent/skripte.py: die Teile des Agenten-Skripts
+    if os.path.isdir(os.path.join(_k, "inkluagent")) and _k not in sys.path:
+        sys.path.insert(0, _k)
 
 
 def lies(name):
@@ -27,7 +31,8 @@ def funktion(text, kopf):
 
 class Anhoeren(unittest.TestCase):
     def setUp(self):
-        self.js = lies("inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
         self.knopf = funktion(self.js, "function inkluagentAnhoerenKnopf(")
         self.lesen = funktion(self.js, "async function inkluagentAnhoeren(")
         self.stopp = funktion(self.js, "function inkluagentAnhoerenStopp(")

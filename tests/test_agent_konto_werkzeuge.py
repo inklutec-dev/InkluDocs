@@ -220,8 +220,8 @@ class MitServer(unittest.TestCase):
 
 class Oberflaeche(unittest.TestCase):
     def setUp(self):
-        with open(os.path.join(FRONTEND, "inkluagent.js"), encoding="utf-8") as f:
-            self.js = f.read()
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
 
     def test_konto_karte_an_den_konto_endpunkt(self):
         self.assertIn("konto ? '/api/agent/bestaetigen'", self.js)

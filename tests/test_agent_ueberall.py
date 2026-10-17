@@ -203,9 +203,11 @@ class Endpunkte(unittest.TestCase):
         self.assertEqual(self.c.get("/api/agent/status").status_code, 404)
         html = self.c.get("/dashboard").text
         self.assertNotIn('id="inkluagentBereich"', html)
-        self.assertNotIn("inkluagent.js", html)
+        self.assertNotIn("/static/inkluagent", html)
         app = self.c.get(f"/app?projekt={self.p}").text
-        self.assertEqual(app.count("/static/inkluagent.js"), 1, "ohne Schalter laedt app.html das Skript wie bisher")
+        from inkluagent import skripte   # die Teile des Agenten-Skripts (17.10.2026)
+        for teil in skripte.TEILE:
+            self.assertEqual(app.count(f"/static/{teil}?v="), 1, f"ohne Schalter laedt app.html das Skript wie bisher: {teil}")
 
     def test_nur_ueberall_ohne_konto_bleibt_aus(self):
         with mock.patch.object(funktionen, "AGENT_UEBERALL", True):
@@ -219,9 +221,13 @@ class Endpunkte(unittest.TestCase):
         self.assertIn('href="#inkluagentBereich"', html)
         self.assertIn("Zum InkluAgent", html)
         self.assertLess(html.index('id="main"'), html.index('id="inkluagentBereich"'), "der Bereich steht nach dem Hauptinhalt")
-        self.assertEqual(html.count("/static/inkluagent.js"), 1)
+        from inkluagent import skripte   # die Teile des Agenten-Skripts (17.10.2026), in Ladereihenfolge
         app = self.c.get(f"/app?projekt={self.p}").text
-        self.assertEqual(app.count("/static/inkluagent.js"), 1, "genau einmal, sonst doppelte let-Deklaration")
+        for seite in (html, app):
+            for teil in skripte.TEILE:
+                self.assertEqual(seite.count(f"/static/{teil}?v="), 1, f"genau einmal, sonst doppelte let-Deklaration: {teil}")
+            stellen = [seite.index(f"/static/{teil}?v=") for teil in skripte.TEILE]
+            self.assertEqual(stellen, sorted(stellen), "in der Reihenfolge der Liste (der Kern mit dem Startaufruf zuletzt)")
         self.assertIn('"ueberall": true', app)
         self.assertIn('"werkzeug_namen"', app)
 
@@ -260,7 +266,8 @@ class Endpunkte(unittest.TestCase):
 
 class Oberflaeche(unittest.TestCase):
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
         self.ab = lies(FRONTEND, "abschluss.js")
 
     def test_barrierefreiheitspruefung_bindet_den_agenten(self):

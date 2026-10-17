@@ -235,8 +235,8 @@ class MitServer(unittest.TestCase):
 
 class Oberflaeche(unittest.TestCase):
     def setUp(self):
-        with open(os.path.join(FRONTEND, "inkluagent.js"), encoding="utf-8") as f:
-            self.js = f.read()
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
 
     def test_knoepfe_neben_senden_nur_mit_schalter(self):
         """Michael Karbe, Feedback 20261012 - 2: Reihe „Senden“, „Neues Gespräch“, „Frühere Gespräche“."""

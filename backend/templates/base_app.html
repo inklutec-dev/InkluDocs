@@ -83,7 +83,7 @@ window.EINGEBETTET = {{ 'true' if eingebettet else 'false' }};   {# im Arbeitsfe
 </script>
 <script src="/static/dashboard.js?v={{ asset_version }}"></script>
 {# Mit Schalter auf jeder Seite; ohne laedt nur app.html das Skript (genau einmal — es deklariert Variablen mit let) #}
-{% if inkluagent_schalter and inkluagent_schalter.ueberall %}<script src="/static/inkluagent.js?v={{ asset_version }}"></script>{% endif %}
+{% if inkluagent_schalter and inkluagent_schalter.ueberall %}{% for s in inkluagent_skripte %}<script src="/static/{{ s }}?v={{ asset_version }}"></script>{% endfor %}{% endif %}
 {% if inkluagent_schalter and inkluagent_schalter.klang and not eingebettet %}<script src="/static/klang.js?v={{ asset_version }}"></script>{% endif %}
 {% block page_script %}{% endblock %}
 </body>

@@ -8,12 +8,16 @@ KI-Assistent …“), die in einer eigenen Runde ersetzt werden.
 Aufruf: `python3 -m unittest tests/test_inkluagent_name.py`."""
 import os
 import re
+import sys
 import unittest
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 BACKEND = next(k for k in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app") if os.path.isdir(k))
 FRONTEND = next(k for k in (os.path.normpath(os.path.join(BACKEND, "..", "frontend")), os.path.join(BACKEND, "frontend"))
                 if os.path.isdir(k))
+if BACKEND not in sys.path:
+    sys.path.insert(0, BACKEND)
+from inkluagent import skripte  # noqa: E402   die Teile des Agenten-Skripts (17.10.2026)
 SPRACHEN = ("de", "en", "fr", "es", "da", "sv")
 
 # Dieselben Muster wie backend/scripts/check_i18n.py
@@ -64,7 +68,7 @@ def katalog(sprache):
 class Werkzeug(unittest.TestCase):
     def setUp(self):
         # Seit 09.10.2026 steht der Chat-Bereich in frontend/inkluagent.js (Konzept InkluAgent, Schritt 1): beide zusammen
-        self.app = lies(os.path.join(BACKEND, "templates", "app.html")) + lies(os.path.join(FRONTEND, "inkluagent.js"))
+        self.app = lies(os.path.join(BACKEND, "templates", "app.html")) + skripte.quelltext(FRONTEND)
 
     def test_knopf_heisst_inkluagent(self):
         """Beschriftung beim Aufbau, beim Oeffnen und beim Schliessen: „InkluAgent“; Auf/Zu meldet aria-expanded."""

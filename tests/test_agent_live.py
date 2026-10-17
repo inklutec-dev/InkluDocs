@@ -404,7 +404,8 @@ class Anschluss(unittest.TestCase):
 
 class Oberflaeche(unittest.TestCase):
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
         self.zeigen = funktion(self.js, "function inkluagentLiveZeigen(")
         self.beob = funktion(self.js, "function inkluagentLiveBeobachten(")
 
@@ -482,7 +483,8 @@ class Buehne(unittest.TestCase):
     nur ueber die feste Schnittstelle window.InkluBuehne (Kern dashboard.js, Vertrag tests/test_buehne.py)."""
 
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
 
     def test_projektseite_einrahmbar_aber_keine_fensterseite(self):
         from inkluagent import fenster

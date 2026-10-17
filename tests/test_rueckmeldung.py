@@ -882,9 +882,13 @@ class Oberflaeche(unittest.TestCase):
         backend = next(k for k in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app") if os.path.isdir(k))
         frontend = next(k for k in (os.path.normpath(os.path.join(backend, "..", "frontend")), os.path.join(backend, "frontend"))
                         if os.path.isdir(k))
-        js = open(os.path.join(frontend, "inkluagent.js"), encoding="utf-8").read()
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        js = skripte.quelltext(frontend)
         self.js = js
-        self.teil = js[js.index("// ─── Rückmeldung (Steve 14.10.2026"):js.index("// ─── Gesperrt, solange")]
+        # der Abschnitt „Rückmeldung“ — seit 17.10.2026 eine eigene Datei (vorher zwischen zwei Ueberschriften ausgeschnitten)
+        with open(os.path.join(frontend, "inkluagent-rueckmeldung.js"), encoding="utf-8") as f:
+            self.teil = f.read()
+        self.assertIn("// ─── Rückmeldung (Steve 14.10.2026", self.teil)
 
     def test_fragt_nur_solange_eine_wartet_und_nimmt_keinen_fokus(self):
         self.assertIn("if (!(rm.wartet > 0) && !((rm.letzte || 0) > window._inkluagentRmBekannt)) break;", self.teil)

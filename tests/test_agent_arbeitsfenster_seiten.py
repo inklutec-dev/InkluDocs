@@ -128,7 +128,8 @@ class Oberflaeche(unittest.TestCase):
     """Quelltext-Pruefungen; das Verhalten pruefen die Klickproben lokal/probe_pr13_*.py (docs/INKLUAGENT.md, Pruefung 13.10.2026)."""
 
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
         self.dash = lies(FRONTEND, "dashboard.js")
 
     def test_seite_im_fenster_nur_eigene_pfade_ohne_projekte(self):

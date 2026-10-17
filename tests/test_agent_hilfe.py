@@ -105,7 +105,8 @@ class Oberflaeche(unittest.TestCase):
     def test_ki_hinweis_beispiele_und_link_im_agenten(self):
         """Steve 09.10.2026: Hilfe IM Bereich des InkluAgent — KI-Hinweis (KI-VO Art. 50) mit „fragt dich“, drei Beispiele je
         Seite (Bilder, Formular, ohne Projekt) und der Link zur Hilfe-Seite. Die drei Stichpunkte stehen weiter auf der Seite."""
-        js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        js = skripte.quelltext(FRONTEND)
         self.assertIn("t('" + KURZ[0] + " " + KURZ[2] + "')", js)
         self.assertIn("t('Sag ihm in eigenen Worten, was du brauchst, zum Beispiel:')", js)
         self.assertIn("t('Alles, was der InkluAgent kann')", js)

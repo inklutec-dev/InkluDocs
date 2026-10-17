@@ -48,7 +48,8 @@ def node(skript):
 class ReineFunktionen(unittest.TestCase):
     def setUp(self):
         self.dash = lies(FRONTEND, "dashboard.js")
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
 
     def test_eigener_pfad(self):
         """S14: eine Hilfsfunktion fuer alle Links, Downloads, Rahmen-Ziele und „weiter“."""
@@ -146,7 +147,8 @@ class Server(unittest.TestCase):
 
 class Quelltext(unittest.TestCase):
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
         self.dash = lies(FRONTEND, "dashboard.js")
         self.css = lies(FRONTEND, "style.css")
 

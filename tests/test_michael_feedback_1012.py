@@ -33,7 +33,8 @@ def lies(*teile):
 
 class Agent(unittest.TestCase):
     def setUp(self):
-        self.js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(FRONTEND)
         f = self.js[self.js.index("function inkluagentInhaltHtml("):]
         self.html = f[:f.index("\n}\n")]
 

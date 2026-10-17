@@ -172,7 +172,8 @@ class Kern(unittest.TestCase):
         self.assertIn("neuZeichnen: () => laden(),", abl)
 
     def test_draussen_nur_was_der_kern_anbietet(self):
-        js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        js = skripte.quelltext(FRONTEND)
         angeboten = set(re.findall(r"\b(\w+)\b", self.kern[self.kern.rindex("return { version: 1,"):]))
         for methode in ("zeigen", "neuZeichnen", "beobachten"):
             self.assertIn(methode, angeboten)

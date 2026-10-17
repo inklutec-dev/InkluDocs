@@ -295,8 +295,8 @@ class Oberflaeche(unittest.TestCase):
         backend = next(k for k in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app") if os.path.isdir(k))
         frontend = next(k for k in (os.path.normpath(os.path.join(backend, "..", "frontend")), os.path.join(backend, "frontend"))
                         if os.path.isdir(k))
-        with open(os.path.join(frontend, "inkluagent.js"), encoding="utf-8") as f:
-            self.js = f.read()
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(frontend)
 
     def test_verlauf_des_kontos_nur_mit_schalter(self):
         self.assertIn("window.INKLUAGENT && window.INKLUAGENT.konto", self.js)

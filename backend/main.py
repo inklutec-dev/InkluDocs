@@ -608,6 +608,9 @@ def _hin_ziele_global() -> list:
 
 
 templates.env.globals["hin_ziele"] = _hin_ziele_global
+# Die Skripte des InkluAgent in Ladereihenfolge (17.10.2026, inkluagent/skripte.py): base_app.html und app.html binden genau diese ein
+from inkluagent import skripte as _inkluagent_skripte  # noqa: E402
+templates.env.globals["inkluagent_skripte"] = _inkluagent_skripte.TEILE
 
 
 def create_token(user_id: int, email: str, is_admin: int = 0) -> str:

@@ -307,7 +307,8 @@ class Oberflaeche(unittest.TestCase):
         backend = next(k for k in (os.path.normpath(os.path.join(HIER, "..", "backend")), "/app") if os.path.isdir(k))
         frontend = next(k for k in (os.path.normpath(os.path.join(backend, "..", "frontend")), os.path.join(backend, "frontend"))
                         if os.path.isdir(k))
-        self.js = open(os.path.join(frontend, "inkluagent.js"), encoding="utf-8").read()
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        self.js = skripte.quelltext(frontend)
         self.css = open(os.path.join(frontend, "style.css"), encoding="utf-8").read()
         self.app = open(os.path.join(backend, "templates", "app.html"), encoding="utf-8").read()
 

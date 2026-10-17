@@ -139,7 +139,8 @@ class Darstellung(unittest.TestCase):
         self.assertIn("<body>", self._render("vorlagen.html", oberflaeche=None))
 
     def test_oberflaeche_js(self):
-        js = lies(FRONTEND, "inkluagent.js")
+        from inkluagent import skripte   # alle Teile des Agenten-Skripts (17.10.2026)
+        js = skripte.quelltext(FRONTEND)
         self.assertIn("function inkluagentAgentenansicht()", js)
         self.assertIn("if (inkluagentAgentenansicht()) { await inkluagentOpen(projectId, false, true); return; }", js)
         # seit 12.10.2026 jede Markierung („aus“ und „war-versteckt“, Steve: spaeter eingeblendete Teile rutschten durch)
