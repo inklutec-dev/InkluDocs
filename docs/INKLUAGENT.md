@@ -890,6 +890,18 @@ Ausnahme nicht abgemeldet, fremde Projekte bzw. fremde Ablage, Mantel ohne Ergeb
 Karte ohne Kennung, Kern rollt draußen, Kamera zieht aus dem Fenster, unbekannte Art) — alle rot. Ganze Suite: nur die 17 bekannten
 Roten (test_texte_migration, test_daten_keine_anweisung, test_projekt_schlank, drei Ladefehler), wie vorher.
 
+Browserproben im Repo (vor jedem Einspielen auf Staging; `INKLUDOCS_BASIS` wählt den Server, nie Production; Konto als Argumente):
+- `tests/e2e/live_buehne_probe.py` (ohne KI, 28 Punkte): Projekt im Fenster mit `InkluBuehne`, Kamerafahrt, Fokus, „Mitverfolgen“,
+  Station ohne Stelle, ein anderes eigenes Projekt, Meine Ablage, von der Startseite aus, „Seite schließen“ bleibt geschlossen.
+- `tests/e2e/live_alttexte_rauch.py` (echtes Modell, 16): ein Alt-Text-Lauf live im Fenster bis „Im Hintergrund: Alt-Texte fertig“.
+- `tests/e2e/live_kette_rauch.py` (echtes Modell; Fall A 16, Fall B 17): Steves Word-Kette als ein Auftrag — Alt-Texte (Kamera je
+  Bild) → In PDF umwandeln (Ansicht Dokument) → Meine Ablage beim fertigen PDF; der Gegenfall „nur Alt-Texte und die Word-Datei“
+  zeigt nur diese zwei Stationen (nie Prüfung, Tagging, Übersetzung, Umwandeln) und endet ohne Ablage (ABLAGE_WORD aus) in der
+  Ansicht Dokument. Ein Rekorder schreibt alle 300 ms mit, was im Fenster steht. Gefunden und behoben dabei: „Seite schließen“ holte
+  das andere Projekt bzw. die Ablage über die gemerkte Stelle zurück; ein Lauf von Sekunden (Word herunterladen) zeigte keine Station.
+- Hinweis zur Kette: Bei Word ist „taggen“ Teil der Umwandlung (LibreOffice schreibt PDF/UA mit Tags); einen eigenen Tagging-Schritt
+  gibt es nur in PDF-Projekten. Die KI-Prüfung (`pruefung` im Auftrag) gilt für getaggte PDFs; „Word prüfen“ ist ein eigenes Werkzeug.
+
 ### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
 
 Unter dem Absender jeder Antwort des InkluAgent (auch im Verlauf, in der Rückmeldung und im älteren Gespräch, nicht am wachsenden
