@@ -119,15 +119,19 @@ class AusDerAblage(unittest.TestCase):
 
 class AusDerPruefdatei(unittest.TestCase):
     def daten(self, **pd):
-        return {"bilder": 4, "sprache": "en-GB", "pruefdatei": dict({"aktuell": True, "verapdf_moeglich": True, "bestanden": True,
+        return {"bilder": 4, "grafiken": [3, 1], "sprache": "en-GB", "pruefdatei": dict({"aktuell": True, "verapdf_moeglich": True, "bestanden": True,
                                                                      "anzahl_probleme": 0}, **pd),
                 "hoerprobe": {"kopf": ["Sprache: Englisch", "Seiten: 2"], "seiten": [{"seite": 1, "zeilen": ["Heading level 1: Hi"]},
                                                                                        {"seite": 2, "zeilen": ["Paragraph: Text"]}]}}
 
     def test_bestanden_hoerprobe_ohne_kopf(self):
-        n = nachweis.aus_pruefdatei(7, 9, "Brief (fiktiv)", self.daten(), 3)
+        n = nachweis.aus_pruefdatei(7, 9, "Brief (fiktiv)", self.daten())
         self.assertEqual((n["quelle"], n["bestanden"], n["befunde"], n["bilder"], n["alt_texte"], n["lang"], n["aktuell"]),
-                         ("pruefdatei", True, 0, 4, 3, "en", True))
+                         ("pruefdatei", True, 0, 3, 2, "en", True), "Grafiken der FERTIGEN Datei, nicht die Bildtabelle (bilder: 4)")
+        d = self.daten()
+        del d["grafiken"]
+        self.assertEqual((nachweis.aus_pruefdatei(7, 9, "", d)["bilder"], nachweis.aus_pruefdatei(7, 9, "", d)["alt_texte"]), (None, None),
+                         "ohne Strukturlesung keine Zeile zu Alt-Texten")
         self.assertEqual(n["hoerprobe"], ["Heading level 1: Hi", "Paragraph: Text"])
         self.assertEqual(n["pruefung_url"], "/app?projekt=7&ansicht=abschluss")
 
@@ -136,6 +140,17 @@ class AusDerPruefdatei(unittest.TestCase):
         self.assertFalse(nachweis.aus_pruefdatei(7, 9, "", self.daten(bestanden=False, anzahl_probleme=3))["bestanden"])
         self.assertIsNone(nachweis.aus_pruefdatei(7, 9, "", {"pruefdatei": None}))
         self.assertIsNone(nachweis.aus_pruefdatei("x", 9, "", self.daten()), "nie eine Ausnahme")
+
+
+class Grafiken(unittest.TestCase):
+    def test_wie_die_zusammenfassung_der_hoerprobe(self):
+        import pdf_struktur
+        s = {"info": {"lang": "de", "seiten": 1}, "elemente": [
+            {"typ": "Figure", "seite": 1, "alt": "Ein Haus (fiktiv)"}, {"typ": "Figure", "seite": 1, "actual": "Haus"},
+            {"typ": "Figure", "seite": 1}, {"typ": "Formula", "seite": 1, "alt": "x²"}, {"typ": "P", "seite": 1, "text": "Hallo"}]}
+        self.assertEqual(pdf_struktur.grafiken(s), (4, 1))
+        self.assertIn("4 Grafiken (1 ohne Alt-Text)", " ".join(pdf_struktur.hoerprobe(s)), "dieselbe Zaehlung wie die Hoerprobe")
+        self.assertEqual(pdf_struktur.grafiken({}), (0, 0))
 
 
 class Herausnehmen(unittest.TestCase):
@@ -199,8 +214,7 @@ class Anschluss(unittest.TestCase):
                 mock.patch.object(oberflaeche._pdf, "_dokument", return_value={"id": 9}), \
                 mock.patch.object(oberflaeche._pdf, "_name", return_value="Brief (fiktiv)"), \
                 mock.patch.object(oberflaeche, "pruefdatei_lesen", return_value={"ok": True, "result": {}}), \
-                mock.patch.object(oberflaeche, "_pruef_daten", return_value=({}, {"id": 9}, daten)), \
-                mock.patch.object(nachweis, "alt_texte_im_dokument", return_value=1):
+                mock.patch.object(oberflaeche, "_pruef_daten", return_value=({}, {"id": 9}, daten)):
             r = oberflaeche.pruefdatei_erstellen(7, 1, 9)
         self.assertEqual((r["nachweis"]["bestanden"], r["nachweis"]["hoerprobe"], r["nachweis"]["dokument"]),
                          (True, ["Absatz: Hallo (fiktiv)"], "Brief (fiktiv)"))

@@ -84,37 +84,26 @@ def aus_ausgabe(user_id: int, ausgabe_id: int, lang: Optional[str] = None) -> Op
         return None
 
 
-def aus_pruefdatei(project_id: int, document_id: int, dokument: str, daten: dict, bilder_mit_alt: Optional[int] = None) -> Optional[dict]:
-    """Nachweis aus der Prüfdatei eines Dokuments (main._abschluss_dokument mit voll=True) — None ohne Prüfdatei."""
+def aus_pruefdatei(project_id: int, document_id: int, dokument: str, daten: dict) -> Optional[dict]:
+    """Nachweis aus der Prüfdatei eines Dokuments (main._abschluss_dokument mit voll=True) — None ohne Prüfdatei. Alt-Texte aus der
+    fertigen Datei (grafiken: Grafiken und davon ohne Alt-Text), nicht aus der Bildtabelle: die kennt die Alt-Texte einer
+    hochgeladenen, schon getaggten PDF nicht (gefunden im Rauchtest 17.10.2026: „0 von 2“, obwohl die Hörprobe sie vorlas)."""
     try:
         pd = (daten or {}).get("pruefdatei") or {}
         if not pd:
             return None
         zeilen = [z for s in ((daten.get("hoerprobe") or {}).get("seiten") or []) for z in (s.get("zeilen") or [])]
+        g = daten.get("grafiken")
+        n, ohne = (int(g[0]), int(g[1])) if isinstance(g, (list, tuple)) and len(g) == 2 else (None, None)
         return {"art": "nachweis", "quelle": "pruefdatei", "project_id": int(project_id), "document_id": int(document_id),
                 "dokument": str(dokument or "")[:200], "dokumente": 1,
                 "bestanden": bool(pd.get("bestanden")) if pd.get("verapdf_moeglich") else None,
                 "befunde": pd.get("anzahl_probleme"), "aktuell": bool(pd.get("aktuell")),
-                "bilder": daten.get("bilder"), "alt_texte": bilder_mit_alt,
+                "bilder": n, "alt_texte": (n - ohne) if n is not None else None,
                 "hoerprobe": _zeilen(zeilen), "hoerprobe_dokument": None, "lang": _sprache(daten.get("sprache")),
                 "pruefung_url": f"/app?projekt={int(project_id)}&ansicht=abschluss"}
     except Exception:  # noqa: BLE001
         log.exception("Nachweis zur Prüfdatei %s nicht gebaut (ignoriert)", document_id)
-        return None
-
-
-def alt_texte_im_dokument(project_id: int, document_id: int) -> Optional[int]:
-    """Wie viele Bilder des Dokuments einen Alt-Text haben (eigener Text, KI-Text oder aus der Datei)."""
-    try:
-        from database import get_db
-        conn = get_db()
-        try:
-            return int(conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND document_id = ? AND TRIM(COALESCE("
-                                    "alt_text_edited, alt_text, original_alt, '')) != ''", (project_id, document_id)).fetchone()[0])
-        finally:
-            conn.close()
-    except Exception:  # noqa: BLE001
-        log.exception("Nachweis: Alt-Texte nicht gezaehlt (ignoriert)")
         return None
 
 

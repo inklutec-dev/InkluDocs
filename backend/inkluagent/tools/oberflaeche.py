@@ -155,8 +155,7 @@ def pruefdatei_erstellen(project_id: int, user_id: int, document_id: Optional[in
         # Nachweis (17.10.2026, inkluagent/nachweis.py): veraPDF und der Anfang der Hoerprobe der fertigen Datei unter der Antwort
         try:
             _p, _d, daten_ = _pruef_daten(project_id, user_id, doc["id"])
-            r["nachweis"] = nachweis.aus_pruefdatei(project_id, doc["id"], _pdf._name(doc), daten_,
-                                                    nachweis.alt_texte_im_dokument(project_id, doc["id"]))
+            r["nachweis"] = nachweis.aus_pruefdatei(project_id, doc["id"], _pdf._name(doc), daten_)
         except HTTPException:
             pass
     return r

@@ -130,6 +130,15 @@ async def uebernehmen(user: dict, ausgabe_id: int, project_id: Optional[int] = N
             h._namen_setzen(ziel, uid, projektname(row, art, _))
             if durch_agent:
                 h._zaehlen(uid, h._tag())
+    # Das Dokument heisst wie in der Herkunft, nicht wie die Datei („inkludocs_….pdf“) — bei einer Datei, ohne eigenen Namen
+    if len(liste) == 1 and doks and (row["dokument_name"] or "").strip():
+        conn = m.get_db()
+        try:
+            conn.execute("UPDATE documents SET display_name = ? WHERE id = ? AND (display_name IS NULL OR display_name = '')",
+                         (row["dokument_name"].strip()[:200], doks[0]))
+            conn.commit()
+        finally:
+            conn.close()
     # Laufbuch: waehrend die Datei ausgelesen wird, zeigt das Live-Fenster das Ziel (nur, wenn der Agent es tut)
     with laufbuch.lauf("uebernehmen", user_id=uid, project_id=ziel, document_id=(doks[0] if doks else None), gesamt=1) as lauf:
         if doks:

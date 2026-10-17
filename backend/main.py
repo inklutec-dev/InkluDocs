@@ -9760,6 +9760,7 @@ def _abschluss_dokument(project: dict, unit: dict, user_id: int, _, voll: bool) 
     aussen["pruefdatei"]["anzahl_probleme"] = len(probleme)
     if voll:
         aussen["sprache"] = ((struktur or {}).get("info") or {}).get("lang") or ""
+        aussen["grafiken"] = list(tagging_api.pdf_struktur.grafiken(struktur)) if struktur else None   # Nachweis (17.10.2026)
         aussen["probleme"] = probleme
         aussen["hoerprobe"] = (abschluss.hoerprobe_seiten(tagging_api.pdf_struktur.hoerprobe(struktur, _, None), _,
                                                           int(((struktur.get("info") or {}).get("seiten")) or aussen["seiten"] or 0))

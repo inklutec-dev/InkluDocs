@@ -165,6 +165,19 @@ def _kinder(elemente: list, idx: int) -> list:
     return out
 
 
+def grafiken(struktur: dict) -> tuple:
+    """(Grafiken, davon ohne Alt-Text) in der Datei — dieselbe Zaehlung wie die Zusammenfassung der Hoerprobe (Nachweis, 17.10.2026:
+    die Bildtabelle kennt die Alt-Texte einer hochgeladenen, schon getaggten PDF nicht)."""
+    n = ohne = 0
+    for e in struktur.get("elemente") or []:
+        if _still(e) or e.get("typ") not in ("Figure", "Formula"):
+            continue
+        n += 1
+        if not (e.get("alt") or e.get("actual")):
+            ohne += 1
+    return n, ohne
+
+
 def hoerprobe(struktur: dict, _: Callable[[str], str] = _identitaet, felder_quickinfos: Optional[dict] = None) -> list[str]:
     """Zeilen in Lesereihenfolge. felder_quickinfos: {Feldname: Quickinfo} aus der Datenbank (ergaenzt
     die /TU-Werte der Datei, falls die Datei noch ohne Quickinfos ist)."""

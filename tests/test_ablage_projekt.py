@@ -177,6 +177,10 @@ class Uebernehmen(Basis):
         p = self.projekt_zeile(r["project_id"])
         self.assertEqual((p["user_id"], p["tool"], p["name"]), (self.u["id"], "pdf", "Vereinsbrief (fiktiv) (barrierefreie PDF)"))
         self.assertEqual(r["projekt"], "Vereinsbrief (fiktiv) (barrierefreie PDF)")
+        c = database.get_db()
+        name = c.execute("SELECT display_name FROM documents WHERE id = ?", (r["dokumente"][0],)).fetchone()[0]
+        c.close()
+        self.assertEqual(name, "Vereinsbrief (fiktiv)", "das Dokument heisst wie in der Herkunft, nicht wie die Datei")
 
     def test_zip_wird_ein_projekt_mit_mehreren_dokumenten(self):
         aid = self.eintrag(zip_mit(**{"01_a.pdf": PDF, "02_b.pdf": PDF}), "alle_pdfua.zip", "application/zip", dokument="")
