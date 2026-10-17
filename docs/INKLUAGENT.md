@@ -982,6 +982,17 @@ Offen: braucht/liefert gilt bisher für die Schritte der Aufträge — der Steck
 kostenpflichtige Schritte im neuen PDF-Projekt (Neu taggen, KI-Prüfung) bietet der Agent danach mit eigenem Preis an (der Preis
 hängt an der fertigen PDF und ist vorher nicht bekannt).
 
+### Aufträge auch mit einem getippten Ja (Steve 17.10.2026)
+
+Steve: „Auch die Aufträge … wird vorher aufgelistet, und dann kann man das mit Ja oder dem Knopf bestätigen, wie man möchte.“ Werkzeug
+`auftrag_erteilen` (auftraege.py): erteilt die jüngste offene Auftragskarte dieses Gesprächs — NUR mit derselben Regel wie die
+bezahlten Einzelaktionen (`sicherheit.ja_grund`: ein kurzes, eindeutiges Ja wie „Ja“, „Ja, mach das“, „OK“, ohne Verneinung und
+Rückfrage, in der Nachricht DIREKT nach der Karte; die Runde der Karte steht als `angebot_turn` im Kontext). Dann derselbe Weg wie
+der Knopf (`karten.absenden`: neu rechnen, Summe und Fingerabdruck, Guthaben, ein Auftrag je Projekt; Haken „per Mail“ wie auf
+der Karte vorbelegt); die Karte steht danach im Verlauf und live in der Seite auf „erteilt“ (`inkluagentFormularKarteSetzen`,
+ohne Fokuswechsel). Kaufen (Credits, Abo, Express), Löschen und Einladungen bleiben beim Knopf. Tests: `test_auftraege.JaGetippt`
+(6), Gegenprobe 4/4; Prompt-Schnappschüsse: ein Absatz in den 20 Lagen mit Aufträgen.
+
 ### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
 
 Unter dem Absender jeder Antwort des InkluAgent (auch im Verlauf, in der Rückmeldung und im älteren Gespräch, nicht am wachsenden

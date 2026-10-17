@@ -130,6 +130,17 @@ function inkluagentFormularFehlerZeigen(form, fehler) {
     return erstes;
 }
 // Ergebnis unter der Karte (abgeschickt, abgelaufen), dazu ein Link der Antwort (z. B. „Auftrag ansehen“)
+// Getipptes Ja zur Auftragskarte (17.10.2026, auftraege.auftrag_erteilen): die Karte in der vorigen Antwort steht danach wie nach
+// dem Knopf — Formular weg, Ergebnis da. Ohne Fokuswechsel und Ansage: die neue Antwort sagt es.
+function inkluagentFormularKarteSetzen(kartenId, felder) {
+    if (!kartenId || !felder || !felder.zustand) return;
+    document.querySelectorAll('.inkluagent-formular[data-karten-id="' + CSS.escape(String(kartenId)) + '"]').forEach(k => {
+        k.dataset.zustand = felder.zustand;
+        const form = k.querySelector('form');
+        if (form) form.remove();
+        if (felder.ergebnis && !k.querySelector('.inkluagent-karte-ergebnis')) inkluagentFormularErgebnis(k, String(felder.ergebnis), null);
+    });
+}
 function inkluagentFormularErgebnis(karte, text, anhang) {
     const p = document.createElement('p');
     p.className = 'inkluagent-karte-ergebnis';

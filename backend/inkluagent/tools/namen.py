@@ -51,7 +51,7 @@ WERKZEUG_NAMEN: dict[str, str] = {
     # Rueckmeldung (14.10.2026, inkluagent/rueckmeldung.py)
     "melden_wenn_fertig": "Rückmeldung einrichten",
     # Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py)
-    "auftrag_vorbereiten": "Auftrag vorbereiten", "auftrag_stand": "Stand des Auftrags", "auftrag_abbrechen": "Auftrag anhalten",
+    "auftrag_vorbereiten": "Auftrag vorbereiten", "auftrag_erteilen": "Auftrag erteilen", "auftrag_stand": "Stand des Auftrags", "auftrag_abbrechen": "Auftrag anhalten",
     # Kaufen im Gespraech, Baustein 3 (14.10.2026, inkluagent/karten.py)
     "credits_kaufen_vorbereiten": "Kauf vorbereiten", "abo_buchen_vorbereiten": "Abo-Buchung vorbereiten",
 }

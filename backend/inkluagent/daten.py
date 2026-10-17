@@ -121,6 +121,7 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     # Auftraege, Baustein 2 (14.10.2026, inkluagent/auftraege.py): Projekt- und Dokumentnamen (im Umfang eines Schritts)
     # gekennzeichnet; Schritt-Titel, Zustaende und Gruende sind Saetze des Servers
     "auftrag_vorbereiten": ("projekt_daten", "schritte[].umfang_daten"),
+    "auftrag_erteilen": (),   # getipptes Ja zur Karte (17.10.2026): nur Text vom Server
     "auftrag_stand": ("auftraege[].projekt_daten", "auftraege[].schritte[].umfang_daten"),
     "auftrag_abbrechen": ("projekt_daten",),
     # Kaufen im Gespraech, Baustein 3 (14.10.2026, inkluagent/karten.py): nur Zahlen und Saetze des Servers

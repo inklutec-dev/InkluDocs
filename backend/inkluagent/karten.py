@@ -204,6 +204,20 @@ def _merken(user_id: int, typ: Kartentyp, project_id: Optional[int], kontext: di
     return kid
 
 
+def offene_karte(user_id: int, art: str, gespraech_id: Optional[int] = None) -> Optional[tuple]:
+    """Die juengste offene Karte dieser Art fuer dieses Konto (und dieses Gespraech): (Kennung, Eintrag) oder None — fuer ein
+    getipptes Ja (auftraege.auftrag_erteilen, 17.10.2026)."""
+    with _SPERRE:
+        _aufraeumen(time.time())
+        offen = [(e["zeit"], k, e) for k, e in _KARTEN.items()
+                 if e["user_id"] == int(user_id) and e["art"] == art and e["zustand"] == "offen"
+                 and (gespraech_id is None or (e.get("kontext") or {}).get("gespraech_id") in (None, int(gespraech_id)))]
+    if not offen:
+        return None
+    _zeit, k, e = max(offen, key=lambda x: x[0])
+    return k, e
+
+
 def _belegen(kid: str, user_id: int) -> tuple[Optional[dict], str]:
     """Die Karte fuer GENAU einen Klick belegen: (Eintrag, '') oder (None, Grund) — 'gesendet', 'laeuft' oder 'ungueltig'."""
     with _SPERRE:

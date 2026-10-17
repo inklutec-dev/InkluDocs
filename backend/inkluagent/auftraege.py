@@ -7,9 +7,12 @@ funktionen.AGENT_AUFTRAEGE (braucht die Formular-Karten AGENT_KARTEN und die Rue
    den Preis mit DENSELBEN Funktionen wie das einzelne Werkzeug und legt EINE Karte vor (karten.AUFTRAG): die Schritte mit
    Umfang und Preis, die Summe, das Guthaben und einen Haken „per Mail melden“. Geht ein gewuenschter Schritt nicht oder reicht
    das Guthaben nicht, gibt es keine Karte, sondern den Grund fuer das Modell.
-2. Erteilen: NUR der Knopf der Karte (POST /api/agent/karte -> karten.absenden -> karte_senden). Ein getipptes „Ja“ erteilt
-   keinen Auftrag. Der Server rechnet den Plan neu; ist die Summe eine andere, gilt die Karte nicht mehr. Sonst legt er den
-   Auftrag an (Tabelle agent_auftraege) und in DERSELBEN Transaktion die Rueckmeldung (Art „auftrag“, rueckmeldung.py).
+2. Erteilen: der Knopf der Karte (POST /api/agent/karte -> karten.absenden -> karte_senden) ODER ein getipptes „Ja“ (Steve
+   17.10.2026: „mit Ja oder dem Knopf bestätigen, wie man möchte“; Werkzeug auftrag_erteilen): dieselbe Regel wie bei den
+   bezahlten Einzelaktionen — ein kurzes, eindeutiges Ja in der Nachricht DIREKT nach der Karte (sicherheit.ja_grund), sonst
+   nichts; dann derselbe Weg wie der Knopf (karten.absenden), die Karte steht danach auf „erteilt“. Der Server rechnet den Plan
+   neu; ist die Summe eine andere, gilt die Karte nicht mehr. Sonst legt er den Auftrag an (Tabelle agent_auftraege) und in
+   DERSELBEN Transaktion die Rueckmeldung (Art „auftrag“, rueckmeldung.py).
 3. Abarbeiten OHNE KI (schleife, alle PRUEF_S Sekunden, eigener Faden): je Auftrag den naechsten Schritt starten — ueber
    DASSELBE Werkzeug wie im Gespraech, mit bestaetigt=true. Die Zustimmung gibt der Auftrag (tools/ausgaben.auftrag_schritt):
    nur fuer die Art dieses Schritts, hoechstens einmal und hoechstens bis zur Rest-Summe der Karte. Laeuft der Schritt im
@@ -537,9 +540,10 @@ def karte_text(projekt: str, plan: dict, _) -> str:
 
 # ─── Werkzeuge des Agenten ───────────────────────────────────────────────────────────────────────────────────────────────────
 WERKZEUG_VORBEREITEN = "auftrag_vorbereiten"
+WERKZEUG_ERTEILEN = "auftrag_erteilen"
 WERKZEUG_STAND = "auftrag_stand"
 WERKZEUG_ABBRECHEN = "auftrag_abbrechen"
-NAMEN = frozenset({WERKZEUG_VORBEREITEN, WERKZEUG_STAND, WERKZEUG_ABBRECHEN})
+NAMEN = frozenset({WERKZEUG_VORBEREITEN, WERKZEUG_ERTEILEN, WERKZEUG_STAND, WERKZEUG_ABBRECHEN})
 
 _SCHRITTE_BESCHREIBUNG = (
     "tagging = Barrierefrei machen (alle ungetaggten PDFs), alt_texte = Alt-Texte für alle Bilder generieren, quickinfos = "
@@ -556,10 +560,10 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
     return [
         {"name": WERKZEUG_VORBEREITEN,
          "description": ("Mehrere Arbeitsschritte in einem Projekt als EIN Auftrag: Der Server ordnet die Schritte, rechnet jeden "
-                         "Preis und die Summe und legt dem Nutzer EINE Karte mit Knopf „Auftrag erteilen“ vor. Nach dem Knopf "
-                         "arbeitet der Server die Schritte im Hintergrund ab (die Seite darf zu), und der InkluAgent meldet sich, "
-                         "wenn alles fertig ist. Erteilen kann NUR der Nutzer mit dem Knopf, nicht mit einem getippten Ja. Für "
-                         "einen einzelnen Schritt nimm sein eigenes Werkzeug. Schritte: " + _SCHRITTE_BESCHREIBUNG),
+                         "Preis und die Summe und legt dem Nutzer EINE Karte mit Knopf „Auftrag erteilen“ vor. Erteilt (Knopf oder "
+                         "ein klares Ja des Nutzers in seiner nächsten Nachricht, dann auftrag_erteilen), arbeitet der Server die "
+                         "Schritte im Hintergrund ab (die Seite darf zu), und der InkluAgent meldet sich, wenn alles fertig ist. "
+                         "Für einen einzelnen Schritt nimm sein eigenes Werkzeug. Schritte: " + _SCHRITTE_BESCHREIBUNG),
          "input_schema": {"type": "object", "properties": dict(pid, **{
              "schritte": {"type": "array", "items": {"type": "string", "enum": [s.art for s in KATALOG]},
                           "description": "Die gewünschten Schritte; die Reihenfolge legt der Server fest."},
@@ -572,6 +576,12 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
                  "true nur, wenn der Nutzer selbst eine Mail haben will, wenn alles fertig ist (Haken auf der Karte vorbelegt; "
                  "die Mail geht immer an die Adresse seines Kontos).")}}),
              "required": ["schritte"] + (["project_id"] if project_id is None else [])}},
+        {"name": WERKZEUG_ERTEILEN,
+         "description": ("Erteilt den Auftrag der Karte aus deiner letzten Antwort — NUR, wenn der Nutzer in seiner Nachricht direkt "
+                         "danach klar zugestimmt hat (ein kurzes Ja wie „Ja“, „Ja, mach das“, „OK“). Der Server prüft das Ja und "
+                         "rechnet wie beim Knopf neu (Summe, Guthaben); die Karte steht danach auf „erteilt“. Hat der Nutzer etwas "
+                         "geändert oder nachgefragt, nicht erteilen, sondern eine neue Karte mit auftrag_vorbereiten."),
+         "input_schema": {"type": "object", "properties": {}, "required": []}},
         {"name": WERKZEUG_STAND,
          "description": ("Stand der Aufträge" + (" in diesem Projekt" if project_id is not None else " des Kontos") +
                          ": je Auftrag die Schritte mit ihrem Zustand (wartet, läuft, fertig, gescheitert). Kostenlos."),
@@ -586,7 +596,7 @@ def werkzeuge(project_id: Optional[int]) -> list[dict]:
 
 PROMPT = """Aufträge mit mehreren Schritten
 
-Will der Nutzer mehrere Arbeitsschritte in einem Projekt nacheinander erledigt haben (zum Beispiel Alt-Texte generieren, dann als Word herunterladen; oder barrierefrei machen, Alt-Texte, dann die fertige PDF), leg ihm mit auftrag_vorbereiten EINE Karte vor, statt jeden Schritt einzeln anzubieten. Das gilt auch, wenn er das Wort „Auftrag“ nicht benutzt. Meint er ein bestimmtes Dokument, gib dessen document_id mit; sonst gilt der Auftrag für alle Dokumente des Projekts. Der Server ordnet die Schritte, rechnet die Preise und die Summe und zeigt alles auf der Karte. Erteilen kann nur der Nutzer mit dem Knopf „Auftrag erteilen“ — frag nicht nach einem Ja, sondern sag in einem Satz, was der Auftrag umfasst, was er zusammen kostet und dass er danach die Seite schließen kann. Der Server arbeitet die Schritte im Hintergrund ab, und du meldest dich von selbst, wenn alles fertig ist; eine Mail gibt es, wenn er den Haken auf der Karte setzt. Geht ein Schritt nicht oder reicht das Guthaben nicht, sagt dir das Werkzeug den Grund: Nenne ihn und frag, wie er weitermachen will. Fragt er, wie weit der Auftrag ist: auftrag_stand. Will er ihn anhalten: auftrag_abbrechen."""
+Will der Nutzer mehrere Arbeitsschritte in einem Projekt nacheinander erledigt haben (zum Beispiel Alt-Texte generieren, dann als Word herunterladen; oder barrierefrei machen, Alt-Texte, dann die fertige PDF), leg ihm mit auftrag_vorbereiten EINE Karte vor, statt jeden Schritt einzeln anzubieten. Das gilt auch, wenn er das Wort „Auftrag“ nicht benutzt. Meint er ein bestimmtes Dokument, gib dessen document_id mit; sonst gilt der Auftrag für alle Dokumente des Projekts. Der Server ordnet die Schritte, rechnet die Preise und die Summe und zeigt alles auf der Karte. Sag in einem Satz, was der Auftrag umfasst, was er zusammen kostet und dass er ihn mit dem Knopf „Auftrag erteilen“ oder einem Ja startet; danach kann er die Seite schließen. Antwortet er in seiner nächsten Nachricht mit einem klaren Ja, erteilst du den Auftrag mit auftrag_erteilen; ändert er etwas, leg eine neue Karte vor. Der Server arbeitet die Schritte im Hintergrund ab, und du meldest dich von selbst, wenn alles fertig ist; eine Mail gibt es, wenn er den Haken auf der Karte setzt. Geht ein Schritt nicht oder reicht das Guthaben nicht, sagt dir das Werkzeug den Grund: Nenne ihn und frag, wie er weitermachen will. Fragt er, wie weit der Auftrag ist: auftrag_stand. Will er ihn anhalten: auftrag_abbrechen."""
 
 # PDF: das Beispiel aus Michaels Fall (15.10.2026) und das schon getaggte Dokument — nur dort, wo es PDF-Projekte gibt. Ohne
 # Projekt gibt es barrierefrei_machen nicht (der Werkzeug-Waechter fand den Namen in Word-, Grafik- und Konto-Gespraechen).
@@ -605,13 +615,17 @@ def prompt(projektart: str) -> str:
 
 
 def ausfuehren(name: str, args: dict, *, user_id: int, project_id: Optional[int], gespraech_id: Optional[int],
-               sprache: Optional[str] = None, auftrag: str = "", _t: Optional[Callable[[str], str]] = None) -> dict:
-    """Werkzeuge des Agenten (agent_loop). Wie jedes Werkzeug: ein Fehler wird ein Ergebnis, nie ein Absturz der Runde."""
+               sprache: Optional[str] = None, auftrag: str = "", _t: Optional[Callable[[str], str]] = None,
+               turn_id: Optional[str] = None) -> dict:
+    """Werkzeuge des Agenten (agent_loop). Wie jedes Werkzeug: ein Fehler wird ein Ergebnis, nie ein Absturz der Runde. turn_id:
+    die Runde dieser Nachricht (fuer das getippte Ja, sicherheit.ja_grund)."""
     _ = _t or (lambda s: s)
     args = args if isinstance(args, dict) else {}
     try:
         if name == WERKZEUG_VORBEREITEN:
-            return _vorbereiten(args, user_id, project_id, gespraech_id, sprache, auftrag, _)
+            return _vorbereiten(args, user_id, project_id, gespraech_id, sprache, auftrag, _, turn_id)
+        if name == WERKZEUG_ERTEILEN:
+            return _erteilen_werkzeug(user_id, gespraech_id, sprache, turn_id, _)
         if name == WERKZEUG_STAND:
             return _stand_werkzeug(user_id, project_id, _)
         if name == WERKZEUG_ABBRECHEN:
@@ -646,7 +660,7 @@ def _laufender(conn, user_id: int, project_id: int) -> Optional[dict]:
 
 
 def _vorbereiten(args: dict, user_id: int, project_id: Optional[int], gespraech_id: Optional[int], sprache: Optional[str],
-                 auftrag: str, _) -> dict:
+                 auftrag: str, _, turn_id: Optional[str] = None) -> dict:
     from . import karten, rueckmeldung
     p = _eigenes_projekt(user_id, project_id if project_id is not None else args.get("project_id"))
     if not p:
@@ -685,17 +699,20 @@ def _vorbereiten(args: dict, user_id: int, project_id: Optional[int], gespraech_
         return {"ok": True, "result": {"karte": None, "projekt_daten": projekt_daten, "schritte": schritte, "summe": plan["summe"],
                                        "verfuegbar": plan["verfuegbar"], "fehlend": fehlend, "guthaben_reicht_nicht": True,
                                        "hinweis": "Das Guthaben reicht für diesen Auftrag nicht. Nenne Summe und Guthaben." + kaufen}}
+    per_mail = rueckmeldung._ja(args.get("per_mail"))
+    # angebot_turn und per_mail: fuer das getippte Ja (auftrag_erteilen) — die Runde der Karte und der Haken, wie er vorbelegt ist
     kontext = {"project_id": int(p["id"]), "wunsch": wunsch, "summe": plan["summe"], "fingerabdruck": fingerabdruck(plan),
-               "gespraech_id": int(gespraech_id), "sprache": sprache or "de", "auftrag": (auftrag or "").strip()[:1000]}
+               "gespraech_id": int(gespraech_id), "sprache": sprache or "de", "auftrag": (auftrag or "").strip()[:1000],
+               "angebot_turn": turn_id, "per_mail": bool(per_mail)}
     kid = karten._merken(user_id, karten.AUFTRAG, None if project_id is None else int(p["id"]), kontext)
-    anhang = karten.karte(karten.AUFTRAG, kid, {"per_mail": rueckmeldung._ja(args.get("per_mail"))}, _,
+    anhang = karten.karte(karten.AUFTRAG, kid, {"per_mail": per_mail}, _,
                           text=karte_text(_projektname(p), plan, _), zeilen=karte_zeilen(plan, _), nummeriert=True,
                           hinweise=plan["hinweise"], knopf=karte_knopf(plan, _))
     return {"ok": True,
             "result": {"karte": "auftrag", "projekt_daten": projekt_daten, "schritte": schritte, "summe": plan["summe"],
                        "hoechstens": plan["hoechstens"], "verfuegbar": plan["verfuegbar"], "hinweise": plan["hinweise"],
                        "hinweis": ("Die Karte steht unter deiner Antwort. Sag in ein bis zwei Sätzen, was der Auftrag umfasst und was "
-                                   "er zusammen kostet; erteilen kann nur der Nutzer mit „Auftrag erteilen“, danach darf er die "
+                                   "er zusammen kostet, und dass er mit „Auftrag erteilen“ oder einem Ja startet; danach darf er die "
                                    "Seite schließen.")},
             "anhang": anhang}
 
@@ -761,7 +778,31 @@ def abbrechen(user_id: int, project_id: int) -> bool:
     return bool(n)
 
 
-# ─── 2. Erteilen (Knopf der Karte) ───────────────────────────────────────────────────────────────────────────────────────────
+# ─── 2. Erteilen (Knopf der Karte oder getipptes Ja) ─────────────────────────────────────────────────────────────────────────
+def _erteilen_werkzeug(user_id: int, gespraech_id: Optional[int], sprache: Optional[str], turn_id: Optional[str], _) -> dict:
+    """auftrag_erteilen (Steve 17.10.2026): das getippte Ja zur Auftragskarte — dieselbe Pruefung wie bei den bezahlten
+    Einzelaktionen (kurzes, eindeutiges Ja in der Nachricht DIREKT nach der Karte), dann derselbe Weg wie der Knopf
+    (karten.absenden: neu rechnen, Guthaben, ein Auftrag je Projekt; die Karte im Verlauf auf „erteilt“)."""
+    from . import karten, sicherheit
+    from .kern import warten
+    e = karten.offene_karte(user_id, karten.AUFTRAG.art, gespraech_id)
+    if not e:
+        return {"ok": False, "error": "Es liegt keine offene Auftragskarte vor. Leg den Auftrag mit auftrag_vorbereiten vor."}
+    kid, eintrag = e
+    grund = sicherheit.ja_grund(turn_id, eintrag["kontext"].get("angebot_turn"))
+    if grund:
+        return {"ok": True, "result": {"erteilt": False, "hinweis": grund}}
+    status, antwort = warten(karten.absenden(kid, {"id": int(user_id)}, {"per_mail": bool(eintrag["kontext"].get("per_mail"))},
+                                             sprache or "de"))
+    karte = dict(antwort.get("karte") or {}, karten_id=kid)
+    if status != 200:
+        out = {"ok": False, "error": str(antwort.get("detail") or "Der Auftrag ließ sich nicht erteilen.")}
+        if karte.get("zustand") and karte["zustand"] != "offen":
+            out["karten"] = [karte]
+        return out
+    return {"ok": True, "result": {"erteilt": True, "hinweis": (
+        "Der Auftrag ist erteilt und läuft im Hintergrund; die Karte steht jetzt auf „erteilt“. Bestätige das in einem Satz und sag, "
+        "dass du dich meldest, wenn alles fertig ist; die Seite darf zu.")}, "karten": [karte]}
 async def karte_senden(e: dict, user: dict, werte: dict, sprache: str, _) -> tuple[int, dict]:
     """karten.absenden fuer die Auftragskarte: (HTTP-Status, Antwort) wie die anderen Karten."""
     return await asyncio.get_running_loop().run_in_executor(None, erteilen, e["kontext"], user, werte, _)

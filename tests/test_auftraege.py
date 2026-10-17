@@ -302,7 +302,7 @@ class Vorbereiten(Basis):
         res = r["result"]
         self.assertTrue(res["projekt_daten"].startswith(DATEN_MARKE))
         self.assertTrue(all(s["umfang_daten"].startswith(DATEN_MARKE) for s in res["schritte"]), "Namen aus Dateien als Daten")
-        self.assertIn("erteilen kann nur der Nutzer", res["hinweis"])
+        self.assertIn("mit „Auftrag erteilen“ oder einem Ja startet", res["hinweis"], "Knopf oder getipptes Ja (17.10.2026)")
         self.assertEqual(sql("SELECT * FROM agent_auftraege"), [], "die Karte legt noch keinen Auftrag an")
 
     def test_ohne_mailwunsch_ist_der_haken_leer(self):
@@ -1380,6 +1380,95 @@ class KetteBruecke(MitWerkzeugen):
             for bedarf in s.braucht:
                 self.assertIn(bedarf, geliefert, s.art)
                 self.assertTrue(any(bedarf in q.liefert and af._vor(q.art, s.art) for q in af.KATALOG), f"{s.art}: Lieferant davor")
+
+
+
+# ─── Getipptes Ja (Steve 17.10.2026: „mit Ja oder dem Knopf bestätigen, wie man möchte“) ─────────────────────────────────────
+class JaGetippt(MitWerkzeugen):
+    """auftrag_erteilen: dieselbe Ja-Regel wie bei den bezahlten Einzelaktionen (kurz, eindeutig, DIREKT nach der Karte), dann
+    derselbe Weg wie der Knopf; die Karte steht danach auf „erteilt“."""
+
+    def setUp(self):
+        super().setUp()
+        from inkluagent import sicherheit
+        self.sicherheit = sicherheit
+        self.runde = 0
+
+    def nachricht(self, text):
+        self.runde += 1
+        tid = f"runde-{self.u['id']}-{self.runde}"
+        self.sicherheit.nachricht_merken(tid, text, self.u["id"])
+        return tid
+
+    def werkzeug(self, name, args, tid):
+        return af.ausfuehren(name, args, user_id=self.u["id"], project_id=self.pid, gespraech_id=self.gid, sprache="de",
+                             turn_id=tid)
+
+    def karte(self, per_mail=False):
+        tid = self.nachricht("Mach bitte die Alt-Texte und dann die Word-Datei (fiktiv).")
+        r = self.werkzeug("auftrag_vorbereiten", {"schritte": ["alt_texte", "word"], "per_mail": per_mail}, tid)
+        self.assertEqual(r["result"]["karte"], "auftrag", r)
+        return r["anhang"]["karten_id"]
+
+    def auftraege(self):
+        return sql("SELECT * FROM agent_auftraege WHERE user_id = ?", self.u["id"])
+
+    def test_klares_ja_direkt_danach_erteilt_wie_der_knopf(self):
+        kid = self.karte()
+        r = self.werkzeug("auftrag_erteilen", {}, self.nachricht("Ja, mach das."))
+        self.assertTrue(r["ok"], r)
+        self.assertTrue(r["result"]["erteilt"])
+        self.assertEqual(len(self.auftraege()), 1, "derselbe Weg wie der Knopf: der Auftrag ist angelegt")
+        self.assertEqual(karten._KARTEN[kid]["zustand"], "gesendet")
+        self.assertEqual((r["karten"][0]["karten_id"], r["karten"][0]["zustand"]), (kid, "gesendet"), "die Seite stellt die Karte um")
+        self.assertIn("Auftrag erteilt", r["karten"][0]["ergebnis"])
+
+    def test_kein_klares_ja_erteilt_nichts_und_die_karte_bleibt(self):
+        kid = self.karte()
+        r = self.werkzeug("auftrag_erteilen", {}, self.nachricht("Ja, aber ohne die Word-Datei"))
+        self.assertFalse(r["result"]["erteilt"])
+        self.assertIn("kein eindeutiges Ja", r["result"]["hinweis"])
+        self.assertEqual(self.auftraege(), [])
+        self.assertEqual(karten._KARTEN[kid]["zustand"], "offen", "der Knopf geht weiter")
+
+    def test_ja_nur_direkt_nach_der_karte(self):
+        self.karte()
+        self.nachricht("Moment, ich überlege noch.")
+        r = self.werkzeug("auftrag_erteilen", {}, self.nachricht("Ja"))
+        self.assertFalse(r["result"]["erteilt"])
+        self.assertIn("direkt nach dem Angebot", r["result"]["hinweis"])
+        self.assertEqual(self.auftraege(), [])
+
+    def test_ohne_offene_karte_nichts(self):
+        r = self.werkzeug("auftrag_erteilen", {}, self.nachricht("Ja"))
+        self.assertFalse(r["ok"])
+        self.assertIn("auftrag_vorbereiten", r["error"])
+        kid = self.karte()
+        import asyncio
+        status, _antwort = asyncio.run(karten.absenden(kid, self.u, {"per_mail": False}, "de"))
+        self.assertEqual(status, 200, "per Knopf erteilt")
+        r = self.werkzeug("auftrag_erteilen", {}, self.nachricht("Ja"))
+        self.assertFalse(r["ok"], "schon erteilt: kein zweiter Auftrag")
+        self.assertEqual(len(self.auftraege()), 1)
+
+    def test_haken_wie_auf_der_karte_vorbelegt(self):
+        self.karte(per_mail=True)
+        self.werkzeug("auftrag_erteilen", {}, self.nachricht("Ja"))
+        rm_zeile = sql("SELECT * FROM agent_rueckmeldungen WHERE user_id = ?", self.u["id"])
+        self.assertEqual(len(rm_zeile), 1)
+        self.assertTrue(any(v in (1, True) for k, v in rm_zeile[0].items() if "mail" in k), rm_zeile[0])
+
+    def test_seite_stellt_die_formular_karte_um(self):
+        backend = os.path.dirname(os.path.dirname(os.path.abspath(af.__file__)))
+        frontend = next(k for k in (os.path.normpath(os.path.join(backend, "..", "frontend")), os.path.join(backend, "frontend"))
+                        if os.path.isdir(k))
+        with open(os.path.join(frontend, "inkluagent-karten.js"), encoding="utf-8") as f:
+            js = f.read()
+        f = js[js.index("function inkluagentFormularKarteSetzen("):]
+        f = f[:f.index("\n}\n")]
+        self.assertIn(".inkluagent-formular[data-karten-id=", f)
+        self.assertIn("if (form) form.remove();", f)
+        self.assertNotIn("focus", f, "kein Fokuswechsel: die neue Antwort sagt es")
 
 
 if __name__ == "__main__":

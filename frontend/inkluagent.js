@@ -584,7 +584,7 @@ function inkluagentAktionenKarten(actions) {
     let nachziehen = false;
     (actions || []).forEach(a => {
         if (!a) return;
-        if (a.type === 'karte') inkluagentKarteSetzen(a.angebot_id, a);
+        if (a.type === 'karte') { inkluagentKarteSetzen(a.angebot_id, a); inkluagentFormularKarteSetzen(a.karten_id, a); }
         if (a.type === 'ansicht_aktualisieren') nachziehen = true;
         if (a.type === 'projekt_geloescht') inkluagentProjektWeg(a.project_id);
     });

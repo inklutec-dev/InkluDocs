@@ -459,7 +459,7 @@ def run_agent(
             elif rueckmeldung_an and name in _rueckmeldung.NAMEN:
                 result = _rueckmeldung.ausfuehren(name, args, **rueckmeldung_kontext)
             elif auftraege_an and name in _auftraege.NAMEN:
-                result = _auftraege.ausfuehren(name, args, _t=_t, **rueckmeldung_kontext)
+                result = _auftraege.ausfuehren(name, args, _t=_t, turn_id=executor.turn_id, **rueckmeldung_kontext)
             else:
                 result = executor.execute(name, args)
                 if rueckmeldung_an:   # Lauf im Hintergrund gestartet: vormerken, das Ergebnis sagt dem Modell, dass er sich meldet
