@@ -110,4 +110,19 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
             "teil": {"type": "string", "enum": ["bericht", "pruefbericht", "hoerprobe", "alles"], "description": "Standard bericht."},
         }, "required": ["ausgabe_id"]},
     },
+    {
+        "name": "ausgabe_in_projekt",
+        "description": (
+            "Lädt eine Ausgabe aus der Ablage (ausgabe_id aus liste_ausgaben oder konvertiere_zu_pdfua) in ein Projekt — wie der "
+            "Knopf „In ein Projekt laden“ in Meine Ablage, kostenlos. Ohne ziel_projekt_id in ein NEUES Projekt (eine barrierefreie "
+            "PDF wird ein PDF-Projekt, eine Word-Datei ein Word-Projekt); mit ziel_projekt_id als weiteres Dokument in ein "
+            "vorhandenes eigenes Projekt derselben Art. Nimm es, wenn der Nutzer mit dem Ergebnis weiterarbeiten will, z. B. die "
+            "fertige PDF prüfen, Quickinfos ergänzen oder neu taggen. Ein anderes Projekt öffnet sich nach deiner Antwort, dort "
+            "geht das Gespräch weiter; preise nennt, was die nächsten Schritte dort kosten würden."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "ausgabe_id": {"type": "integer", "description": "Die ausgabe_id."},
+            "ziel_projekt_id": {"type": "integer", "description": "Nur für ein vorhandenes eigenes Projekt derselben Art; sonst weglassen."},
+        }, "required": ["ausgabe_id"]},
+    },
 ]

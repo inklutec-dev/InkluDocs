@@ -10765,6 +10765,22 @@ async def ausgabe_loeschen(ausgabe_id: int, user: dict = Depends(get_current_use
     return {"ok": True}
 
 
+@app.post("/api/ausgaben/{ausgabe_id}/in-projekt")
+async def ausgabe_in_projekt(ausgabe_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """„In ein Projekt laden“ (Steve 17.10.2026, ablage_projekt.py): die Datei des Eintrags in ein neues Projekt oder — mit
+    {"project_id": n} — als weiteres Dokument in ein eigenes Projekt derselben Art. Derselbe Weg wie Hochladen, kostenlos."""
+    try:
+        daten = await request.json()
+    except Exception:  # noqa: BLE001 — ohne Inhalt: neues Projekt
+        daten = {}
+    pid = daten.get("project_id") if isinstance(daten, dict) else None
+    if pid is not None and (isinstance(pid, bool) or not str(pid).isdigit()):
+        raise HTTPException(status_code=422, detail="project_id muss eine ganze Zahl sein")
+    import ablage_projekt
+    return await ablage_projekt.uebernehmen(user, ausgabe_id, int(pid) if pid is not None else None, request,
+                                            get_gettext(resolve_ui_language(request)))
+
+
 # ─── QUICKINFO-WERKZEUG (27.08.2026): eigener Router, eigene Tabellen ────────
 # Alle Formular-Endpunkte liegen in formular_api.py; hier werden nur die
 # gemeinsamen Regeln (Login, DB, Verzeichnisse, Credits, Export-Helfer)

@@ -12947,3 +12947,53 @@ msgstr "Im Hintergrund: {was} für „{projekt}“, {n} von {m} fertig"
 #, python-brace-format
 msgid "Im Hintergrund: {was} – hat nicht geklappt"
 msgstr "Im Hintergrund: {was} – hat nicht geklappt"
+
+# Aus der Ablage in ein Projekt (17.10.2026, ablage_projekt.py, ablage.html)
+msgid "In ein Projekt laden"
+msgstr "In ein Projekt laden"
+
+msgid "Ziel"
+msgstr "Ziel"
+
+msgid "Neues PDF-Projekt"
+msgstr "Neues PDF-Projekt"
+
+msgid "Neues Word-Projekt"
+msgstr "Neues Word-Projekt"
+
+msgid "Laden"
+msgstr "Laden"
+
+msgid "Geladen. Das Projekt wird geöffnet."
+msgstr "Geladen. Das Projekt wird geöffnet."
+
+msgid "Laden fehlgeschlagen."
+msgstr "Laden fehlgeschlagen."
+
+#, python-brace-format
+msgid "{name} (barrierefreie PDF)"
+msgstr "{name} (barrierefreie PDF)"
+
+msgid "Aus der Ablage"
+msgstr "Aus der Ablage"
+
+msgid "In diesem Eintrag ist keine PDF- oder Word-Datei."
+msgstr "In diesem Eintrag ist keine PDF- oder Word-Datei."
+
+msgid "In diesem Eintrag liegen PDF- und Word-Dateien. Lade sie einzeln hoch."
+msgstr "In diesem Eintrag liegen PDF- und Word-Dateien. Lade sie einzeln hoch."
+
+msgid "Eine PDF passt nur in ein PDF-Projekt. Lade sie in ein neues Projekt."
+msgstr "Eine PDF passt nur in ein PDF-Projekt. Lade sie in ein neues Projekt."
+
+msgid "Eine Word-Datei passt nur in ein Word-Projekt. Lade sie in ein neues Projekt."
+msgstr "Eine Word-Datei passt nur in ein Word-Projekt. Lade sie in ein neues Projekt."
+
+msgid "Eintrag nicht gefunden"
+msgstr "Eintrag nicht gefunden"
+
+msgid "Die Datei ist nicht mehr vorhanden. Der Bericht bleibt."
+msgstr "Die Datei ist nicht mehr vorhanden. Der Bericht bleibt."
+
+msgid "Projekt nicht gefunden"
+msgstr "Projekt nicht gefunden"

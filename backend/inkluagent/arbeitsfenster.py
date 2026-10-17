@@ -44,6 +44,7 @@ ANSICHT_JE_WERKZEUG: dict = {
 ANSICHT_JE_LAUF: dict = {
     "alt_texte": "alttexte", "quickinfos": "quickinfos", "tagging": "tagging", "korrektur": "abschluss", "pruefung": "abschluss",
     "umwandeln": "dokument", "uebersetzen": "uebersetzung", "export": "dokument", "auftrag": "dokument",
+    "uebernehmen": "dokument",   # aus der Ablage in ein Projekt: das Ziel in der Ansicht Dokument
 }
 
 

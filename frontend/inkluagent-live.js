@@ -45,7 +45,7 @@ function inkluagentLiveBeobachten() {
 function inkluagentLiveWas(art) {
     const namen = { alt_texte: t('Alt-Texte'), quickinfos: t('Quickinfos'), tagging: t('Tagging'), korrektur: t('Korrektur'),
                     pruefung: t('Prüfung'), umwandeln: t('In PDF umwandeln'), uebersetzen: t('Übersetzung'), export: t('Herunterladen'),
-                    auftrag: t('Auftrag') };
+                    auftrag: t('Auftrag'), uebernehmen: t('In ein Projekt laden') };
     return namen[art] || t('Arbeit');
 }
 // Kopfzeile eines Laufs: „Im Hintergrund: Alt-Texte für „Projekt“, 2 von 3 fertig“ (ohne Zahlen, wenn er nur ein Stueck hat)

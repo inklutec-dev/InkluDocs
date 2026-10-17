@@ -125,7 +125,7 @@ def _werkzeugsatz_roh(project: dict, project_id: int, user_id: int):
     if art == "pdf":
         bekannt = {d["name"] for d in TOOL_DEFINITIONS}
         felder = [d for d in TOOL_DEFINITIONS_FORMULAR if d["name"] not in bekannt]
-        ablage = [d for d in TOOL_DEFINITIONS_WORD if d["name"] in ("liste_ausgaben", "lies_ausgabe")]
+        ablage = [d for d in TOOL_DEFINITIONS_WORD if d["name"] in ("liste_ausgaben", "lies_ausgabe", "ausgabe_in_projekt")]
         return (TOOL_DEFINITIONS + felder + TOOL_DEFINITIONS_PDF + ablage + TOOL_DEFINITIONS_OBERFLAECHE_PDF,
                 ToolExecutor(project_id=project_id, user_id=user_id, pdf=True))
     # Grafik- und Webseiten-Projekte (InkluAgent-Ausbau Runde 1, Schritt 4, Schalter AGENT_BILD_WERKZEUGE): alles, was die

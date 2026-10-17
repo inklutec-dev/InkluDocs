@@ -64,5 +64,6 @@ def warten(coro, timeout: float = 180.0) -> Any:
             if "Server-Schleife" in str(e):
                 coro.close()
                 raise
-        return asyncio.run_coroutine_threadsafe(coro, schleife).result(timeout)
+        import laufbuch   # Laeufe darin gelten als Arbeit des Agenten, wenn das Werkzeug es ist (Live-Fenster, 17.10.2026)
+        return asyncio.run_coroutine_threadsafe(laufbuch.mitnehmen_coro(coro), schleife).result(timeout)
     return asyncio.run(coro)

@@ -12518,3 +12518,53 @@ msgstr "I bakgrunden: {was} för ”{projekt}”, {n} av {m} klara"
 #, python-brace-format
 msgid "Im Hintergrund: {was} – hat nicht geklappt"
 msgstr "I bakgrunden: {was} – det gick inte"
+
+# Aus der Ablage in ein Projekt (17.10.2026, ablage_projekt.py, ablage.html)
+msgid "In ein Projekt laden"
+msgstr "Läs in i ett projekt"
+
+msgid "Ziel"
+msgstr "Mål"
+
+msgid "Neues PDF-Projekt"
+msgstr "Nytt PDF-projekt"
+
+msgid "Neues Word-Projekt"
+msgstr "Nytt Word-projekt"
+
+msgid "Laden"
+msgstr "Läs in"
+
+msgid "Geladen. Das Projekt wird geöffnet."
+msgstr "Inläst. Projektet öppnas."
+
+msgid "Laden fehlgeschlagen."
+msgstr "Det gick inte att läsa in."
+
+#, python-brace-format
+msgid "{name} (barrierefreie PDF)"
+msgstr "{name} (tillgänglig PDF)"
+
+msgid "Aus der Ablage"
+msgstr "Från arkivet"
+
+msgid "In diesem Eintrag ist keine PDF- oder Word-Datei."
+msgstr "Den här posten innehåller ingen PDF- eller Word-fil."
+
+msgid "In diesem Eintrag liegen PDF- und Word-Dateien. Lade sie einzeln hoch."
+msgstr "Den här posten innehåller PDF- och Word-filer. Ladda upp dem var för sig."
+
+msgid "Eine PDF passt nur in ein PDF-Projekt. Lade sie in ein neues Projekt."
+msgstr "En PDF passar bara i ett PDF-projekt. Läs in den i ett nytt projekt."
+
+msgid "Eine Word-Datei passt nur in ein Word-Projekt. Lade sie in ein neues Projekt."
+msgstr "En Word-fil passar bara i ett Word-projekt. Läs in den i ett nytt projekt."
+
+msgid "Eintrag nicht gefunden"
+msgstr "Posten hittades inte"
+
+msgid "Die Datei ist nicht mehr vorhanden. Der Bericht bleibt."
+msgstr "Filen finns inte längre. Rapporten finns kvar."
+
+msgid "Projekt nicht gefunden"
+msgstr "Projektet hittades inte"

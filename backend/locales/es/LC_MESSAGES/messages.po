@@ -12946,3 +12946,53 @@ msgstr "En segundo plano: {was} para «{projekt}», {n} de {m} listos"
 #, python-brace-format
 msgid "Im Hintergrund: {was} – hat nicht geklappt"
 msgstr "En segundo plano: {was} – no ha funcionado"
+
+# Aus der Ablage in ein Projekt (17.10.2026, ablage_projekt.py, ablage.html)
+msgid "In ein Projekt laden"
+msgstr "Cargar en un proyecto"
+
+msgid "Ziel"
+msgstr "Destino"
+
+msgid "Neues PDF-Projekt"
+msgstr "Nuevo proyecto PDF"
+
+msgid "Neues Word-Projekt"
+msgstr "Nuevo proyecto de Word"
+
+msgid "Laden"
+msgstr "Cargar"
+
+msgid "Geladen. Das Projekt wird geöffnet."
+msgstr "Cargado. Se abre el proyecto."
+
+msgid "Laden fehlgeschlagen."
+msgstr "No se pudo cargar."
+
+#, python-brace-format
+msgid "{name} (barrierefreie PDF)"
+msgstr "{name} (PDF accesible)"
+
+msgid "Aus der Ablage"
+msgstr "Desde el archivo"
+
+msgid "In diesem Eintrag ist keine PDF- oder Word-Datei."
+msgstr "Esta entrada no contiene ningún archivo PDF ni de Word."
+
+msgid "In diesem Eintrag liegen PDF- und Word-Dateien. Lade sie einzeln hoch."
+msgstr "Esta entrada contiene archivos PDF y de Word. Súbelos por separado."
+
+msgid "Eine PDF passt nur in ein PDF-Projekt. Lade sie in ein neues Projekt."
+msgstr "Un PDF solo cabe en un proyecto PDF. Cárgalo en un proyecto nuevo."
+
+msgid "Eine Word-Datei passt nur in ein Word-Projekt. Lade sie in ein neues Projekt."
+msgstr "Un archivo de Word solo cabe en un proyecto de Word. Cárgalo en un proyecto nuevo."
+
+msgid "Eintrag nicht gefunden"
+msgstr "Entrada no encontrada"
+
+msgid "Die Datei ist nicht mehr vorhanden. Der Bericht bleibt."
+msgstr "El archivo ya no está disponible. El informe se conserva."
+
+msgid "Projekt nicht gefunden"
+msgstr "Proyecto no encontrado"

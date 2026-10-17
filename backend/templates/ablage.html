@@ -151,6 +151,72 @@
     return wrap;
   }
 
+  // „In ein Projekt laden“ (Steve 17.10.2026, ablage_projekt.py): die Datei als neues Projekt oder als weiteres Dokument in ein
+  // eigenes Projekt derselben Art — derselbe Weg wie Hochladen, kostenlos; danach oeffnet sich das Projekt. Ohne Browser-Dialog wie
+  // „Löschen“: der Knopf wird zu einer Auswahl mit „Laden“ und „Abbrechen“. Waehrend des Ladens bleibt der Fokus auf „Laden“
+  // (aria-disabled statt disabled), die Meldung steht sichtbar daneben und wird angesagt.
+  function projektKnopf(a) {
+    const wrap = el('span', 'ausgabe-in-projekt');
+    const btn = el('button', 'btn btn-secondary', t('In ein Projekt laden'));
+    btn.type = 'button';
+    btn.addEventListener('click', async () => {
+      const word = a.art === 'docx';
+      let projekte = [];
+      try {
+        const res = await fetch('/api/projects');
+        const d = res.ok ? await res.json() : {};
+        projekte = (d.projects || []).filter((p) => (word ? (p.tool === 'word' || p.tool === 'uebersetzen') : (p.tool === 'pdf' || p.tool === 'formular')));
+      } catch (e) {
+        projekte = [];
+      }
+      wrap.innerHTML = '';
+      const lab = el('label', null, t('Ziel'));
+      lab.htmlFor = 'ziel_' + a.id;
+      const sel = document.createElement('select');
+      sel.id = 'ziel_' + a.id;
+      const neu = el('option', null, word ? t('Neues Word-Projekt') : t('Neues PDF-Projekt'));
+      neu.value = '';
+      sel.appendChild(neu);
+      projekte.forEach((p) => {
+        const o = el('option', null, p.name || p.filename || '');
+        o.value = p.id;
+        sel.appendChild(o);
+      });
+      const ja = el('button', 'btn btn-primary', t('Laden'));
+      ja.type = 'button';
+      const nein = el('button', 'btn btn-secondary', t('Abbrechen'));
+      nein.type = 'button';
+      const meldung = el('span', 'dash-meta');
+      meldung.id = 'ziel_meldung_' + a.id;
+      ja.setAttribute('aria-describedby', meldung.id);
+      ja.addEventListener('click', async () => {
+        if (ja.getAttribute('aria-disabled') === 'true') return;
+        ja.setAttribute('aria-disabled', 'true');
+        meldung.textContent = t('Wird geladen ...');
+        announce(t('Wird geladen ...'));
+        try {
+          const body = sel.value ? { project_id: Number(sel.value) } : {};
+          const res = await fetch('/api/ausgaben/' + a.id + '/in-projekt', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const d = await res.json().catch(() => ({}));
+          if (!res.ok || !d.url || !/^\/app\?projekt=\d+$/.test(d.url)) throw new Error(typeof d.detail === 'string' ? d.detail : '');
+          meldung.textContent = t('Geladen. Das Projekt wird geöffnet.');
+          announce(meldung.textContent);
+          window.location.href = d.url;
+        } catch (e) {
+          ja.removeAttribute('aria-disabled');
+          meldung.textContent = (e && e.message) || t('Laden fehlgeschlagen.');
+          announce(meldung.textContent);
+        }
+      });
+      nein.addEventListener('click', () => { wrap.innerHTML = ''; wrap.appendChild(btn); btn.focus(); });
+      wrap.appendChild(lab); wrap.appendChild(sel); wrap.appendChild(ja); wrap.appendChild(nein); wrap.appendChild(meldung);
+      sel.focus();
+    });
+    wrap.appendChild(btn);
+    return wrap;
+  }
+
   function eintrag(a, gefiltert) {
     const li = el('li', 'dash-item');
     li.id = 'ausgabe-' + a.id;
@@ -196,6 +262,7 @@
       zum.textContent = t('Zum Projekt');
       aktionen.appendChild(zum);
     }
+    if (a.datei_verfuegbar && (a.art === 'pdfua' || a.art === 'pdf' || a.art === 'docx')) aktionen.appendChild(projektKnopf(a));
     aktionen.appendChild(loeschKnopf(a, li));
     text.appendChild(aktionen);
     text.appendChild(detailsMitLader(a.id, t('Prüfbericht lesen'), fuelleBericht, 'ausgabe-bericht'));

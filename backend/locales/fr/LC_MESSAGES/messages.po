@@ -12946,3 +12946,53 @@ msgstr "En arrière-plan : {was} pour « {projekt} », {n} sur {m} terminés"
 #, python-brace-format
 msgid "Im Hintergrund: {was} – hat nicht geklappt"
 msgstr "En arrière-plan : {was} – n’a pas fonctionné"
+
+# Aus der Ablage in ein Projekt (17.10.2026, ablage_projekt.py, ablage.html)
+msgid "In ein Projekt laden"
+msgstr "Charger dans un projet"
+
+msgid "Ziel"
+msgstr "Destination"
+
+msgid "Neues PDF-Projekt"
+msgstr "Nouveau projet PDF"
+
+msgid "Neues Word-Projekt"
+msgstr "Nouveau projet Word"
+
+msgid "Laden"
+msgstr "Charger"
+
+msgid "Geladen. Das Projekt wird geöffnet."
+msgstr "Chargé. Le projet s’ouvre."
+
+msgid "Laden fehlgeschlagen."
+msgstr "Le chargement a échoué."
+
+#, python-brace-format
+msgid "{name} (barrierefreie PDF)"
+msgstr "{name} (PDF accessible)"
+
+msgid "Aus der Ablage"
+msgstr "Depuis les archives"
+
+msgid "In diesem Eintrag ist keine PDF- oder Word-Datei."
+msgstr "Cette entrée ne contient aucun fichier PDF ou Word."
+
+msgid "In diesem Eintrag liegen PDF- und Word-Dateien. Lade sie einzeln hoch."
+msgstr "Cette entrée contient des fichiers PDF et Word. Importe-les séparément."
+
+msgid "Eine PDF passt nur in ein PDF-Projekt. Lade sie in ein neues Projekt."
+msgstr "Un PDF ne va que dans un projet PDF. Charge-le dans un nouveau projet."
+
+msgid "Eine Word-Datei passt nur in ein Word-Projekt. Lade sie in ein neues Projekt."
+msgstr "Un fichier Word ne va que dans un projet Word. Charge-le dans un nouveau projet."
+
+msgid "Eintrag nicht gefunden"
+msgstr "Entrée introuvable"
+
+msgid "Die Datei ist nicht mehr vorhanden. Der Bericht bleibt."
+msgstr "Le fichier n’est plus disponible. Le rapport reste."
+
+msgid "Projekt nicht gefunden"
+msgstr "Projet introuvable"

@@ -41,7 +41,8 @@ HOECHSTENS = 200         # Schutz gegen ein volllaufendes Laufbuch (es wird ohne
 
 # Die Arten — eine Liste, damit die Seite sie kennt und Tests sie prüfen können. Neue Art = ein Eintrag hier und einer in
 # arbeitsfenster.ANSICHT_JE_LAUF (welche Ansicht das Fenster dafür zeigt).
-ARTEN = ("alt_texte", "quickinfos", "tagging", "korrektur", "pruefung", "umwandeln", "uebersetzen", "export", "auftrag")
+ARTEN = ("alt_texte", "quickinfos", "tagging", "korrektur", "pruefung", "umwandeln", "uebersetzen", "export", "auftrag",
+         "uebernehmen")   # uebernehmen: aus der Ablage in ein Projekt (ablage_projekt.py, 17.10.2026)
 
 # Lief der Lauf aus einem Werkzeug des Agenten heraus an? (agent_kontext setzt ihn für die Dauer eines Werkzeugs)
 _AGENT: contextvars.ContextVar[bool] = contextvars.ContextVar("laufbuch_agent", default=False)

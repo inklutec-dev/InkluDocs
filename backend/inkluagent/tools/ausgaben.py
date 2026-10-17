@@ -329,6 +329,7 @@ AENDERT_ANSICHT = frozenset({
     "exportiere_alt_texte", "exportiere_quickinfos", "alt_texte_generieren", "quickinfos_generieren", "stammdaten_anwenden",
     "ki_kontext_setzen", "eigener_prompt", "ausgabe_loeschen", "save_to_master_data",
     "bild_umbenennen", "bild_loeschen",   # Grafik- und Webseiten-Projekte (Ausbau Runde 1, Schritt 4)
+    "ausgabe_in_projekt",                 # in dasselbe Projekt geladen: ein Dokument mehr (17.10.2026)
 })
 
 
@@ -641,6 +642,47 @@ def lies_ausgabe(project_id: int, user_id: int, ausgabe_id: int, teil: str = "be
         **({"hinweis": "Gib die Hörprobe (hoerprobe_daten) ohne die Markierung Zeile für Zeile wieder, ohne Umformulierung."}
            if teil in ("hoerprobe", "alles") else {}),
     }}
+
+
+def ausgabe_in_projekt(project_id: int, user_id: int, ausgabe_id: int, ziel_projekt_id: Optional[int] = None) -> dict[str, Any]:
+    """„In ein Projekt laden“ (Steve 17.10.2026, ablage_projekt.py): eine Ausgabe DIESES Projekts in ein neues Projekt oder als
+    weiteres Dokument in ein eigenes Projekt derselben Art — derselbe Weg wie der Knopf in Meine Ablage, kostenlos. Ein anderes
+    Projekt oeffnet sich nach der Antwort (Seitenwechsel), das Gespraech geht dort weiter."""
+    m = _main()
+    try:
+        m._require_project_owned(project_id, user_id)
+    except HTTPException as e:
+        return _fehler(e)
+    row = m._ausgabe_row(user_id, int(ausgabe_id))
+    if not row or int(row["project_id"] or 0) != int(project_id):
+        return {"ok": False, "error": f"Ausgabe {ausgabe_id} gibt es in diesem Projekt nicht. Hol die Liste mit liste_ausgaben."}
+    import ablage_projekt
+    from .. import hochladen, storage
+    from ..kern import warten
+    from ..konto import SEITE_WECHSELT, seite_wechseln
+    from i18n import get_gettext
+    _ = get_gettext(_ui_lang(user_id))
+    try:
+        erg = warten(ablage_projekt.uebernehmen({"id": user_id}, int(ausgabe_id), ziel_projekt_id, None, _, durch_agent=True),
+                     timeout=240)
+    except HTTPException as e:
+        return _fehler(e)
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": fehlertext(e, "Das Laden in ein Projekt hat nicht geklappt.")}
+    pid = int(erg["project_id"])
+    fakten = hochladen._fakten(pid, erg["dokumente"][0] if erg["dokumente"] else None)
+    hier = pid == int(project_id)
+    result = {"project_id": pid, "neues_projekt": erg["neues_projekt"], "projekt_daten": daten(erg["projekt"]),
+              "dokumente": len(erg["dokumente"]), "status": erg["status"], "art": erg["art"],
+              "fakten": {k: fakten.get(k) for k in ("seiten", "bilder", "felder", "getaggt")},
+              "preise": hochladen.preise(fakten) if erg["status"] != "error" else {},
+              "hinweis": ("Die Datei steht jetzt als Dokument in diesem Projekt." if hier else SEITE_WECHSELT)}
+    out: dict[str, Any] = {"ok": True, "result": result}
+    if not hier:
+        storage.fokus_setzen(user_id, pid)
+        out["anhang"] = {"art": "link", "url": f"/app?projekt={pid}", "text": _("Projekt „{projekt}“ öffnen").format(projekt=erg["projekt"])}
+        out["aktionen"] = [seite_wechseln(pid)]
+    return out
 
 
 def analysiere_word_struktur(project_id: int, user_id: int, document_id: Optional[int] = None) -> dict[str, Any]:
