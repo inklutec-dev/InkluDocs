@@ -77,7 +77,7 @@ class Ziel(unittest.TestCase):
         # Kennungen von Bild und Dokument seit dem Live-Fenster (16.10.2026): damit es die Karte findet
         self.assertEqual(z, {"art": "bild", "image_id": self.a, "nummer": 2, "seite": 2, "bild_url": f"/api/images/{self.a}/file",
                              "seite_url": f"/api/images/{self.a}/page-view", "dokument": "Jahresbericht (fiktiv).pdf",
-                             "dokument_nr": 1, "document_id": self.d1})
+                             "dokument_nr": 1, "document_id": self.d1, "project_id": self.p})   # Projekt seit 17.10.2026
         z = arbeitsfenster.ziel(self.u["id"], self.p, {"image_id": self.c})
         self.assertEqual((z["nummer"], z["dokument_nr"], z["seite_url"]), (1, 2, None), "Nummer je Dokument, ohne Seitenansicht keine")
 
@@ -95,9 +95,22 @@ class Ziel(unittest.TestCase):
         c.close()
         self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"feld_id": fid}),
                          {"art": "feld", "feld_id": fid, "nummer": 4, "seite": 3, "dokument": "Anhang (fiktiv).pdf", "dokument_nr": 2,
-                          "document_id": self.d2})
+                          "document_id": self.d2, "project_id": self.p})
         self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"document_id": self.d1}),
-                         {"art": "dokument", "dokument": "Jahresbericht (fiktiv).pdf", "dokument_nr": 1, "document_id": self.d1})
+                         {"art": "dokument", "dokument": "Jahresbericht (fiktiv).pdf", "dokument_nr": 1, "document_id": self.d1,
+                          "project_id": self.p})
+
+    def test_ansicht_je_werkzeug(self):
+        # Live-Fenster „zum Anklemmen“ (17.10.2026): EINE Liste Werkzeug -> Ansicht; ohne Eintrag keine Ansicht (die Seite nimmt die Zielart)
+        self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"image_id": self.a}, "generate_alt_text")["ansicht"], "alttexte")
+        self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"document_id": self.d1}, "pruefung_starten")["ansicht"], "abschluss")
+        self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"document_id": self.d1}, "barrierefrei_machen")["ansicht"], "tagging")
+        self.assertNotIn("ansicht", arbeitsfenster.ziel(self.u["id"], self.p, {"document_id": self.d1}, "gibt_es_nicht"))
+        gueltig = {"dokument", "tagging", "alttexte", "quickinfos", "uebersetzung", "abschluss"}
+        self.assertLessEqual(set(arbeitsfenster.ANSICHT_JE_WERKZEUG.values()), gueltig)
+        self.assertLessEqual(set(arbeitsfenster.ANSICHT_JE_LAUF.values()), gueltig)
+        import laufbuch
+        self.assertEqual(set(arbeitsfenster.ANSICHT_JE_LAUF), set(laufbuch.ARTEN), "jede Art des Laufbuchs hat ihre Ansicht")
 
     def test_nur_eigene_daten_dieses_projekts(self):
         self.assertIsNone(arbeitsfenster.ziel(self.fremd["id"], self.p, {"image_id": self.a}), "fremdes Konto")

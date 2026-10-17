@@ -3820,7 +3820,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         box.hidden = false;
         // Fokus nur retten, wenn er gerade verloren ging (der Abbrechen-Knopf verschwindet
         // mit dem Neuaufbau) — niemandem, der tippt, den Fokus stehlen.
-        if (document.activeElement === document.body) box.focus();
+        if (document.activeElement === document.body && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) box.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (17.10.2026)
     }
     // Satz zu gescheiterten Bildern fuer die Laufmeldung (17.09.2026), mit Hinweis auf den
     // Filter-Chip, ueber den die Karten zu finden sind.
@@ -4549,6 +4549,72 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Refresh limit after generation
 
 
+
+    // ─── Bühne im Arbeitsfenster (Live-Fenster „zum Anklemmen“, 17.10.2026; Kern: dashboard.js buehneEinrichten) ───
+    // Steht diese Projektseite eingebettet im Arbeitsfenster, sagt sie hier — und NUR hier —, wie sie eine Stelle findet. Die Seite
+    // draussen ruft nur window.InkluBuehne. Neue Ansicht oder neue Karte = ein Eintrag in finden(); tests/test_buehne.py prueft die
+    // Kennungen gegen die Ansichten.
+    function buehneStelleFinden(s) {
+        if (!s || typeof s !== 'object') return null;
+        const hier = new URLSearchParams(window.location.search).get('projekt');
+        if (s.project_id != null && String(s.project_id) !== String(hier)) return null;   // eine Stelle eines anderen Projekts
+        const el = (x) => document.getElementById(x);
+        const zahl = (x) => (/^\d+$/.test(String(x == null ? '' : x)) ? String(x) : null);
+        const ansicht = aktuelleAnsicht(currentProjectFuerAnsicht || {});
+        if (s.art === 'bild' && zahl(s.image_id)) {
+            const kopf = el('img_heading_' + s.image_id);
+            const karte = el('imgcard_' + s.image_id) || (kopf ? kopf.closest('details.img-section') : null);   // Grafik: Block
+            return { ansicht: 'alttexte', kopf: kopf, karte: karte, text: el('alttext_' + s.image_id) };
+        }
+        if (s.art === 'feld' && zahl(s.feld_id)) {
+            return { ansicht: 'quickinfos', kopf: el('feld_heading_' + s.feld_id), karte: el('feldcard_' + s.feld_id),
+                     text: el('quickinfo_' + s.feld_id) };
+        }
+        if ((s.art === 'dokument' || s.art === 'seite') && zahl(s.document_id)) {
+            const d = s.document_id;
+            const soll = s.ansicht || 'dokument';
+            if (s.art === 'seite' && zahl(s.seite)) {   // Seite eines Dokuments: in Quickinfos und Alt-Texten gibt es Seitenabschnitte
+                const kopf = ansicht === 'quickinfos' ? el('feld_page_' + d + '_' + s.seite) : (ansicht === 'alttexte' ? el('page_heading_' + d + '_' + s.seite) : null);
+                if (kopf) return { ansicht: soll, kopf: kopf, karte: kopf.closest('details.page-section') || kopf, text: null };
+            }
+            if (ansicht === 'dokument' || ansicht === 'tagging') {
+                return { ansicht: soll, kopf: el('dok_heading_' + d), karte: el('dok_karte_' + d), text: el('dok_badge_' + d) };
+            }
+            if (ansicht === 'abschluss') {
+                return { ansicht: soll, kopf: el('ab_heading_' + d), karte: el('ab_karte_' + d), text: el('ab_badge_' + d) };
+            }
+            const kopf = el('doc_heading_' + d);   // Alt-Texte, Quickinfos, Übersetzung: Abschnitt des Dokuments
+            return { ansicht: soll, kopf: kopf, karte: kopf ? (kopf.closest('details.doc-section') || kopf) : null, text: null };
+        }
+        return null;
+    }
+    if (window.EINGEBETTET === true && typeof buehneEinrichten === 'function') {
+        window.InkluBuehne = buehneEinrichten({
+            finden: buehneStelleFinden,
+            ansicht: () => aktuelleAnsicht(currentProjectFuerAnsicht || {}),
+            // Still wechseln: ohne Fokus und Ansage (showProject erneut), ohne die gemerkte Ansicht des Projekts zu aendern, ohne Eingaben
+            // zu verlieren (offene erst speichern; klappt das nicht, bleibt die Ansicht). Kennt das Projekt die Ansicht nicht: false.
+            async ansichtWechseln(ziel) {
+                const p = currentProjectFuerAnsicht;
+                if (!p || !verfuegbareAnsichten(p).includes(ziel)) return false;
+                if (await alleAusstehendenSpeichern()) return false;
+                const u = new URL(window.location.href);
+                u.searchParams.set('ansicht', ziel);
+                history.replaceState(history.state, '', u.toString());
+                await showProject(p.id, true);
+                return true;
+            },
+            neuZeichnen: () => (currentProjectFuerAnsicht ? showProject(currentProjectFuerAnsicht.id, true) : null),
+            // Eine Bildkarte, die der Filter der Alt-Texte ausblendet: Filter auf „alle“, damit man sieht, wo der Agent ist
+            aufdecken(el) {
+                if (el.closest('#imageList') && el.closest('[hidden]') && (imageFilter.stand !== 'alle' || imageFilter.pruef !== 'alle')) {
+                    imageFilter.stand = 'alle';
+                    imageFilter.pruef = 'alle';
+                    applyImageFilter(false);
+                }
+            },
+        });
+    }
 
     // ─── InkluAgent (KI-Agent pro Projekt): seit 09.10.2026 in frontend/inkluagent.js (Konzept InkluAgent, Schritt 1) ───
 

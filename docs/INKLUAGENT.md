@@ -182,6 +182,8 @@ Besucher (`DEMO_DAILY_CHAT_LIMIT`, 12).
    `refresh_*`-Aktion im Loop; Projekt-Zusammenfassung.
 5. Frontend: `inkluagentSectionHtml(projectId, '<variante>')` einbinden, Aktionen umsetzen.
 6. Tests: E2E-Chat-Turn in `tests/e2e/verify_<werkzeug>.py`, Klicktest Kasten vorhanden/abwesend beim Gast.
+7. Livestream im Arbeitsfenster: siehe „So schließt du ein neues Werkzeug an den Livestream an“ (Laufbuch, Liste Werkzeug → Ansicht,
+   Bühne; Abschnitt „Livestream zum Anklemmen“, 17.10.2026).
 
 
 ## Word-Projekte: der Bot macht das Dokument fertig (Meine Ausgaben, Schritt 2, 11.09.2026)
@@ -822,6 +824,64 @@ Werkzeuge“ — und auf die Frage nach dem elegantesten Weg „Mitsehen und Mit
   und am Ende eines Laufs zeichnet die Seite draußen das Fenster neu. (6) Die Pillen schlugen `hidden` — `.arbeitsfenster [hidden]`.
 - Tests: `tests/test_agent_live.py` Klasse `Buehne` (14); drei wörtliche Erwartungen älterer Tests angepasst (Ziel mit Kennungen,
   Erfolg auch für das Projekt). Klickprobe `probe_buehne.py` 18/18, Rauchtest mit echtem Lauf `rauch_live1610.py` 16/16 (Hilfsdateien).
+
+### Livestream zum Anklemmen: Laufbuch, Werkzeug → Ansicht, Bühne (Steve 17.10.2026)
+
+Steve: „Was machen wir bei zukünftigen Werkzeugen? Können die da einfach angeschlossen werden?“ — am Beispiel seiner Kette (Word
+bekommt Alt-Texte → mit LibreOffice in PDF → taggen → prüfen → exportieren), mit dem Grundsatz „natürlich soll nur das gestreamt
+werden, was der Agent auch an Aufgaben macht“. Und: „ohne das ganze Programm umbauen zu müssen … nur so umständlich, wie es unbedingt
+notwendig ist“. Darum drei feste Teile, die jeder Lauf und jede Ansicht nur benutzt, statt eigene Wege zu bauen:
+
+1. **Laufbuch** (`backend/laufbuch.py`): was in diesem Prozess gerade im Hintergrund arbeitet — eine Stelle für alle Läufe (vorher
+   eine eigene Liste nur für Alt-Texte, `main._ALT_LAEUFE`). Ein Lauf meldet sich an (`beginnen` bzw. `with laufbuch.lauf(...)`),
+   sagt, woran er ist (`stueck(image_id=… | feld_id=… | document_id=…, seite=…)`), zählt (`weiter`, `stand`), nennt bei Ketten die
+   Station (`station_setzen`) und sein Ergebnis in der Ablage (`ergebnis(ausgabe_id=…)`) und meldet sich ab (`beenden(ok)`; der
+   Kontextmanager tut das auch bei Fehler und Abbruch). Nur Kennungen und Zahlen, nie Texte; nichts darin wirft eine Ausnahme.
+   **Nur der Agent wird gestreamt:** `ToolExecutor.execute` (definitions.py, definitions_formular.py) ruft jedes Werkzeug in
+   `laufbuch.agent_kontext()` auf; was es anstößt, trägt die Quelle „agent“. Über `asyncio.create_task` geht sie von selbst mit;
+   Threads, Rechenbereiche und fremde Schleifen bekommen sie mit `laufbuch.mitnehmen(fn)` bzw. `laufbuch.mitnehmen_coro(coro)`
+   (`main.im_hauptloop` tut das schon). Was jemand per Knopf startet, steht im Laufbuch als „oberflaeche“ und erscheint nicht.
+   Angeschlossen: Alt-Texte (`main._process_project`), Quickinfos (`formular_api._generiere_projekt`), Tagging, Testweise taggen,
+   Korrektur, KI-Prüfung (`tagging_api`), Prüfdatei/veraPDF (`main._abschluss_erstellen_sync`), Word prüfen, In PDF umwandeln
+   (LibreOffice), PDF und Word herunterladen (dünne Mäntel um `*_kern` in `main.py`), Übersetzen (`uebersetzung_api`), die Kette
+   (`kette_api`, Stationen) und Aufträge (`inkluagent/auftraege.py`, Stationen je Schritt).
+2. **Eine Liste je Richtung** (`inkluagent/arbeitsfenster.py`): `ANSICHT_JE_WERKZEUG` (welches Werkzeug man in welcher Ansicht der
+   Projektseite sieht, z. B. `pruefung_starten` → Barrierefreiheitsprüfung) und `ANSICHT_JE_LAUF` (Art des Laufs → Ansicht). Der
+   Chat-Stream gibt dem Ziel jedes Schritts `project_id` und `ansicht` mit; `GET /api/agent/live` liefert je Lauf (höchstens drei,
+   laufende zuerst) Art, Station, Ansicht, Fortschritt, die Stelle, das Stück davor mit seinem Text (Alt-Text bzw. Quickinfo) und das
+   Ergebnis — alles aus der Datenbank, nur aus Projekten und der Ablage DIESES Kontos.
+3. **Bühne** (`window.InkluBuehne`, Kern `buehneEinrichten` in `dashboard.js`): die feste Schnittstelle der Seite im Arbeitsfenster
+   — `zeigen(stelle)`, `neuZeichnen()`, `beobachten(fn)` (dazu `lesen`, `titel`, `ansicht`, `version: 1`). Die Seite draußen
+   (`inkluagent.js`) ruft nur diese; sie kennt keine Kennungen und Funktionen der Seite im Fenster mehr. Jede Seite sagt selbst, wie
+   sie eine Stelle findet: `app.html` `buehneStelleFinden` (Bild, Feld, Seite, Dokument je Ansicht), `ablage.html` (ein Eintrag der
+   Ablage). Der Kern wechselt still die Ansicht (ohne Fokus, Ansage, Eingabeverlust; kennt das Projekt die Ansicht nicht, bleibt die
+   Seite), wartet bis 8 s auf die Karte, deckt sie auf (Klappen, Filter, gekürzte Listen), rollt nur sich selbst, markiert sie, zeigt
+   die Hand, hält sie 30 s im Blick und meldet nach jedem Neuzeichnen Titel und den Text der Stelle („So klingt diese Stelle“).
+   Die Seite im Fenster sagt nichts an, solange niemand in ihr arbeitet (`announce` im Rahmen ohne Fokus).
+
+**Fenster folgt dem Agenten** (`inkluagentFensterFolgen`): in ein anderes EIGENES Projekt (auch von der Startseite aus; nie im
+Gastzugang) und für ein fertiges Ergebnis in „Meine Ablage“. Eine Seite, die jemand selbst im Fenster geöffnet hat, bleibt; wer im
+Fenster arbeitet, wird nicht weggezogen; „Mitverfolgen“ aus hält alles an. Was der Agent geöffnet hat (`vomAgenten`), schließt man mit
+„Seite schließen“ wieder (zurück zum eigenen Projekt) und wird nicht gemerkt.
+
+**So schließt du ein neues Werkzeug an den Livestream an**
+- *Werkzeug arbeitet sofort* (z. B. ein Feld ändern): ein Eintrag in `ANSICHT_JE_WERKZEUG`, wenn es eine Ansicht der Projektseite hat.
+  Nennt es `image_id`, `feld_id` oder `document_id`, fährt die Kamera von selbst hin.
+- *Werkzeug startet einen Lauf im Hintergrund*: im Lauf `with laufbuch.lauf("<art>", user_id=…, project_id=…, document_id=…,
+  gesamt=n) as lauf:` und darin `lauf.stueck(...)` je Stück, `lauf.weiter()` je fertigem, bei einer Datei `lauf.ergebnis(ausgabe_id=…)`.
+  Startet das Werkzeug einen Thread oder Rechenbereich: `laufbuch.mitnehmen(fn)`; eine Koroutine in einer anderen Schleife:
+  `laufbuch.mitnehmen_coro(coro)`. Neue Art: in `laufbuch.ARTEN`, `ANSICHT_JE_LAUF` und `inkluagentLiveWas` (Name, übersetzt).
+- *Neue Ansicht oder neue Karte*: ein Zweig in `buehneStelleFinden` (Karte, Überschrift, Textfeld per Kennung) und die Kennung in
+  `tests/test_buehne.py` `ERZEUGER`. Eine neue Seite mit Stellen meldet sich mit `buehneEinrichten({ finden, … })` an.
+- Tests sagen, wenn etwas fehlt: `test_agent_live.Anschluss` (jede angemeldete Art ist bekannt und jede angeschlossen, Threads nehmen
+  den Agenten mit), `test_buehne` (jede gesuchte Kennung gibt es in ihrer Ansicht, gleiche Schlüssel, jede Ansicht der Server-Listen
+  gibt es in der Projektseite), `test_agent_arbeitsfenster.test_ansicht_je_werkzeug`.
+
+Tests: `tests/test_laufbuch.py` (11), `tests/test_buehne.py` (12), `tests/test_agent_live.py` neu (40: Live aus dem Laufbuch, Mäntel
+mit Ergebnis und Fehler, Alt-Text-Lauf auch bei Abbruch, Anschluss, Oberfläche, Bühne). Gegenprobe: zehn eingebaute Fehler (Lauf bei
+Ausnahme nicht abgemeldet, fremde Projekte bzw. fremde Ablage, Mantel ohne Ergebnis, Thread ohne Agent, falsche Kennung im Finder,
+Karte ohne Kennung, Kern rollt draußen, Kamera zieht aus dem Fenster, unbekannte Art) — alle rot. Ganze Suite: nur die 17 bekannten
+Roten (test_texte_migration, test_daten_keine_anweisung, test_projekt_schlank, drei Ladefehler), wie vorher.
 
 ### „Anhören“ unter jeder Antwort (Steve 16.10.2026: „wie bei InkluEdit auch im Chat einen Button zum Antwortvorlesen“)
 

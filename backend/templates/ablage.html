@@ -272,6 +272,20 @@
     const v = e.target.value;
     window.location.href = v ? ('/ablage?projekt=' + encodeURIComponent(v)) : '/ablage';
   });
+  // Bühne im Arbeitsfenster (Live-Fenster, 17.10.2026; Kern: dashboard.js buehneEinrichten): ein Eintrag der Ablage ist eine Stelle —
+  // dort liegt das fertige Ergebnis eines Laufs (Umwandeln, Herunterladen). Die Seite draussen ruft nur window.InkluBuehne.
+  if (window.EINGEBETTET === true && typeof buehneEinrichten === 'function') {
+    window.InkluBuehne = buehneEinrichten({
+      finden(s) {
+        if (!s || s.art !== 'ausgabe' || !/^\d+$/.test(String(s.ausgabe_id == null ? '' : s.ausgabe_id))) return null;
+        const karte = document.getElementById('ausgabe-' + s.ausgabe_id);
+        if (!karte) return null;
+        const kopf = karte.querySelector('h2') || karte;
+        return { karte: karte, kopf: kopf, text: kopf };
+      },
+      neuZeichnen: () => laden(),
+    });
+  }
   laden();
 {% endraw %}
 </script>

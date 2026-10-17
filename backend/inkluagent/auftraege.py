@@ -842,6 +842,39 @@ def _beenden(a: dict, zustand: str) -> None:
     a["zustand"] = zustand
     _speichern(a, zustand=zustand, beendet_am=_iso())
     log.info("Auftrag %s: %s", a["id"], zustand)
+    _laufbuch_ende(a, zustand)
+
+
+# ─── Laufbuch (17.10.2026, laufbuch.py): ein Auftrag ist EIN Lauf des Agenten mit Stationen ───
+# Der Stand liegt in der Datenbank (Schritte); das Laufbuch spiegelt ihn im Prozess: Fortschritt = beendete Schritte, Station = die
+# Art des Schritts, der dran ist (als Art des Laufbuchs), Stelle = sein Dokument. Die Laeufe der Schritte selbst (Tagging, Alt-Texte
+# …) melden sich zusaetzlich an — das Live-Fenster zeigt den innersten. Nach einem Neustart legt der naechste Rundgang ihn neu an.
+_LAUFBUCH: dict = {}
+_LAUFBUCH_ART = {"tagging": "tagging", "alt_texte": "alt_texte", "quickinfos": "quickinfos", "pruefung": "pruefung",
+                 "uebersetzung": "uebersetzen", "alt_texte_tabelle": "export", "quickinfos_tabelle": "export", "word": "export",
+                 "pdfua": "umwandeln", "pdf": "export"}
+
+
+def _laufbuch_stand(a: dict) -> None:
+    try:
+        import laufbuch
+        lauf = _LAUFBUCH.get(a["id"])
+        if lauf is None or not lauf.laeuft:
+            lauf = _LAUFBUCH[a["id"]] = laufbuch.beginnen("auftrag", user_id=a["user_id"], project_id=a["project_id"],
+                                                          gesamt=len(a["schritte"]), quelle="agent")
+        lauf.stand(sum(1 for x in a["schritte"] if x["zustand"] not in ("offen", "laeuft")), len(a["schritte"]))
+        s = next((x for x in a["schritte"] if x["zustand"] in ("offen", "laeuft")), None)
+        lauf.station_setzen(_LAUFBUCH_ART.get(s["art"]) if s else None)
+        if s and s.get("document_id"):
+            lauf.stueck(document_id=s["document_id"])
+    except Exception:  # noqa: BLE001 — das Laufbuch darf keinen Auftrag stoeren
+        log.exception("Auftrag %s: Laufbuch nicht nachgezogen (ignoriert)", a.get("id"))
+
+
+def _laufbuch_ende(a: dict, zustand: str) -> None:
+    lauf = _LAUFBUCH.pop(a.get("id"), None)
+    if lauf is not None:
+        lauf.beenden(zustand == "fertig")
 
 
 def _iso() -> str:
@@ -921,6 +954,7 @@ def weiter(aid: int) -> None:
         a = _laden(aid)
         if not a or a["zustand"] != "laeuft":
             return
+        _laufbuch_stand(a)
         if not _eigenes_projekt(a["user_id"], a["project_id"]):
             laufend = next((s for s in a["schritte"] if s["zustand"] in ("offen", "laeuft")), None)
             if laufend:

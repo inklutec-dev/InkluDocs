@@ -15,6 +15,37 @@ log = logging.getLogger(__name__)
 
 _NAME_MAX = 120
 
+# ─── Welche Ansicht der Projektseite zu welcher Arbeit gehoert (Live-Fenster „zum Anklemmen“, 17.10.2026) ───
+# EINE Liste je Richtung: ein neues Werkzeug ist ein Eintrag in ANSICHT_JE_WERKZEUG, ein neuer Lauf einer in ANSICHT_JE_LAUF (und
+# eine Art in laufbuch.ARTEN). Die Ansichten sind die der Projektseite (app.html ansichtenFuer): dokument, tagging, alttexte,
+# quickinfos, uebersetzung, abschluss. Kennt ein Projekt die Ansicht nicht (Word ohne Tagging, Grafik nur Alt-Texte), bleibt die
+# Seite im Fenster, wo sie ist (InkluBuehne in app.html prueft das). Werkzeuge ohne Eintrag: die Ansicht folgt der Art des Ziels.
+ANSICHT_JE_WERKZEUG: dict = {
+    # Bilder und Alt-Texte
+    "view_image": "alttexte", "generate_alt_text": "alttexte", "update_alt_text": "alttexte", "revert_alt_text": "alttexte",
+    "get_image_metadata": "alttexte", "bild_umbenennen": "alttexte", "alt_texte_generieren": "alttexte",
+    "exportiere_alt_texte": "alttexte",
+    # Formularfelder und Quickinfos
+    "view_field": "quickinfos", "get_field_details": "quickinfos", "generate_quickinfo": "quickinfos", "update_quickinfo": "quickinfos",
+    "revert_quickinfo": "quickinfos", "save_to_master_data": "quickinfos", "quickinfos_generieren": "quickinfos",
+    "exportiere_quickinfos": "quickinfos",
+    # PDF: Dokument, Tagging, Pruefung
+    "dokument_stand": "dokument", "dokument_umbenennen": "dokument", "exportiere_fertige_pdf": "dokument",
+    "komplett_barrierefrei_machen": "dokument",
+    "barrierefrei_machen": "tagging", "testweise_taggen": "tagging",
+    "pruefung_starten": "abschluss", "pruefbericht_lesen": "abschluss", "pruefdatei_erstellen": "abschluss",
+    "pruefdatei_lesen": "abschluss", "hoerprobe_lesen": "abschluss", "korrektur_anwenden": "abschluss",
+    "korrektur_rueckgaengig": "abschluss",
+    # Word
+    "analysiere_word_struktur": "dokument", "konvertiere_zu_pdfua": "dokument", "exportiere_word": "dokument",
+    "pruefe_word_dokument": "abschluss",
+    "uebersetze_dokument": "uebersetzung", "uebersetzung_stand": "uebersetzung", "exportiere_uebersetzung": "uebersetzung",
+}
+ANSICHT_JE_LAUF: dict = {
+    "alt_texte": "alttexte", "quickinfos": "quickinfos", "tagging": "tagging", "korrektur": "abschluss", "pruefung": "abschluss",
+    "umwandeln": "dokument", "uebersetzen": "uebersetzung", "export": "dokument", "auftrag": "dokument",
+}
+
 
 def _zahl(wert) -> Optional[int]:
     if isinstance(wert, bool):
@@ -40,8 +71,19 @@ def _dokument(conn, project_id: int, document_id) -> dict:
             "document_id": d["id"]}   # Live-Fenster: damit es die Karte des Dokuments findet (doc_heading_<id>)
 
 
-def ziel(user_id: int, project_id: Optional[int], args) -> Optional[dict]:
-    """Woran ein Werkzeugaufruf arbeitet, oder None. Nie eine Ausnahme (der Stream darf daran nicht scheitern)."""
+def ziel(user_id: int, project_id: Optional[int], args, werkzeug: Optional[str] = None) -> Optional[dict]:
+    """Woran ein Werkzeugaufruf arbeitet, oder None — mit der Ansicht, in der man es sieht (ANSICHT_JE_WERKZEUG) und dem Projekt.
+    Nie eine Ausnahme (der Stream darf daran nicht scheitern)."""
+    z = _ziel_ohne_ansicht(user_id, project_id, args)
+    if z is not None:
+        z["project_id"] = int(project_id)
+        a = ANSICHT_JE_WERKZEUG.get(werkzeug or "")
+        if a:
+            z["ansicht"] = a
+    return z
+
+
+def _ziel_ohne_ansicht(user_id: int, project_id: Optional[int], args) -> Optional[dict]:
     if not project_id or not isinstance(args, dict):
         return None
     try:
@@ -100,48 +142,84 @@ def _feld(conn, project_id: int, feld_id: int) -> Optional[dict]:
 
 
 _ALT_MAX = 1000
+_LIVE_HOECHSTENS = 3
 
 
-def live(user_id: int, laeufe: dict, vorher=None, alt_text_von=None) -> dict:
-    """Live-Fenster (16.10.2026): {"laeuft": {...} oder None, "vorher": {...} oder None}.
-    laeufe: die Alt-Text-Laeufe des Prozesses (main._ALT_LAEUFE, Projekt -> {gesamt, document_id}); gezeigt wird der juengste in
-    einem Projekt DIESES Kontos — Projektname, gesamt, fertig (gesamt minus noch offene) und das Bild, an dem er gerade ist (wie
-    ziel: Nummer je Dokument, Seite, Dokument, Adressen). vorher: Kennung eines Bildes, das die Seite zuletzt als „in Arbeit“
-    gezeigt hat — ist es fertig (done/error) und gehoert zum Konto, kommt sein Alt-Text (alt_text_von, wie die Oberflaeche ihn
-    zeigt) mit. Nie eine Ausnahme nach aussen."""
-    out: dict = {"laeuft": None, "vorher": None}
+def _stelle(conn, user_id: int, project_id: int, stueck: Optional[dict], ansicht: Optional[str], alt_text_von=None,
+            mit_text: bool = False) -> Optional[dict]:
+    """Ein Stueck aus dem Laufbuch (nur Kennungen) als Stelle fuer die Seite — aus der Datenbank, nur in diesem Projekt."""
+    if not stueck:
+        return None
+    art = stueck.get("art")
+    out: Optional[dict] = None
+    if art == "bild" and stueck.get("image_id"):
+        out = _bild(conn, project_id, int(stueck["image_id"]))
+        if out and mit_text:
+            r = conn.execute("SELECT * FROM images WHERE id = ? AND project_id = ?", (int(stueck["image_id"]), project_id)).fetchone()
+            if r:
+                text = alt_text_von(dict(r)) if alt_text_von else (r["alt_text"] or "")
+                out.update(status=r["status"], text=str(text or "")[:_ALT_MAX])
+    elif art == "feld" and stueck.get("feld_id"):
+        out = _feld(conn, project_id, int(stueck["feld_id"]))
+        if out:
+            out["feld_id"] = int(stueck["feld_id"])
+            if mit_text:
+                r = conn.execute("SELECT quickinfo FROM formularfelder WHERE id = ? AND project_id = ?",
+                                 (int(stueck["feld_id"]), project_id)).fetchone()
+                out["text"] = str((r["quickinfo"] if r else "") or "")[:_ALT_MAX]
+    elif art in ("dokument", "seite") and stueck.get("document_id"):
+        d = _dokument(conn, project_id, int(stueck["document_id"]))
+        if d:
+            out = dict(d, art=art)
+            if art == "seite" and stueck.get("seite"):
+                out["seite"] = int(stueck["seite"])
+    if out is None:
+        return None
+    out["project_id"] = project_id
+    if ansicht:
+        out["ansicht"] = ansicht
+    return out
+
+
+def live(user_id: int, eintraege: Optional[list] = None, alt_text_von=None) -> dict:
+    """Live-Fenster (16./17.10.2026): {"laeufe": [...]} — was der Agent im Hintergrund gerade tut, juengstes Laufendes zuerst
+    (hoechstens _LIVE_HOECHSTENS). Quelle ist das Laufbuch (nur Laeufe des Agenten, laufbuch.fuer_konto); Projekt, Stelle und Texte
+    kommen aus der Datenbank, nur aus Projekten DIESES Kontos. Je Lauf: art, station (bei Auftraegen), ansicht, projekt, gesamt,
+    fertig, laeuft, ok, stelle (woran er gerade ist), vorher (das Stueck davor, mit Text — Alt-Text bzw. Quickinfo), ergebnis
+    (z. B. die fertige Datei in der Ablage). Nie eine Ausnahme nach aussen."""
+    out: dict = {"laeufe": []}
     try:
+        import laufbuch
         from database import get_db
+        eintraege = laufbuch.fuer_konto(user_id) if eintraege is None else eintraege
         conn = get_db()
         try:
-            ids = [pid for pid in laeufe if _zahl(pid) is not None]
-            if ids:
-                platz = ",".join("?" * len(ids))
-                p = conn.execute(f"SELECT id, COALESCE(NULLIF(TRIM(name), ''), filename) AS name FROM projects "
-                                 f"WHERE user_id = ? AND id IN ({platz}) ORDER BY id DESC LIMIT 1", (user_id, *ids)).fetchone()
-                if p:
-                    e = laeufe.get(p["id"]) or {}
-                    dok = e.get("document_id")
-                    if dok is not None:
-                        offen = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND document_id = ? AND status IN "
-                                             "('pending', 'processing')", (p["id"], dok)).fetchone()[0]
-                    else:
-                        offen = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status IN ('pending', 'processing')",
-                                             (p["id"],)).fetchone()[0]
-                    gesamt = max(int(e.get("gesamt") or 0), int(offen))
-                    jetzt = conn.execute("SELECT id FROM images WHERE project_id = ? AND status = 'processing' ORDER BY id DESC LIMIT 1",
-                                         (p["id"],)).fetchone()
-                    out["laeuft"] = {"art": "alt_texte", "project_id": p["id"], "projekt": (p["name"] or "")[:_NAME_MAX],
-                                     "gesamt": gesamt, "fertig": max(0, gesamt - int(offen)),
-                                     "bild": dict(_bild(conn, p["id"], jetzt["id"]) or {}, image_id=jetzt["id"]) if jetzt else None}
-            v = _zahl(vorher)
-            if v is not None:
-                r = conn.execute("SELECT i.* FROM images i JOIN projects p ON p.id = i.project_id WHERE i.id = ? AND p.user_id = ? "
-                                 "AND i.status IN ('done', 'error')", (v, user_id)).fetchone()
-                if r:
-                    text = alt_text_von(dict(r)) if alt_text_von else (r["alt_text"] or "")
-                    out["vorher"] = dict(_bild(conn, r["project_id"], r["id"]) or {}, image_id=r["id"], status=r["status"],
-                                         alt=str(text or "")[:_ALT_MAX])
+            for e in eintraege:
+                if len(out["laeufe"]) >= _LIVE_HOECHSTENS:
+                    break
+                pid = _zahl(e.get("project_id"))
+                if pid is None:
+                    continue
+                p = conn.execute("SELECT id, COALESCE(NULLIF(TRIM(name), ''), filename) AS name FROM projects WHERE id = ? AND user_id = ?",
+                                 (pid, user_id)).fetchone()
+                if not p:
+                    continue
+                was = e.get("station") or e.get("art")
+                ansicht = ANSICHT_JE_LAUF.get(was)
+                ergebnis_ = None
+                erg = e.get("ergebnis") or {}
+                if erg.get("art") == "ausgabe" and _zahl(erg.get("ausgabe_id")) is not None:
+                    a = conn.execute("SELECT id FROM ablage WHERE id = ? AND user_id = ?", (int(erg["ausgabe_id"]), user_id)).fetchone()
+                    if a:
+                        ergebnis_ = {"art": "ausgabe", "ausgabe_id": int(a["id"])}
+                out["laeufe"].append({
+                    "nr": e.get("nr"), "art": e.get("art"), "station": e.get("station"), "was": was, "ansicht": ansicht,
+                    "project_id": pid, "projekt": (p["name"] or "")[:_NAME_MAX],
+                    "gesamt": int(e.get("gesamt") or 0), "fertig": int(e.get("fertig") or 0),
+                    "laeuft": bool(e.get("laeuft")), "ok": e.get("ok"),
+                    "stelle": _stelle(conn, user_id, pid, e.get("stueck"), ansicht),
+                    "vorher": _stelle(conn, user_id, pid, e.get("vorher"), ansicht, alt_text_von, mit_text=True),
+                    "ergebnis": ergebnis_})
         finally:
             conn.close()
     except Exception:  # noqa: BLE001

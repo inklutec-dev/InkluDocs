@@ -12909,3 +12909,41 @@ msgstr "Formularfeld, {info}"
 
 msgid "Dieses Feld hat noch keine Quickinfo. Ein Screenreader nennt dann oft nur „Textfeld“."
 msgstr "Dieses Feld hat noch keine Quickinfo. Ein Screenreader nennt dann oft nur „Textfeld“."
+
+# InkluAgent: Live-Fenster mit Laufbuch (17.10.2026)
+msgid "Arbeit"
+msgstr "Arbeit"
+
+msgid "Auftrag"
+msgstr "Auftrag"
+
+msgid "In PDF umwandeln"
+msgstr "In PDF umwandeln"
+
+#, python-brace-format
+msgid "Arbeitet im Hintergrund: {was}, {n} von {m} fertig."
+msgstr "Arbeitet im Hintergrund: {was}, {n} von {m} fertig."
+
+#, python-brace-format
+msgid "Arbeitet im Hintergrund: {was}."
+msgstr "Arbeitet im Hintergrund: {was}."
+
+#, python-brace-format
+msgid "Im Hintergrund: Auftrag für „{projekt}“, Schritt {n} von {m}: {was}"
+msgstr "Im Hintergrund: Auftrag für „{projekt}“, Schritt {n} von {m}: {was}"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} fertig"
+msgstr "Im Hintergrund: {was} fertig"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} für „{projekt}“"
+msgstr "Im Hintergrund: {was} für „{projekt}“"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} für „{projekt}“, {n} von {m} fertig"
+msgstr "Im Hintergrund: {was} für „{projekt}“, {n} von {m} fertig"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} – hat nicht geklappt"
+msgstr "Im Hintergrund: {was} – hat nicht geklappt"

@@ -539,7 +539,7 @@
                 return a.pruef || !a.korr ? Dokument.pruefAbschlussText(dokDaten[k]) : Dokument.korrAbschlussText(dokDaten[k]);
             });
             const out = document.getElementById('dok_pruef_status_' + kiFertig[0]);
-            if (out) { out.textContent = texte.join(' '); out.focus(); } else { announce(texte.join(' ')); }
+            if (out) { out.textContent = texte.join(' '); if (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt()) out.focus(); } else { announce(texte.join(' ')); }   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (17.10.2026)
         }
         // Laeuft ein Bau (auch aus einem anderen Tab), die Ansicht nachziehen, bis er fertig ist; die KI-Nachfrage
         // laeuft unabhaengig davon (Generation schuetzt vor doppelten Schleifen)

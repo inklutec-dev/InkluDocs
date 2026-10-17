@@ -77,6 +77,9 @@ window.listeKuerzen = listeKuerzen;
 // und wird angehaengt. opts.verwerfbar: ein Zwischenstand (ein Schritt des Agenten), den announce.verwerfen() streicht, solange er
 // noch wartet — ist die Antwort da, soll er ihr Vorlesen nicht unterbrechen (inkluagentSchrittAnsagenVerwerfen).
 function announce(msg, opts) {
+  // Im Arbeitsfenster spricht die eingebettete Seite nur, wenn jemand in ihr arbeitet (Live-Fenster, 17.10.2026): sonst sagt die Seite
+  // draussen an — vorher hoerte man Laden, Nachfragen und Ergebnisse der Seite im Fenster doppelt oder mitten im Lesen
+  if (typeof imRahmen === 'function' && imRahmen() && typeof document !== 'undefined' && !document.hasFocus()) return;
   const el = byId('liveRegion');
   if (!el || !msg) return;
   const z = announce._z || (announce._z = { warte: [], plan: 0, zuletzt: 0 });
@@ -204,6 +207,118 @@ function fokusHierErlaubt() {
   try { return !imRahmen() || document.hasFocus(); } catch (e) { return true; }
 }
 window.fokusHierErlaubt = fokusHierErlaubt;
+
+// ─── Bühne für das Arbeitsfenster (Live-Fenster „zum Anklemmen“, 17.10.2026) ───
+// Eine Seite, die im Arbeitsfenster der Agentenansicht steht (eingebettet), bietet der Seite draussen EINE feste Schnittstelle:
+//   window.InkluBuehne = { version, zeigen(stelle, opts), neuZeichnen(), lesen(stelle), titel(), ansicht(), beobachten(fn) }
+// Die Seite draussen (inkluagent.js) greift sonst nicht in diese Seite: Ansichten duerfen sich aendern, solange die Seite ihre Stellen
+// kennt. Jede Seite meldet nur, wie sie eine Stelle findet — buehneEinrichten({ finden, ansicht, ansichtWechseln, neuZeichnen,
+// aufdecken }), finden(stelle) -> { karte, kopf, text, ansicht } | null. Den Rest macht dieser Kern: passende Ansicht (still),
+// Karte aufdecken (zugeklappt, gefiltert, gekuerzt), nur diese Seite rollen, markieren, Hand, nach jedem Neuzeichnen Marke und Lage
+// halten (nicht, solange jemand in dieser Seite arbeitet), und Beobachter benachrichtigen (Titel und Text der Stelle fuer „So klingt
+// diese Stelle“). Stellen kommen vom Server (inkluagent/arbeitsfenster.py): art bild|feld|dokument|seite|ausgabe, Kennungen, ansicht.
+function buehneEinrichten(seite) {
+  if (!imRahmen() || !seite || typeof seite.finden !== 'function') return null;
+  const zustand = { stelle: null, bis: 0, halten: 0, hoerer: [], lauf: 0 };
+  const ruhig = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const main = document.getElementById('main');
+  const warten = async (fn, ms) => {
+    const ende = Date.now() + ms;
+    let x = fn();
+    while (!x && Date.now() < ende) { await new Promise(r => setTimeout(r, 200)); x = fn(); }
+    return x;
+  };
+  function aufdecken(el) {
+    for (let d = el.closest('details'); d; d = d.parentElement ? d.parentElement.closest('details') : null) d.open = true;
+    if (typeof seite.aufdecken === 'function') seite.aufdecken(el);   // eigene Filter der Seite
+    for (let x = el; x && x !== main && x !== document.body; x = x.parentElement) if (x.hidden) x.hidden = false;   // gekuerzte Listen
+  }
+  function rollen(karte, weich) {
+    const r = karte.getBoundingClientRect();
+    const oben = Math.max(0, window.scrollY + r.top - Math.max(12, (window.innerHeight - Math.min(r.height, window.innerHeight)) / 2));
+    try { window.scrollTo({ top: oben, behavior: weich ? 'smooth' : 'auto' }); } catch (e) { window.scrollTo(0, oben); }
+  }
+  function markieren(karte) {
+    karte.classList.add('inkluagent-hin-ziel');
+    clearTimeout(karte._buehneMarke);
+    karte._buehneMarke = setTimeout(() => karte.classList.remove('inkluagent-hin-ziel'), Math.max(0, zustand.bis - Date.now()));
+  }
+  function textVon(el) {
+    if (!el) return '';
+    return String(('value' in el && typeof el.value === 'string') ? el.value : el.textContent || '').trim();
+  }
+  function lesen(stelle) {
+    const f = stelle ? seite.finden(stelle) : null;
+    return f ? { art: stelle.art, text: textVon(f.text) } : null;
+  }
+  function titel() {
+    const h = document.querySelector('#main h1');
+    return h ? h.textContent.trim() : String(document.title || '').split(' · ')[0].trim();
+  }
+  function melden() {
+    const daten = { titel: titel(), stelle: zustand.stelle, gelesen: zustand.stelle ? lesen(zustand.stelle) : null };
+    zustand.hoerer.forEach(fn => { try { fn(daten); } catch (e) { /* ein Beobachter stoert die Seite nie */ } });
+  }
+  async function zeigen(stelle, opts) {
+    opts = opts || {};
+    if (!stelle || typeof stelle !== 'object') return false;
+    const lauf = ++zustand.lauf;   // nur die juengste Fahrt zaehlt
+    const vorab = seite.finden(stelle);
+    const soll = stelle.ansicht || (vorab && vorab.ansicht) || null;
+    if (soll && typeof seite.ansicht === 'function' && seite.ansicht() !== soll && typeof seite.ansichtWechseln === 'function') {
+      const ok = await seite.ansichtWechseln(soll);   // still: ohne Fokus und Ansage; geht die Ansicht nicht, bleibt die Seite
+      if (lauf !== zustand.lauf) return false;
+      if (ok === false && !(vorab && vorab.karte)) return false;
+    }
+    const f = await warten(() => { const g = seite.finden(stelle); return g && g.karte ? g : null; }, opts.warten || 8000);
+    if (!f || lauf !== zustand.lauf) return false;
+    zustand.stelle = stelle;
+    zustand.bis = Date.now() + 3500;
+    zustand.halten = Date.now() + 30000;
+    aufdecken(f.kopf || f.karte);
+    rollen(f.karte, !ruhig() && opts.weich !== false);
+    markieren(f.karte);
+    if (opts.hand !== false && typeof zeigeHand === 'function') {
+      setTimeout(() => { try { zeigeHand(f.kopf || f.karte); } catch (e) { /* nur Schmuck */ } }, ruhig() ? 0 : 500);
+    }
+    melden();
+    return true;
+  }
+  async function neuZeichnen() {
+    if (typeof seite.neuZeichnen === 'function') await seite.neuZeichnen();
+    melden();
+    return true;
+  }
+  function beobachten(fn) {
+    if (typeof fn === 'function') zustand.hoerer.push(fn);
+    melden();
+  }
+  // Nach jedem Neuzeichnen der Seite (Abruf, Nachfragen waehrend eines Laufs, Ansichtswechsel): Marke und Lage halten, Beobachter
+  // benachrichtigen — gebuendelt. Die Lage nur, solange niemand in dieser Seite arbeitet (document.hasFocus).
+  if (main && typeof MutationObserver !== 'undefined') {
+    let wartet = false;
+    new MutationObserver(() => {
+      if (wartet) return;
+      wartet = true;
+      setTimeout(() => {
+        wartet = false;
+        const st = zustand.stelle;
+        const f = st ? seite.finden(st) : null;
+        if (f && f.karte) {
+          if (Date.now() < zustand.bis && !f.karte.classList.contains('inkluagent-hin-ziel')) { aufdecken(f.kopf || f.karte); markieren(f.karte); }
+          if (Date.now() < zustand.halten && !document.hasFocus()) {
+            const r = f.karte.getBoundingClientRect();
+            if (r.bottom < 0 || r.top > window.innerHeight) rollen(f.karte, false);
+          }
+        }
+        melden();
+      }, 150);
+    }).observe(main, { childList: true, subtree: true, characterData: true });
+  }
+  return { version: 1, zeigen, neuZeichnen, lesen, titel, beobachten,
+           ansicht: () => (typeof seite.ansicht === 'function' ? seite.ansicht() : null) };
+}
+window.buehneEinrichten = buehneEinrichten;
 function ganzeSeite(url) {
   (imRahmen() ? window.top : window).location.href = url;
 }

@@ -144,8 +144,13 @@ async def _kette(project_id: int, user_id: int, plan: dict, ui_lang: str, sprach
     _laeuft[project_id] = stand
     _speichern(project_id, stand)
     loop = asyncio.get_running_loop()
+    # Laufbuch (17.10.2026, laufbuch.py): die Kette als Auftrag mit drei Stationen; die Laeufe darin (Tagging, Alt-Texte, Quickinfos)
+    # melden sich selbst an — das Fenster zeigt den innersten
+    import laufbuch
+    lauf = laufbuch.beginnen("auftrag", user_id=user_id, project_id=project_id, gesamt=3)
     try:
         # 1. Tagging je Datei ohne Struktur
+        lauf.station_setzen("tagging")
         s = stand["schritte"]["tagging"]
         if s["status"] != "uebersprungen":
             s["status"] = "laeuft"
@@ -161,7 +166,7 @@ async def _kette(project_id: int, user_id: int, plan: dict, ui_lang: str, sprach
                     continue
                 name = d.get("display_name") or d.get("original_filename") or f"Dokument {d.get('doc_index')}"
                 try:
-                    erg = await loop.run_in_executor(None, _d.tagging_lauf, project_id, d["id"], user_id, sprache, ui_lang)
+                    erg = await loop.run_in_executor(None, laufbuch.mitnehmen(_d.tagging_lauf), project_id, d["id"], user_id, sprache, ui_lang)
                 except Exception as e:  # noqa: BLE001
                     log.exception("[kette] Tagging %s/%s", project_id, d["id"])
                     erg = {"status": "fehler", "grund": "Unerwarteter Fehler beim Tagging"}
@@ -173,6 +178,8 @@ async def _kette(project_id: int, user_id: int, plan: dict, ui_lang: str, sprach
             s["status"] = "fertig" if not s["fehler"] else ("teilweise" if s["fertig"] else "fehler")
             _speichern(project_id, stand)
         # 2. Alt-Texte
+        lauf.weiter()
+        lauf.station_setzen("alt_texte")
         s = stand["schritte"]["alttexte"]
         conn = _d.get_db()
         try:
@@ -200,6 +207,8 @@ async def _kette(project_id: int, user_id: int, plan: dict, ui_lang: str, sprach
             s["status"] = "uebersprungen"
         _speichern(project_id, stand)
         # 3. Quickinfos
+        lauf.weiter()
+        lauf.station_setzen("quickinfos")
         s = stand["schritte"]["quickinfos"]
         conn = _d.get_db()
         try:
@@ -221,6 +230,7 @@ async def _kette(project_id: int, user_id: int, plan: dict, ui_lang: str, sprach
         else:
             s["status"] = "uebersprungen"
         stand["schritt"] = "fertig"
+        lauf.weiter()
     except asyncio.CancelledError:
         stand["schritt"] = "fehler"
         stand["zusammenfassung"] = "Die Kette wurde durch einen Neustart des Servers abgebrochen."
@@ -230,6 +240,7 @@ async def _kette(project_id: int, user_id: int, plan: dict, ui_lang: str, sprach
         stand["schritt"] = "fehler"
         stand["zusammenfassung"] = "Unerwarteter Fehler in der Kette."
     finally:
+        lauf.beenden(stand.get("schritt") == "fertig")
         stand["laeuft"] = False
         stand["beendet"] = time.strftime("%Y-%m-%d %H:%M:%S")
         if not stand.get("zusammenfassung"):
@@ -303,7 +314,8 @@ def starten_von_aussen(project_id: int, user_id: int, ui_lang: str) -> dict:
         if project_id in _laeuft:
             raise HTTPException(status_code=409, detail="Die Kette läuft bereits")
         _laeuft[project_id] = {"laeuft": True}
-    asyncio.run_coroutine_threadsafe(_kette(project_id, user_id, plan, ui_lang or "", sprache), _loop)
+    import laufbuch   # Live-Fenster (17.10.2026): die Kette bleibt auf ihrer Schleife ein Lauf des Agenten
+    asyncio.run_coroutine_threadsafe(laufbuch.mitnehmen_coro(_kette(project_id, user_id, plan, ui_lang or "", sprache)), _loop)
     return {"gestartet": True, "plan": plan}
 
 

@@ -12908,3 +12908,41 @@ msgstr "Champ de formulaire, {info}"
 
 msgid "Dieses Feld hat noch keine Quickinfo. Ein Screenreader nennt dann oft nur „Textfeld“."
 msgstr "Ce champ n’a pas encore d’info-bulle. Un lecteur d’écran dit alors souvent seulement « champ de texte »."
+
+# InkluAgent: Live-Fenster mit Laufbuch (17.10.2026)
+msgid "Arbeit"
+msgstr "Travail"
+
+msgid "Auftrag"
+msgstr "Mission"
+
+msgid "In PDF umwandeln"
+msgstr "Convertir en PDF"
+
+#, python-brace-format
+msgid "Arbeitet im Hintergrund: {was}, {n} von {m} fertig."
+msgstr "Travaille en arrière-plan : {was}, {n} sur {m} terminés."
+
+#, python-brace-format
+msgid "Arbeitet im Hintergrund: {was}."
+msgstr "Travaille en arrière-plan : {was}."
+
+#, python-brace-format
+msgid "Im Hintergrund: Auftrag für „{projekt}“, Schritt {n} von {m}: {was}"
+msgstr "En arrière-plan : mission pour « {projekt} », étape {n} sur {m} : {was}"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} fertig"
+msgstr "En arrière-plan : {was} terminé"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} für „{projekt}“"
+msgstr "En arrière-plan : {was} pour « {projekt} »"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} für „{projekt}“, {n} von {m} fertig"
+msgstr "En arrière-plan : {was} pour « {projekt} », {n} sur {m} terminés"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} – hat nicht geklappt"
+msgstr "En arrière-plan : {was} – n’a pas fonctionné"

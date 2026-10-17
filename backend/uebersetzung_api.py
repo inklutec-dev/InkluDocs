@@ -488,8 +488,13 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
     # je Paket auf — bei zehn Paketen zu je 150 Woertern standen 15 Credits in der Rueckfrage und 20 wurden gebucht. Jetzt bucht
     # jedes Paket nur, was die Rundung ueber alle bisher geschriebenen Woerter mehr verlangt: zusammen nie mehr als die Vorschau.
     geschrieben_woerter = 0
+    # Laufbuch (17.10.2026, laufbuch.py): je Paket das Dokument als Stelle, Fortschritt je Paket; abgemeldet im finally
+    import laufbuch
+    lauf = laufbuch.beginnen("uebersetzen", user_id=user_id, project_id=project_id, document_id=document_id, gesamt=len(pakete))
+    lauf_ok = False
     try:
         for did, batch in pakete:
+            lauf.stueck(document_id=did)
             if st.get("abbruch"):
                 st["fehler"].append("Vom Nutzer abgebrochen – der Rest bleibt unübersetzt.")
                 break
@@ -550,7 +555,10 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
                     _d.billing.verbuche(user_id, "sammellauf", aktion=AKTION, credits=anteil)
                     st["credits"] += anteil
             st["pakete_fertig"] += 1
+            lauf.weiter()
+        lauf_ok = True
     finally:
+        lauf.beenden(lauf_ok)
         conn = _d.get_db()
         try:
             hinweis = " ".join(st["fehler"])[:1000]
@@ -587,7 +595,8 @@ def bot_starten(user: dict, project_id: int, zielsprache: str, alt_texte: bool =
     if _loop is None:
         raise HTTPException(status_code=503, detail="Übersetzung nicht bereit")
     einst = _einstellungen_pruefen({"zielsprache": zielsprache, "alt_texte": alt_texte, "sprache_setzen": True})
-    fut = asyncio.run_coroutine_threadsafe(lauf_starten(project_id, user, einst, None), _loop)
+    import laufbuch   # Live-Fenster (17.10.2026): der Lauf bleibt auf der Uebersetzungs-Schleife ein Lauf des Agenten
+    fut = asyncio.run_coroutine_threadsafe(laufbuch.mitnehmen_coro(lauf_starten(project_id, user, einst, None)), _loop)
     try:
         return fut.result(timeout=60)
     except TimeoutError:   # concurrent.futures.TimeoutError ist seit 3.11 dasselbe Objekt

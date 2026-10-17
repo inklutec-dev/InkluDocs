@@ -22,6 +22,8 @@ import json
 import logging
 import os
 import threading
+
+import laufbuch   # Live-Fenster (17.10.2026): Laeufe des Agenten bleiben es auch im Thread
 import time
 from typing import Any, Optional
 
@@ -382,7 +384,7 @@ def barrierefrei_machen(project_id: int, user_id: int, document_id: Optional[int
     # Sprachvorgabe wie Knopf und Kette (tagging_api / kette_api): Projektsprache vor Kontosprache. Vorher ging hier ""
     # an den Lauf — bei unsicherer Erkennung ohne /Lang wurde dann immer de-DE gesetzt (Skriptpruefung 09.10.2026).
     sprache = project.get("alt_language") or ui_lang or "de"
-    threading.Thread(target=t.lauf_synchron, args=(project_id, doc["id"], user_id, sprache, ui_lang), daemon=True,
+    threading.Thread(target=laufbuch.mitnehmen(t.lauf_synchron), args=(project_id, doc["id"], user_id, sprache, ui_lang), daemon=True,
                      name=f"bot-tagging-{doc['id']}").start()
     time.sleep(0.5)
     return {"ok": True, "result": {
@@ -471,7 +473,7 @@ def pruefung_starten(project_id: int, user_id: int, document_id: Optional[int] =
             return {"ok": False, "error": "Die Prüfung oder das Tagging läuft bereits"}
     finally:
         conn.close()
-    threading.Thread(target=t._pruefung_sync, args=(project_id, doc["id"], user_id, int(st.get("preis") or 0), _ausg._ui_lang(user_id)),
+    threading.Thread(target=laufbuch.mitnehmen(t._pruefung_sync), args=(project_id, doc["id"], user_id, int(st.get("preis") or 0), _ausg._ui_lang(user_id)),
                      daemon=True, name=f"bot-pruefung-{doc['id']}").start()
     return {"ok": True, "result": {
         "gestartet": True, "dokument": _name(doc), "seiten": st["seiten"], "preis": st.get("preis"),
@@ -701,7 +703,7 @@ def korrektur_anwenden(project_id: int, user_id: int, document_id: Optional[int]
             t._korrektur_laeuft[doc["id"]] = {"seit": time.time()}
     finally:
         conn.close()
-    threading.Thread(target=t._korrektur_sync, args=(project_id, doc["id"], user_id, bool(erneut_pruefen), preis, _ausg._ui_lang(user_id)),
+    threading.Thread(target=laufbuch.mitnehmen(t._korrektur_sync), args=(project_id, doc["id"], user_id, bool(erneut_pruefen), preis, _ausg._ui_lang(user_id)),
                      daemon=True, name=f"bot-korrektur-{doc['id']}").start()
     return {"ok": True, "result": {"gestartet": True, "dokument": _name(doc), "befunde": ko.get("auto_befunde"), "erneut_pruefen": bool(erneut_pruefen),
                                    "hinweis": ("Die Korrektur läuft (wenige Sekunden)" + (", danach die Nachprüfung (10 bis 20 Sekunden je Seite)" if erneut_pruefen else "")

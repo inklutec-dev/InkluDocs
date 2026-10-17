@@ -345,7 +345,9 @@ def im_hauptloop(coro) -> None:
     if _HAUPT_LOOP is None:
         coro.close()
         raise HTTPException(status_code=503, detail="Der Server ist noch nicht bereit")
-    asyncio.run_coroutine_threadsafe(coro, _HAUPT_LOOP)
+    # Laufbuch (17.10.2026): startet ein Werkzeug des Agenten den Lauf, bleibt er auch auf der Schleife ein Lauf des Agenten
+    import laufbuch
+    asyncio.run_coroutine_threadsafe(laufbuch.mitnehmen_coro(coro), _HAUPT_LOOP)
 
 
 @asynccontextmanager
@@ -7618,24 +7620,24 @@ async def _process_project(project_id: int, user_id: int, force: bool = False,
     aussen ab (CancelledError beim Container-Neustart) und raeumt auf. Der Fehler wird danach
     weitergereicht, damit nichts stillschweigend verschwindet."""
     ki_neu_ids = set(ki_neu_ids or ())
-    eintrag = _alt_lauf_eintragen(project_id, document_id)
+    # Laufbuch (17.10.2026, laufbuch.py): angemeldet mit den Bildern, die dieser Lauf vor sich hat; je Bild Stueck und Fortschritt
+    # (_process_project_lauf), abgemeldet auch bei Abbruch. Ersetzt die eigene Liste _ALT_LAEUFE vom 16.10.2026.
+    import laufbuch
+    lauf = laufbuch.beginnen("alt_texte", user_id=user_id, project_id=project_id, document_id=document_id,
+                             gesamt=_alt_lauf_gesamt(project_id, document_id))
+    ok = False
     try:
-        await _process_project_lauf(project_id, user_id, force, document_id, ki_neu_ids)
+        await _process_project_lauf(project_id, user_id, force, document_id, ki_neu_ids, lauf=lauf)
+        ok = True
     except BaseException:
         _notaufraeumen(project_id, ki_neu_ids)
         raise
     finally:
-        if _ALT_LAEUFE.get(project_id) is eintrag:
-            _ALT_LAEUFE.pop(project_id, None)
+        lauf.beenden(ok)
 
 
-# Live-Fenster (Steve 16.10.2026): welche Alt-Text-Laeufe in DIESEM Prozess gerade arbeiten — Projekt -> {gesamt, document_id,
-# seit}. Nur hier steht, was wirklich laeuft: ein Projektstatus 'processing' kann nach einem Absturz haengen bleiben (Staging:
-# Bilder vom Mai 2026). gesamt = Bilder, die dieser Lauf vor sich hat (wie _process_project_lauf sie auswaehlt).
-_ALT_LAEUFE: dict = {}
-
-
-def _alt_lauf_eintragen(project_id: int, document_id: Optional[int]) -> dict:
+def _alt_lauf_gesamt(project_id: int, document_id: Optional[int]) -> int:
+    """Wie viele Bilder ein Lauf vor sich hat — wie _process_project_lauf sie auswaehlt (fuer das Laufbuch)."""
     gesamt = 0
     try:
         conn = get_db()
@@ -7650,13 +7652,11 @@ def _alt_lauf_eintragen(project_id: int, document_id: Optional[int]) -> dict:
             conn.close()
     except Exception:  # noqa: BLE001 — die Anzeige darf den Lauf nie aufhalten
         gesamt = 0
-    eintrag = {"gesamt": int(gesamt), "document_id": document_id, "seit": time.time()}
-    _ALT_LAEUFE[project_id] = eintrag
-    return eintrag
+    return int(gesamt)
 
 
 async def _process_project_lauf(project_id: int, user_id: int, force: bool = False,
-                                document_id: Optional[int] = None, ki_neu_ids: Optional[set] = None):
+                                document_id: Optional[int] = None, ki_neu_ids: Optional[set] = None, lauf=None):
     """force (28.08.2026, „Alle neu generieren“): Cache je Bild raeumen und force_regenerate
     an die Pipeline geben — sonst kaeme fuer bereits gecachte Bilder der alte Text zurueck.
     document_id (28.08.2026): nur die Bilder EINES Dokuments (Knopf am Dokument)."""
@@ -7756,6 +7756,8 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
             break
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
+        if lauf is not None:
+            lauf.stueck(image_id=img["id"])   # Laufbuch: an diesem Bild schreibt er gerade
         ki_kosten.setze(image_id=img["id"], document_id=img["document_id"])
         if force:
             try:
@@ -7869,6 +7871,8 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
             (processed, project_id)
         )
         conn.commit()
+        if lauf is not None:
+            lauf.weiter()   # Laufbuch: dieses Bild ist durch (fertig oder Fehler)
 
     if fehlversuche:
         print(f"Sammellauf Projekt {project_id}: {fehlversuche} Bild(er) im ki_neu-Modus gescheitert — "
@@ -9427,7 +9431,24 @@ def _ablage_datei_fuer(user_id: int, doc_id, bau_stand: str) -> Optional[dict]:
     return None
 
 
+# Laufbuch (17.10.2026, laufbuch.py): PDF herunterladen — ein duenner Mantel meldet den Lauf an und ab (auch bei Fehler), der Kern
+# bleibt unveraendert. Stelle = das Dokument (bei einem ganzen Projekt keine); Ergebnis = der Eintrag in der Ablage.
 def _pdf_export_sync(user_id: int, project: dict, document_id: Optional[int], custom_name: Optional[str],
+                     ausloeser: str = "knopf", erwarteter_preis: Optional[int] = None, _=None) -> dict:
+    import laufbuch
+    with laufbuch.lauf("export", user_id=user_id, project_id=project["id"], document_id=document_id, gesamt=1) as lauf:
+        if document_id:
+            lauf.stueck(document_id=document_id)
+        erg = _pdf_export_kern(user_id, project, document_id, custom_name, ausloeser, erwarteter_preis, _)
+        ids = (erg.get("ausgabe_ids") or []) if isinstance(erg, dict) else []
+        aid = erg.get("ausgabe_id") if isinstance(erg, dict) else None
+        if aid or ids:
+            lauf.ergebnis(ausgabe_id=aid or ids[0])
+        lauf.weiter()
+        return erg
+
+
+def _pdf_export_kern(user_id: int, project: dict, document_id: Optional[int], custom_name: Optional[str],
                      ausloeser: str = "knopf", erwarteter_preis: Optional[int] = None, _=None) -> dict:
     """Das ganze PDF-Herunterladen (im Rechenbereich _export_executor, der Aufrufer haelt die Sperre _export_belegen):
     Planung (NACH dem Belegen, damit sie den zuletzt bezahlten Stand sieht), Bau bzw. Ablage-Datei, Abrechnung aus dem
@@ -9828,7 +9849,12 @@ def _abschluss_erstellen_sync(project: dict, user_id: int, document_id: int) -> 
         _abschluss_laeuft.add(document_id)
         _abschluss_nutzer[user_id] = document_id
     try:
-        return _abschluss_bauen(project, user_id, document_id)
+        import laufbuch   # Laufbuch (17.10.2026): Pruefdatei (veraPDF), Stelle = das Dokument
+        with laufbuch.lauf("pruefung", user_id=user_id, project_id=project["id"], document_id=document_id, gesamt=1) as lauf:
+            lauf.stueck(document_id=document_id)
+            neu = _abschluss_bauen(project, user_id, document_id)
+            lauf.weiter()
+            return neu
     finally:
         with _abschluss_lock:
             _abschluss_laeuft.discard(document_id)
@@ -10092,7 +10118,24 @@ def _word_dokument_ansicht(project: dict, user_id: int) -> dict:
     return {"project": projekt_aussen, "documents": aussen, "ausgaben_anzahl": _ausgaben_anzahl(project["id"])}
 
 
+# Laufbuch (17.10.2026, laufbuch.py): Word in barrierefreie PDF umwandeln (LibreOffice) — ein duenner Mantel meldet den Lauf an und ab (auch bei Fehler), der Kern
+# bleibt unveraendert. Stelle = das Dokument (bei einem ganzen Projekt keine); Ergebnis = der Eintrag in der Ablage.
 def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int], custom_name: Optional[str],
+                          ui_lang: str, ausloeser: str = "knopf") -> dict:
+    import laufbuch
+    with laufbuch.lauf("umwandeln", user_id=user_id, project_id=project["id"], document_id=document_id, gesamt=1) as lauf:
+        if document_id:
+            lauf.stueck(document_id=document_id)
+        erg = _pdfua_umwandeln_kern(project, user_id, document_id, custom_name, ui_lang, ausloeser)
+        ids = (erg.get("ausgabe_ids") or []) if isinstance(erg, dict) else []
+        aid = erg.get("ausgabe_id") if isinstance(erg, dict) else None
+        if aid or ids:
+            lauf.ergebnis(ausgabe_id=aid or ids[0])
+        lauf.weiter()
+        return erg
+
+
+def _pdfua_umwandeln_kern(project: dict, user_id: int, document_id: Optional[int], custom_name: Optional[str],
                           ui_lang: str, ausloeser: str = "knopf") -> dict:
     """Kern der Umwandlung, SYNCHRON (laeuft im Executor): Word mit Alt-Texten bauen ->
     Umwandler (LibreOffice) -> Alt-Texte nachtragen -> Dokument-Eigenschaften -> veraPDF ->
@@ -10202,7 +10245,23 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
             "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"])}
 
 
+# Laufbuch (17.10.2026, laufbuch.py): Word pruefen (Hoerprobe und Pruefbericht vor der Umwandlung) — ein duenner Mantel meldet den Lauf an und ab (auch bei Fehler), der Kern
+# bleibt unveraendert. Stelle = das Dokument (bei einem ganzen Projekt keine); Ergebnis = der Eintrag in der Ablage.
 def _pdfua_vorschau_sync(project: dict, user_id: int, document_id: Optional[int], ui_lang: str) -> dict:
+    import laufbuch
+    with laufbuch.lauf("pruefung", user_id=user_id, project_id=project["id"], document_id=document_id, gesamt=1) as lauf:
+        if document_id:
+            lauf.stueck(document_id=document_id)
+        erg = _pdfua_vorschau_kern(project, user_id, document_id, ui_lang)
+        ids = (erg.get("ausgabe_ids") or []) if isinstance(erg, dict) else []
+        aid = erg.get("ausgabe_id") if isinstance(erg, dict) else None
+        if aid or ids:
+            lauf.ergebnis(ausgabe_id=aid or ids[0])
+        lauf.weiter()
+        return erg
+
+
+def _pdfua_vorschau_kern(project: dict, user_id: int, document_id: Optional[int], ui_lang: str) -> dict:
     """Hoerprobe (was ein Screenreader liest) + Pruefbericht des Word-Dokuments, VOR der
     Umwandlung und kostenlos — reines Lesen der Word-Datei mit unseren Alt-Texten.
     Synchron; gemeinsam fuer die Word-Ansichten (Hoerprobe in „Dokument“, „Barrierefreiheitsprüfung“) und das
@@ -10235,7 +10294,24 @@ def _pdfua_vorschau_sync(project: dict, user_id: int, document_id: Optional[int]
     return {"ok": True, "dokumente": dokumente}
 
 
+# Laufbuch (17.10.2026, laufbuch.py): als Word herunterladen — ein duenner Mantel meldet den Lauf an und ab (auch bei Fehler), der Kern
+# bleibt unveraendert. Stelle = das Dokument (bei einem ganzen Projekt keine); Ergebnis = der Eintrag in der Ablage.
 def _word_export_ausgabe_sync(project: dict, user_id: int, document_id: Optional[int], custom_name: Optional[str],
+                              ui_lang: str, ausloeser: str = "bot") -> dict:
+    import laufbuch
+    with laufbuch.lauf("export", user_id=user_id, project_id=project["id"], document_id=document_id, gesamt=1) as lauf:
+        if document_id:
+            lauf.stueck(document_id=document_id)
+        erg = _word_export_ausgabe_kern(project, user_id, document_id, custom_name, ui_lang, ausloeser)
+        ids = (erg.get("ausgabe_ids") or []) if isinstance(erg, dict) else []
+        aid = erg.get("ausgabe_id") if isinstance(erg, dict) else None
+        if aid or ids:
+            lauf.ergebnis(ausgabe_id=aid or ids[0])
+        lauf.weiter()
+        return erg
+
+
+def _word_export_ausgabe_kern(project: dict, user_id: int, document_id: Optional[int], custom_name: Optional[str],
                               ui_lang: str, ausloeser: str = "bot") -> dict:
     """Word-Datei mit Alt-Texten fuer den CHATBOT (Werkzeug exportiere_word, 11.09.2026): der Bot kann
     keinen Browser-Download ausloesen, also entsteht die Datei im Projekt-Exportordner mit einem Token,
@@ -12060,17 +12136,16 @@ async def agent_status(user: dict = Depends(get_current_user)):
 
 
 @app.get("/api/agent/live")
-async def agent_live(vorher: Optional[int] = None, user: dict = Depends(get_current_user)):
+async def agent_live(user: dict = Depends(get_current_user)):
     """Live-Fenster (Steve 16.10.2026: „dass man sieht, wo er sich gerade aufhält … wenn er einen Alternativtext macht, dass man in
-    dem Moment das Bild eingeblendet sieht“; Schalter AGENT_ARBEITSFENSTER): woran ein Alt-Text-Lauf im Hintergrund gerade
-    arbeitet — Bild mit Nummer, Seite, Dokument, Adressen und Fortschritt — und mit vorher=<Bild> dessen fertiger Alt-Text. Nur
-    Laeufe dieses Prozesses (_ALT_LAEUFE) in Projekten DIESES Kontos; ohne KI, nur Datenbank. Namen und Alt-Texte sind Nutzer- bzw.
-    KI-Daten — die Seite setzt sie mit textContent."""
+    dem Moment das Bild eingeblendet sieht“; Schalter AGENT_ARBEITSFENSTER): was der Agent im Hintergrund gerade tut — aus dem
+    Laufbuch (laufbuch.py: nur Laeufe des Agenten in diesem Prozess), je Lauf Art, Ansicht, Projekt, Fortschritt, die Stelle, das
+    Stueck davor mit seinem Text und das Ergebnis (inkluagent/arbeitsfenster.live). Nur Projekte DIESES Kontos; ohne KI, nur
+    Datenbank. Namen und Texte sind Nutzer- bzw. KI-Daten — die Seite setzt sie mit textContent."""
     _require_inkluagent()
     funktionen.endpunkt_frei("AGENT_ARBEITSFENSTER")
     from inkluagent import arbeitsfenster as _af
-    laeufe = {pid: dict(e) for pid, e in list(_ALT_LAEUFE.items())}
-    return await asyncio.to_thread(_af.live, user["id"], laeufe, vorher, _display_alt_text)
+    return await asyncio.to_thread(_af.live, user["id"], None, _display_alt_text)
 
 
 @app.get("/api/agent/ueberblick")
@@ -12289,7 +12364,7 @@ async def _agent_nachricht(request: Request, user: dict, project_id: Optional[in
             # Kennungen
             if funktionen.AGENT_ARBEITSFENSTER:
                 from inkluagent import arbeitsfenster as _af
-                _z = _af.ziel(user["id"], project_id, args)
+                _z = _af.ziel(user["id"], project_id, args, name)   # mit der Ansicht des Werkzeugs (17.10.2026)
                 if _z:
                     ev["ziel"] = _z
                 _fortschritt_aendern(user["id"], start, lambda f: _fortschritt_schritt(f, name, ev.get("ziel")))

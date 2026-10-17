@@ -238,6 +238,10 @@ def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe:
     an Dokument, Bildern oder Projektstatus. Alles steht im try, damit die Sperren im finally IMMER freigegeben werden."""
     ordner = ziel = meta = tmp = tmp_alt = bilder_tmp = ""
     bericht: dict = {}
+    # Laufbuch (17.10.2026): Testlauf des Taggings, Stelle = das Dokument; abgemeldet im finally
+    import laufbuch
+    lauf = laufbuch.beginnen("tagging", user_id=user_id, project_id=project_id, document_id=document_id, gesamt=1)
+    lauf.stueck(document_id=document_id)
     try:
         ordner, ziel, meta = test_pfade(user_id, project_id, document_id)
         tmp = ziel + f".{int(time.time())}.tmp.pdf"
@@ -311,6 +315,7 @@ def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe:
         except Exception as e:  # noqa: BLE001
             log.warning("[testweise] Bericht fuer Dokument %s nicht geschrieben: %r", document_id, e)
         test_freigeben(user_id, document_id)
+        lauf.beenden(bool(bericht) and not (bericht or {}).get("fehler"))
 
 
 class _DokumentWeg(Exception):
@@ -478,6 +483,10 @@ def _korrektur_sync(project_id: int, document_id: int, user_id: int, erneut: boo
     # Die Korrektur gilt als laufend, bis ihr Bericht gespeichert und die Nachpruefung markiert ist (14.10.2026, Rueckmeldung des
     # InkluAgent, unabhaengige Pruefung Befund 2): vorher wurde sie VOR dem Speichern frei gegeben — einen Augenblick lief dann
     # weder Korrektur noch Pruefung, und wer darauf wartete (inkluagent/rueckmeldung.py), hielt den Lauf fuer beendet.
+    import laufbuch   # Laufbuch (17.10.2026): Stelle = das Dokument
+    lauf = laufbuch.beginnen("korrektur", user_id=user_id, project_id=project_id, document_id=document_id, gesamt=1)
+    lauf.stueck(document_id=document_id)
+    kb: dict = {}
     try:
         try:
             kb = pdf_korrektur.anwenden(pfad, pb.get("befunde") or [], uebers)
@@ -499,6 +508,7 @@ def _korrektur_sync(project_id: int, document_id: int, user_id: int, erneut: boo
             conn.close()
     finally:
         _korrektur_laeuft.pop(document_id, None)
+        lauf.beenden(bool(kb) and not kb.get("fehler"))
     if gestartet:
         _pruefung_sync(project_id, document_id, user_id, preis, ui_lang)
 
@@ -1176,6 +1186,11 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
     ziel_alt = ziel_tmp[:-len(".tmp.pdf")] + ".alt.tmp.pdf"   # PDFix-Ausgabe + Feldtexte (Feld = Datei, 09.10.2026)
     uebers = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None
     bericht: dict = {}
+    # Laufbuch (17.10.2026, laufbuch.py): Stelle ist das Dokument (auf dem Weg „Struktur zuerst“ je Seite); abgemeldet im finally
+    import laufbuch
+    lauf = laufbuch.beginnen("tagging", user_id=user_id, project_id=project_id, document_id=document_id, gesamt=1)
+    lauf.stueck(document_id=document_id)
+    lauf_ok = False
     try:
         # Sicherheitsnetz (09.10.2026): bei gesperrtem professionellem Tagging nie ein bezahlter Lauf, auch wenn ein
         # Aufrufer die Wache am Eingang uebergangen hat — Grund in den Bericht, keine Credits.
@@ -1187,6 +1202,8 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
             def fortschritt(seite, seiten):
                 if document_id in _laeuft:
                     _laeuft[document_id].update({"seite": seite, "seiten": seiten})
+                lauf.stand(max(0, int(seite or 1) - 1), int(seiten or 0))
+                lauf.stueck(document_id=document_id, seite=seite)
 
             bericht = pdf_struktur_tagging.taggen(quelle, ziel_tmp, sprache_vorgabe, arbeitsordner=os.path.dirname(ziel),
                                                   fortschritt=fortschritt, dokument_name=doc.get("display_name") or doc.get("original_filename") or "")
@@ -1277,6 +1294,9 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
         log.info("[tagging] Dokument %s fertig: %s Seiten, %s Elemente, %s Bilder (%s uebernommen), %s Credits",
                  document_id, bericht.get("seiten"), (bericht.get("nachher") or {}).get("elemente"),
                  len(images), uebernommen, preis)
+        lauf.stueck(document_id=document_id)   # fertig: wieder das ganze Dokument (nicht die letzte Seite)
+        lauf.stand(lauf.gesamt or 1)
+        lauf_ok = True
     except Exception as e:  # noqa: BLE001
         grund = str(e) if isinstance(e, pdf_tagging.TaggingFehler) else "Unerwarteter Fehler beim Tagging"
         if not isinstance(e, pdf_tagging.TaggingFehler):
@@ -1300,6 +1320,7 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
             conn.close()
     finally:
         _laeuft.pop(document_id, None)
+        lauf.beenden(lauf_ok)
 
 
 @ki_kosten.mit_kunde   # KI-Kosten (05.10.2026)
@@ -1353,12 +1374,17 @@ def _pruefung_sync(project_id: int, document_id: int, user_id: int, preis: int, 
     name = doc.get("display_name") or doc.get("original_filename") or ""
     bericht: dict = {}
     status = STATUS_FERTIG
+    import laufbuch   # Laufbuch (17.10.2026): Stelle = Dokument, je Seite die Seite
+    lauf = laufbuch.beginnen("pruefung", user_id=user_id, project_id=project_id, document_id=document_id, gesamt=1)
+    lauf.stueck(document_id=document_id)
     try:
         struktur = pdf_struktur.lesen(pfad, os.path.dirname(pfad))
 
         def fortschritt(seite, seiten):
             if document_id in _pruefung_laeuft:
                 _pruefung_laeuft[document_id].update({"seite": seite, "seiten": seiten})
+            lauf.stand(max(0, int(seite or 1) - 1), int(seiten or 0))
+            lauf.stueck(document_id=document_id, seite=seite)
 
         bericht = pdf_pruefung.pruefe_dokument(pfad, struktur, os.path.dirname(pfad), sprache_ausgabe=(ui_lang or "de"),
                                                dokument_name=name, fortschritt=fortschritt)
@@ -1373,6 +1399,10 @@ def _pruefung_sync(project_id: int, document_id: int, user_id: int, preis: int, 
         bericht = {"fehler": (str(e) if bekannt else "Unerwarteter Fehler bei der Prüfung"), "zeit": time.strftime("%Y-%m-%d %H:%M:%S")}
     finally:
         _pruefung_laeuft.pop(document_id, None)
+        if status == STATUS_FERTIG:
+            lauf.stueck(document_id=document_id)
+            lauf.stand(lauf.gesamt or 1)
+        lauf.beenden(status == STATUS_FERTIG)
         conn = _d.get_db()
         try:
             conn.execute("UPDATE documents SET pruefung_status = ?, pruefung_bericht = ? WHERE id = ?",
@@ -1445,7 +1475,8 @@ def test_starten_fuer(project_id: int, document_id: int, user: dict, ui_lang: st
         _test_nutzer[user["id"]] = document_id
     try:
         sprache = (project.get("alt_language") or user.get("language") or "de")
-        _test_executor.submit(_test_sync, project_id, document_id, user["id"], sprache, ui_lang)
+        import laufbuch   # Laufbuch: ein Testlauf, den der Agent anstoesst, bleibt im Pool ein Lauf des Agenten
+        _test_executor.submit(laufbuch.mitnehmen(_test_sync), project_id, document_id, user["id"], sprache, ui_lang)
     except Exception:
         test_freigeben(user["id"], document_id)   # sonst haengt die Sperre bis zum Neustart
         raise

@@ -209,7 +209,7 @@
         if (!box || !out) { announce(text); return; }
         out.textContent = text;
         box.hidden = false;
-        if (document.activeElement === document.body) box.focus();
+        if (document.activeElement === document.body && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) box.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (17.10.2026)
     }
     function meldungSchliessen() {
         const box = document.getElementById('uLaufMeldung');

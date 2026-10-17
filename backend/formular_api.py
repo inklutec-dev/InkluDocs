@@ -649,6 +649,11 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
     felder_by_id = {f["id"]: _feld_fuer_ki(f) for f in offen}
     stand_by_id = {f["id"]: (f.get("updated_at") or "") for f in offen}   # Schutz gegen Handarbeit waehrend des Laufs
     lauf_user = _d.get_user_by_id(user_id) if _d.get_user_by_id else None
+    # Laufbuch (17.10.2026, laufbuch.py): je Seite das erste Feld als Stelle (das Live-Fenster faehrt zu seiner Karte), Fortschritt je
+    # Seite; abgemeldet im finally, auch bei Abbruch
+    import laufbuch
+    lauf = laufbuch.beginnen("quickinfos", user_id=user_id, project_id=project_id, document_id=document_id, gesamt=len(seiten))
+    lauf_ok = False
     try:
         for (doc_id, page), felder in seiten.items():
             # Abbruch durch den Nutzer (01.09.2026): vor jeder Seite nachsehen.
@@ -669,6 +674,7 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                 st["fehler"].append(f"Tageslimit erreicht ({tl['limit']} KI-Aufrufe pro Tag) – Rest bleibt offen.")
                 break
             doc = docs.get(doc_id) or {}
+            lauf.stueck(feld_id=felder[0]["id"], document_id=doc_id)
             try:
                 src = _originalpfad(doc)
                 conn = _d.get_db()
@@ -685,11 +691,13 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
             except (formular_ki.FeldPassFehler, HTTPException) as e:
                 st["fehler"].append(f"Seite {page}: {getattr(e, 'detail', None) or e}")
                 st["seiten_fertig"] += 1
+                lauf.weiter()
                 continue
             except Exception as e:  # nie den ganzen Lauf abbrechen
                 log.exception("[formular] Feld-Pass Seite %s Projekt %s: %r", page, project_id, e)
                 st["fehler"].append(f"Seite {page}: unerwarteter Fehler")
                 st["seiten_fertig"] += 1
+                lauf.weiter()
                 continue
             # Abbruch waehrend des Modellaufrufs (Michael Karbe 09.09.2026): die Ergebnisse dieser
             # Seite werden verworfen und nicht berechnet — der Lauf endet beim Klick, nicht erst
@@ -720,6 +728,7 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                 _d.billing.verbuche(user_id, "generierung", aktion="quickinfo_generierung",
                                     credits=_d.billing.aktion_preis("quickinfo_generierung", geschrieben))
             st["seiten_fertig"] += 1
+            lauf.weiter()
         # Konsistenz ueber das ganze Dokument (nur KI-Texte dieses Laufs).
         if alle_vorschlaege:
             angeglichen = formular_ki.konsistenz(alle_vorschlaege, felder_by_id)
@@ -731,7 +740,9 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                 conn.commit()
             finally:
                 conn.close()
+        lauf_ok = True
     finally:
+        lauf.beenden(lauf_ok)
         conn = _d.get_db()
         try:
             conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ? AND status = 'processing'", (project_id,))

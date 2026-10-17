@@ -243,7 +243,9 @@ class ToolExecutor:
                     # KI-Kosten (05.10.2026): was ein Werkzeug an KI verbraucht, zaehlt fuer diesen Kunden und dieses Projekt —
                     # auch wenn das Werkzeug ausserhalb einer Chat-Nachricht aufgerufen wird.
                     import ki_kosten
-                    with ki_kosten.kontext(user_id=self.user_id, project_id=self.project_id):
+                    import laufbuch
+                    # Laufbuch (17.10.2026): was dieses Werkzeug an Laeufen anstoesst, gilt als Arbeit des Agenten (Live-Fenster)
+                    with ki_kosten.kontext(user_id=self.user_id, project_id=self.project_id), laufbuch.agent_kontext():
                         ergebnis = handler(args)
                 except Exception as e:  # noqa: BLE001
                     log.exception("Werkzeug %s crashte", name)

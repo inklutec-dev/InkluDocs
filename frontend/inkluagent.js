@@ -753,9 +753,11 @@ function inkluagentSeiteZeigen() {
     if (!f || !s) return;
     const titel = f.querySelector('#arbeitsSeiteTitel');
     const neu = s.projekt ? s.name : t('Seite: {name}', { name: s.name });   // Projekt: seine Ueberschrift („Alt-Texte – Projekt: …“)
-    // Das Projekt ist der Grundzustand des Fensters auf seiner Seite: kein „Seite schließen“, dafuer „Mitverfolgen“
-    f.querySelector('#arbeitsSeiteZu').hidden = !!s.projekt;
-    f.querySelector('#arbeitsFolgen').hidden = !s.projekt;
+    // Das eigene Projekt ist der Grundzustand des Fensters auf seiner Seite: kein „Seite schließen“; ein anderes Projekt oder die Ablage,
+    // in die der Agent gefahren ist, schliesst man wieder (zurueck zum eigenen). „Mitverfolgen“, wo die Kamera fahren kann.
+    const eigenes = !!(s.projekt && String(s.projektId) === String(window._inkluagentProjectId));
+    f.querySelector('#arbeitsSeiteZu').hidden = eigenes;
+    f.querySelector('#arbeitsFolgen').hidden = !(s.projekt || s.vomAgenten);
     if (titel.textContent !== neu) titel.textContent = neu;
     f.querySelector('#arbeitsSeiteRahmen').title = t('Arbeitsfenster: {name}', { name: s.name });
     f.querySelector('#arbeitsSeite').hidden = false;
@@ -766,7 +768,8 @@ function inkluagentSeiteZeigen() {
 // sie wieder (und jeder Versuch erneuerte die Zeit, die 2-Stunden-Grenze lief nie ab).
 function inkluagentSeiteMerken() {
     const s = window._arbeitsSeite;
-    if (!s || s.projekt) return;   // das Projekt oeffnet das Fenster auf seiner Seite ohnehin (Live-Fenster)
+    // das Projekt oeffnet das Fenster auf seiner Seite ohnehin, und was der Agent geoeffnet hat, gehoert zu seinem Lauf (Live-Fenster)
+    if (!s || s.projekt || s.vomAgenten) return;
     try {
         sessionStorage.setItem('inkluagent.fenster', JSON.stringify({ pfad: s.pfad, name: s.name, zeit: Date.now(),
             seite: inkluagentPfadOhne(window.location.pathname + window.location.search, ['agent', 'hin']) }));
@@ -803,11 +806,16 @@ function inkluagentRahmenGeladen(rahmen) {
         const vorher = window._arbeitsSeite || {};
         const fokus = !!vorher.fokus || document.activeElement === rahmen;
         const name = projekt ? ((h1 && h1.textContent.trim()) || vorher.name || titel) : (titel || vorher.name || loc.pathname);
-        window._arbeitsSeite = { offen: true, pfad: pfad, name: name, fokus: false, hin: false, projekt: projekt };
+        // Live-Fenster (17.10.2026): ob der Agent die Seite geoeffnet hat (fremdes Projekt, Ablage fuer ein Ergebnis) — nur dann folgt
+        // die Kamera darin weiter; geht der Nutzer im Rahmen auf eine andere Seite, ist es seine
+        const gleich = vorher.pfad && inkluagentPfadOhne(vorher.pfad, ['ansicht']).split('#')[0] === inkluagentPfadOhne(pfad, ['ansicht']).split('#')[0];
+        window._arbeitsSeite = { offen: true, pfad: pfad, name: name, fokus: false, hin: false, projekt: projekt,
+                                 projektId: projekt ? new URLSearchParams(loc.search).get('projekt') : null,
+                                 ablage: /^\/ablage\/?$/.test(loc.pathname), vomAgenten: !!(vorher.vomAgenten && gleich) };
         inkluagentSeiteZeigen();
         inkluagentSeiteMerken();
         if (fokus) inkluagentRahmenFokus(rahmen, !!(vorher.fokus && vorher.hin), loc.hash);
-        if (projekt) inkluagentProjektGeladen(win, doc);
+        inkluagentBuehneGeladen(win, doc);   // Seiten mit Bühne (Projekt, Ablage): Kamerafahrt, Titel, Mithoeren
         return;
     }
     if (eigene && /^\/login(\/|$)/.test(loc.pathname)) { inkluagentZurAnmeldung(); return; }   // 2. Anmeldung
@@ -908,88 +916,78 @@ function inkluagentFensterWiederherstellen() {
     if (gross === '1' && !inkluagentFensterSchmal()) inkluagentFensterGross(true);
 }
 
-// ─── Das Projekt selbst im Arbeitsfenster: Live-Fenster mit Kamerafahrt, Mitsehen und Mithoeren (Steve 16.10.2026) ───
+// ─── Das Projekt selbst im Arbeitsfenster: Live-Fenster mit Kamerafahrt, Mitsehen und Mithoeren (Steve 16./17.10.2026) ───
 // „Dass man wirklich einen Livestream sieht, wo er gerade ist — den Live-Ausschnitt von der Oberflaeche.“ Auf einer Projektseite zeigt das
-// Arbeitsfenster DIESES Projekt als echte, bedienbare Oberflaeche (eingebettet: ohne Seitenleiste und ohne eigenen Agenten, siehe
-// inkluagentBinden). Die Seite haelt sich selbst aktuell (sie fragt waehrend eines Laufs nach); nach Antworten mit Aenderungen zeichnet
-// diese Seite sie neu (inkluagentRahmenNachziehen). Der Agent steuert das Fenster: bei jedem Schritt mit Ziel und bei jedem Bild eines
-// Laufs im Hintergrund faehrt es zur Karte — ohne Neuladen, wenn sie in der Ansicht steht, sonst laedt es die passende Ansicht
-// (?ansicht=, ohne Fokus und ohne Ansage, die gemerkte Ansicht des Projekts bleibt) —, markiert sie und zeigt mit der Hand darauf.
-// Nie, solange der Fokus im Fenster steht, und nicht mehr, sobald man dort selbst etwas tut („Mitverfolgen“ springt dann auf aus; ein
-// Druck folgt wieder). Darunter „So klingt diese Stelle“: wie ein Screenreader sie ungefaehr vorliest, mit „Anhören“.
-// Fuer alle Werkzeuge gleich: PDF, Word, Grafik, Web und Uebersetzen nutzen dieselbe Projektseite. Zustand im window (_arbeitsFolge*).
+// Arbeitsfenster ein Projekt als echte, bedienbare Oberflaeche (eingebettet: ohne Seitenleiste und ohne eigenen Agenten, siehe
+// inkluagentInit). Der Agent steuert das Fenster: bei jedem Schritt mit Ziel und bei jeder Stelle eines Laufs im Hintergrund faehrt es dorthin
+// — in sein Projekt (auch ein anderes eigenes Projekt, in dem er gerade arbeitet) oder in die Ablage (das fertige Ergebnis).
+// FESTE SCHNITTSTELLE (17.10.2026): diese Seite spricht mit der Seite im Fenster NUR ueber window.InkluBuehne (dashboard.js
+// buehneEinrichten; jede Seite sagt selbst, wie sie ihre Stellen findet: app.html, ablage.html): zeigen, neuZeichnen, beobachten. Sie greift
+// nicht in Kennungen oder Funktionen der Seite — Ansichten duerfen sich aendern, ohne die Kamerafahrt zu brechen.
+// Nie, solange der Fokus im Fenster steht, und nicht mehr, sobald man dort selbst etwas tut („Mitverfolgen“ springt dann auf aus; ein Druck
+// folgt wieder). Darunter „So klingt diese Stelle“: wie ein Screenreader die Stelle ungefaehr vorliest, mit „Anhören“.
+// Zustand im window (_arbeitsSeite: offen, projekt, projektId, ablage, vomAgenten …; _arbeitsFolgeZiel).
 function inkluagentProjektFensterAn() {
     return inkluagentChatstilAktiv() && window._inkluagentProjectId != null && !window.GUEST_MODE;
 }
-function inkluagentProjektPfad(ansicht) {
-    return '/app?projekt=' + encodeURIComponent(window._inkluagentProjectId) + (ansicht ? '&ansicht=' + encodeURIComponent(ansicht) : '');
+function inkluagentZahl(x) {
+    return /^\d+$/.test(String(x == null ? '' : x)) ? String(x) : null;
 }
+function inkluagentProjektPfad(projektId, ansicht) {
+    return '/app?projekt=' + encodeURIComponent(projektId) + (ansicht ? '&ansicht=' + encodeURIComponent(ansicht) : '');
+}
+// Ein Projekt gilt im Rahmen als Erfolg, wenn es das Projekt dieser Seite ist oder das, das diese Seite gerade dort geoeffnet hat
+// (der Agent arbeitet darin). Ein anderes Projekt, das jemand im Rahmen per Link oeffnet, wechselt wie bisher die ganze Seite.
 function inkluagentIstProjektImRahmen(loc) {
-    if (!loc || !/^\/app\/?$/.test(loc.pathname) || window._inkluagentProjectId == null) return false;
-    return new URLSearchParams(loc.search).get('projekt') === String(window._inkluagentProjectId);
+    if (!loc || !/^\/app\/?$/.test(loc.pathname)) return false;
+    const p = new URLSearchParams(loc.search).get('projekt');
+    if (!p) return false;
+    const s = window._arbeitsSeite;
+    return (window._inkluagentProjectId != null && p === String(window._inkluagentProjectId)) || !!(s && s.projekt && String(s.projektId) === p);
 }
-function inkluagentProjektImFenster(ansicht) {
+function inkluagentProjektImFenster(projektId, ansicht) {
     const f = document.getElementById('arbeitsfenster');
-    if (!f || !inkluagentProjektFensterAn()) return;
+    const pid = inkluagentZahl(projektId == null ? window._inkluagentProjectId : projektId);
+    // Das eigene Projekt nur auf einer Projektseite; ein Projekt, in dem der Agent arbeitet, auf jeder Seite mit Agent (auch der Startseite)
+    const darf = projektId == null ? inkluagentProjektFensterAn() : (inkluagentChatstilAktiv() && !window.GUEST_MODE);
+    if (!f || !pid || !darf) return;
+    const eigenes = String(window._inkluagentProjectId) === pid;
     const h1 = document.querySelector('#main h1');
-    window._arbeitsSeite = { offen: true, projekt: true, pfad: inkluagentProjektPfad(ansicht), name: h1 ? h1.textContent.trim() : '',
-                             fokus: false, hin: false, laedt: true };
+    window._arbeitsSeite = { offen: true, projekt: true, projektId: pid, pfad: inkluagentProjektPfad(pid, ansicht),
+                             name: eigenes && h1 ? h1.textContent.trim() : t('Projekt'), fokus: false, hin: false, laedt: true,
+                             vomAgenten: !eigenes };
     f.querySelector('#arbeitsSeiteMeldung').hidden = true;
     inkluagentSeiteZeigen();
-    inkluagentRahmenLaden(f.querySelector('#arbeitsSeiteRahmen'), inkluagentProjektPfad(ansicht) + '&eingebettet=1');
+    inkluagentRahmenLaden(f.querySelector('#arbeitsSeiteRahmen'), inkluagentProjektPfad(pid, ansicht) + '&eingebettet=1');
 }
-// Das Projekt ist im Fenster geladen: wer dort selbst etwas tut, wird nicht mehr weggezogen; ein Ziel, das waehrend des Ladens kam,
-// wird jetzt gezeigt (die Karten baut die Seite erst nach ihrem Abruf — darum mit Warten)
-function inkluagentProjektGeladen(win, doc) {
+// Die Ablage im Fenster, weil ein Lauf dort sein Ergebnis abgelegt hat (Umwandeln, Herunterladen)
+function inkluagentAblageImFenster() {
+    if (!inkluagentChatstilAktiv()) return;
+    inkluagentSeiteImFenster('/ablage', t('Meine Ablage'), true);
+    if (window._arbeitsSeite) Object.assign(window._arbeitsSeite, { ablage: true, vomAgenten: true });
+}
+// Eine Seite mit Bühne ist im Fenster geladen: wer dort selbst etwas tut, wird nicht mehr weggezogen; Titel und „So klingt diese Stelle“
+// kommen von der Bühne (beobachten); eine Stelle, die waehrend des Ladens kam, wird jetzt gezeigt
+function inkluagentBuehneGeladen(win, doc) {
     if (!doc || doc._inkluagentSelbst) return;
     doc._inkluagentSelbst = true;
     ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(art => doc.addEventListener(art, e => {
         if (e.isTrusted) inkluagentFolgenSetzen(false, false);
     }, { passive: true }));
-    // Die Projektansichten zeichnen ihren Hauptbereich neu (Abruf, Nachfragen waehrend eines Laufs, Ansichtswechsel darin): danach
-    // Ueberschrift, Markierung und „So klingt diese Stelle“ nachziehen — gebuendelt
-    const main = doc.getElementById('main');
-    if (main && win && typeof win.MutationObserver === 'function') {
-        let wartet = false;
-        new win.MutationObserver(() => {
-            if (wartet) return;
-            wartet = true;
-            setTimeout(() => { wartet = false; inkluagentRahmenNeuGezeichnet(win, doc); }, 150);
-        }).observe(main, { childList: true, subtree: true });
-    }
-    inkluagentRahmenNeuGezeichnet(win, doc);
-    const ziel = window._arbeitsFolgeZiel;
-    if (ziel) inkluagentFensterFolgen(ziel, true);
+    const b = win && win.InkluBuehne;
+    if (b && typeof b.beobachten === 'function') b.beobachten(d => inkluagentBuehneGemeldet(doc, d));
+    if (window._arbeitsFolgeZiel) inkluagentFensterFolgen(window._arbeitsFolgeZiel);
 }
-function inkluagentRahmenNeuGezeichnet(win, doc) {
+// Die Bühne meldet: Titel der Seite (beim Projekt seine Ueberschrift mit Ansicht, „Alt-Texte – Projekt: …“) und was an der Stelle steht
+function inkluagentBuehneGemeldet(doc, d) {
     const s = window._arbeitsSeite;
     const rahmen = document.getElementById('arbeitsSeiteRahmen');
-    if (!s || !s.projekt || !rahmen) return;
+    if (!s || !d || !rahmen) return;
     try { if (rahmen.contentDocument !== doc) return; } catch (e) { return; }   // inzwischen eine andere Seite im Fenster
-    const h1 = doc.querySelector('#main h1');
-    const name = h1 ? h1.textContent.trim() : '';
-    if (name && name !== s.name) { s.name = name; inkluagentSeiteZeigen(); }
-    // Die Markierung der Stelle ueberlebt ein Neuzeichnen (sonst verschwand sie nach Sekundenbruchteilen)
-    const m = window._arbeitsMarke;
-    const el = m ? doc.getElementById(m.id) : null;
-    const k = el && (el.closest('section.image-review, details, .card') || el);
-    if (k && Date.now() < m.bis && !k.classList.contains('inkluagent-hin-ziel')) {
-        for (let d = el.closest('details'); d; d = d.parentElement ? d.parentElement.closest('details') : null) d.open = true;
-        k.classList.add('inkluagent-hin-ziel');
-        setTimeout(() => k.classList.remove('inkluagent-hin-ziel'), Math.max(0, m.bis - Date.now()));
-    }
-    // Im Blick halten: ein Neuzeichnen setzt die Seite oft nach oben — solange „Mitverfolgen“ an ist und niemand im Fenster arbeitet,
-    // steht die verfolgte Karte danach wieder mittig (sofort, ohne Fahrt)
-    if (k && Date.now() < m.halten && inkluagentFolgenAn() && document.activeElement !== rahmen) {
-        const r = k.getBoundingClientRect();
-        if (r.bottom < 0 || r.top > win.innerHeight) inkluagentRahmenRollen(win, k, false);
-    }
-    // Mitsehen: was jetzt in der Karte der verfolgten Stelle steht (ein Lauf fuellt den Alt-Text waehrenddessen)
-    const ziel = window._arbeitsFolgeZiel;
-    const karte = ziel ? inkluagentZielKarte(ziel) : null;
-    const feld = karte && karte.feld ? doc.getElementById(karte.feld) : null;
-    if (feld && /^alttext_/.test(karte.feld)) inkluagentMithoerenSetzen({ art: 'bild', alt: feld.value });
-    else if (feld) inkluagentMithoerenSetzen({ art: 'feld', info: feld.value });
+    if (s.projekt && d.titel && d.titel !== s.name) { s.name = d.titel; inkluagentSeiteZeigen(); }
+    const g = d.gelesen;
+    if (g && g.art === 'bild') inkluagentMithoerenSetzen({ art: 'bild', alt: g.text });
+    else if (g && g.art === 'feld') inkluagentMithoerenSetzen({ art: 'feld', info: g.text });
 }
 function inkluagentFolgenAn() {
     const k = document.getElementById('arbeitsFolgen');
@@ -1002,89 +1000,39 @@ function inkluagentFolgenSetzen(an, selbst) {
     k.setAttribute('aria-pressed', an ? 'true' : 'false');
     if (an && selbst && window._arbeitsFolgeZiel) inkluagentFensterFolgen(window._arbeitsFolgeZiel);
 }
-// Welche Karte gehoert zum Ziel, und in welcher Ansicht steht sie
-function inkluagentZielKarte(ziel) {
-    const zahl = x => (typeof x === 'number' && isFinite(x)) ? Math.floor(x) : (/^\d+$/.test(String(x || '')) ? Number(x) : null);
-    if (ziel.art === 'bild') {
-        let id = zahl(ziel.image_id);
-        if (id == null) { const m = /^\/api\/images\/(\d+)\//.exec(String(ziel.bild_url || '')); id = m ? Number(m[1]) : null; }
-        return id == null ? null : { id: 'img_heading_' + id, feld: 'alttext_' + id, ansicht: 'alttexte' };
-    }
-    if (ziel.art === 'feld') {
-        const id = zahl(ziel.feld_id);
-        return id == null ? null : { id: 'feld_heading_' + id, feld: 'quickinfo_' + id, ansicht: 'quickinfos' };
-    }
-    if (ziel.art === 'dokument') {
-        const id = zahl(ziel.document_id);
-        return id == null ? null : { id: 'doc_heading_' + id, ansicht: 'dokument' };
-    }
-    return null;
-}
-// Kamerafahrt zur Stelle. nachLaden: das Fenster hat gerade (die passende Ansicht) geladen — dann nicht noch einmal laden.
-function inkluagentFensterFolgen(ziel, nachLaden) {
-    if (!ziel || !inkluagentProjektFensterAn()) return;
-    const karte = inkluagentZielKarte(ziel);
-    if (!karte) return;
-    window._arbeitsFolgeZiel = ziel;
-    const s = window._arbeitsSeite;
-    if (!inkluagentFolgenAn() || !s || !s.projekt || s.laedt) return;   // eine andere Seite ist offen, oder sie laedt noch
+// Kamerafahrt zu einer Stelle (vom Server: art bild|feld|dokument|seite|ausgabe, Kennungen, project_id, ansicht). Erst die richtige
+// Seite ins Fenster (sein Projekt, die Ablage), dann zeigt die Bühne die Stelle. Eine Seite, die der Nutzer selbst geoeffnet hat
+// (Einstellungen …), bleibt stehen.
+function inkluagentFensterFolgen(stelle) {
+    if (!stelle || typeof stelle !== 'object' || !inkluagentChatstilAktiv()) return;
+    window._arbeitsFolgeZiel = stelle;
+    if (!inkluagentFolgenAn()) return;
     const rahmen = document.getElementById('arbeitsSeiteRahmen');
     if (!rahmen || document.activeElement === rahmen) return;            // wer im Fenster arbeitet, wird nicht weggezogen
-    let win = null;
-    let doc = null;
-    try { win = rahmen.contentWindow; doc = rahmen.contentDocument; } catch (e) { return; }
-    if (!win || !doc) return;
-    const lauf = window._arbeitsFolgeLauf = (window._arbeitsFolgeLauf || 0) + 1;
-    let versuche = nachLaden ? 32 : 1;   // nach dem Laden bis zu 8 s auf die Karte warten (die Seite baut sie nach ihrem Abruf)
-    // Steht das Fenster in einer anderen Ansicht (die Adresse der Seite traegt sie: ?ansicht=), die passende laden — einmal; Werkzeuge
-    // ohne Ansichten (Grafik, Web) haben keine in der Adresse
-    let aktuell = null;
-    try { aktuell = new URLSearchParams(doc.location.search).get('ansicht'); } catch (e) { aktuell = null; }
-    if (!nachLaden && karte.ansicht && aktuell && aktuell !== karte.ansicht) { inkluagentProjektImFenster(karte.ansicht); return; }
-    const suchen = () => {
-        if (lauf !== window._arbeitsFolgeLauf || document.activeElement === rahmen) return;
-        const el = doc.getElementById(karte.id);
-        if (el) { inkluagentImRahmenZeigen(win, doc, el, karte); return; }
-        if (--versuche > 0) { setTimeout(suchen, 250); return; }
-        // nicht in dieser Ansicht: die passende laden (einmal) — danach zeigt inkluagentProjektGeladen die Stelle
-        if (!nachLaden && karte.ansicht) inkluagentProjektImFenster(karte.ansicht);
-    };
-    suchen();
+    const s = window._arbeitsSeite;
+    if (s && s.offen && !s.projekt && !s.vomAgenten) return;             // eine selbst geoeffnete Seite bleibt
+    if (stelle.art === 'ausgabe') {
+        if (!inkluagentZahl(stelle.ausgabe_id)) return;
+        if (!(s && s.ablage)) { inkluagentAblageImFenster(); return; }   // nach dem Laden zeigt inkluagentBuehneGeladen die Stelle
+    } else {
+        const pid = inkluagentZahl(stelle.project_id != null ? stelle.project_id : window._inkluagentProjectId);
+        if (!pid) return;
+        if (!(s && s.projekt && String(s.projektId) === pid)) { inkluagentProjektImFenster(pid, stelle.ansicht); return; }
+    }
+    if (s && s.laedt) return;
+    let b = null;
+    try { b = rahmen.contentWindow && rahmen.contentWindow.InkluBuehne; } catch (e) { return; }
+    if (!b || typeof b.zeigen !== 'function') return;
+    Promise.resolve(b.zeigen(stelle, { weich: true })).catch(() => {});
 }
-// Im Rahmen: zugeklappte Karten oeffnen, nur den Rahmen rollen (scrollIntoView rollte auch diese Seite), Karte markieren, Hand
-function inkluagentImRahmenZeigen(win, doc, el, karte) {
-    for (let d = el.closest('details'); d; d = d.parentElement ? d.parentElement.closest('details') : null) d.open = true;
-    const ziel = el.closest('section.image-review, details, .card') || el;
-    const ruhig = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    inkluagentRahmenRollen(win, ziel, !ruhig);
-    ziel.classList.add('inkluagent-hin-ziel');
-    clearTimeout(ziel._inkluagentHin);
-    ziel._inkluagentHin = setTimeout(() => ziel.classList.remove('inkluagent-hin-ziel'), 3500);
-    // Marke 3,5 s; im Blick halten 30 s — beides ueberlebt ein Neuzeichnen der Seite (inkluagentRahmenNeuGezeichnet)
-    window._arbeitsMarke = { id: el.id, bis: Date.now() + 3500, halten: Date.now() + 30000 };
-    if (typeof win.zeigeHand === 'function') setTimeout(() => { try { win.zeigeHand(el); } catch (e) { /* nur Schmuck */ } }, ruhig ? 0 : 500);
-    // Mitsehen und Mithoeren: was in der Karte steht, so wie ein Screenreader es ungefaehr vorliest
-    const feld = karte && karte.feld ? doc.getElementById(karte.feld) : null;
-    if (feld && /^alttext_/.test(karte.feld)) inkluagentMithoerenSetzen({ art: 'bild', alt: feld.value });
-    else if (feld) inkluagentMithoerenSetzen({ art: 'feld', info: feld.value });
-}
-// Nur den Rahmen rollen, die Karte mittig (scrollIntoView rollte auch die Seite draussen); weich nur ohne „Bewegung reduzieren“
-function inkluagentRahmenRollen(win, karte, weich) {
-    const r = karte.getBoundingClientRect();
-    const oben = Math.max(0, (win.scrollY || 0) + r.top - Math.max(12, (win.innerHeight - Math.min(r.height, win.innerHeight)) / 2));
-    try { win.scrollTo({ top: oben, behavior: weich ? 'smooth' : 'auto' }); } catch (e) { win.scrollTo(0, oben); }
-}
-// Nach Aenderungen des Agenten: die Projektseite im Fenster neu zeichnen und wieder zur Stelle — nicht, solange man dort arbeitet
+// Nach Aenderungen des Agenten: die Seite im Fenster neu zeichnen — nicht, solange man dort arbeitet. Die Bühne haelt Stelle und Marke.
 function inkluagentRahmenNachziehen() {
     const s = window._arbeitsSeite;
     const rahmen = document.getElementById('arbeitsSeiteRahmen');
-    if (!s || !s.projekt || s.laedt || !rahmen || document.activeElement === rahmen) return;
-    let win = null;
-    try { win = rahmen.contentWindow; } catch (e) { return; }
-    if (!win || typeof win.showProject !== 'function' || win._inkluagentProjectId == null) return;
-    Promise.resolve(win.showProject(win._inkluagentProjectId, true)).then(() => {
-        if (window._arbeitsFolgeZiel) inkluagentFensterFolgen(window._arbeitsFolgeZiel, true);
-    }).catch(() => {});
+    if (!s || !s.offen || s.laedt || !rahmen || document.activeElement === rahmen) return;
+    let b = null;
+    try { b = rahmen.contentWindow && rahmen.contentWindow.InkluBuehne; } catch (e) { return; }
+    if (b && typeof b.neuZeichnen === 'function') Promise.resolve(b.neuZeichnen()).catch(() => {});
 }
 // „So klingt diese Stelle“: vereinfacht, wie VoiceOver oder NVDA es sagen — Bild mit Alternativtext, Formularfeld mit Quickinfo
 function inkluagentMithoerenSetzen(stelle) {
@@ -1313,8 +1261,11 @@ function inkluagentArbeitsZeigen() {
     if (!f) return;
     const z = inkluagentArbeitsZustand();
     // Live-Fenster (16.10.2026): tut der Agent selbst nichts, aber ein Lauf arbeitet im Hintergrund, sagt der Stand das
-    const lv = window._arbeitsLive && window._arbeitsLive.laeuft;
-    const hinten = (!z.laeuft && lv) ? t('Arbeitet im Hintergrund: Alt-Texte, {n} von {m} fertig.', { n: lv.fertig, m: lv.gesamt }) : '';
+    const ll = window._arbeitsLive && window._arbeitsLive.lauf;
+    const lv = ll && ll.laeuft ? ll : null;
+    const hinten = (!z.laeuft && lv) ? (lv.gesamt > 1
+        ? t('Arbeitet im Hintergrund: {was}, {n} von {m} fertig.', { was: inkluagentLiveWas(lv.art === 'auftrag' && lv.station ? lv.station : lv.art), n: lv.fertig, m: lv.gesamt })
+        : t('Arbeitet im Hintergrund: {was}.', { was: inkluagentLiveWas(lv.art === 'auftrag' && lv.station ? lv.station : lv.art) })) : '';
     inkluagentTextSetzen(f.querySelector('#arbeitsStand'), hinten || z.stand || t('Bereit. Schreib dem InkluAgent, was er erledigen soll.'));
     f.dataset.zustand = z.laeuft ? 'laeuft' : (lv ? 'hinten' : 'ruhe');   // nur fuer den Punkt vor dem Stand (style.css)
     f.querySelector('#arbeitsFortschritt').hidden = !z.laeuft;
@@ -1523,7 +1474,7 @@ function inkluagentArbeitsStart(text, behalten) {
     const z = inkluagentArbeitsZustand();
     z.laeuft = true;
     if (!behalten) { z.schritte = []; z.notiz = ''; z.ergebnis = null; }
-    if (!behalten && !(window._arbeitsLive && window._arbeitsLive.laeuft)) {
+    if (!behalten && !(window._arbeitsLive && window._arbeitsLive.lauf && window._arbeitsLive.lauf.laeuft)) {
         window._arbeitsLive = null;
         const lb = document.getElementById('arbeitsLive');
         if (lb) lb.hidden = true;
@@ -1582,13 +1533,15 @@ function inkluagentStandVorlesen() {
     inkluagentLiveTexte().forEach(x => teile.push(x));   // Live-Fenster: was im Hintergrund laeuft und was gerade fertig wurde
     announce(teile.map(x => x.replace(/[.\s]+$/, '')).join('. ') + '.');
 }
-// ─── Live-Fenster (Steve 16.10.2026: „wie einen Livestream im Arbeitsfenster … wenn er einen Alternativtext für die Bilder macht,
-// dass man in dem Moment das Bild eingeblendet sieht“) ───
-// Laeuft ein Alt-Text-Lauf im Hintergrund (nach „Auftrag erteilen“ oder dem Knopf einer Karte), fragt die Seite GET /api/agent/live
-// alle 2,5 Sekunden, solange er laeuft und die Seite sichtbar ist. Gezeigt wird das Bild, an dem er gerade schreibt (Hand und Ring),
-// mit Nummer, Seite und Dokument, darunter der Alt-Text des Bildes davor, sobald er fertig ist (Klang „schritt“ je Bild). Keine
-// Ansagen: VoiceOver bekommt alles mit „Stand vorlesen“ und am Ende die Rueckmeldung des Agenten. Zustand im window
-// (_arbeitsLive = {laeuft, vorher, bild}); auf oberster Ebene nur Funktionen (test_inkluagent_js).
+// ─── Live-Fenster (Steve 16./17.10.2026: „wie einen Livestream im Arbeitsfenster“; „nur das, was der Agent auch an Aufgaben macht“) ───
+// Arbeitet der Agent im Hintergrund (nach „Auftrag erteilen“, dem Knopf einer Karte oder einer Antwort), fragt die Seite GET /api/agent/live
+// alle 2,5 Sekunden, solange etwas laeuft und die Seite sichtbar ist. Der Server liest das Laufbuch (laufbuch.py — jeder Lauf meldet sich
+// dort an: Alt-Texte, Quickinfos, Tagging, Korrektur, Pruefung, Umwandeln, Uebersetzen, Herunterladen, Auftraege mit Stationen; nur
+// Laeufe des Agenten). Gezeigt wird der juengste: Kopfzeile mit Art, Projekt und Fortschritt; die Kamera faehrt zu seiner Stelle (ein Bild,
+// ein Feld, ein Dokument, eine Seite) und am Ende zum Ergebnis (der Eintrag in der Ablage). Je fertigem Stueck ein Tick und — bei Bildern
+// und Feldern — „So klingt diese Stelle“ mit dem neuen Text. Keine Ansagen: VoiceOver bekommt alles mit „Stand vorlesen“ und am Ende die
+// Rueckmeldung des Agenten. Ein neuer Lauf braucht hier nichts — nur eine Art im Laufbuch und eine Ansicht (arbeitsfenster.ANSICHT_JE_LAUF).
+// Zustand im window (_arbeitsLive); auf oberster Ebene nur Funktionen (test_inkluagent_js).
 function inkluagentLiveBeobachten() {
     if (!inkluagentArbeitsfensterAn()) return;
     // Ein Lauf, den die Antwort oder der Knopf gerade erst angestossen hat, steht vielleicht noch nicht beim Server: zweimal nachsehen
@@ -1598,19 +1551,19 @@ function inkluagentLiveBeobachten() {
     const runde = async () => {
         let d = null;
         try {
-            const vorher = window._arbeitsLive && window._arbeitsLive.bild ? window._arbeitsLive.bild.image_id : null;
-            const res = await fetch('/api/agent/live' + (vorher ? '?vorher=' + encodeURIComponent(vorher) : ''));
+            const res = await fetch('/api/agent/live');
             d = res.ok ? await res.json() : null;
         } catch (e) {
             d = null;
         }
         if (d) inkluagentLiveZeigen(d);
-        if (d && d.laeuft) {
+        const laeuft = !!(d && Array.isArray(d.laeufe) && d.laeufe.some(x => x && x.laeuft));
+        if (laeuft) {
             // unsichtbarer Tab: erst wieder fragen, wenn er sichtbar wird
             const weiter = () => setTimeout(runde, 2500);
             if (document.visibilityState === 'hidden') document.addEventListener('visibilitychange', weiter, { once: true });
             else weiter();
-        } else if (d && !d.laeuft && window._arbeitsLiveAnlauf > 0 && !(window._arbeitsLive && window._arbeitsLive.vorher)) {
+        } else if (d && !laeuft && window._arbeitsLiveAnlauf > 0 && !(Array.isArray(d.laeufe) && d.laeufe.length)) {
             window._arbeitsLiveAnlauf--;
             setTimeout(runde, 3000);
         } else {
@@ -1619,75 +1572,92 @@ function inkluagentLiveBeobachten() {
     };
     runde();
 }
+// Was ein Lauf tut, in Worten der Oberflaeche (Art des Laufbuchs; bei Auftraegen die Station)
+function inkluagentLiveWas(art) {
+    const namen = { alt_texte: t('Alt-Texte'), quickinfos: t('Quickinfos'), tagging: t('Tagging'), korrektur: t('Korrektur'),
+                    pruefung: t('Prüfung'), umwandeln: t('In PDF umwandeln'), uebersetzen: t('Übersetzung'), export: t('Herunterladen'),
+                    auftrag: t('Auftrag') };
+    return namen[art] || t('Arbeit');
+}
+// Kopfzeile eines Laufs: „Im Hintergrund: Alt-Texte für „Projekt“, 2 von 3 fertig“ (ohne Zahlen, wenn er nur ein Stueck hat)
+function inkluagentLiveTitel(l) {
+    const was = inkluagentLiveWas(l.art === 'auftrag' && l.station ? l.station : l.art);
+    const projekt = String(l.projekt || '');
+    if (!l.laeuft) return l.ok === false ? t('Im Hintergrund: {was} – hat nicht geklappt', { was: was }) : t('Im Hintergrund: {was} fertig', { was: was });
+    if (l.art === 'auftrag') return t('Im Hintergrund: Auftrag für „{projekt}“, Schritt {n} von {m}: {was}', { projekt: projekt, n: Math.min(l.gesamt, l.fertig + 1), m: l.gesamt, was: was });
+    if (l.gesamt > 1) return t('Im Hintergrund: {was} für „{projekt}“, {n} von {m} fertig', { was: was, projekt: projekt, n: l.fertig, m: l.gesamt });
+    return t('Im Hintergrund: {was} für „{projekt}“', { was: was, projekt: projekt });
+}
+function inkluagentLiveSchluessel(x) {
+    return x ? JSON.stringify([x.art, x.project_id, x.image_id, x.feld_id, x.document_id, x.seite, x.ausgabe_id, x.ansicht]) : '';
+}
 function inkluagentLiveZeigen(d) {
     const box = document.getElementById('arbeitsLive');
     if (!box) return;
     const alt = window._arbeitsLive || {};
-    const l = d.laeuft || null;
-    const neu = { laeuft: l, bild: l && l.bild ? l.bild : null, vorher: alt.vorher || null };
-    // Fertig wurde das Bild, das zuletzt „in Arbeit“ war: sein Alt-Text kommt mit (vorher), auch wenn der Lauf schon zu Ende ist
-    if (d.vorher && alt.bild && d.vorher.image_id === alt.bild.image_id) {
-        neu.vorher = d.vorher;
-        inkluagentKlang('schritt');   // ein Tick je fertigem Bild, wie je erledigtem Schritt
-    }
-    // Ein Bild ist fertig oder der Lauf zu Ende: die echte Oberflaeche im Fenster gleich neu zeichnen — ihr eigenes Nachfragen endet mit
-    // dem Lauf, das letzte Bild stand dort sonst ohne Text (Rauchtest 16.10.2026)
-    if (neu.vorher !== alt.vorher || (alt.laeuft && !l)) inkluagentRahmenNachziehen();
+    const l = (d && Array.isArray(d.laeufe) && d.laeufe[0]) || null;
+    const neu = { lauf: l, nr: l ? l.nr : null, stelle: l ? inkluagentLiveSchluessel(l.stelle) : '', vorher: l ? inkluagentLiveSchluessel(l.vorher) : '' };
     window._arbeitsLive = neu;
-    // Steht das Projekt selbst im Fenster, zeigt dessen echte Oberflaeche Bild und Text; der Block oben bleibt nur Kopfzeile
-    const buehne = !!(window._arbeitsSeite && window._arbeitsSeite.projekt);
+    if (!l) { box.hidden = true; inkluagentArbeitsZeigen(); return; }
+    const derselbe = alt.lauf && alt.nr === l.nr;
+    // Ein Stueck ist fertig (das „vorher“ wechselt): Tick, die echte Oberflaeche im Fenster neu zeichnen, „So klingt diese Stelle“
+    if (derselbe && neu.vorher && neu.vorher !== alt.vorher) { inkluagentKlang('schritt'); inkluagentRahmenNachziehen(); }
+    if (l.vorher && l.vorher.art === 'bild') inkluagentMithoerenSetzen({ art: 'bild', alt: l.vorher.text, status: l.vorher.status });
+    else if (l.vorher && l.vorher.art === 'feld') inkluagentMithoerenSetzen({ art: 'feld', info: l.vorher.text });
+    // Zu Ende: neu zeichnen und zum Ergebnis fahren (die fertige Datei in der Ablage)
+    if (derselbe && alt.lauf.laeuft && !l.laeuft) {
+        inkluagentRahmenNachziehen();
+        if (l.ergebnis) inkluagentFensterFolgen(l.ergebnis);
+    }
+    // Kamerafahrt zur Stelle, wenn sie sich geaendert hat (oder ein neuer Lauf beginnt)
+    if (l.laeuft && l.stelle && (!derselbe || neu.stelle !== alt.stelle)) inkluagentFensterFolgen(l.stelle);
+    // Steht ein Projekt im Fenster, zeigt dessen echte Oberflaeche Bild und Text; der Block oben bleibt nur Kopfzeile. Ohne Buehne
+    // (etwa auf der Startseite) zeigt er das Bild, an dem der Lauf gerade ist.
+    const buehne = !!(window._arbeitsSeite && window._arbeitsSeite.offen && (window._arbeitsSeite.projekt || window._arbeitsSeite.ablage));
     box.classList.toggle('arbeitsfenster-live-kopf', buehne);
-    if (d.vorher && neu.vorher === d.vorher) inkluagentMithoerenSetzen({ art: 'bild', alt: d.vorher.alt, status: d.vorher.status });
-    if (!l && !neu.vorher) { box.hidden = true; inkluagentArbeitsZeigen(); return; }
     box.hidden = false;
-    box.dataset.zustand = l ? 'laeuft' : 'fertig';
-    inkluagentTextSetzen(box.querySelector('#arbeitsLiveTitel'), l
-        ? t('Im Hintergrund: Alt-Texte für „{projekt}“, {n} von {m} fertig', { projekt: String(l.projekt || ''), n: l.fertig, m: l.gesamt })
-        : t('Im Hintergrund: fertig'));
+    box.dataset.zustand = l.laeuft ? 'laeuft' : 'fertig';
+    inkluagentTextSetzen(box.querySelector('#arbeitsLiveTitel'), inkluagentLiveTitel(l));
     const p = box.querySelector('#arbeitsLiveFortschritt');
-    p.hidden = !l;
-    if (l) { p.max = Math.max(1, Number(l.gesamt) || 1); p.value = Math.min(p.max, Number(l.fertig) || 0); }
+    p.hidden = !(l.laeuft && l.gesamt > 1);
+    if (!p.hidden) { p.max = Math.max(1, Number(l.gesamt) || 1); p.value = Math.min(p.max, Number(l.fertig) || 0); }
     const fig = box.querySelector('figure');
     const img = fig.querySelector('img');
     const gut = u => typeof u === 'string' && /^\/api\/images\/\d+\/(file|page-view)$/.test(u);
-    const b = neu.bild;
-    if (b && (gut(b.bild_url) || gut(b.seite_url))) {
+    const b = l.laeuft && l.stelle && l.stelle.art === 'bild' ? l.stelle : null;
+    if (!buehne && b && (gut(b.bild_url) || gut(b.seite_url))) {
         const url = gut(b.bild_url) ? b.bild_url : b.seite_url;
         img.onerror = () => { if (gut(b.seite_url) && img.getAttribute('src') !== b.seite_url) img.src = b.seite_url; else fig.hidden = true; };
         const wechsel = img.getAttribute('src') !== url;
         if (wechsel) img.src = url;
         inkluagentTextSetzen(fig.querySelector('figcaption'), t('In Arbeit: {bild}', { bild: inkluagentLiveBildText(b) }));
         fig.hidden = false;
-        // Die Hand zeigt auf das erste Bild eines Laufs (dashboard.js zeigeHand: nur fuers Auge, nicht bei reduzierter Bewegung; mit
-        // dem Wusch der Klangspur — darum nur einmal, nicht je Bild). Danach zeigt der Ring um das Bild, dass er daran schreibt.
-        if (wechsel && !alt.bild && !buehne && typeof zeigeHand === 'function') zeigeHand(fig);
-        // Steht das Projekt im Fenster, faehrt es zur Karte des Bildes (Kamerafahrt) — dort entsteht der Text in der echten Oberflaeche
-        if (wechsel) inkluagentFensterFolgen({ art: 'bild', image_id: b.image_id, bild_url: b.bild_url });
+        // Die Hand zeigt auf das erste Bild eines Laufs (mit dem Wusch der Klangspur — darum nur einmal, nicht je Bild)
+        if (wechsel && !derselbe && typeof zeigeHand === 'function') zeigeHand(fig);
     } else {
         fig.hidden = true;
     }
-    if (buehne) fig.hidden = true;
     const fertig = box.querySelector('#arbeitsLiveFertig');
-    const v = neu.vorher;
-    const fertigText = v ? (v.status === 'error'
+    const v = l.vorher;
+    const fertigText = (!buehne && v && v.art === 'bild') ? (v.status === 'error'
         ? t('Gerade fertig: {bild} – hat nicht geklappt', { bild: inkluagentLiveBildText(v) })
         : t('Gerade fertig: {bild}', { bild: inkluagentLiveBildText(v) })) : '';
-    if (fertig._stand !== JSON.stringify([fertigText, v && v.alt])) {
-        fertig._stand = JSON.stringify([fertigText, v && v.alt]);
+    if (fertig._stand !== JSON.stringify([fertigText, v && v.text])) {
+        fertig._stand = JSON.stringify([fertigText, v && v.text]);
         fertig.textContent = '';
-        if (v) {
-            const s = document.createElement('strong');
-            s.textContent = fertigText;
-            fertig.appendChild(s);
-            if (v.status !== 'error' && v.alt) {
+        if (fertigText) {
+            const st = document.createElement('strong');
+            st.textContent = fertigText;
+            fertig.appendChild(st);
+            if (v.status !== 'error' && v.text) {
                 const q = document.createElement('span');
                 q.className = 'arbeitsfenster-live-alt';
-                q.textContent = String(v.alt);
+                q.textContent = String(v.text);
                 fertig.appendChild(q);
             }
         }
     }
-    fertig.hidden = !v || buehne;
+    fertig.hidden = !fertigText;
     inkluagentArbeitsZeigen();   // Stand in der Kopfzeile nachziehen
 }
 // „Bild 3 · Seite 2 · Dokument 1: Name“ — wie die Bildunterschrift der Vorschau
@@ -1696,17 +1666,27 @@ function inkluagentLiveBildText(b) {
     const dok = b.dokument ? (b.dokument_nr ? t('Dokument {n}: {name}', { n: b.dokument_nr, name: String(b.dokument) }) : String(b.dokument)) : '';
     return [inkluagentZielText({ art: 'bild', nummer: b.nummer }), b.seite ? t('Seite {n}', { n: b.seite }) : '', dok].filter(Boolean).join(' · ');
 }
-// Fuer „Stand vorlesen“ und die Kopfzeile: was im Hintergrund laeuft und was gerade fertig wurde
+// Eine Stelle in Worten (fuer „Stand vorlesen“): Bild, Feld, Dokument, Seite
+function inkluagentLiveStelleText(x) {
+    if (!x) return '';
+    if (x.art === 'bild') return inkluagentLiveBildText(x);
+    const dok = x.dokument ? (x.dokument_nr ? t('Dokument {n}: {name}', { n: x.dokument_nr, name: String(x.dokument) }) : String(x.dokument)) : '';
+    if (x.art === 'feld') return [inkluagentZielText({ art: 'feld', nummer: x.nummer }), x.seite ? t('Seite {n}', { n: x.seite }) : '', dok].filter(Boolean).join(' · ');
+    if (x.art === 'seite') return [t('Seite {n}', { n: x.seite }), dok].filter(Boolean).join(' · ');
+    return dok;
+}
+// Fuer „Stand vorlesen“ und die Kopfzeile: was im Hintergrund laeuft, wo, und was gerade fertig wurde
 function inkluagentLiveTexte() {
     const lv = window._arbeitsLive;
-    if (!lv) return [];
-    const out = [];
-    const l = lv.laeuft;
-    if (l) out.push(t('Im Hintergrund: Alt-Texte für „{projekt}“, {n} von {m} fertig', { projekt: String(l.projekt || ''), n: l.fertig, m: l.gesamt }));
-    if (l && l.bild) out.push(t('In Arbeit: {bild}', { bild: inkluagentLiveBildText(l.bild) }));
-    const v = lv.vorher;
-    if (v) out.push(v.status === 'error' ? t('Gerade fertig: {bild} – hat nicht geklappt', { bild: inkluagentLiveBildText(v) })
-                                         : t('Gerade fertig: {bild}', { bild: inkluagentLiveBildText(v) }) + (v.alt ? ': ' + String(v.alt) : ''));
+    const l = lv && lv.lauf;
+    if (!l) return [];
+    const out = [inkluagentLiveTitel(l)];
+    const wo = l.laeuft ? inkluagentLiveStelleText(l.stelle) : '';
+    if (wo) out.push(t('In Arbeit: {bild}', { bild: wo }));
+    const v = l.vorher;
+    if (v && v.art === 'bild') out.push(v.status === 'error' ? t('Gerade fertig: {bild} – hat nicht geklappt', { bild: inkluagentLiveBildText(v) })
+                                                            : t('Gerade fertig: {bild}', { bild: inkluagentLiveBildText(v) }) + (v.text ? ': ' + String(v.text) : ''));
+    else if (v && v.art === 'feld' && v.text) out.push(t('Gerade fertig: {bild}', { bild: inkluagentLiveStelleText(v) }) + ': ' + String(v.text));
     return out;
 }
 // Nach dem Knopf einer Karte (Bestaetigung, Formular) ist die Entscheidung gefallen: „Wartet auf dich“ im Arbeitsfenster stimmt nicht

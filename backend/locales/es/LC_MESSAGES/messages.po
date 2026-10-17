@@ -12908,3 +12908,41 @@ msgstr "Campo de formulario, {info}"
 
 msgid "Dieses Feld hat noch keine Quickinfo. Ein Screenreader nennt dann oft nur „Textfeld“."
 msgstr "Este campo todavía no tiene información rápida. Un lector de pantalla suele decir solo «campo de texto»."
+
+# InkluAgent: Live-Fenster mit Laufbuch (17.10.2026)
+msgid "Arbeit"
+msgstr "Trabajo"
+
+msgid "Auftrag"
+msgstr "Encargo"
+
+msgid "In PDF umwandeln"
+msgstr "Convertir a PDF"
+
+#, python-brace-format
+msgid "Arbeitet im Hintergrund: {was}, {n} von {m} fertig."
+msgstr "Trabajando en segundo plano: {was}, {n} de {m} listos."
+
+#, python-brace-format
+msgid "Arbeitet im Hintergrund: {was}."
+msgstr "Trabajando en segundo plano: {was}."
+
+#, python-brace-format
+msgid "Im Hintergrund: Auftrag für „{projekt}“, Schritt {n} von {m}: {was}"
+msgstr "En segundo plano: encargo para «{projekt}», paso {n} de {m}: {was}"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} fertig"
+msgstr "En segundo plano: {was} listo"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} für „{projekt}“"
+msgstr "En segundo plano: {was} para «{projekt}»"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} für „{projekt}“, {n} von {m} fertig"
+msgstr "En segundo plano: {was} para «{projekt}», {n} de {m} listos"
+
+#, python-brace-format
+msgid "Im Hintergrund: {was} – hat nicht geklappt"
+msgstr "En segundo plano: {was} – no ha funcionado"

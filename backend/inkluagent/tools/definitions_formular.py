@@ -156,7 +156,9 @@ class ToolExecutorFormular:
             ergebnis = sicherheit.einzel_vorab(self, name, args)
             if ergebnis is None:
                 try:
-                    ergebnis = handler(args)
+                    import laufbuch
+                    with laufbuch.agent_kontext():   # Laufbuch (17.10.2026): Laeufe dieses Werkzeugs sind Arbeit des Agenten
+                        ergebnis = handler(args)
                 except Exception as e:  # noqa: BLE001
                     log.exception("Werkzeug %s crashte", name)
                     ergebnis = {"ok": False, "error": fehlertext(e, f"Das Werkzeug {name} hat gerade nicht geklappt.")}

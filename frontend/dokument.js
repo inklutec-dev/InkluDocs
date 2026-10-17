@@ -1018,7 +1018,7 @@
         if (!box || !out) { announce(text); return; }
         out.textContent = text;
         box.hidden = false;
-        box.focus();
+        if (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt()) box.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (17.10.2026)
     }
     function meldungSchliessen() {
         const box = document.getElementById('dkLaufMeldung');
@@ -1199,8 +1199,8 @@
                         await showProject(projectId, true);
                         const erster = fertigGeworden.concat(testFertig)[0];
                         const ziel = erster ? document.getElementById('dok_ergebnis_text_' + erster.id) : null;
-                        if (ziel) ziel.focus();
-                        else if (erster && ergebnisMeldung[erster.id]) zeigeMeldung(ergebnisMeldung[erster.id].text);   // Ansicht „Dokument“
+                        if (ziel && (typeof fokusHierErlaubt !== 'function' || fokusHierErlaubt())) ziel.focus();   // im Arbeitsfenster nur, wenn der Fokus schon hier steht (17.10.2026)
+                        else if (!ziel && erster && ergebnisMeldung[erster.id]) zeigeMeldung(ergebnisMeldung[erster.id].text);   // Ansicht „Dokument“
                         if (texte.length) { if (ziel) announce(texte.join(' ')); else zeigeMeldung(texte.join(' ')); }
                         else if (!erster && project.status === 'extracting' && d2.project.status !== 'extracting') announce(t('Dokument gelesen.'));
                         if (!erster) fokusWiederherstellen(fokus);   // Neuaufbau ohne eigenes Fokusziel: Position behalten (A11y-Review)
