@@ -97,10 +97,15 @@ class Vertrag(unittest.TestCase):
 
     def test_arten_wie_das_laufbuch(self):
         arten_finder = set(re.findall(r"s\.art === '([a-z]+)'", self.finder))
-        self.assertEqual(arten_finder, {"bild", "feld", "dokument", "seite"})
+        self.assertEqual(arten_finder, {"bild", "feld", "dokument", "seite", "ansicht"})
         lb = lies(BACKEND, "laufbuch.py")
-        for art in arten_finder | {"ausgabe"}:
+        for art in arten_finder - {"ansicht"} | {"ausgabe"}:
             self.assertIn(f'neu["art"] = "{art}"', lb, art)
+        # „ansicht“ (eine Station ohne einzelne Stelle) setzt der Server selbst; die Stelle ist die Ueberschrift 1 jeder Projektansicht
+        self.assertIn('{"art": "ansicht", "project_id": pid, "ansicht": ansicht}', lies(BACKEND, "inkluagent", "arbeitsfenster.py"))
+        self.assertIn("const kopf = el('projectName');", self.finder)
+        for datei in ("app.html", "formular.js", "uebersetzen.js"):
+            self.assertIn('<h1 id="projectName"', quelle(datei), datei)
         self.assertIn("s.art !== 'ausgabe'", lies(TEMPLATES, "ablage.html"), "die Ablage findet Ergebnisse")
 
     def test_jede_ansicht_gibt_es_in_der_projektseite(self):

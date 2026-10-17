@@ -216,7 +216,7 @@ window.fokusHierErlaubt = fokusHierErlaubt;
 // aufdecken }), finden(stelle) -> { karte, kopf, text, ansicht } | null. Den Rest macht dieser Kern: passende Ansicht (still),
 // Karte aufdecken (zugeklappt, gefiltert, gekuerzt), nur diese Seite rollen, markieren, Hand, nach jedem Neuzeichnen Marke und Lage
 // halten (nicht, solange jemand in dieser Seite arbeitet), und Beobachter benachrichtigen (Titel und Text der Stelle fuer „So klingt
-// diese Stelle“). Stellen kommen vom Server (inkluagent/arbeitsfenster.py): art bild|feld|dokument|seite|ausgabe, Kennungen, ansicht.
+// diese Stelle“). Stellen kommen vom Server (inkluagent/arbeitsfenster.py): art bild|feld|dokument|seite|ausgabe|ansicht, Kennungen, ansicht.
 function buehneEinrichten(seite) {
   if (!imRahmen() || !seite || typeof seite.finden !== 'function') return null;
   const zustand = { stelle: null, bis: 0, halten: 0, hoerer: [], lauf: 0 };

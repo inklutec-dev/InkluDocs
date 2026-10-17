@@ -187,7 +187,8 @@ class Live(unittest.TestCase):
         self.assertEqual((s["art"], s["document_id"], s["dokument"]), ("dokument", self.d, "Jahresbericht (fiktiv).pdf"))
         fremd_p, (fremd_d,) = projekt(nutzer()["id"])
         l.stueck(document_id=fremd_d)
-        self.assertIsNone(self.live()[0]["stelle"], "ein Dokument eines anderen Projekts ist keine Stelle")
+        self.assertEqual(self.live()[0]["stelle"], {"art": "ansicht", "project_id": self.p, "ansicht": "tagging"},
+                         "ein Dokument eines anderen Projekts ist keine Stelle: nur die Ansicht des eigenen Projekts")
 
     def test_ergebnis_nur_aus_der_eigenen_ablage(self):
         mein = ausgabe(self.u["id"], self.p)
@@ -206,8 +207,13 @@ class Live(unittest.TestCase):
         l.station_setzen("tagging")
         x = self.live()[0]
         self.assertEqual((x["art"], x["station"], x["was"], x["ansicht"]), ("auftrag", "tagging", "tagging", "tagging"))
+        self.assertEqual(x["stelle"], {"art": "ansicht", "project_id": self.p, "ansicht": "tagging"},
+                         "eine Station ohne einzelne Stelle: die Ansicht selbst (das Fenster wechselt Station fuer Station)")
         l.station_setzen("alt_texte")
         self.assertEqual(self.live()[0]["ansicht"], "alttexte")
+        self.assertEqual(self.live()[0]["stelle"]["ansicht"], "alttexte")
+        l.beenden()
+        self.assertIsNone(self.live()[0]["stelle"], "beendet: keine Stelle mehr")
 
     def test_nur_agent_nur_eigene_projekte_hoechstens_drei(self):
         laufbuch.beginnen("export", user_id=self.u["id"], project_id=self.p)          # Oberflaeche: nicht gestreamt
@@ -429,9 +435,12 @@ class Oberflaeche(unittest.TestCase):
 
     def test_kamera_folgt_der_stelle_und_am_ende_dem_ergebnis(self):
         self.assertIn("if (l.laeuft && l.stelle && (!derselbe || neu.stelle !== alt.stelle)) inkluagentFensterFolgen(l.stelle);", self.zeigen)
-        ende = self.zeigen[self.zeigen.index("if (derselbe && alt.lauf.laeuft && !l.laeuft) {"):]
-        self.assertIn("inkluagentRahmenNachziehen();\n        if (l.ergebnis) inkluagentFensterFolgen(l.ergebnis);", ende)
+        # auch ein Lauf, der zwischen zwei Nachfragen begann und endete (Umwandeln im Werkzeug) — nicht beim ersten Blick, nur einmal
+        ende = self.zeigen[self.zeigen.index("if ((derselbe && alt.lauf.laeuft && !l.laeuft) || (!derselbe && !erster && !l.laeuft && l.ergebnis)) {"):]
+        self.assertIn("inkluagentRahmenNachziehen();\n        if (l.ergebnis && window._arbeitsLiveGefolgt !== l.nr) "
+                      "{ window._arbeitsLiveGefolgt = l.nr; inkluagentFensterFolgen(l.ergebnis); }", ende)
         self.assertIn("const derselbe = alt.lauf && alt.nr === l.nr;", self.zeigen)
+        self.assertIn("const erster = !('lauf' in alt);", self.zeigen)
 
     def test_stand_vorlesen_und_kopfzeile(self):
         self.assertIn("inkluagentLiveTexte().forEach(x => teile.push(x));", funktion(self.js, "function inkluagentStandVorlesen("))

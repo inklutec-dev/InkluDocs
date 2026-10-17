@@ -859,6 +859,13 @@ notwendig ist“. Darum drei feste Teile, die jeder Lauf und jede Ansicht nur be
    die Hand, hält sie 30 s im Blick und meldet nach jedem Neuzeichnen Titel und den Text der Stelle („So klingt diese Stelle“).
    Die Seite im Fenster sagt nichts an, solange niemand in ihr arbeitet (`announce` im Rahmen ohne Fokus).
 
+**Station ohne einzelne Stelle:** Ein Auftrag zwischen zwei Läufen, ein Werkzeug für das ganze Projekt (z. B. In PDF umwandeln ohne
+Dokument) hat keine Karte — dann ist die Stelle die Ansicht selbst (`{"art": "ansicht", "project_id", "ansicht"}`, im Stream von
+`ziel()`, im Live-Stand von `live()`); die Bühne wechselt in die Ansicht und zeigt ihre Überschrift 1 (`#projectName`). So geht das
+Fenster auch bei einer Kette Station für Station mit. **Ergebnis:** Endet ein Lauf mit einer Datei in der Ablage, fährt das Fenster
+dorthin — auch wenn der Lauf zwischen zwei Nachfragen begann und endete (Umwandeln und Herunterladen laufen im Werkzeug selbst), aber
+nicht beim ersten Blick nach dem Laden der Seite und jedes Ergebnis nur einmal.
+
 **Fenster folgt dem Agenten** (`inkluagentFensterFolgen`): in ein anderes EIGENES Projekt (auch von der Startseite aus; nie im
 Gastzugang) und für ein fertiges Ergebnis in „Meine Ablage“. Eine Seite, die jemand selbst im Fenster geöffnet hat, bleibt; wer im
 Fenster arbeitet, wird nicht weggezogen; „Mitverfolgen“ aus hält alles an. Was der Agent geöffnet hat (`vomAgenten`), schließt man mit

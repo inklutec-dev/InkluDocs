@@ -106,6 +106,13 @@ class Ziel(unittest.TestCase):
         self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"document_id": self.d1}, "pruefung_starten")["ansicht"], "abschluss")
         self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {"document_id": self.d1}, "barrierefrei_machen")["ansicht"], "tagging")
         self.assertNotIn("ansicht", arbeitsfenster.ziel(self.u["id"], self.p, {"document_id": self.d1}, "gibt_es_nicht"))
+        # ein Werkzeug fuer das ganze Projekt (17.10.2026): die Ansicht selbst ist das Ziel — nur im eigenen Projekt, nur ohne Kennung
+        self.assertEqual(arbeitsfenster.ziel(self.u["id"], self.p, {}, "konvertiere_zu_pdfua"),
+                         {"art": "ansicht", "project_id": self.p, "ansicht": "dokument"})
+        self.assertIsNone(arbeitsfenster.ziel(self.u["id"], self.p, {}, "gibt_es_nicht"))
+        self.assertIsNone(arbeitsfenster.ziel(self.fremd["id"], self.p, {}, "konvertiere_zu_pdfua"), "fremdes Projekt")
+        self.assertIsNone(arbeitsfenster.ziel(self.u["id"], self.p, {"image_id": 999999}, "generate_alt_text"), "falsche Kennung")
+        self.assertIsNone(arbeitsfenster.ziel(self.u["id"], None, {}, "konvertiere_zu_pdfua"))
         gueltig = {"dokument", "tagging", "alttexte", "quickinfos", "uebersetzung", "abschluss"}
         self.assertLessEqual(set(arbeitsfenster.ANSICHT_JE_WERKZEUG.values()), gueltig)
         self.assertLessEqual(set(arbeitsfenster.ANSICHT_JE_LAUF.values()), gueltig)

@@ -75,12 +75,31 @@ def ziel(user_id: int, project_id: Optional[int], args, werkzeug: Optional[str] 
     """Woran ein Werkzeugaufruf arbeitet, oder None — mit der Ansicht, in der man es sieht (ANSICHT_JE_WERKZEUG) und dem Projekt.
     Nie eine Ausnahme (der Stream darf daran nicht scheitern)."""
     z = _ziel_ohne_ansicht(user_id, project_id, args)
+    a = ANSICHT_JE_WERKZEUG.get(werkzeug or "")
     if z is not None:
         z["project_id"] = int(project_id)
-        a = ANSICHT_JE_WERKZEUG.get(werkzeug or "")
         if a:
             z["ansicht"] = a
+    elif a and isinstance(args, dict) and not any(k in args for k in ("image_id", "feld_id", "document_id")) \
+            and _eigenes_projekt(user_id, project_id):
+        # Ein Werkzeug fuer das ganze Projekt (z. B. In PDF umwandeln ohne Dokument): die Ansicht selbst ist die Stelle
+        z = {"art": "ansicht", "project_id": int(project_id), "ansicht": a}
     return z
+
+
+def _eigenes_projekt(user_id: int, project_id) -> bool:
+    if not _zahl(project_id):
+        return False
+    try:
+        from database import get_db
+        conn = get_db()
+        try:
+            return conn.execute("SELECT 1 FROM projects WHERE id = ? AND user_id = ?", (int(project_id), user_id)).fetchone() is not None
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001
+        log.exception("Arbeitsfenster: Projekt nicht pruefbar (ignoriert)")
+        return False
 
 
 def _ziel_ohne_ansicht(user_id: int, project_id: Optional[int], args) -> Optional[dict]:
@@ -217,7 +236,9 @@ def live(user_id: int, eintraege: Optional[list] = None, alt_text_von=None) -> d
                     "project_id": pid, "projekt": (p["name"] or "")[:_NAME_MAX],
                     "gesamt": int(e.get("gesamt") or 0), "fertig": int(e.get("fertig") or 0),
                     "laeuft": bool(e.get("laeuft")), "ok": e.get("ok"),
-                    "stelle": _stelle(conn, user_id, pid, e.get("stueck"), ansicht),
+                    "stelle": _stelle(conn, user_id, pid, e.get("stueck"), ansicht) or (
+                        # eine Station ohne einzelne Stelle (Auftrag, Umwandeln des ganzen Projekts): die Ansicht selbst
+                        {"art": "ansicht", "project_id": pid, "ansicht": ansicht} if e.get("laeuft") and ansicht else None),
                     "vorher": _stelle(conn, user_id, pid, e.get("vorher"), ansicht, alt_text_von, mit_text=True),
                     "ergebnis": ergebnis_})
         finally:

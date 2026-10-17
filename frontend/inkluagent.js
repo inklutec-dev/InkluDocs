@@ -1600,14 +1600,17 @@ function inkluagentLiveZeigen(d) {
     window._arbeitsLive = neu;
     if (!l) { box.hidden = true; inkluagentArbeitsZeigen(); return; }
     const derselbe = alt.lauf && alt.nr === l.nr;
+    const erster = !('lauf' in alt);   // erster Blick nach dem Laden der Seite
     // Ein Stueck ist fertig (das „vorher“ wechselt): Tick, die echte Oberflaeche im Fenster neu zeichnen, „So klingt diese Stelle“
     if (derselbe && neu.vorher && neu.vorher !== alt.vorher) { inkluagentKlang('schritt'); inkluagentRahmenNachziehen(); }
     if (l.vorher && l.vorher.art === 'bild') inkluagentMithoerenSetzen({ art: 'bild', alt: l.vorher.text, status: l.vorher.status });
     else if (l.vorher && l.vorher.art === 'feld') inkluagentMithoerenSetzen({ art: 'feld', info: l.vorher.text });
-    // Zu Ende: neu zeichnen und zum Ergebnis fahren (die fertige Datei in der Ablage)
-    if (derselbe && alt.lauf.laeuft && !l.laeuft) {
+    // Zu Ende: neu zeichnen und zum Ergebnis fahren (die fertige Datei in der Ablage). Auch ein Lauf, der zwischen zwei Nachfragen
+    // begann und endete (Umwandeln, Herunterladen: der Agent wartet im Werkzeug darauf) — nicht beim ersten Blick nach dem Laden
+    // der Seite (das waere ein alter Lauf), jedes Ergebnis nur einmal
+    if ((derselbe && alt.lauf.laeuft && !l.laeuft) || (!derselbe && !erster && !l.laeuft && l.ergebnis)) {
         inkluagentRahmenNachziehen();
-        if (l.ergebnis) inkluagentFensterFolgen(l.ergebnis);
+        if (l.ergebnis && window._arbeitsLiveGefolgt !== l.nr) { window._arbeitsLiveGefolgt = l.nr; inkluagentFensterFolgen(l.ergebnis); }
     }
     // Kamerafahrt zur Stelle, wenn sie sich geaendert hat (oder ein neuer Lauf beginnt)
     if (l.laeuft && l.stelle && (!derselbe || neu.stelle !== alt.stelle)) inkluagentFensterFolgen(l.stelle);

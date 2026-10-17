@@ -4570,6 +4570,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             return { ansicht: 'quickinfos', kopf: el('feld_heading_' + s.feld_id), karte: el('feldcard_' + s.feld_id),
                      text: el('quickinfo_' + s.feld_id) };
         }
+        if (s.art === 'ansicht') {   // Station ohne einzelne Stelle (Auftrag, ganzes Projekt): die Ansicht selbst, oben an ihrer Überschrift
+            const kopf = el('projectName');
+            return { ansicht: s.ansicht || null, kopf: kopf, karte: kopf, text: null };
+        }
         if ((s.art === 'dokument' || s.art === 'seite') && zahl(s.document_id)) {
             const d = s.document_id;
             const soll = s.ansicht || 'dokument';
