@@ -66,7 +66,9 @@ Laden, `inkluagentBereichAufbauen()`, ist das Letzte im Kern, und der Kern lädt
 und keine in anderen Dateien (klassische Skripte teilen sich den globalen Bereich — eine zweite gleichnamige überschriebe still die
 erste); jede Datei `frontend/inkluagent*.js` steht in der Liste; jeder Teil nennt `window.I18N` im Kopf (sonst liest `check_i18n.py`
 seine Texte nicht). Neuer Teil = Datei + Eintrag in `TEILE`. Cache: alle Teile zählen in die Version an `?v=` (i18n.py,
-tests/test_asset_version.py — vorher fehlte das Agenten-Skript dort ganz, ebenso hochladefeld.js und klang.js).
+tests/test_asset_version.py — vorher fehlte das Agenten-Skript dort ganz, ebenso hochladefeld.js und klang.js). Im Browser:
+`tests/e2e/agent_teile_probe.py` (ohne KI) — auf Startseite, Ablage, Einstellungen und Projektseite, in Agenten- und manueller
+Ansicht: alle Teile genau einmal in Listenreihenfolge, aus jedem Teil eine Funktion da, Bereich aufgebaut, keine JavaScript-Fehler.
 
 ## Was für alle Werkzeuge gilt (einmal ändern, überall wirksam)
 
