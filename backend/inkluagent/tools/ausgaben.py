@@ -559,7 +559,7 @@ def konvertiere_zu_pdfua(project_id: int, user_id: int, document_id: Optional[in
                     "zusammen: bestanden oder welche Bereiche Hinweise haben, und was der Nutzer dagegen tun kann. Unter deiner "
                     "Antwort steht ausserdem der Nachweis mit dem Anfang der Hörprobe zum Anhören."),
     }, "anhang": _anhang("pdfua", r, project_id),
-        "nachweis": _nachweis.aus_ausgabe(user_id, r["ausgabe_id"], project.get("alt_language"))}
+        "nachweis": _nachweis.aus_ausgabe(user_id, r["ausgabe_id"])}
 
 
 def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = None,
@@ -702,7 +702,7 @@ def ausgabe_in_projekt(project_id: Optional[int], user_id: int, ausgabe_id: int,
             if r.get("ok") and r.get("nachweis"):
                 nachweise.append(r["nachweis"])
         if not nachweise:   # Pruefdatei ging nicht (Tags, Dienst): der Nachweis aus dem Umwandeln
-            n = _nachweis.aus_ausgabe(user_id, int(ausgabe_id), None)
+            n = _nachweis.aus_ausgabe(user_id, int(ausgabe_id))
             nachweise = [n] if n else []
         out["nachweis"] = nachweise
         result["pruefung"] = [{"pdf_ua": {True: "bestanden", False: "nicht bestanden"}.get(n.get("bestanden"), "nicht geprüft"),

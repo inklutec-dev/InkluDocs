@@ -33,7 +33,7 @@ FRONTEND = next(k for k in (os.path.normpath(os.path.join(BACKEND, "..", "fronte
                 if os.path.isdir(k))
 _N = [0]
 
-HOER = ["Dokumenttitel: Vereinsbrief (fiktiv)", "Sprache: Deutsch", "Überschrift Ebene 1: Einladung (fiktiv)",
+HOER = ["Dokumenttitel: Vereinsbrief (fiktiv)", "Sprache: Deutsch (de-DE)", "Überschrift Ebene 1: Einladung (fiktiv)",
         "Absatz: Liebe Mitglieder, wir laden euch ein (fiktiv).", "Grafik: Ein Haus mit rotem Dach (fiktiv)."] + \
        [f"Absatz: Zeile {i} (fiktiv)." for i in range(10)]
 
@@ -78,13 +78,22 @@ class AusDerAblage(unittest.TestCase):
 
     def test_umwandeln_bestanden_mit_hoerprobe_ohne_sprachzeile(self):
         aid = eintrag(self.uid, [dok()])
-        n = nachweis.aus_ausgabe(self.uid, aid, "de-DE")
+        n = nachweis.aus_ausgabe(self.uid, aid)
         self.assertEqual((n["art"], n["quelle"], n["ausgabe_id"], n["bestanden"], n["befunde"], n["bilder"], n["alt_texte"]),
                          ("nachweis", "ablage", aid, True, 0, 3, 3))
         self.assertEqual(n["hoerprobe"][:3], [HOER[0], HOER[2], HOER[3]], "Titel bleibt, die Sprachzeile steht als lang an der Karte")
         self.assertEqual(len(n["hoerprobe"]), nachweis.HOERPROBE_ZEILEN, "nur der Anfang")
         self.assertEqual((n["lang"], n["ablage_url"], n["dokument"], n["hoerprobe_dokument"]),
                          ("de", f"/ablage#ausgabe-{aid}", "Einladung (fiktiv)", None))
+
+    def test_sprache_aus_der_datei_nicht_aus_dem_projekt(self):
+        # Rauchtest 17.10.2026: das Testdokument erklaerte Englisch — die Karte las mit deutscher Stimme vor
+        for zeile, lang in (("Sprache: Englisch (en-US)", "en"), ("Language: English (en-US)", "en"), ("Sprache: xx-YY", "xx"),
+                            ("Sprache: nicht gesetzt", None), ("Sprache: Deutsch", None)):
+            aid = eintrag(self.uid, [dok(hoer=["Dokumenttitel: X (fiktiv)", zeile, "Absatz: Text (fiktiv)"])])
+            n = nachweis.aus_ausgabe(self.uid, aid)
+            self.assertEqual(n["lang"], lang, zeile)
+            self.assertEqual(n["hoerprobe"], ["Dokumenttitel: X (fiktiv)", "Absatz: Text (fiktiv)"], "die Sprachzeile steht als lang an der Karte")
 
     def test_mehrere_dokumente_und_befunde(self):
         aid = eintrag(self.uid, [dok(name="A (fiktiv)", hoer=[]), dok(False, 2, bilder=2, alt=1, name="B (fiktiv)")])
@@ -197,7 +206,7 @@ class Anschluss(unittest.TestCase):
         self.assertLess(q.index("for a in nachweis.herausnehmen(result):"), q.index("content_text = json.dumps(result"))
 
     def test_die_drei_werkzeuge_liefern_ihn(self):
-        self.assertIn('"nachweis": _nachweis.aus_ausgabe(user_id, r["ausgabe_id"], project.get("alt_language"))',
+        self.assertIn('"nachweis": _nachweis.aus_ausgabe(user_id, r["ausgabe_id"])}',
                       lies(BACKEND, "inkluagent", "tools", "ausgaben.py"))
         self.assertIn('return {"ok": True, "result": result, "anhang": anhang, "nachweis": nachweise}',
                       lies(BACKEND, "inkluagent", "tools", "pdf.py"))

@@ -31,11 +31,18 @@ def _hochladen():
     return importlib.import_module("inkluagent.hochladen")
 
 
+def _ohne_endung(name: str) -> str:
+    """„brief.docx“ -> „brief“ (Dokumentnamen der Herkunft sind oft Dateinamen; die PDF ist keine .docx mehr)."""
+    name = (name or "").strip()
+    basis, endung = os.path.splitext(name)
+    return basis.strip() if endung.lower() in (".docx", ".doc", ".pdf", ".zip") and basis.strip() else name
+
+
 def projektname(row, art: str, _=None) -> str:
     """Name des neuen Projekts: Dokument bzw. Projekt der Herkunft, bei einer PDF mit dem Zusatz, was es ist."""
     _ = _ or (lambda s: s)
-    basis = ((row["dokument_name"] or "").strip() or (row["projekt_name"] or "").strip()
-             or os.path.splitext(row["dateiname"] or "")[0].strip() or _("Aus der Ablage"))
+    basis = (_ohne_endung(row["dokument_name"] or "") or (row["projekt_name"] or "").strip()
+             or _ohne_endung(row["dateiname"] or "") or _("Aus der Ablage"))
     return (_("{name} (barrierefreie PDF)").format(name=basis) if art == "pdf" else basis)[:120]
 
 
@@ -129,11 +136,11 @@ async def uebernehmen(user: dict, ausgabe_id: int, project_id: Optional[int] = N
             h._namen_setzen(ziel, uid, projektname(row, art, _))
             h._zaehlen(uid, h._tag())
     # Das Dokument heisst wie in der Herkunft, nicht wie die Datei („inkludocs_….pdf“) — bei einer Datei, ohne eigenen Namen
-    if len(liste) == 1 and doks and (row["dokument_name"] or "").strip():
+    if len(liste) == 1 and doks and _ohne_endung(row["dokument_name"] or ""):
         conn = m.get_db()
         try:
             conn.execute("UPDATE documents SET display_name = ? WHERE id = ? AND (display_name IS NULL OR display_name = '')",
-                         (row["dokument_name"].strip()[:200], doks[0]))
+                         (_ohne_endung(row["dokument_name"])[:200], doks[0]))
             conn.commit()
         finally:
             conn.close()

@@ -93,6 +93,7 @@ def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt, nachweis=False,
     check(f"{name}: fiktives Word-Dokument hochgeladen", bool(pid), (r.status, r.text()[:200]))
     neue_ausgaben = set()
     neue_projekte: list = []
+    fehler_vorher = fehler
     try:
         if not pid:
             return
@@ -160,6 +161,9 @@ def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt, nachweis=False,
         nachher = {a["id"]: a for a in (pg.request.get(B + "/api/ausgaben").json().get("ausgaben") or [])}
         neue_ausgaben = set(nachher) - pdf_vorher
         print(f"  Neue Ablage-Einträge: {[(i, nachher[i].get('dateiname')) for i in sorted(neue_ausgaben)]}")
+        for i in sorted(neue_ausgaben):   # das veraPDF-Urteil der Datei selbst (Umwandeln bzw. Herunterladen)
+            print(f"    Ablage {i}: bestanden={nachher[i].get('bestanden')} hinweise={nachher[i].get('hinweise')} — "
+                  f"{str(nachher[i].get('zusammenfassung') or '')[:120]}")
         pfad = pg.evaluate("() => { const d = document.getElementById('arbeitsSeiteRahmen').contentDocument; return d ? d.location.pathname : ''; }")
         if endpunkt[1] is None:           # endet anderswo (Fall C: im neuen Projekt, unten geprueft)
             pass
@@ -201,7 +205,9 @@ def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt, nachweis=False,
                 check(f"{name}: das Fenster folgte ins neue Projekt bis zur Barrierefreiheitsprüfung",
                       f"{neu}:abschluss" in stationen and stationen[-1].startswith(f"{neu}:"), stationen)
     finally:
-        if os.environ.get("BEHALTEN"):   # zum Nachsehen (Fehlersuche): nichts loeschen, nur nennen
+        # zum Nachsehen: auf Wunsch (BEHALTEN) und von selbst, wenn in diesem Fall etwas fehlte — ein seltener Fehler soll nicht mit
+        # seinen Dateien verschwinden (17.10.2026: „nicht bestanden, 1 von 2“ einmal in fuenf Laeufen, Dateien schon geloescht)
+        if os.environ.get("BEHALTEN") or fehler > fehler_vorher:
             print(f"  BEHALTEN: Projekte {[pid] + neue_projekte}, Ablage {sorted(neue_ausgaben)}")
             return
         if pid:
@@ -238,7 +244,9 @@ with sync_playwright() as p:
             fall(pg, "C", "Vereinsbrief Bruecke (fiktiv)",
                  "Mach dieses Word-Dokument bitte komplett fertig, als einen Auftrag: zuerst die Alt-Texte für alle Bilder, dann in "
                  "eine barrierefreie PDF umwandeln, und die PDF dann in ein PDF-Projekt laden und dort prüfen.",
-                 erwartet=("alt_texte", "umwandeln", "uebernehmen", "pruefung"), verboten=("tagging", "uebersetzen", "korrektur", "export"),
+                 # „In ein Projekt laden“ dauert oft nur Sekunden und faellt zwischen zwei Nachfragen des Live-Fensters (alle 2,5 s);
+                 # dass das Fenster ins neue Projekt ging, prueft neues_projekt — eine Mindest-Verweildauer je Station ist vorgemerkt
+                 erwartet=("alt_texte", "umwandeln", "pruefung"), verboten=("tagging", "uebersetzen", "korrektur", "export"),
                  endpunkt=("/app?dokument", None), nachweis=True, neues_projekt=True)
         check("Keine JavaScript-Fehler", not js, js)
     finally:

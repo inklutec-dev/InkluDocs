@@ -16,6 +16,7 @@ from __future__ import annotations
 import importlib
 import json
 import logging
+import re
 from typing import Optional
 
 log = logging.getLogger(__name__)
@@ -52,8 +53,19 @@ def _sprache(lang) -> Optional[str]:
     return lang if lang.isalpha() and len(lang) == 2 else None
 
 
-def aus_ausgabe(user_id: int, ausgabe_id: int, lang: Optional[str] = None) -> Optional[dict]:
-    """Nachweis zu einem Eintrag in Meine Ablage — None, wenn es ihn für dieses Konto nicht gibt oder er nichts Geprüftes enthält."""
+def _sprache_aus_zeile(zeile) -> Optional[str]:
+    """Die Dokumentsprache aus der Sprachzeile der Word-Hörprobe („Sprache: Englisch (en-US)“, in jeder Oberflächensprache; ein
+    unbekanntes Kürzel steht ohne Namen) — None, wenn keine gesetzt ist („Sprache: nicht gesetzt“)."""
+    wert = str(zeile or "").split(":", 1)[-1].strip()
+    m = re.search(r"\(([^()]*)\)\s*$", wert)
+    code = (m.group(1) if m else wert).strip()
+    return code[:2].lower() if re.fullmatch(r"[A-Za-z]{2}(?:[-_][A-Za-z0-9]{2,8})*", code) else None
+
+
+def aus_ausgabe(user_id: int, ausgabe_id: int) -> Optional[dict]:
+    """Nachweis zu einem Eintrag in Meine Ablage — None, wenn es ihn für dieses Konto nicht gibt oder er nichts Geprüftes enthält.
+    Die Sprache der Karte ist die der DATEI (Kopfzeile der Hörprobe), nicht die des Projekts: ein Screenreader liest mit der Sprache,
+    die das Dokument erklärt (Rauchtest 17.10.2026: ein Testdokument erklärte Englisch, die Karte sagte Deutsch)."""
     try:
         m = _main()
         row = m._ausgabe_row(int(user_id), int(ausgabe_id))
@@ -69,7 +81,9 @@ def aus_ausgabe(user_id: int, ausgabe_id: int, lang: Optional[str] = None) -> Op
         mit_bildern = [d for d in bericht if d.get("bilder") is not None]
         erst = next((d for d in bericht if d.get("hoerprobe")), None)
         hp = list((erst or {}).get("hoerprobe") or [])
+        lang = None
         if row["art"] == "pdfua" and len(hp) > 1:
+            lang = _sprache_aus_zeile(hp[1])
             hp = hp[:1] + hp[2:]   # Word-Hörprobe: Zeile 0 Titel, Zeile 1 Sprache (steht als lang an der Karte)
         return {"art": "nachweis", "quelle": "ablage", "ausgabe_id": int(row["id"]),
                 "dokument": str(a.get("dokument") or a.get("projekt") or "")[:200], "dokumente": len(bericht),
@@ -78,7 +92,7 @@ def aus_ausgabe(user_id: int, ausgabe_id: int, lang: Optional[str] = None) -> Op
                 "alt_texte": sum(int(d.get("alt_texte") or 0) for d in mit_bildern) if mit_bildern else None,
                 "hoerprobe": _zeilen(hp),
                 "hoerprobe_dokument": (str(erst.get("dokument") or "")[:200] if erst and len(bericht) > 1 else None),
-                "lang": _sprache(lang), "ablage_url": f"/ablage#ausgabe-{int(row['id'])}"}
+                "lang": lang, "ablage_url": f"/ablage#ausgabe-{int(row['id'])}"}
     except Exception:  # noqa: BLE001
         log.exception("Nachweis zur Ausgabe %s nicht gebaut (ignoriert)", ausgabe_id)
         return None

@@ -577,7 +577,7 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
               {"art": "pdf", "dateiname": dateiname, "download_url": download_url, "label": ("zip" if ist_zip else "pdf")})
     # Nachweis (17.10.2026, inkluagent/nachweis.py): veraPDF der Eintraege in der Ablage (bei einem ZIP je Dokument, hoechstens drei)
     ids = [ausgabe_id] if ausgabe_id else (erg.get("ausgabe_ids") or [])
-    nachweise = [n for n in (_nachweis.aus_ausgabe(user_id, i, project.get("alt_language")) for i in ids[:3] if i) if n]
+    nachweise = [n for n in (_nachweis.aus_ausgabe(user_id, i) for i in ids[:3] if i) if n]
     return {"ok": True, "result": result, "anhang": anhang, "nachweis": nachweise}
 
 
