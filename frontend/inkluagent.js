@@ -1610,10 +1610,15 @@ function inkluagentLiveZeigen(d) {
     else if (l.vorher && l.vorher.art === 'feld') inkluagentMithoerenSetzen({ art: 'feld', info: l.vorher.text });
     // Zu Ende: neu zeichnen und zum Ergebnis fahren (die fertige Datei in der Ablage). Auch ein Lauf, der zwischen zwei Nachfragen
     // begann und endete (Umwandeln, Herunterladen: der Agent wartet im Werkzeug darauf) — nicht beim ersten Blick nach dem Laden
-    // der Seite (das waere ein alter Lauf), jedes Ergebnis nur einmal
-    if ((derselbe && alt.lauf.laeuft && !l.laeuft) || (!derselbe && !erster && !l.laeuft && l.ergebnis)) {
+    // der Seite (das waere ein alter Lauf), jedes Ende nur einmal. Ohne Datei in der Ablage (Word herunterladen ohne ABLAGE_WORD)
+    // zeigt ein so kurzer Lauf wenigstens seine Station: die Ansicht, in der man ihn sieht
+    if ((derselbe && alt.lauf.laeuft && !l.laeuft) || (!derselbe && !erster && !l.laeuft)) {
         inkluagentRahmenNachziehen();
-        if (l.ergebnis && window._arbeitsLiveGefolgt !== l.nr) { window._arbeitsLiveGefolgt = l.nr; inkluagentFensterFolgen(l.ergebnis); }
+        if (window._arbeitsLiveGefolgt !== l.nr) {
+            window._arbeitsLiveGefolgt = l.nr;
+            if (l.ergebnis) inkluagentFensterFolgen(l.ergebnis);
+            else if (!derselbe && l.ansicht && l.project_id != null) inkluagentFensterFolgen({ art: 'ansicht', project_id: l.project_id, ansicht: l.ansicht });
+        }
     }
     // Kamerafahrt zur Stelle, wenn sie sich geaendert hat (oder ein neuer Lauf beginnt)
     if (l.laeuft && l.stelle && (!derselbe || neu.stelle !== alt.stelle)) inkluagentFensterFolgen(l.stelle);

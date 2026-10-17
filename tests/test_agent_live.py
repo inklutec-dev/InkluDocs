@@ -436,9 +436,12 @@ class Oberflaeche(unittest.TestCase):
     def test_kamera_folgt_der_stelle_und_am_ende_dem_ergebnis(self):
         self.assertIn("if (l.laeuft && l.stelle && (!derselbe || neu.stelle !== alt.stelle)) inkluagentFensterFolgen(l.stelle);", self.zeigen)
         # auch ein Lauf, der zwischen zwei Nachfragen begann und endete (Umwandeln im Werkzeug) — nicht beim ersten Blick, nur einmal
-        ende = self.zeigen[self.zeigen.index("if ((derselbe && alt.lauf.laeuft && !l.laeuft) || (!derselbe && !erster && !l.laeuft && l.ergebnis)) {"):]
-        self.assertIn("inkluagentRahmenNachziehen();\n        if (l.ergebnis && window._arbeitsLiveGefolgt !== l.nr) "
-                      "{ window._arbeitsLiveGefolgt = l.nr; inkluagentFensterFolgen(l.ergebnis); }", ende)
+        ende = self.zeigen[self.zeigen.index("if ((derselbe && alt.lauf.laeuft && !l.laeuft) || (!derselbe && !erster && !l.laeuft)) {"):]
+        self.assertIn("inkluagentRahmenNachziehen();\n        if (window._arbeitsLiveGefolgt !== l.nr) {\n"
+                      "            window._arbeitsLiveGefolgt = l.nr;\n            if (l.ergebnis) inkluagentFensterFolgen(l.ergebnis);", ende)
+        # Rauchtest 17.10.2026 (Word herunterladen ohne Ablage, ein Schritt von Sekunden): wenigstens die Station zeigen
+        self.assertIn("else if (!derselbe && l.ansicht && l.project_id != null) inkluagentFensterFolgen({ art: 'ansicht', "
+                      "project_id: l.project_id, ansicht: l.ansicht });", ende)
         self.assertIn("const derselbe = alt.lauf && alt.nr === l.nr;", self.zeigen)
         self.assertIn("const erster = !('lauf' in alt);", self.zeigen)
 
