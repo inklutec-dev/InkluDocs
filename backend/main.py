@@ -10658,6 +10658,18 @@ def _ausgaben_des_projekts(user_id: int, project_id: int) -> list[dict]:
     return [_ausgabe_dict(r) for r in rows]
 
 
+def _ausgaben_des_kontos(user_id: int, hoechstens: int = 50) -> list[dict]:
+    """Die ganze Ablage des Kontos ueber alle Projekte (neueste zuerst), ohne Berichte — fuer den InkluAgent, der kreuz und quer
+    arbeitet (Steve 17.10.2026)."""
+    conn = get_db()
+    try:
+        rows = conn.execute(_ABLAGE_SELECT + " WHERE a.user_id = ? ORDER BY a.created_at DESC, a.id DESC LIMIT ?",
+                            (user_id, int(hoechstens))).fetchall()
+    finally:
+        conn.close()
+    return [_ausgabe_dict(r) for r in rows]
+
+
 @app.get("/api/ausgaben")
 async def ausgaben_liste(projekt: Optional[int] = None, user: dict = Depends(get_current_user)):
     _ablage_dateien_einsammeln(user["id"])
@@ -10764,22 +10776,6 @@ async def ausgabe_loeschen(ausgabe_id: int, user: dict = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
     _ablage_eintrag_weg(user["id"], r)
     return {"ok": True}
-
-
-@app.post("/api/ausgaben/{ausgabe_id}/in-projekt")
-async def ausgabe_in_projekt(ausgabe_id: int, request: Request, user: dict = Depends(get_current_user)):
-    """„In ein Projekt laden“ (Steve 17.10.2026, ablage_projekt.py): die Datei des Eintrags in ein neues Projekt oder — mit
-    {"project_id": n} — als weiteres Dokument in ein eigenes Projekt derselben Art. Derselbe Weg wie Hochladen, kostenlos."""
-    try:
-        daten = await request.json()
-    except Exception:  # noqa: BLE001 — ohne Inhalt: neues Projekt
-        daten = {}
-    pid = daten.get("project_id") if isinstance(daten, dict) else None
-    if pid is not None and (isinstance(pid, bool) or not str(pid).isdigit()):
-        raise HTTPException(status_code=422, detail="project_id muss eine ganze Zahl sein")
-    import ablage_projekt
-    return await ablage_projekt.uebernehmen(user, ausgabe_id, int(pid) if pid is not None else None, request,
-                                            get_gettext(resolve_ui_language(request)))
 
 
 # ─── QUICKINFO-WERKZEUG (27.08.2026): eigener Router, eigene Tabellen ────────

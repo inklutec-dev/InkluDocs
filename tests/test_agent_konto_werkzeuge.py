@@ -85,7 +85,8 @@ class Schalter(unittest.TestCase):
         self.assertFalse(r["ok"], "ohne Schalter fuehrt der Executor nichts Aenderndes aus")
         with AN:
             defs, _e, system = konto.werkzeugsatz(1)
-        self.assertEqual(len(defs), 8)
+        self.assertEqual({d["name"] for d in defs}, {d["name"] for d in konto.TOOL_DEFINITIONS_KONTO + konto.TOOL_DEFINITIONS_KONTO_AENDERN})
+        self.assertIn("ausgabe_in_projekt", {d["name"] for d in defs}, "aus der Ablage in ein Projekt (17.10.2026): aendernd")
         self.assertIn("Was du hier außerdem ändern kannst", system)
         self.assertIn("NUR der Knopf löscht", system)
         self.assertNotIn("bestaetigt", str([d["input_schema"] for d in konto.TOOL_DEFINITIONS_KONTO_AENDERN]),

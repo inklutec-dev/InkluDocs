@@ -12648,23 +12648,11 @@ msgstr "I baggrunden: {was} – lykkedes ikke"
 msgid "In ein Projekt laden"
 msgstr "Indlæs i et projekt"
 
-msgid "Ziel"
-msgstr "Mål"
 
-msgid "Neues PDF-Projekt"
-msgstr "Nyt PDF-projekt"
 
-msgid "Neues Word-Projekt"
-msgstr "Nyt Word-projekt"
 
-msgid "Laden"
-msgstr "Indlæs"
 
-msgid "Geladen. Das Projekt wird geöffnet."
-msgstr "Indlæst. Projektet åbnes."
 
-msgid "Laden fehlgeschlagen."
-msgstr "Indlæsning mislykkedes."
 
 #, python-brace-format
 msgid "{name} (barrierefreie PDF)"

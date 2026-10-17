@@ -94,14 +94,17 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
         "name": "liste_ausgaben",
         "description": (
             "Alle fertigen Ausgaben dieses Projekts (barrierefreie PDFs, Word-Dateien) mit Datum, Prüfstand und "
-            "Verfügbarkeit der Datei — die Ablage. Keine Args."
+            "Verfügbarkeit der Datei — die Ablage. Mit alle_projekte=true die ganze Ablage des Kontos über alle Projekte."
         ),
-        "input_schema": {"type": "object", "properties": {}, "required": []},
+        "input_schema": {"type": "object", "properties": {
+            "alle_projekte": {"type": "boolean", "description": "true: die Ablage aller Projekte des Kontos (höchstens 50)."},
+        }, "required": []},
     },
     {
         "name": "lies_ausgabe",
         "description": (
-            "Liest zu einer Ausgabe (ausgabe_id aus liste_ausgaben oder konvertiere_zu_pdfua) den Bericht: "
+            "Liest zu einer Ausgabe der Ablage (ausgabe_id aus liste_ausgaben oder konvertiere_zu_pdfua, auch aus einem "
+            "anderen Projekt) den Bericht: "
             "teil=bericht (Prüfung je Bereich in Klartext + Prüfbericht des Word-Dokuments), teil=pruefbericht "
             "(nur Word-Prüfbericht), teil=hoerprobe (vollständige Hörprobe, Zeile für Zeile), teil=alles."
         ),
@@ -113,8 +116,9 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
     {
         "name": "ausgabe_in_projekt",
         "description": (
-            "Lädt eine Ausgabe aus der Ablage (ausgabe_id aus liste_ausgaben oder konvertiere_zu_pdfua) in ein Projekt — wie der "
-            "Knopf „In ein Projekt laden“ in Meine Ablage, kostenlos. Ohne ziel_projekt_id in ein NEUES Projekt (eine barrierefreie "
+            "Lädt eine Ausgabe aus der Ablage (ausgabe_id aus liste_ausgaben oder konvertiere_zu_pdfua, auch aus einem anderen "
+            "Projekt) in ein Projekt, kostenlos — von Hand wäre das Herunterladen und im Zielprojekt „Dokumente hinzufügen“. Nur auf "
+            "Wunsch des Nutzers. Ohne ziel_projekt_id in ein NEUES Projekt (eine barrierefreie "
             "PDF wird ein PDF-Projekt, eine Word-Datei ein Word-Projekt); mit ziel_projekt_id als weiteres Dokument in ein "
             "vorhandenes eigenes Projekt derselben Art. Nimm es, wenn der Nutzer mit dem Ergebnis weiterarbeiten will, z. B. die "
             "fertige PDF prüfen, Quickinfos ergänzen oder neu taggen. Ein anderes Projekt öffnet sich nach deiner Antwort, dort "

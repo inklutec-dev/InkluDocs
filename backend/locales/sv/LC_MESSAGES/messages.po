@@ -12523,23 +12523,11 @@ msgstr "I bakgrunden: {was} – det gick inte"
 msgid "In ein Projekt laden"
 msgstr "Läs in i ett projekt"
 
-msgid "Ziel"
-msgstr "Mål"
 
-msgid "Neues PDF-Projekt"
-msgstr "Nytt PDF-projekt"
 
-msgid "Neues Word-Projekt"
-msgstr "Nytt Word-projekt"
 
-msgid "Laden"
-msgstr "Läs in"
 
-msgid "Geladen. Das Projekt wird geöffnet."
-msgstr "Inläst. Projektet öppnas."
 
-msgid "Laden fehlgeschlagen."
-msgstr "Det gick inte att läsa in."
 
 #, python-brace-format
 msgid "{name} (barrierefreie PDF)"

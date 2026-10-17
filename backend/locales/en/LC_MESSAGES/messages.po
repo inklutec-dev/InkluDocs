@@ -12949,23 +12949,11 @@ msgstr "In the background: {was} – did not work"
 msgid "In ein Projekt laden"
 msgstr "Load into a project"
 
-msgid "Ziel"
-msgstr "Destination"
 
-msgid "Neues PDF-Projekt"
-msgstr "New PDF project"
 
-msgid "Neues Word-Projekt"
-msgstr "New Word project"
 
-msgid "Laden"
-msgstr "Load"
 
-msgid "Geladen. Das Projekt wird geöffnet."
-msgstr "Loaded. Opening the project."
 
-msgid "Laden fehlgeschlagen."
-msgstr "Loading failed."
 
 #, python-brace-format
 msgid "{name} (barrierefreie PDF)"

@@ -1,10 +1,11 @@
-"""Aus der Ablage in ein Projekt (Steve 17.10.2026, backend/ablage_projekt.py): Knopf „In ein Projekt laden“ in Meine Ablage
-(POST /api/ausgaben/{id}/in-projekt) und Werkzeug ausgabe_in_projekt des InkluAgent — EINE Funktion für beide Wege.
+"""Aus der Ablage in ein Projekt (Steve 17.10.2026, backend/ablage_projekt.py): Werkzeug ausgabe_in_projekt des InkluAgent —
+kreuz und quer, in Projekten und auf Seiten ohne Projekt; einen Knopf in der Ablage gibt es bewusst nicht (Steve: „brauche ich
+eigentlich gar nicht“; von Hand: herunterladen und im Zielprojekt „Dokumente hinzufügen“).
 
 Prüft: Datei des Eintrags (PDF, Word, ZIP ausgepackt; nur PDF/Word; Größe; Anzahl), neues Projekt mit Namen aus der Herkunft oder
 weiteres Dokument in ein eigenes Projekt derselben Art (fremdes Projekt 404, andere Art 400), fremder Eintrag und fehlende Datei 404,
-Tagesgrenze nur über den InkluAgent, Laufbuch nur, wenn der Agent es tut, Endpunkt (422 bei unsinniger project_id), Werkzeug
-(nur Einträge dieses Projekts, Seitenwechsel und Link bei anderem Projekt, Fokus des Gesprächs), Knopf in ablage.html am Quelltext.
+Tagesgrenze, Laufbuch nur, wenn der Agent es tut, Werkzeug (Einträge jedes eigenen Projekts, nie fremde; Seitenwechsel und Link bei
+anderem Projekt, Fokus des Gesprächs; pruefen), die ganze Ablage auf Seiten ohne Projekt (lesen, laden), kein Knopf in der Ablage.
 Wegwerf-Datenbank, main.upload_file durch eine Attrappe ersetzt (kein Auslesen), keine KI.
     docker exec -w /app <container> python3 -m unittest /app/tests/test_ablage_projekt.py
 """
@@ -123,8 +124,8 @@ class Basis(unittest.TestCase):
         c.close()
         return aid
 
-    def uebernehmen(self, aid, project_id=None, durch_agent=False, user=None):
-        return asyncio.run(ablage_projekt.uebernehmen(user or self.u, aid, project_id, None, None, durch_agent=durch_agent))
+    def uebernehmen(self, aid, project_id=None, user=None):
+        return asyncio.run(ablage_projekt.uebernehmen(user or self.u, aid, project_id, None))
 
     def projekt_zeile(self, pid):
         c = database.get_db()
@@ -221,19 +222,18 @@ class Uebernehmen(Basis):
             self.uebernehmen(aid)
         self.assertEqual(e.exception.status_code, 400)
 
-    def test_tagesgrenze_nur_ueber_den_agenten(self):
+    def test_tagesgrenze_wie_beim_hochladen_im_gespraech(self):
         with mock.patch.object(hochladen, "max_neue_projekte_tag", return_value=1):
-            self.uebernehmen(self.eintrag(), durch_agent=True)
+            self.uebernehmen(self.eintrag())
             with self.assertRaises(HTTPException) as e:
-                self.uebernehmen(self.eintrag(), durch_agent=True)
+                self.uebernehmen(self.eintrag())
             self.assertEqual(e.exception.status_code, 429)
-            self.assertTrue(self.uebernehmen(self.eintrag())["neues_projekt"], "der Knopf zaehlt nicht zur Grenze des Agenten")
             ziel = projekt(self.u["id"], "pdf", "pdf")
-            self.assertFalse(self.uebernehmen(self.eintrag(), ziel, durch_agent=True)["neues_projekt"], "in ein vorhandenes: immer")
+            self.assertFalse(self.uebernehmen(self.eintrag(), ziel)["neues_projekt"], "in ein vorhandenes: immer")
 
     def test_laufbuch_nur_wenn_der_agent_es_tut(self):
         r = self.uebernehmen(self.eintrag())
-        self.assertEqual(laufbuch.fuer_konto(self.u["id"]), [], "Knopf: nicht gestreamt")
+        self.assertEqual(laufbuch.fuer_konto(self.u["id"]), [], "ohne den Agenten: nicht gestreamt")
         d = laufbuch.fuer_konto(self.u["id"], nur_agent=False)[0]
         self.assertEqual((d["art"], d["project_id"], d["laeuft"], d["ok"]), ("uebernehmen", r["project_id"], False, True))
         with laufbuch.agent_kontext():
@@ -243,40 +243,29 @@ class Uebernehmen(Basis):
                                                                      {"art": "dokument", "document_id": r2["dokumente"][0]}))
 
 
-class Endpunkt(Basis):
-    def setUp(self):
-        super().setUp()
-        from fastapi.testclient import TestClient
-        self.c = TestClient(self.main.app)
-        self.c.cookies.set("token", self.main.create_token(self.u["id"], self.u["email"], 0))
-
-    def test_neues_und_vorhandenes_projekt(self):
-        r = self.c.post(f"/api/ausgaben/{self.eintrag()}/in-projekt", json={})
-        self.assertEqual(r.status_code, 200, r.text)
-        self.assertTrue(r.json()["url"].startswith("/app?projekt="))
-        ziel = projekt(self.u["id"], "pdf", "pdf")
-        r = self.c.post(f"/api/ausgaben/{self.eintrag()}/in-projekt", json={"project_id": ziel})
-        self.assertEqual((r.status_code, r.json()["project_id"]), (200, ziel))
-        self.assertEqual(self.c.post(f"/api/ausgaben/{self.eintrag()}/in-projekt").status_code, 200, "ohne Inhalt: neues Projekt")
-
-    def test_unsinn_und_fremdes(self):
-        aid = self.eintrag()
-        for unsinn in ("abc", True, -1, 1.5):
-            self.assertEqual(self.c.post(f"/api/ausgaben/{aid}/in-projekt", json={"project_id": unsinn}).status_code, 422, unsinn)
-        fremd = konto()
-        aid = self.eintrag(uid=fremd["id"], pid=projekt(fremd["id"]))
-        self.assertEqual(self.c.post(f"/api/ausgaben/{aid}/in-projekt", json={}).status_code, 404)
-        self.assertEqual(self.hochgeladen, [])
-
-
 class Werkzeug(Basis):
-    def test_nur_eintraege_dieses_projekts(self):
+    def test_kreuz_und_quer_aber_nie_fremde_eintraege(self):
         from inkluagent.tools import ausgaben
         anderes = projekt(self.u["id"])
-        aid = self.eintrag(pid=anderes)
-        r = ausgaben.ausgabe_in_projekt(self.quelle, self.u["id"], aid)
-        self.assertFalse(r["ok"])
-        self.assertIn("liste_ausgaben", r["error"])
+        r = ausgaben.ausgabe_in_projekt(self.quelle, self.u["id"], self.eintrag(pid=anderes))
+        self.assertTrue(r["ok"], "ein Eintrag aus einem ANDEREN eigenen Projekt")
+        lies = ausgaben.lies_ausgabe(self.quelle, self.u["id"], self.eintrag(pid=anderes))
+        self.assertTrue(lies["ok"], lies)
+        fremd = konto()
+        aid = self.eintrag(uid=fremd["id"], pid=projekt(fremd["id"]))
+        for r in (ausgaben.ausgabe_in_projekt(self.quelle, self.u["id"], aid), ausgaben.lies_ausgabe(self.quelle, self.u["id"], aid)):
+            self.assertFalse(r["ok"])
+            self.assertIn("liste_ausgaben", r["error"])
+
+    def test_liste_dieses_projekts_oder_der_ganzen_ablage(self):
+        from inkluagent.tools import ausgaben
+        hier, dort = self.eintrag(), self.eintrag(pid=projekt(self.u["id"], name="Jahresbericht (fiktiv)"))
+        nur = ausgaben.liste_ausgaben(self.quelle, self.u["id"])["result"]
+        self.assertEqual({a["ausgabe_id"] for a in nur["ausgaben"]} & {hier, dort}, {hier})
+        alle = ausgaben.liste_ausgaben(self.quelle, self.u["id"], alle=True)["result"]
+        self.assertTrue({hier, dort} <= {a["ausgabe_id"] for a in alle["ausgaben"]})
+        self.assertTrue(all("projekt_daten" in a and "project_id" in a for a in alle["ausgaben"]), "aus welchem Projekt, als Daten")
+        self.assertEqual(alle["ausgaben_url"], "/ablage")
 
     def test_anderes_projekt_mit_seitenwechsel_link_und_fokus(self):
         from inkluagent import storage
@@ -332,21 +321,47 @@ class Werkzeug(Basis):
             self.assertIn("ausgabe_in_projekt", executor._handlers(), tool)
 
 
-class Oberflaeche(unittest.TestCase):
-    def test_knopf_in_der_ablage(self):
+class OhneProjekt(Basis):
+    """Auf Seiten ohne Projekt (Startseite, Meine Ablage …) sieht der Agent die ganze Ablage, liest jeden eigenen Eintrag und laedt
+    ihn in ein Projekt — als Arbeit des Agenten (Laufbuch)."""
+
+    def test_ganze_ablage_lesen_und_laden(self):
+        from inkluagent import konto
+        aid = self.eintrag()
+        k = konto.KontoExecutor(self.u["id"])
+        liste = k.execute("liste_ausgaben", {})
+        self.assertTrue(liste["ok"], liste)
+        self.assertIn(aid, [a["ausgabe_id"] for a in liste["result"]["ausgaben"]])
+        self.assertTrue(k.execute("lies_ausgabe", {"ausgabe_id": aid})["ok"])
+        with mock.patch.object(konto, "aendern_an", return_value=False):
+            self.assertFalse(k.execute("ausgabe_in_projekt", {"ausgabe_id": aid})["ok"], "Schalter aus: aendert nichts")
+        with mock.patch.object(konto, "aendern_an", return_value=True):
+            r = k.execute("ausgabe_in_projekt", {"ausgabe_id": aid})
+        self.assertTrue(r["ok"], r)
+        pid = r["result"]["project_id"]
+        self.assertEqual(r["aktionen"], [{"type": "seite_wechseln", "url": f"/app?projekt={pid}", "project_id": pid}])
+        d = laufbuch.fuer_konto(self.u["id"])[0]
+        self.assertEqual((d["art"], d["quelle"]), ("uebernehmen", "agent"), "Konto-Werkzeuge laufen als Agent (Live-Fenster)")
+
+    def test_im_werkzeugsatz_ohne_projekt(self):
+        from inkluagent import konto
+        with mock.patch.object(konto, "aendern_an", return_value=True):
+            defs, _e, _s = konto.werkzeugsatz(self.u["id"])
+        namen = {d["name"] for d in defs}
+        self.assertTrue({"liste_ausgaben", "lies_ausgabe", "ausgabe_in_projekt"} <= namen, namen)
+        with mock.patch.object(konto, "aendern_an", return_value=False):
+            defs, _e, _s = konto.werkzeugsatz(self.u["id"])
+        self.assertNotIn("ausgabe_in_projekt", {d["name"] for d in defs}, "aendernd: nur mit dem Schalter")
+
+
+class KeinKnopf(unittest.TestCase):
+    def test_kein_knopf_und_kein_endpunkt(self):
+        """Steve 17.10.2026: „eigentlich brauche ich den Button in der Ablage gar nicht … es geht nur darum, dass der Agent auf
+        alles Zugriff hat“ — von Hand: im Zielprojekt „Dokumente hinzufügen“."""
         with open(os.path.join(BACKEND, "templates", "ablage.html"), encoding="utf-8") as f:
-            t = f.read()
-        k = t[t.index("function projektKnopf(a) {"):]
-        k = k[:k.index("\n  }\n")]
-        self.assertIn("if (a.datei_verfuegbar && (a.art === 'pdfua' || a.art === 'pdf' || a.art === 'docx')) aktionen.appendChild(projektKnopf(a));", t)
-        self.assertIn("fetch('/api/ausgaben/' + a.id + '/in-projekt'", k)
-        self.assertIn(r"/^\/app\?projekt=\d+$/.test(d.url)", k, "nur eine Projektadresse dieser Seite")
-        self.assertIn("ja.setAttribute('aria-disabled', 'true');", k, "Fokus bleibt auf dem Knopf (nicht disabled)")
-        self.assertNotIn(".disabled = true", k)
-        self.assertIn("lab.htmlFor = 'ziel_' + a.id;", k, "Auswahl beschriftet")
-        self.assertIn("announce(meldung.textContent);", k)
-        self.assertNotIn("innerHTML = '<", k)
-        self.assertIn("(p.tool === 'pdf' || p.tool === 'formular')", k, "nur Projekte derselben Art (wie hochladen._passt)")
+            self.assertNotIn("in-projekt", f.read())
+        with open(os.path.join(BACKEND, "main.py"), encoding="utf-8") as f:
+            self.assertNotIn('"/api/ausgaben/{ausgabe_id}/in-projekt"', f.read())
 
 
 if __name__ == "__main__":

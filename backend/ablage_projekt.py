@@ -1,14 +1,14 @@
-"""Aus der Ablage in ein Projekt (Steve 17.10.2026: „wäre natürlich cool, wenn der Agent das sogar in ein anderes Projekt laden
-könnte, wenn man möchte“). Die Brücke für Ketten über Dateitypen: Word → barrierefreie PDF in „Meine Ablage“ → PDF-Projekt →
-prüfen, bei Bedarf neu taggen. Vorher ging das nur über Herunterladen und neu Hochladen.
+"""Aus der Ablage in ein Projekt — für den InkluAgent (Steve 17.10.2026: „dass der Agent auf alles Zugriff hat, auch auf die
+Ablage, und gegebenenfalls auf Wunsch von einem Projekt in ein anderes schieben kann“). Die Brücke für Ketten über Dateitypen:
+Word → barrierefreie PDF in „Meine Ablage“ → PDF-Projekt → prüfen, bei Bedarf neu taggen.
 
-EINE Funktion für beide Wege (Chatbot = Oberfläche): der Knopf „In ein Projekt laden“ in Meine Ablage (POST
-/api/ausgaben/{id}/in-projekt, main.py) und das Werkzeug ausgabe_in_projekt des InkluAgent (inkluagent/tools/ausgaben.py). Die
-Datei geht denselben Weg wie ein Hochladen (main.upload_file: Dateityp am Inhalt, Größe, Passwort, Auslesen) — in ein NEUES Projekt
-oder als weiteres Dokument in ein vorhandenes EIGENES Projekt derselben Art (PDF zu PDF, Word zu Word). Ein ZIP (Umwandlung mehrerer
-Dokumente) wird ausgepackt: jede PDF- bzw. Word-Datei darin wird ein Dokument desselben Projekts. Kostet nichts (wie Hochladen).
-Über den InkluAgent zählt ein neues Projekt zur Tagesgrenze wie beim Hochladen im Gespräch. Laufbuch: art „uebernehmen“ (das
-Live-Fenster zeigt das Ziel, während es ausgelesen wird).
+Von Hand geht das über Herunterladen und im Zielprojekt „Dokumente hinzufügen“ — einen eigenen Knopf in der Ablage gibt es bewusst
+nicht (Steve 17.10.2026: „brauche ich eigentlich gar nicht“). Werkzeug ausgabe_in_projekt (inkluagent/tools/ausgaben.py, in
+Projekten und auf Seiten ohne Projekt). Die Datei geht denselben Weg wie ein Hochladen (main.upload_file: Dateityp am Inhalt,
+Größe, Passwort, Auslesen; die Datei wird in den Upload-Ordner KOPIERT — das Löschen eines Projekts entfernt dessen Ursprungsdatei,
+eine Ablage-Datei als Ursprung wäre mitgelöscht worden) — in ein NEUES Projekt oder als weiteres Dokument in ein vorhandenes EIGENES
+Projekt derselben Art (PDF zu PDF, Word zu Word). Ein ZIP (Umwandlung mehrerer Dokumente) wird ausgepackt. Kostet nichts; ein neues
+Projekt zählt zur Tagesgrenze wie beim Hochladen im Gespräch. Laufbuch: art „uebernehmen“ (das Live-Fenster zeigt das Ziel).
 """
 from __future__ import annotations
 
@@ -81,8 +81,7 @@ def dateien(pfad: str, dateiname: str, media: str, grenze: int, hoechstens: int,
     return [(name, daten, art)]
 
 
-async def uebernehmen(user: dict, ausgabe_id: int, project_id: Optional[int] = None, request=None, _=None,
-                      durch_agent: bool = False) -> dict:
+async def uebernehmen(user: dict, ausgabe_id: int, project_id: Optional[int] = None, _=None) -> dict:
     """-> {"ok": True, "project_id", "neues_projekt", "projekt", "dokumente": [ids], "status", "url", "art"}. Fehler als
     HTTPException mit einem Satz für Menschen (404 Eintrag, Datei oder Projekt; 400 Art passt nicht; 413 zu groß; 429 Tagesgrenze)."""
     import laufbuch
@@ -115,21 +114,20 @@ async def uebernehmen(user: dict, ausgabe_id: int, project_id: Optional[int] = N
                                                          if art == "pdf" else
                                                          _("Eine Word-Datei passt nur in ein Word-Projekt. Lade sie in ein neues Projekt.")))
         ziel = int(p["id"])
-    elif durch_agent and h._zaehler(uid, h._tag()) >= h.max_neue_projekte_tag():
+    elif h._zaehler(uid, h._tag()) >= h.max_neue_projekte_tag():
         raise HTTPException(status_code=429, detail=_("Heute sind schon {n} neue Projekte über den InkluAgent angelegt worden. Morgen "
                                                       "geht es weiter; in ein bestehendes Projekt kannst du weiter hochladen.")
                             .format(n=h.max_neue_projekte_tag()))
     neu = ziel is None
     doks: list = []
     for i, (name, inhalt, _art) in enumerate(liste):
-        r = await m.upload_file(file=h._Datei(name, inhalt), project_id=ziel, user=user, request=request)
+        r = await m.upload_file(file=h._Datei(name, inhalt), project_id=ziel, user=user, request=None)
         ziel = int(r["project_id"])
         if r.get("document_id"):
             doks.append(int(r["document_id"]))
         if neu and i == 0:   # das neue Projekt entstand mit der ersten Datei; die weiteren kommen als Dokumente dazu
             h._namen_setzen(ziel, uid, projektname(row, art, _))
-            if durch_agent:
-                h._zaehlen(uid, h._tag())
+            h._zaehlen(uid, h._tag())
     # Das Dokument heisst wie in der Herkunft, nicht wie die Datei („inkludocs_….pdf“) — bei einer Datei, ohne eigenen Namen
     if len(liste) == 1 and doks and (row["dokument_name"] or "").strip():
         conn = m.get_db()

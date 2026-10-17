@@ -78,7 +78,7 @@ WERKZEUG_FREMDTEXT: dict[str, tuple] = {
     "uebersetze_dokument": (),
     "uebersetzung_stand": (),
     "exportiere_uebersetzung": (),
-    "liste_ausgaben": (),
+    "liste_ausgaben": ("ausgaben[].projekt_daten",),   # Projektname, wenn die ganze Ablage gelistet wird (17.10.2026)
     "lies_ausgabe": ("dokumente[].pruefbericht[].text_daten", "dokumente[].hoerprobe_daten"),
     "ausgabe_in_projekt": ("projekt_daten",),   # Name des Projekts (aus Dokument- bzw. Projektname, 17.10.2026)
     # wie die Oberflaeche

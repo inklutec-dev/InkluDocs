@@ -201,6 +201,9 @@ def fall(pg, name, titel, auftrag, erwartet, verboten, endpunkt, nachweis=False,
                 check(f"{name}: das Fenster folgte ins neue Projekt bis zur Barrierefreiheitsprüfung",
                       f"{neu}:abschluss" in stationen and stationen[-1].startswith(f"{neu}:"), stationen)
     finally:
+        if os.environ.get("BEHALTEN"):   # zum Nachsehen (Fehlersuche): nichts loeschen, nur nennen
+            print(f"  BEHALTEN: Projekte {[pid] + neue_projekte}, Ablage {sorted(neue_ausgaben)}")
+            return
         if pid:
             pg.request.delete(B + f"/api/projects/{pid}")
         for x in neue_projekte:

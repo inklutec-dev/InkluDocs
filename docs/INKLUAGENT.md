@@ -946,14 +946,18 @@ Browserproben im Repo (vor jedem Einspielen auf Staging; `INKLUDOCS_BASIS` wähl
 Steve: „Die Frage ist für mich halt, dass der Agent durchläuft. Wäre natürlich spannend, wenn der Agent das sogar in ein anderes
 Projekt laden könnte, wenn man möchte“ — und „ich brauche einen Wow-Effekt“. Drei Stufen, jede für sich auf Staging geprüft:
 
-1. **Brücke aus der Ablage in ein Projekt** (`backend/ablage_projekt.py`, EINE Funktion für Knopf und Agent — Chatbot = Oberfläche):
-   Knopf „In ein Projekt laden“ in Meine Ablage (`POST /api/ausgaben/{id}/in-projekt`; Auswahl „Neues PDF-Projekt“ oder ein eigenes
-   Projekt derselben Art, wie „Löschen“ ohne Browser-Dialog, `aria-disabled` statt `disabled`) und Werkzeug `ausgabe_in_projekt`
-   (Word- und PDF-Projekte; Seitenwechsel ins neue Projekt, Link, Fokus des Gesprächs, Preise der nächsten Schritte; `pruefen`:
-   danach gleich die Prüfdatei). Die Datei geht denselben Weg wie Hochladen (`main.upload_file` — wichtig: das KOPIERT in den
-   Upload-Ordner; das Löschen eines Projekts entfernt dessen Ursprungsdatei ohne Pfadprüfung, eine Ablage-Datei als Ursprung wäre
-   mitgelöscht worden). ZIP ausgepackt (je PDF/Word ein Dokument), kostenlos, über den Agenten mit Tagesgrenze, Laufbuch-Art
-   `uebernehmen`. `kern.warten` nimmt den Agenten jetzt mit (Laufbuch), wie `main.im_hauptloop`.
+1. **Ablage kreuz und quer, Brücke aus der Ablage in ein Projekt** (`backend/ablage_projekt.py`, nur für den Agenten): Steve
+   17.10.2026: „Es geht ja nur darum, dass der Agent auf alles Zugriff hat, auch auf die Ablage, und dass er gegebenenfalls auf
+   Wunsch von einem Projekt in ein anderes schieben kann.“ Einen Knopf in der Ablage gibt es bewusst NICHT („brauche ich eigentlich
+   gar nicht“; von Hand: herunterladen und im Zielprojekt „Dokumente hinzufügen“ — der Agent kürzt einen Weg ab, den die Oberfläche
+   hat). `liste_ausgaben` (im Projekt mit `alle_projekte`, ohne Projekt immer die ganze Ablage, höchstens 50, Projektname als
+   Daten), `lies_ausgabe` (jeder eigene Eintrag) und `ausgabe_in_projekt` (jeder eigene Eintrag; neues Projekt oder ein eigenes
+   derselben Art; Seitenwechsel, Link, Fokus des Gesprächs, Preise der nächsten Schritte; `pruefen`: danach gleich die Prüfdatei) —
+   in Word- und PDF-Projekten und auf Seiten ohne Projekt (`konto.py`, ändernd nur mit `AGENT_KONTO_WERKZEUGE`). Die Datei geht
+   denselben Weg wie Hochladen (`main.upload_file` — wichtig: das KOPIERT in den Upload-Ordner; das Löschen eines Projekts entfernt
+   dessen Ursprungsdatei ohne Pfadprüfung, eine Ablage-Datei als Ursprung wäre mitgelöscht worden). ZIP ausgepackt (je PDF/Word ein
+   Dokument), kostenlos, mit der Tagesgrenze für neue Projekte, Laufbuch-Art `uebernehmen`. `kern.warten` nimmt den Agenten mit
+   (Laufbuch), wie `main.im_hauptloop`; `KontoExecutor.execute` läuft jetzt wie der ToolExecutor in `laufbuch.agent_kontext()`.
 2. **„Fertig mit Nachweis“** (`backend/inkluagent/nachweis.py`): am Ende eine Karte unter der Antwort bzw. der Rückmeldung — „Nachweis:
    <Dokument>“, PDF/UA nach veraPDF (bestanden / nicht bestanden, n Befunde / nicht geprüft — nie „bestanden“, wenn nicht geprüft),
    Alt-Texte „n von m Bildern“, und „So liest ein Screenreader den Anfang vor:“ mit den ersten acht Zeilen der Hörprobe und „Anhören“
@@ -972,8 +976,8 @@ Projekt laden könnte, wenn man möchte“ — und „ich brauche einen Wow-Effe
    läuft Steves Kette als EIN Auftrag durch: Alt-Texte → In PDF umwandeln → PDF-Projekt → Prüfung → Nachweis. Ein neuer
    Ketten-Schritt nennt nur, was er braucht und liefert; die Reihenfolge bleibt die des Katalogs.
 
-Tests: `tests/test_ablage_projekt.py` (18), `tests/test_nachweis.py` (16), `tests/test_auftraege.py` Klasse `KetteBruecke` (6);
-Gegenproben 7/7, 8/8, 7/7. Klickprobe `tests/e2e/ablage_bruecke_probe.py` (Tastatur; danach ist die Ablage-Datei noch da).
+Tests: `tests/test_ablage_projekt.py` (19), `tests/test_nachweis.py` (17), `tests/test_auftraege.py` Klasse `KetteBruecke` (6);
+Gegenproben 7/7, 8/8, 7/7. Echter Rauchtest `tests/e2e/live_kette_rauch.py` Fall C (die ganze Kette über die Brücke).
 Offen: braucht/liefert gilt bisher für die Schritte der Aufträge — der Steckbrief für alle Werkzeuge (Listen daraus erzeugt) folgt;
 kostenpflichtige Schritte im neuen PDF-Projekt (Neu taggen, KI-Prüfung) bietet der Agent danach mit eigenem Preis an (der Preis
 hängt an der fertigen PDF und ist vorher nicht bekannt).

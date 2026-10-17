@@ -592,32 +592,41 @@ def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = 
                           "ausgaben_anzahl": r.get("ausgaben_anzahl")} if r.get("ausgabe_id") else {}))}
 
 
-def liste_ausgaben(project_id: int, user_id: int) -> dict[str, Any]:
-    """Alle Eintraege unter Meine Ablage fuer dieses Projekt (neueste zuerst)."""
+def liste_ausgaben(project_id: Optional[int], user_id: int, alle: bool = False) -> dict[str, Any]:
+    """Eintraege unter Meine Ablage: dieses Projekts (neueste zuerst) — oder, mit alle bzw. ohne Projekt (Seiten ohne Projekt), die
+    ganze Ablage des Kontos ueber alle Projekte (Steve 17.10.2026: der Agent arbeitet kreuz und quer; hoechstens 50)."""
     m = _main()
-    try:
-        m._require_project_owned(project_id, user_id)   # Ablage gibt es fuer Word- UND PDF-Projekte (22.09.2026)
-    except HTTPException as e:
-        return _fehler(e)
+    ganz = bool(alle) or project_id is None
+    if not ganz:
+        try:
+            m._require_project_owned(project_id, user_id)   # Ablage gibt es fuer Word- UND PDF-Projekte (22.09.2026)
+        except HTTPException as e:
+            return _fehler(e)
     m._ablage_dateien_einsammeln(user_id)
-    eintraege = m._ausgaben_des_projekts(user_id, project_id)
-    kurz = [{"ausgabe_id": a["id"], "art": a["art"], "dokument": a["dokument"] or "alle Dokumente",
+    eintraege = m._ausgaben_des_kontos(user_id) if ganz else m._ausgaben_des_projekts(user_id, project_id)
+    kurz = []
+    for a in eintraege:
+        k = {"ausgabe_id": a["id"], "art": a["art"], "dokument": a["dokument"] or "alle Dokumente",
              "erstellt": a["created_at"], "ausloeser": a["ausloeser"], "bestanden": a["bestanden"],
              "hinweise": a["hinweise"], "zusammenfassung": a["zusammenfassung"],
              "datei_verfuegbar": a["datei_verfuegbar"], "dateiname": a["dateiname"],
              "download_url": f"/api/ausgaben/{a['id']}/datei" if a["datei_verfuegbar"] else None}
-            for a in eintraege]
+        if ganz:   # aus welchem Projekt (Name = Nutzerdaten, gekennzeichnet)
+            k.update(project_id=a["project_id"], projekt_daten=daten(a["projekt"] or ""), projekt_geloescht=bool(a["projekt_geloescht"]))
+        kurz.append(k)
     return {"ok": True, "result": {"anzahl": len(kurz), "ausgaben": kurz,
-                                   "ausgaben_url": f"/ablage?projekt={project_id}",
-                                   "hinweis": "Details (Befunde, Hoerprobe) je Eintrag mit lies_ausgabe(ausgabe_id, teil)."}}
+                                   "ausgaben_url": "/ablage" if ganz else f"/ablage?projekt={project_id}",
+                                   "hinweis": ("Details (Befunde, Hoerprobe) je Eintrag mit lies_ausgabe(ausgabe_id, teil); in ein Projekt "
+                                               "laden mit ausgabe_in_projekt.")}}
 
 
-def lies_ausgabe(project_id: int, user_id: int, ausgabe_id: int, teil: str = "bericht") -> dict[str, Any]:
-    """Bericht (Klartext je Bereich), Pruefbericht des Word-Dokuments oder Hoerprobe eines Eintrags."""
+def lies_ausgabe(project_id: Optional[int], user_id: int, ausgabe_id: int, teil: str = "bericht") -> dict[str, Any]:
+    """Bericht (Klartext je Bereich), Pruefbericht des Word-Dokuments oder Hoerprobe eines Eintrags — jedes Eintrags der eigenen
+    Ablage, auch aus einem anderen Projekt (17.10.2026: kreuz und quer)."""
     m = _main()
     row = m._ausgabe_row(user_id, int(ausgabe_id))
-    if not row or int(row["project_id"]) != int(project_id):
-        return {"ok": False, "error": f"Ausgabe {ausgabe_id} gibt es in diesem Projekt nicht. Hol die Liste mit liste_ausgaben."}
+    if not row:
+        return {"ok": False, "error": f"Ausgabe {ausgabe_id} gibt es in deiner Ablage nicht. Hol die Liste mit liste_ausgaben."}
     a = m._ausgabe_dict(row, mit_bericht=True)
     teil = (teil or "bericht").strip().lower()
     doks = []
@@ -647,20 +656,23 @@ def lies_ausgabe(project_id: int, user_id: int, ausgabe_id: int, teil: str = "be
     }}
 
 
-def ausgabe_in_projekt(project_id: int, user_id: int, ausgabe_id: int, ziel_projekt_id: Optional[int] = None,
+def ausgabe_in_projekt(project_id: Optional[int], user_id: int, ausgabe_id: int, ziel_projekt_id: Optional[int] = None,
                        pruefen: bool = False) -> dict[str, Any]:
-    """„In ein Projekt laden“ (Steve 17.10.2026, ablage_projekt.py): eine Ausgabe DIESES Projekts in ein neues Projekt oder als
-    weiteres Dokument in ein eigenes Projekt derselben Art — derselbe Weg wie der Knopf in Meine Ablage, kostenlos. Ein anderes
-    Projekt oeffnet sich nach der Antwort (Seitenwechsel), das Gespraech geht dort weiter. pruefen (PDF): danach die Pruefdatei der
-    neuen Dokumente (kostenlos, wie „Prüfung starten“) — der Nachweis aus der echten PDF; geht das nicht, der aus der Ablage."""
+    """Eine Ausgabe der eigenen Ablage (aus jedem Projekt) in ein neues Projekt oder als weiteres Dokument in ein eigenes Projekt
+    derselben Art (ablage_projekt.py, kostenlos; Steve 17.10.2026: „dass der Agent auf alles Zugriff hat, auch auf die Ablage, und
+    auf Wunsch von einem Projekt in ein anderes schieben kann“ — von Hand: im Zielprojekt „Dokumente hinzufügen“). project_id:
+    das Projekt des Gespraechs, None auf Seiten ohne Projekt. Ein anderes Projekt oeffnet sich nach der Antwort (Seitenwechsel), das
+    Gespraech geht dort weiter. pruefen (PDF): danach die Pruefdatei der neuen Dokumente (kostenlos, wie „Prüfung starten“) — der
+    Nachweis aus der echten PDF; geht das nicht, der aus der Ablage."""
     m = _main()
-    try:
-        m._require_project_owned(project_id, user_id)
-    except HTTPException as e:
-        return _fehler(e)
+    if project_id is not None:
+        try:
+            m._require_project_owned(project_id, user_id)
+        except HTTPException as e:
+            return _fehler(e)
     row = m._ausgabe_row(user_id, int(ausgabe_id))
-    if not row or int(row["project_id"] or 0) != int(project_id):
-        return {"ok": False, "error": f"Ausgabe {ausgabe_id} gibt es in diesem Projekt nicht. Hol die Liste mit liste_ausgaben."}
+    if not row:
+        return {"ok": False, "error": f"Ausgabe {ausgabe_id} gibt es in deiner Ablage nicht. Hol die Liste mit liste_ausgaben."}
     import ablage_projekt
     from .. import hochladen, storage
     from ..kern import warten
@@ -668,15 +680,14 @@ def ausgabe_in_projekt(project_id: int, user_id: int, ausgabe_id: int, ziel_proj
     from i18n import get_gettext
     _ = get_gettext(_ui_lang(user_id))
     try:
-        erg = warten(ablage_projekt.uebernehmen({"id": user_id}, int(ausgabe_id), ziel_projekt_id, None, _, durch_agent=True),
-                     timeout=240)
+        erg = warten(ablage_projekt.uebernehmen({"id": user_id}, int(ausgabe_id), ziel_projekt_id, _), timeout=240)
     except HTTPException as e:
         return _fehler(e)
     except Exception as e:  # noqa: BLE001
         return {"ok": False, "error": fehlertext(e, "Das Laden in ein Projekt hat nicht geklappt.")}
     pid = int(erg["project_id"])
     fakten = hochladen._fakten(pid, erg["dokumente"][0] if erg["dokumente"] else None)
-    hier = pid == int(project_id)
+    hier = project_id is not None and pid == int(project_id)
     result = {"project_id": pid, "neues_projekt": erg["neues_projekt"], "projekt_daten": daten(erg["projekt"]),
               "dokumente": len(erg["dokumente"]), "status": erg["status"], "art": erg["art"],
               "fakten": {k: fakten.get(k) for k in ("seiten", "bilder", "felder", "getaggt")},

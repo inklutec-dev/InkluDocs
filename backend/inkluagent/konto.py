@@ -7,9 +7,12 @@ Konto-Werkzeugen — Konzept „InkluAgent ausbauen“, Abschnitt 5, Schritt 6 (
   Projekt selbst (der Nutzer klickt den Link, dort hat der Agent die Projekt-Werkzeuge)
 - guthaben_lesen: verfuegbare Credits (billing.verfuegbare_credits)
 - laufende_arbeit: was gerade laeuft (Generierung, Auslesen, Uebersetzung, Tagging)
+- liste_ausgaben, lies_ausgabe: Meine Ablage ueber alle Projekte (17.10.2026, Steve: der Agent arbeitet kreuz und quer)
 Schritt 4 (Schalter funktionen.AGENT_KONTO_WERKZEUGE): projekt_anlegen, projekt_umbenennen, projekt_loeschen (NUR ueber den Knopf
 der Karte — nie per getipptem Ja —, nicht waehrend eines Laufs) und lauf_abbrechen, je ueber denselben Endpunkt wie der Knopf
-der Oberflaeche (inkluagent/kern.py). Den Besitz prueft jedes Werkzeug selbst (user_id) bzw. der Endpunkt.
+der Oberflaeche (inkluagent/kern.py). Dazu (17.10.2026) ausgabe_in_projekt: eine Datei aus der Ablage in ein neues oder ein eigenes
+Projekt derselben Art (ablage_projekt.py). Den Besitz prueft jedes Werkzeug selbst (user_id) bzw. der Endpunkt. Alles, was ein
+Konto-Werkzeug anstoesst, gilt als Arbeit des Agenten (laufbuch.agent_kontext in execute, Live-Fenster).
 """
 from __future__ import annotations
 
@@ -50,6 +53,23 @@ TOOL_DEFINITIONS_KONTO: list[dict] = [
         "description": "Verfügbare Credits des Kontos (Monatskontingent und Zusatzpakete, abzüglich Vormerkungen). Kostenlos.",
         "input_schema": {"type": "object", "properties": {}},
     },
+    # Meine Ablage des ganzen Kontos (Steve 17.10.2026: der Agent arbeitet kreuz und quer, auch mit der Ablage)
+    {
+        "name": "liste_ausgaben",
+        "description": ("Meine Ablage des Kontos über alle Projekte, neueste zuerst (höchstens 50): fertige barrierefreie PDFs und "
+                        "Word-Dateien mit Projekt, Datum, Prüfstand und ob die Datei noch da ist. Kostenlos."),
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "lies_ausgabe",
+        "description": ("Liest zu einer Ausgabe (ausgabe_id aus liste_ausgaben) den Bericht: teil=bericht (Prüfung je Bereich in "
+                        "Klartext + Prüfbericht des Word-Dokuments), teil=pruefbericht, teil=hoerprobe (Zeile für Zeile), teil=alles. "
+                        "Kostenlos."),
+        "input_schema": {"type": "object", "properties": {
+            "ausgabe_id": {"type": "integer", "description": "Die ausgabe_id."},
+            "teil": {"type": "string", "enum": ["bericht", "pruefbericht", "hoerprobe", "alles"], "description": "Standard bericht."},
+        }, "required": ["ausgabe_id"]},
+    },
     {
         "name": "laufende_arbeit",
         "description": ("Was im Konto gerade läuft: Alt-Text-Generierung, Auslesen, Übersetzung, Tagging, Aufträge — je mit "
@@ -84,6 +104,20 @@ TOOL_DEFINITIONS_KONTO_AENDERN: list[dict] = [
                         "es ausdrücklich will. Der Server legt dann eine Karte mit Knopf vor — NUR dieser Knopf löscht, ein "
                         "getipptes Ja reicht nicht. Nicht möglich, solange im Projekt etwas läuft."),
         "input_schema": {"type": "object", "properties": {"project_id": {"type": "integer"}}, "required": ["project_id"]},
+    },
+    {
+        "name": "ausgabe_in_projekt",
+        "description": ("Lädt eine Ausgabe aus der Ablage (ausgabe_id aus liste_ausgaben) in ein Projekt, kostenlos — von Hand wäre "
+                        "das Herunterladen und im Zielprojekt „Dokumente hinzufügen“. Ohne ziel_projekt_id in ein NEUES Projekt (eine "
+                        "PDF wird ein PDF-Projekt, eine Word-Datei ein Word-Projekt), mit ziel_projekt_id (aus projekte_auflisten) als "
+                        "weiteres Dokument in ein eigenes Projekt derselben Art. Nur auf Wunsch des Nutzers. Das Projekt öffnet sich "
+                        "nach deiner Antwort; preise nennt, was die nächsten Schritte dort kosten würden."),
+        "input_schema": {"type": "object", "properties": {
+            "ausgabe_id": {"type": "integer", "description": "Die ausgabe_id."},
+            "ziel_projekt_id": {"type": "integer", "description": "Nur für ein vorhandenes eigenes Projekt derselben Art; sonst weglassen."},
+            "pruefen": {"type": "boolean", "description": ("Bei einer PDF: danach gleich prüfen (Prüfdatei mit veraPDF und Hörprobe, "
+                                                           "kostenlos) — der Nachweis steht unter deiner Antwort.")},
+        }, "required": ["ausgabe_id"]},
     },
     {
         "name": "lauf_abbrechen",
@@ -178,6 +212,12 @@ class KontoExecutor:
         self.nur_mit_karte = False
 
     def execute(self, name: str, args: dict) -> dict:
+        import laufbuch
+        # Laufbuch (17.10.2026): was ein Konto-Werkzeug anstoesst, ist Arbeit des Agenten (Live-Fenster) — wie im ToolExecutor
+        with laufbuch.agent_kontext():
+            return self._ausfuehren(name, args)
+
+    def _ausfuehren(self, name: str, args: dict) -> dict:
         args = args if isinstance(args, dict) else {}
         try:
             if name == "projekte_auflisten":
@@ -187,6 +227,12 @@ class KontoExecutor:
                     for p in liste]}}
             if name == "projekt_oeffnen":
                 return self._oeffnen(args.get("project_id"))
+            if name == "liste_ausgaben":
+                from .tools import ausgaben
+                return ausgaben.liste_ausgaben(None, self.user_id)
+            if name == "lies_ausgabe":
+                from .tools import ausgaben
+                return ausgaben.lies_ausgabe(None, self.user_id, int(args["ausgabe_id"]), str(args.get("teil") or "bericht"))
             if name == "guthaben_lesen":
                 import billing
                 v = billing.verfuegbare_credits(self.user_id)
@@ -273,6 +319,12 @@ class KontoExecutor:
         return {"ok": True, "result": {"project_id": pid, "name_daten": daten(name), "art": ART.get(art, art), "hinweis": SEITE_WECHSELT},
                 "anhang": {"art": "link", "url": f"/app?projekt={pid}", "text": self._("Projekt „{projekt}“ öffnen").format(projekt=name)},
                 "aktionen": [seite_wechseln(pid)]}
+
+    def _ausgabe_in_projekt(self, args: dict) -> dict:
+        from .tools import ausgaben
+        ziel = args.get("ziel_projekt_id")
+        return ausgaben.ausgabe_in_projekt(None, self.user_id, int(args["ausgabe_id"]),
+                                           int(ziel) if ziel not in (None, "", 0) else None, pruefen=bool(args.get("pruefen", False)))
 
     def _projekt_umbenennen(self, args: dict) -> dict:
         from .kern import Anfrage
@@ -527,6 +579,7 @@ Was du hier kannst
 * projekt_oeffnen — ein Projekt zum Weiterarbeiten öffnen: nach deiner Antwort wechselt die Seite dorthin, der InkluAgent ist dort offen. Im Projekt hast du die Werkzeuge des Projekts (Alt-Texte, Tagging, Prüfung, Übersetzen …). Die Arbeit selbst machst du dort, nicht hier.
 * guthaben_lesen — verfügbare Credits.
 * laufende_arbeit — was gerade läuft.
+* liste_ausgaben, lies_ausgabe — Meine Ablage über alle Projekte: was fertig ist, mit Prüfergebnis und Hörprobe.
 
 {aendern}Was du hier NICHT kannst
 {nicht_aendern}* Abo und Zahlung, Konto löschen, Passwort und E-Mail, API-Schlüssel, Team und Gäste einladen: das bleibt bewusst in der Oberfläche. Du erklärst kurz, wo es geht („Abo & Verbrauch“, „Einstellungen“, „Team“), und tust es nicht selbst.
@@ -539,12 +592,14 @@ _AENDERN = """Was du hier außerdem ändern kannst
 * projekt_umbenennen — einen Projektnamen ändern.
 * projekt_loeschen — nur, wenn der Nutzer es ausdrücklich will. Nenne das Projekt mit Namen. Der Server legt eine Karte mit Knopf vor; NUR der Knopf löscht, ein getipptes Ja nicht. Läuft im Projekt gerade etwas, geht Löschen nicht — sag das.
 * lauf_abbrechen — laufende Generierung oder Übersetzung beenden, nur auf ausdrücklichen Wunsch. Tagging lässt sich nicht abbrechen.
+* ausgabe_in_projekt — eine Datei aus der Ablage auf Wunsch in ein neues oder ein vorhandenes eigenes Projekt derselben Art laden (kostenlos); danach wechselt die Seite dorthin.
 Bei mehreren Projekten mit ähnlichem Namen fragst du nach, welches gemeint ist, bevor du etwas änderst oder löschst.
 
 """
 
-_NICHT_AENDERN = ("* Projekte anlegen, umbenennen oder löschen und Läufe abbrechen: das geht über die Oberfläche. Neue Projekte "
-                  "entstehen über „Neues Projekt“.\n")
+_NICHT_AENDERN = ("* Projekte anlegen, umbenennen oder löschen, Läufe abbrechen und Dateien aus der Ablage in ein Projekt laden: das "
+                  "geht über die Oberfläche. Neue Projekte entstehen über „Neues Projekt“, Dateien kommen über „Dokumente hinzufügen“ "
+                  "im Projekt dazu.\n")
 
 _GESPRAECHE = """Frühere Gespräche
 Spricht der Nutzer über ein Projekt oder ein Thema, über das ihr schon früher gesprochen habt, findest du mit fruehere_gespraeche die passenden Gespräche und sagst in einem Satz, dass unter deiner Antwort Links stehen; dort kann er mit „Hier weitermachen“ fortsetzen. Das laufende Gespräch ist nicht dabei. Neue Gespräche beginnt der Nutzer selbst mit dem Knopf „Neues Gespräch“."""

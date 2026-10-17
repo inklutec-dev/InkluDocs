@@ -291,7 +291,7 @@ class ToolExecutor:
                 "uebersetze_dokument": lambda a: ausgaben_tools.uebersetze_dokument(p, u, str(a.get("zielsprache") or ""), bestaetigt=bool(a.get("bestaetigt", False)), alt_texte=bool(a.get("alt_texte", True)), turn=self),
                 "uebersetzung_stand": lambda _a: ausgaben_tools.uebersetzung_stand(p, u),
                 "exportiere_uebersetzung": lambda _a: ausgaben_tools.exportiere_uebersetzung(p, u),
-                "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
+                "liste_ausgaben": lambda a: ausgaben_tools.liste_ausgaben(p, u, alle=bool(a.get("alle_projekte", False))),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
                 "ausgabe_in_projekt": lambda a: ausgaben_tools.ausgabe_in_projekt(
                     p, u, int(a["ausgabe_id"]), int(a["ziel_projekt_id"]) if a.get("ziel_projekt_id") not in (None, "", 0) else None,
@@ -325,7 +325,7 @@ class ToolExecutor:
                 "alt_sprache_setzen": lambda a: pdf_tools.alt_sprache_setzen(p, u, str(a.get("sprache") or "")),
                 "korrektur_anwenden": lambda a: pdf_tools.korrektur_anwenden(p, u, _doc(a), erneut_pruefen=bool(a.get("erneut_pruefen", False)), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
                 "korrektur_rueckgaengig": lambda a: pdf_tools.korrektur_rueckgaengig(p, u, _doc(a)),
-                "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
+                "liste_ausgaben": lambda a: ausgaben_tools.liste_ausgaben(p, u, alle=bool(a.get("alle_projekte", False))),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
                 "ausgabe_in_projekt": lambda a: ausgaben_tools.ausgabe_in_projekt(
                     p, u, int(a["ausgabe_id"]), int(a["ziel_projekt_id"]) if a.get("ziel_projekt_id") not in (None, "", 0) else None,
